@@ -1,3 +1,4 @@
+import asyncio
 import re
 import sys
 
@@ -184,4 +185,4 @@ async def greet():
 
 print(sys.argv[1])
 rpcs3Bot.run(sys.argv[1])
-greet()
+asyncio.ensure_future(greet())
