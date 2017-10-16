@@ -19,11 +19,12 @@ boot_up_message = "Hello and welcome to CompatBot. \n" \
                   "All jokes aside if you manage to crash it please message Nicba1010 with the cause of the crash. \n" \
                   "Commands I would recommend using are:\n" \
                   "```" \
-                  "!help" \
-                  "!help top" \
-                  "!top new 10 all playable" \
-                  "!filters (It's a MUST)" \
+                  "!help\n" \
+                  "!help top\n" \
+                  "!top new 10 all playable\n" \
+                  "!filters (It's a MUST)\n" \
                   "```" \
                   "I wish everyone here all the best of luck with using this bot and I will strive to improve it as " \
-                  "often as possible." \
-                  "*Roberto Anic Banic AKA Nicba1010*"
+                  "often as possible.\n" \
+                  "*Roberto Anic Banic AKA Nicba1010\n" \
+                  "https://github.com/RPCS3/discord-bot"
