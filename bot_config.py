@@ -13,3 +13,17 @@ oldest_header = "{requestor} requested top {amount} oldest {region} {media} upda
 invalid_command_text = "Invalid command!"
 
 latest_limit = 15
+
+boot_up_message = "Hello and welcome to CompatBot. \n" \
+                  "You can expect this message every time you crash this bot so please don't. \n" \
+                  "All jokes aside if you manage to crash it please message Nicba1010 with the cause of the crash. \n" \
+                  "Commands I would recommend using are:\n" \
+                  "```" \
+                  "!help" \
+                  "!help top" \
+                  "!top new 10 all playable" \
+                  "!filters (It's a MUST)" \
+                  "```" \
+                  "I wish everyone here all the best of luck with using this bot and I will strive to improve it as " \
+                  "often as possible." \
+                  "*Roberto Anic Banic AKA Nicba1010*"

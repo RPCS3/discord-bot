@@ -10,7 +10,7 @@ from discord.ext.commands import Bot
 
 from api import newline_separator, directions, regions, statuses, release_types
 from api.request import ApiRequest
-from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header
+from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header, boot_up_message
 from utils import limit_int
 
 channel_id = "291679908067803136"
@@ -18,6 +18,10 @@ bot_spam_id = "319224795785068545"
 rpcs3Bot = Bot(command_prefix="!")
 pattern = '[A-z]{4}\\d{5}'
 
+
+@rpcs3Bot.event
+async def on_ready():
+	await rpcs3Bot.send_message(discord.Object(id=channel_id), boot_up_message)
 
 @rpcs3Bot.event
 async def on_message(message: Message):
