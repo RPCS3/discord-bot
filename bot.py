@@ -13,7 +13,12 @@ rpcs3Bot = Bot(command_prefix="!")
 pattern = '[A-z]{4}\\d{5}'
 
 @rpcs3Bot.event
-async def on_message(message):
+
+
+asyncio.async
+
+
+def on_message(message):
 	if message.author.name == "RPCS3 Bot":
 		return
 	try:
@@ -116,6 +121,7 @@ async def search(url, ctx, *args, limit=-1, search_title=None, query=None):
 	jsonn = requests.get(url).text
 	data = json.loads(jsonn)
 	if data["return_code"] == -3:
+		print(url)
 		return await rpcs3Bot.send_message(discord.Object(id=channelid), "{}, Illegal search".format(ctx.message.author.mention))
 	if data["return_code"] == -2:
 		return await rpcs3Bot.send_message(discord.Object(id=channelid), "Please be patient API is in maintenance mode!")
