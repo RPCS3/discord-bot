@@ -12,4 +12,4 @@ oldest_header = "{requestor} requested top {amount} oldest {region} {media} upda
 
 invalid_command_text = "Invalid command!"
 
-latest_limit = 10
+latest_limit = 15
