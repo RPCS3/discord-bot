@@ -1,4 +1,3 @@
-import json
 import re
 import sys
 
@@ -18,10 +17,6 @@ bot_spam_id = "319224795785068545"
 rpcs3Bot = Bot(command_prefix="!")
 pattern = '[A-z]{4}\\d{5}'
 
-
-@rpcs3Bot.event
-async def on_ready():
-	await rpcs3Bot.send_message(discord.Object(id=channel_id), boot_up_message)
 
 @rpcs3Bot.event
 async def on_message(message: Message):
@@ -178,5 +173,15 @@ async def get_code(code: str) -> object:
 		return "```" + result.results[0].to_string() + "```"
 	return None
 
+
+async def greet():
+	"""
+	Greets on boot!
+	"""
+	await rpcs3Bot.wait_until_ready()
+	await rpcs3Bot.send_message(discord.Object(id=channel_id), boot_up_message)
+
+
 print(sys.argv[1])
 rpcs3Bot.run(sys.argv[1])
+greet()
