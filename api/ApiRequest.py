@@ -1,12 +1,22 @@
+"""
+ApiRequest class
+"""
+
 import html
 from datetime import datetime
 
+import requests
+
 import api
-from api import base_url, datetime_input_format, datetime_compatlist_query_format
+from api import base_url, datetime_input_format, datetime_compatlist_query_format, ApiResponse, version
 
 
 class ApiRequest(object):
-	def __init__(self):
+	"""
+	API Request builder object
+	"""
+
+	def __init__(self) -> None:
 		self.search = None
 		self.status = None
 		self.start = None
@@ -14,11 +24,24 @@ class ApiRequest(object):
 		self.date = None
 		self.release_type = None
 		self.region = None
+		self.amount = api.default_amount
+		self.amount_wanted = api.request_result_amount[api.default_amount]
 
-	def search(self, string):
-		self.search = string
+	def set_search(self, search: str) -> 'ApiRequest':
+		"""
+		Adds the search string to the query.
+		:param search: string to search for
+		:return: ApiRequest object
+		"""
+		self.search = search
+		return self
 
-	def status(self, status):
+	def set_status(self, status: int) -> 'ApiRequest':
+		"""
+		Adds status filter to the query.
+		:param status: status to filter by, see ApiConfig.statuses
+		:return: ApiRequest object
+		"""
 		try:
 			self.status = api.statuses[status]
 		except KeyError:
@@ -26,7 +49,12 @@ class ApiRequest(object):
 
 		return self
 
-	def startswith(self, start):
+	def set_startswith(self, start: str) -> 'ApiRequest':
+		"""
+		Adds starting character filter to the query.
+		:param start: character to filter by
+		:return: ApiRequest object
+		"""
 		if len(start) != 1:
 			if start in ("num", "09"):
 				self.start = "09"
@@ -37,7 +65,13 @@ class ApiRequest(object):
 
 		return self
 
-	def sort(self, sort_type, direction):
+	def set_sort(self, sort_type, direction) -> 'ApiRequest':
+		"""
+		Adds sorting request to query.
+		:param sort_type: element to sort by, see ApiConfig.sort_types
+		:param direction: sorting direction, see ApiConfig.directions
+		:return: ApiRequest object
+		"""
 		for k, v in api.directions:
 			if direction in v:
 				try:
@@ -49,7 +83,12 @@ class ApiRequest(object):
 
 		return self
 
-	def date(self, date):
+	def set_date(self, date: str) -> 'ApiRequest':
+		"""
+		Adds date filter to query.
+		:param date: date to filter by
+		:return: ApiRequest object
+		"""
 		try:
 			date = datetime.strptime(date, datetime_input_format)
 			self.date = datetime.strftime(date, datetime_compatlist_query_format)
@@ -58,7 +97,12 @@ class ApiRequest(object):
 
 		return self
 
-	def release_type(self, release_type):
+	def set_release_type(self, release_type: str) -> 'ApiRequest':
+		"""
+		Adds release type filter to query.
+		:param release_type: release type to filter by, see ApiConfig.release_type
+		:return: ApiRequest object
+		"""
 		for k, v in api.release_types:
 			if release_type in v:
 				self.release_type = k
@@ -67,7 +111,12 @@ class ApiRequest(object):
 		self.release_type = None
 		return self
 
-	def region(self, region):
+	def set_region(self, region: str) -> 'ApiRequest':
+		"""
+		Adds region filter to query.
+		:param region: region to filter by, see ApiConfig.regions
+		:return: ApiRequest object
+		"""
 		for k, v in api.regions:
 			if region in v:
 				self.region = k
@@ -76,8 +125,37 @@ class ApiRequest(object):
 		self.region = None
 		return self
 
-	def build_query(self):
+	def set_amount(self, amount: int) -> 'ApiRequest':
+		"""
+		Sets the desired result count and gets the closest available.
+		:param amount: desired result count, chooses closest available option, see ApiConfig.request_result_amount
+		:return: ApiRequest object
+		"""
+		if max(api.request_result_amount, key=api.request_result_amount.get) >= amount >= 1:
+			current_diff = -1
+
+			for k, v in api.request_result_amount:
+				if v >= amount:
+					diff = v - amount
+					if diff < current_diff or current_diff == -1:
+						self.amount = k
+						current_diff = diff
+
+			if current_diff != -1:
+				self.amount_wanted = amount
+		else:
+			self.amount_wanted = None
+			self.amount = api.default_amount
+
+		return self
+
+	def build_query(self) -> str:
+		"""
+		Builds the search query.
+		:return: the search query
+		"""
 		url = base_url + "?"
+
 		if self.search is not None:
 			url += "g={}&".format(html.escape(self.search))
 		if self.status is not None:
@@ -91,5 +169,13 @@ class ApiRequest(object):
 		if self.release_type is not None:
 			url += "t={}&".format(self.release_type)
 		if self.region is not None:
-			url += "f={}".format(self.region)
-		return url
+			url += "f={}&".format(self.region)
+
+		return url + "api=v{}".format(version)
+
+	def request(self) -> ApiResponse:
+		"""
+		Makes an API request to the API with the current request configuration.
+		:return: the API response
+		"""
+		return ApiResponse(requests.get(self.build_query()).content, amount_wanted=self.amount_wanted)
