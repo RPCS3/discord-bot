@@ -1,21 +1,24 @@
-from datetime import datetime.strptime, date.strftime
+from datetime import datetime
+
+from api import datetime_input_format, datetime_output_format, trim_string
+
 
 class ApiResult(object):
-	def __init__(self, id, data):
-		self.id = id
+	def __init__(self, game_id, data):
+		self.game_id = game_id
 		self.title = data["title"]
 		self.status = data["status"]
-		self.date = strptime("%Y-%m-%d", data["date"])
+		self.date = datetime.strptime(data["date"], datetime_input_format)
 		self.thread = data["thread"]
 		self.commit = data["commit"]
 		self.pr = data["pr"]
-	
-	def to_chat_string(self):
+
+	def to_string(self):
 		return "ID:{:9s} Title:{:40s} PR:{:4s} Status:{:8s} Updated:{:10s}".format(
-			self.id,
-			self.title,
+			self.game_id,
+			trim_string(self.title, 40),
 			self.pr,
 			self.status,
 			self.date,
-			strftime("%Y-%m-%d", self.date)
+			datetime.strftime(self.date, datetime_output_format)
 		)
