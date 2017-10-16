@@ -1,5 +1,4 @@
 import discord
-import asyncio
 import requests
 import re
 import urllib.parse
@@ -13,12 +12,7 @@ rpcs3Bot = Bot(command_prefix="!")
 pattern = '[A-z]{4}\\d{5}'
 
 @rpcs3Bot.event
-
-
-asyncio.async
-
-
-def on_message(message):
+async def on_message(message):
 	if message.author.name == "RPCS3 Bot":
 		return
 	try:
