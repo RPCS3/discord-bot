@@ -27,11 +27,10 @@ class ApiResult(object):
 		Makes a string representation of the object.
 		:return: string representation of the object
 		"""
-		return "ID:{:9s} Title:{:40s} PR:{:4s} Status:{:8s} Updated:{:10s}".format(
+		return ("ID:{:9s} Title:{:40s} PR:{:4s} Status:{:8s} Updated:{:10s}".format(
 			self.game_id,
 			trim_string(self.title, 40),
-			self.pr,
+			self.pr if self.pr is not 0 else "????",
 			self.status,
-			self.date,
 			datetime.strftime(self.date, datetime_output_format)
-		)
+		))

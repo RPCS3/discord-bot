@@ -8,7 +8,8 @@ from datetime import datetime
 import requests
 
 import api
-from api import base_url, datetime_input_format, datetime_compatlist_query_format, ApiResponse, version
+from api import datetime_compatlist_query_format, datetime_input_format, base_url, version
+from api.response import ApiResponse
 
 
 class ApiRequest(object):
@@ -16,7 +17,10 @@ class ApiRequest(object):
 	API Request builder object
 	"""
 
-	def __init__(self) -> None:
+	def __init__(self, requestor=None) -> None:
+		self.requestor = requestor
+		self.custom_header = None
+		self.time_start = None
 		self.search = None
 		self.status = None
 		self.start = None
@@ -35,6 +39,14 @@ class ApiRequest(object):
 		"""
 		self.search = search
 		return self
+
+	def set_custom_header(self, custom_header) -> 'ApiRequest':
+		"""
+		Sets a custom header.
+		:param custom_header: custom hedaer
+		:return: ApiRequest object
+		"""
+		self.custom_header = custom_header
 
 	def set_status(self, status: int) -> 'ApiRequest':
 		"""
@@ -72,10 +84,10 @@ class ApiRequest(object):
 		:param direction: sorting direction, see ApiConfig.directions
 		:return: ApiRequest object
 		"""
-		for k, v in api.directions:
+		for k, v in api.directions.items():
 			if direction in v:
 				try:
-					self.sort = api.sort_types[sort_type] + k
+					self.sort = str(api.sort_types[sort_type]) + k
 					return self
 				except KeyError:
 					self.sort = None
@@ -103,7 +115,7 @@ class ApiRequest(object):
 		:param release_type: release type to filter by, see ApiConfig.release_type
 		:return: ApiRequest object
 		"""
-		for k, v in api.release_types:
+		for k, v in api.release_types.items():
 			if release_type in v:
 				self.release_type = k
 				return self
@@ -117,7 +129,7 @@ class ApiRequest(object):
 		:param region: region to filter by, see ApiConfig.regions
 		:return: ApiRequest object
 		"""
-		for k, v in api.regions:
+		for k, v in api.regions.items():
 			if region in v:
 				self.region = k
 				return self
@@ -131,10 +143,10 @@ class ApiRequest(object):
 		:param amount: desired result count, chooses closest available option, see ApiConfig.request_result_amount
 		:return: ApiRequest object
 		"""
-		if max(api.request_result_amount, key=api.request_result_amount.get) >= amount >= 1:
+		if max(api.request_result_amount.values()) >= amount >= 1:
 			current_diff = -1
 
-			for k, v in api.request_result_amount:
+			for k, v in api.request_result_amount.items():
 				if v >= amount:
 					diff = v - amount
 					if diff < current_diff or current_diff == -1:
@@ -157,7 +169,7 @@ class ApiRequest(object):
 		url = base_url + "?"
 
 		if self.search is not None:
-			url += "g={}&".format(html.escape(self.search))
+			url += "g={}&".format(html.escape(self.search).replace(" ", "%20"))
 		if self.status is not None:
 			url += "s={}&".format(self.status)
 		if self.start is not None:
@@ -178,4 +190,11 @@ class ApiRequest(object):
 		Makes an API request to the API with the current request configuration.
 		:return: the API response
 		"""
-		return ApiResponse(requests.get(self.build_query()).content, amount_wanted=self.amount_wanted)
+		print(self.build_query())
+		self.time_start = api.system_time_millis()
+		return ApiResponse(
+			request=self,
+			data=requests.get(self.build_query()).content,
+			amount_wanted=self.amount_wanted,
+			custom_header=self.custom_header
+		)

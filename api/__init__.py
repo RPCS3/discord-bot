@@ -5,8 +5,5 @@ __author__ = 'Roberto Anic Banic'
 __license__ = 'GPLv3'
 __copyright__ = 'Copyright 2017 Roberto Anic Banic'
 
-from .ApiConfig import *
-from .ApiRequest import ApiRequest
-from .ApiResponse import ApiResponse
-from .ApiResult import ApiResult
+from .config import *
 from .utils import *

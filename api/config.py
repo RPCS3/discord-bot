@@ -62,12 +62,12 @@ directions = {
 }
 
 regions = {
-	"j": ("j", "jap", "japan"),
-	"u": ("u", "us", "america"),
-	"e": ("e", "eu", "europe"),
-	"a": ("a", "asia", "ch", "china"),
-	"k": ("k", "kor", "korea"),
-	"h": ("h", "hk", "hong", "kong", "hongkong")
+	"j": ("j", "jap", "japan", "JPN"),
+	"u": ("u", "us", "america", "USA"),
+	"e": ("e", "eu", "europe", "EU"),
+	"a": ("a", "asia", "ch", "china", "CHN"),
+	"k": ("k", "kor", "korea", "KOR"),
+	"h": ("h", "hk", "hong", "kong", "hongkong", "HK")
 }
 
 statuses = {
@@ -83,10 +83,10 @@ sort_types = {
 	"id": 1,
 	"title": 2,
 	"status": 3,
-	"last": 4
+	"date": 4
 }
 
 release_types = {
-	"b": ("b", "d", "disc", "bluray"),
-	"n": ("n", "p", "psn")
+	"b": ("b", "d", "disc", "bluray", "Blu-Ray"),
+	"n": ("n", "p", "psn", "PSN")
 }
