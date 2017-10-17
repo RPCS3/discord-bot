@@ -1,6 +1,7 @@
 import asyncio
 import re
 import sys
+from random import randint
 
 import discord
 import requests
@@ -181,6 +182,19 @@ async def greet():
 	"""
 	await rpcs3Bot.wait_until_ready()
 	await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), boot_up_message)
+
+
+# User requests
+# noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
+async def roll(ctx, *args):
+	"""Generates a random number between 0 and n (default 10)"""
+	n = 10
+	if len(args) >= 1:
+		try:
+			n = int(args[0])
+		except ValueError:
+			pass
+	await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), "You rolled a {}!".format(randint(0, n)))
 
 
 print(sys.argv[1])
