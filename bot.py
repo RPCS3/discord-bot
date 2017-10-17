@@ -186,6 +186,7 @@ async def greet():
 
 # User requests
 # noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
+@rpcs3Bot.command(pass_context=True)
 async def roll(ctx, *args):
 	"""Generates a random number between 0 and n (default 10)"""
 	n = 10
@@ -199,4 +200,4 @@ async def roll(ctx, *args):
 
 print(sys.argv[1])
 rpcs3Bot.run(sys.argv[1])
-asyncio.ensure_future(greet())
+greet()
