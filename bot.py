@@ -1,7 +1,6 @@
-import asyncio
 import re
 import sys
-from random import randint
+from random import randint, random
 
 import discord
 import requests
@@ -196,6 +195,16 @@ async def roll(ctx, *args):
 		except ValueError:
 			pass
 	await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), "You rolled a {}!".format(randint(0, n)))
+
+
+# noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
+@rpcs3Bot.command(pass_context=True, name="8ball")
+async def eight_ball(ctx, *args):
+	"""Generates a random answer to your question"""
+	await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), random.choice([
+		"Nah mate", "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Nope", "Njet", "Da", "Maybe", "I don't know",
+		"I don't care"
+	]))
 
 
 print(sys.argv[1])
