@@ -1,6 +1,6 @@
 import re
 import sys
-from random import randint, random
+from random import randint, choice
 
 import discord
 import requests
@@ -201,7 +201,7 @@ async def roll(ctx, *args):
 @rpcs3Bot.command(pass_context=True, name="8ball")
 async def eight_ball(ctx, *args):
 	"""Generates a random answer to your question"""
-	await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), random.choice([
+	await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), choice([
 		"Nah mate", "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Nope", "Njet", "Da", "Maybe", "I don't know",
 		"I don't care"
 	]))
