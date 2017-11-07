@@ -203,7 +203,11 @@ async def eight_ball(ctx, *args):
 	"""Generates a random answer to your question"""
 	await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), choice([
 		"Nah mate", "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Nope", "Njet", "Da", "Maybe", "I don't know",
-		"I don't care"
+		"I don't care", "Affirmative", "Sure", "Yeah, why not", "Most likely", "Sim", "Oui", "Heck yeah!", "Roger that",
+		"Aye!", "Yes without a doubt m8!", "Who cares", "Maybe yes, maybe not", "Maybe not, maybe yes", "Ugh",
+		"Probably", "Ask again later", "Error 404: answer not found", "Don't ask me that again",
+		"You should think twice before asking", "You what now?", "Bloody hell, answering that ain't so easy",
+		"Of course not", "Seriously no", "Noooooooooo", "Most likely not", "Não", "Non", "Hell no", "Absolutely not"
 	]))
 
 
