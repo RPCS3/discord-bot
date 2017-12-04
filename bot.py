@@ -35,7 +35,7 @@ async def on_message(message: Message):
 		return
 	codelist = []
 	for matcher in re.finditer(pattern, message.content):
-		code = matcher.group(0)
+		code = str(matcher.group(0)).upper()
 		if code not in codelist:
 			codelist.append(code)
 			print(code)
