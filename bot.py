@@ -213,4 +213,3 @@ async def eight_ball(ctx, *args):
 
 print(sys.argv[1])
 rpcs3Bot.run(sys.argv[1])
-greet()
