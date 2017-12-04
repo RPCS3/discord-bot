@@ -1,10 +1,10 @@
+import json
 import re
 import sys
 from random import randint, choice
 
 import discord
 import requests
-from bs4 import BeautifulSoup
 from discord import Message
 from discord.ext.commands import Bot
 
@@ -156,11 +156,17 @@ async def dispatch_message(message: str):
 @rpcs3Bot.command(pass_context=True)
 async def latest(ctx, *args):
 	"""Get the latest RPCS3 build link"""
-	appveyor_url = BeautifulSoup(requests.get("https://rpcs3.net/download").content, "lxml").find(
-		"div",
-		{"class": "div-download-left"}
-	).parent['href']
-	return await rpcs3Bot.send_message(ctx.message.author, appveyor_url)
+	latest_build = json.loads(requests.get("https://update.rpcs3.net/?c=somecommit").content)['latest_build']
+	return await rpcs3Bot.send_message(
+		ctx.message.author,
+		"PR: {pr}\nWindows:\n\tTime: {win_time}\n\t{windows_url}\nLinux:\n\tTime: {linux_time}\n\t{linux_url}".format(
+			pr=latest_limit['pr'],
+			win_time=latest_limit['windows']['datetime'],
+			windows_url=latest_build['windows']['download'],
+			linux_time=latest_limit['windows']['datetime'],
+			linux_url=latest_build['linux']['download']
+		)
+	)
 
 
 async def get_code(code: str) -> object:
