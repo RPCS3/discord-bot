@@ -160,10 +160,10 @@ async def latest(ctx, *args):
 	return await rpcs3Bot.send_message(
 		ctx.message.author,
 		"PR: {pr}\nWindows:\n\tTime: {win_time}\n\t{windows_url}\nLinux:\n\tTime: {linux_time}\n\t{linux_url}".format(
-			pr=latest_limit['pr'],
-			win_time=latest_limit['windows']['datetime'],
+			pr=latest_build['pr'],
+			win_time=latest_build['windows']['datetime'],
 			windows_url=latest_build['windows']['download'],
-			linux_time=latest_limit['windows']['datetime'],
+			linux_time=latest_build['windows']['datetime'],
 			linux_url=latest_build['linux']['download']
 		)
 	)
