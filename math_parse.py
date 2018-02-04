@@ -87,6 +87,7 @@ class NumericStringParser(object):
                    "tan": math.tan,
                    "exp": math.exp,
                    "abs": abs,
+                   "sqrt": lambda a: math.sqrt(a),
                    "trunc": lambda a: int(a),
                    "round": round,
                    "sgn": lambda a: abs(a) > epsilon and self.cmp(a, 0) or 0}
