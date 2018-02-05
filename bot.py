@@ -99,8 +99,9 @@ async def top(ctx, *args):
     To see all filters do !filters
     """
     request = ApiRequest(ctx.message.author)
-    if args[0] not in ("new", "old"):
-        rpcs3Bot.send_message(discord.Object(id=bot_spam_id), invalid_command_text)
+    if len(args) == 0 or args[0] not in ("new", "old"):
+        print("Invalid command")
+        return await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), invalid_command_text)
 
     if len(args) >= 1:
         if args[0] == "old":
