@@ -100,7 +100,8 @@ async def top(ctx, *args):
     """
     request = ApiRequest(ctx.message.author)
     if len(args) == 0 or args[0] not in ("new", "old"):
-        return rpcs3Bot.send_message(discord.Object(id=bot_spam_id), invalid_command_text)
+        print("Invalid command")
+        return await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), invalid_command_text)
 
     if len(args) >= 1:
         if args[0] == "old":
