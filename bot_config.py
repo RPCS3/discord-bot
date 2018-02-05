@@ -6,7 +6,7 @@ Variables:
 {region} = Region
 {media} = Blu-Ray/PSN
 """
-search_header = "{requestor} searched for: 	***{search_string}***"
+search_header = "{requestor} searched for: ***{search_string}***"
 newest_header = "{requestor} requested top {amount} newest {region} {media} updated games"
 oldest_header = "{requestor} requested top {amount} oldest {region} {media} updated games"
 
