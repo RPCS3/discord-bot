@@ -187,7 +187,7 @@ async def get_code(code: str) -> object:
     if len(result.results) == 1:
         for result in result.results:
             if result.game_id == code:
-                return "```" + result.results[0].to_string() + "```"
+                return "```" + result.to_string() + "```"
     return None
 
 
