@@ -43,7 +43,7 @@ async def on_message(message: Message):
             print(code)
     for code in codelist:
         info = await get_code(code)
-        if not info == "None":
+        if info is not None:
             await rpcs3Bot.send_message(message.channel, info)
 
 
