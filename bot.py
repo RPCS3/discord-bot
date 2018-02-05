@@ -196,7 +196,7 @@ async def greet():
     Greets on boot!
     """
     await rpcs3Bot.wait_until_ready()
-    await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), boot_up_message)
+    return await rpcs3Bot.send_message(discord.Object(id=bot_spam_id), boot_up_message)
 
 
 # User requests
