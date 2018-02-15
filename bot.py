@@ -16,7 +16,7 @@ from bot_utils import get_code
 from math_parse import NumericStringParser
 from math_utils import limit_int
 from phases import LogAnalyzer
-from stream_handlers import stream_text_log, stream_gzip_decompress, stream_7z_decompress
+from stream_handlers import stream_text_log, stream_gzip_decompress
 
 channel_id = "291679908067803136"
 bot_spam_id = "319224795785068545"
@@ -25,9 +25,9 @@ id_pattern = '[A-z]{4}\\d{5}'
 nsp = NumericStringParser()
 
 file_handlers = (
-    {
-        'ext': '.zip'
-    },
+    # {
+    #     'ext': '.zip'
+    # },
     {
         'ext': '.log',
         'handler': stream_text_log
@@ -36,10 +36,10 @@ file_handlers = (
         'ext': '.gz',
         'handler': stream_gzip_decompress
     },
-    {
-        'ext': '.7z',
-        'handler': stream_7z_decompress
-    }
+    # {
+    #     'ext': '.7z',
+    #     'handler': stream_7z_decompress
+    # }
 )
 
 
@@ -71,6 +71,9 @@ async def on_message(message: Message):
             info = get_code(code)
             if info is not None:
                 await rpcs3Bot.send_message(message.channel, '```{}```'.format(info))
+            else:
+                await rpcs3Bot.send_message(message.channel, '```Serial not found in compatibility database, possibly '
+                                                             'untested!```')
         return
 
     # Log Analysis!

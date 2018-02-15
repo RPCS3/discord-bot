@@ -1,4 +1,3 @@
-import pylzma as pylzma
 import zlib
 
 
@@ -9,16 +8,6 @@ def stream_text_log(stream):
 
 def stream_gzip_decompress(stream):
     dec = zlib.decompressobj(32 + zlib.MAX_WBITS)  # offset 32 to skip the header
-    for chunk in stream:
-        rv = dec.decompress(chunk)
-        if rv:
-            yield rv
-        del rv
-    del dec
-
-
-def stream_7z_decompress(stream):
-    dec = pylzma.decompressobj()
     for chunk in stream:
         rv = dec.decompress(chunk)
         if rv:
