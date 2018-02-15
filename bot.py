@@ -76,13 +76,16 @@ async def on_message(message: Message):
     # Log Analysis!
     if len(message.attachments) > 0:
         log = LogAnalyzer()
+        print("Attachments present, looking for log file...")
         for attachment in filter(lambda a: any(e['ext'] in a['url'] for e in file_handlers), message.attachments):
             for handler in file_handlers:
                 if attachment['url'].endswith(handler['ext']):
+                    print("Found log attachment, name: {name}".format(name=attachment['filename']))
                     with requests.get(attachment['url'], stream=True) as response:
+                        print("Opened request stream!")
+                        # noinspection PyTypeChecker
                         for row in stream_line_by_line_safe(response, handler['handler']):
                             error_code = log.feed(row)
-                            del row
                             if error_code == LogAnalyzer.ERROR_SUCCESS:
                                 continue
                             elif error_code == LogAnalyzer.ERROR_PIRACY:
@@ -126,9 +129,12 @@ def mask(string: str):
 
 def stream_line_by_line_safe(stream: Response, func: staticmethod):
     buffer = ''
+    chunk_buffer = b''
     for chunk in func(stream):
         try:
-            message = chunk.decode('UTF-8')
+            chunk_buffer += chunk
+            message = chunk_buffer.decode('UTF-8')
+            chunk_buffer = b''
             if '\n' in message:
                 parts = message.split('\n')
                 yield buffer + parts[0]
@@ -136,14 +142,17 @@ def stream_line_by_line_safe(stream: Response, func: staticmethod):
                 for part in parts[1:-1]:
                     yield part
                 buffer += parts[-1]
-            elif len(buffer) > 1024 * 1024:
+            elif len(buffer) > 1024 * 1024 or len(chunk_buffer) > 1024 * 1024:
                 print('Possible overflow intended, piss off!')
                 break
             else:
                 buffer += message
         except UnicodeDecodeError as ude:
-            print(ude.reason)
-            break
+            if ude.end == len(chunk_buffer):
+                pass
+            else:
+                print("{}\n{} {} {} {}".format(chunk_buffer, ude.reason, ude.start, ude.end, len(chunk_buffer)))
+                break
         del chunk
     del buffer
 

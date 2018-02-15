@@ -4,6 +4,7 @@ from bot_config import piracy_strings
 from bot_utils import get_code
 
 SERIAL_PATTERN = re.compile('Serial: (?P<id>[A-z]{4}\d{5})')
+LIBRARIES_PATTERN = re.compile('Load libraries:(?P<libraries>.*)', re.DOTALL | re.MULTILINE)
 
 
 class LogAnalyzer(object):
@@ -29,9 +30,21 @@ class LogAnalyzer(object):
             if info is not None:
                 self.report = info + '\n' + self.report
                 return self.ERROR_SUCCESS
-        except AttributeError as ae:
+        except AttributeError:
             print("Could not detect serial! Aborting!")
             return self.ERROR_FAIL
+
+    def get_libraries(self):
+        try:
+            self.libraries = [lib.strip().replace('.sprx', '')
+                              for lib
+                              in re.search(LIBRARIES_PATTERN, self.buffer).group('libraries').strip()[1:].split('-')]
+            if len(self.libraries) > 0:
+                self.report += 'Selected Libraries: ' + ', '.join(self.libraries) + '\n\n'
+        except KeyError as ke:
+            print(ke)
+            pass
+        return self.ERROR_SUCCESS
 
     """
     End Trigger
@@ -41,7 +54,7 @@ class LogAnalyzer(object):
     """
     phase = (
         {
-            'end_trigger': '0:00:00.000000',
+            'end_trigger': 'Compatibility notice:',
             'regex': re.compile('(?P<all>.*)', flags=re.DOTALL | re.MULTILINE),
             'string_format': '{all}\n\n'
         },
@@ -69,7 +82,8 @@ class LogAnalyzer(object):
                 'SPU Decoder: {spu_decoder:>21s} | SPU Threads: {spu_threads}\n'
                 'SPU Lower Thread Priority: {spu_lower_thread_priority:>7s} | SPU Delay Penalty: {spu_delay_penalty}\n'
                 'SPU Loop Detection: {spu_loop_detection:>14s} | Hook Static Functions: {hook_static_functions}\n'
-                'Thread Scheduler: {thread_scheduler:>16s} | Lib Loader: {lib_loader}\n\n'
+                'Thread Scheduler: {thread_scheduler:>16s} | Lib Loader: {lib_loader}\n\n',
+            'function': get_libraries
         },
         {
             'end_trigger': 'Video:',
@@ -104,6 +118,7 @@ class LogAnalyzer(object):
         self.phase_index = 0
         self.report = ''
         self.trigger = ''
+        self.libraries = []
 
     def feed(self, data):
         if len(self.buffer) > 16 * 1024 * 1024:
@@ -127,21 +142,22 @@ class LogAnalyzer(object):
                 self.report += current_phase['string_format'].format(
                     **re.search(current_phase['regex'], self.buffer).groupdict()
                 )
-                return self.ERROR_SUCCESS
             except AttributeError as ae:
                 print("Regex failed!")
                 return self.ERROR_FAIL
-        elif current_phase['function'] is not None:
-            if isinstance(current_phase['function'], list):
-                for func in current_phase['function']:
-                    error_code = func(self)
-                    if error_code != self.ERROR_SUCCESS:
-                        return error_code
-                return self.ERROR_SUCCESS
-            else:
-                return current_phase['function'](self)
-        else:
-            return self.ERROR_SUCCESS
+        try:
+            if current_phase['function'] is not None:
+                if isinstance(current_phase['function'], list):
+                    for func in current_phase['function']:
+                        error_code = func(self)
+                        if error_code != self.ERROR_SUCCESS:
+                            return error_code
+                    return self.ERROR_SUCCESS
+                else:
+                    return current_phase['function'](self)
+        except KeyError:
+            pass
+        return self.ERROR_SUCCESS
 
     def get_trigger(self):
         return self.trigger
