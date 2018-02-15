@@ -121,7 +121,7 @@ async def piracy_alert(message: Message, trigger: str):
         "or {bot_admin}".format(
             author=message.author.mention,
             trigger=mask(trigger),
-            bot_admin=message.server.get_member(id=267367850706993152).mention
+            bot_admin=message.server.get_member(267367850706993152).mention
         )
     )
 
