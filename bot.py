@@ -110,6 +110,7 @@ async def on_message(message: Message):
 
 
 async def piracy_alert(message: Message, trigger: str):
+    print(message.author.id)
     await rpcs3Bot.send_message(
         message.channel,
         "Pirated release detected {author}!\n"
@@ -121,7 +122,7 @@ async def piracy_alert(message: Message, trigger: str):
         "or {bot_admin}".format(
             author=message.author.mention,
             trigger=mask(trigger),
-            bot_admin=message.server.get_member(267367850706993152).mention
+            bot_admin=message.server.get_member('267367850706993152').mention
         )
     )
 
