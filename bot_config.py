@@ -28,3 +28,7 @@ boot_up_message = "Hello and welcome to CompatBot. \n" \
                   "often as possible.\n" \
                   "*Roberto Anic Banic AKA Nicba1010\n" \
                   "https://github.com/RPCS3/discord-bot"
+
+piracy_strings = {
+    'nicoblog.org'
+}

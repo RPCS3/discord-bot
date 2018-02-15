@@ -7,18 +7,40 @@ import discord
 import requests
 from discord import Message
 from discord.ext.commands import Bot
+from requests import Response
 
 from api import newline_separator, directions, regions, statuses, release_types
 from api.request import ApiRequest
 from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header, boot_up_message
+from bot_utils import get_code
 from math_parse import NumericStringParser
-from utils import limit_int
+from math_utils import limit_int
+from phases import LogAnalyzer
+from stream_handlers import stream_text_log, stream_gzip_decompress, stream_7z_decompress
 
 channel_id = "291679908067803136"
 bot_spam_id = "319224795785068545"
 rpcs3Bot = Bot(command_prefix="!")
-pattern = '[A-z]{4}\\d{5}'
+id_pattern = '[A-z]{4}\\d{5}'
 nsp = NumericStringParser()
+
+file_handlers = (
+    {
+        'ext': '.zip'
+    },
+    {
+        'ext': '.log',
+        'handler': stream_text_log
+    },
+    {
+        'ext': '.gz',
+        'handler': stream_gzip_decompress
+    },
+    {
+        'ext': '.7z',
+        'handler': stream_7z_decompress
+    }
+)
 
 
 @rpcs3Bot.event
@@ -27,24 +49,103 @@ async def on_message(message: Message):
     OnMessage event listener
     :param message: message
     """
+    # Self reply detect
     if message.author.name == "RPCS3 Bot":
         return
+    # Command detect
     try:
         if message.content[0] == "!":
             return await rpcs3Bot.process_commands(message)
     except IndexError as ie:
-        print(message.content)
-        return
-    codelist = []
-    for matcher in re.finditer(pattern, message.content):
+        print("Empty message! Could still have attachments.")
+
+    # Code reply
+    code_list = []
+    for matcher in re.finditer(id_pattern, message.content):
         code = str(matcher.group(0)).upper()
-        if code not in codelist:
-            codelist.append(code)
+        if code not in code_list:
+            code_list.append(code)
             print(code)
-    for code in codelist:
-        info = await get_code(code)
-        if info is not None:
-            await rpcs3Bot.send_message(message.channel, info)
+    if len(code_list) > 0:
+        for code in code_list:
+            info = get_code(code)
+            if info is not None:
+                await rpcs3Bot.send_message(message.channel, '```{}```'.format(info))
+        return
+
+    # Log Analysis!
+    if len(message.attachments) > 0:
+        log = LogAnalyzer()
+        for attachment in filter(lambda a: any(e['ext'] in a['url'] for e in file_handlers), message.attachments):
+            for handler in file_handlers:
+                if attachment['url'].endswith(handler['ext']):
+                    with requests.get(attachment['url'], stream=True) as response:
+                        for row in stream_line_by_line_safe(response, handler['handler']):
+                            error_code = log.feed(row)
+                            del row
+                            if error_code == LogAnalyzer.ERROR_SUCCESS:
+                                continue
+                            elif error_code == LogAnalyzer.ERROR_PIRACY:
+                                await piracy_alert(message, log.get_trigger())
+                                break
+                            elif error_code == LogAnalyzer.ERROR_OVERFLOW:
+                                print("Possible Buffer Overflow Attack Detected!")
+                                break
+                            elif error_code == LogAnalyzer.ERROR_STOP:
+                                await rpcs3Bot.send_message(
+                                    message.channel,
+                                    log.get_report()
+                                )
+                                break
+                            elif error_code == LogAnalyzer.ERROR_FAIL:
+                                break
+                    print("Stopping stream!")
+        del log
+
+
+async def piracy_alert(message: Message, trigger: str):
+    await rpcs3Bot.send_message(
+        message.channel,
+        "Pirated release detected {author}!\n"
+        "Please note that the RPCS3 community and it's developers do not support piracy!\n"
+        "Most of the issues caused by pirated dumps is because they have been tampered with in such a way "
+        "and therefore act unpredictably on RPCS3.\n"
+        "If you need help obtaining legal dumps please read <https://rpcs3.net/quickstart>\n"
+        "The trigger phrase was `{trigger}`, if you believe this was detected wrongly please contact a mod "
+        "or {bot_admin}".format(
+            author=message.author.mention,
+            trigger=mask(trigger),
+            bot_admin=discord.Object(id=267367850706993152)
+        )
+    )
+
+
+def mask(string: str):
+    return ''.join("*" if i % 2 == 0 else char for i, char in enumerate(string, 1))
+
+
+def stream_line_by_line_safe(stream: Response, func: staticmethod):
+    buffer = ''
+    for chunk in func(stream):
+        try:
+            message = chunk.decode('UTF-8')
+            if '\n' in message:
+                parts = message.split('\n')
+                yield buffer + parts[0]
+                buffer = ''
+                for part in parts[1:-1]:
+                    yield part
+                buffer += parts[-1]
+            elif len(buffer) > 1024 * 1024:
+                print('Possible overflow intended, piss off!')
+                break
+            else:
+                buffer += message
+        except UnicodeDecodeError as ude:
+            print(ude.reason)
+            break
+        del chunk
+    del buffer
 
 
 @rpcs3Bot.command()
@@ -53,6 +154,7 @@ async def math(*args):
     return await rpcs3Bot.say(nsp.eval(''.join(map(str, args))))
 
 
+# noinspection PyShadowingBuiltins
 @rpcs3Bot.command()
 async def credits(*args):
     """Author Credit"""
@@ -176,20 +278,6 @@ async def latest(ctx, *args):
             linux_url=latest_build['linux']['download']
         )
     )
-
-
-async def get_code(code: str) -> object:
-    """
-    Gets the game data for a certain game code or returns None
-    :param code: code to get data for
-    :return: data or None
-    """
-    result = ApiRequest().set_search(code).set_amount(10).request()
-    if len(result.results) >= 1:
-        for result in result.results:
-            if result.game_id == code:
-                return "```" + result.to_string() + "```"
-    return None
 
 
 async def greet():
