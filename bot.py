@@ -20,8 +20,10 @@ from stream_handlers import stream_text_log, stream_gzip_decompress
 
 channel_id = "291679908067803136"
 bot_spam_id = "319224795785068545"
+bot_admin_id = "267367850706993152"
+
 rpcs3Bot = Bot(command_prefix="!")
-id_pattern = '[A-z]{4}\\d{5}'
+id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<numbers>\\d{5})' # see http://www.psdevwiki.com/ps3/Productcode
 nsp = NumericStringParser()
 
 file_handlers = (
@@ -50,7 +52,7 @@ async def on_message(message: Message):
     :param message: message
     """
     # Self reply detect
-    if message.author.name == "RPCS3 Bot":
+    if message.author.id == rpcs3Bot.connection.user.id:
         return
     # Command detect
     try:
@@ -61,8 +63,10 @@ async def on_message(message: Message):
 
     # Code reply
     code_list = []
-    for matcher in re.finditer(id_pattern, message.content):
-        code = str(matcher.group(0)).upper()
+    for matcher in re.finditer(id_pattern, message.content, flags=re.I):
+        letter_part = str(matcher.group('letters'))
+        number_part = str(matcher.group('numbers'))
+        code = (letter_part + number_part).upper()
         if code not in code_list:
             code_list.append(code)
             print(code)
@@ -79,6 +83,7 @@ async def on_message(message: Message):
     # Log Analysis!
     if len(message.attachments) > 0:
         log = LogAnalyzer()
+        sent_log = False
         print("Attachments present, looking for log file...")
         for attachment in filter(lambda a: any(e['ext'] in a['url'] for e in file_handlers), message.attachments):
             for handler in file_handlers:
@@ -102,9 +107,16 @@ async def on_message(message: Message):
                                     message.channel,
                                     log.get_report()
                                 )
+                                sent_log = True
                                 break
                             elif error_code == LogAnalyzer.ERROR_FAIL:
                                 break
+                        if not sent_log:
+                            print("Log analyzer didn't finish, probably a truncated/invalid log!")
+                            await rpcs3Bot.send_message(
+                                message.channel,
+                                log.get_report()
+                            )
                     print("Stopping stream!")
         del log
 
@@ -122,7 +134,7 @@ async def piracy_alert(message: Message, trigger: str):
         "or {bot_admin}".format(
             author=message.author.mention,
             trigger=mask(trigger),
-            bot_admin=message.server.get_member('267367850706993152').mention
+            bot_admin=message.server.get_member(bot_admin_id).mention
         )
     )
 
