@@ -3,7 +3,7 @@ import re
 from bot_config import piracy_strings
 from bot_utils import get_code
 
-SERIAL_PATTERN = re.compile('Serial: (?P<id>[A-z]{4}\d{5})')
+SERIAL_PATTERN = re.compile('Serial: (?P<id>[A-z]{4}\\d{5})')
 LIBRARIES_PATTERN = re.compile('Load libraries:(?P<libraries>.*)', re.DOTALL | re.MULTILINE)
 
 
@@ -39,7 +39,7 @@ class LogAnalyzer(object):
             self.libraries = [lib.strip().replace('.sprx', '')
                               for lib
                               in re.search(LIBRARIES_PATTERN, self.buffer).group('libraries').strip()[1:].split('-')]
-            if len(self.libraries) > 0:
+            if len(self.libraries) > 0 and self.libraries[0] != "]": # [] when empty
                 self.report += 'Selected Libraries: ' + ', '.join(self.libraries) + '\n\n'
         except KeyError as ke:
             print(ke)
@@ -101,9 +101,9 @@ class LogAnalyzer(object):
                                 'Rendering Mode: (?P<strict_rendering_mode>.*?)\n.*?',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
-                'Renderer: {renderer:>21s} | Resolution: {resolution}\n'
-                'Frame Limit: {frame_limit:>18s} | Write Color Buffers: {write_color_buffers}\n'
-                'VSync: {vsync:>24s} | Strict Rendering Mode: {strict_rendering_mode}\n'
+                'Renderer: {renderer:>24s} | Resolution: {resolution}\n'
+                'Frame Limit: {frame_limit:>21s} | Write Color Buffers: {write_color_buffers}\n'
+                'VSync: {vsync:>27s} | Strict Rendering Mode: {strict_rendering_mode}\n'
         },
         {
             'end_trigger': 'Log:',

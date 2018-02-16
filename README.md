@@ -1,7 +1,7 @@
 # discord-bot
 
 Dependencies:
-* python3.5 or newer
+* python3.6 or newer
 * pip for python3
 * `$ python3 -m pip install -U discord.py`
 * pyparsing for python3 (distro package or through pip)
