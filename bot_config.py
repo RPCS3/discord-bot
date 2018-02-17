@@ -29,6 +29,10 @@ boot_up_message = "Hello and welcome to CompatBot. \n" \
                   "*Roberto Anic Banic AKA Nicba1010\n" \
                   "https://github.com/RPCS3/discord-bot"
 
+bot_channel_id = "291679908067803136"
+bot_spam_id = "319224795785068545"
+bot_admin_id = "267367850706993152"
+
 piracy_strings = {
-    
+
 }

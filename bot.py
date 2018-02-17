@@ -5,25 +5,23 @@ from random import randint, choice
 
 import discord
 import requests
-from discord import Message
-from discord.ext.commands import Bot
+from discord import Message, Member, Server, Channel
+from discord.ext.commands import Bot, Context
 from requests import Response
 
 from api import newline_separator, directions, regions, statuses, release_types
 from api.request import ApiRequest
-from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header, boot_up_message
+from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header, boot_up_message, bot_admin_id, \
+    bot_spam_id, bot_channel_id
 from bot_utils import get_code
+from database import Moderator, init
 from math_parse import NumericStringParser
 from math_utils import limit_int
 from phases import LogAnalyzer
 from stream_handlers import stream_text_log, stream_gzip_decompress
 
-channel_id = "291679908067803136"
-bot_spam_id = "319224795785068545"
-bot_admin_id = "267367850706993152"
-
 rpcs3Bot = Bot(command_prefix="!")
-id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<numbers>\\d{5})' # see http://www.psdevwiki.com/ps3/Productcode
+id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
 nsp = NumericStringParser()
 
 file_handlers = (
@@ -43,6 +41,14 @@ file_handlers = (
     #     'handler': stream_7z_decompress
     # }
 )
+
+
+@rpcs3Bot.event
+async def on_ready():
+    print('Logged in as:')
+    print(rpcs3Bot.user.name)
+    print(rpcs3Bot.user.id)
+    print('------')
 
 
 @rpcs3Bot.event
@@ -140,7 +146,7 @@ async def piracy_alert(message: Message, trigger: str):
 
 
 def mask(string: str):
-    return ''.join("*" if i % 2 == 0 else char for i, char in enumerate(string, 1))
+    return ''.join("*" if i % 1 == 0 else char for i, char in enumerate(string, 1))
 
 
 def stream_line_by_line_safe(stream: Response, func: staticmethod):
@@ -286,7 +292,7 @@ async def dispatch_message(message: str):
     :param message: message to dispatch
     """
     for part in message.split(newline_separator):
-        await rpcs3Bot.send_message(discord.Object(id=channel_id), part)
+        await rpcs3Bot.send_message(discord.Object(id=bot_channel_id), part)
 
 
 @rpcs3Bot.command(pass_context=True)
@@ -341,5 +347,207 @@ async def eight_ball(ctx, *args):
     ]))
 
 
+async def is_sudo(ctx: Context):
+    message: Message = ctx.message
+    author: Member = message.author
+    sudo_user: Moderator = Moderator.get_or_none(
+        Moderator.discord_id == author.id, Moderator.sudoer == True
+    )
+    if sudo_user is not None:
+        print("User is sudoer, allowed!")
+        return True
+    else:
+        await rpcs3Bot.send_message(
+            message.channel,
+            "{mention} is not a sudoer, this incident will be reported!".format(mention=author.mention)
+        )
+        return False
+
+
+async def is_mod(ctx: Context):
+    message: Message = ctx.message
+    author: Member = message.author
+    mod_user: Moderator = Moderator.get_or_none(
+        Moderator.discord_id == author.id
+    )
+    if mod_user is not None:
+        print("User is moderator, allowed!")
+        return True
+    else:
+        await rpcs3Bot.send_message(
+            message.channel,
+            "{mention} is not a mod, this incident will be reported!".format(mention=author.mention)
+        )
+        return False
+
+
+async def is_private_channel(ctx: Context):
+    message: Message = ctx.message
+    author: Member = message.author
+    channel: Channel = message.channel
+    if channel.is_private:
+        return True
+    else:
+        await rpcs3Bot.send_message(
+            channel,
+            '{mention} https://i.imgflip.com/24qx11.jpg'.format(
+                mention=author.mention
+            )
+        )
+        return False
+
+
+@rpcs3Bot.group(pass_context=True)
+async def sudo(ctx: Context):
+    if not await is_sudo(ctx):
+        ctx.invoked_subcommand = None
+    if ctx.invoked_subcommand is None:
+        await rpcs3Bot.say('Invalid !sudo command passed...')
+
+
+@sudo.command(pass_context=True)
+async def say(ctx: Context, *args):
+    message: Message = ctx.message
+    origin_channel: Channel = message.channel
+    author: Member = message.author
+    server: Server = message.server
+    channel: Channel = server.get_channel(args[0][2:-1]) \
+        if args[0][:2] == '<#' and args[0][-1] == '>' \
+        else origin_channel
+    await rpcs3Bot.send_message(
+        channel,
+        ' '.join(args if channel.id == origin_channel.id else args[1:])
+    )
+
+
+@sudo.group(pass_context=True)
+async def mod(ctx: Context):
+    if ctx.invoked_subcommand is None:
+        await rpcs3Bot.say('Invalid !sudo mod command passed...')
+
+
+@mod.command(pass_context=True)
+async def add(ctx: Context, user: Member):
+    moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
+    if moderator is None:
+        Moderator(discord_id=user.id).save()
+        await rpcs3Bot.say(
+            "{mention} successfully added as moderator, you now have access to editing the piracy trigger list "
+            "and other useful things! I will send you the available commands to your message box!".format(
+                mention=user.mention
+            )
+        )
+    else:
+        await rpcs3Bot.say(
+            "{mention} is already a moderator!".format(
+                mention=user.mention
+            )
+        )
+
+
+@mod.command(pass_context=True, name="del")
+async def delete(ctx: Context, user: Member):
+    moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
+    if moderator is not None:
+        if moderator.discord_id != bot_admin_id:
+            if moderator.delete_instance():
+                await rpcs3Bot.say(
+                    "{mention} removed as moderator!".format(
+                        mention=user.mention
+                    )
+                )
+            else:
+                await  rpcs3Bot.say(
+                    "Something went wrong!".format(
+                        mention=user.mention
+                    )
+                )
+        else:
+            await  rpcs3Bot.say(
+                "{author_mention} why would you even try this! Alerting {mention}!".format(
+                    author_mention=ctx.message.author_mention.mention,
+                    mention=ctx.message.server.get_member(bot_admin_id).mention
+                )
+            )
+    else:
+        await rpcs3Bot.say(
+            "{mention} not found in moderators table!".format(
+                mention=user.mention
+            )
+        )
+
+
+@mod.command(pass_context=True)
+async def sudo(ctx: Context, user: Member):
+    message: Message = ctx.message
+    moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
+    if moderator is not None:
+        if moderator.sudoer is False:
+            moderator.sudoer = True
+            moderator.save()
+            await rpcs3Bot.say(
+                "{mention} successfully granted sudo permissions!".format(
+                    mention=user.mention
+                )
+            )
+        else:
+            await rpcs3Bot.say(
+                "{mention} already has sudo permissions!".format(
+                    mention=user.mention
+                )
+            )
+    else:
+        await rpcs3Bot.say(
+            "{mention} does not exist in moderator list, please add as moderator with mod_add!".format(
+                mention=user.mention
+            )
+        )
+
+
+@mod.command(pass_context=True)
+async def unsudo(ctx: Context, user: Member):
+    message: Message = ctx.message
+    author: Member = message.author
+    server: Server = message.server
+    moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
+    if moderator is not None:
+        if moderator.discord_id != bot_admin_id:
+            if moderator.sudoer is True:
+                moderator.sudoer = False
+                moderator.save()
+                await rpcs3Bot.say(
+                    "Successfully took away sudo permissions from {mention}".format(
+                        mention=user.mention
+                    )
+                )
+            else:
+                await rpcs3Bot.say(
+                    "{mention} already doesn't have sudo permissions!".format(
+                        mention=user.mention
+                    )
+                )
+        else:
+            await  rpcs3Bot.say(
+                "{author_mention} why would you even try this! Alerting {mention}!".format(
+                    author_mention=author.mention,
+                    mention=server.get_member(bot_admin_id).mention
+                )
+            )
+    else:
+        await rpcs3Bot.say(
+            "{mention} does not exist in moderator list!".format(
+                mention=user.mention
+            )
+        )
+
+
+@rpcs3Bot.group(pass_context=True)
+async def piracy_filter(ctx: Context, *args):
+    if await is_mod(ctx) and await is_private_channel(ctx):
+        if ctx.invoked_subcommand is None:
+            await rpcs3Bot.say('Invalid piracy_filter command passed...')
+
+
 print(sys.argv[1])
+init()
 rpcs3Bot.run(sys.argv[1])
