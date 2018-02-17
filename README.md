@@ -6,6 +6,7 @@ Dependencies:
 * `$ python3 -m pip install -U discord.py`
 * pyparsing for python3 (distro package or through pip)
 * requests for python3 (distro package or through pip)
+* peewee for python3 (distro package or through pip)
 
 
 Optional stuff for private testing:
@@ -13,7 +14,7 @@ Optional stuff for private testing:
 * add a user bot to this new app (look at the bottom of the app page)
   * notice the Bot User Token
 * [add your new bot to your private server](https://discordapp.com/oauth2/authorize?client_id=BOTCLIENTID&scope=bot)
-* change channel IDs in `bot.py` for your test server channels
+* change IDs in `bot_config.py` for your channels and users
 
 How to run:
 * `$ python3 bot.py bot_user_token`
