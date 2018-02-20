@@ -3,7 +3,8 @@
 Dependencies:
 * python3.6 or newer
 * pip for python3
-* `$ python3 -m pip install -U discord.py`
+* `$ pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=di
+scord.py[voice]`
 * pyparsing for python3 (distro package or through pip)
 * requests for python3 (distro package or through pip)
 * peewee for python3 (distro package or through pip)

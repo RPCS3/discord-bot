@@ -3,7 +3,6 @@ import re
 import sys
 from random import randint, choice
 
-import discord
 import requests
 from discord import Message, Member, TextChannel, DMChannel
 from discord.ext.commands import Bot, Context
@@ -12,7 +11,7 @@ from requests import Response
 from api import newline_separator, directions, regions, statuses, release_types
 from api.request import ApiRequest
 from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header, bot_admin_id, \
-    bot_spam_id, bot_channel_id
+    bot_channel_id
 from bot_utils import get_code
 from database import Moderator, init
 from math_parse import NumericStringParser
@@ -229,7 +228,7 @@ async def top(ctx: Context, *args):
     request = ApiRequest(ctx.message.author)
     if len(args) == 0 or args[0] not in ("new", "old"):
         print("Invalid command")
-        return await ctx.send(discord.Object(id=bot_spam_id), invalid_command_text)
+        return await bot_channel.send(invalid_command_text)
 
     if len(args) >= 1:
         if args[0] == "old":
@@ -320,10 +319,10 @@ async def roll(*args):
 
 
 # noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
-@bot.command()
-async def eight_ball():
+@bot.command(name="8ball")
+async def eight_ball(ctx: Context):
     """Generates a random answer to your question"""
-    await bot_channel.send(choice([
+    await ctx.send(choice([
         "Nah mate", "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Nope", "Njet", "Da", "Maybe", "I don't know",
         "I don't care", "Affirmative", "Sure", "Yeah, why not", "Most likely", "Sim", "Oui", "Heck yeah!", "Roger that",
         "Aye!", "Yes without a doubt m8!", "Who cares", "Maybe yes, maybe not", "Maybe not, maybe yes", "Ugh",
@@ -389,12 +388,11 @@ async def sudo(ctx: Context):
 
 @sudo.command()
 async def say(ctx: Context, *args):
-    channel: TextChannel = bot.get_channel(args[0][2:-1]) \
+    print(int(args[0][2:-1]))
+    channel: TextChannel = bot.get_channel(int(args[0][2:-1])) \
         if args[0][:2] == '<#' and args[0][-1] == '>' \
         else ctx.channel
-    await ctx.channel.send(
-        ' '.join(args if channel.id == ctx.channel.id else args[1:])
-    )
+    await channel.send(' '.join(args if channel.id == ctx.channel.id else args[1:]))
 
 
 @sudo.group()
