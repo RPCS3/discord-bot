@@ -11,7 +11,7 @@ class BaseModel(Model):
 
 
 class Moderator(BaseModel):
-    discord_id = CharField(unique=True)
+    discord_id = IntegerField(unique=True)
     sudoer = BooleanField(default=False)
 
 
