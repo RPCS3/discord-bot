@@ -108,3 +108,4 @@ venv.bak/
 .idea
 discord.log
 /.vscode/settings.json
+bot.db
