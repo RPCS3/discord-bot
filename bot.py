@@ -306,8 +306,8 @@ async def latest(ctx: Context):
 
 # User requests
 # noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
-@bot.command(pass_context=True)
-async def roll(*args):
+@bot.command()
+async def roll(ctx: Context, *args):
     """Generates a random number between 0 and n (default 10)"""
     n = 10
     if len(args) >= 1:
@@ -315,7 +315,7 @@ async def roll(*args):
             n = int(args[0])
         except ValueError:
             pass
-    await bot_channel.send("You rolled a {}!".format(randint(0, n)))
+    await ctx.channel.send("You rolled a {}!".format(randint(0, n)))
 
 
 # noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
