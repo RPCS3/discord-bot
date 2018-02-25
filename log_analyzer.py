@@ -78,11 +78,10 @@ class LogAnalyzer(object):
                                 'functions: (?P<hook_static_functions>.*?)\n.*',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
-                'PPU Decoder: {ppu_decoder:>21s} | PPU Threads: {ppu_threads}\n'
+                'PPU Decoder: {ppu_decoder:>21s} | Thread Scheduler: {thread_scheduler}\n'
                 'SPU Decoder: {spu_decoder:>21s} | SPU Threads: {spu_threads}\n'
-                'SPU Lower Thread Priority: {spu_lower_thread_priority:>7s} | SPU Delay Penalty: {spu_delay_penalty}\n'
-                'SPU Loop Detection: {spu_loop_detection:>14s} | Hook Static Functions: {hook_static_functions}\n'
-                'Thread Scheduler: {thread_scheduler:>16s} | Lib Loader: {lib_loader}\n\n',
+                'SPU Lower Thread Priority: {spu_lower_thread_priority:>7s} | Hook Static Functions: {hook_static_functions}\n'
+                'SPU Loop Detection: {spu_loop_detection:>14s} | Lib Loader: {lib_loader}\n\n',
             'function': get_libraries
         },
         {
@@ -95,15 +94,20 @@ class LogAnalyzer(object):
             'end_trigger': 'Audio:',
             'regex': re.compile('Renderer: (?P<renderer>.*?)\n.*?'
                                 'Resolution: (?P<resolution>.*?)\n.*?'
-                                'limit: (?P<frame_limit>.*?)\n.*?'
-                                'Color Buffers: (?P<write_color_buffers>.*?)\n.*?'
+                                'Frame limit: (?P<frame_limit>.*?)\n.*?'
+                                'Write Color Buffers: (?P<write_color_buffers>.*?)\n.*?'
                                 'VSync: (?P<vsync>.*?)\n.*?'
-                                'Rendering Mode: (?P<strict_rendering_mode>.*?)\n.*?',
+                                'Use GPU texture scaling: (?P<gpu_texture_scaling>.*?)\n.*?'
+                                'Strict Rendering Mode: (?P<strict_rendering_mode>.*?)\n.*?'
+                                'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
+                                'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
+                                'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
-                'Renderer: {renderer:>24s} | Resolution: {resolution}\n'
-                'Frame Limit: {frame_limit:>21s} | Write Color Buffers: {write_color_buffers}\n'
-                'VSync: {vsync:>27s} | Strict Rendering Mode: {strict_rendering_mode}\n'
+                'Renderer: {renderer:>24s} | Frame Limit: {frame_limit}\n'
+                'Resolution: {resolution:>22s} | Write Color Buffers: {write_color_buffers}\n'
+                'Resolution Scale: {resolution_scale:>16s} | Use GPU texture scaling: {gpu_texture_scaling}\n'
+                'Resolution Scale Threshold: {texture_scale_threshold:>6s} | Anisotropic Filter Override: {af_override}\n'
         },
         {
             'end_trigger': 'Log:',
@@ -139,9 +143,10 @@ class LogAnalyzer(object):
         current_phase = self.phase[self.phase_index]
         if current_phase['regex'] is not None and current_phase['string_format'] is not None:
             try:
-                self.report += current_phase['string_format'].format(
-                    **re.search(current_phase['regex'], self.buffer).groupdict()
-                )
+                group_args = re.search(current_phase['regex'], self.buffer).groupdict()
+                if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
+                    group_args['resolution_scale'] = "Strict Mode"
+                self.report += current_phase['string_format'].format(**group_args)
             except AttributeError as ae:
                 print("Regex failed!")
                 return self.ERROR_FAIL

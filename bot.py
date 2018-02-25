@@ -34,7 +34,7 @@ file_handlers = (
         'handler': stream_text_log
     },
     {
-        'ext': '.gz',
+        'ext': '.log.gz',
         'handler': stream_gzip_decompress
     },
     # {
