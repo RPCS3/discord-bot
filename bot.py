@@ -4,7 +4,7 @@ import sys
 from random import randint, choice
 
 import requests
-from discord import Message, Member, TextChannel, DMChannel
+from discord import Message, Member, Channel, PrivateChannel
 from discord.ext.commands import Bot, Context
 from requests import Response
 
@@ -23,7 +23,7 @@ bot = Bot(command_prefix="!")
 id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
 nsp = NumericStringParser()
 
-bot_channel: TextChannel = None
+bot_channel: Channel = None
 
 file_handlers = (
     # {
@@ -34,7 +34,7 @@ file_handlers = (
         'handler': stream_text_log
     },
     {
-        'ext': '.gz',
+        'ext': '.log.gz',
         'handler': stream_gzip_decompress
     },
     # {
@@ -94,11 +94,11 @@ async def on_message(message: Message):
         log = LogAnalyzer()
         sent_log = False
         print("Attachments present, looking for log file...")
-        for attachment in filter(lambda a: any(e['ext'] in a.url for e in file_handlers), message.attachments):
+        for attachment in filter(lambda a: any(e['ext'] in a['url'] for e in file_handlers), message.attachments):
             for handler in file_handlers:
-                if attachment.url.endswith(handler['ext']):
-                    print("Found log attachment, name: {name}".format(name=attachment.filename))
-                    with requests.get(attachment.url, stream=True) as response:
+                if attachment['url'].endswith(handler['ext']):
+                    print("Found log attachment, name: {name}".format(name=attachment['filename']))
+                    with requests.get(attachment['url'], stream=True) as response:
                         print("Opened request stream!")
                         # noinspection PyTypeChecker
                         for row in stream_line_by_line_safe(response, handler['handler']):
@@ -113,7 +113,7 @@ async def on_message(message: Message):
                                 print("Possible Buffer Overflow Attack Detected!")
                                 break
                             elif error_code == LogAnalyzer.ERROR_STOP:
-                                await message.channel.send(log.get_report())
+                                await bot.send_message(message.channel, content=log.get_report())
                                 sent_log = True
                                 break
                             elif error_code == LogAnalyzer.ERROR_FAIL:
@@ -125,7 +125,7 @@ async def on_message(message: Message):
 
 
 async def piracy_alert(message: Message):
-    await message.channel.send(
+    await bot.send_message(message.channel, content=
         "Pirated release detected {author}!\n"
         "**You are being denied further support until you legally dump the game!**\n"
         "Please note that the RPCS3 community and its developers do not support piracy!\n"
@@ -367,7 +367,7 @@ async def is_mod(ctx: Context):
 async def is_private_channel(ctx: Context):
     message: Message = ctx.message
     author: Member = message.author
-    if isinstance(ctx.channel, DMChannel):
+    if isinstance(ctx.channel, PrivateChannel):
         return True
     else:
         await ctx.channel.send(
@@ -389,7 +389,7 @@ async def sudo(ctx: Context):
 @sudo.command()
 async def say(ctx: Context, *args):
     print(int(args[0][2:-1]))
-    channel: TextChannel = bot.get_channel(int(args[0][2:-1])) \
+    channel: Channel = bot.get_channel(int(args[0][2:-1])) \
         if args[0][:2] == '<#' and args[0][-1] == '>' \
         else ctx.channel
     await channel.send(' '.join(args if channel.id == ctx.channel.id else args[1:]))
