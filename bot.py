@@ -4,7 +4,7 @@ import sys
 from random import randint, choice
 
 import requests
-from discord import Message, Member, TextChannel, DMChannel
+from discord import Message, Member, Channel, PrivateChannel
 from discord.ext.commands import Bot, Context
 from requests import Response
 
@@ -16,14 +16,14 @@ from bot_utils import get_code
 from database import Moderator, init
 from math_parse import NumericStringParser
 from math_utils import limit_int
-from phases import LogAnalyzer
+from log_analyzer import LogAnalyzer
 from stream_handlers import stream_text_log, stream_gzip_decompress
 
 bot = Bot(command_prefix="!")
 id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
 nsp = NumericStringParser()
 
-bot_channel: TextChannel = None
+bot_channel: Channel = None
 
 file_handlers = (
     # {
@@ -34,7 +34,7 @@ file_handlers = (
         'handler': stream_text_log
     },
     {
-        'ext': '.gz',
+        'ext': '.log.gz',
         'handler': stream_gzip_decompress
     },
     # {
@@ -52,6 +52,7 @@ async def on_ready():
     print('------')
     global bot_channel
     bot_channel = bot.get_channel(bot_channel_id)
+    print('Bot channel: ' + bot_channel.id)
 
 
 @bot.event
@@ -84,9 +85,9 @@ async def on_message(message: Message):
         for code in code_list:
             info = get_code(code)
             if info is not None:
-                await message.channel.send('```{}```'.format(info))
+                await bot.send_message(message.channel, content='```{}```'.format(info))
             else:
-                await message.channel.send('```Serial not found in compatibility database, possibly untested!```')
+                await bot.send_message(message.channel, content='```Serial not found in compatibility database, possibly untested!```')
         return
 
     # Log Analysis!
@@ -94,11 +95,11 @@ async def on_message(message: Message):
         log = LogAnalyzer()
         sent_log = False
         print("Attachments present, looking for log file...")
-        for attachment in filter(lambda a: any(e['ext'] in a.url for e in file_handlers), message.attachments):
+        for attachment in filter(lambda a: any(e['ext'] in a['url'] for e in file_handlers), message.attachments):
             for handler in file_handlers:
-                if attachment.url.endswith(handler['ext']):
-                    print("Found log attachment, name: {name}".format(name=attachment.filename))
-                    with requests.get(attachment.url, stream=True) as response:
+                if attachment['url'].endswith(handler['ext']):
+                    print("Found log attachment, name: {name}".format(name=attachment['filename']))
+                    with requests.get(attachment['url'], stream=True) as response:
                         print("Opened request stream!")
                         # noinspection PyTypeChecker
                         for row in stream_line_by_line_safe(response, handler['handler']):
@@ -113,7 +114,7 @@ async def on_message(message: Message):
                                 print("Possible Buffer Overflow Attack Detected!")
                                 break
                             elif error_code == LogAnalyzer.ERROR_STOP:
-                                await message.channel.send(log.get_report())
+                                await bot.send_message(message.channel, content=log.get_report())
                                 sent_log = True
                                 break
                             elif error_code == LogAnalyzer.ERROR_FAIL:
@@ -125,7 +126,7 @@ async def on_message(message: Message):
 
 
 async def piracy_alert(message: Message):
-    await message.channel.send(
+    await bot.send_message(message.channel, content=
         "Pirated release detected {author}!\n"
         "**You are being denied further support until you legally dump the game!**\n"
         "Please note that the RPCS3 community and its developers do not support piracy!\n"
@@ -173,28 +174,28 @@ def stream_line_by_line_safe(stream: Response, func: staticmethod):
     del buffer
 
 
-@bot.command()
+@bot.group(pass_context=True)
 async def math(ctx: Context, *args):
     """Math, here you go Juhn"""
-    return await ctx.send(nsp.eval(''.join(map(str, args))))
+    return await bot.send_message(ctx.message.channel, content=nsp.eval(''.join(map(str, args))))
 
 
 # noinspection PyShadowingBuiltins
-@bot.command()
-async def credits(ctx: Context):
+@bot.group(pass_context=True)
+async def credits(ctx: Context, *args):
     """Author Credit"""
-    return await ctx.send("```\nMade by Roberto Anic Banic aka nicba1010!\n```")
+    return await bot.send_message(ctx.message.channel, content="```\nMade by Roberto Anic Banic aka nicba1010!\n```")
 
 
 # noinspection PyMissingTypeHints
-@bot.command(pass_context=True)
+@bot.group(pass_context=True)
 async def c(ctx, *args):
     """Searches the compatibility database, USE: !c searchterm """
     await compat_search(ctx, *args)
 
 
 # noinspection PyMissingTypeHints
-@bot.command(pass_context=True)
+@bot.group(pass_context=True)
 async def compat(ctx, *args):
     """Searches the compatibility database, USE: !compat searchterm"""
     await compat_search(ctx, *args)
@@ -212,17 +213,17 @@ async def compat_search(ctx, *args):
 
 
 # noinspection PyMissingTypeHints
-@bot.command(pass_context=True)
+@bot.group(pass_context=True)
 async def top(ctx: Context, *args):
     """
     Gets the x (default 10) top oldest/newest updated games
     Example usage:
         !top old 10
-        !top new 10 jap
+        !top new 10 ja
         !top old 10 all
-        !top new 10 jap playable
-        !top new 10 jap playable bluray
-        !top new 10 jap loadable psn
+        !top new 10 ja playable
+        !top new 10 ja playable bluray
+        !top new 10 ja loadable psn
     To see all filters do !filters
     """
     request = ApiRequest(ctx.message.author)
@@ -250,7 +251,7 @@ async def top(ctx: Context, *args):
     await dispatch_message(string)
 
 
-@bot.command()
+@bot.group(pass_context=True)
 async def filters(ctx: Context):
     message = "**Sorting directions (not used in top command)**\n"
     message += "Ascending\n```" + str(directions["a"]) + "```\n"
@@ -277,7 +278,7 @@ async def filters(ctx: Context):
     message += "**Release Types**\n"
     message += "Blu-Ray\n```" + str(release_types["b"]) + "```\n"
     message += "PSN\n```" + str(release_types["n"]) + "```\n"
-    await ctx.author.send(message)
+    await bot.send_message(ctx.message.author, content=message)
 
 
 async def dispatch_message(message: str):
@@ -286,14 +287,14 @@ async def dispatch_message(message: str):
     :param message: message to dispatch
     """
     for part in message.split(newline_separator):
-        await bot_channel.send(part)
+        await bot.send_message(bot_channel, content=part)
 
 
-@bot.command()
+@bot.group(pass_context=True)
 async def latest(ctx: Context):
     """Get the latest RPCS3 build link"""
     latest_build = json.loads(requests.get("https://update.rpcs3.net/?c=somecommit").content)['latest_build']
-    return await ctx.author.send(
+    return await bot.send_message(ctx.message.author, content=
         "PR: {pr}\nWindows:\n\tTime: {win_time}\n\t{windows_url}\nLinux:\n\tTime: {linux_time}\n\t{linux_url}".format(
             pr=latest_build['pr'],
             win_time=latest_build['windows']['datetime'],
@@ -306,7 +307,7 @@ async def latest(ctx: Context):
 
 # User requests
 # noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
-@bot.command()
+@bot.group(pass_context=True)
 async def roll(ctx: Context, *args):
     """Generates a random number between 0 and n (default 10)"""
     n = 10
@@ -315,14 +316,14 @@ async def roll(ctx: Context, *args):
             n = int(args[0])
         except ValueError:
             pass
-    await ctx.channel.send("You rolled a {}!".format(randint(0, n)))
+    await bot.send_message(ctx.message.channel, content="You rolled a {}!".format(randint(0, n)))
 
 
 # noinspection PyMissingTypeHints,PyMissingOrEmptyDocstring
-@bot.command(name="8ball")
+@bot.group(pass_context=True, name="8ball")
 async def eight_ball(ctx: Context):
     """Generates a random answer to your question"""
-    await ctx.send(choice([
+    await bot.send_message(ctx.message.channel, content=choice([
         "Nah mate", "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Nope", "Njet", "Da", "Maybe", "I don't know",
         "I don't care", "Affirmative", "Sure", "Yeah, why not", "Most likely", "Sim", "Oui", "Heck yeah!", "Roger that",
         "Aye!", "Yes without a doubt m8!", "Who cares", "Maybe yes, maybe not", "Maybe not, maybe yes", "Ugh",
@@ -367,10 +368,10 @@ async def is_mod(ctx: Context):
 async def is_private_channel(ctx: Context):
     message: Message = ctx.message
     author: Member = message.author
-    if isinstance(ctx.channel, DMChannel):
+    if isinstance(ctx.channel, PrivateChannel):
         return True
     else:
-        await ctx.channel.send(
+        await bot.send_message(ctx.message.channel, content=
             '{mention} https://i.imgflip.com/24qx11.jpg'.format(
                 mention=author.mention
             )
@@ -389,7 +390,7 @@ async def sudo(ctx: Context):
 @sudo.command()
 async def say(ctx: Context, *args):
     print(int(args[0][2:-1]))
-    channel: TextChannel = bot.get_channel(int(args[0][2:-1])) \
+    channel: Channel = bot.get_channel(int(args[0][2:-1])) \
         if args[0][:2] == '<#' and args[0][-1] == '>' \
         else ctx.channel
     await channel.send(' '.join(args if channel.id == ctx.channel.id else args[1:]))
