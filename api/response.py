@@ -79,7 +79,7 @@ class ApiResponse(object):
             results_string_part += "```"
             results_string += results_string_part
 
-        footer_string = "Retrieved from: *{request_url}* in {milliseconds} milliseconds!"
+        footer_string = "Retrieved from: *<{request_url}>* in {milliseconds} milliseconds!"
         if return_codes[self.code]["display_results"]:
             return "{}{}{}{}{}".format(
                 header_string + '\n' + return_codes[self.code]["info"],

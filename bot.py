@@ -16,7 +16,7 @@ from bot_utils import get_code
 from database import Moderator, init
 from math_parse import NumericStringParser
 from math_utils import limit_int
-from phases import LogAnalyzer
+from log_analyzer import LogAnalyzer
 from stream_handlers import stream_text_log, stream_gzip_decompress
 
 bot = Bot(command_prefix="!")
@@ -34,7 +34,7 @@ file_handlers = (
         'handler': stream_text_log
     },
     {
-        'ext': '.gz',
+        'ext': '.log.gz',
         'handler': stream_gzip_decompress
     },
     # {
@@ -218,11 +218,11 @@ async def top(ctx: Context, *args):
     Gets the x (default 10) top oldest/newest updated games
     Example usage:
         !top old 10
-        !top new 10 jap
+        !top new 10 ja
         !top old 10 all
-        !top new 10 jap playable
-        !top new 10 jap playable bluray
-        !top new 10 jap loadable psn
+        !top new 10 ja playable
+        !top new 10 ja playable bluray
+        !top new 10 ja loadable psn
     To see all filters do !filters
     """
     request = ApiRequest(ctx.message.author)

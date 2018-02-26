@@ -5,9 +5,9 @@
             "name": "Python",
             "type": "python",
             "request": "launch",
-            "stopOnEntry": true,
+            "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${file}",
+            "program": "${workspaceFolder}/bot.py",
             "args": [
                 "put_bot_user_token_here"
             ],

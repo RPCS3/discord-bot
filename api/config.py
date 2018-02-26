@@ -62,7 +62,7 @@ directions = {
 }
 
 regions = {
-    "j": ("j", "jap", "japan", "JPN"),
+    "j": ("j", "ja", "japan", "JPN"),
     "u": ("u", "us", "america", "USA"),
     "e": ("e", "eu", "europe", "EU"),
     "a": ("a", "asia", "ch", "china", "CHN"),
