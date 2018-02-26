@@ -101,13 +101,15 @@ class LogAnalyzer(object):
                                 'Strict Rendering Mode: (?P<strict_rendering_mode>.*?)\n.*?'
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
-                                'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?',
+                                'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
+                                'Adapter: (?P<gpu>[^"][^\r\n]*)',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
                 'Renderer: {renderer:>24s} | Frame Limit: {frame_limit}\n'
                 'Resolution: {resolution:>22s} | Write Color Buffers: {write_color_buffers}\n'
                 'Resolution Scale: {resolution_scale:>16s} | Use GPU texture scaling: {gpu_texture_scaling}\n'
                 'Resolution Scale Threshold: {texture_scale_threshold:>6s} | Anisotropic Filter Override: {af_override}\n'
+                'GPU: {gpu:>29s}\n'
         },
         {
             'end_trigger': 'Log:',
@@ -146,8 +148,11 @@ class LogAnalyzer(object):
                 group_args = re.search(current_phase['regex'], self.buffer).groupdict()
                 if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
                     group_args['resolution_scale'] = "Strict Mode"
+                if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
+                    group_args['spu_threads'] = 'auto'
                 self.report += current_phase['string_format'].format(**group_args)
             except AttributeError as ae:
+                print(ae)
                 print("Regex failed!")
                 return self.ERROR_FAIL
         try:
