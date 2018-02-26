@@ -11,12 +11,12 @@ from requests import Response
 from api import newline_separator, directions, regions, statuses, release_types
 from api.request import ApiRequest
 from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header, bot_admin_id, \
-    bot_channel_id
+    bot_channel_id, piracy_strings
 from bot_utils import get_code
-from database import Moderator, init
+from database import Moderator, init, PiracyString
+from log_analyzer import LogAnalyzer
 from math_parse import NumericStringParser
 from math_utils import limit_int
-from log_analyzer import LogAnalyzer
 from stream_handlers import stream_text_log, stream_gzip_decompress
 
 bot = Bot(command_prefix="!")
@@ -380,6 +380,7 @@ async def is_private_channel(ctx: Context):
 
 @bot.group()
 async def sudo(ctx: Context):
+    """Sudo command group, used to manage moderators and sudoers."""
     if not await is_sudo(ctx):
         ctx.invoked_subcommand = None
     if ctx.invoked_subcommand is None:
@@ -388,6 +389,7 @@ async def sudo(ctx: Context):
 
 @sudo.command()
 async def say(ctx: Context, *args):
+    """Basically says whatever you want it to say in a channel."""
     print(int(args[0][2:-1]))
     channel: TextChannel = bot.get_channel(int(args[0][2:-1])) \
         if args[0][:2] == '<#' and args[0][-1] == '>' \
@@ -397,12 +399,14 @@ async def say(ctx: Context, *args):
 
 @sudo.group()
 async def mod(ctx: Context):
+    """Mod subcommand for sudo mod group."""
     if ctx.invoked_subcommand is None:
         await ctx.send('Invalid !sudo mod command passed...')
 
 
 @mod.command()
 async def add(ctx: Context, user: Member):
+    """Adds a new moderator."""
     moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
     if moderator is None:
         Moderator(discord_id=user.id).save()
@@ -422,6 +426,7 @@ async def add(ctx: Context, user: Member):
 
 @mod.command(name="del")
 async def delete(ctx: Context, user: Member):
+    """Removes a moderator."""
     moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
     if moderator is not None:
         if moderator.discord_id != bot_admin_id:
@@ -452,8 +457,27 @@ async def delete(ctx: Context, user: Member):
         )
 
 
+# noinspection PyShadowingBuiltins
+@mod.command()
+async def list(ctx: Context):
+    """Lists all moderators."""
+    buffer = '```\n'
+    for moderator in Moderator.select():
+        row = '{username:<32s} | {sudo}\n'.format(
+            username=bot.get_user(moderator.discord_id).name,
+            sudo=('sudo' if moderator.sudoer else 'not sudo')
+        )
+        if len(buffer) + len(row) + 3 > 2000:
+            await ctx.send(buffer + '```')
+            buffer = '```\n'
+        buffer += row
+    if len(buffer) > 4:
+        await ctx.send(buffer + '```')
+
+
 @mod.command()
 async def sudo(ctx: Context, user: Member):
+    """Makes a moderator a sudoer."""
     moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
     if moderator is not None:
         if moderator.sudoer is False:
@@ -480,6 +504,7 @@ async def sudo(ctx: Context, user: Member):
 
 @mod.command()
 async def unsudo(ctx: Context, user: Member):
+    """Removes a moderator from sudoers."""
     message: Message = ctx.message
     author: Member = message.author
     moderator: Moderator = Moderator.get_or_none(Moderator.discord_id == user.id)
@@ -515,10 +540,64 @@ async def unsudo(ctx: Context, user: Member):
 
 
 @bot.group()
-async def piracy_filter(ctx: Context):
-    if await is_mod(ctx) and await is_private_channel(ctx):
+async def piracy(ctx: Context):
+    """Command used to manage piracy filters."""
+    if not await is_mod(ctx):
+        ctx.invoked_subcommand = None
+        return
+
+    if await is_private_channel(ctx):
         if ctx.invoked_subcommand is None:
-            await ctx.send('Invalid piracy_filter command passed...')
+            await ctx.send('Invalid piracy command passed...')
+
+
+# noinspection PyShadowingBuiltins
+@piracy.command()
+async def list(ctx: Context):
+    """Lists all filters."""
+    buffer = '```\n'
+    for piracy_string in PiracyString.select():
+        row = str(piracy_string.id).zfill(4) + ' | ' + piracy_string.string + '\n'
+        if len(buffer) + len(row) + 3 > 2000:
+            await ctx.send(buffer + '```')
+            buffer = '```\n'
+        buffer += row
+    if len(buffer) > 4:
+        await ctx.send(buffer + '```')
+
+
+@piracy.command()
+async def add(ctx: Context, trigger: str):
+    """Adds a filter."""
+    piracy_string = PiracyString.get_or_none(PiracyString.string == trigger)
+    if piracy_string is None:
+        PiracyString(string=trigger).save()
+        await ctx.send("Item successfully saved!")
+        await list.invoke(ctx)
+        refresh_piracy_cache()
+    else:
+        await ctx.send("Item already exists at id {id}!".format(id=piracy_string.id))
+
+
+# noinspection PyShadowingBuiltins
+@piracy.command()
+async def delete(ctx: Context, id: int):
+    """Removes a filter."""
+    piracy_string: PiracyString = PiracyString.get_or_none(PiracyString.id == id)  # Column actually exists but hidden
+    if piracy_string is not None:
+        piracy_string.delete_instance()
+        await ctx.send("Item successfully deleted!")
+        await list.invoke(ctx)
+        refresh_piracy_cache()
+    else:
+        await ctx.send("Item does not exist!")
+
+
+def refresh_piracy_cache():
+    print("Refreshing piracy cache!")
+    piracy_strings.clear()
+    for piracy_string in PiracyString.select():
+        piracy_strings.append(piracy_string.string)
 
 
 print(sys.argv[1])
