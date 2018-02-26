@@ -16,7 +16,7 @@ class LogAnalyzer(object):
 
     def piracy_check(self):
         for trigger in piracy_strings:
-            if trigger in self.buffer:
+            if trigger.lower() in self.buffer.lower():
                 self.trigger = trigger
                 return self.ERROR_PIRACY
         return self.ERROR_SUCCESS
@@ -39,7 +39,7 @@ class LogAnalyzer(object):
             self.libraries = [lib.strip().replace('.sprx', '')
                               for lib
                               in re.search(LIBRARIES_PATTERN, self.buffer).group('libraries').strip()[1:].split('-')]
-            if len(self.libraries) > 0 and self.libraries[0] != "]": # [] when empty
+            if len(self.libraries) > 0 and self.libraries[0] != "]":  # [] when empty
                 self.report += 'Selected Libraries: ' + ', '.join(self.libraries) + '\n\n'
         except KeyError as ke:
             print(ke)
