@@ -52,7 +52,7 @@ async def on_ready():
     print('------')
     global bot_channel
     bot_channel = bot.get_channel(bot_channel_id)
-
+    refresh_piracy_cache()
 
 @bot.event
 async def on_message(message: Message):
@@ -70,6 +70,22 @@ async def on_message(message: Message):
             return await bot.process_commands(message)
     except IndexError:
         print("Empty message! Could still have attachments.")
+
+    # piracy links check
+    msg_text = message.content
+    was_censored = False
+    for trigger in piracy_strings:
+        if trigger in msg_text:
+            was_censored = True
+            msg_text = msg_text.replace(trigger, '`<removed>`')
+    if was_censored:
+        msg_text="{author} said:\n{censored_msg}\n".format(
+            author=message.author.mention,
+            censored_msg=msg_text
+        )
+        await message.delete()
+        await message.channel.send(msg_text)
+        await message.author.send('Please follow the rules and do not discuss piracy on this server. Repeated offence may result in a ban.')
 
     # Code reply
     code_list = []
@@ -125,6 +141,7 @@ async def on_message(message: Message):
 
 
 async def piracy_alert(message: Message):
+    await message.delete()
     await message.channel.send(
         "Pirated release detected {author}!\n"
         "**You are being denied further support until you legally dump the game!**\n"
