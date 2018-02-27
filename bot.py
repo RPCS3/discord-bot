@@ -73,7 +73,7 @@ async def on_message(message: Message):
 
     # Code reply
     code_list = []
-    for matcher in re.finditer(id_pattern, message.content, flags=re.I):
+    for matcher in re.finditer(id_pattern, message.content, flags=re.IGNORECASE):
         letter_part = str(matcher.group('letters'))
         number_part = str(matcher.group('numbers'))
         code = (letter_part + number_part).upper()
