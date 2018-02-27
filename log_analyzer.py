@@ -102,7 +102,7 @@ class LogAnalyzer(object):
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
                                 'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
-                                'Adapter: (?P<gpu>[^"][^\r\n]*)',
+                                'Adapter: (?P<gpu>(""|.*?))\n.*?',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
                 'Renderer: {renderer:>24s} | Frame Limit: {frame_limit}\n'
@@ -145,12 +145,21 @@ class LogAnalyzer(object):
         current_phase = self.phase[self.phase_index]
         if current_phase['regex'] is not None and current_phase['string_format'] is not None:
             try:
-                group_args = re.search(current_phase['regex'], self.buffer).groupdict()
-                if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
-                    group_args['resolution_scale'] = "Strict Mode"
-                if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
-                    group_args['spu_threads'] = 'auto'
-                self.report += current_phase['string_format'].format(**group_args)
+                regex_result = re.search(current_phase['regex'], self.buffer)
+                if regex_result is not None:
+                    group_args = regex_result.groupdict()
+                    if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
+                        group_args['resolution_scale'] = "Strict Mode"
+                    if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
+                        group_args['spu_threads'] = 'auto'
+                    if 'gpu' in group_args and group_args['gpu'] == '""':
+                        group_args['gpu'] = ''
+                    if 'af_override' in group_args:
+                        if group_args['af_override'] == '0':
+                            group_args['af_override'] = 'auto'
+                        elif group_args['af_override'] == '1':
+                            group_args['af_override'] = 'disabled'
+                    self.report += current_phase['string_format'].format(**group_args)
             except AttributeError as ae:
                 print(ae)
                 print("Regex failed!")
