@@ -72,16 +72,13 @@ async def on_message(message: Message):
         print("Empty message! Could still have attachments.")
 
     # piracy links check
-    was_censored = False
     for trigger in piracy_strings:
         if trigger in message.content:
-            was_censored = True
+            await message.delete()
+            await message.channel.send("{author} Please follow the rules and do not discuss piracy on this server. Repeated offence may result in a ban.".format(
+                author=message.author.mention
+            ))
             break
-    if was_censored:
-        await message.delete()
-        await message.channel.send("{author} Please follow the rules and do not discuss piracy on this server. Repeated offence may result in a ban.".format(
-            author=message.author.mention
-        ))
 
     # Code reply
     code_list = []
