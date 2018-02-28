@@ -102,7 +102,7 @@ class LogAnalyzer(object):
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
                                 'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
-                                'Adapter: (?P<gpu>(""|.*?))\n.*?',
+                                'Adapter: (?P<gpu>((?!"").*?))\n.*?',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
                 'Renderer: {renderer:>24s} | Frame Limit: {frame_limit}\n'
