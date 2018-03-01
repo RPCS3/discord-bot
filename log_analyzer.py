@@ -27,9 +27,8 @@ class LogAnalyzer(object):
     def get_id(self):
         try:
             info = get_code(re.search(SERIAL_PATTERN, self.buffer).group('id'))
-            if info is not None:
-                self.report = info + '\n' + self.report
-                return self.ERROR_SUCCESS
+            self.report = info.to_string() + '\n' + self.report
+            return self.ERROR_SUCCESS
         except AttributeError:
             print("Could not detect serial! Aborting!")
             return self.ERROR_FAIL
