@@ -101,14 +101,15 @@ class LogAnalyzer(object):
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
                                 'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
-                                'Adapter: (?P<gpu>(""|.*?))\n.*?',
+                                'D3D12:\s*\n\s*Adapter: (?P<d3d_gpu>(""|.*?))\n.*?'
+                                'Vulkan:\s*\n\s*Adapter: (?P<vulkan_gpu>(""|.*?))\n.*?',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
                 'Renderer: {renderer:>24s} | Frame Limit: {frame_limit}\n'
                 'Resolution: {resolution:>22s} | Write Color Buffers: {write_color_buffers}\n'
                 'Resolution Scale: {resolution_scale:>16s} | Use GPU texture scaling: {gpu_texture_scaling}\n'
                 'Resolution Scale Threshold: {texture_scale_threshold:>6s} | Anisotropic Filter Override: {af_override}\n'
-                'GPU: {gpu:>29s}\n'
+                'Vulkan GPU: {vulkan_gpu:>22s} | D3D12 GPU: {d3d_gpu}\n'
         },
         {
             'end_trigger': 'Log:',
@@ -151,8 +152,10 @@ class LogAnalyzer(object):
                         group_args['resolution_scale'] = "Strict Mode"
                     if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
                         group_args['spu_threads'] = 'auto'
-                    if 'gpu' in group_args and group_args['gpu'] == '""':
-                        group_args['gpu'] = ''
+                    if 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] == '""':
+                        group_args['vulkan_gpu'] = 'Not set'
+                    if 'd3d_gpu' in group_args and group_args['d3d_gpu'] == '""':
+                        group_args['d3d_gpu'] = 'Not set'
                     if 'af_override' in group_args:
                         if group_args['af_override'] == '0':
                             group_args['af_override'] = 'auto'
