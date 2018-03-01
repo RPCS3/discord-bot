@@ -92,10 +92,7 @@ async def on_message(message: Message):
     if len(code_list) > 0:
         for code in code_list:
             info = get_code(code)
-            if info is not None:
-                await message.channel.send('```{}```'.format(info))
-            else:
-                await message.channel.send('```Serial not found in compatibility database, possibly untested!```')
+            await message.channel.send(embed=info.to_embed())
         return
 
     # Log Analysis!
