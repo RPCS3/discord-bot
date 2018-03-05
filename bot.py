@@ -4,14 +4,13 @@ import sys
 from random import randint, choice
 
 import requests
-from discord import Message, Member, TextChannel, DMChannel
+from discord import Message, Member, TextChannel, DMChannel, Forbidden
 from discord.ext.commands import Bot, Context
 from requests import Response
 
 from api import newline_separator, directions, regions, statuses, release_types
 from api.request import ApiRequest
-from bot_config import latest_limit, newest_header, invalid_command_text, oldest_header, bot_admin_id, \
-    bot_channel_id, piracy_strings
+from bot_config import *
 from bot_utils import get_code
 from database import Moderator, init, PiracyString
 from log_analyzer import LogAnalyzer
@@ -24,6 +23,7 @@ id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<
 nsp = NumericStringParser()
 
 bot_channel: TextChannel = None
+rules_channel: TextChannel = None
 
 file_handlers = (
     # {
@@ -51,14 +51,24 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     global bot_channel
+    global rules_channel
     bot_channel = bot.get_channel(bot_channel_id)
+    rules_channel = bot.get_channel(bot_rules_channel_id)
     refresh_piracy_cache()
+
+@bot.event
+async def on_message_edit(before: Message, after: Message):
+    """
+    OnMessageEdit event listener
+    :param before: message
+    :param after: message
+    """
+    await piracy_check(after)
 
 @bot.event
 async def on_message(message: Message):
     """
     OnMessage event listener
-    :param ctx: context
     :param message: message
     """
     # Self reply detect
@@ -71,14 +81,7 @@ async def on_message(message: Message):
     except IndexError:
         print("Empty message! Could still have attachments.")
 
-    # piracy links check
-    for trigger in piracy_strings:
-        if trigger in message.content:
-            await message.delete()
-            await message.channel.send("{author} Please follow the rules and do not discuss piracy on this server. Repeated offence may result in a ban.".format(
-                author=message.author.mention
-            ))
-            break
+    await piracy_check(message)
 
     # Code reply
     code_list = []
@@ -129,9 +132,26 @@ async def on_message(message: Message):
                     print("Stopping stream!")
         del log
 
+async def piracy_check(message: Message):
+    for trigger in piracy_strings:
+        if trigger in message.content:
+            try:
+#            permissions = message.channel.permissions_for(bot.user)
+#            if permissions.manage_messages:
+                await message.delete()
+            except Forbidden as fbe:
+                print("Couldn't delete the moderated message")
+            await message.channel.send("{author} Please follow the {rules} and do not discuss piracy on this server. Repeated offence may result in a ban.".format(
+                author=message.author.mention,
+                rules=rules_channel.mention
+            ))
+            break
 
 async def piracy_alert(message: Message):
-    await message.delete()
+    try:
+        await message.delete()
+    except Forbidden as fbe:
+        print("Couldn't delete the moderated log attachment")
     await message.channel.send(
         "Pirated release detected {author}!\n"
         "**You are being denied further support until you legally dump the game!**\n"
@@ -140,8 +160,6 @@ async def piracy_alert(message: Message):
         "and therefore act unpredictably on RPCS3.\n"
         "If you need help obtaining legal dumps please read <https://rpcs3.net/quickstart>\n".format(
             author=message.author.mention
-            # trigger=mask(trigger),
-            # bot_admin=message.server.get_member(bot_admin_id).mention
         )
     )
 

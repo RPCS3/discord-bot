@@ -32,6 +32,7 @@ boot_up_message = "Hello and welcome to CompatBot. \n" \
 bot_channel_id = 291679908067803136
 bot_spam_id = 319224795785068545
 bot_admin_id = 267367850706993152
+bot_rules_channel_id = 311894275015049216
 
 piracy_strings = [
 

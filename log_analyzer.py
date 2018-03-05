@@ -53,9 +53,9 @@ class LogAnalyzer(object):
     """
     phase = (
         {
-            'end_trigger': 'Compatibility notice:',
+            'end_trigger': '·',
             'regex': re.compile('(?P<all>.*)', flags=re.DOTALL | re.MULTILINE),
-            'string_format': '{all}\n\n'
+            'string_format': '\n{all}\n'
         },
         {
             'end_trigger': 'Core:',
@@ -67,8 +67,9 @@ class LogAnalyzer(object):
             'end_trigger': 'VFS:',
             'regex': re.compile('Decoder: (?P<ppu_decoder>.*?)\n.*?'
                                 'Threads: (?P<ppu_threads>.*?)\n.*?'
-                                'scheduler: (?P<thread_scheduler>.*?)\n.*?'
+                                '(?:scheduler: (?P<thread_scheduler>.*?)\n.*?)?'
                                 'Decoder: (?P<spu_decoder>.*?)\n.*?'
+                                '(?:secondary cores: (?P<spu_secondary_cores>.*?)\n.*?)?'
                                 'priority: (?P<spu_lower_thread_priority>.*?)\n.*?'
                                 'SPU Threads: (?P<spu_threads>.*?)\n.*?'
                                 'penalty: (?P<spu_delay_penalty>.*?)\n.*?'
@@ -101,8 +102,8 @@ class LogAnalyzer(object):
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
                                 'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
-                                'D3D12:\s*\n\s*Adapter: (?P<d3d_gpu>(""|.*?))\n.*?'
-                                'Vulkan:\s*\n\s*Adapter: (?P<vulkan_gpu>(""|.*?))\n.*?',
+                                'D3D12:\s*\n\s*Adapter: (?P<d3d_gpu>.*?)\n.*?'
+                                'Vulkan:\s*\n\s*Adapter: (?P<vulkan_gpu>.*?)\n.*?',
                                 flags=re.DOTALL | re.MULTILINE),
             'string_format':
                 'Renderer: {renderer:>24s} | Frame Limit: {frame_limit}\n'
@@ -145,13 +146,15 @@ class LogAnalyzer(object):
         current_phase = self.phase[self.phase_index]
         if current_phase['regex'] is not None and current_phase['string_format'] is not None:
             try:
-                regex_result = re.search(current_phase['regex'], self.buffer)
+                regex_result = re.search(current_phase['regex'], self.buffer.strip() + '\n')
                 if regex_result is not None:
                     group_args = regex_result.groupdict()
                     if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
                         group_args['resolution_scale'] = "Strict Mode"
                     if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
                         group_args['spu_threads'] = 'auto'
+                    if 'spu_secondary_cores' in group_args:
+                        group_args['thread_scheduler'] = group_args['spu_secondary_cores']
                     if 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] == '""':
                         group_args['vulkan_gpu'] = 'Not set'
                     if 'd3d_gpu' in group_args and group_args['d3d_gpu'] == '""':

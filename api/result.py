@@ -36,7 +36,7 @@ class ApiResult(object):
         self.date = datetime.strptime(data["date"], datetime_input_format) if "date" in data else None
         self.thread = data["thread"] if "thread" in data else None
         self.commit = data["commit"] if "commit" in data else None
-        self.pr = data["pr"] if "pr" in data and data["pr"] is not 0 else """¯\_(ツ)_/¯"""
+        self.pr = data["pr"] if "pr" in data and data["pr"] is not 0 else """???"""
 
     def to_string(self) -> str:
         """
@@ -67,7 +67,7 @@ class ApiResult(object):
             ).set_footer(
                 text="Status: {}, PR: {}, Updated: {}".format(
                     self.status,
-                    self.pr,
+                    self.pr if self.pr != "???" else """¯\_(ツ)_/¯""",
                     datetime.strftime(self.date, datetime_output_format)
                 )
             )
