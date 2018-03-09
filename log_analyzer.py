@@ -2,6 +2,7 @@ import re
 
 from bot_config import piracy_strings
 from bot_utils import get_code
+from discord import Embed
 
 SERIAL_PATTERN = re.compile('Serial: (?P<id>[A-z]{4}\\d{5})')
 LIBRARIES_PATTERN = re.compile('Load libraries:(?P<libraries>.*)', re.DOTALL | re.MULTILINE)
@@ -120,6 +121,7 @@ class LogAnalyzer(object):
                 self.buffer = ''
                 self.phase_index += 1
             else:
+                self.sanitize()
                 return error_code
         else:
             self.buffer += '\n' + data
@@ -173,16 +175,27 @@ class LogAnalyzer(object):
             pass
         return self.ERROR_SUCCESS
 
+    def sanitize(self):
+        result = {}
+        for k, v in self.parsed_data.items():
+            result[k] = v.replace("`", "`\u200d").replace("<", "<\u200d") if v is not None else v
+        self.parsed_data = result
+        libs = []
+        for l in self.libraries:
+            libs.append(l.replace("`", "`\u200d").replace("<", "<\u200d") if l is not None else l)
+        self.libraries = libs
+
     def get_trigger(self):
         return self.trigger
 
     def get_text_report(self):
         additional_info = {
             'product_info': self.product_info.to_string(),
-            'libs': ', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "[]"
+            'libs': ', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None"
         }
         additional_info.update(self.parsed_data)
-        result = (
+        return (
+            '```'
             '{product_info}\n'
             '\n'
             '{build_and_specs}'
@@ -200,5 +213,45 @@ class LogAnalyzer(object):
             'Resolution Scale: {resolution_scale:>16s} | Use GPU texture scaling: {gpu_texture_scaling}\n'
             'Resolution Scale Threshold: {texture_scale_threshold:>6s} | Anisotropic Filter Override: {af_override}\n'
             'VSync: {vsync:>27s} | Disable Vertex Cache: {vertex_cache}\n'
+            '```'
         ).format(**additional_info)
-        return "```" + result.replace("```", "`\u200d`\u200d`\u200d") + "```"
+
+    def get_embed_report(self):
+        return self.product_info.to_embed(False).add_field(
+            name='Build Info',
+            value=(
+                '{build_and_specs}'
+                'GPU: {gpu_info}'
+            ).format(**self.parsed_data),
+            inline=False
+        ).add_field(
+            name='CPU Settings',
+            value=(
+                'PPU Decoder: {ppu_decoder}\n'
+                'SPU Decoder: {spu_decoder}\n'
+                'SPU Lower Thread Priority: {spu_lower_thread_priority}\n'
+                'SPU Loop Detection: {spu_loop_detection}\n'
+                'Thread Scheduler: {thread_scheduler}\n'
+                'SPU Threads: {spu_threads}\n'
+                'Hook Static Functions: {hook_static_functions}\n'
+                'Lib Loader: {lib_loader}\n'
+            ).format(**self.parsed_data),
+            inline=True
+        ).add_field(
+            name='GPU Settings',
+            value=(
+                'Renderer: {renderer}\n'
+                'Resolution: {resolution}\n'
+                'Resolution Scale: {resolution_scale}\n'
+                'Resolution Scale Threshold: {texture_scale_threshold}\n'
+                'Write Color Buffers: {write_color_buffers}\n'
+                'Use GPU texture scaling: {gpu_texture_scaling}\n'
+                'Anisotropic Filter Override: {af_override}\n'
+                'Disable Vertex Cache: {vertex_cache}\n'
+            ).format(**self.parsed_data),
+            inline=True
+        ).add_field(
+            name="Selected Libraries",
+            value=', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
+            inline=False
+        )

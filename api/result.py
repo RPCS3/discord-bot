@@ -54,23 +54,26 @@ class ApiResult(object):
         else:
             return "Product code {} was not found in compatibility database, possibly untested!".format(self.game_id)
 
-    def to_embed(self) -> Embed:
+    def to_embed(self, infoInFooter = True) -> Embed:
         """
         Makes an Embed representation of the object.
         :return: Embed representation of the object
         """
         if self.status in self.status_map:
-            return Embed(
+            desc = "Status: {}, PR: {}, Updated: {}".format(
+                self.status,
+                self.pr if self.pr != "???" else """¯\_(ツ)_/¯""",
+                datetime.strftime(self.date, datetime_output_format))
+            result = Embed(
                 title="[{}] {}".format(self.game_id, trim_string(self.title, 200)),
                 url="https://forums.rpcs3.net/thread-{}.html".format(self.thread),
-                color=self.status_map[self.status],
-            ).set_footer(
-                text="Status: {}, PR: {}, Updated: {}".format(
-                    self.status,
-                    self.pr if self.pr != "???" else """¯\_(ツ)_/¯""",
-                    datetime.strftime(self.date, datetime_output_format)
-                )
-            )
+                description = desc if not infoInFooter else None,
+                color=self.status_map[self.status])
+            if infoInFooter:
+                return result.set_footer(text=desc)
+            else:
+                return result
+            
         else:
             return Embed(
                 description="Product code {} was not found in compatibility database, possibly untested!".format(self.game_id),
