@@ -19,7 +19,7 @@ from math_utils import limit_int
 from stream_handlers import stream_text_log, stream_gzip_decompress
 
 bot = Bot(command_prefix="!")
-id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
+id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
 nsp = NumericStringParser()
 
 bot_channel: TextChannel = None
