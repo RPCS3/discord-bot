@@ -135,7 +135,7 @@ async def on_message(message: Message):
 
 async def piracy_check(message: Message):
     for trigger in piracy_strings:
-        if trigger in message.content:
+        if trigger.lower() in message.content.lower(): #we should .lower() on trigger add ideally
             try:
 #            permissions = message.channel.permissions_for(bot.user)
 #            if permissions.manage_messages:
@@ -575,6 +575,8 @@ async def piracy(ctx: Context):
     if await is_private_channel(ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid piracy command passed...')
+    else:
+        ctx.invoked_subcommand = None
 
 
 # noinspection PyShadowingBuiltins
