@@ -19,7 +19,7 @@ from math_utils import limit_int
 from stream_handlers import stream_text_log, stream_gzip_decompress
 
 bot = Bot(command_prefix="!")
-id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][A-Z])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
+id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
 nsp = NumericStringParser()
 
 bot_channel: TextChannel = None
@@ -122,7 +122,8 @@ async def on_message(message: Message):
                                 print("Possible Buffer Overflow Attack Detected!")
                                 break
                             elif error_code == LogAnalyzer.ERROR_STOP:
-                                await message.channel.send(log.get_report())
+                                await message.channel.send(log.get_text_report())
+                                #await message.channel.send(embed=log.get_embed_report())
                                 sent_log = True
                                 break
                             elif error_code == LogAnalyzer.ERROR_FAIL:
@@ -134,7 +135,7 @@ async def on_message(message: Message):
 
 async def piracy_check(message: Message):
     for trigger in piracy_strings:
-        if trigger in message.content:
+        if trigger.lower() in message.content.lower(): #we should .lower() on trigger add ideally
             try:
 #            permissions = message.channel.permissions_for(bot.user)
 #            if permissions.manage_messages:
@@ -574,6 +575,8 @@ async def piracy(ctx: Context):
     if await is_private_channel(ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid piracy command passed...')
+    else:
+        ctx.invoked_subcommand = None
 
 
 # noinspection PyShadowingBuiltins
