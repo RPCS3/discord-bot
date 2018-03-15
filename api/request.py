@@ -2,7 +2,7 @@
 ApiRequest class
 """
 
-import html
+from urllib.parse import urlencode
 from datetime import datetime
 
 import requests
@@ -166,24 +166,24 @@ class ApiRequest(object):
         Builds the search query.
         :return: the search query
         """
-        url = base_url + "?"
-
+        args = { "api": "v{}".format(version) }
         if self.search is not None:
-            url += "g={}&".format(html.escape(self.search).replace(" ", "%20"))
+            args["g"] = self.search
         if self.status is not None:
-            url += "s={}&".format(self.status)
+            args["s"] = self.status
         if self.start is not None:
-            url += "c={}&".format(self.start)
+            args["c"] = self.start
         if self.sort is not None:
-            url += "o={}&".format(self.sort)
+            args["o"] = self.sort
         if self.date is not None:
-            url += "d={}&".format(self.date)
+            args["d"] = self.date
         if self.release_type is not None:
-            url += "t={}&".format(self.release_type)
+            args["t"] = self.release_type
         if self.region is not None:
-            url += "f={}&".format(self.region)
+            args["f"] = self.region
 
-        return url + "api=v{}".format(version)
+        url = base_url + "?" + urlencode(args)
+        return url
 
     def request(self) -> ApiResponse:
         """
