@@ -8,7 +8,7 @@ from discord import Message, Member, TextChannel, DMChannel, Forbidden
 from discord.ext.commands import Bot, Context
 from requests import Response
 
-from api import newline_separator, directions, regions, statuses, release_types
+from api import newline_separator, directions, regions, statuses, release_types, trim_string
 from api.request import ApiRequest
 from bot_config import *
 from bot_utils import get_code
@@ -232,6 +232,7 @@ async def compat_search(ctx, *args):
     for arg in args:
         search_string += (" " + arg) if len(search_string) > 0 else arg
 
+    search_string = trim_string(search_string, 40)
     request = ApiRequest(ctx.message.author).set_search(search_string)
     response = request.request()
     await dispatch_message(response.to_string())

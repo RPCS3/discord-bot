@@ -3,6 +3,7 @@ import re
 from bot_config import piracy_strings
 from bot_utils import get_code
 from discord import Embed
+from api import sanitize_string
 
 SERIAL_PATTERN = re.compile('Serial: (?P<id>[A-z]{4}\\d{5})')
 LIBRARIES_PATTERN = re.compile('Load libraries:(?P<libraries>.*)', re.DOTALL | re.MULTILINE)
@@ -178,11 +179,11 @@ class LogAnalyzer(object):
     def sanitize(self):
         result = {}
         for k, v in self.parsed_data.items():
-            result[k] = v.replace("`", "`\u200d").replace("<", "<\u200d") if v is not None else v
+            result[k] = sanitize_string(v)
         self.parsed_data = result
         libs = []
         for l in self.libraries:
-            libs.append(l.replace("`", "`\u200d").replace("<", "<\u200d") if l is not None else l)
+            libs.append(sanitize_string(l))
         self.libraries = libs
 
     def get_trigger(self):

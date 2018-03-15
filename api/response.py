@@ -4,7 +4,7 @@ ApiResponse class
 import json
 from typing import Dict, List
 
-from api import newline_separator, return_codes, system_time_millis, regions, release_types
+from api import newline_separator, return_codes, system_time_millis, regions, release_types, sanitize_string
 from bot_config import search_header
 from .result import ApiResult
 
@@ -47,7 +47,7 @@ class ApiResponse(object):
         """
         return self.build_string().format(
             requestor=self.request.requestor.mention,
-            search_string=self.request.search,
+            search_string=sanitize_string(self.request.search),
             request_url=self.request.build_query().replace("&api=v1", ""),
             milliseconds=self.time_end - self.request.time_start,
             amount=self.request.amount_wanted,
