@@ -48,7 +48,7 @@ class ApiResponse(object):
         return self.build_string().format(
             requestor=self.request.requestor.mention,
             search_string=sanitize_string(self.request.search),
-            request_url=self.request.build_query().replace("&api=v1", ""),
+            request_url=self.request.build_query().replace("api=v1", "").replace("&&", "&").replace("?&","?"),
             milliseconds=self.time_end - self.request.time_start,
             amount=self.request.amount_wanted,
             region="" if self.request.region is None else regions[self.request.region][-1],
