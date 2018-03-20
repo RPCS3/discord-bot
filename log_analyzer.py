@@ -218,7 +218,7 @@ class LogAnalyzer(object):
         ).format(**additional_info)
 
     def get_embed_report(self):
-        return self.product_info.to_embed(False).add_field(
+        result = self.product_info.to_embed(False).add_field(
             name='Build Info',
             value=(
                 '{build_and_specs}'
@@ -251,8 +251,11 @@ class LogAnalyzer(object):
                 '`Disable Vertex Cache: {vertex_cache:>12s}`\n'
             ).format(**self.parsed_data),
             inline=True
-        ).add_field(
-            name="Selected Libraries",
-            value=', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
-            inline=False
         )
+        if 'manual' in self.parsed_data['lib_loader']:
+            result = result.add_field(
+                name="Selected Libraries",
+                value=', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
+                inline=False
+            )
+        return result
