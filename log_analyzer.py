@@ -218,6 +218,17 @@ class LogAnalyzer(object):
         ).format(**additional_info)
 
     def get_embed_report(self):
+        lib_loader = self.parsed_data['lib_loader']
+        if lib_loader is not None:
+            lib_loader = lib_loader.lower()
+        lib_loader_auto = 'auto' in lib_loader
+        lib_loader_manual = 'manual' in lib_loader
+        if lib_loader_auto and lib_loader_manual:
+            self.parsed_data['lib_loader'] = "Auto & manual select"
+        elif lib_loader_auto:
+            self.parsed_data['lib_loader'] = "Auto"
+        elif lib_loader_manual:
+            self.parsed_data['lib_loader'] = "Manual selection"
         result = self.product_info.to_embed(False).add_field(
             name='Build Info',
             value=(
