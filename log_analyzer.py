@@ -139,7 +139,7 @@ class LogAnalyzer(object):
                         group_args['resolution_scale'] = "Strict Mode"
                     if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
                         group_args['spu_threads'] = 'auto'
-                    if 'spu_secondary_cores' in group_args:
+                    if 'spu_secondary_cores' in group_args and group_args['spu_secondary_cores'] is not None:
                         group_args['thread_scheduler'] = group_args['spu_secondary_cores']
                     if 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] == '""':
                         group_args['vulkan_gpu'] = 'Unknown'
@@ -228,27 +228,27 @@ class LogAnalyzer(object):
         ).add_field(
             name='CPU Settings',
             value=(
-                'PPU Decoder: {ppu_decoder}\n'
-                'SPU Decoder: {spu_decoder}\n'
-                'SPU Lower Thread Priority: {spu_lower_thread_priority}\n'
-                'SPU Loop Detection: {spu_loop_detection}\n'
-                'Thread Scheduler: {thread_scheduler}\n'
-                'SPU Threads: {spu_threads}\n'
-                'Hook Static Functions: {hook_static_functions}\n'
-                'Lib Loader: {lib_loader}\n'
+                '`PPU Decoder: {ppu_decoder:>21s}`\n'
+                '`SPU Decoder: {spu_decoder:>21s}`\n'
+                '`SPU Lower Thread Priority: {spu_lower_thread_priority:>7s}`\n'
+                '`SPU Loop Detection: {spu_loop_detection:>14s}`\n'
+                '`Thread Scheduler: {thread_scheduler:>16s}`\n'
+                '`SPU Threads: {spu_threads:>21s}`\n'
+                '`Hook Static Functions: {hook_static_functions:>11s}`\n'
+                '`Lib Loader: {lib_loader:>22s}`\n'
             ).format(**self.parsed_data),
             inline=True
         ).add_field(
             name='GPU Settings',
             value=(
-                'Renderer: {renderer}\n'
-                'Resolution: {resolution}\n'
-                'Resolution Scale: {resolution_scale}\n'
-                'Resolution Scale Threshold: {texture_scale_threshold}\n'
-                'Write Color Buffers: {write_color_buffers}\n'
-                'Use GPU texture scaling: {gpu_texture_scaling}\n'
-                'Anisotropic Filter Override: {af_override}\n'
-                'Disable Vertex Cache: {vertex_cache}\n'
+                '`Renderer: {renderer:>24s}`\n'
+                '`Resolution: {resolution:>22s}`\n'
+                '`Resolution Scale: {resolution_scale:>16s}`\n'
+                '`Resolution Scale Threshold: {texture_scale_threshold:>6s}`\n'
+                '`Write Color Buffers: {write_color_buffers:>13s}`\n'
+                '`Use GPU texture scaling: {gpu_texture_scaling:>9s}`\n'
+                '`Anisotropic Filter Override: {af_override:>5s}`\n'
+                '`Disable Vertex Cache: {vertex_cache:>12s}`\n'
             ).format(**self.parsed_data),
             inline=True
         ).add_field(

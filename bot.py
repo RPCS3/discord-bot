@@ -122,8 +122,8 @@ async def on_message(message: Message):
                                 print("Possible Buffer Overflow Attack Detected!")
                                 break
                             elif error_code == LogAnalyzer.ERROR_STOP:
-                                await message.channel.send(log.get_text_report())
-                                #await message.channel.send(embed=log.get_embed_report())
+                                #await message.channel.send(log.get_text_report(), embed=log.product_info.to_embed())
+                                await message.channel.send(embed=log.get_embed_report())
                                 sent_log = True
                                 break
                             elif error_code == LogAnalyzer.ERROR_FAIL:
