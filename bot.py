@@ -355,7 +355,9 @@ async def eight_ball(ctx: Context):
         "Aye!", "Yes without a doubt m8!", "Who cares", "Maybe yes, maybe not", "Maybe not, maybe yes", "Ugh",
         "Probably", "Ask again later", "Error 404: answer not found", "Don't ask me that again",
         "You should think twice before asking", "You what now?", "Bloody hell, answering that ain't so easy",
-        "Of course not", "Seriously no", "Noooooooooo", "Most likely not", "Não", "Non", "Hell no", "Absolutely not"
+        "Of course not", "Seriously no", "Noooooooooo", "Most likely not", "Não", "Non", "Hell no", "Absolutely not",
+        "Ask Neko", "Ask Ani", "I'm pretty sure that's illegal!", ":cell_ok_hand:", "Don't be an idiot. YES.",
+        "What do *you* think?", "Only on Wednesdays"
     ]))
 
 
