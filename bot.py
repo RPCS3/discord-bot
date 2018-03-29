@@ -253,27 +253,31 @@ async def top(ctx: Context, *args):
     To see all filters do !filters
     """
     request = ApiRequest(ctx.message.author)
-    if len(args) == 0 or args[0] not in ("new", "old"):
+    if len(args) == 0:
         print("Invalid command")
         return await bot_channel.send(invalid_command_text)
 
-    if len(args) >= 1:
-        if args[0] == "old":
-            request.set_sort("date", "asc")
-            request.set_custom_header(oldest_header)
+    age = "new"
+    for arg in args:
+        arg = arg.lower()
+        if arg in ["old", "new"]:
+            age = arg
+        elif arg in ["nothing", "loadable", "intro", "ingame", "playable"]:
+            request.set_status(arg)
+        elif arg in ["bluray", "blu-ray", "disc", "psn", "b", "d", "n", "p"]:
+            request.set_release_type(arg)
+        elif arg.isdigit():
+            request.set_amount(limit_int(int(arg), latest_limit))
         else:
-            request.set_sort("date", "desc")
-            request.set_custom_header(newest_header)
-    if len(args) >= 2:
-        request.set_amount(limit_int(int(args[1]), latest_limit))
-    if len(args) >= 3:
-        request.set_region(args[2])
-    if len(args) >= 4:
-        request.set_status(args[3])
-    if len(args) >= 5:
-        request.set_release_type(args[4])
-
+            request.set_region(arg)
+    if age == "old":
+        request.set_sort("date", "asc")
+        request.set_custom_header(oldest_header)
+    else:
+        request.set_sort("date", "desc")
+        request.set_custom_header(newest_header)
     string = request.request().to_string()
+    string = string.replace("  ", " ").replace("  ", " ")
     await dispatch_message(string)
 
 
