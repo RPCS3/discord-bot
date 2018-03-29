@@ -258,7 +258,7 @@ class LogAnalyzer(object):
                 '`Resolution Scale Threshold: {texture_scale_threshold:>6s}`\n'
                 '`Write Color Buffers: {write_color_buffers:>13s}`\n'
                 '`Use GPU texture scaling: {gpu_texture_scaling:>9s}`\n'
-                '`Anisotropic Filter Override: {af_override:>5s}`\n'
+                '`Anisotropic Filter: {af_override:>5s}`\n'
                 '`Disable Vertex Cache: {vertex_cache:>12s}`\n'
             ).format(**self.parsed_data),
             inline=True
