@@ -239,7 +239,7 @@ class LogAnalyzer(object):
             ).format(**self.parsed_data),
             inline=False
         ).add_field(
-            name='CPU Settings' if not custom_config else 'Custom CPU Settings',
+            name='CPU Settings' if not custom_config else 'Per-game CPU Settings',
             value=(
                 '`PPU Decoder: {ppu_decoder:>21s}`\n'
                 '`SPU Decoder: {spu_decoder:>21s}`\n'
@@ -252,7 +252,7 @@ class LogAnalyzer(object):
             ).format(**self.parsed_data),
             inline=True
         ).add_field(
-            name='GPU Settings' if not custom_config else 'Custom GPU Settings',
+            name='GPU Settings' if not custom_config else 'Per-game GPU Settings',
             value=(
                 '`Renderer: {renderer:>24s}`\n'
                 '`Resolution: {resolution:>22s}`\n'
