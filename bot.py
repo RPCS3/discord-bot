@@ -92,8 +92,8 @@ async def on_message(message: Message):
         if code not in code_list:
             code_list.append(code)
             print(code)
-    if 0 < len(code_list) < 6: # TODO: remove limit and do embeds if more than one
-        for code in code_list:
+    if len(code_list) > 0:
+        for code in code_list[:5]:
             info = get_code(code)
             await message.channel.send(embed=info.to_embed())
         return
