@@ -57,7 +57,7 @@ class LogAnalyzer(object):
         },
         {
             'end_trigger': 'Core:',
-            'regex': None,
+            'regex': re.compile('(?:.* custom config: (?P<custom_config>.*?)\n.*?)?', flags=re.DOTALL | re.MULTILINE),
             'function': [get_id, piracy_check]
         },
         {
@@ -192,7 +192,8 @@ class LogAnalyzer(object):
     def get_text_report(self):
         additional_info = {
             'product_info': self.product_info.to_string(),
-            'libs': ', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None"
+            'libs': ', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
+            'config': '\nUsing custom config!\n' if 'custom_config' in self.parsed_data and self.parsed_data['custom_config'] is not None else ''
         }
         additional_info.update(self.parsed_data)
         return (
@@ -201,7 +202,7 @@ class LogAnalyzer(object):
             '\n'
             '{build_and_specs}'
             'GPU: {gpu_info}\n'
-            '\n'
+            '{config}\n'
             'PPU Decoder: {ppu_decoder:>21s} | Thread Scheduler: {thread_scheduler}\n'
             'SPU Decoder: {spu_decoder:>21s} | SPU Threads: {spu_threads}\n'
             'SPU Lower Thread Priority: {spu_lower_thread_priority:>7s} | Hook Static Functions: {hook_static_functions}\n'
@@ -229,6 +230,7 @@ class LogAnalyzer(object):
             self.parsed_data['lib_loader'] = "Auto"
         elif lib_loader_manual:
             self.parsed_data['lib_loader'] = "Manual selection"
+        custom_config = 'custom_config' in self.parsed_data and self.parsed_data['custom_config'] is not None
         result = self.product_info.to_embed(False).add_field(
             name='Build Info',
             value=(
@@ -237,7 +239,7 @@ class LogAnalyzer(object):
             ).format(**self.parsed_data),
             inline=False
         ).add_field(
-            name='CPU Settings',
+            name='CPU Settings' if not custom_config else 'Custom CPU Settings',
             value=(
                 '`PPU Decoder: {ppu_decoder:>21s}`\n'
                 '`SPU Decoder: {spu_decoder:>21s}`\n'
@@ -250,7 +252,7 @@ class LogAnalyzer(object):
             ).format(**self.parsed_data),
             inline=True
         ).add_field(
-            name='GPU Settings',
+            name='GPU Settings' if not custom_config else 'Custom GPU Settings',
             value=(
                 '`Renderer: {renderer:>24s}`\n'
                 '`Resolution: {resolution:>22s}`\n'
