@@ -156,7 +156,7 @@ class LogAnalyzer(object):
                         if group_args['af_override'] == '0':
                             group_args['af_override'] = 'auto'
                         elif group_args['af_override'] == '1':
-                            group_args['af_override'] = 'disabled'
+                            group_args['af_override'] = 'off'
                     self.parsed_data.update(group_args)
             except AttributeError as ae:
                 print(ae)
