@@ -4,6 +4,7 @@ from bot_config import piracy_strings
 from bot_utils import get_code
 from discord import Embed
 from api import sanitize_string
+from api.result import ApiResult
 
 SERIAL_PATTERN = re.compile('Serial: (?P<id>[A-z]{4}\\d{5})')
 LIBRARIES_PATTERN = re.compile('Load libraries:(?P<libraries>.*)', re.DOTALL | re.MULTILINE)
@@ -31,8 +32,8 @@ class LogAnalyzer(object):
             self.product_info = get_code(re.search(SERIAL_PATTERN, self.buffer).group('id'))
             return self.ERROR_SUCCESS
         except AttributeError:
-            print("Could not detect serial! Aborting!")
-            return self.ERROR_FAIL
+            self.product_info = ApiResult(None, dict({"status": "Unknown"}))
+            return self.ERROR_SUCCESS
 
     def get_libraries(self):
         try:
@@ -260,7 +261,7 @@ class LogAnalyzer(object):
                 '`Resolution Scale Threshold: {texture_scale_threshold:>6s}`\n'
                 '`Write Color Buffers: {write_color_buffers:>13s}`\n'
                 '`Use GPU texture scaling: {gpu_texture_scaling:>9s}`\n'
-                '`Anisotropic Filter: {af_override:>5s}`\n'
+                '`Anisotropic Filter: {af_override:>14s}`\n'
                 '`Disable Vertex Cache: {vertex_cache:>12s}`\n'
             ).format(**self.parsed_data),
             inline=True
