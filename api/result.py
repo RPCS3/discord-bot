@@ -75,7 +75,7 @@ class ApiResult(object):
                 return result
             
         else:
-            desc = "No product id was found, log might be corrupted or tempered with"
+            desc = "No product id was found, log might be corrupted or tampered with"
             if self.game_id is not None:
                 desc = "Product code {} was not found in compatibility database, possibly untested!".format(self.game_id)
             return Embed(
