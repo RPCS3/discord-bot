@@ -8,7 +8,9 @@ def get_code(code: str) -> ApiResult:
     :return: data or None
     """
     result = ApiRequest().set_search(code).set_amount(10).request()
-    if len(result.results) >= 1:
+    if result.code == -2:
+        return ApiResult("", dict({"status": "Maintenance"}))
+    elif len(result.results) >= 1:
         for result in result.results:
             if result.game_id == code:
                 return result

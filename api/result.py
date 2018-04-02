@@ -43,7 +43,9 @@ class ApiResult(object):
         Makes a string representation of the object.
         :return: string representation of the object
         """
-        if self.status in self.status_map:
+        if self.status == "Maintenance":
+            return "API is under maintenance, please try again later."
+        elif self.status in self.status_map:
             return ("ID:{:9s} Title:{:40s} PR:{:4s} Status:{:8s} Updated:{:10s}".format(
                 self.game_id,
                 trim_string(self.title, 40),
@@ -59,7 +61,12 @@ class ApiResult(object):
         Makes an Embed representation of the object.
         :return: Embed representation of the object
         """
-        if self.status in self.status_map:
+        if self.status == "Maintenance":
+            return Embed(
+                description="API is undergoing maintenance, please try again later.",
+                color = 0xffff00
+            )
+        elif self.status in self.status_map:
             desc = "Status: {}, PR: {}, Updated: {}".format(
                 self.status,
                 self.pr if self.pr != "???" else """¯\_(ツ)_/¯""",
@@ -68,7 +75,7 @@ class ApiResult(object):
                 title="[{}] {}".format(self.game_id, trim_string(self.title, 200)),
                 url="https://forums.rpcs3.net/thread-{}.html".format(self.thread),
                 description = desc if not infoInFooter else None,
-                color=self.status_map[self.status])
+                color = self.status_map[self.status])
             if infoInFooter:
                 return result.set_footer(text=desc)
             else:
