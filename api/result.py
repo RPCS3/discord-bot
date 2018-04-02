@@ -64,7 +64,7 @@ class ApiResult(object):
         if self.status == "Maintenance":
             return Embed(
                 description="API is undergoing maintenance, please try again later.",
-                color = 0xfaa61a
+                color = 0xffff00
             )
         elif self.status in self.status_map:
             desc = "Status: {}, PR: {}, Updated: {}".format(
