@@ -9,7 +9,7 @@ def get_code(code: str) -> ApiResult:
     """
     result = ApiRequest().set_search(code).set_amount(10).request()
     if result.code == -2:
-        return None
+        return ApiResult("", dict({"status": "Maintenance"}))
     elif len(result.results) >= 1:
         for result in result.results:
             if result.game_id == code:

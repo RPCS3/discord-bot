@@ -96,8 +96,8 @@ async def on_message(message: Message):
     if len(code_list) > 0:
         for code in code_list[:5]:
             info = get_code(code)
-            if info is None:
-                await message.channel.send(embed=ApiResult("", dict({"status": "Maintenance"})).to_embed())
+            if info.status == "Maintenance":
+                await message.channel.send(embed=info.to_embed())
                 break
             else:
                 await message.channel.send(embed=info.to_embed())
