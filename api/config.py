@@ -38,7 +38,7 @@ return_codes = {
         "display_results": False,
         "override_all": True,
         "display_footer": False,
-        "info": "{requestor}: API is under maintenance, please try again later."
+        "info": "{requestor}: API is undergoing maintenance, please try again later."
     },
     -3: {
         "display_results": False,

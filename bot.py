@@ -10,6 +10,7 @@ from requests import Response
 
 from api import newline_separator, directions, regions, statuses, release_types, trim_string
 from api.request import ApiRequest
+from api.result import ApiResult
 from bot_config import *
 from bot_utils import get_code
 from database import Moderator, init, PiracyString
@@ -95,7 +96,11 @@ async def on_message(message: Message):
     if len(code_list) > 0:
         for code in code_list[:5]:
             info = get_code(code)
-            await message.channel.send(embed=info.to_embed())
+            if info is None:
+                await message.channel.send(embed=ApiResult("", dict({"status": "Maintenance"})).to_embed())
+                break
+            else:
+                await message.channel.send(embed=info.to_embed())
         return
 
     # Log Analysis!
@@ -242,14 +247,16 @@ async def compat_search(ctx, *args):
 @bot.command(pass_context=True)
 async def top(ctx: Context, *args):
     """
-    Gets the x (default 10) top oldest/newest updated games
+    Gets the x (default is 10 new) top games by specified criteria; order is flexible
     Example usage:
-        !top old 10
-        !top new 10 ja
-        !top old 10 all
-        !top new 10 ja playable
-        !top new 10 ja playable bluray
-        !top new 10 ja loadable psn
+        !top 10 new
+        !top 10 new jpn
+        !top 10 playable
+        !top 10 new ingame eu
+        !top 10 old psn intro
+        !top 10 old loadable us bluray
+        !top 
+
     To see all filters do !filters
     """
     request = ApiRequest(ctx.message.author)
@@ -265,7 +272,7 @@ async def top(ctx: Context, *args):
         elif arg in ["nothing", "loadable", "intro", "ingame", "playable"]:
             request.set_status(arg)
         elif arg in ["bluray", "blu-ray", "disc", "psn", "b", "d", "n", "p"]:
-            request.set_release_type(arg)
+            request.set_release_type(arg.replace("-", ""))
         elif arg.isdigit():
             request.set_amount(limit_int(int(arg), latest_limit))
         else:
