@@ -431,7 +431,7 @@ async def sudo(ctx: Context):
 @sudo.command()
 async def say(ctx: Context, *args):
     """Basically says whatever you want it to say in a channel."""
-    print(int(args[0][2:-1]))
+    print(args[0])
     channel: TextChannel = bot.get_channel(int(args[0][2:-1])) \
         if args[0][:2] == '<#' and args[0][-1] == '>' \
         else ctx.channel
