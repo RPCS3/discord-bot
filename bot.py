@@ -443,7 +443,7 @@ async def restart(ctx: Context, *args):
     process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
     await ctx.send(process.communicate()[0])
     await ctx.send('Restarting...')
-    os.execl(sys.executable, *sys.argv)
+    os.execl(sys.executable, sys.argv[0], *sys.argv)
 
 
 @sudo.group()
