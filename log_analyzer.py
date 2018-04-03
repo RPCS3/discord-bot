@@ -58,7 +58,9 @@ class LogAnalyzer(object):
         },
         {
             'end_trigger': 'Core:',
-            'regex': re.compile('(?:.* custom config: (?P<custom_config>.*?)\n.*?)?', flags=re.DOTALL | re.MULTILINE),
+            'regex': re.compile('Path: (?:(?P<win_path>\w:/)|(?P<lin_path>/)).*?\n'
+                                '(?:.* custom config: (?P<custom_config>.*?)\n.*?)?',
+                                flags=re.DOTALL | re.MULTILINE),
             'function': [get_id, piracy_check]
         },
         {
@@ -194,6 +196,7 @@ class LogAnalyzer(object):
         additional_info = {
             'product_info': self.product_info.to_string(),
             'libs': ', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
+            'os': 'Windows' if 'win_path' in self.parsed_data and self.parsed_data['win_path'] is not None else 'Linux',
             'config': '\nUsing custom config!\n' if 'custom_config' in self.parsed_data and self.parsed_data['custom_config'] is not None else ''
         }
         additional_info.update(self.parsed_data)
@@ -202,7 +205,7 @@ class LogAnalyzer(object):
             '{product_info}\n'
             '\n'
             '{build_and_specs}'
-            'GPU: {gpu_info}\n'
+            'GPU: {gpu_info} ({os})\n'
             '{config}\n'
             'PPU Decoder: {ppu_decoder:>21s} | Thread Scheduler: {thread_scheduler}\n'
             'SPU Decoder: {spu_decoder:>21s} | SPU Threads: {spu_threads}\n'
@@ -232,11 +235,12 @@ class LogAnalyzer(object):
         elif lib_loader_manual:
             self.parsed_data['lib_loader'] = "Manual selection"
         custom_config = 'custom_config' in self.parsed_data and self.parsed_data['custom_config'] is not None
+        self.parsed_data['os_path'] = 'Windows' if 'win_path' in self.parsed_data and self.parsed_data['win_path'] is not None else 'Linux'
         result = self.product_info.to_embed(False).add_field(
             name='Build Info',
             value=(
                 '{build_and_specs}'
-                'GPU: {gpu_info}'
+                'GPU: {gpu_info} ({os_path})'
             ).format(**self.parsed_data),
             inline=False
         ).add_field(

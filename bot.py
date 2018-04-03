@@ -96,7 +96,10 @@ async def on_message(message: Message):
             code_list.append(code)
             print(code)
     if len(code_list) > 0:
-        for code in code_list[:(min(len(code_list), 50) if isinstance(message.channel, DMChannel) else 5)]:
+        max_len = 5
+        if isinstance(message.channel, DMChannel):
+            max_len = min(len(code_list), 50)
+        for code in code_list[:(max_len)]:
             info = get_code(code)
             if info.status == "Maintenance":
                 await message.channel.send(info.to_string())
