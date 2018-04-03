@@ -44,7 +44,7 @@ class ApiResult(object):
         :return: string representation of the object
         """
         if self.status == "Maintenance":
-            return "API is under maintenance, please try again later."
+            return "API is undergoing maintenance, please try again later."
         elif self.status in self.status_map:
             return ("ID:{:9s} Title:{:40s} PR:{:4s} Status:{:8s} Updated:{:10s}".format(
                 self.game_id,

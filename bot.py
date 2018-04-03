@@ -97,7 +97,7 @@ async def on_message(message: Message):
         for code in code_list[:5]:
             info = get_code(code)
             if info.status == "Maintenance":
-                await message.channel.send(embed=info.to_embed())
+                await message.channel.send(info.to_string())
                 break
             else:
                 await message.channel.send(embed=info.to_embed())
@@ -255,16 +255,12 @@ async def top(ctx: Context, *args):
         !top 10 new ingame eu
         !top 10 old psn intro
         !top 10 old loadable us bluray
-        !top 
 
     To see all filters do !filters
     """
     request = ApiRequest(ctx.message.author)
-    if len(args) == 0:
-        print("Invalid command")
-        return await bot_channel.send(invalid_command_text)
-
     age = "new"
+    amount = 10
     for arg in args:
         arg = arg.lower()
         if arg in ["old", "new"]:
@@ -274,9 +270,10 @@ async def top(ctx: Context, *args):
         elif arg in ["bluray", "blu-ray", "disc", "psn", "b", "d", "n", "p"]:
             request.set_release_type(arg.replace("-", ""))
         elif arg.isdigit():
-            request.set_amount(limit_int(int(arg), latest_limit))
+            amount = limit_int(int(arg), latest_limit)
         else:
             request.set_region(arg)
+    request.set_amount(amount)
     if age == "old":
         request.set_sort("date", "asc")
         request.set_custom_header(oldest_header)
@@ -284,8 +281,7 @@ async def top(ctx: Context, *args):
         request.set_sort("date", "desc")
         request.set_custom_header(newest_header)
     string = request.request().to_string()
-    string = string.replace("  ", " ").replace("  ", " ")
-    await dispatch_message(string)
+    await dispatch_message(string, True)
 
 
 @bot.command()
@@ -318,12 +314,15 @@ async def filters(ctx: Context):
     await ctx.author.send(message)
 
 
-async def dispatch_message(message: str):
+async def dispatch_message(message: str, clean_up_first_line = False):
     """
     Dispatches messages one by one divided by the separator defined in api.config
     :param message: message to dispatch
     """
-    for part in message.split(newline_separator):
+    message_parts = message.split(newline_separator)
+    if clean_up_first_line:
+        message_parts[0] = message_parts[0].replace("  ", " ").replace("  ", " ")
+    for part in message_parts:
         await bot_channel.send(part)
 
 

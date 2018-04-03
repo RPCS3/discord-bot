@@ -1,4 +1,4 @@
-def limit_int(amount: int, high: int, low: int = 0) -> int:
+def limit_int(amount: int, high: int, low: int = 1) -> int:
     """
     Limits an integer.
     :param amount: amount
