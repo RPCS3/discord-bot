@@ -440,7 +440,6 @@ async def say(ctx: Context, *args):
 @sudo.command()
 async def restart(ctx: Context, *args):
     """Restarts bot and pulls newest commit."""
-    git pull && python3 bot.py MjkxNTk4Njk1NjA1MjA3MDQx.C6r8aw.8PfoVoC5Je_RJpU_kLpgTfIVYaM
     process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
     await channel.send(process.communicate()[0])
     await channel.send('Restarting...')
