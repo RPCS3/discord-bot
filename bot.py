@@ -1,6 +1,8 @@
 import json
+import os
 import re
 import sys
+import subprocess
 from random import randint, choice
 
 import requests
@@ -369,9 +371,6 @@ async def eight_ball(ctx: Context):
         "Ask Neko", "Ask Ani", "I'm pretty sure that's illegal!", "<:cell_ok_hand:324618647857397760>", "Don't be an idiot. YES.",
         "What do *you* think?", "Only on Wednesdays"
     ]))
-#    await ctx.send(choice([
-#        "<:slowpoke:428901168991830017>"
-#    ]))
 
 
 async def is_sudo(ctx: Context):
@@ -432,11 +431,18 @@ async def sudo(ctx: Context):
 @sudo.command()
 async def say(ctx: Context, *args):
     """Basically says whatever you want it to say in a channel."""
-    print(int(args[0][2:-1]))
     channel: TextChannel = bot.get_channel(int(args[0][2:-1])) \
         if args[0][:2] == '<#' and args[0][-1] == '>' \
         else ctx.channel
     await channel.send(' '.join(args if channel.id == ctx.channel.id else args[1:]))
+    
+@sudo.command()
+async def restart(ctx: Context, *args):
+    """Restarts bot and pulls newest commit."""
+    process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
+    await ctx.send(str(process.communicate()[0], "utf-8"))
+    await ctx.send('Restarting...')
+    os.execl(sys.executable, sys.argv[0], *sys.argv)
 
 
 @sudo.group()
