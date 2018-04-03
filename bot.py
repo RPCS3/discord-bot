@@ -1,6 +1,8 @@
 import json
+import os
 import re
 import sys
+import subprocess
 from random import randint, choice
 
 import requests
@@ -369,9 +371,6 @@ async def eight_ball(ctx: Context):
         "Ask Neko", "Ask Ani", "I'm pretty sure that's illegal!", "<:cell_ok_hand:324618647857397760>", "Don't be an idiot. YES.",
         "What do *you* think?", "Only on Wednesdays"
     ]))
-#    await ctx.send(choice([
-#        "<:slowpoke:428901168991830017>"
-#    ]))
 
 
 async def is_sudo(ctx: Context):
@@ -437,6 +436,15 @@ async def say(ctx: Context, *args):
         if args[0][:2] == '<#' and args[0][-1] == '>' \
         else ctx.channel
     await channel.send(' '.join(args if channel.id == ctx.channel.id else args[1:]))
+    
+@sudo.command()
+async def restart(ctx: Context, *args):
+    """Restarts bot and pulls newest commit."""
+    git pull && python3 bot.py MjkxNTk4Njk1NjA1MjA3MDQx.C6r8aw.8PfoVoC5Je_RJpU_kLpgTfIVYaM
+    process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
+    await channel.send(process.communicate()[0])
+    await channel.send('Restarting...')
+    os.execl(sys.executable, *sys.argv)
 
 
 @sudo.group()
