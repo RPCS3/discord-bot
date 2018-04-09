@@ -58,7 +58,9 @@ class LogAnalyzer(object):
         },
         {
             'end_trigger': 'Core:',
-            'regex': re.compile('(?:.* custom config: (?P<custom_config>.*?)\n.*?)?', flags=re.DOTALL | re.MULTILINE),
+            'regex': re.compile('Path: (?:(?P<win_path>\w:/)|(?P<lin_path>/)).*?\n'
+                                '(?:.* custom config: (?P<custom_config>.*?)\n.*?)?',
+                                flags=re.DOTALL | re.MULTILINE),
             'function': [get_id, piracy_check]
         },
         {
@@ -194,6 +196,7 @@ class LogAnalyzer(object):
         additional_info = {
             'product_info': self.product_info.to_string(),
             'libs': ', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
+            'os': 'Windows' if 'win_path' in self.parsed_data and self.parsed_data['win_path'] is not None else 'Linux',
             'config': '\nUsing custom config!\n' if 'custom_config' in self.parsed_data and self.parsed_data['custom_config'] is not None else ''
         }
         additional_info.update(self.parsed_data)
@@ -203,6 +206,7 @@ class LogAnalyzer(object):
             '\n'
             '{build_and_specs}'
             'GPU: {gpu_info}\n'
+            'OS: {os}\n'
             '{config}\n'
             'PPU Decoder: {ppu_decoder:>21s} | Thread Scheduler: {thread_scheduler}\n'
             'SPU Decoder: {spu_decoder:>21s} | SPU Threads: {spu_threads}\n'
@@ -232,6 +236,7 @@ class LogAnalyzer(object):
         elif lib_loader_manual:
             self.parsed_data['lib_loader'] = "Manual selection"
         custom_config = 'custom_config' in self.parsed_data and self.parsed_data['custom_config'] is not None
+        self.parsed_data['os_path'] = 'Windows' if 'win_path' in self.parsed_data and self.parsed_data['win_path'] is not None else 'Linux'
         result = self.product_info.to_embed(False).add_field(
             name='Build Info',
             value=(
@@ -247,6 +252,7 @@ class LogAnalyzer(object):
                 '`SPU Lower Thread Priority: {spu_lower_thread_priority:>7s}`\n'
                 '`SPU Loop Detection: {spu_loop_detection:>14s}`\n'
                 '`Thread Scheduler: {thread_scheduler:>16s}`\n'
+                '`Detected OS: {os_path:>21s}`\n'
                 '`SPU Threads: {spu_threads:>21s}`\n'
                 '`Hook Static Functions: {hook_static_functions:>11s}`\n'
                 '`Lib Loader: {lib_loader:>22s}`\n'
@@ -262,6 +268,8 @@ class LogAnalyzer(object):
                 '`Write Color Buffers: {write_color_buffers:>13s}`\n'
                 '`Use GPU texture scaling: {gpu_texture_scaling:>9s}`\n'
                 '`Anisotropic Filter: {af_override:>14s}`\n'
+                '`Frame Limit: {frame_limit:>21s}`\n'
+#                '`VSync: {vsync:>27s}`\n'
                 '`Disable Vertex Cache: {vertex_cache:>12s}`\n'
             ).format(**self.parsed_data),
             inline=True
