@@ -205,7 +205,8 @@ class LogAnalyzer(object):
             '{product_info}\n'
             '\n'
             '{build_and_specs}'
-            'GPU: {gpu_info} ({os})\n'
+            'GPU: {gpu_info}\n'
+            'OS: {os}\n'
             '{config}\n'
             'PPU Decoder: {ppu_decoder:>21s} | Thread Scheduler: {thread_scheduler}\n'
             'SPU Decoder: {spu_decoder:>21s} | SPU Threads: {spu_threads}\n'
@@ -240,7 +241,7 @@ class LogAnalyzer(object):
             name='Build Info',
             value=(
                 '{build_and_specs}'
-                'GPU: {gpu_info} ({os_path})'
+                'GPU: {gpu_info}'
             ).format(**self.parsed_data),
             inline=False
         ).add_field(
@@ -251,6 +252,7 @@ class LogAnalyzer(object):
                 '`SPU Lower Thread Priority: {spu_lower_thread_priority:>7s}`\n'
                 '`SPU Loop Detection: {spu_loop_detection:>14s}`\n'
                 '`Thread Scheduler: {thread_scheduler:>16s}`\n'
+                '`Detected OS: {os_path:>21s}`\n'
                 '`SPU Threads: {spu_threads:>21s}`\n'
                 '`Hook Static Functions: {hook_static_functions:>11s}`\n'
                 '`Lib Loader: {lib_loader:>22s}`\n'
@@ -266,6 +268,8 @@ class LogAnalyzer(object):
                 '`Write Color Buffers: {write_color_buffers:>13s}`\n'
                 '`Use GPU texture scaling: {gpu_texture_scaling:>9s}`\n'
                 '`Anisotropic Filter: {af_override:>14s}`\n'
+                '`Frame Limit: {frame_limit:>21s}`\n'
+#                '`VSync: {vsync:>27s}`\n'
                 '`Disable Vertex Cache: {vertex_cache:>12s}`\n'
             ).format(**self.parsed_data),
             inline=True
