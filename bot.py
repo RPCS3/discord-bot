@@ -186,7 +186,6 @@ async def on_message(message: Message):
 					print("Stopping stream!")
 		del log
 
-
 async def report(reason: str, message: Message, reporters: List[Member], attention=False):
 	author: Member = message.author
 	channel: TextChannel = message.channel
@@ -213,7 +212,6 @@ async def report(reason: str, message: Message, reporters: List[Member], attenti
 	if reporters is not None:
 		e.add_field(name="Reporters", value='\n'.join([x.mention for x in reporters]))
 	await bot_log.send("", embed=e)
-
 
 async def piracy_check(message: Message):
 	for trigger in piracy_strings:
