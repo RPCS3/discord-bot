@@ -31,12 +31,17 @@ boot_up_message = "Hello and welcome to CompatBot. \n" \
 
 bot_channel_id = 291679908067803136
 bot_spam_id = 319224795785068545
-bot_admin_id = 267367850706993152
+bot_log_id = 436972161572536329
 bot_rules_channel_id = 311894275015049216
+bot_admin_id = 267367850706993152
 
 user_moderation_character = '☕'
 user_moderatable_channel_ids = [272875751773306881, 319224795785068545]
 user_moderation_count_needed = 5
+user_moderation_excused_roles = ['Administrator', 'Community Manager', 'Web Developer', 'Moderator',
+                                 'Lead Graphics Developer', 'Lead Core Developer', 'Developers', 'Affiliated',
+                                 'Contributors'
+                                 ]
 piracy_strings = [
 
 ]

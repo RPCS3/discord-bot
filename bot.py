@@ -5,9 +5,10 @@ import subprocess
 import sys
 from datetime import datetime
 from random import randint, choice
+from typing import List
 
 import requests
-from discord import Message, Member, TextChannel, DMChannel, Forbidden, Reaction, User, Role
+from discord import Message, Member, TextChannel, DMChannel, Forbidden, Reaction, User, Role, Embed
 from discord.ext.commands import Bot, Context
 from requests import Response
 
@@ -27,6 +28,7 @@ nsp = NumericStringParser()
 
 bot_channel: TextChannel = None
 rules_channel: TextChannel = None
+bot_log: TextChannel = None
 
 file_handlers = (
 	# {
@@ -54,9 +56,11 @@ async def on_ready():
 	print(bot.user.id)
 	print('------')
 	global bot_channel
+	global bot_log
 	global rules_channel
 	bot_channel = bot.get_channel(bot_channel_id)
 	rules_channel = bot.get_channel(bot_rules_channel_id)
+	bot_log = bot.get_channel(bot_log_id)
 	refresh_piracy_cache()
 
 
@@ -66,23 +70,35 @@ async def on_reaction_add(reaction: Reaction, user: User):
 	message: Message = reaction.message
 	# if len(message.attachments) > 0:
 	# 	return
+
+	role: Role
+	for role in reaction.message.author.roles:
+		if role.name.strip() in user_moderation_excused_roles:
+			return
+
 	if message.channel.id in user_moderatable_channel_ids:
+		print("Moderatable")
 		if (datetime.now() - message.created_at).total_seconds() < 12 * 60 * 60:
+			print("Early enough")
 			if reaction.emoji == user_moderation_character:
+				print("Good character")
 				print(reaction.count)
-				count = 0
+				reporters = []
 				user: Member
 				async for user in reaction.users():
+					if user._user.id == bot.user.id:
+						return
 					role: Role
 					for role in user.roles:
 						print(role.name)
 						if role.name != '@everyone':
-							count += 1
+							reporters.append(user)
 							break
-					print(count)
+					print(len(reporters))
 
-				if count >= user_moderation_count_needed:
-					await message.delete()
+				if len(reporters) >= user_moderation_count_needed:
+					await message.add_reaction(user_moderation_character)
+					await report("User moderation report ⭐💵", message, reporters=reporters)
 
 
 @bot.event
@@ -171,6 +187,34 @@ async def on_message(message: Message):
 		del log
 
 
+async def report(reason: str, message: Message, reporters: List[Member], attention=False):
+	author: Member = message.author
+	channel: TextChannel = message.channel
+	user: User = author._user
+	e = Embed(
+		title="Report for {}".format(reason),
+		description="Not deleted/requires attention: @here" if attention else "Deleted/Doesn't require attention",
+		color=0xe74c3c if attention else 0xf9b32f
+	)
+	e.add_field(name="Violator", value=message.author.mention)
+	e.add_field(name="Channel", value=channel.mention)
+	e.add_field(name="Time", value=message.created_at)
+	e.add_field(name="Contents of offending item", value=message.content, inline=False)
+	e.add_field(
+		name="Search query (since discord doesnt allow jump links <:panda_face:436991868547366913>)",
+		value="`from: {nick} during: {date} in: {channel} {text}`".format(
+			nick=user.name + "#" + user.discriminator,
+			date=message.created_at.strftime("%Y-%m-%d"),
+			channel=channel.name,
+			text=message.content.split(" ")[-1]
+		),
+		inline=False
+	)
+	if reporters is not None:
+		e.add_field(name="Reporters", value='\n'.join([x.mention for x in reporters]))
+	await bot_log.send("", embed=e)
+
+
 async def piracy_check(message: Message):
 	for trigger in piracy_strings:
 		if trigger.lower() in message.content.lower():  # we should .lower() on trigger add ideally
@@ -180,11 +224,14 @@ async def piracy_check(message: Message):
 				await message.delete()
 			except Forbidden as fbe:
 				print("Couldn't delete the moderated message")
+				await report("Piracy", message, None, attention=True)
+				return
 			await message.channel.send(
 				"{author} Please follow the {rules} and do not discuss piracy on this server. Repeated offence may result in a ban.".format(
 					author=message.author.mention,
 					rules=rules_channel.mention
 				))
+			await report("Piracy", message, None, attention=False)
 			break
 
 
