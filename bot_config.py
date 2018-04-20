@@ -34,6 +34,9 @@ bot_spam_id = 319224795785068545
 bot_admin_id = 267367850706993152
 bot_rules_channel_id = 311894275015049216
 
+user_moderation_character = '☕'
+user_moderatable_channel_ids = [272875751773306881, 319224795785068545]
+user_moderation_count_needed = 5
 piracy_strings = [
 
 ]
