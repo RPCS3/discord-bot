@@ -20,7 +20,7 @@ from database import Moderator, init, PiracyString
 from log_analyzer import LogAnalyzer
 from math_parse import NumericStringParser
 from math_utils import limit_int
-from stream_handlers import stream_text_log, stream_gzip_decompress
+from stream_handlers import stream_text_log, stream_gzip_decompress, stream_zip_decompress, Deflate64Exception
 
 bot = Bot(command_prefix="!")
 id_pattern = '(?P<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \\-]?(?P<numbers>\\d{5})'  # see http://www.psdevwiki.com/ps3/Productcode
@@ -31,9 +31,10 @@ rules_channel: TextChannel = None
 bot_log: TextChannel = None
 
 file_handlers = (
-	# {
-	#     'ext': '.zip'
-	# },
+	{
+		'ext'    : '.zip',
+		'handler': stream_zip_decompress
+	},
 	{
 		'ext'    : '.log',
 		'handler': stream_text_log
@@ -66,7 +67,6 @@ async def on_ready():
 
 @bot.event
 async def on_reaction_add(reaction: Reaction, user: User):
-	print(reaction)
 	message: Message = reaction.message
 	# if len(message.attachments) > 0:
 	# 	return
@@ -77,11 +77,8 @@ async def on_reaction_add(reaction: Reaction, user: User):
 			return
 
 	if message.channel.id in user_moderatable_channel_ids:
-		print("Moderatable")
 		if (datetime.now() - message.created_at).total_seconds() < 12 * 60 * 60:
-			print("Early enough")
 			if reaction.emoji == user_moderation_character:
-				print("Good character")
 				print(reaction.count)
 				reporters = []
 				user: Member
@@ -163,26 +160,38 @@ async def on_message(message: Message):
 					with requests.get(attachment.url, stream=True) as response:
 						print("Opened request stream!")
 						# noinspection PyTypeChecker
-						for row in stream_line_by_line_safe(response, handler['handler']):
-							error_code = log.feed(row)
-							if error_code == LogAnalyzer.ERROR_SUCCESS:
-								continue
-							elif error_code == LogAnalyzer.ERROR_PIRACY:
-								await piracy_alert(message)
-								sent_log = True
-								break
-							elif error_code == LogAnalyzer.ERROR_OVERFLOW:
-								print("Possible Buffer Overflow Attack Detected!")
-								break
-							elif error_code == LogAnalyzer.ERROR_STOP:
-								# await message.channel.send(log.get_text_report(), embed=log.product_info.to_embed())
-								await message.channel.send(embed=log.get_embed_report())
-								sent_log = True
-								break
-							elif error_code == LogAnalyzer.ERROR_FAIL:
-								break
-						if not sent_log:
-							print("Log analyzer didn't finish, probably a truncated/invalid log!")
+						try:
+							for row in stream_line_by_line_safe(response, handler['handler']):
+								error_code = log.feed(row)
+								if error_code == LogAnalyzer.ERROR_SUCCESS:
+									continue
+								elif error_code == LogAnalyzer.ERROR_PIRACY:
+									await piracy_alert(message)
+									sent_log = True
+									break
+								elif error_code == LogAnalyzer.ERROR_OVERFLOW:
+									print("Possible Buffer Overflow Attack Detected!")
+									break
+								elif error_code == LogAnalyzer.ERROR_STOP:
+									# await message.channel.send(log.get_text_report(), embed=log.product_info.to_embed())
+									await message.channel.send(embed=log.get_embed_report())
+									sent_log = True
+									break
+								elif error_code == LogAnalyzer.ERROR_FAIL:
+									print("Log parsing failed")
+									break
+							if not sent_log:
+								await message.channel.send(
+									"Log analysis failed, most likely cause is a truncated/invalid log."
+								)
+								print("Log analyzer didn't finish, probably a truncated/invalid log!")
+						except Deflate64Exception:
+							await message.channel.send(
+								"Unsupported compression algorithm used.\n"
+								"\tAlgorithm name: Deflate64\n"
+								"\tAlternative: Deflate\n"
+								"\tOther alternatives: Default .log.gz file, Raw .log file\n"
+							)
 					print("Stopping stream!")
 		del log
 
@@ -271,7 +280,7 @@ def stream_line_by_line_safe(stream: Response, func: staticmethod):
 				for part in parts[1:-1]:
 					yield part
 				buffer += parts[-1]
-			elif len(buffer) > 1024 * 1024 or len(chunk_buffer) > 1024 * 1024:
+			elif len(buffer) > overflow_threshold or len(chunk_buffer) > overflow_threshold:
 				print('Possible overflow intended, piss off!')
 				break
 			else:

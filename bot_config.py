@@ -12,6 +12,7 @@ oldest_header = "{requestor} requested top {amount} oldest {region} {media} upda
 
 invalid_command_text = "Invalid command!"
 
+overflow_threshold = 1024 * 1024 * 256
 latest_limit = 15
 
 boot_up_message = "Hello and welcome to CompatBot. \n" \

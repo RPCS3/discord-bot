@@ -1,10 +1,9 @@
 import re
 
-from bot_config import piracy_strings
-from bot_utils import get_code
-from discord import Embed
 from api import sanitize_string
 from api.result import ApiResult
+from bot_config import piracy_strings
+from bot_utils import get_code
 
 SERIAL_PATTERN = re.compile('Serial: (?P<id>[A-z]{4}\\d{5})')
 LIBRARIES_PATTERN = re.compile('Load libraries:(?P<libraries>.*)', re.DOTALL | re.MULTILINE)
@@ -16,6 +15,7 @@ class LogAnalyzer(object):
     ERROR_STOP = 2
     ERROR_OVERFLOW = -1
     ERROR_FAIL = -2
+    ERROR_DEFLATE_64 = -3
 
     def piracy_check(self):
         for trigger in piracy_strings:
