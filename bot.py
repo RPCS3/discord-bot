@@ -95,7 +95,7 @@ async def on_reaction_add(reaction: Reaction, user: User):
 
 				if len(reporters) >= user_moderation_count_needed:
 					await message.add_reaction(user_moderation_character)
-					await report("User moderation report ⭐💵", message, reporters=reporters)
+					await report("User moderation report ⭐💵", message, reporters=reporters, attention=True)
 
 
 @bot.event
