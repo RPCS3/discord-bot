@@ -247,8 +247,10 @@ async def piracy_check(message: Message):
 async def piracy_alert(message: Message):
 	try:
 		await message.delete()
+		await report("Pirated Release", message, None, attention=False)
 	except Forbidden as fbe:
 		print("Couldn't delete the moderated log attachment")
+		await report("Pirated Release", message, None, attention=True)
 	await message.channel.send(
 		"Pirated release detected {author}!\n"
 		"**You are being denied further support until you legally dump the game!**\n"
