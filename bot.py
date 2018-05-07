@@ -694,7 +694,7 @@ async def faq(ctx: Context):
         return
 
     if ctx.invoked_subcommand is None:
-        await ctx.send('Invalid piracy command passed...')
+        await ctx.send('Invalid faq command passed...')
 
 
 @faq.command()
@@ -719,7 +719,7 @@ async def add(ctx: Context, key: str, text: str):
     if faq_item is None:
         FaqItem(key=key, text=text).save()
         await ctx.send("Item successfully saved!")
-        await list.invoke(ctx)
+        await faq.list.invoke(ctx)
         refresh_faq_cache()
     else:
         await ctx.send("Item already exists at id {id}!".format(id=faq_item.id))
