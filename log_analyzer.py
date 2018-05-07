@@ -74,7 +74,7 @@ class LogAnalyzer(object):
                                 'SPU Threads: (?P<spu_threads>.*?)\n.*?'
                                 'penalty: (?P<spu_delay_penalty>.*?)\n.*?'
                                 'detection: (?P<spu_loop_detection>.*?)\n.*?'
-                                'Loader: (?P<lib_loader>.*?)\n.*?'
+                                '[Ll]oader: (?P<lib_loader>.*?)\n.*?'
                                 'functions: (?P<hook_static_functions>.*?)\n.*',
                                 flags=re.DOTALL | re.MULTILINE),
             'function': get_libraries
@@ -97,7 +97,7 @@ class LogAnalyzer(object):
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
                                 'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
-                                'D3D12:\s*\n\s*Adapter: (?P<d3d_gpu>.*?)\n.*?'
+                                '(?:D3D12|DirectX 12):\s*\n\s*Adapter: (?P<d3d_gpu>.*?)\n.*?'
                                 'Vulkan:\s*\n\s*Adapter: (?P<vulkan_gpu>.*?)\n.*?',
                                 flags=re.DOTALL | re.MULTILINE)
         },
