@@ -687,7 +687,7 @@ async def unsudo(ctx: Context, user: Member):
 
 
 @bot.group()
-async def guide(ctx: Context):
+async def faq(ctx: Context):
     """Command used to manage faq items."""
     if not await is_mod(ctx):
         ctx.invoked_subcommand = None
@@ -697,7 +697,7 @@ async def guide(ctx: Context):
         await ctx.send('Invalid piracy command passed...')
 
 
-@guide.command()
+@faq.command()
 async def list(ctx: Context):
     """Lists all faq items."""
     buffer = '```\n'
@@ -712,7 +712,7 @@ async def list(ctx: Context):
         await ctx.send(buffer + '```')
 
 
-@guide.command()
+@faq.command()
 async def add(ctx: Context, key: str, text: str):
     """Adds a faq item."""
     faq_item: FaqItem = FaqItem.get_or_none(FaqItem.key == key)
@@ -726,7 +726,7 @@ async def add(ctx: Context, key: str, text: str):
 
 
 # noinspection PyShadowingBuiltins
-@guide.command()
+@faq.command()
 async def delete(ctx: Context, id: int):
     """Removes a faq item."""
     faq_item: FaqItem = FaqItem.get_or_none(FaqItem.id == id)  # Column actually exists but hidden
