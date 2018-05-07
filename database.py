@@ -19,10 +19,15 @@ class PiracyString(BaseModel):
     string = CharField(unique=True)
 
 
+class FaqItem(BaseModel):
+    key = CharField(unique=True)
+    text = TextField(null=False)
+
+
 def init():
     with db:
         db.get_tables()
-        db.create_tables([Moderator, PiracyString])
+        db.create_tables([Moderator, PiracyString, FaqItem])
         try:
             Moderator.get(discord_id=bot_admin_id)
         except DoesNotExist:

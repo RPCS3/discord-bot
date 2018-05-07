@@ -16,7 +16,7 @@ from api import newline_separator, directions, regions, statuses, release_types,
 from api.request import ApiRequest
 from bot_config import *
 from bot_utils import get_code
-from database import Moderator, init, PiracyString
+from database import Moderator, init, PiracyString, FaqItem
 from log_analyzer import LogAnalyzer
 from math_parse import NumericStringParser
 from math_utils import limit_int
@@ -532,14 +532,14 @@ async def say(ctx: Context, *args):
 @sudo.command()
 async def restart(ctx: Context, *args):
     """Restarts bot and pulls newest commit."""
-    process = subprocess.Popen(["git", "pull", "--all"], stdout=subprocess.PIPE)
-    await ctx.send(str(process.communicate()[0], "utf-8"))
     process = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE)
     await ctx.send("Current branch is: " + str(process.communicate()[0], "utf-8"))
     if args.__len__() == 1:
         await ctx.send('Switching to branch `{}`...'.format(args[0]))
         process = subprocess.Popen(["git", "checkout", args[0]], stdout=subprocess.PIPE)
         await ctx.send(str(process.communicate()[0], "utf-8"))
+    process = subprocess.Popen(["git", "pull", "--all"], stdout=subprocess.PIPE)
+    await ctx.send(str(process.communicate()[0], "utf-8"))
     await ctx.send('Restarting...')
     os.execl(sys.executable, sys.argv[0], *sys.argv)
 
@@ -687,6 +687,59 @@ async def unsudo(ctx: Context, user: Member):
 
 
 @bot.group()
+async def guide(ctx: Context):
+    """Command used to manage faq items."""
+    if not await is_mod(ctx):
+        ctx.invoked_subcommand = None
+        return
+
+    if ctx.invoked_subcommand is None:
+        await ctx.send('Invalid piracy command passed...')
+
+
+@guide.command()
+async def list(ctx: Context):
+    """Lists all faq items."""
+    buffer = '```\n'
+    for faq_item in FaqItem.select():
+        row = str(faq_item.id).zfill(4) + ' | ' + faq_item.key + '\n' + \
+              (faq_item.text[:1000] + '...') if len(faq_item.text) > 1000 else faq_item.text + '\n'
+        if len(buffer) + len(row) + 3 > 2000:
+            await ctx.send(buffer + '```')
+            buffer = '```\n'
+        buffer += row
+    if len(buffer) > 4:
+        await ctx.send(buffer + '```')
+
+
+@guide.command()
+async def add(ctx: Context, key: str, text: str):
+    """Adds a faq item."""
+    faq_item: FaqItem = FaqItem.get_or_none(FaqItem.key == key)
+    if faq_item is None:
+        FaqItem(key=key, text=text).save()
+        await ctx.send("Item successfully saved!")
+        await list.invoke(ctx)
+        refresh_faq_cache()
+    else:
+        await ctx.send("Item already exists at id {id}!".format(id=faq_item.id))
+
+
+# noinspection PyShadowingBuiltins
+@guide.command()
+async def delete(ctx: Context, id: int):
+    """Removes a faq item."""
+    faq_item: FaqItem = FaqItem.get_or_none(FaqItem.id == id)  # Column actually exists but hidden
+    if faq_item is not None:
+        faq_item.delete_instance()
+        await ctx.send("Item successfully deleted!")
+        await list.invoke(ctx)
+        refresh_faq_cache()
+    else:
+        await ctx.send("Item does not exist!")
+
+
+@bot.group()
 async def piracy(ctx: Context):
     """Command used to manage piracy filters."""
     if not await is_mod(ctx):
@@ -747,6 +800,13 @@ def refresh_piracy_cache():
     piracy_strings.clear()
     for piracy_string in PiracyString.select():
         piracy_strings.append(piracy_string.string)
+
+
+def refresh_faq_cache():
+    print("Refreshing piracy cache!")
+    faq_items.clear()
+    for faq_item in FaqItem.select():
+        faq_items[faq_item.key] = faq_item.text
 
 
 print(sys.argv[1])

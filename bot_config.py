@@ -46,3 +46,4 @@ user_moderation_excused_roles = ['Administrator', 'Community Manager', 'Web Deve
 piracy_strings = [
 
 ]
+faq_items = {}
