@@ -698,7 +698,7 @@ async def faq(ctx: Context):
 
 
 @faq.command()
-async def list(ctx: Context):
+async def listfaq(ctx: Context):
     """Lists all faq items."""
     buffer = '```\n'
     for faq_item in FaqItem.select():
@@ -719,7 +719,7 @@ async def add(ctx: Context, key: str, text: str):
     if faq_item is None:
         FaqItem(key=key, text=text).save()
         await ctx.send("Item successfully saved!")
-        await faq.list.invoke(ctx)
+        await listfaq.invoke(ctx)
         refresh_faq_cache()
     else:
         await ctx.send("Item already exists at id {id}!".format(id=faq_item.id))
