@@ -200,6 +200,9 @@ async def report(reason: str, message: Message, reporters: List[Member], attenti
 	author: Member = message.author
 	channel: TextChannel = message.channel
 	user: User = author._user
+	offending_content = message.content
+	if (offending_content is None or offending_content == ""):
+		offending_content = "📎 message attachment (probably log)" if len(message.attachments) > 0 else "🤔 something fishy is going on here"
 	e = Embed(
 		title="Report for {}".format(reason),
 		description="Not deleted/requires attention: @here" if attention else "Deleted/Doesn't require attention",
@@ -208,7 +211,7 @@ async def report(reason: str, message: Message, reporters: List[Member], attenti
 	e.add_field(name="Violator", value=message.author.mention)
 	e.add_field(name="Channel", value=channel.mention)
 	e.add_field(name="Time", value=message.created_at)
-	e.add_field(name="Contents of offending item", value=message.content, inline=False)
+	e.add_field(name="Contents of offending item", value=offending_content, inline=False)
 	e.add_field(
 		name="Search query (since discord doesnt allow jump links <:panda_face:436991868547366913>)",
 		value="`from: {nick} during: {date} in: {channel} {text}`".format(
