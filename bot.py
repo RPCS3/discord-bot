@@ -206,7 +206,7 @@ async def report(reason: str, message: Message, reporters: List[Member], attenti
 			offending_content += "\n"
 		for att in message.attachments:
 			offending_content += "\n📎 " + att.filename
-	if (offending_content is not None and offending_content != ""):
+	if (offending_content is None or offending_content == ""):
 		offending_content = "🤔 something fishy is going on here, there was no message or attachment"
 	e = Embed(
 		title="Report for {}".format(reason),
