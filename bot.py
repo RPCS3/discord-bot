@@ -201,8 +201,13 @@ async def report(reason: str, message: Message, reporters: List[Member], attenti
 	channel: TextChannel = message.channel
 	user: User = author._user
 	offending_content = message.content
-	if (offending_content is None or offending_content == ""):
-		offending_content = "📎 message attachment (probably log)" if len(message.attachments) > 0 else "🤔 something fishy is going on here"
+	if len(message.attachments) > 0:
+		if (offending_content is not None and offending_content != ""):
+			offending_content += "\n"
+		for att in message.attachments:
+			offending_content += "\n📎 " + att.filename
+	if (offending_content is not None and offending_content != ""):
+		offending_content = "🤔 something fishy is going on here, there was no message or attachment"
 	e = Embed(
 		title="Report for {}".format(reason),
 		description="Not deleted/requires attention: @here" if attention else "Deleted/Doesn't require attention",
