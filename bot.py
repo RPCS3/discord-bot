@@ -114,6 +114,8 @@ async def on_message(message: Message):
 	OnMessage event listener
 	:param message: message
 	"""
+	if await piracy_check(message):
+		return
 	# Self reply detect
 	if message.author.id == bot.user.id:
 		return
@@ -123,8 +125,6 @@ async def on_message(message: Message):
 			return await bot.process_commands(message)
 	except IndexError:
 		print("Empty message! Could still have attachments.")
-
-	await piracy_check(message)
 
 	# Code reply
 	code_list = []
@@ -249,6 +249,7 @@ async def piracy_check(message: Message):
 					rules=rules_channel.mention
 				))
 			await report("Piracy", message, None, attention=False)
+			return True
 			break
 
 
