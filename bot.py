@@ -114,10 +114,11 @@ async def on_message(message: Message):
 	OnMessage event listener
 	:param message: message
 	"""
-	if await piracy_check(message):
-		return
 	# Self reply detect
 	if message.author.id == bot.user.id:
+		return
+	# Piracy detect
+	if await piracy_check(message):
 		return
 	# Command detect
 	try:
