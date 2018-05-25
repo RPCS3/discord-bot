@@ -274,7 +274,7 @@ class LogAnalyzer(object):
             ).format(**self.parsed_data),
             inline=True
         )
-        if 'manual' in self.parsed_data['lib_loader']:
+        if 'manual' in self.parsed_data['lib_loader'].lower():
             result = result.add_field(
                 name="Selected Libraries",
                 value=', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
