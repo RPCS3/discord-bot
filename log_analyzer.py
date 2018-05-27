@@ -182,7 +182,13 @@ class LogAnalyzer(object):
     def sanitize(self):
         result = {}
         for k, v in self.parsed_data.items():
-            result[k] = sanitize_string(v)
+            r = sanitize_string(v)
+            if r is not None:
+                if r == "true":
+                    r = "[x]"
+                elif r == "false":
+                    r = "[ ]"
+            result[k] = r
         self.parsed_data = result
         libs = []
         for l in self.libraries:
