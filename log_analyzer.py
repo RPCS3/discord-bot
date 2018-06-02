@@ -88,12 +88,14 @@ class LogAnalyzer(object):
             'end_trigger': 'Audio:',
             'regex': re.compile('Renderer: (?P<renderer>.*?)\n.*?'
                                 'Resolution: (?P<resolution>.*?)\n.*?'
+                                'Aspect ratio: (?P<aspect_ratio>.*?)\n.*?'
                                 'Frame limit: (?P<frame_limit>.*?)\n.*?'
                                 'Write Color Buffers: (?P<write_color_buffers>.*?)\n.*?'
                                 'VSync: (?P<vsync>.*?)\n.*?'
                                 'Use GPU texture scaling: (?P<gpu_texture_scaling>.*?)\n.*?'
                                 'Strict Rendering Mode: (?P<strict_rendering_mode>.*?)\n.*?'
                                 'Disable Vertex Cache: (?P<vertex_cache>.*?)\n.*?'
+                                'Blit: (?P<cpu_blit>.*?)\n.*?'
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
                                 'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
@@ -141,7 +143,7 @@ class LogAnalyzer(object):
                     if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
                         group_args['resolution_scale'] = "Strict Mode"
                     if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
-                        group_args['spu_threads'] = 'auto'
+                        group_args['spu_threads'] = 'Auto'
                     if 'spu_secondary_cores' in group_args and group_args['spu_secondary_cores'] is not None:
                         group_args['thread_scheduler'] = group_args['spu_secondary_cores']
                     if 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] == '""':
@@ -157,9 +159,9 @@ class LogAnalyzer(object):
                             group_args['gpu_info'] = 'Unknown'
                     if 'af_override' in group_args:
                         if group_args['af_override'] == '0':
-                            group_args['af_override'] = 'auto'
+                            group_args['af_override'] = 'Auto'
                         elif group_args['af_override'] == '1':
-                            group_args['af_override'] = 'disabled'
+                            group_args['af_override'] = 'Disabled'
                     self.parsed_data.update(group_args)
             except AttributeError as ae:
                 print(ae)
@@ -260,6 +262,7 @@ class LogAnalyzer(object):
                 '`Thread Scheduler: {thread_scheduler:>16s}`\n'
                 '`Detected OS: {os_path:>21s}`\n'
                 '`SPU Threads: {spu_threads:>21s}`\n'
+                '`Force CPU Blit: {cpu_blit:>18s}`\n'
                 '`Hook Static Functions: {hook_static_functions:>11s}`\n'
                 '`Lib Loader: {lib_loader:>22s}`\n'
             ).format(**self.parsed_data),
@@ -268,6 +271,7 @@ class LogAnalyzer(object):
             name='GPU Settings' if not custom_config else 'Per-game GPU Settings',
             value=(
                 '`Renderer: {renderer:>24s}`\n'
+                '`Aspect ratio: {aspect_ratio:>20s}`\n'
                 '`Resolution: {resolution:>22s}`\n'
                 '`Resolution Scale: {resolution_scale:>16s}`\n'
                 '`Resolution Scale Threshold: {texture_scale_threshold:>6s}`\n'
