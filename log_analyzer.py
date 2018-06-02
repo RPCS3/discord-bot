@@ -1,5 +1,6 @@
 import re
 
+from collections import deque
 from api import sanitize_string
 from api.result import ApiResult
 from bot_config import piracy_strings
@@ -24,7 +25,7 @@ class LogAnalyzer(object):
             self.build_and_specs = self.parsed_data["build_and_specs"]
         self.trigger = ''
         self.buffer = ''
-        self.last_line = ''
+        self.buffer_lines.clear()
         self.libraries = []
         self.parsed_data = { "build_and_specs": self.build_and_specs }
         return self.ERROR_SUCCESS
@@ -37,7 +38,6 @@ class LogAnalyzer(object):
         return self.ERROR_SUCCESS
 
     def done(self):
-        self.phase_index = 0
         return self.ERROR_STOP
 
     def done_and_reset(self):
@@ -128,14 +128,18 @@ class LogAnalyzer(object):
         },
         {
             'end_trigger': 'Objects cleared...',
-            'regex': None,
+            'regex': re.compile('RSX: (?:\\d|\\.|\\s|\\w|-)*(?P<driver_version>(?:\\d+\\.)*?\\d+)\n[^\n]*?'
+                                'RSX: [^\n]+\n[^\n]*?'
+                                'RSX: (?P<driver_manuf>.*?)\n[^\n]*?'
+                                'RSX: Supported texel buffer size reported: (?P<texel_buffer_size>\\d*?) bytes\n.*?',
+                                flags=re.DOTALL | re.MULTILINE),
             'function': done_and_reset
         }
     )
 
     def __init__(self):
         self.buffer = ''
-        self.last_line = ''
+        self.buffer_lines = deque([])
         self.total_data_len = 0
         self.phase_index = 0
         self.build_and_specs = None
@@ -151,22 +155,23 @@ class LogAnalyzer(object):
                 or self.phase[self.phase_index]['end_trigger'] is data.strip():
             error_code = self.process_data()
             self.buffer = ''
-            self.last_line = ''
-            if error_code == self.ERROR_SUCCESS:
+            self.buffer_lines.clear()
+            if error_code == self.ERROR_SUCCESS or error_code == self.ERROR_STOP:
                 self.phase_index += 1
-            else:
+            if error_code != self.ERROR_SUCCESS:
                 self.sanitize()
-                return error_code
+            return error_code
         else:
-            if len(self.buffer) > 256 * 1024:
-                self.buffer = self.last_line + '\n' + data
-            else:
-                self.buffer += '\n' + data
-            self.last_line = data
+            if len(self.buffer_lines) > 256:
+                self.buffer_lines.popleft()
+            self.buffer_lines.append(data)
         return self.ERROR_SUCCESS
 
     def process_data(self):
+        self.buffer = '\n'.join(self.buffer_lines)
         current_phase = self.phase[self.phase_index]
+        if (self.phase_index > 5):
+            print(self.buffer)
         if current_phase['regex'] is not None:
             try:
                 regex_result = re.search(current_phase['regex'], self.buffer.strip() + '\n')
@@ -189,6 +194,10 @@ class LogAnalyzer(object):
                             group_args['gpu_info'] = group_args['d3d_gpu']
                         else:
                             group_args['gpu_info'] = 'Unknown'
+                    if 'driver_manuf' in group_args and group_args['gpu_info'] == 'Unknown':
+                        group_args['gpu_info'] = group_args['driver_manuf']
+                    if 'driver_version' in group_args and 'gpu_info' in group_args:
+                        group_args["gpu_info"] += "(" + group_args["driver_version"] + ")"
                     if 'af_override' in group_args:
                         if group_args['af_override'] == '0':
                             group_args['af_override'] = 'Auto'
