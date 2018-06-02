@@ -52,7 +52,7 @@ class LogAnalyzer(object):
         except AttributeError:
             self.product_info = ApiResult(None, dict({"status": "Unknown"}))
             return self.ERROR_SUCCESS
-    
+
     def parse_rsx(self):
         if len(self.buffer_lines) < 4:
             return False
@@ -70,7 +70,7 @@ class LogAnalyzer(object):
             print(ke)
             pass
         return self.ERROR_SUCCESS
-    
+
     """
     End Trigger
     Regex
@@ -251,12 +251,12 @@ class LogAnalyzer(object):
             group_args['spu_threads'] = 'Auto'
         if 'spu_secondary_cores' in group_args and group_args['spu_secondary_cores'] is not None:
             group_args['thread_scheduler'] = group_args['spu_secondary_cores']
-        if 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] != '""':
+        if 'driver_manuf_new' in group_args and group_args['driver_manuf_new'] is not None:
+            group_args['gpu_info'] = group_args['driver_manuf_new']
+        elif 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] != '""':
             group_args['gpu_info'] = group_args['vulkan_gpu']
         elif 'd3d_gpu' in group_args and group_args['d3d_gpu'] != '""':
             group_args['gpu_info'] = group_args['d3d_gpu']
-        elif 'driver_manuf_new' in group_args and group_args['driver_manuf_new'] is not None:
-            group_args['gpu_info'] = group_args['driver_manuf_new']
         elif 'driver_manuf' in group_args and group_args['driver_manuf'] is not None:
             group_args['gpu_info'] = group_args['driver_manuf']
         else:
