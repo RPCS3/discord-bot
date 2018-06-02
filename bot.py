@@ -152,7 +152,6 @@ async def on_message(message: Message):
 	# Log Analysis!
 	if len(message.attachments) > 0:
 		log = LogAnalyzer()
-		sent_log = False
 		print("Attachments present, looking for log file...")
 		for attachment in filter(lambda a: any(e['ext'] in a.url for e in file_handlers), message.attachments):
 			for handler in file_handlers:
@@ -162,6 +161,8 @@ async def on_message(message: Message):
 						print("Opened request stream!")
 						# noinspection PyTypeChecker
 						try:
+							sent_log = False
+							result = None
 							for row in stream_line_by_line_safe(response, handler['handler']):
 								error_code = log.feed(row)
 								if error_code == LogAnalyzer.ERROR_SUCCESS:
@@ -172,20 +173,24 @@ async def on_message(message: Message):
 									break
 								elif error_code == LogAnalyzer.ERROR_OVERFLOW:
 									print("Possible Buffer Overflow Attack Detected!")
+									if result is None:
+										result = log.get_embed_report()
+									result = result.add_field(name="Notes",value="Log was too large, showing last processed run")
 									break
 								elif error_code == LogAnalyzer.ERROR_STOP:
 									# await message.channel.send(log.get_text_report(), embed=log.product_info.to_embed())
-									await message.channel.send(embed=log.get_embed_report())
-									sent_log = True
-									break
+									result = log.get_embed_report()
 								elif error_code == LogAnalyzer.ERROR_FAIL:
 									print("Log parsing failed")
 									break
 							if not sent_log:
-								await message.channel.send(
-									"Log analysis failed, most likely cause is a truncated/invalid log."
-								)
-								print("Log analyzer didn't finish, probably a truncated/invalid log!")
+								if result is None:
+									await message.channel.send(
+										"Log analysis failed, most likely cause is a truncated/invalid log."
+									)
+									print("Log analyzer didn't finish, probably a truncated/invalid log!")
+								else:
+									await message.channel.send(embed=result)
 						except Deflate64Exception:
 							await message.channel.send(
 								"Unsupported compression algorithm used.\n"

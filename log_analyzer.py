@@ -17,6 +17,18 @@ class LogAnalyzer(object):
     ERROR_FAIL = -2
     ERROR_DEFLATE_64 = -3
 
+    def clear_results(self):
+        if self is None or self.parsed_data is None:
+            return self.ERROR_SUCCESS
+        if self.build_and_specs is None:
+            self.build_and_specs = self.parsed_data["build_and_specs"]
+        self.trigger = ''
+        self.buffer = ''
+        self.last_line = ''
+        self.libraries = []
+        self.parsed_data = { "build_and_specs": self.build_and_specs }
+        return self.ERROR_SUCCESS
+
     def piracy_check(self):
         for trigger in piracy_strings:
             if trigger.lower() in self.buffer.lower():
@@ -25,6 +37,11 @@ class LogAnalyzer(object):
         return self.ERROR_SUCCESS
 
     def done(self):
+        self.phase_index = 0
+        return self.ERROR_STOP
+
+    def done_and_reset(self):
+        self.phase_index = 0
         return self.ERROR_STOP
 
     def get_id(self):
@@ -44,7 +61,7 @@ class LogAnalyzer(object):
             print(ke)
             pass
         return self.ERROR_SUCCESS
-
+    
     """
     End Trigger
     Regex
@@ -55,10 +72,11 @@ class LogAnalyzer(object):
         {
             'end_trigger': '·',
             'regex': re.compile('(?P<build_and_specs>.*)', flags=re.DOTALL | re.MULTILINE),
+            'function': clear_results
         },
         {
             'end_trigger': 'Core:',
-            'regex': re.compile('Path: (?:(?P<win_path>\w:/)|(?P<lin_path>/)).*?\n'
+            'regex': re.compile('Path: (?:(?P<win_path>\\w:/)|(?P<lin_path>/)).*?\n'
                                 '(?:.* custom config: (?P<custom_config>.*?)\n.*?)?',
                                 flags=re.DOTALL | re.MULTILINE),
             'function': [get_id, piracy_check]
@@ -99,38 +117,52 @@ class LogAnalyzer(object):
                                 'Resolution Scale: (?P<resolution_scale>.*?)\n.*?'
                                 'Anisotropic Filter Override: (?P<af_override>.*?)\n.*?'
                                 'Minimum Scalable Dimension: (?P<texture_scale_threshold>.*?)\n.*?'
-                                '(?:D3D12|DirectX 12):\s*\n\s*Adapter: (?P<d3d_gpu>.*?)\n.*?'
-                                'Vulkan:\s*\n\s*Adapter: (?P<vulkan_gpu>.*?)\n.*?',
+                                '(?:D3D12|DirectX 12):\\s*\n\\s*Adapter: (?P<d3d_gpu>.*?)\n.*?'
+                                'Vulkan:\\s*\n\\s*Adapter: (?P<vulkan_gpu>.*?)\n.*?',
                                 flags=re.DOTALL | re.MULTILINE)
         },
         {
             'end_trigger': 'Log:',
             'regex': None,
             'function': done
+        },
+        {
+            'end_trigger': 'Objects cleared...',
+            'regex': None,
+            'function': done_and_reset
         }
     )
 
     def __init__(self):
         self.buffer = ''
+        self.last_line = ''
+        self.total_data_len = 0
         self.phase_index = 0
+        self.build_and_specs = None
         self.trigger = ''
         self.libraries = []
         self.parsed_data = {}
 
     def feed(self, data):
-        if len(self.buffer) > 16 * 1024 * 1024:
+        self.total_data_len += len(data)
+        if self.total_data_len > 32 * 1024 * 1024:
             return self.ERROR_OVERFLOW
         if self.phase[self.phase_index]['end_trigger'] in data \
                 or self.phase[self.phase_index]['end_trigger'] is data.strip():
             error_code = self.process_data()
+            self.buffer = ''
+            self.last_line = ''
             if error_code == self.ERROR_SUCCESS:
-                self.buffer = ''
                 self.phase_index += 1
             else:
                 self.sanitize()
                 return error_code
         else:
-            self.buffer += '\n' + data
+            if len(self.buffer) > 256 * 1024:
+                self.buffer = self.last_line + '\n' + data
+            else:
+                self.buffer += '\n' + data
+            self.last_line = data
         return self.ERROR_SUCCESS
 
     def process_data(self):
