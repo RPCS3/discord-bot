@@ -1,5 +1,6 @@
 import re
 
+import itertools
 from collections import deque
 from api import sanitize_string
 from api.result import ApiResult
@@ -51,6 +52,14 @@ class LogAnalyzer(object):
         except AttributeError:
             self.product_info = ApiResult(None, dict({"status": "Unknown"}))
             return self.ERROR_SUCCESS
+    
+    def parse_rsx(self):
+        if len(self.buffer_lines) < 4:
+            return False
+        if  all(line.startswith('·!') for line in itertools.islice(self.buffer_lines, 4)) and \
+            all('RSX: ' in line for line in itertools.islice(self.buffer_lines, 4)):
+            return True
+        return False
 
     def get_libraries(self):
         try:
@@ -128,11 +137,19 @@ class LogAnalyzer(object):
         },
         {
             'end_trigger': 'Objects cleared...',
-            'regex': re.compile('RSX: (?:\\d|\\.|\\s|\\w|-)*(?P<driver_version>(?:\\d+\\.)*?\\d+)\n[^\n]*?'
+            'regex': re.compile('(?:'
+                                'RSX:(?:\\d|\\.|\\s|\\w|-)* (?P<driver_version>(?:\\d+\\.)*\\d+)\n[^\n]*?'
                                 'RSX: [^\n]+\n[^\n]*?'
                                 'RSX: (?P<driver_manuf>.*?)\n[^\n]*?'
-                                'RSX: Supported texel buffer size reported: (?P<texel_buffer_size>\\d*?) bytes\n.*?',
+                                'RSX: Supported texel buffer size reported: (?P<texel_buffer_size>\\d*?) bytes'
+                                ')|(?:'
+                                'GL RENDERER: (?P<driver_manuf_new>.*?)\n[^\n]*?'
+                                'GL VERSION:(?:\\d|\\.|\\s|\\w|-)* (?P<driver_version_new>(?:\\d+\\.)*\\d+)\n[^\n]*?'
+                                'RSX: [^\n]+\n[^\n]*?'
+                                'RSX: Supported texel buffer size reported: (?P<texel_buffer_size_new>\\d*?) bytes'
+                                ')\n.*?',
                                 flags=re.DOTALL | re.MULTILINE),
+            'on_buffer_flush': parse_rsx,
             'function': done_and_reset
         }
     )
@@ -163,53 +180,38 @@ class LogAnalyzer(object):
             return error_code
         else:
             if len(self.buffer_lines) > 256:
+                error_code = self.process_data(True)
+                if error_code != self.ERROR_SUCCESS:
+                    self.sanitize()
+                    return error_code
                 self.buffer_lines.popleft()
             self.buffer_lines.append(data)
         return self.ERROR_SUCCESS
 
-    def process_data(self):
-        self.buffer = '\n'.join(self.buffer_lines)
+    def process_data(self, on_buffer_flush = False):
         current_phase = self.phase[self.phase_index]
-        if (self.phase_index > 5):
-            print(self.buffer)
+        # if buffer was flushed and check function found relevant data, run regex
+        if on_buffer_flush:
+            try:
+                if current_phase['on_buffer_flush'] is not None:
+                    if not current_phase['on_buffer_flush'](self):
+                        return self.ERROR_SUCCESS
+            except KeyError:
+                pass
+        self.buffer = '\n'.join(self.buffer_lines)
         if current_phase['regex'] is not None:
             try:
                 regex_result = re.search(current_phase['regex'], self.buffer.strip() + '\n')
                 if regex_result is not None:
                     group_args = regex_result.groupdict()
-                    if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
-                        group_args['resolution_scale'] = "Strict Mode"
-                    if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
-                        group_args['spu_threads'] = 'Auto'
-                    if 'spu_secondary_cores' in group_args and group_args['spu_secondary_cores'] is not None:
-                        group_args['thread_scheduler'] = group_args['spu_secondary_cores']
-                    if 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] == '""':
-                        group_args['vulkan_gpu'] = 'Unknown'
-                    if 'd3d_gpu' in group_args and group_args['d3d_gpu'] == '""':
-                        group_args['d3d_gpu'] = 'Unknown'
-                    if 'vulkan_gpu' in group_args:
-                        if group_args['vulkan_gpu'] != 'Unknown':
-                            group_args['gpu_info'] = group_args['vulkan_gpu']
-                        elif 'd3d_gpu' in group_args:
-                            group_args['gpu_info'] = group_args['d3d_gpu']
-                        else:
-                            group_args['gpu_info'] = 'Unknown'
-                    if 'driver_manuf' in group_args and group_args['gpu_info'] == 'Unknown':
-                        group_args['gpu_info'] = group_args['driver_manuf']
-                    if 'driver_version' in group_args and 'gpu_info' in group_args:
-                        group_args["gpu_info"] += "(" + group_args["driver_version"] + ")"
-                    if 'af_override' in group_args:
-                        if group_args['af_override'] == '0':
-                            group_args['af_override'] = 'Auto'
-                        elif group_args['af_override'] == '1':
-                            group_args['af_override'] = 'Disabled'
                     self.parsed_data.update(group_args)
             except AttributeError as ae:
                 print(ae)
                 print("Regex failed!")
                 return self.ERROR_FAIL
         try:
-            if current_phase['function'] is not None:
+            # run funcitons only on end_trigger
+            if current_phase['function'] is not None and not on_buffer_flush:
                 if isinstance(current_phase['function'], list):
                     for func in current_phase['function']:
                         error_code = func(self)
@@ -241,7 +243,36 @@ class LogAnalyzer(object):
     def get_trigger(self):
         return self.trigger
 
+    def process_final_data(self):
+        group_args = self.parsed_data
+        if 'strict_rendering_mode' in group_args and group_args['strict_rendering_mode'] == 'true':
+            group_args['resolution_scale'] = "Strict Mode"
+        if 'spu_threads' in group_args and group_args['spu_threads'] == '0':
+            group_args['spu_threads'] = 'Auto'
+        if 'spu_secondary_cores' in group_args and group_args['spu_secondary_cores'] is not None:
+            group_args['thread_scheduler'] = group_args['spu_secondary_cores']
+        if 'vulkan_gpu' in group_args and group_args['vulkan_gpu'] != '""':
+            group_args['gpu_info'] = group_args['vulkan_gpu']
+        elif 'd3d_gpu' in group_args and group_args['d3d_gpu'] != '""':
+            group_args['gpu_info'] = group_args['d3d_gpu']
+        elif 'driver_manuf_new' in group_args and group_args['driver_manuf_new'] is not None:
+            group_args['gpu_info'] = group_args['driver_manuf_new']
+        elif 'driver_manuf' in group_args and group_args['driver_manuf'] is not None:
+            group_args['gpu_info'] = group_args['driver_manuf']
+        else:
+            group_args['gpu_info'] = 'Unknown'
+        if 'driver_version_new' in group_args and group_args["driver_version_new"] is not None:
+            group_args["gpu_info"] = group_args["gpu_info"] + " (" + group_args["driver_version_new"] + ")"
+        elif 'driver_version' in group_args and group_args["driver_version"] is not None:
+            group_args["gpu_info"] = group_args["gpu_info"] + " (" + group_args["driver_version"] + ")"
+        if 'af_override' in group_args:
+            if group_args['af_override'] == '0':
+                group_args['af_override'] = 'Auto'
+            elif group_args['af_override'] == '1':
+                group_args['af_override'] = 'Disabled'
+
     def get_text_report(self):
+        self.process_final_data()
         additional_info = {
             'product_info': self.product_info.to_string(),
             'libs': ', '.join(self.libraries) if len(self.libraries) > 0 and self.libraries[0] != "]" else "None",
@@ -273,6 +304,7 @@ class LogAnalyzer(object):
         ).format(**additional_info)
 
     def get_embed_report(self):
+        self.process_final_data()
         lib_loader = self.parsed_data['lib_loader']
         if lib_loader is not None:
             lib_loader = lib_loader.lower()
