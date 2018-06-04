@@ -95,7 +95,7 @@ async def on_reaction_add(reaction: Reaction, user: User):
 
 				if len(reporters) >= user_moderation_count_needed:
 					await message.add_reaction(user_moderation_character)
-					await report("User moderation report ⭐💵", message, reporters=reporters, attention=True)
+					await report("User moderation report ⭐💵", trigger=None, message=message, reporters=reporters, attention=True)
 
 
 @bot.event
@@ -167,7 +167,7 @@ async def on_message(message: Message):
 								if error_code == LogAnalyzer.ERROR_SUCCESS:
 									continue
 								elif error_code == LogAnalyzer.ERROR_PIRACY:
-									await piracy_alert(message)
+									await piracy_alert(message, log.get_trigger())
 									sent_log = True
 									break
 								elif error_code == LogAnalyzer.ERROR_OVERFLOW:
@@ -197,7 +197,7 @@ async def on_message(message: Message):
 		del log
 
 
-async def report(reason: str, message: Message, reporters: List[Member], attention=False):
+async def report(report_kind: str, trigger: str, message: Message, reporters: List[Member], attention=False):
 	author: Member = message.author
 	channel: TextChannel = message.channel
 	user: User = author._user
@@ -209,9 +209,11 @@ async def report(reason: str, message: Message, reporters: List[Member], attenti
 			offending_content += "\n📎 " + att.filename
 	if (offending_content is None or offending_content == ""):
 		offending_content = "🤔 something fishy is going on here, there was no message or attachment"
+	report_text = ("Triggered by: `" + trigger + "`\n") if trigger is not None else ""
+	report_text += "Not deleted/requires attention: @here" if attention else "Deleted/Doesn't require attention"
 	e = Embed(
-		title="Report for {}".format(reason),
-		description="Not deleted/requires attention: @here" if attention else "Deleted/Doesn't require attention",
+		title="Report for {}".format(report_kind),
+		description=report_text,
 		color=0xe74c3c if attention else 0xf9b32f
 	)
 	e.add_field(name="Violator", value=message.author.mention)
@@ -242,25 +244,25 @@ async def piracy_check(message: Message):
 				await message.delete()
 			except Forbidden as fbe:
 				print("Couldn't delete the moderated message")
-				await report("Piracy", message, None, attention=True)
+				await report("Piracy", trigger, message, None, attention=True)
 				return
 			await message.channel.send(
 				"{author} Please follow the {rules} and do not discuss piracy on this server. Repeated offence may result in a ban.".format(
 					author=message.author.mention,
 					rules=rules_channel.mention
 				))
-			await report("Piracy", message, None, attention=False)
+			await report("Piracy", trigger, message, None, attention=False)
 			return True
 			break
 
 
-async def piracy_alert(message: Message):
+async def piracy_alert(message: Message, trigger: str):
 	try:
 		await message.delete()
-		await report("Pirated Release", message, None, attention=False)
+		await report("Pirated Release", trigger, message, None, attention=False)
 	except Forbidden as fbe:
 		print("Couldn't delete the moderated log attachment")
-		await report("Pirated Release", message, None, attention=True)
+		await report("Pirated Release", trigger, message, None, attention=True)
 	await message.channel.send(
 		"Pirated release detected {author}!\n"
 		"**You are being denied further support until you legally dump the game!**\n"
