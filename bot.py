@@ -220,16 +220,17 @@ async def report(report_kind: str, trigger: str, message: Message, reporters: Li
 	e.add_field(name="Channel", value=channel.mention)
 	e.add_field(name="Time", value=message.created_at)
 	e.add_field(name="Contents of offending item", value=offending_content, inline=False)
-	e.add_field(
-		name="Search query (since discord doesnt allow jump links <:panda_face:436991868547366913>)",
-		value="`from: {nick} during: {date} in: {channel} {text}`".format(
-			nick=user.name + "#" + user.discriminator,
-			date=message.created_at.strftime("%Y-%m-%d"),
-			channel=channel.name,
-			text=message.content.split(" ")[-1]
-		),
-		inline=False
-	)
+	if attention:
+		e.add_field(
+			name="Search query (since discord doesnt allow jump links <:panda_face:436991868547366913>)",
+			value="`from: {nick} during: {date} in: {channel} {text}`".format(
+				nick=user.name + "#" + user.discriminator,
+				date=message.created_at.strftime("%Y-%m-%d"),
+				channel=channel.name,
+				text=message.content.split(" ")[-1]
+			),
+			inline=False
+		)
 	if reporters is not None:
 		e.add_field(name="Reporters", value='\n'.join([x.mention for x in reporters]))
 	await bot_log.send("", embed=e)
