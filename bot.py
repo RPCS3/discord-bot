@@ -528,17 +528,18 @@ async def is_mod(ctx: Context):
         return False
 
 
-async def is_private_channel(ctx: Context):
+async def is_private_channel(ctx: Context, gay=True):
     message: Message = ctx.message
     author: Member = message.author
     if isinstance(ctx.channel, DMChannel):
         return True
     else:
-        await ctx.channel.send(
-            '{mention} https://i.imgflip.com/24qx11.jpg'.format(
-                mention=author.mention
+        if gay:
+            await ctx.channel.send(
+                '{mention} https://i.imgflip.com/24qx11.jpg'.format(
+                    mention=author.mention
+                )
             )
-        )
         return False
 
 
@@ -806,7 +807,7 @@ async def list_warnings(ctx: Context, user: User):
 
 
 async def list_warnings_for_user(ctx: Context, user: User):
-    is_private = await is_private_channel(ctx)
+    is_private = await is_private_channel(ctx, gay=False)
     if user is None:
         await ctx.send("A user to scan for needs to be provided...")
         return
