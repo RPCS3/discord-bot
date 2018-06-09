@@ -2,7 +2,7 @@ import re
 
 import itertools
 from collections import deque
-from api import sanitize_string
+from api import sanitize_string, trim_string
 from api.result import ApiResult
 from bot_config import piracy_strings
 from bot_utils import get_code
@@ -24,7 +24,8 @@ class LogAnalyzer(object):
             return self.ERROR_SUCCESS
         if self.build_and_specs is None:
             self.build_and_specs = self.parsed_data["build_and_specs"]
-        self.trigger = ''
+        self.trigger = None
+        self.trigger_context = None
         self.buffer = ''
         self.buffer_lines.clear()
         self.libraries = []
@@ -33,8 +34,12 @@ class LogAnalyzer(object):
 
     def piracy_check(self):
         for trigger in piracy_strings:
-            if trigger.lower() in self.buffer.lower():
+            lower_trigger = trigger.lower()
+            if lower_trigger in self.buffer.lower():
                 self.trigger = trigger
+                for line in self.buffer_lines:
+                    if lower_trigger in line.lower():
+                        self.trigger_context = line
                 return self.ERROR_PIRACY
         return self.ERROR_SUCCESS
 
@@ -160,7 +165,8 @@ class LogAnalyzer(object):
         self.total_data_len = 0
         self.phase_index = 0
         self.build_and_specs = None
-        self.trigger = ''
+        self.trigger = None
+        self.trigger_context = None
         self.libraries = []
         self.parsed_data = {}
 
@@ -239,9 +245,16 @@ class LogAnalyzer(object):
         for l in self.libraries:
             libs.append(sanitize_string(l))
         self.libraries = libs
+        if self.trigger is not None:
+            self.trigger = sanitize_string(self.trigger) 
+        if self.trigger_context is not None:
+            self.trigger_context = sanitize_string(trim_string(self.trigger_context, 256))
 
     def get_trigger(self):
         return self.trigger
+
+    def get_trigger_context(self):
+        return self.trigger_context
 
     def process_final_data(self):
         group_args = self.parsed_data

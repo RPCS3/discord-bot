@@ -98,7 +98,7 @@ async def on_reaction_add(reaction: Reaction, user: User):
                 if len(reporters) >= user_moderation_count_needed:
                     await message.add_reaction(user_moderation_character)
                     # noinspection PyTypeChecker
-                    await report("User moderation report ⭐💵", trigger=None, message=message, reporters=reporters,
+                    await report("User moderation report ⭐💵", trigger=None, trigger_context=None, message=message, reporters=reporters,
                                  attention=True)
 
 
@@ -172,7 +172,7 @@ async def on_message(message: Message):
                                 if error_code == LogAnalyzer.ERROR_SUCCESS:
                                     continue
                                 elif error_code == LogAnalyzer.ERROR_PIRACY:
-                                    await piracy_alert(message, log.get_trigger())
+                                    await piracy_alert(message, log.get_trigger(), log.get_trigger_context())
                                     sent_log = True
                                     break
                                 elif error_code == LogAnalyzer.ERROR_OVERFLOW:
@@ -207,7 +207,7 @@ async def on_message(message: Message):
         del log
 
 
-async def report(report_kind: str, trigger: str, message: Message, reporters: List[Member], attention=False):
+async def report(report_kind: str, trigger: str, trigger_context: str, message: Message, reporters: List[Member], attention=False):
     author: Member = message.author
     channel: TextChannel = message.channel
     user: User = author._user
@@ -221,6 +221,7 @@ async def report(report_kind: str, trigger: str, message: Message, reporters: Li
     if offending_content is None or offending_content == "":
         offending_content = "🤔 something fishy is going on here, there was no message or attachment"
     report_text = ("Triggered by: `" + trigger + "`\n") if trigger is not None else ""
+    report_text += ("Triggered in: ```" + trigger_context + "```\n") if trigger_context is not None else ""
     report_text += "Not deleted/requires attention: @here" if attention else "Deleted/Doesn't require attention"
     e = Embed(
         title="Report for {}".format(report_kind),
@@ -257,7 +258,7 @@ async def piracy_check(message: Message):
                 await message.delete()
             except Forbidden as fbe:
                 print("Couldn't delete the moderated message")
-                await report("Piracy", trigger, message, None, attention=True)
+                await report("Piracy", trigger, None, message, None, attention=True)
                 return
             await message.channel.send(
                 "{author} Please follow the {rules} and do not discuss "
@@ -265,20 +266,20 @@ async def piracy_check(message: Message):
                     author=message.author.mention,
                     rules=rules_channel.mention
                 ))
-            await report("Piracy", trigger, message, None, attention=False)
+            await report("Piracy", trigger, None, message, None, attention=False)
             await add_warning_for_user(message.channel, message.author._user, 'Pirated Phrase Mentioned',
                                        str(message.created_at) + ' - ' + message.content)
             return True
 
 
 # noinspection PyTypeChecker
-async def piracy_alert(message: Message, trigger: str):
+async def piracy_alert(message: Message, trigger: str, trigger_context: str):
     try:
         await message.delete()
-        await report("Pirated Release", trigger, message, None, attention=False)
+        await report("Pirated Release", trigger, trigger_context, message, None, attention=False)
     except Forbidden as fbe:
         print("Couldn't delete the moderated log attachment")
-        await report("Pirated Release", trigger, message, None, attention=True)
+        await report("Pirated Release", trigger, trigger_context, message, None, attention=True)
 
     await message.channel.send(
         "Pirated release detected {author}!\n"
