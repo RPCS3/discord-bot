@@ -19,10 +19,16 @@ class PiracyString(BaseModel):
     string = CharField(unique=True)
 
 
+class Warning(BaseModel):
+    discord_id = IntegerField()
+    reason = TextField()
+    full_reason = TextField()
+
+
 def init():
     with db:
         db.get_tables()
-        db.create_tables([Moderator, PiracyString])
+        db.create_tables([Moderator, PiracyString, Warning])
         try:
             Moderator.get(discord_id=bot_admin_id)
         except DoesNotExist:
