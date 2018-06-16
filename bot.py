@@ -19,7 +19,7 @@ from api.request import ApiRequest
 from api.utils import sanitize_string, trim_string
 from bot_config import *
 from bot_utils import get_code
-from database import Moderator, init, PiracyString, Warning
+from database import Moderator, init, PiracyString, Warning, Explanation
 from log_analyzer import LogAnalyzer
 from math_parse import NumericStringParser
 from math_utils import limit_int
@@ -77,6 +77,11 @@ async def on_ready():
     reaction_deny = '👮‍'
     refresh_piracy_cache()
 
+async def react_with(ctx: Context, reaction: Emoji):
+    try:
+        await ctx.message.add_reaction(reaction)
+    except Exception:
+        pass
 
 @bot.event
 async def on_reaction_add(reaction: Reaction, user: User):
@@ -107,7 +112,7 @@ async def on_reaction_add(reaction: Reaction, user: User):
                     print(len(reporters))
 
                 if len(reporters) >= user_moderation_count_needed:
-                    await message.add_reaction(user_moderation_character)
+                    await react_with(ctx, user_moderation_character)
                     # noinspection PyTypeChecker
                     await report("User moderation report ⭐💵", trigger=None, trigger_context=None, message=message, reporters=reporters,
                                  attention=True)
@@ -518,10 +523,7 @@ async def is_sudo(ctx: Context):
         print("User " + author.display_name + " is sudoer, allowed!")
         return True
     else:
-        try:
-            await ctx.message.add_reaction(reaction_deny)
-        except Exception:
-            pass
+        await react_with(ctx, reaction_deny)
         await ctx.channel.send(
             "{mention} is not a sudoer, this incident will be reported!".format(mention=author.mention)
         )
@@ -538,10 +540,7 @@ async def is_mod(ctx: Context):
         print("User " + author.display_name + " is moderator, allowed!")
         return True
     else:
-        try:
-            await ctx.message.add_reaction(reaction_deny)
-        except Exception:
-            pass
+        await react_with(ctx, reaction_deny)
         await ctx.channel.send("{mention} is not a mod, this incident will be reported!".format(mention=author.mention))
         return False
 
@@ -789,7 +788,7 @@ async def delete(ctx: Context, id: int):
 
 @bot.group()
 async def warn(ctx: Context):
-    """Command used to manage warnings. USE: !warn @user reason"""
+    """Command used to issue and manage warnings. USE: !warn @user reason"""
     if await is_mod(ctx):
         if ctx.invoked_subcommand is None:
             args = ctx.message.content.split(' ')[1:]
@@ -797,16 +796,10 @@ async def warn(ctx: Context):
             user: User = bot.get_user(user_id)
             reason: str = ' '.join(args[1:])
             if await add_warning_for_user(ctx, ctx.message.author.id, user_id, reason):
-                try:
-                    await ctx.message.add_reaction(reaction_confirm)
-                except Exception:
-                    pass
+                await react_with(ctx, reaction_confirm)
                 await list_warnings_for_user(ctx, user_id, user.name if user is not None else "unknown user")
             else:
-                try:
-                    await ctx.message.add_reaction(reaction_failed)
-                except Exception:
-                    pass
+                await react_with(ctx, reaction_failed)
                 await list_warnings_for_user(ctx, user_id, user.name if user is not None else "")
     else:
         ctx.invoked_subcommand = None
@@ -897,6 +890,51 @@ async def remove(ctx: Context, id: int):
             await list_warnings_for_user(ctx, warning.discord_id, "unknown user")
     else:
         await ctx.send("Warning does not exist!")
+
+
+@bot.group()
+async def explain(ctx: Context):
+    """Command used to show and manage explanations. USE: !explain term"""
+    if ctx.invoked_subcommand is None:
+        args = ctx.message.content.split(' ')[1:]
+        if (len(args) == 0):
+            await ctx.send("Use !explain term")
+            return
+        term = args[0]
+        explanation = Explanation.get_or_none(Explanation.keyword == term)
+        if explanation is None:
+            await react_with(ctx, reaction_failed)
+        else:
+            await ctx.send(explanation.text)
+
+
+@explain.command()
+async def add(ctx: Context, *args):
+    """Add new term with specified explanation. USE: !explain add <term> <explanation>"""
+    if not await is_mod(ctx):
+        return
+
+    if (len(args) < 2):
+        await react_with(ctx, reaction_failed)
+        return
+
+    term = args[0]
+    text = ' '.join(args[1:])
+    Explanation(keyword=term, text=text).save()
+    await react_with(ctx, reaction_confirm)
+
+@explain.command()
+async def list(ctx: Context):
+    """List all known terms that could be used for !explain command"""
+    buffer = 'Defined terms:\n'
+    for explanation in Explanation.select(Explanation.keyword).order_by(Explanation.keyword):
+        row = explanation.keyword + '\n'
+        if len(buffer) + len(row) > 2000:
+            await ctx.send(buffer)
+            buffer = ''
+        buffer += row
+    if len(buffer) > 4:
+        await ctx.send(buffer)
 
 
 def refresh_piracy_cache():
