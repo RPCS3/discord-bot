@@ -787,7 +787,7 @@ async def delete(ctx: Context, id: int):
 
 @bot.group()
 async def warn(ctx: Context):
-    """Command used to manage warnings."""
+    """Command used to manage warnings. USE: !warn @user reason"""
     if await is_mod(ctx):
         if ctx.invoked_subcommand is None:
             args = ctx.message.content.split(' ')[1:]
