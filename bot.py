@@ -12,9 +12,11 @@ from discord import Message, Member, TextChannel, DMChannel, Forbidden, Reaction
 from discord.ext.commands import Bot, Context
 from discord.utils import get
 from requests import Response
+from peewee import fn
 
 from api import newline_separator, directions, regions, statuses, release_types, trim_string
 from api.request import ApiRequest
+from api.utils import sanitize_string, trim_string
 from bot_config import *
 from bot_utils import get_code
 from database import Moderator, init, PiracyString, Warning
@@ -60,7 +62,6 @@ async def on_ready():
     global bot_channel
     global bot_log
     global rules_channel
-    global ok_hand_emoji
     bot_channel = bot.get_channel(bot_channel_id)
     rules_channel = bot.get_channel(bot_rules_channel_id)
     bot_log = bot.get_channel(bot_log_id)
@@ -253,10 +254,8 @@ async def piracy_check(message: Message):
     for trigger in piracy_strings:
         if trigger.lower() in message.content.lower():  # we should .lower() on trigger add ideally
             try:
-                #            permissions = message.channel.permissions_for(bot.user)
-                #            if permissions.manage_messages:
                 await message.delete()
-            except Forbidden as fbe:
+            except Forbidden:
                 print("Couldn't delete the moderated message")
                 await report("Piracy", trigger, None, message, None, attention=True)
                 return
@@ -277,7 +276,7 @@ async def piracy_alert(message: Message, trigger: str, trigger_context: str):
     try:
         await message.delete()
         await report("Pirated Release", trigger, trigger_context, message, None, attention=False)
-    except Forbidden as fbe:
+    except Forbidden:
         print("Couldn't delete the moderated log attachment")
         await report("Pirated Release", trigger, trigger_context, message, None, attention=True)
 
@@ -802,19 +801,37 @@ async def add_warning_for_user(ctx, user: User, reason: str, full_reason: str = 
 
 # noinspection PyShadowingBuiltins
 @warn.command(name="list")
-async def list_warnings(ctx: Context, user: User):
-    """Lists all warnings."""
-    await list_warnings_for_user(ctx, user)
+async def list_warnings(ctx: Context, *, user: User = None):
+    """Lists users with warnings, or all warnings for a given user."""
+    if user is None:
+        await list_users_with_warnings(ctx)
+    else:
+        await list_warnings_for_user(ctx, user)
 
+
+async def list_users_with_warnings(ctx: Context):
+    buffer = "Warning count per user:\n```\n"
+    for user_row in Warning.select(Warning.discord_id, fn.COUNT(Warning.reason).alias('num')).group_by(Warning.discord_id):
+        user: User = bot.get_user(user_row.discord_id)
+        row = str(sanitize_string(user.name.ljust(25))) + ' | ' + \
+                ('<@' + str(user.id) + '>').ljust(21) + ' | ' + \
+                str(user_row.num).rjust(2) + '\n'
+        if len(buffer) + len(row) + 3 > 2000:
+            await ctx.send(buffer + '```')
+            buffer = '```\n'
+        buffer += row
+    if len(buffer) > 4:
+        await ctx.send(buffer + '```')
 
 async def list_warnings_for_user(ctx: Context, user: User):
     is_private = await is_private_channel(ctx, gay=False)
     if user is None:
         await ctx.send("A user to scan for needs to be provided...")
         return
-    buffer = '```\n'
+
+    buffer = 'Warning list for ' + sanitize_string(user.name) + ':\n```\n'
     for warning in Warning.select().where(Warning.discord_id == user.id):
-        row = str(warning.id).zfill(5) + ' | ' + user.name + ' | ' + warning.reason + (
+        row = str(warning.id).zfill(5) + ' | ' + warning.reason + (
             ' | ' + warning.full_reason if is_private else '') + '\n'
         if len(buffer) + len(row) + 3 > 2000:
             await ctx.send(buffer + '```')
