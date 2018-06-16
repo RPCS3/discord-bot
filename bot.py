@@ -57,6 +57,18 @@ file_handlers = (
 )
 
 
+async def generic_error_handler(ctx: Context, error):
+    await react_with(ctx, reaction_failed)
+    await ctx.send(str(error))
+
+
+async def react_with(ctx: Context, reaction: Emoji):
+    try:
+        await ctx.message.add_reaction(reaction)
+    except Exception as e:
+        print("Couldn't add a reaction: " + str(e))
+
+
 @bot.event
 async def on_ready():
     print('Logged in as:')
@@ -77,11 +89,6 @@ async def on_ready():
     reaction_deny = '👮'
     refresh_piracy_cache()
 
-async def react_with(ctx: Context, reaction: Emoji):
-    try:
-        await ctx.message.add_reaction(reaction)
-    except Exception as e:
-        print("Couldn't add a reaction: " + str(e))
 
 @bot.event
 async def on_reaction_add(reaction: Reaction, user: User):
@@ -909,19 +916,33 @@ async def explain(ctx: Context):
 
 
 @explain.command()
-async def add(ctx: Context, *args):
+async def add(ctx: Context):
     """Add new term with specified explanation. USE: !explain add <term> <explanation>"""
     if not await is_mod(ctx):
         return
 
-    if (len(args) < 2):
+    args = ctx.message.content.split(maxsplit=3)
+    if (len(args) != 4):
         await react_with(ctx, reaction_failed)
         return
 
-    term = args[0]
-    text = ' '.join(args[1:])
-    Explanation(keyword=term, text=text).save()
-    await react_with(ctx, reaction_confirm)
+    term = args[2]
+    text = args[3]
+    if Explanation.get_or_none(Explanation.keyword == term) is None:
+        try:
+            Explanation(keyword=term, text=text).save()
+            await react_with(ctx, reaction_confirm)
+        except Exception:
+            await react_with(ctx, reaction_failed)
+    else:
+        await react_with(ctx, reaction_failed)
+        await ctx.send("Term `" + term + "` already exists, use !explain update instead")
+
+
+@add.error
+async def add_error(ctx: Context, error):
+    await generic_error_handler(ctx, error)
+
 
 @explain.command()
 async def list(ctx: Context):
@@ -935,6 +956,59 @@ async def list(ctx: Context):
         buffer += row
     if len(buffer) > 4:
         await ctx.send(buffer)
+
+
+@explain.command()
+async def update(ctx: Context):
+    """Update explanation for a given term. USE: !explain update <term> <new explanation>"""
+    if not await is_mod(ctx):
+        return
+
+    args = ctx.message.content.split(maxsplit=3)
+    if (len(args) != 4):
+        await react_with(ctx, reaction_failed)
+        return
+
+    term = args[2]
+    text = args[3]
+    if Explanation.get_or_none(Explanation.keyword == term) is None:
+        await react_with(ctx, reaction_failed)
+        await ctx.send("Term `" + term + "` has not been defined yet")
+    else:
+        try:
+            (Explanation.update({Explanation.text: text})
+                        .where(Explanation.keyword == term)
+            ).execute()
+            await react_with(ctx, reaction_confirm)
+        except Exception:
+            await react_with(ctx, reaction_failed)
+
+
+@update.error
+async def add_error(ctx: Context, error):
+    await generic_error_handler(ctx, error)
+
+
+@explain.command()
+async def remove(ctx: Context, *, term: str):
+    """Removes term explanation"""
+    if not await is_mod(ctx):
+        return
+
+    if Explanation.get_or_none(Explanation.keyword == term) is None:
+        await react_with(ctx, reaction_failed)
+        await ctx.send("Term `" + term + "` is not defined")
+    else:
+        try:
+            (Explanation.delete().where(Explanation.keyword == term)).execute()
+            await react_with(ctx, reaction_confirm)
+        except Exception:
+            await react_with(ctx, reaction_failed)
+
+
+@remove.error
+async def remove_error(ctx: Context, error):
+    await generic_error_handler(ctx, error)
 
 
 def refresh_piracy_cache():
