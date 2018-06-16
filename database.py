@@ -27,11 +27,15 @@ class Warning(BaseModel):
     full_reason = TextField()
 
 
+class Explanation(BaseModel):
+    keyword = TextField(unique=True)
+    text = TextField()
+
 def init():
     with db:
         with db.atomic() as tx:
             db.get_tables()
-            db.create_tables([Moderator, PiracyString, Warning])
+            db.create_tables([Moderator, PiracyString, Warning, Explanation])
             try:
                 Moderator.get(discord_id=bot_admin_id)
             except DoesNotExist:
