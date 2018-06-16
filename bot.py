@@ -844,20 +844,25 @@ async def list_warnings(ctx: Context, user: str = None):
 
 
 async def list_users_with_warnings(ctx: Context):
-    buffer = "Warning count per user:\n```\n"
+    is_private = await is_private_channel(ctx, gay=False)
+    quotes = "```" # if not is_private else ""
+    buffer = "Warning count per user:" + quotes + "\n"
     for user_row in Warning.select(Warning.discord_id, fn.COUNT(Warning.reason).alias('num')).group_by(Warning.discord_id):
         user_id = user_row.discord_id
         user: User = bot.get_user(user_id)
-        user_name = user.name if user is not None else "unknown user"
+        user_name = user.display_name if user is not None else "unknown user"
+        # if is_private:
+        #     row = "<@{}>: {}\n".format(user_id, user_row.num)
+        # else:
         row = str(sanitize_string(user_name.ljust(25))) + ' | ' + \
-                ('<@' + str(user_id) + '>').ljust(21) + ' | ' + \
+                ((str(user_id).ljust(18) + ' | ') if is_private else "") + \
                 str(user_row.num).rjust(2) + '\n'
-        if len(buffer) + len(row) + 3 > 2000:
-            await ctx.send(buffer + '```')
-            buffer = '```\n'
+        if len(buffer) + len(row) + len(quotes) > 2000:
+            await ctx.send(buffer + quotes)
+            buffer = quotes + '\n'
         buffer += row
     if len(buffer) > 4:
-        await ctx.send(buffer + '```')
+        await ctx.send(buffer + quotes)
 
 async def list_warnings_for_user(ctx: Context, user: User):
     if user is None:
@@ -885,7 +890,7 @@ async def list_warnings_for_user(ctx: Context, user_id: int, user_name: str):
 # noinspection PyShadowingBuiltins
 @warn.command()
 async def remove(ctx: Context, id: int):
-    """Removes a filter."""
+    """Removes a warning."""
     warning: Warning = Warning.get_or_none(Warning.id == id)  # Column actually exists but hidden
     if warning is not None:
         warning.delete_instance()
