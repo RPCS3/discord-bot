@@ -288,7 +288,7 @@ async def piracy_check(message: Message):
                     rules=rules_channel.mention
                 ))
             await report("Piracy", trigger, None, message, None, attention=False)
-            await add_warning_for_user(message.channel, message.author._user, bot.user.id,
+            await add_warning_for_user(message.channel, message.author.id, bot.user.id,
                                        'Pirated Phrase Mentioned',
                                        str(message.created_at) + ' - ' + message.content)
             return True
@@ -313,7 +313,7 @@ async def piracy_alert(message: Message, trigger: str, trigger_context: str):
             author=message.author.mention
         )
     )
-    await add_warning_for_user(message.channel, message.author._user, bot.user.id,
+    await add_warning_for_user(message.channel, message.author.id, bot.user.id,
                                'Pirated Release Detected',
                                str(message.created_at) + ' - ' + message.content + ' - ' + trigger)
 
