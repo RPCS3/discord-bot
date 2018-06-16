@@ -9,7 +9,7 @@ from typing import List
 
 import requests
 from discord import Message, Member, TextChannel, DMChannel, Forbidden, Reaction, User, Role, Embed, Emoji
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Bot, Context, UserConverter
 from discord.utils import get
 from requests import Response
 from peewee import fn
@@ -34,6 +34,7 @@ rules_channel: TextChannel = None
 bot_log: TextChannel = None
 
 reaction_confirm: Emoji = None
+reaction_failed: Emoji = None
 reaction_deny: Emoji = None
 
 file_handlers = (
@@ -66,11 +67,13 @@ async def on_ready():
     global bot_log
     global rules_channel
     global reaction_confirm
+    global reaction_failed
     global reaction_deny
     bot_channel = bot.get_channel(bot_channel_id)
     rules_channel = bot.get_channel(bot_rules_channel_id)
     bot_log = bot.get_channel(bot_log_id)
     reaction_confirm = '👌'
+    reaction_failed = '⛔'
     reaction_deny = '👮‍'
     refresh_piracy_cache()
 
@@ -788,47 +791,64 @@ async def warn(ctx: Context):
     if await is_mod(ctx):
         if ctx.invoked_subcommand is None:
             args = ctx.message.content.split(' ')[1:]
-            user: User = bot.get_user(int(args[0][3:-1] if args[0][2] == '!' else args[0][2:-1]))
+            user_id = int(args[0][3:-1] if args[0][2] == '!' else args[0][2:-1])
+            user: User = bot.get_user(user_id)
             reason: str = ' '.join(args[1:])
-            if await add_warning_for_user(ctx, user, reason):
-                await ctx.message.add_reaction(reaction_confirm)
-            await list_warnings_for_user(ctx, user)
+            if await add_warning_for_user(ctx, user_id, reason):
+                try:
+                    await ctx.message.add_reaction(reaction_confirm)
+                except:
+                    pass
+                await list_warnings_for_user(ctx, user_id, user.name if user is not None else "unknown user")
+            else:
+                try:
+                    await ctx.message.add_reaction(reaction_failed)
+                except:
+                    pass
+                await list_warnings_for_user(ctx, user_id, user.name if user is not None else "")
     else:
         ctx.invoked_subcommand = None
 
 
-async def add_warning_for_user(ctx, user: User, reason: str, full_reason: str = '') -> bool:
-    if user is None:
-        await ctx.send("A user to warn needs to be provided...")
-        return False
+async def add_warning_for_user(ctx, user_id, reason: str, full_reason: str = '') -> bool:
     if reason is None:
         await ctx.send("A reason needs to be provided...")
         return False
-    Warning(discord_id=user.id, reason=reason, full_reason=full_reason).save()
-    num_warnings: int = Warning.select().where(Warning.discord_id == user.id).count()
+
+    Warning(discord_id=user_id, reason=reason, full_reason=full_reason).save()
+    num_warnings: int = Warning.select().where(Warning.discord_id == user_id).count()
     await ctx.send("User warning saved! User currently has {} {}!".format(
         num_warnings,
-        'warning' if num_warnings == 1 else "warnings"
+        'warning' if num_warnings % 10 == 1 and num_warnings % 100 != 11 else "warnings"
     ))
     return True
 
 
 # noinspection PyShadowingBuiltins
 @warn.command(name="list")
-async def list_warnings(ctx: Context, *, user: User = None):
+async def list_warnings(ctx: Context, user: str = None):
     """Lists users with warnings, or all warnings for a given user."""
     if user is None:
         await list_users_with_warnings(ctx)
     else:
-        await list_warnings_for_user(ctx, user)
+        try:
+            discord_user = await UserConverter().convert(ctx, user)
+        except:
+            discord_user = None
+        if discord_user is None:
+            await list_warnings_for_user(ctx, int(user[2:-1]), "unknown user")
+        else:
+            await list_warnings_for_user(ctx, discord_user.id, discord_user.name)
 
 
 async def list_users_with_warnings(ctx: Context):
     buffer = "Warning count per user:\n```\n"
     for user_row in Warning.select(Warning.discord_id, fn.COUNT(Warning.reason).alias('num')).group_by(Warning.discord_id):
-        user: User = bot.get_user(user_row.discord_id)
-        row = str(sanitize_string(user.name.ljust(25))) + ' | ' + \
-                ('<@' + str(user.id) + '>').ljust(21) + ' | ' + \
+        user_id = user_row.discord_id
+        user: User = bot.get_user(user_id)
+        user_name = user.name if user is not None else "unknown user"
+        row = str(sanitize_string(user_name.ljust(25))) + ' | ' + \
+                ('<@' + str(user_id) + '>').ljust(21) + ' | ' + \
                 str(user_row.num).rjust(2) + '\n'
         if len(buffer) + len(row) + 3 > 2000:
             await ctx.send(buffer + '```')
@@ -838,13 +858,16 @@ async def list_users_with_warnings(ctx: Context):
         await ctx.send(buffer + '```')
 
 async def list_warnings_for_user(ctx: Context, user: User):
-    is_private = await is_private_channel(ctx, gay=False)
     if user is None:
         await ctx.send("A user to scan for needs to be provided...")
         return
 
-    buffer = 'Warning list for ' + sanitize_string(user.name) + ':\n```\n'
-    for warning in Warning.select().where(Warning.discord_id == user.id):
+    await list_warnings_for_user(ctx, user.id, user.name)
+
+async def list_warnings_for_user(ctx: Context, user_id: int, user_name: str):
+    is_private = await is_private_channel(ctx, gay=False)
+    buffer = 'Warning list for ' + sanitize_string(user_name) + ':\n```\n'
+    for warning in Warning.select().where(Warning.discord_id == user_id):
         row = str(warning.id).zfill(5) + ' | ' + warning.reason + (
             ' | ' + warning.full_reason if is_private else '') + '\n'
         if len(buffer) + len(row) + 3 > 2000:
