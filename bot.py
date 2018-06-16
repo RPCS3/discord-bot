@@ -74,14 +74,14 @@ async def on_ready():
     bot_log = bot.get_channel(bot_log_id)
     reaction_confirm = '👌'
     reaction_failed = '⛔'
-    reaction_deny = '👮‍'
+    reaction_deny = '👮'
     refresh_piracy_cache()
 
 async def react_with(ctx: Context, reaction: Emoji):
     try:
         await ctx.message.add_reaction(reaction)
-    except Exception:
-        pass
+    except Exception as e:
+        print("Couldn't add a reaction: " + str(e))
 
 @bot.event
 async def on_reaction_add(reaction: Reaction, user: User):
