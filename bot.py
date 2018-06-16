@@ -276,7 +276,8 @@ async def piracy_check(message: Message):
                     rules=rules_channel.mention
                 ))
             await report("Piracy", trigger, None, message, None, attention=False)
-            await add_warning_for_user(message.channel, message.author._user, 'Pirated Phrase Mentioned',
+            await add_warning_for_user(message.channel, message.author._user, bot.user.id,
+                                       'Pirated Phrase Mentioned',
                                        str(message.created_at) + ' - ' + message.content)
             return True
 
@@ -300,7 +301,8 @@ async def piracy_alert(message: Message, trigger: str, trigger_context: str):
             author=message.author.mention
         )
     )
-    await add_warning_for_user(message.channel, message.author._user, 'Pirated Release Detected',
+    await add_warning_for_user(message.channel, message.author._user, bot.user.id,
+                               'Pirated Release Detected',
                                str(message.created_at) + ' - ' + message.content + ' - ' + trigger)
 
 
@@ -518,7 +520,7 @@ async def is_sudo(ctx: Context):
     else:
         try:
             await ctx.message.add_reaction(reaction_deny)
-        except:
+        except Exception:
             pass
         await ctx.channel.send(
             "{mention} is not a sudoer, this incident will be reported!".format(mention=author.mention)
@@ -538,7 +540,7 @@ async def is_mod(ctx: Context):
     else:
         try:
             await ctx.message.add_reaction(reaction_deny)
-        except:
+        except Exception:
             pass
         await ctx.channel.send("{mention} is not a mod, this incident will be reported!".format(mention=author.mention))
         return False
@@ -794,28 +796,28 @@ async def warn(ctx: Context):
             user_id = int(args[0][3:-1] if args[0][2] == '!' else args[0][2:-1])
             user: User = bot.get_user(user_id)
             reason: str = ' '.join(args[1:])
-            if await add_warning_for_user(ctx, user_id, reason):
+            if await add_warning_for_user(ctx, ctx.message.author.id, user_id, reason):
                 try:
                     await ctx.message.add_reaction(reaction_confirm)
-                except:
+                except Exception:
                     pass
                 await list_warnings_for_user(ctx, user_id, user.name if user is not None else "unknown user")
             else:
                 try:
                     await ctx.message.add_reaction(reaction_failed)
-                except:
+                except Exception:
                     pass
                 await list_warnings_for_user(ctx, user_id, user.name if user is not None else "")
     else:
         ctx.invoked_subcommand = None
 
 
-async def add_warning_for_user(ctx, user_id, reason: str, full_reason: str = '') -> bool:
+async def add_warning_for_user(ctx, user_id, reporter_id, reason: str, full_reason: str = '') -> bool:
     if reason is None:
         await ctx.send("A reason needs to be provided...")
         return False
 
-    Warning(discord_id=user_id, reason=reason, full_reason=full_reason).save()
+    Warning(discord_id=user_id, issuer_id=reporter_id, reason=reason, full_reason=full_reason).save()
     num_warnings: int = Warning.select().where(Warning.discord_id == user_id).count()
     await ctx.send("User warning saved! User currently has {} {}!".format(
         num_warnings,
@@ -833,7 +835,7 @@ async def list_warnings(ctx: Context, user: str = None):
     else:
         try:
             discord_user = await UserConverter().convert(ctx, user)
-        except:
+        except Exception:
             discord_user = None
         if discord_user is None:
             await list_warnings_for_user(ctx, int(user[2:-1]), "unknown user")
@@ -862,14 +864,16 @@ async def list_warnings_for_user(ctx: Context, user: User):
         await ctx.send("A user to scan for needs to be provided...")
         return
 
-    await list_warnings_for_user(ctx, user.id, user.name)
+    await list_warnings_for_user(ctx, user.id, user.display_name)
 
 async def list_warnings_for_user(ctx: Context, user_id: int, user_name: str):
     is_private = await is_private_channel(ctx, gay=False)
     buffer = 'Warning list for ' + sanitize_string(user_name) + ':\n```\n'
     for warning in Warning.select().where(Warning.discord_id == user_id):
-        row = str(warning.id).zfill(5) + ' | ' + warning.reason + (
-            ' | ' + warning.full_reason if is_private else '') + '\n'
+        row = str(warning.id).zfill(5) + ' | ' + \
+                (bot.get_user(warning.issuer_id).display_name if warning.issuer_id > 0 else "").ljust(25) + ' | ' + \
+                warning.reason + \
+                (' | ' + warning.full_reason if is_private else '') + '\n'
         if len(buffer) + len(row) + 3 > 2000:
             await ctx.send(buffer + '```')
             buffer = '```\n'
@@ -886,7 +890,11 @@ async def remove(ctx: Context, id: int):
     if warning is not None:
         warning.delete_instance()
         await ctx.send("Warning successfully deleted!")
-        await list_warnings_for_user(ctx, bot.get_user(warning.discord_id))
+        user = bot.get_user(warning.discord_id)
+        if user is not None:
+            await list_warnings_for_user(ctx, user.id, user.display_name)
+        else:
+            await list_warnings_for_user(ctx, warning.discord_id, "unknown user")
     else:
         await ctx.send("Warning does not exist!")
 
