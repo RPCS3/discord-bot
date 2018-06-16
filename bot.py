@@ -33,6 +33,9 @@ bot_channel: TextChannel = None
 rules_channel: TextChannel = None
 bot_log: TextChannel = None
 
+reaction_confirm: Emoji = None
+reaction_deny: Emoji = None
+
 file_handlers = (
     {
         'ext': '.zip',
@@ -62,9 +65,13 @@ async def on_ready():
     global bot_channel
     global bot_log
     global rules_channel
+    global reaction_confirm
+    global reaction_deny
     bot_channel = bot.get_channel(bot_channel_id)
     rules_channel = bot.get_channel(bot_rules_channel_id)
     bot_log = bot.get_channel(bot_log_id)
+    reaction_confirm = '👌'
+    reaction_deny = '👮‍'
     refresh_piracy_cache()
 
 
@@ -503,9 +510,13 @@ async def is_sudo(ctx: Context):
         Moderator.discord_id == author.id, Moderator.sudoer == True
     )
     if sudo_user is not None:
-        print("User is sudoer, allowed!")
+        print("User " + author.display_name + " is sudoer, allowed!")
         return True
     else:
+        try:
+            await ctx.message.add_reaction(reaction_deny)
+        except:
+            pass
         await ctx.channel.send(
             "{mention} is not a sudoer, this incident will be reported!".format(mention=author.mention)
         )
@@ -519,12 +530,14 @@ async def is_mod(ctx: Context):
         Moderator.discord_id == author.id
     )
     if mod_user is not None:
-        print("User is moderator, allowed!")
+        print("User " + author.display_name + " is moderator, allowed!")
         return True
     else:
-        await ctx.channel.send(
-            "{mention} is not a mod, this incident will be reported!".format(mention=author.mention)
-        )
+        try:
+            await ctx.message.add_reaction(reaction_deny)
+        except:
+            pass
+        await ctx.channel.send("{mention} is not a mod, this incident will be reported!".format(mention=author.mention))
         return False
 
 
@@ -548,6 +561,7 @@ async def sudo(ctx: Context):
     """Sudo command group, used to manage moderators and sudoers."""
     if not await is_sudo(ctx):
         ctx.invoked_subcommand = None
+        return
     if ctx.invoked_subcommand is None:
         await ctx.send('Invalid !sudo command passed...')
 
@@ -777,7 +791,7 @@ async def warn(ctx: Context):
             user: User = bot.get_user(int(args[0][3:-1] if args[0][2] == '!' else args[0][2:-1]))
             reason: str = ' '.join(args[1:])
             if await add_warning_for_user(ctx, user, reason):
-                await ctx.message.add_reaction('👌')
+                await ctx.message.add_reaction(reaction_confirm)
             await list_warnings_for_user(ctx, user)
     else:
         ctx.invoked_subcommand = None
