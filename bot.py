@@ -120,7 +120,8 @@ async def on_reaction_add(reaction: Reaction, user: User):
                 reporters = []
                 user: Member
                 async for user in reaction.users():
-                    if user._user.id == bot.user.id:
+                    if user == bot.user:
+                        print("Found bot reaction, bailing out")
                         return
                     role: Role
                     for role in user.roles:
@@ -154,7 +155,7 @@ async def on_message(message: Message):
     :param message: message
     """
     # Self reply detect
-    if message.author.id == bot.user.id:
+    if message.author == bot.user:
         return
     # Piracy detect
     if await piracy_check(message):
@@ -794,7 +795,7 @@ async def delete(ctx: Context, id: int):
 @bot.group()
 async def warn(ctx: Context):
     """Command used to issue and manage warnings. USE: !warn @user reason"""
-    if await is_mod(ctx):
+    if ctx.invoked_subcommand == bot.get_command("warn list") or await is_mod(ctx):
         if ctx.invoked_subcommand is None:
             args = ctx.message.content.split(' ')[1:]
             user_id = int(args[0][3:-1] if args[0][2] == '!' else args[0][2:-1])
@@ -829,16 +830,19 @@ async def add_warning_for_user(ctx, user_id, reporter_id, reason: str, full_reas
 async def list_warnings(ctx: Context, user: str = None):
     """Lists users with warnings, or all warnings for a given user."""
     if user is None:
-        await list_users_with_warnings(ctx)
+        if await is_mod(ctx):
+            await list_users_with_warnings(ctx)
     else:
         try:
             discord_user = await UserConverter().convert(ctx, user)
         except Exception:
             discord_user = None
         if discord_user is None:
-            await list_warnings_for_user(ctx, int(user[2:-1]), "unknown user")
+            if await is_mod(ctx):
+                await list_warnings_for_user(ctx, int(user[2:-1]), "unknown user")
         else:
-            await list_warnings_for_user(ctx, discord_user.id, discord_user.name)
+            if discord_user == ctx.message.author or await is_mod(ctx):
+                await list_warnings_for_user(ctx, discord_user.id, discord_user.name)
 
 
 async def list_users_with_warnings(ctx: Context):
@@ -873,8 +877,8 @@ async def list_warnings_for_user(ctx: Context, user_id: int, user_name: str):
     if Warning.select().where(Warning.discord_id == user_id).count() == 0:
         await ctx.send(user_name + " has no warnings, is a standup citizen, and a pillar of this community")
         return
-        
-    is_private = await is_private_channel(ctx, gay=False)
+
+    is_private = await is_private_channel(ctx, gay=False) and await is_mod(ctx, report=False)
     buffer = 'Warning list for ' + sanitize_string(user_name) + ':\n```\n'
     for warning in Warning.select().where(Warning.discord_id == user_id):
         row = str(warning.id).zfill(5) + ' | ' + \
