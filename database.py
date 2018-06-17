@@ -50,7 +50,8 @@ def init():
                 )
                 tx.commit()
                 print("Updated [warning] columns")
-        except Exception:
+        except Exception as e:
+            print(str(e))
             tx.rollback()
         try:
             with db.atomic() as tx:
@@ -59,5 +60,6 @@ def init():
                 )
             tx.commit()
             print("Updated [warning] indices")
-        except Exception:
+        except Exception as e:
+            print(str(e))
             tx.rollback()
