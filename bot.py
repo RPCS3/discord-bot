@@ -3,7 +3,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import randint, choice
 from typing import List
 
@@ -100,36 +100,59 @@ async def on_ready():
     reaction_failed = '⛔'
     reaction_deny = '👮'
     refresh_piracy_cache()
+    await refresh_moderated_messages()
+    print("Bot is ready to serve!")
+
+
+async def refresh_moderated_messages():
+    print("Checking moderated channels for missed new messages...")
+    for channel_id in user_moderatable_channel_ids:
+        channel = bot.get_channel(channel_id)
+        if channel is not None:
+            try:
+                async for msg in channel.history(after=(datetime.utcnow()-timedelta(hours=12))):
+                    for reaction in msg.reactions:
+                        if reaction.emoji == user_moderation_character:
+                            usr = (await reaction.users(limit=1).flatten())[0]
+                            await on_reaction_add(reaction, usr)
+            except Exception as e:
+                print("Uh oh: " + str(e))
+                pass
 
 
 @bot.event
 async def on_reaction_add(reaction: Reaction, user: User):
     message: Message = reaction.message
-    if message.author == bot.user or await is_private_channel(message, gay=False):
+    if message.author == bot.user or user == bot.user or await is_private_channel(message, gay=False):
+        #print("Author is bot or this is in DMs")
         return
 
     role: Role
     for role in message.author.roles:
         if role.name.strip() in user_moderation_excused_roles:
+            #print(role.name + " is excused")
             return
 
+    #print("Checking for starbucks...")
     if message.channel.id in user_moderatable_channel_ids:
+        #print("Checking for message expiration date...")
         if (datetime.now() - message.created_at).total_seconds() < 12 * 60 * 60:
+            #print("Checking for " + user_moderation_character + " count...")
             if reaction.emoji == user_moderation_character:
-                print(reaction.count)
+                #print(reaction.count)
                 reporters = []
                 user: Member
                 async for user in reaction.users():
                     if user == bot.user:
-                        print("Found bot reaction, bailing out")
+                        #print("Found bot reaction, bailing out")
                         return
                     role: Role
                     for role in user.roles:
-                        print(role.name)
+                        #print(role.name)
                         if role.name != '@everyone':
                             reporters.append(user)
                             break
-                    print(len(reporters))
+                    #print(len(reporters))
 
                 if len(reporters) >= user_moderation_count_needed:
                     await react_with(message, user_moderation_character)
