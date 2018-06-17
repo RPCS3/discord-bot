@@ -841,7 +841,7 @@ async def add_warning_for_user(ctx: Context, user_id: int, reporter_id: int, rea
 
     Warning(discord_id=user_id, issuer_id=reporter_id, reason=reason, full_reason=full_reason).save()
     num_warnings: int = Warning.select().where(Warning.discord_id == user_id).count()
-    print("Saved warning for " + str(user_id))
+    #print("Saved warning for " + str(user_id))
     await ctx.send("User warning saved! User currently has {} {}!".format(
         num_warnings,
         'warning' if num_warnings % 10 == 1 and num_warnings % 100 != 11 else "warnings"
