@@ -872,6 +872,10 @@ async def list_warnings_for_user(ctx: Context, user: User):
     await list_warnings_for_user(ctx, user.id, user.display_name)
 
 async def list_warnings_for_user(ctx: Context, user_id: int, user_name: str):
+    if Warning.select().where(Warning.discord_id == user_id).count() == 0:
+        await ctx.send(user_name + " has no warnings, is a standup citizen, and a pillar of this community")
+        return
+        
     is_private = await is_private_channel(ctx, gay=False)
     buffer = 'Warning list for ' + sanitize_string(user_name) + ':\n```\n'
     for warning in Warning.select().where(Warning.discord_id == user_id):
