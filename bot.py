@@ -841,6 +841,7 @@ async def add_warning_for_user(ctx: Context, user_id: int, reporter_id: int, rea
 
     Warning(discord_id=user_id, issuer_id=reporter_id, reason=reason, full_reason=full_reason).save()
     num_warnings: int = Warning.select().where(Warning.discord_id == user_id).count()
+    print("Saved warning for " + str(user_id))
     await ctx.send("User warning saved! User currently has {} {}!".format(
         num_warnings,
         'warning' if num_warnings % 10 == 1 and num_warnings % 100 != 11 else "warnings"
@@ -875,7 +876,12 @@ async def list_users_with_warnings(ctx: Context):
     for user_row in Warning.select(Warning.discord_id, fn.COUNT(Warning.reason).alias('num')).group_by(Warning.discord_id):
         user_id = user_row.discord_id
         user: User = bot.get_user(user_id)
-        user_name = user.display_name if user is not None else "unknown user"
+        if user is not None:
+            user_name = user.display_name
+        elif is_private:
+            user_name = "<@" + str(user_id) + ">"
+        else:
+            user_name = "unknown user"
         # if is_private:
         #     row = "<@{}>: {}\n".format(user_id, user_row.num)
         # else:
@@ -908,7 +914,7 @@ async def list_warnings_for_user(ctx: Context, user_id: int, user_name: str):
         if warning_issuer is not None:
             warning_issuer_name = warning_issuer.display_name
         elif warning.issuer_id > 0:
-            warning_issuer_name = "<@" + str(warning.issuer_id) + ">"
+            warning_issuer_name = "<@" + str(warning.issuer_id) + ">" if is_private else "unknown mod"
         else:
             warning_issuer_name = ""
         row = str(warning.id).zfill(5) + ' | ' + \
