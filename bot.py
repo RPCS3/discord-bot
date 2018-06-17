@@ -9,7 +9,7 @@ from typing import List
 
 import requests
 from discord import Message, Member, TextChannel, DMChannel, Forbidden, Reaction, User, Role, Embed, Emoji
-from discord.ext.commands import Bot, Context, UserConverter
+from discord.ext.commands import Bot, Context, UserConverter, CommandError
 from discord.utils import get
 from requests import Response
 from peewee import fn
@@ -57,7 +57,7 @@ file_handlers = (
 )
 
 
-async def generic_error_handler(ctx: Context, error):
+async def generic_error_handler(ctx: Context, error: CommandError):
     await react_with(ctx, reaction_failed)
     await ctx.send(str(error))
 
@@ -834,7 +834,7 @@ async def warn(ctx: Context):
         ctx.invoked_subcommand = None
 
 
-async def add_warning_for_user(ctx, user_id, reporter_id, reason: str, full_reason: str = '') -> bool:
+async def add_warning_for_user(ctx: Context, user_id: int, reporter_id: int, reason: str, full_reason: str = '') -> bool:
     if reason is None:
         await ctx.send("A reason needs to be provided...")
         return False
@@ -974,7 +974,7 @@ async def add(ctx: Context):
 
 
 @add.error
-async def add_error(ctx: Context, error):
+async def add_error(ctx: Context, error: CommandError):
     await generic_error_handler(ctx, error)
 
 
@@ -1019,7 +1019,7 @@ async def update(ctx: Context):
 
 
 @update.error
-async def add_error(ctx: Context, error):
+async def add_error(ctx: Context, error: CommandError):
     await generic_error_handler(ctx, error)
 
 
