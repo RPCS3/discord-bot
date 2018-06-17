@@ -824,7 +824,7 @@ async def warn(ctx: Context):
             user_id = int(args[0][3:-1] if args[0][2] == '!' else args[0][2:-1])
             user: User = bot.get_user(user_id)
             reason: str = ' '.join(args[1:])
-            if await add_warning_for_user(ctx, ctx.message.author.id, user_id, reason):
+            if await add_warning_for_user(ctx, user_id, ctx.message.author.id, reason):
                 await react_with(ctx, reaction_confirm)
                 await list_warnings_for_user(ctx, user_id, user.name if user is not None else "unknown user")
             else:
@@ -904,8 +904,15 @@ async def list_warnings_for_user(ctx: Context, user_id: int, user_name: str):
     is_private = await is_private_channel(ctx, gay=False) and await is_mod(ctx, report=False)
     buffer = 'Warning list for ' + sanitize_string(user_name) + ':\n```\n'
     for warning in Warning.select().where(Warning.discord_id == user_id):
+        warning_issuer = bot.get_user(warning.issuer_id)
+        if warning_issuer is not None:
+            warning_issuer_name = warning_issuer.display_name
+        elif warning.issuer_id > 0:
+            warning_issuer_name = "<@" + str(warning.issuer_id) + ">"
+        else:
+            warning_issuer_name = ""
         row = str(warning.id).zfill(5) + ' | ' + \
-                (bot.get_user(warning.issuer_id).display_name if warning.issuer_id > 0 else "").ljust(25) + ' | ' + \
+                warning_issuer_name.ljust(25) + ' | ' + \
                 warning.reason + \
                 (' | ' + warning.full_reason if is_private else '') + '\n'
         if len(buffer) + len(row) + 3 > 2000:
