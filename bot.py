@@ -64,9 +64,21 @@ async def generic_error_handler(ctx: Context, error):
 
 async def react_with(ctx: Context, reaction: Emoji):
     try:
-        await ctx.message.add_reaction(reaction)
+        msg = ctx if isinstance(ctx, Message) else ctx.message
+        await msg.add_reaction(reaction)
     except Exception as e:
         print("Couldn't add a reaction: " + str(e))
+
+
+async def is_private_channel(ctx: Context, gay=True):
+    if isinstance(ctx.channel, DMChannel):
+        return True
+    else:
+        if gay:
+            message: Message = ctx.message
+            author: Member = message.author
+            await ctx.channel.send('{mention} https://i.imgflip.com/24qx11.jpg'.format(mention=author.mention))
+        return False
 
 
 @bot.event
@@ -93,11 +105,11 @@ async def on_ready():
 @bot.event
 async def on_reaction_add(reaction: Reaction, user: User):
     message: Message = reaction.message
-    # if len(message.attachments) > 0:
-    # 	return
+    if message.author == bot.user or await is_private_channel(message, gay=False):
+        return
 
     role: Role
-    for role in reaction.message.author.roles:
+    for role in message.author.roles:
         if role.name.strip() in user_moderation_excused_roles:
             return
 
@@ -119,7 +131,7 @@ async def on_reaction_add(reaction: Reaction, user: User):
                     print(len(reporters))
 
                 if len(reporters) >= user_moderation_count_needed:
-                    await react_with(ctx, user_moderation_character)
+                    await react_with(message, user_moderation_character)
                     # noinspection PyTypeChecker
                     await report("User moderation report ⭐💵", trigger=None, trigger_context=None, message=message, reporters=reporters,
                                  attention=True)
@@ -537,7 +549,7 @@ async def is_sudo(ctx: Context):
         return False
 
 
-async def is_mod(ctx: Context):
+async def is_mod(ctx: Context, report: bool = True):
     message: Message = ctx.message
     author: Member = message.author
     mod_user: Moderator = Moderator.get_or_none(
@@ -547,23 +559,9 @@ async def is_mod(ctx: Context):
         print("User " + author.display_name + " is moderator, allowed!")
         return True
     else:
-        await react_with(ctx, reaction_deny)
-        await ctx.channel.send("{mention} is not a mod, this incident will be reported!".format(mention=author.mention))
-        return False
-
-
-async def is_private_channel(ctx: Context, gay=True):
-    message: Message = ctx.message
-    author: Member = message.author
-    if isinstance(ctx.channel, DMChannel):
-        return True
-    else:
-        if gay:
-            await ctx.channel.send(
-                '{mention} https://i.imgflip.com/24qx11.jpg'.format(
-                    mention=author.mention
-                )
-            )
+        if report:
+            await react_with(ctx, reaction_deny)
+            await ctx.channel.send("{mention} is not a mod, this incident will be reported!".format(mention=author.mention))
         return False
 
 
