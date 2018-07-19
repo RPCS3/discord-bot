@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.Utils;
 
-namespace CompatBot.LogParsing
+namespace CompatBot.EventHandlers.LogParsing
 {
     internal static partial class LogParser
     {

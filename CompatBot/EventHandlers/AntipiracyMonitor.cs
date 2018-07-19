@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatBot.Commands;
-using CompatBot.Providers;
+using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;

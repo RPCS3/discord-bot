@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 
-namespace CompatBot.LogParsing.SourceHandlers
+namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     public class GzipHandler: ISourceHandler
     {
@@ -28,7 +28,7 @@ namespace CompatBot.LogParsing.SourceHandlers
                     {
                         var memory = writer.GetMemory(Config.MinimumBufferSize);
                         read = await gzipStream.ReadAsync(memory, Config.Cts.Token);
-                        writer.Advance(read); //todo: test that .Advance(0) works as expected
+                        writer.Advance(read);
                         flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
                     } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
                 }

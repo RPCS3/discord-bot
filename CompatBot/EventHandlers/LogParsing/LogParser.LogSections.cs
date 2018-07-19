@@ -3,9 +3,10 @@ using System.Collections.Specialized;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Providers;
+using CompatBot.Database.Providers;
+using CompatBot.EventHandlers.LogParsing.POCOs;
 
-namespace CompatBot.LogParsing
+namespace CompatBot.EventHandlers.LogParsing
 {
     internal partial class LogParser
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace CompatBot.LogParsing
+namespace CompatBot.EventHandlers.LogParsing.POCOs
 {
     internal class LogSection
     {

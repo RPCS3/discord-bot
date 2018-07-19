@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using CompatBot.Attributes;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus;

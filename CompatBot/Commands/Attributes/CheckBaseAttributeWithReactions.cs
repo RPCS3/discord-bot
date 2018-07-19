@@ -3,7 +3,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 
-namespace CompatBot.Attributes
+namespace CompatBot.Commands.Attributes
 {
     internal abstract class CheckBaseAttributeWithReactions: CheckBaseAttribute
     {

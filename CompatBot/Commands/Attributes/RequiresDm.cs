@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
-namespace CompatBot.Attributes
+namespace CompatBot.Commands.Attributes
 {
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
     internal class RequiresDm: CheckBaseAttribute

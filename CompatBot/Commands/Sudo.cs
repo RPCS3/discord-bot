@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using CompatBot.Attributes;
+using CompatBot.Commands.Attributes;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;

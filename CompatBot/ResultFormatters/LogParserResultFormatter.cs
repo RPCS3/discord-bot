@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatBot.EventHandlers;
-using CompatBot.LogParsing;
+using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
 using DSharpPlus.Entities;
 
