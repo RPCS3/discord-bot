@@ -19,7 +19,7 @@ namespace CompatBot.ResultFormatters
             string url = null;
             PrInfo prInfo = null;
 
-            if (justAppend)
+            if (!justAppend)
             {
                 if (pr == "0")
                     pr = "PR #???";
