@@ -5,7 +5,7 @@ using CompatApiClient;
 using CompatApiClient.POCOs;
 using DSharpPlus.Entities;
 
-namespace CompatBot.ResultFormatters
+namespace CompatBot.Utils.ResultFormatters
 {
     internal static class UpdateInfoFormatter
     {

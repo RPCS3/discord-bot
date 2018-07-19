@@ -11,7 +11,7 @@ using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
 using DSharpPlus.Entities;
 
-namespace CompatBot.ResultFormatters
+namespace CompatBot.Utils.ResultFormatters
 {
     internal static class LogParserResult
     {
