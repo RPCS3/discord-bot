@@ -12,7 +12,7 @@ namespace CompatBot.Commands
     {
         [Group("mod")]
         [Description("Used to manage bot moderators")]
-        public class Mod : BaseCommandModule
+        public sealed class Mod : BaseCommandModule
         {
             [Command("add")]
             [Description("Adds a new moderator")]

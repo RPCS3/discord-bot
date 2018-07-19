@@ -137,7 +137,7 @@ namespace CompatBot.Commands
             var isPrivate = message.Channel.IsPrivate;
             var result = new StringBuilder("Warning list for ").Append(userName).AppendLine(":")
                 .AppendLine("```");
-            var header = $"{"ID",-5} | {"Issued by",-25} | {"On date",-20} | Reason";
+            var header = $"{"ID",-5} | {"Issued by",-15} | {"On date (UTC)",-20} | Reason";
             if (isPrivate)
                 header += "          | Full reason";
             result.AppendLine(header)
@@ -146,7 +146,7 @@ namespace CompatBot.Commands
             {
                 var issuerName = warning.IssuerId == 0 ? "" : await client.GetUserNameAsync(message.Channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
                 var timestamp = warning.Timestamp.HasValue ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
-                result.Append($"{warning.Id:00000} | {issuerName,-25} | {timestamp,-20} | {warning.Reason}");
+                result.Append($"{warning.Id:00000} | {issuerName,-15} | {timestamp,-20} | {warning.Reason}");
                 if (isPrivate)
                     result.Append(" | ").Append(warning.FullReason);
                 result.AppendLine();
