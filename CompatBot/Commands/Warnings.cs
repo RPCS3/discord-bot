@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient;
-using CompatBot.Attributes;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus;

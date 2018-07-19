@@ -7,7 +7,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 
-namespace CompatBot.Converters
+namespace CompatBot.Commands.Converters
 {
     internal sealed class CustomDiscordChannelConverter : IArgumentConverter<DiscordChannel>
     {

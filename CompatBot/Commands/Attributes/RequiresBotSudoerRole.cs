@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using CompatBot.Providers;
+using CompatBot.Database.Providers;
 using DSharpPlus.CommandsNext;
 
-namespace CompatBot.Attributes
+namespace CompatBot.Commands.Attributes
 {
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
     internal class RequiresBotSudoerRole: CheckBaseAttributeWithReactions

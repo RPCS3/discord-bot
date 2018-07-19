@@ -2,9 +2,8 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using CompatBot.Database;
 
-namespace CompatBot.Providers
+namespace CompatBot.Database.Providers
 {
     internal static class ModProvider
     {

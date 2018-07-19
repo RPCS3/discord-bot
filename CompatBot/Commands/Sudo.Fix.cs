@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Converters;
+using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;

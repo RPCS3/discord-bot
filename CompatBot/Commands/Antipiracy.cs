@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using CompatBot.Attributes;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
-using CompatBot.Providers;
+using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;

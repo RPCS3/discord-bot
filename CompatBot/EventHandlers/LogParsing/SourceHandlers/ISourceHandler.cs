@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 
-namespace CompatBot.LogParsing.SourceHandlers
+namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal interface ISourceHandler
     {

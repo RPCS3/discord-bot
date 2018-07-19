@@ -1,6 +1,6 @@
 ﻿using System.Collections.Specialized;
 
-namespace CompatBot.LogParsing
+namespace CompatBot.EventHandlers.LogParsing.POCOs
 {
     internal class LogParseState
     {

@@ -5,9 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.EventHandlers.LogParsing.POCOs;
 using NReco.Text;
 
-namespace CompatBot.LogParsing
+namespace CompatBot.EventHandlers.LogParsing
 {
     using SectionAction = KeyValuePair<string, Action<string, LogParseState>>;
 

@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 
-namespace CompatBot.Providers
+namespace CompatBot.Database.Providers
 {
     internal static class PiracyStringProvider
     {
