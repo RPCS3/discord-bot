@@ -12,7 +12,7 @@ namespace CompatBot.Commands
     {
         [Group("bot")]
         [Description("Commands to manage the bot instance")]
-        public class Bot: BaseCommandModule
+        public sealed class Bot: BaseCommandModule
         {
 
             [Command("version")]

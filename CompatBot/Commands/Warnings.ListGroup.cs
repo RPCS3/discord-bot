@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -80,7 +81,7 @@ namespace CompatBot.Commands
                 if (number < 1)
                     number = 10;
                 var userIdColumn = ctx.Channel.IsPrivate ? $"{"User ID",-18} | " : "";
-                var header = $"ID    | {"User",-25} | {userIdColumn}{"Issued by",-25} | Reason              ";
+                var header = $"ID    | {"User",-25} | {userIdColumn}{"Issued by",-15} | {"On date (UTC)",-20} | Reason              ";
                 var result = new StringBuilder("Last issued warnings:").AppendLine("```")
                     .AppendLine(header)
                     .AppendLine("".PadLeft(header.Length, '-'));
@@ -94,7 +95,8 @@ namespace CompatBot.Commands
                     result.Append($"{row.Id:00000} | {username,-25} | ");
                     if (ctx.Channel.IsPrivate)
                         result.Append($"{row.DiscordId,-18} | ");
-                    result.Append($"{modname,-25} | {row.Reason}");
+                    var timestamp = row.Timestamp.HasValue ? new DateTime(row.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
+                    result.Append($"{modname,-15} | {timestamp,-20} | {row.Reason}");
                     if (ctx.Channel.IsPrivate)
                         result.Append(" | ").Append(row.FullReason);
                     result.AppendLine();
