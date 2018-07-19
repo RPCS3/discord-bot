@@ -1,20 +1,30 @@
-# discord-bot
+RPCS3 Compatibility Bot reimplemented in C# for .NET Core
+=========================================================
 
-Dependencies:
-* python3.6 or newer
-* pip for python3
-* `$ pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]`
-* pyparsing for python3 (distro package or through pip)
-* requests for python3 (distro package or through pip)
-* peewee for python3 (distro package or through pip)
+Development Requirements
+------------------------
+* [.NET Core 2.1 SDK](https://www.microsoft.com/net/download/windows) or newer
+* Any text editor, but Visual Studio 2017 or Visual Studio Code is recommended
 
+Runtime Requirements
+--------------------
+* [.NET Core 2.1 Runtime](https://www.microsoft.com/net/download/windows) or newer for compiled version
+* [.NET Core 2.1 SDK](https://www.microsoft.com/net/download/windows) or newer to run from sources
 
-Optional stuff for private testing:
-* [create an app](https://discordapp.com/developers/applications/me)
-* add a user bot to this new app (look at the bottom of the app page)
-  * notice the Bot User Token
-* [add your new bot to your private server](https://discordapp.com/oauth2/authorize?client_id=BOTCLIENTID&scope=bot)
-* change IDs in `bot_config.py` for your channels and users
+How to Build
+------------
+* Change configuration for test server in `CompatBot/Properties/launchSettings.json`
+* Note that token could be set in the settings _or_ supplied as a launch argument (higher priority)
+* If you've changed the database model, add a migration
+	* `$ cd CompatBot`
+	* `$ dotnet ef migrations add NAME`
+	* `$ cd ..`
+* `$ cd CompatBot`
+* `$ dotnet run [token]`
 
-How to run:
-* `$ python3 bot.py bot_user_token`
+How to Run in Production
+------------------------
+* Change configuration if needed (probably just token)
+* Put `bot.db` in `CompatBot/`
+* `$ cd CompatBot`
+* `$ dotnet run -c Release [token]`
