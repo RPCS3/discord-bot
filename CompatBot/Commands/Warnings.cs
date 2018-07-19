@@ -27,7 +27,7 @@ namespace CompatBot.Commands
                 return;
 
             var typingTask = ctx.TriggerTypingAsync();
-            if (await AddAsync(ctx.Client, ctx.Message, user.Id, user.Username.Sanitize(), ctx.Message.Author, reason).ConfigureAwait(false))
+            if (await AddAsync(ctx, user.Id, user.Username.Sanitize(), ctx.Message.Author, reason).ConfigureAwait(false))
                 await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
             else
                 await ctx.Message.CreateReactionAsync(Config.Reactions.Failure).ConfigureAwait(false);
@@ -41,7 +41,7 @@ namespace CompatBot.Commands
                 return;
 
             var typingTask = ctx.TriggerTypingAsync();
-            if (await AddAsync(ctx.Client, ctx.Message, userId, $"<@{userId}>", ctx.Message.Author, reason).ConfigureAwait(false))
+            if (await AddAsync(ctx, userId, $"<@{userId}>", ctx.Message.Author, reason).ConfigureAwait(false))
                 await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
             else
                 await ctx.Message.CreateReactionAsync(Config.Reactions.Failure).ConfigureAwait(false);
@@ -94,6 +94,12 @@ namespace CompatBot.Commands
                 ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
             }
 
+        }
+
+        internal static async Task<bool> AddAsync(CommandContext ctx, ulong userId, string userName, DiscordUser issuer, string reason, string fullReason = null)
+        {
+            reason = await Sudo.Fix.FixChannelMentionAsync(ctx, reason).ConfigureAwait(false);
+            return await AddAsync(ctx.Client, ctx.Message, userId, userName, issuer, reason, fullReason);
         }
 
         internal static async Task<bool> AddAsync(DiscordClient client, DiscordMessage message, ulong userId, string userName, DiscordUser issuer, string reason, string fullReason = null)

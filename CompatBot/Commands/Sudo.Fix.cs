@@ -40,7 +40,7 @@ namespace CompatBot.Commands
                             }
                         }
                     await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
-                    ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
+                    await ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -58,39 +58,49 @@ namespace CompatBot.Commands
                 {
                     var @fixed = 0;
                     foreach (var warning in BotDb.Instance.Warning)
-                        if (!string.IsNullOrEmpty(warning.Reason) && warning.Reason.Contains('#'))
+                    {
+                        var newReason = await FixChannelMentionAsync(ctx, warning.Reason).ConfigureAwait(false);
+                        if (newReason != warning.Reason)
                         {
-                            var reasonParts = warning.Reason.Split(' ');
-                            var rebuiltMsg = new List<string>(reasonParts.Length);
-                            var changed = false;
-                            foreach (var p in reasonParts)
-                            {
-                                if (p.Contains('#'))
-                                {
-                                    var ch = await new CustomDiscordChannelConverter().ConvertAsync(p, ctx).ConfigureAwait(false);
-                                    if (ch.HasValue)
-                                    {
-                                        rebuiltMsg.Add("#" + ch.Value.Name);
-                                        changed = true;
-                                        continue;
-                                    }
-                                }
-                                rebuiltMsg.Add(p);
-                            }
-                            if (changed)
-                            {
-                                warning.Reason = string.Join(' ', rebuiltMsg);
-                                @fixed++;
-                            }
+                            warning.Reason = newReason;
+                            @fixed++;
                         }
+                    }
                     await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
-                    ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
+                    await ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
                     ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", "Couln't fix channel mentions: " + e, DateTime.Now);
                     await ctx.RespondAsync("Failed to fix warning timestamps").ConfigureAwait(false);
                 }
+            }
+
+            public static async Task<string> FixChannelMentionAsync(CommandContext ctx, string msg)
+            {
+                if (!string.IsNullOrEmpty(msg) && msg.Contains('#'))
+                {
+                    var reasonParts = msg.Split(' ');
+                    var rebuiltMsg = new List<string>(reasonParts.Length);
+                    var changed = false;
+                    foreach (var p in reasonParts)
+                    {
+                        if (p.Contains('#'))
+                        {
+                            var ch = await new CustomDiscordChannelConverter().ConvertAsync(p, ctx).ConfigureAwait(false);
+                            if (ch.HasValue)
+                            {
+                                rebuiltMsg.Add("#" + ch.Value.Name);
+                                changed = true;
+                                continue;
+                            }
+                        }
+                        rebuiltMsg.Add(p);
+                    }
+                    if (changed)
+                        return string.Join(' ', rebuiltMsg);
+                }
+                return msg;
             }
         }
     }
