@@ -30,12 +30,14 @@ namespace CompatBot.EventHandlers
                 return;
 
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
-            StringBuilder previousRepliesBuilder = null;
             foreach (var msg in lastBotMessages)
-            {
                 if (NeedToSilence(msg))
                     return;
 
+            lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
+            StringBuilder previousRepliesBuilder = null;
+            foreach (var msg in lastBotMessages)
+            {
                 if (msg.Author.IsCurrent)
                 {
                     previousRepliesBuilder = previousRepliesBuilder ?? new StringBuilder();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -16,6 +17,9 @@ namespace CompatBot.EventHandlers
                 return;
 
             if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
+                return;
+
+            if ((args.Message.Author as DiscordMember)?.Roles?.Any() ?? false)
                 return;
 
             if (args.Message.Content.Contains('·'))
