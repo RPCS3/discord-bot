@@ -14,7 +14,6 @@ namespace CompatBot.Commands
         [Description("Commands to manage the bot instance")]
         public sealed class Bot: BaseCommandModule
         {
-
             [Command("version")]
             [Description("Returns currently checked out bot commit")]
             public async Task Version(CommandContext ctx)
