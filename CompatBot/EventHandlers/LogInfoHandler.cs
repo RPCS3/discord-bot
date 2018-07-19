@@ -7,8 +7,8 @@ using CompatBot.Commands;
 using CompatBot.EventHandlers.LogParsing;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
-using CompatBot.ResultFormatters;
 using CompatBot.Utils;
+using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 
