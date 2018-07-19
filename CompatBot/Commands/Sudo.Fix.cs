@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Converters;
 using CompatBot.Database;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -14,9 +16,9 @@ namespace CompatBot.Commands
         // '2018-07-19T12:19:06.7888609Z - '
         private static readonly Regex Timestamp = new Regex(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
-        [Group("fix")]
+        [Group("fix"), Hidden]
         [Description("Commands to fix various stuff")]
-        public sealed class Fix : BaseCommandModule
+        public sealed class Fix: BaseCommandModule
         {
             [Command("timestamps")]
             [Description("Fixes `timestamp` column in the `warning` table")]
@@ -43,6 +45,50 @@ namespace CompatBot.Commands
                 catch (Exception e)
                 {
                     ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", "Couln't fix warning timestamps: " + e, DateTime.Now);
+                    await ctx.RespondAsync("Failed to fix warning timestamps").ConfigureAwait(false);
+                }
+            }
+
+            [Command("channels")]
+            [Description("Fixes channel mentions in `warning` table")]
+            public async Task Channels(CommandContext ctx)
+            {
+                await ctx.TriggerTypingAsync().ConfigureAwait(false);
+                try
+                {
+                    var @fixed = 0;
+                    foreach (var warning in BotDb.Instance.Warning)
+                        if (!string.IsNullOrEmpty(warning.Reason) && warning.Reason.Contains('#'))
+                        {
+                            var reasonParts = warning.Reason.Split(' ');
+                            var rebuiltMsg = new List<string>(reasonParts.Length);
+                            var changed = false;
+                            foreach (var p in reasonParts)
+                            {
+                                if (p.Contains('#'))
+                                {
+                                    var ch = await new CustomDiscordChannelConverter().ConvertAsync(p, ctx).ConfigureAwait(false);
+                                    if (ch.HasValue)
+                                    {
+                                        rebuiltMsg.Add("#" + ch.Value.Name);
+                                        changed = true;
+                                        continue;
+                                    }
+                                }
+                                rebuiltMsg.Add(p);
+                            }
+                            if (changed)
+                            {
+                                warning.Reason = string.Join(' ', rebuiltMsg);
+                                @fixed++;
+                            }
+                        }
+                    await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
+                    ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", "Couln't fix channel mentions: " + e, DateTime.Now);
                     await ctx.RespondAsync("Failed to fix warning timestamps").ConfigureAwait(false);
                 }
             }
