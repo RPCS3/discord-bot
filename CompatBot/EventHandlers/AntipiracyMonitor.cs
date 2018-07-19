@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using CompatApiClient;
 using CompatBot.Commands;
 using CompatBot.Providers;
 using CompatBot.Utils;
@@ -50,7 +51,7 @@ namespace CompatBot.EventHandlers
                 await Task.WhenAll(
                     message.Channel.SendMessageAsync($"{message.Author.Mention} Please follow the {rules.Mention} and do not discuss piracy on this server. Repeated offence may result in a ban."),
                     client.ReportAsync("Mention of piracy", message, trigger, message.Content, needsAttention),
-                    Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Mention of piracy", message.Content)
+                    Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Mention of piracy", message.Content.Sanitize())
                 ).ConfigureAwait(false);
             }
             catch (Exception e)

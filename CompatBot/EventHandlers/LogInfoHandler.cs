@@ -2,6 +2,7 @@
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatApiClient;
 using CompatBot.Commands;
 using CompatBot.LogParsing;
 using CompatBot.LogParsing.SourceHandlers;
@@ -69,7 +70,7 @@ namespace CompatBot.EventHandlers
                             await Task.WhenAll(
                                 args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, needsAttention),
                                 Warnings.AddAsync(args.Client, args.Message, args.Message.Author.Id, args.Message.Author.Username, args.Client.CurrentUser,
-                                    "Pirated Release", $"{message.CreationTimestamp:O} - {message.Content} - {result.PiracyTrigger}")
+                                    "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
                             );
                         }
                     }
