@@ -24,7 +24,7 @@ namespace CompatBot.EventHandlers
 
             if (args.Message.Content.Contains('·'))
                 if (args.Message.Content.Split('\n', StringSplitOptions.RemoveEmptyEntries).Any(l => l.StartsWith('·')))
-                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random lines that might be completely irrelevant").ConfigureAwait(false);
+                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random bits that might be completely irrelevant").ConfigureAwait(false);
         }
     }
 }
