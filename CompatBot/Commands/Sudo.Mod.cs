@@ -97,7 +97,7 @@ namespace CompatBot.Commands
                 {
                     result = (Config.Reactions.Denied, $"{ctx.Message.Author.Mention} why would you even try this?! Alerting {sudoer.Mention}");
                     var dm = await sudoer.CreateDmChannelAsync().ConfigureAwait(false);
-                    await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your sudoer permissions ¯\_(ツ)_/¯").ConfigureAwait(false);
+                    await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your sudo permissions ¯\_(ツ)_/¯").ConfigureAwait(false);
                 }
                 else if (ModProvider.IsMod(sudoer.Id))
                 {

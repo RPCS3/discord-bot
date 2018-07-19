@@ -189,7 +189,7 @@ namespace CompatBot.ResultFormatters
             // should be last check here
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
-                notes += $"{Environment.NewLine}Outdated RPCS3 build detected";
+                notes += $"{Environment.NewLine}Outdated RPCS3 build detected, consider updating";
             if (notes != null)
                 builder.AddField("Notes", notes);
 
