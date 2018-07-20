@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -8,6 +9,8 @@ namespace CompatBot.EventHandlers
 {
     internal class LogsAsTextMonitor
     {
+        private static readonly Regex LogLine = new Regex(@"^·|^\w {(rsx|PPU|SPU)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
             if (args.Author.IsBot)
@@ -22,9 +25,8 @@ namespace CompatBot.EventHandlers
             if ((args.Message.Author as DiscordMember)?.Roles?.Any() ?? false)
                 return;
 
-            if (args.Message.Content.Contains('·'))
-                if (args.Message.Content.Split('\n', StringSplitOptions.RemoveEmptyEntries).Any(l => l.StartsWith('·')))
-                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random bits that might be completely irrelevant").ConfigureAwait(false);
+            if (LogLine.IsMatch(args.Message.Content))
+                await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random bits that might be completely irrelevant").ConfigureAwait(false);
         }
     }
 }
