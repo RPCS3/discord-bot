@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CompatBot.Commands
 {
     [Group("explain"), Aliases("botsplain", "define")]
-    //[Cooldown(1, 1, CooldownBucketType.Channel)]
+    [Cooldown(1, 3, CooldownBucketType.Channel)]
     [Description("Used to manage and show explanations")]
     internal sealed class Explain: BaseCommandModule
     {
