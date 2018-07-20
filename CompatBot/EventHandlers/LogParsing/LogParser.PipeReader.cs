@@ -49,7 +49,10 @@ namespace CompatBot.EventHandlers.LogParsing
                     {
                         await OnNewLineAsync(buffer.Slice(0, lineEnd.Value), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                         if (state.Error != LogParseState.ErrorCode.None)
+                        {
+                            reader.Complete();
                             return state;
+                        }
 
                         buffer = buffer.Slice(buffer.GetPosition(1, lineEnd.Value));
                     }
