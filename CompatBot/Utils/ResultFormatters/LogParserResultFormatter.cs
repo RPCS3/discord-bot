@@ -121,6 +121,8 @@ namespace CompatBot.Utils.ResultFormatters
                 var libList = libs.Split('\n').Select(l => l.Trim(' ', '\t', '-', '\r', '[', ']')).Where(s => !string.IsNullOrEmpty(s)).ToList();
                 items["library_list"] = libList.Count > 0 ? string.Join(", ", libList) : "None";
             }
+            else
+                items["library_list"] = "None";
 
             foreach (var key in items.AllKeys)
             {
