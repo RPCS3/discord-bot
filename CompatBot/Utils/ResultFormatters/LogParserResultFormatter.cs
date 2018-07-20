@@ -212,10 +212,22 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var latestBuildInfo = BuildInfoInUpdate.Match(link.ToLowerInvariant());
-            if (!latestBuildInfo.Success || buildInfo.Groups["commit"].Value == latestBuildInfo.Groups["commit"].Value)
+            if (!latestBuildInfo.Success || SameCommits(buildInfo.Groups["commit"].Value, latestBuildInfo.Groups["commit"].Value))
                 return null;
 
             return updateInfo;
+        }
+
+        private static bool SameCommits(string commitA, string CommitB)
+        {
+            if (string.IsNullOrEmpty(commitA) && string.IsNullOrEmpty(CommitB))
+                return true;
+
+            if (string.IsNullOrEmpty(commitA) || string.IsNullOrEmpty(CommitB))
+                return false;
+
+            var len = Math.Min(commitA.Length, CommitB.Length);
+            return commitA.Substring(0, len) == CommitB.Substring(0, len);
         }
     }
 }
