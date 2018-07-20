@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using CompatApiClient;
 using DSharpPlus.Entities;
-using Remotion.Linq.Parsing;
 
 namespace CompatBot.Utils
 {
