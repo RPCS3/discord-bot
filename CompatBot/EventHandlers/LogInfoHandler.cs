@@ -55,26 +55,33 @@ namespace CompatBot.EventHandlers
                         await args.Channel.SendMessageAsync("Log analysis failed, most likely cause is a truncated/invalid log. Please run the game again and reupload the new copy.").ConfigureAwait(false);
                     else
                     {
-                        await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
-                        if (result.Error == LogParseState.ErrorCode.PiracyDetected)
+                        try
                         {
-                            bool needsAttention = false;
-                            try
+                            await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
+                            if (result.Error == LogParseState.ErrorCode.PiracyDetected)
                             {
-                                await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
+                                bool needsAttention = false;
+                                try
+                                {
+                                    await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
+                                }
+                                catch (Exception e)
+                                {
+                                    needsAttention = true;
+                                    args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unable to delete message in {args.Channel.Name}: {e.Message}", DateTime.Now);
+                                }
+                                await Task.WhenAll(
+                                    args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, needsAttention),
+                                    Warnings.AddAsync(args.Client, args.Message, args.Message.Author.Id, args.Message.Author.Username, args.Client.CurrentUser,
+                                        "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
+                                );
                             }
-                            catch (Exception e)
-                            {
-                                needsAttention = true;
-                                args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unable to delete message in {args.Channel.Name}: {e.Message}", DateTime.Now);
-                            }
-                            await Task.WhenAll(
-                                args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, needsAttention),
-                                Warnings.AddAsync(args.Client, args.Message, args.Message.Author.Id, args.Message.Author.Username, args.Client.CurrentUser,
-                                                  "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
-                            );
                         }
-                    }
+                        catch (Exception e)
+                        {
+                            args.Client.DebugLogger.LogMessage(LogLevel.Error, "", "Sending log results failed: " + e, DateTime.Now);
+                        }
+                        }
                     return;
                 }
 
