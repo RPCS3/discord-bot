@@ -24,7 +24,7 @@ namespace CompatBot.Utils
                     builder.ClearFields();
                     fieldCount = 0;
                 }
-                builder.AddField(field.title.Trim(MaxTitleSize), field.content, true);
+                builder.AddField(field.title.Trim(MaxTitleSize).ToUpperInvariant(), field.content, true);
                 fieldCount++;
             }
             if (fieldCount > 0)
