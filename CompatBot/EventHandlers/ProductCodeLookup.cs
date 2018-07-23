@@ -20,7 +20,7 @@ namespace CompatBot.EventHandlers
         // see http://www.psdevwiki.com/ps3/Productcode
         private static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Client compatClient = new Client();
-        private static readonly AhoCorasickDoubleArrayTrie<string> ChillCheck = new AhoCorasickDoubleArrayTrie<string>(new[] {"shut up", "hush", "chill"}.ToDictionary(s => s, s => s));
+        private static readonly AhoCorasickDoubleArrayTrie<string> ChillCheck = new AhoCorasickDoubleArrayTrie<string>(new[] {"shut up", "hush", "chill"}.ToDictionary(s => s, s => s), true);
 
         public static async Task OnMessageMention(MessageCreateEventArgs args)
         {
