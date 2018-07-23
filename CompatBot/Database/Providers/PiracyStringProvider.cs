@@ -74,7 +74,7 @@ namespace CompatBot.Database.Providers
 
         private static void RebuildMatcher()
         {
-            matcher = PiracyStrings.Count == 0 ? null : new AhoCorasickDoubleArrayTrie<string>(PiracyStrings.ToDictionary(s => s, s => s));
+            matcher = PiracyStrings.Count == 0 ? null : new AhoCorasickDoubleArrayTrie<string>(PiracyStrings.ToDictionary(s => s, s => s), true);
         }
     }
 }
