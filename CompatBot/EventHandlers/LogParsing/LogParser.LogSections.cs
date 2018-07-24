@@ -108,7 +108,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["·F "] = new Regex(@"F \d+:\d+:\d+\.\d+ {.+?} (?<fatal_error>.*?(\:\W*\r?\n\(.*?)*)\r?$", DefaultOptions),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
-                EndTrigger = "Objects cleared...",
+                EndTrigger = "All threads stopped...",
             }
         };
 
