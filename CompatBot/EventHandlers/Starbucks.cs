@@ -80,7 +80,7 @@ namespace CompatBot.EventHandlers
 
                 // in case it's not in cache and doesn't contain any info, including Author
                 message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
-                if ((message.Author as DiscordMember)?.Roles.Any(r => Config.Moderation.RoleWhiteList.Contains(r.Name)) ?? false)
+                if ((message.Author as DiscordMember)?.Roles.IsWhitelisted() ?? false)
                     return;
 
                 var users = await message.GetReactionsAsync(emoji).ConfigureAwait(false);

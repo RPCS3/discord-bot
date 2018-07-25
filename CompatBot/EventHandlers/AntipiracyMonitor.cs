@@ -30,6 +30,9 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(message.Content) || message.Content.StartsWith(Config.CommandPrefix))
                 return true;
 
+            if ((message.Author as DiscordMember)?.Roles.IsWhitelisted() ?? false)
+                return true;
+
             string trigger = null;
             bool needsAttention = false;
             try
