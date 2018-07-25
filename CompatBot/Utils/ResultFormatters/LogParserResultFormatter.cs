@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -193,7 +194,9 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
         {
-                if (items["fatal_error"] is string fatalError)
+            if (items["rap_file"] is string rap)
+                builder.AddField("Missing License", $"Missing `{Path.GetFileName(rap)}`");
+            else if (items["fatal_error"] is string fatalError)
                 builder.AddField("Fatal Error", $"`{fatalError}`");
             string notes = null;
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))

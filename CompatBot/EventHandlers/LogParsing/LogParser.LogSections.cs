@@ -106,6 +106,8 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["GL VERSION:"] = new Regex(@"GL VERSION:(\d|\.|\s|\w|-)* (?<driver_version_new>(\d+\.)*\d+)\r?\n", DefaultOptions),
                     ["texel buffer size reported:"] = new Regex(@"RSX: Supported texel buffer size reported: (?<texel_buffer_size_new>\d*?) bytes", DefaultOptions),
                     ["·F "] = new Regex(@"F \d+:\d+:\d+\.\d+ {.+?} (?<fatal_error>.*?(\:\W*\r?\n\(.*?)*)\r?$", DefaultOptions),
+                    ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?)\r?$", DefaultOptions),
+                    ["Rap file not found:"] = new Regex(@"Rap file not found: (?<rap_file>.*?)\r?$", DefaultOptions),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
