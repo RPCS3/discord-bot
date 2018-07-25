@@ -137,11 +137,17 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void BuildInfoSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
-            builder.AddField("Build Info", $"{items["build_and_specs"]}{Environment.NewLine}GPU: {items["gpu_info"]}");
+            var systemInfo = $"{items["build_and_specs"]}";
+            if (items["gpu_info"] is string gpu)
+                systemInfo += $"{Environment.NewLine}GPU: {gpu}";
+            builder.AddField("Build Info", systemInfo);
         }
 
         private static void BuildCpuSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
+            if (string.IsNullOrEmpty(items["ppu_decoder"]))
+                return;
+
             var content = new StringBuilder()
                 .AppendLine($"`PPU Decoder: {items["ppu_decoder"],21}`")
                 .AppendLine($"`SPU Decoder: {items["spu_decoder"],21}`")
@@ -153,12 +159,16 @@ namespace CompatBot.Utils.ResultFormatters
                 .AppendLine($"`Force CPU Blit: {items["cpu_blit"] ?? "N/A",18}`")
                 .AppendLine($"`Hook Static Functions: {items["hook_static_functions"],11}`")
                 .AppendLine($"`Lib Loader: {items["lib_loader"],22}`")
-                .ToString();
+                .ToString()
+                .FixSpaces();
             builder.AddField(items["custom_config"] == null ? "CPU Settings" : "Per-game CPU Settings", content, true);
         }
 
         private static void BuildGpuSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
+            if (string.IsNullOrEmpty(items["renderer"]))
+                return;
+
             var content = new StringBuilder()
                 .AppendLine($"`Renderer: {items["renderer"],24}`")
                 .AppendLine($"`Aspect ratio: {items["aspect_ratio"],20}`")
@@ -170,7 +180,8 @@ namespace CompatBot.Utils.ResultFormatters
                 .AppendLine($"`Anisotropic Filter: {items["af_override"] ?? "N/A",14}`")
                 .AppendLine($"`Frame Limit: {items["frame_limit"],21}`")
                 .AppendLine($"`Disable Vertex Cache: {items["vertex_cache"],12}`")
-                .ToString();
+                .ToString()
+                .FixSpaces();
             builder.AddField(items["custom_config"] == null ? "GPU Settings" : "Per-game GPU Settings", content, true);
         }
 
@@ -182,9 +193,11 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
         {
-            if (items["fatal_error"] is string fatalError)
+                if (items["fatal_error"] is string fatalError)
                 builder.AddField("Fatal Error", $"`{fatalError}`");
             string notes = null;
+            if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
+                notes += "Log is empty. You need to run the game before uploading the log.";
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes += "Log was too large, showing last processed run";
 
@@ -231,5 +244,7 @@ namespace CompatBot.Utils.ResultFormatters
             var len = Math.Min(commitA.Length, CommitB.Length);
             return commitA.Substring(0, len) == CommitB.Substring(0, len);
         }
+
+        private static string FixSpaces(this string text) => text?.Replace("  ", " \u200d \u200d");
     }
 }
