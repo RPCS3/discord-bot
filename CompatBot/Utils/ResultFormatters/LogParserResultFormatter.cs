@@ -247,7 +247,5 @@ namespace CompatBot.Utils.ResultFormatters
             var len = Math.Min(commitA.Length, CommitB.Length);
             return commitA.Substring(0, len) == CommitB.Substring(0, len);
         }
-
-        private static string FixSpaces(this string text) => text?.Replace("  ", " \u200d \u200d");
     }
 }

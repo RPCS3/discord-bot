@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -49,8 +50,8 @@ namespace CompatBot.Commands
                 Title = "RPCS3 Compatibility Bot",
                 Url = "https://github.com/RPCS3/discord-bot",
                 Description = "Made by:\n" +
-                              "\tRoberto Anić Banić aka nicba1010\n" +
-                              "\t13xforever",
+                              "　　Roberto Anić Banić aka nicba1010\n" +
+                              "　　13xforever".FixSpaces(),
                 Color = DiscordColor.Purple,
             };
             await ctx.RespondAsync(embed: embed.Build());
