@@ -10,6 +10,7 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -57,31 +58,43 @@ namespace CompatBot.EventHandlers
                     {
                         try
                         {
-                            await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
                             if (result.Error == LogParseState.ErrorCode.PiracyDetected)
                             {
-                                bool needsAttention = false;
-                                try
+                                if ((args.Message.Author as DiscordMember)?.Roles.IsWhitelisted() ?? false)
                                 {
-                                    await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
+                                    await Task.WhenAll(
+                                        args.Channel.SendMessageAsync("I see wha' ye did thar ☠"),
+                                        args.Client.ReportAsync("Pirated Release (whitelisted by role)", args.Message, result.PiracyTrigger, result.PiracyContext)
+                                    ).ConfigureAwait(false);
                                 }
-                                catch (Exception e)
+                                else
                                 {
-                                    needsAttention = true;
-                                    args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unable to delete message in {args.Channel.Name}: {e.Message}", DateTime.Now);
+                                    bool needsAttention = false;
+                                    try
+                                    {
+                                        await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        needsAttention = true;
+                                        args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unable to delete message in {args.Channel.Name}: {e.Message}", DateTime.Now);
+                                    }
+                                    await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
+                                    await Task.WhenAll(
+                                        args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, needsAttention),
+                                        Warnings.AddAsync(args.Client, args.Message, args.Message.Author.Id, args.Message.Author.Username, args.Client.CurrentUser,
+                                            "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
+                                    );
                                 }
-                                await Task.WhenAll(
-                                    args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, needsAttention),
-                                    Warnings.AddAsync(args.Client, args.Message, args.Message.Author.Id, args.Message.Author.Username, args.Client.CurrentUser,
-                                        "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
-                                );
                             }
+                            else
+                                await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
                         }
                         catch (Exception e)
                         {
                             args.Client.DebugLogger.LogMessage(LogLevel.Error, "", "Sending log results failed: " + e, DateTime.Now);
                         }
-                        }
+                    }
                     return;
                 }
 
