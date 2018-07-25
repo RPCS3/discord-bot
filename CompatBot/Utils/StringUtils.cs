@@ -32,5 +32,7 @@ namespace CompatBot.Utils
             }
             return string.Create((int)buffer.Length, buffer, Splice);
         }
+
+        public static string FixSpaces(this string text) => text?.Replace("  ", " \u200d \u200d");
     }
 }
