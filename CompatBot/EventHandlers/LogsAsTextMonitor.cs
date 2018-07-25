@@ -28,8 +28,11 @@ namespace CompatBot.EventHandlers
             if (LogLine.IsMatch(args.Message.Content))
             {
                 if (args.Message.Content.Contains("LDR:") && args.Message.Content.Contains("fs::file is null"))
-                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} this error usually indicates a missing `.rap` license file.{Environment.NewLine}" +
-                                                         "Please follow the quickstart guide to get a proper dump of a digital title.").ConfigureAwait(false);
+                    await args.Channel.SendMessageAsync(
+                        $"{args.Message.Author.Mention} this error usually indicates a missing `.rap` license file.{Environment.NewLine}" +
+                        $"Please follow the quickstart guide to get a proper dump of a digital title.{Environment.NewLine}" +
+                         "Also please upload full log file instead of pasting random bits that might or might not be relevant."
+                    ).ConfigureAwait(false);
                 else
                     await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random bits that might be completely irrelevant").ConfigureAwait(false);
             }
