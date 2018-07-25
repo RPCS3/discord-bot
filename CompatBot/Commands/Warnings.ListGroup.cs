@@ -21,7 +21,7 @@ namespace CompatBot.Commands
         {
             [GroupCommand, Priority(10)]
             [Description("Show warning list for a user. Default is to show warning list for yourself")]
-            public async Task List(CommandContext ctx, [Description("Discord user to warn")] DiscordUser user)
+            public async Task List(CommandContext ctx, [Description("Discord user to list warnings for")] DiscordUser user)
             {
                 var typingTask = ctx.TriggerTypingAsync();
                 if (await CheckListPermissionAsync(ctx, user.Id).ConfigureAwait(false))
@@ -30,7 +30,7 @@ namespace CompatBot.Commands
             }
 
             [GroupCommand]
-            public async Task List(CommandContext ctx, [Description("Id of the user to warn")] ulong userId)
+            public async Task List(CommandContext ctx, [Description("Id of the user to list warnings for")] ulong userId)
             {
                 var typingTask = ctx.TriggerTypingAsync();
                 if (await CheckListPermissionAsync(ctx, userId).ConfigureAwait(false))
@@ -39,7 +39,7 @@ namespace CompatBot.Commands
             }
 
             [GroupCommand]
-            [Description("Show your own warning list")]
+            [Description("List your own warning list")]
             public async Task List(CommandContext ctx)
             {
                 var typingTask = ctx.TriggerTypingAsync();
