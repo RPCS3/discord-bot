@@ -62,7 +62,7 @@ namespace CompatBot.Commands
             await ctx.Message.CreateReactionAsync(Config.Reactions.Failure).ConfigureAwait(false);
         }
 
-        [Command("add")]
+        [Command("add"), RequiresBotModRole]
         [Description("Adds a new explanation to the list")]
         public async Task Add(CommandContext ctx,
             [Description("A term to explain. Quote it if it contains spaces")] string term,
