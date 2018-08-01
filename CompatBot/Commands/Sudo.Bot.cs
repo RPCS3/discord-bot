@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
@@ -60,12 +61,12 @@ namespace CompatBot.Commands
                         })
                         {
                             git.Start();
-                            var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
+                            var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(true);
                             git.WaitForExit();
                             if (!string.IsNullOrEmpty(stdout))
-                                await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
+                                await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(true);
                         }
-                        await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
+                        await ctx.RespondAsync("Restarting...").ConfigureAwait(true);
                         using (var self = new Process
                         {
 #if DEBUG
@@ -82,7 +83,7 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        await ctx.RespondAsync("Updating failed: " + e.Message).ConfigureAwait(false);
+                        await ctx.RespondAsync("Updating failed: " + e.Message).ConfigureAwait(true);
                     }
                     finally
                     {
