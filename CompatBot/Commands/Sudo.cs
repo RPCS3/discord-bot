@@ -10,8 +10,6 @@ namespace CompatBot.Commands
     [Description("Used to manage bot moderators and sudoers")]
     internal sealed partial class Sudo : BaseCommandModule
     {
-        private static readonly object updateObj = new object();
-
         [Command("say"), Priority(10)]
         [Description("Make bot say things, optionally in a specific channel")]
         public async Task Say(CommandContext ctx, [Description("Discord channel (can use just #name in DM)")] DiscordChannel channel, [RemainingText, Description("Message text to send")] string message)
