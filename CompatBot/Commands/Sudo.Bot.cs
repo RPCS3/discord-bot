@@ -11,6 +11,8 @@ namespace CompatBot.Commands
 {
     internal partial class Sudo
     {
+        private static readonly SemaphoreSlim lockObj = new SemaphoreSlim(1, 1);
+
         [Group("bot")]
         [Description("Commands to manage the bot instance")]
         public sealed class Bot: BaseCommandModule
@@ -45,7 +47,7 @@ namespace CompatBot.Commands
             public async Task Restart(CommandContext ctx)
             {
                 var typingTask = ctx.TriggerTypingAsync();
-                if (Monitor.TryEnter(updateObj))
+                if (lockObj.Wait(0))
                 {
                     try
                     {
@@ -61,12 +63,12 @@ namespace CompatBot.Commands
                         })
                         {
                             git.Start();
-                            var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(true);
+                            var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
                             git.WaitForExit();
                             if (!string.IsNullOrEmpty(stdout))
-                                await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(true);
+                                await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
                         }
-                        await ctx.RespondAsync("Restarting...").ConfigureAwait(true);
+                        await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
                         using (var self = new Process
                         {
 #if DEBUG
@@ -83,11 +85,11 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        await ctx.RespondAsync("Updating failed: " + e.Message).ConfigureAwait(true);
+                        await ctx.RespondAsync("Updating failed: " + e.Message).ConfigureAwait(false);
                     }
                     finally
                     {
-                        Monitor.Exit(updateObj);
+                        lockObj.Release();
                     }
                 }
                 else
