@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace CompatApiClient.POCOs
+﻿namespace CompatApiClient.POCOs
 {
     public class UpdateInfo
     {

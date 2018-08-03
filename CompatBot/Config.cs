@@ -14,6 +14,7 @@ namespace CompatBot
         public static readonly ulong BotLogId = 436972161572536329;
         public static readonly ulong BotRulesChannelId = 311894275015049216;
         public static readonly ulong BotAdminId = 267367850706993152;
+        public static readonly ulong ThumbnailSpamId = 474163354232029197;
 
         public static readonly int ProductCodeLookupHistoryThrottle = 7;
 

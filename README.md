@@ -17,7 +17,7 @@ How to Build
 * Note that token could be set in the settings _or_ supplied as a launch argument (higher priority)
 * If you've changed the database model, add a migration
 	* `$ cd CompatBot`
-	* `$ dotnet ef migrations add NAME`
+	* `$ dotnet ef migrations add -c [BotDb|ThumbnailDb] MigrationName`
 	* `$ cd ..`
 * `$ cd CompatBot`
 * `$ dotnet run [token]`

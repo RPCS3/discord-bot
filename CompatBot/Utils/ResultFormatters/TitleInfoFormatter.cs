@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using CompatApiClient;
+using CompatApiClient.Utils;
 using CompatApiClient.POCOs;
 using DSharpPlus.Entities;
 
@@ -45,7 +46,7 @@ namespace CompatBot.Utils.ResultFormatters
             return $"Product code {titleId} was not found in compatibility database, possibly untested!";
         }
 
-        public static DiscordEmbed AsEmbed(this TitleInfo info, string titleId, bool footer = true)
+        public static DiscordEmbed AsEmbed(this TitleInfo info, string titleId, bool footer = true, string thumbnailUrl = null)
         {
             if (info.Status == TitleInfo.Maintenance.Status)
                 return new DiscordEmbedBuilder{Description = "API is undergoing maintenance, please try again later.", Color = Config.Colors.Maintenance}.Build();
@@ -55,6 +56,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
+                footer = footer && string.IsNullOrEmpty(thumbnailUrl);
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
                 var pr = info.ToPrString(footer ? @"¯\_(ツ)_ /¯" : @"¯\\\_(ツ)\_ /¯");
                 var desc = $"Status: {info.Status}, PR: {pr}, Updated: {info.ToUpdated()}";
@@ -64,6 +66,7 @@ namespace CompatBot.Utils.ResultFormatters
                         Url = $"https://forums.rpcs3.net/thread-{info.Thread}.html",
                         Description = footer ? null : desc,
                         Color = color,
+                        ThumbnailUrl = thumbnailUrl
                     }.WithFooter(footer ? desc : null)
                     .Build();
             }

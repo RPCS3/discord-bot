@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CompatApiClient;
+using CompatApiClient.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 

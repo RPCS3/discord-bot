@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CompatApiClient;
+using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
@@ -57,18 +57,22 @@ namespace CompatBot.Commands
                 var result = new StringBuilder("Warning count per user:").AppendLine("```")
                     .AppendLine(header)
                     .AppendLine("".PadLeft(header.Length, '-'));
-                var query = from warn in BotDb.Instance.Warning
-                    group warn by warn.DiscordId into userGroup
-                    let row = new { discordId = userGroup.Key, count = userGroup.Count() }
-                    orderby row.count descending
-                    select row;
-                foreach (var row in query)
+                using (var db = new BotDb())
                 {
-                    var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
-                    result.Append($"{username,-25} | ");
-                    if (ctx.Channel.IsPrivate)
-                        result.Append($"{row.discordId,-18} | ");
-                    result.AppendLine($"{row.count,2}");
+                    var query = from warn in db.Warning
+                        group warn by warn.DiscordId
+                        into userGroup
+                        let row = new {discordId = userGroup.Key, count = userGroup.Count()}
+                        orderby row.count descending
+                        select row;
+                    foreach (var row in query)
+                    {
+                        var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
+                        result.Append($"{username,-25} | ");
+                        if (ctx.Channel.IsPrivate)
+                            result.Append($"{row.discordId,-18} | ");
+                        result.AppendLine($"{row.count,2}");
+                    }
                 }
                 await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }
@@ -85,21 +89,24 @@ namespace CompatBot.Commands
                 var result = new StringBuilder("Last issued warnings:").AppendLine("```")
                     .AppendLine(header)
                     .AppendLine("".PadLeft(header.Length, '-'));
-                var query = from warn in BotDb.Instance.Warning
-                    orderby warn.Id descending
-                    select warn;
-                foreach (var row in query.Take(number))
+                using (var db = new BotDb())
                 {
-                    var username = await ctx.GetUserNameAsync(row.DiscordId).ConfigureAwait(false);
-                    var modname = await ctx.GetUserNameAsync(row.IssuerId, defaultName: "Unknown mod").ConfigureAwait(false);
-                    result.Append($"{row.Id:00000} | {username,-25} | ");
-                    if (ctx.Channel.IsPrivate)
-                        result.Append($"{row.DiscordId,-18} | ");
-                    var timestamp = row.Timestamp.HasValue ? new DateTime(row.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
-                    result.Append($"{modname,-15} | {timestamp,-20} | {row.Reason}");
-                    if (ctx.Channel.IsPrivate)
-                        result.Append(" | ").Append(row.FullReason);
-                    result.AppendLine();
+                    var query = from warn in db.Warning
+                        orderby warn.Id descending
+                        select warn;
+                    foreach (var row in query.Take(number))
+                    {
+                        var username = await ctx.GetUserNameAsync(row.DiscordId).ConfigureAwait(false);
+                        var modname = await ctx.GetUserNameAsync(row.IssuerId, defaultName: "Unknown mod").ConfigureAwait(false);
+                        result.Append($"{row.Id:00000} | {username,-25} | ");
+                        if (ctx.Channel.IsPrivate)
+                            result.Append($"{row.DiscordId,-18} | ");
+                        var timestamp = row.Timestamp.HasValue ? new DateTime(row.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
+                        result.Append($"{modname,-15} | {timestamp,-20} | {row.Reason}");
+                        if (ctx.Channel.IsPrivate)
+                            result.Append(" | ").Append(row.FullReason);
+                        result.AppendLine();
+                    }
                 }
                 await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }

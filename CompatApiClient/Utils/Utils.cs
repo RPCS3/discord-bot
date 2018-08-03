@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CompatApiClient
+namespace CompatApiClient.Utils
 {
     public static class Utils
     {

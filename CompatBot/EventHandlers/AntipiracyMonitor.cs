@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using CompatApiClient;
+using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;

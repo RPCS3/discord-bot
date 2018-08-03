@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
+using CompatApiClient.Utils;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
@@ -101,15 +102,13 @@ Example usage:
 
         [Command("latest"), Aliases("download")]
         [Description("Provides links to the latest RPCS3 build")]
+        [Cooldown(1, 30, CooldownBucketType.Channel)]
         public async Task Latest(CommandContext ctx)
         {
-            var getDmTask = ctx.CreateDmAsync();
-            if (ctx.Channel.IsPrivate)
-                await ctx.TriggerTypingAsync().ConfigureAwait(false);
+            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             var info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
             var embed = await info.AsEmbedAsync().ConfigureAwait(false);
-            var dm = await getDmTask.ConfigureAwait(false);
-            await dm.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+            await ctx.RespondAsync(embed: embed.Build()).ConfigureAwait(false);
         }
 
         private static string DicToDesc(Dictionary<char, string[]> dictionary)
@@ -129,7 +128,17 @@ Example usage:
         {
             var botChannelTask = ctx.Client.GetChannelAsync(Config.BotChannelId);
             Console.WriteLine(requestBuilder.Build());
-            var result = await client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
+            CompatResult result;
+            try
+            {
+                result = await client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
+            }
+            catch
+            {
+                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                return;
+            }
+
             var botChannel = await botChannelTask.ConfigureAwait(false);
             foreach (var msg in FormatSearchResults(ctx, result))
                 await botChannel.SendAutosplitMessageAsync(msg).ConfigureAwait(false);

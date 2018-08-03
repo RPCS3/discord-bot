@@ -15,9 +15,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-beta-00470" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-beta-00470" />
-    <PackageReference Include="MathParser.org-mXparser" Version="4.2.0" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-beta-00491" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-beta-00491" />
+    <PackageReference Include="MathParser.org-mXparser" Version="4.2.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.1.1" />
@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CompatApiClient\CompatApiClient.csproj" />
+    <ProjectReference Include="..\PsnClient\PsnClient.csproj" />
   </ItemGroup>
 
 </Project>

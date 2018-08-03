@@ -9,13 +9,14 @@ namespace CompatBot.Database.Providers
 {
     internal static class PiracyStringProvider
     {
+        private static readonly BotDb db = new BotDb();
         private static readonly object SyncObj = new object();
         private static readonly List<string> PiracyStrings;
         private static AhoCorasickDoubleArrayTrie<string> matcher;
 
         static PiracyStringProvider()
         {
-            PiracyStrings = BotDb.Instance.Piracystring.Select(ps => ps.String).ToList();
+            PiracyStrings = db.Piracystring.Select(ps => ps.String).ToList();
             RebuildMatcher();
         }
 
@@ -32,7 +33,6 @@ namespace CompatBot.Database.Providers
                 PiracyStrings.Add(trigger);
                 RebuildMatcher();
             }
-            var db = BotDb.Instance;
             await db.Piracystring.AddAsync(new Piracystring {String = trigger}).ConfigureAwait(false);
             await db.SaveChangesAsync().ConfigureAwait(false);
             return true;
@@ -40,7 +40,6 @@ namespace CompatBot.Database.Providers
 
         public static async Task<bool> RemoveAsync(int id)
         {
-            var db = BotDb.Instance;
             var dbItem = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id).ConfigureAwait(false);
             if (dbItem == null)
                 return false;

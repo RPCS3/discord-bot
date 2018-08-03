@@ -1,11 +1,18 @@
 ﻿using System;
 using System.Buffers;
+using System.Linq;
 using System.Text;
 
 namespace CompatBot.Utils
 {
     internal static class StringUtils
     {
+        private static readonly Encoding Latin8BitEncoding = Encoding.GetEncodings()
+                                                                 .FirstOrDefault(e => e.CodePage == 1250 || e.CodePage == 1252 || e.CodePage == 28591)?
+                                                                 .GetEncoding()
+                                                             ?? Encoding.ASCII;
+        private static readonly Encoding Utf8 = new UTF8Encoding(false);
+
         public static string StripQuotes(this string str)
         {
             if (str == null || str.Length < 2)
@@ -18,7 +25,7 @@ namespace CompatBot.Utils
 
         public static string AsString(this ReadOnlySequence<byte> buffer, Encoding encoding = null)
         {
-            encoding = encoding ?? Encoding.ASCII;
+            encoding = encoding ?? Latin8BitEncoding;
             if (buffer.IsSingleSegment)
                 return encoding.GetString(buffer.First.Span);
 
@@ -31,6 +38,24 @@ namespace CompatBot.Utils
                 }
             }
             return string.Create((int)buffer.Length, buffer, Splice);
+        }
+
+        public static string ToUtf8(this string str)
+        {
+            return Utf8.GetString(Latin8BitEncoding.GetBytes(str));
+        }
+
+        public static string ToLatin8BitEncoding(this string str)
+        {
+            try
+            {
+                return Latin8BitEncoding.GetString(Utf8.GetBytes(str));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return str;
+            }
         }
 
         public static string FixSpaces(this string text) => text?.Replace("  ", " \u200d \u200d");

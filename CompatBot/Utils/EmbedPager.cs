@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CompatApiClient;
+using CompatApiClient.Utils;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils

@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CompatApiClient;
+using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Utils;
@@ -53,9 +53,13 @@ namespace CompatBot.Commands
         public async Task Remove(CommandContext ctx, [Description("Warning IDs to remove separated with space")] params int[] ids)
         {
             var typingTask = ctx.TriggerTypingAsync();
-            var warningsToRemove = await BotDb.Instance.Warning.Where(w => ids.Contains(w.Id)).ToListAsync().ConfigureAwait(false);
-            BotDb.Instance.Warning.RemoveRange(warningsToRemove);
-            var removedCount = await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
+            int removedCount;
+            using (var db = new BotDb())
+            {
+                var warningsToRemove = await db.Warning.Where(w => ids.Contains(w.Id)).ToListAsync().ConfigureAwait(false);
+                db.Warning.RemoveRange(warningsToRemove);
+                removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
+            }
             (DiscordEmoji reaction, string msg) result = removedCount == ids.Length
                 ? (Config.Reactions.Success, $"Warning{(ids.Length == 1 ? "" : "s")} successfully removed!")
                 : (Config.Reactions.Failure, $"Removed {removedCount} items, but was asked to remove {ids.Length}");
@@ -80,9 +84,13 @@ namespace CompatBot.Commands
             {
                 var typingTask = ctx.TriggerTypingAsync();
                 //var removed = await BotDb.Instance.Database.ExecuteSqlCommandAsync($"DELETE FROM `warning` WHERE `discord_id`={userId}").ConfigureAwait(false);
-                var warningsToRemove = await BotDb.Instance.Warning.Where(w => w.DiscordId == userId).ToListAsync().ConfigureAwait(false);
-                BotDb.Instance.Warning.RemoveRange(warningsToRemove);
-                var removed = await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
+                int removed;
+                using (var db = new BotDb())
+                {
+                    var warningsToRemove = await db.Warning.Where(w => w.DiscordId == userId).ToListAsync().ConfigureAwait(false);
+                    db.Warning.RemoveRange(warningsToRemove);
+                    removed = await db.SaveChangesAsync().ConfigureAwait(false);
+                }
                 await Task.WhenAll(
                     ctx.RespondAsync($"{removed} warning{(removed == 1 ? "" : "s")} successfully removed!"),
                     ctx.Message.CreateReactionAsync(Config.Reactions.Success),
@@ -111,9 +119,13 @@ namespace CompatBot.Commands
             }
             try
             {
-                await BotDb.Instance.Warning.AddAsync(new Warning {DiscordId = userId, IssuerId = issuer.Id, Reason = reason, FullReason = fullReason ?? "", Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
-                await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
-                var count = await BotDb.Instance.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
+                int count;
+                using (var db = new BotDb())
+                {
+                    await db.Warning.AddAsync(new Warning {DiscordId = userId, IssuerId = issuer.Id, Reason = reason, FullReason = fullReason ?? "", Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    count = await db.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
+                }
                 await message.RespondAsync($"User warning saved! User currently has {count} warning{(count % 10 == 1 && count % 100 != 11 ? "" : "s")}!").ConfigureAwait(false);
                 if (count > 1)
                     await ListUserWarningsAsync(client, message, userId, userName).ConfigureAwait(false);
@@ -130,7 +142,9 @@ namespace CompatBot.Commands
         private static async Task ListUserWarningsAsync(DiscordClient client, DiscordMessage message, ulong userId, string userName, bool skipIfOne = true)
         {
             await message.Channel.TriggerTypingAsync().ConfigureAwait(false);
-            var count = await BotDb.Instance.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
+            int count;
+            using (var db = new BotDb())
+                count = await db.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
             if (count == 0)
             {
                 await message.RespondAsync(userName + " has no warnings, is a standup citizen, and a pillar of this community").ConfigureAwait(false);
@@ -148,15 +162,16 @@ namespace CompatBot.Commands
                 header += "          | Full reason";
             result.AppendLine(header)
                   .AppendLine("".PadLeft(header.Length, '-'));
-            foreach (var warning in BotDb.Instance.Warning.Where(w => w.DiscordId == userId))
-            {
-                var issuerName = warning.IssuerId == 0 ? "" : await client.GetUserNameAsync(message.Channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
-                var timestamp = warning.Timestamp.HasValue ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
-                result.Append($"{warning.Id:00000} | {issuerName,-15} | {timestamp,-20} | {warning.Reason}");
-                if (isPrivate)
-                    result.Append(" | ").Append(warning.FullReason);
-                result.AppendLine();
-            }
+            using(var db = new BotDb())
+                foreach (var warning in db.Warning.Where(w => w.DiscordId == userId))
+                {
+                    var issuerName = warning.IssuerId == 0 ? "" : await client.GetUserNameAsync(message.Channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
+                    var timestamp = warning.Timestamp.HasValue ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
+                    result.Append($"{warning.Id:00000} | {issuerName,-15} | {timestamp,-20} | {warning.Reason}");
+                    if (isPrivate)
+                        result.Append(" | ").Append(warning.FullReason);
+                    result.AppendLine();
+                }
             await message.Channel.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
         }
     }
