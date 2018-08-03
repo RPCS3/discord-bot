@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
+using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
@@ -18,7 +19,7 @@ namespace CompatBot.EventHandlers
     internal static class ProductCodeLookup
     {
         // see http://www.psdevwiki.com/ps3/Productcode
-        private static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Client compatClient = new Client();
         private static readonly AhoCorasickDoubleArrayTrie<string> ChillCheck = new AhoCorasickDoubleArrayTrie<string>(new[] {"shut up", "hush", "chill"}.ToDictionary(s => s, s => s), true);
 
@@ -111,7 +112,10 @@ namespace CompatBot.EventHandlers
                     return TitleInfo.Unknown.AsEmbed(code, footer);
 
                 if (result.Results.TryGetValue(code, out var info))
-                    return info.AsEmbed(code, footer);
+                {
+                    var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
+                    return info.AsEmbed(code, footer, thumbnailUrl);
+                }
 
                 return TitleInfo.Unknown.AsEmbed(code, footer);
             }

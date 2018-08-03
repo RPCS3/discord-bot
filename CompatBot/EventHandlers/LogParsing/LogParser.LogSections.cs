@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
+using CompatBot.Utils;
 
 namespace CompatBot.EventHandlers.LogParsing
 {
@@ -20,7 +20,7 @@ namespace CompatBot.EventHandlers.LogParsing
          * If trigger is matched, then the associated reges will be run on THE WHOLE sliding window
          * If any data was captured, it will be stored in the current collection of items with the key of the explicit capture group of regex
          *
-         * Due to limitations, REGEX can't contain anything other than ASCII (triggers CAN however)
+         * Due to limitations, REGEX can't contain anything other than ASCII (including triggers)
          *
          */
         private static readonly List<LogSection> LogSections = new List<LogSection>
@@ -105,7 +105,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["GL RENDERER:"] = new Regex(@"GL RENDERER: (?<driver_manuf_new>.*?)\r?\n", DefaultOptions),
                     ["GL VERSION:"] = new Regex(@"GL VERSION:(\d|\.|\s|\w|-)* (?<driver_version_new>(\d+\.)*\d+)\r?\n", DefaultOptions),
                     ["texel buffer size reported:"] = new Regex(@"RSX: Supported texel buffer size reported: (?<texel_buffer_size_new>\d*?) bytes", DefaultOptions),
-                    ["·F "] = new Regex(@"F \d+:\d+:\d+\.\d+ {.+?} (?<fatal_error>.*?(\:\W*\r?\n\(.*?)*)\r?$", DefaultOptions),
+                    ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ {.+?} (?<fatal_error>.*?(\:\W*\r?\n\(.*?)*)\r?$", DefaultOptions),
                     ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?)\r?$", DefaultOptions),
                     ["Rap file not found:"] = new Regex(@"Rap file not found: (?<rap_file>.*?)\r?$", DefaultOptions),
                 },
@@ -119,7 +119,7 @@ namespace CompatBot.EventHandlers.LogParsing
             if (await PiracyStringProvider.FindTriggerAsync(line).ConfigureAwait(false) is string match)
             {
                 state.PiracyTrigger = match;
-                state.PiracyContext = Utf8.GetString(Encoding.ASCII.GetBytes(line));
+                state.PiracyContext = line.ToUtf8();
                 state.Error = LogParseState.ErrorCode.PiracyDetected;
             }
         }

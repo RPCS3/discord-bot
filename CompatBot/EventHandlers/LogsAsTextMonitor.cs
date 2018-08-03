@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Utils;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
@@ -22,7 +22,7 @@ namespace CompatBot.EventHandlers
             if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
-            if ((args.Message.Author as DiscordMember)?.Roles.IsWhitelisted() ?? false)
+            if ((args.Message.Author as DiscordMember)?.Roles.Any() ?? false)
                 return;
 
             if (LogLine.IsMatch(args.Message.Content))

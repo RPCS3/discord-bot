@@ -24,8 +24,9 @@ namespace CompatBot.Commands
             var result = new StringBuilder("```")
                 .AppendLine("ID   | Trigger")
                 .AppendLine("-----------------------------");
-            foreach (var item in await BotDb.Instance.Piracystring.ToListAsync().ConfigureAwait(false))
-                result.AppendLine($"{item.Id:0000} | {item.String}");
+            using (var db = new BotDb())
+                foreach (var item in await db.Piracystring.ToListAsync().ConfigureAwait(false))
+                    result.AppendLine($"{item.Id:0000} | {item.String}");
             await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             await typingTask;
         }

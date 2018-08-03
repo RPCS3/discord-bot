@@ -28,11 +28,14 @@ namespace CompatBot.Commands
                 return;
             }
 
-            var explanation = await BotDb.Instance.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-            if (explanation != null)
+            using (var db = new BotDb())
             {
-                await ctx.RespondAsync(explanation.Text).ConfigureAwait(false);
-                return;
+                var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                if (explanation != null)
+                {
+                    await ctx.RespondAsync(explanation.Text).ConfigureAwait(false);
+                    return;
+                }
             }
 
             term = term.StripQuotes();
@@ -50,11 +53,14 @@ namespace CompatBot.Commands
                 if (hasMention)
                 {
                     term = term.Substring(0, idx).TrimEnd();
-                    explanation = await BotDb.Instance.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-                    if (explanation != null)
+                    using (var db = new BotDb())
                     {
-                        await ctx.RespondAsync(explanation.Text).ConfigureAwait(false);
-                        return;
+                        var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                        if (explanation != null)
+                        {
+                            await ctx.RespondAsync(explanation.Text).ConfigureAwait(false);
+                            return;
+                        }
                     }
                 }
             }
@@ -76,16 +82,22 @@ namespace CompatBot.Commands
                     ctx.RespondAsync("An explanation for the term must be provided")
                 ).ConfigureAwait(false);
             }
-            else if (await BotDb.Instance.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
-                await Task.WhenAll(
-                    ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
-                    ctx.RespondAsync($"'{term}' is already defined. Use `update` to update an existing term.")
-                ).ConfigureAwait(false);
             else
             {
-                await BotDb.Instance.Explanation.AddAsync(new Explanation {Keyword = term, Text = explanation}).ConfigureAwait(false);
-                await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                using (var db = new BotDb())
+                {
+                    if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
+                        await Task.WhenAll(
+                            ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
+                            ctx.RespondAsync($"'{term}' is already defined. Use `update` to update an existing term.")
+                        ).ConfigureAwait(false);
+                    else
+                    {
+                        await db.Explanation.AddAsync(new Explanation {Keyword = term, Text = explanation}).ConfigureAwait(false);
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                    }
+                }
             }
         }
 
@@ -96,19 +108,22 @@ namespace CompatBot.Commands
             [RemainingText, Description("New explanation text")] string explanation)
         {
             term = term.StripQuotes();
-            var item = await BotDb.Instance.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-            if (item == null)
+            using (var db = new BotDb())
             {
-                await Task.WhenAll(
-                    ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
-                    ctx.RespondAsync($"Term '{term}' is not defined")
-                ).ConfigureAwait(false);
-            }
-            else
-            {
-                item.Text = explanation;
-                await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                if (item == null)
+                {
+                    await Task.WhenAll(
+                        ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
+                        ctx.RespondAsync($"Term '{term}' is not defined")
+                    ).ConfigureAwait(false);
+                }
+                else
+                {
+                    item.Text = explanation;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                }
             }
         }
 
@@ -119,19 +134,22 @@ namespace CompatBot.Commands
         {
             oldTerm = oldTerm.StripQuotes();
             newTerm = newTerm.StripQuotes();
-            var item = await BotDb.Instance.Explanation.FirstOrDefaultAsync(e => e.Keyword == oldTerm).ConfigureAwait(false);
-            if (item == null)
+            using (var db = new BotDb())
             {
-                await Task.WhenAll(
-                    ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
-                    ctx.RespondAsync($"Term '{oldTerm}' is not defined")
-                ).ConfigureAwait(false);
-            }
-            else
-            {
-                item.Keyword = newTerm;
-                await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == oldTerm).ConfigureAwait(false);
+                if (item == null)
+                {
+                    await Task.WhenAll(
+                        ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
+                        ctx.RespondAsync($"Term '{oldTerm}' is not defined")
+                    ).ConfigureAwait(false);
+                }
+                else
+                {
+                    item.Keyword = newTerm;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                }
             }
         }
 
@@ -148,24 +166,27 @@ namespace CompatBot.Commands
                 await ctx.Message.CreateReactionAsync(Config.Reactions.Failure).ConfigureAwait(false);
         }
 
-        [Command("list")]
+        [Command("list"), LimitedToSpamChannel]
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
             await ctx.TriggerTypingAsync().ConfigureAwait(false);
-            var keywords = await BotDb.Instance.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
-            if (keywords.Count == 0)
-                await ctx.RespondAsync("Nothing has been defined yet").ConfigureAwait(false);
-            else
-                try
-                {
-                    foreach (var embed in new EmbedPager().BreakInEmbeds(new DiscordEmbedBuilder {Title = "Defined terms", Color = Config.Colors.Help}, keywords))
-                        await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
-                }
+            using (var db = new BotDb())
+            {
+                var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
+                if (keywords.Count == 0)
+                    await ctx.RespondAsync("Nothing has been defined yet").ConfigureAwait(false);
+                else
+                    try
+                    {
+                        foreach (var embed in new EmbedPager().BreakInEmbeds(new DiscordEmbedBuilder {Title = "Defined terms", Color = Config.Colors.Help}, keywords))
+                            await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                    }
+            }
         }
 
 
@@ -174,19 +195,22 @@ namespace CompatBot.Commands
         public async Task Remove(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
         {
             term = term.StripQuotes();
-            var item = await BotDb.Instance.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-            if (item == null)
+            using (var db = new BotDb())
             {
-                await Task.WhenAll(
-                    ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
-                    ctx.RespondAsync($"Term '{term}' is not defined")
-                ).ConfigureAwait(false);
-            }
-            else
-            {
-                BotDb.Instance.Explanation.Remove(item);
-                await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                if (item == null)
+                {
+                    await Task.WhenAll(
+                        ctx.Message.CreateReactionAsync(Config.Reactions.Failure),
+                        ctx.RespondAsync($"Term '{term}' is not defined")
+                    ).ConfigureAwait(false);
+                }
+                else
+                {
+                    db.Explanation.Remove(item);
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                }
             }
         }
 

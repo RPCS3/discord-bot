@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.POCOs;
+using CompatBot.Utils;
 using NReco.Text;
 
 namespace CompatBot.EventHandlers.LogParsing
@@ -15,7 +15,6 @@ namespace CompatBot.EventHandlers.LogParsing
     internal partial class LogParser
     {
         private static readonly ReadOnlyCollection<LogSectionParser> SectionParsers;
-        private static readonly Encoding Utf8 = new UTF8Encoding(false);
 
         static LogParser()
         {
@@ -26,14 +25,14 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     OnLineCheckAsync = sectionDescription.OnNewLineAsync ?? ((l, s) => Task.CompletedTask),
                     OnSectionEnd = sectionDescription.OnSectionEnd,
-                    EndTrigger = Encoding.ASCII.GetString(Utf8.GetBytes(sectionDescription.EndTrigger)),
+                    EndTrigger = sectionDescription.EndTrigger.ToLatin8BitEncoding(),
                 };
                 // the idea here is to construct Aho-Corasick parser that will look for any data marker and run the associated regex to extract the data into state
                 if (sectionDescription.Extractors?.Count > 0)
                 {
                     var act = new AhoCorasickDoubleArrayTrie<Action<string, LogParseState>>(sectionDescription.Extractors.Select(extractorPair =>
                         new SectionAction(
-                            Encoding.ASCII.GetString(Utf8.GetBytes(extractorPair.Key)),
+                            extractorPair.Key.ToLatin8BitEncoding(),
                             (buffer, state) => OnExtractorHit(buffer, extractorPair.Value, state)
                         )
                     ), true);
@@ -54,7 +53,7 @@ namespace CompatBot.EventHandlers.LogParsing
 #if DEBUG
                     Console.WriteLine($"regex {group.Name} = {group.Value}");
 #endif
-                    state.WipCollection[group.Name] = Utf8.GetString(Encoding.ASCII.GetBytes(group.Value));
+                    state.WipCollection[group.Name] = group.Value.ToUtf8();
                 }
         }
 

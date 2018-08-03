@@ -2,7 +2,7 @@
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading.Tasks;
-using CompatApiClient;
+using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.EventHandlers.LogParsing;
 using CompatBot.EventHandlers.LogParsing.POCOs;

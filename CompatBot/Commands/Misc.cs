@@ -77,30 +77,47 @@ namespace CompatBot.Commands
         }
 
         [Command("roll")]
-        [Description("Generates a random number between 1 and N (default 10). Can also roll dices like `2d6`")]
-        public async Task Roll(CommandContext ctx, [Description("Some positive number or a dice")] string something)
+        [Description("Generates a random number between 1 and N. Can also roll dices like `2d6`. Default is 1d6")]
+        public Task Roll(CommandContext ctx)
+        {
+            return Roll(ctx, 6);
+        }
+ 
+        [Command("roll")]
+        public async Task Roll(CommandContext ctx, [Description("Some positive number")] int maxValue)
+        {
+            string result = null;
+            if (maxValue > 1)
+                    lock (rng) result = (rng.Next(maxValue) + 1).ToString();
+            if (string.IsNullOrEmpty(result))
+                await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("💩")).ConfigureAwait(false);
+            else
+                await ctx.RespondAsync(result).ConfigureAwait(false);
+        }
+
+        [Command("roll")]
+        public async Task Roll(CommandContext ctx, [Description("Dices to roll (i.e. 2d6 for two 6-sided dices)")] string dices)
         {
             var result = "";
-            switch (something)
+            if (dices is string dice && Regex.IsMatch(dice, @"\d+d\d+"))
             {
-                case string val when int.TryParse(val, out var maxValue) && maxValue > 1:
-                    lock (rng) result = (rng.Next(maxValue) + 1).ToString();
-                    break;
-                case string dice when Regex.IsMatch(dice, @"\d+d\d+"):
-                    var typingTask = ctx.TriggerTypingAsync();
-                    var diceParts = dice.Split('d', StringSplitOptions.RemoveEmptyEntries);
-                    if (int.TryParse(diceParts[0], out var num) && int.TryParse(diceParts[1], out var face) &&
-                        0 < num && num < 101 &&
-                        1 < face && face < 1001)
+                var typingTask = ctx.TriggerTypingAsync();
+                var diceParts = dice.Split('d', StringSplitOptions.RemoveEmptyEntries);
+                if (int.TryParse(diceParts[0], out var num) && int.TryParse(diceParts[1], out var face) &&
+                    0 < num && num < 101 &&
+                    1 < face && face < 1001)
+                {
+                    List<int> rolls;
+                    lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
+                    if (rolls.Count > 1)
                     {
-                        List<int> rolls;
-                        lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
                         result = "Total: " + rolls.Sum();
-                        if (rolls.Count > 1)
-                            result += "\nRolls: " + string.Join(' ', rolls);
+                        result += "\nRolls: " + string.Join(' ', rolls);
                     }
-                    await typingTask.ConfigureAwait(false);
-                    break;
+                    else
+                        result = rolls.Sum().ToString();
+                }
+                await typingTask.ConfigureAwait(false);
             }
             if (string.IsNullOrEmpty(result))
                 await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("💩")).ConfigureAwait(false);

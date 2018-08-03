@@ -28,18 +28,21 @@ namespace CompatBot.Commands
                 try
                 {
                     var @fixed = 0;
-                    foreach (var warning in BotDb.Instance.Warning)
-                        if (!string.IsNullOrEmpty(warning.FullReason))
-                        {
-                            var match = Timestamp.Match(warning.FullReason);
-                            if (match.Success && DateTime.TryParse(match.Groups["date"].Value, out var timestamp))
+                    using (var db = new BotDb())
+                    {
+                        foreach (var warning in db.Warning)
+                            if (!string.IsNullOrEmpty(warning.FullReason))
                             {
-                                warning.Timestamp = timestamp.Ticks;
-                                warning.FullReason = warning.FullReason.Substring(match.Groups["cutout"].Value.Length);
-                                @fixed++;
+                                var match = Timestamp.Match(warning.FullReason);
+                                if (match.Success && DateTime.TryParse(match.Groups["date"].Value, out var timestamp))
+                                {
+                                    warning.Timestamp = timestamp.Ticks;
+                                    warning.FullReason = warning.FullReason.Substring(match.Groups["cutout"].Value.Length);
+                                    @fixed++;
+                                }
                             }
-                        }
-                    await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                    }
                     await ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -57,16 +60,19 @@ namespace CompatBot.Commands
                 try
                 {
                     var @fixed = 0;
-                    foreach (var warning in BotDb.Instance.Warning)
+                    using (var db = new BotDb())
                     {
-                        var newReason = await FixChannelMentionAsync(ctx, warning.Reason).ConfigureAwait(false);
-                        if (newReason != warning.Reason)
+                        foreach (var warning in db.Warning)
                         {
-                            warning.Reason = newReason;
-                            @fixed++;
+                            var newReason = await FixChannelMentionAsync(ctx, warning.Reason).ConfigureAwait(false);
+                            if (newReason != warning.Reason)
+                            {
+                                warning.Reason = newReason;
+                                @fixed++;
+                            }
                         }
+                        await db.SaveChangesAsync().ConfigureAwait(false);
                     }
-                    await BotDb.Instance.SaveChangesAsync().ConfigureAwait(false);
                     await ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
                 }
                 catch (Exception e)

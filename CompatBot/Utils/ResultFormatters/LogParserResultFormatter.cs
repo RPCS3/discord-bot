@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
+using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
@@ -37,7 +38,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (collection?.Count > 0)
             {
                 var gameInfo = await client.LookupGameInfoAsync(collection["serial"], false).ConfigureAwait(false);
-                builder = new DiscordEmbedBuilder(gameInfo);
+                builder = new DiscordEmbedBuilder(gameInfo) {ThumbnailUrl = null}; // or this will fuck up all formatting
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {
                     state.PiracyContext = state.PiracyContext.Sanitize();
@@ -225,7 +226,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
-            var link = updateInfo.LatestBuild?.Windows?.Download ?? updateInfo.LatestBuild?.Linux?.Download;
+            var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download;
             if (string.IsNullOrEmpty(link))
                 return null;
 
@@ -236,16 +237,16 @@ namespace CompatBot.Utils.ResultFormatters
             return updateInfo;
         }
 
-        private static bool SameCommits(string commitA, string CommitB)
+        private static bool SameCommits(string commitA, string commitB)
         {
-            if (string.IsNullOrEmpty(commitA) && string.IsNullOrEmpty(CommitB))
+            if (string.IsNullOrEmpty(commitA) && string.IsNullOrEmpty(commitB))
                 return true;
 
-            if (string.IsNullOrEmpty(commitA) || string.IsNullOrEmpty(CommitB))
+            if (string.IsNullOrEmpty(commitA) || string.IsNullOrEmpty(commitB))
                 return false;
 
-            var len = Math.Min(commitA.Length, CommitB.Length);
-            return commitA.Substring(0, len) == CommitB.Substring(0, len);
+            var len = Math.Min(commitA.Length, commitB.Length);
+            return commitA.Substring(0, len) == commitB.Substring(0, len);
         }
     }
 }

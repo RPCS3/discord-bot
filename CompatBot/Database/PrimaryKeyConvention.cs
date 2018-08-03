@@ -25,7 +25,8 @@ namespace CompatBot.Database
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
                 var pk = entity.GetKeys().FirstOrDefault(k => k.IsPrimaryKey());
-                entity.RemoveKey(pk.Properties);
+                if (pk != null)
+                    entity.RemoveKey(pk.Properties);
             }
         }
     }

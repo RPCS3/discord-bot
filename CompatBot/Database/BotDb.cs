@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +7,6 @@ namespace CompatBot.Database
 {
     internal class BotDb: DbContext
     {
-        private static readonly Lazy<BotDb> instance = new Lazy<BotDb>(() => new BotDb());
-        public static BotDb Instance => instance.Value;
-
         public DbSet<Moderator> Moderator { get; set; }
         public DbSet<Piracystring> Piracystring { get; set; }
         public DbSet<Warning> Warning { get; set; }

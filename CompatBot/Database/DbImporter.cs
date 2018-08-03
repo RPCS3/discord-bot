@@ -10,11 +10,11 @@ namespace CompatBot.Database
 {
     internal static class DbImporter
     {
-        public static async Task<bool> UpgradeAsync(BotDb dbContext, CancellationToken cancellationToken)
+        public static async Task<bool> UpgradeAsync(DbContext dbContext, CancellationToken cancellationToken)
         {
             try
             {
-                Console.WriteLine("Upgrading database if needed...");
+                Console.WriteLine($"Upgrading {dbContext.GetType().Name} database if needed...");
                 await dbContext.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (SqliteException e)
@@ -23,14 +23,17 @@ namespace CompatBot.Database
                 Console.WriteLine(e.Message);
                 Console.WriteLine("Database upgrade failed, probably importing an unversioned one.");
                 Console.ResetColor();
+                if (!(dbContext is BotDb botDb))
+                    return false;
+
                 Console.WriteLine("Trying to apply a manual fixup...");
                 try
                 {
-                    await ImportAsync(dbContext, cancellationToken).ConfigureAwait(false);
+                    await ImportAsync(botDb, cancellationToken).ConfigureAwait(false);
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Manual fixup worked great. Let's try migrations again...");
                     Console.ResetColor();
-                    await dbContext.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
+                    await botDb.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
 
                 }
                 catch (Exception ex)
@@ -42,9 +45,9 @@ namespace CompatBot.Database
                     return false;
                 }
             }
-            if (!await dbContext.Moderator.AnyAsync(m => m.DiscordId == Config.BotAdminId, cancellationToken).ConfigureAwait(false))
+            if (dbContext is BotDb botDb2 && !await botDb2.Moderator.AnyAsync(m => m.DiscordId == Config.BotAdminId, cancellationToken).ConfigureAwait(false))
             {
-                await dbContext.Moderator.AddAsync(new Moderator {DiscordId = Config.BotAdminId, Sudoer = true}, cancellationToken).ConfigureAwait(false);
+                await botDb2.Moderator.AddAsync(new Moderator {DiscordId = Config.BotAdminId, Sudoer = true}, cancellationToken).ConfigureAwait(false);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             Console.WriteLine("Database is ready.");

@@ -13,8 +13,11 @@ namespace CompatBot.Utils.ResultFormatters
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordEmbedBuilder builder = null)
         {
+            if (info == null)
+                return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
+
             var justAppend = builder != null;
-            var build = info?.LatestBuild;
+            var build = info.LatestBuild;
             var pr = build?.Pr ?? "0";
             string url = null;
             PrInfo prInfo = null;
@@ -27,7 +30,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     url = "https://github.com/RPCS3/rpcs3/pull/" + pr;
                     prInfo = await client.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
-                    pr = $"PR #{pr} by {prInfo?.User?.login ?? "???"}";
+                    pr = $"PR #{pr} by {prInfo?.User?.Login ?? "???"}";
                 }
             }
             builder = builder ?? new DiscordEmbedBuilder {Title = pr, Url = url, Description = prInfo?.Title, Color = Config.Colors.DownloadLinks};
@@ -41,7 +44,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (string.IsNullOrEmpty(link))
                 return "No link available";
 
-            var text = new Uri(link).Segments?.Last();
+            var text = new Uri(link).Segments?.Last() ?? "";
             if (simpleName && text.Contains('_'))
                 text = text.Split('_', 2)[0];
                 

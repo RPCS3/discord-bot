@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CompatApiClient.POCOs
+﻿namespace CompatApiClient.POCOs
 {
     public class PrInfo
     {
@@ -16,6 +12,6 @@ namespace CompatApiClient.POCOs
 
     public class GithubUser
     {
-        public string login;
+        public string Login;
     }
 }

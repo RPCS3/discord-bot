@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using CompatApiClient.POCOs;
+using CompatApiClient.Utils;
 using Newtonsoft.Json;
 
 namespace CompatApiClient
@@ -32,39 +33,62 @@ namespace CompatApiClient
         //todo: cache results
         public async Task<CompatResult> GetCompatResultAsync(RequestBuilder requestBuilder, CancellationToken cancellationToken)
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, requestBuilder.Build());
             var startTime = DateTime.UtcNow;
-            CompatResult result;
-            try
+            var url = requestBuilder.Build();
+            var tries = 0;
+            do
             {
-                var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
-                result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                PrintError(e);
-                result = new CompatResult{ReturnCode = -2};
-            }
-            result.RequestBuilder = requestBuilder;
-            result.RequestDuration = DateTime.UtcNow - startTime;
-            return result;
+                try
+                {
+                    using (var message = new HttpRequestMessage(HttpMethod.Get, url))
+                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                        try
+                        {
+                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            var result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
+                            result.RequestBuilder = requestBuilder;
+                            result.RequestDuration = DateTime.UtcNow - startTime;
+                            return result;
+                        }
+                        catch (Exception e)
+                        {
+                            ConsoleLogger.PrintError(e, response, ConsoleColor.Yellow);
+                        }
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, null, ConsoleColor.Yellow);
+                }
+                tries++;
+            } while (tries < 3);
+            throw new HttpRequestException("Couldn't communicate with the API");
         }
 
         public async Task<UpdateInfo> GetUpdateAsync(CancellationToken cancellationToken, string commit = "somecommit")
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, "https://update.rpcs3.net/?c=" + commit);
-            UpdateInfo result;
-            try
+            var tries = 3;
+            do
             {
-                var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
-                result = await response.Content.ReadAsAsync<UpdateInfo>(formatters, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                PrintError(e);
-                result = new UpdateInfo { ReturnCode = -2 };
-            }
-            return result;
+                try
+                {
+                    using (var message = new HttpRequestMessage(HttpMethod.Get, "https://update.rpcs3.net/?c=" + commit))
+                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                        try
+                        {
+                            return await response.Content.ReadAsAsync<UpdateInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception e)
+                        {
+                            ConsoleLogger.PrintError(e, response, ConsoleColor.Yellow);
+                        }
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, null, ConsoleColor.Yellow);
+                }
+                tries++;
+            } while (tries < 3);
+            return null;
         }
 
         public async Task<PrInfo> GetPrInfoAsync(string pr, CancellationToken cancellationToken)
@@ -72,23 +96,33 @@ namespace CompatApiClient
             if (prInfoCache.TryGetValue(pr, out var result))
                 return result;
 
-            var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/pulls/" + pr);
-            HttpContent content = null;
             try
             {
-                message.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
-                var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
-                content = response.Content;
-                await content.LoadIntoBufferAsync().ConfigureAwait(false);
-                result = await content.ReadAsAsync<PrInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                using (var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/pulls/" + pr))
+                {
+                    message.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                    {
+                        try
+                        {
+                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            result = await response.Content.ReadAsAsync<PrInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception e)
+                        {
+                            ConsoleLogger.PrintError(e, response);
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {
-                PrintError(e);
-                if (content != null)
-                    try { Console.WriteLine(await content.ReadAsStringAsync().ConfigureAwait(false)); } catch {}
+                ConsoleLogger.PrintError(e, null);
+            }
+            if (result == null)
+            {
                 int.TryParse(pr, out var prnum);
-                return new PrInfo{Number = prnum};
+                return new PrInfo { Number = prnum };
             }
 
             lock (prInfoCache)
@@ -99,13 +133,6 @@ namespace CompatApiClient
                 prInfoCache[pr] = result;
                 return result;
             }
-        }
-
-        private void PrintError(Exception e)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Error communicating with api: " + e.Message);
-            Console.ResetColor();
         }
     }
 }

@@ -4,9 +4,10 @@ using CompatBot.Commands;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
+using CompatBot.ThumbScrapper;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot
 {
@@ -20,9 +21,15 @@ namespace CompatBot
                 return;
             }
 
-            if (!await DbImporter.UpgradeAsync(BotDb.Instance, Config.Cts.Token))
-                return;
+            using (var db = new BotDb())
+                if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
+                    return;
 
+            using (var db = new ThumbnailDb())
+                if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
+                    return;
+
+            var psnScrappingTask = new PsnScraper().Run(Config.Cts.Token);
 
             var config = new DiscordConfiguration
             {
@@ -34,7 +41,7 @@ namespace CompatBot
 
             using (var client = new DiscordClient(config))
             {
-                var commands = client.UseCommandsNext(new CommandsNextConfiguration {StringPrefixes = new[] {Config.CommandPrefix}});
+                var commands = client.UseCommandsNext(new CommandsNextConfiguration {StringPrefixes = new[] {Config.CommandPrefix}, Services = new ServiceCollection().BuildServiceProvider()});
                 commands.RegisterConverter(new CustomDiscordChannelConverter());
                 commands.RegisterCommands<Misc>();
                 commands.RegisterCommands<CompatList>();
@@ -91,6 +98,7 @@ namespace CompatBot
                     await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}).ConfigureAwait(false);
                 }
             }
+            await psnScrappingTask.ConfigureAwait(false);
             Console.WriteLine("Exiting");
         }
     }
