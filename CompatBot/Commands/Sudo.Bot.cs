@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -15,13 +16,12 @@ namespace CompatBot.Commands
 
         [Group("bot")]
         [Description("Commands to manage the bot instance")]
-        public sealed class Bot: BaseCommandModule
+        public sealed partial class Bot: BaseCommandModuleCustom
         {
-            [Command("version")]
+            [Command("version"), TriggersTyping]
             [Description("Returns currently checked out bot commit")]
             public async Task Version(CommandContext ctx)
             {
-                var typingTask = ctx.TriggerTypingAsync();
                 using (var git = new Process
                 {
                     StartInfo = new ProcessStartInfo("git", "log -1 --oneline")
@@ -39,14 +39,12 @@ namespace CompatBot.Commands
                     if (!string.IsNullOrEmpty(stdout))
                         await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
                 }
-                await typingTask.ConfigureAwait(false);
             }
 
-            [Command("restart"), Aliases("update")]
+            [Command("restart"), Aliases("update"), TriggersTyping]
             [Description("Restarts bot and pulls newest commit")]
             public async Task Restart(CommandContext ctx)
             {
-                var typingTask = ctx.TriggerTypingAsync();
                 if (lockObj.Wait(0))
                 {
                     try
@@ -94,7 +92,6 @@ namespace CompatBot.Commands
                 }
                 else
                     await ctx.RespondAsync("Update is already in progress").ConfigureAwait(false);
-                await typingTask.ConfigureAwait(false);
             }
 
             [Command("stop"), Aliases("exit", "shutdown", "terminate")]

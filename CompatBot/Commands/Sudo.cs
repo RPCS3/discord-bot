@@ -8,7 +8,7 @@ namespace CompatBot.Commands
 {
     [Group("sudo"), RequiresBotSudoerRole]
     [Description("Used to manage bot moderators and sudoers")]
-    internal sealed partial class Sudo : BaseCommandModule
+    internal sealed partial class Sudo : BaseCommandModuleCustom
     {
         [Command("say"), Priority(10)]
         [Description("Make bot say things, optionally in a specific channel")]

@@ -4,7 +4,9 @@ using System.Globalization;
 using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatApiClient.POCOs;
+using CompatBot.Database.Providers;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionTranslators.Internal;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -75,7 +77,15 @@ namespace CompatBot.Utils.ResultFormatters
                 var desc = string.IsNullOrEmpty(titleId)
                     ? "No product id was found; log might be corrupted, please reupload a new copy"
                     : $"Product code {titleId} was not found in compatibility database, possibly untested!";
-                return new DiscordEmbedBuilder{Description = desc, Color = Config.Colors.CompatStatusUnknown};
+                var result = new DiscordEmbedBuilder
+                {
+                    Description = desc,
+                    Color = Config.Colors.CompatStatusUnknown,
+                    ThumbnailUrl = thumbnailUrl,
+                };
+                if (ThumbnailProvider.GetTitleName(titleId) is string titleName && !string.IsNullOrEmpty(titleName))
+                    result.Title = $"[{titleId}] {titleName.Sanitize().Trim(200)}";
+                return result.Build();
             }
 
         }

@@ -16,7 +16,7 @@ namespace CompatBot.Commands
 {
     [Group("warn")]
     [Description("Command used to manage warnings")]
-    internal sealed partial class Warnings: BaseCommandModule
+    internal sealed partial class Warnings: BaseCommandModuleCustom
     {
         [GroupCommand] //attributes on overloads do not work, so no easy permission checks
         [Description("Command used to issue a new warning")]
@@ -26,12 +26,11 @@ namespace CompatBot.Commands
             if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
                 return;
 
-            var typingTask = ctx.TriggerTypingAsync();
+            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             if (await AddAsync(ctx, user.Id, user.Username.Sanitize(), ctx.Message.Author, reason).ConfigureAwait(false))
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             else
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Failure).ConfigureAwait(false);
-            await typingTask;
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't save the warning, please try again").ConfigureAwait(false);
         }
 
         [GroupCommand, RequiresBotModRole]
@@ -40,19 +39,17 @@ namespace CompatBot.Commands
             if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
                 return;
 
-            var typingTask = ctx.TriggerTypingAsync();
+            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             if (await AddAsync(ctx, userId, $"<@{userId}>", ctx.Message.Author, reason).ConfigureAwait(false))
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Success).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             else
-                await ctx.Message.CreateReactionAsync(Config.Reactions.Failure).ConfigureAwait(false);
-            await typingTask;
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't save the warning, please try again").ConfigureAwait(false);
         }
 
-        [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
+        [Command("remove"), Aliases("delete", "del"), RequiresBotModRole, TriggersTyping]
         [Description("Removes specified warnings")]
         public async Task Remove(CommandContext ctx, [Description("Warning IDs to remove separated with space")] params int[] ids)
         {
-            var typingTask = ctx.TriggerTypingAsync();
             int removedCount;
             using (var db = new BotDb())
             {
@@ -60,14 +57,10 @@ namespace CompatBot.Commands
                 db.Warning.RemoveRange(warningsToRemove);
                 removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             }
-            (DiscordEmoji reaction, string msg) result = removedCount == ids.Length
-                ? (Config.Reactions.Success, $"Warning{(ids.Length == 1 ? "" : "s")} successfully removed!")
-                : (Config.Reactions.Failure, $"Removed {removedCount} items, but was asked to remove {ids.Length}");
-            await Task.WhenAll(
-                ctx.RespondAsync(result.msg),
-                ctx.Message.CreateReactionAsync(result.reaction),
-                typingTask
-            ).ConfigureAwait(false);
+            if (removedCount == ids.Length)
+                await ctx.RespondAsync($"Warning{(ids.Length == 1 ? "" : "s")} successfully removed!").ConfigureAwait(false);
+            else
+                await ctx.RespondAsync($"Removed {removedCount} items, but was asked to remove {ids.Length}").ConfigureAwait(false);
         }
 
         [Command("clear"), RequiresBotModRole]
@@ -77,12 +70,11 @@ namespace CompatBot.Commands
             return Clear(ctx, user.Id);
         }
 
-        [Command("clear"), RequiresBotModRole]
+        [Command("clear"), RequiresBotModRole, TriggersTyping]
         public async Task Clear(CommandContext ctx, [Description("User ID to clear warnings for")] ulong userId)
         {
             try
             {
-                var typingTask = ctx.TriggerTypingAsync();
                 //var removed = await BotDb.Instance.Database.ExecuteSqlCommandAsync($"DELETE FROM `warning` WHERE `discord_id`={userId}").ConfigureAwait(false);
                 int removed;
                 using (var db = new BotDb())
@@ -91,11 +83,7 @@ namespace CompatBot.Commands
                     db.Warning.RemoveRange(warningsToRemove);
                     removed = await db.SaveChangesAsync().ConfigureAwait(false);
                 }
-                await Task.WhenAll(
-                    ctx.RespondAsync($"{removed} warning{(removed == 1 ? "" : "s")} successfully removed!"),
-                    ctx.Message.CreateReactionAsync(Config.Reactions.Success),
-                    typingTask
-                ).ConfigureAwait(false);
+                await ctx.RespondAsync($"{removed} warning{(removed == 1 ? "" : "s")} successfully removed!").ConfigureAwait(false);
             }
             catch (Exception e)
             {

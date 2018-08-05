@@ -7,20 +7,18 @@ using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("piracy"), RequiresBotModRole, RequiresDm]
+    [Group("piracy"), RequiresBotModRole, RequiresDm, TriggersTyping]
     [Description("Used to manage piracy filters **in DM**")]
-    internal sealed class Antipiracy: BaseCommandModule
+    internal sealed class Antipiracy: BaseCommandModuleCustom
     {
         [Command("list"), Aliases("show")]
         [Description("Lists all filters")]
         public async Task List(CommandContext ctx)
         {
-            var typingTask = ctx.TriggerTypingAsync();
             var result = new StringBuilder("```")
                 .AppendLine("ID   | Trigger")
                 .AppendLine("-----------------------------");
@@ -28,23 +26,17 @@ namespace CompatBot.Commands
                 foreach (var item in await db.Piracystring.ToListAsync().ConfigureAwait(false))
                     result.AppendLine($"{item.Id:0000} | {item.String}");
             await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
-            await typingTask;
         }
 
         [Command("add")]
         [Description("Adds a new piracy filter trigger")]
         public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string trigger)
         {
-            var typingTask = ctx.TriggerTypingAsync();
             var wasSuccessful = await PiracyStringProvider.AddAsync(trigger).ConfigureAwait(false);
-            (DiscordEmoji reaction, string msg) result = wasSuccessful
-                ? (Config.Reactions.Success, "New trigger successfully saved!")
-                : (Config.Reactions.Failure, "Trigger already defined.");
-            await Task.WhenAll(
-                ctx.RespondAsync(result.msg),
-                ctx.Message.CreateReactionAsync(result.reaction),
-                typingTask
-            ).ConfigureAwait(false);
+            if (wasSuccessful)
+                await ctx.ReactWithAsync(Config.Reactions.Success, "New trigger successfully saved!").ConfigureAwait(false);
+            else
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Trigger already defined.").ConfigureAwait(false);
             if (wasSuccessful)
                 await List(ctx).ConfigureAwait(false);
         }
@@ -53,19 +45,14 @@ namespace CompatBot.Commands
         [Description("Removes a piracy filter trigger")]
         public async Task Remove(CommandContext ctx, [Description("Filter ids to remove separated with spaces")] params int[] ids)
         {
-            var typingTask = ctx.TriggerTypingAsync();
-            (DiscordEmoji reaction, string msg) result = (Config.Reactions.Success, $"Trigger{(ids.Length == 1 ? "" : "s")} successfully removed!");
             var failedIds = new List<int>();
             foreach (var id in ids)
                 if (!await PiracyStringProvider.RemoveAsync(id).ConfigureAwait(false))
                     failedIds.Add(id);
             if (failedIds.Count > 0)
-                result = (Config.Reactions.Failure, "Some ids couldn't be removed: " + string.Join(", ", failedIds));
-            await Task.WhenAll(
-                ctx.RespondAsync(result.msg),
-                ctx.Message.CreateReactionAsync(result.reaction),
-                typingTask
-            ).ConfigureAwait(false);
+                await ctx.RespondAsync("Some ids couldn't be removed: " + string.Join(", ", failedIds)).ConfigureAwait(false);
+            else
+                await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{(ids.Length == 1 ? "" : "s")} successfully removed!").ConfigureAwait(false);
             await List(ctx).ConfigureAwait(false);
         }
     }

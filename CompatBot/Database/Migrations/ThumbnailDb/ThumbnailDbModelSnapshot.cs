@@ -52,6 +52,9 @@ namespace CompatBot.Migrations
                     b.Property<string>("EmbeddableUrl")
                         .HasColumnName("embeddable_url");
 
+                    b.Property<string>("Name")
+                        .HasColumnName("name");
+
                     b.Property<string>("ProductCode")
                         .IsRequired()
                         .HasColumnName("product_code");
