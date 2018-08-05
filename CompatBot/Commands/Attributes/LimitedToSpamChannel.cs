@@ -8,15 +8,16 @@ namespace CompatBot.Commands.Attributes
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
     internal class LimitedToSpamChannel: CheckBaseAttribute
     {
-        public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
+        public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
         {
             if (ctx.Channel.IsPrivate || help)
-                return Task.FromResult(true);
+                return true;
 
             if (ctx.Channel.Name.Contains("spam", StringComparison.InvariantCultureIgnoreCase))
-                return Task.FromResult(true);
+                return true;
 
-            return Task.FromResult(false);
+            await ctx.RespondAsync($"`{Config.CommandPrefix}{ctx.Command.QualifiedName}` is limited to bot spam channel and DMs").ConfigureAwait(false);
+            return false;
         }
     }
 }
