@@ -53,7 +53,15 @@ namespace CompatBot.EventHandlers.LogParsing
 #if DEBUG
                     Console.WriteLine($"regex {group.Name} = {group.Value}");
 #endif
-                    state.WipCollection[group.Name] = group.Value.ToUtf8();
+                    if (group.Name == "rap_file")
+                    {
+                        var currentValue = state.WipCollection[group.Name];
+                        if (!string.IsNullOrEmpty(currentValue))
+                            currentValue += Environment.NewLine;
+                        state.WipCollection[group.Name] = currentValue + group.Value.ToUtf8();
+                    }
+                    else
+                        state.WipCollection[group.Name] = group.Value.ToUtf8();
                 }
         }
 

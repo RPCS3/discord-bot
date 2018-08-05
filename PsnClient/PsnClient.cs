@@ -22,11 +22,13 @@ namespace PsnClient
         private readonly HttpClient client;
         private readonly MediaTypeFormatterCollection dashedFormatters;
         private readonly MediaTypeFormatterCollection underscoreFormatters;
+        private readonly MediaTypeFormatterCollection xmlFormatters;
         private static readonly Regex ContainerIdLink = new Regex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
 
         public Client()
         {
-            client = HttpClientFactory.Create(new CompressionMessageHandler());
+            
+            client = HttpClientFactory.Create(new CustomTlsCertificatesHandler(), new CompressionMessageHandler());
             var dashedSettings = new JsonSerializerSettings
             {
                 ContractResolver = new JsonContractResolver(NamingStyles.Dashed),
@@ -40,15 +42,15 @@ namespace PsnClient
                 NullValueHandling = NullValueHandling.Ignore
             };
             underscoreFormatters = new MediaTypeFormatterCollection(new[] { new JsonMediaTypeFormatter { SerializerSettings = underscoreSettings } });
+            xmlFormatters = new MediaTypeFormatterCollection(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
         }
 
         public async Task<AppLocales> GetLocales(CancellationToken cancellationToken)
         {
             try
             {
-                HttpResponseMessage response;
                 using (var message = new HttpRequestMessage(HttpMethod.Get, "https://transact.playstation.com/assets/app.json"))
-                using (response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
                     try
                     {
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
@@ -76,8 +78,7 @@ namespace PsnClient
                 using (var getMessage = new HttpRequestMessage(HttpMethod.Get, "https://store.playstation.com/kamaji/api/valkyrie_storefront/00_09_000/user/stores"))
                 {
                     getMessage.Headers.Add("Cookie", cookieHeaderValue);
-                    HttpResponseMessage response;
-                    using (response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false))
+                    using (var response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false))
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
@@ -157,9 +158,8 @@ namespace PsnClient
             {
                 var loc = locale.AsLocaleData();
                 var baseUrl = $"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/storefront/{containerId}";
-                HttpResponseMessage response;
                 using (var message = new HttpRequestMessage(HttpMethod.Get, baseUrl))
-                using (response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
                     try
                     {
                         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -192,9 +192,8 @@ namespace PsnClient
                 filters["size"] = take.ToString();
                 filters["bucket"] = "games";
                 url = url.SetQueryParameters(filters);
-                HttpResponseMessage response;
                 using (var message = new HttpRequestMessage(HttpMethod.Get, url))
-                using (response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
                     try
                     {
                         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -221,9 +220,8 @@ namespace PsnClient
             try
             {
                 var loc = locale.AsLocaleData();
-                HttpResponseMessage response;
                 using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/resolve/{contentId}?depth={depth}"))
-                using (response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
                     try
                     {
                         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -231,6 +229,33 @@ namespace PsnClient
 
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                         return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response);
+                        return null;
+                    }
+            }
+            catch (Exception e)
+            {
+                ConsoleLogger.PrintError(e, null);
+                return null;
+            }
+        }
+
+        public async Task<TitlePatch> GetTitleUpdatesAsync(string productId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml"))
+                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                    try
+                    {
+                        if (response.StatusCode == HttpStatusCode.NotFound)
+                            return null;
+
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        return await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {

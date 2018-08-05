@@ -28,6 +28,7 @@ namespace CompatBot.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     product_code = table.Column<string>(nullable: false),
                     content_id = table.Column<string>(nullable: true),
+                    name = table.Column<string>(nullable: true),
                     url = table.Column<string>(nullable: true),
                     embeddable_url = table.Column<string>(nullable: true),
                     timestamp = table.Column<long>(nullable: false)

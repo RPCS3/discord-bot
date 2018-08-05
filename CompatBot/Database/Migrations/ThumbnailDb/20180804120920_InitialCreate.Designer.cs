@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CompatBot.Migrations
 {
     [DbContext(typeof(ThumbnailDb))]
-    [Migration("20180801095653_InitialCreate")]
+    [Migration("20180804120920_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,6 +53,9 @@ namespace CompatBot.Migrations
 
                     b.Property<string>("EmbeddableUrl")
                         .HasColumnName("embeddable_url");
+
+                    b.Property<string>("Name")
+                        .HasColumnName("name");
 
                     b.Property<string>("ProductCode")
                         .IsRequired()

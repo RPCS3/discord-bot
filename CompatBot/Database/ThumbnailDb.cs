@@ -43,6 +43,7 @@ namespace CompatBot.Database
         [Required]
         public string ProductCode { get; set; }
         public string ContentId { get; set; }
+        public string Name { get; set; }
         public string Url { get; set; }
         public string EmbeddableUrl { get; set; }
         public long Timestamp { get; set; }

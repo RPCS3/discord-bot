@@ -17,6 +17,9 @@ namespace CompatBot.ThumbScrapper
     {
         private static readonly PsnClient.Client Client = new PsnClient.Client();
         private static readonly Regex ContentIdMatcher = new Regex(@"(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16})", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        private static readonly SemaphoreSlim LockObj = new SemaphoreSlim(1, 1);
+        private static List<string> PsnStores = new List<string>();
+        private static DateTime StoreRefreshTimestamp = DateTime.MinValue;
 
         public async Task Run(CancellationToken cancellationToken)
         {
@@ -26,7 +29,7 @@ namespace CompatBot.ThumbScrapper
                     break;
 
                 await ScrapeStateProvider.CleanAsync(cancellationToken).ConfigureAwait(false);
-
+                await RefreshStoresAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
                     await DoScrapePassAsync(cancellationToken).ConfigureAwait(false);
@@ -39,18 +42,59 @@ namespace CompatBot.ThumbScrapper
             } while (!cancellationToken.IsCancellationRequested);
         }
 
+        private static async Task RefreshStoresAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (ScrapeStateProvider.IsFresh(StoreRefreshTimestamp))
+                    return;
+
+                var knownLocales = await Client.GetLocales(cancellationToken).ConfigureAwait(false);
+                var enabledLocales = knownLocales.EnabledLocales ?? new string[0];
+                var result = GetLocalesInPreferredOrder(enabledLocales);
+                await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (ScrapeStateProvider.IsFresh(StoreRefreshTimestamp))
+                        return;
+
+                    PsnStores = result;
+                    StoreRefreshTimestamp = DateTime.UtcNow;
+                }
+                finally
+                {
+                    LockObj.Release();
+                }
+            }
+            catch (Exception e)
+            {
+                PrintError(e);
+            }
+        }
+
         private static async Task DoScrapePassAsync(CancellationToken cancellationToken)
         {
-            var knownLocales = await Client.GetLocales(cancellationToken).ConfigureAwait(false);
-            var enabledLocales = knownLocales.EnabledLocales ?? new string[0];
-            foreach (var locale in GetLocalesInPreferredOrder(enabledLocales))
+            List<string> storesToScrape;
+            await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
             {
+                storesToScrape = new List<string>(PsnStores);
+            }
+            finally
+            {
+                LockObj.Release();
+            }
+
+            var percentPerStore = 1.0 / storesToScrape.Count;
+            for (var storeIdx = 0; storeIdx < storesToScrape.Count; storeIdx++)
+            {
+                var locale = storesToScrape[storeIdx];
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
                 if (ScrapeStateProvider.IsFresh(locale))
                 {
-                    Console.WriteLine($"Cache for {locale} PSN is fresh, skipping");
+                    //Console.WriteLine($"Cache for {locale} PSN is fresh, skipping");
                     continue;
                 }
 
@@ -79,18 +123,22 @@ namespace CompatBot.ThumbScrapper
                 };
                 var take = 30;
                 var returned = 0;
-                foreach (var containerId in knownContainers)
+                var containersToScrape = knownContainers.ToList(); //.Where(c => c.Contains("FULL", StringComparison.InvariantCultureIgnoreCase)).ToList();
+                var percentPerContainer = 1.0 / containersToScrape.Count;
+                for (var containerIdx = 0; containerIdx < containersToScrape.Count; containerIdx++)
                 {
+                    var containerId = containersToScrape[containerIdx];
                     if (cancellationToken.IsCancellationRequested)
                         return;
 
                     if (ScrapeStateProvider.IsFresh(locale, containerId))
                     {
-                        Console.WriteLine($"\tCache for {locale} container {containerId} is fresh, skipping");
+                        //Console.WriteLine($"\tCache for {locale} container {containerId} is fresh, skipping");
                         continue;
                     }
 
-                    Console.WriteLine($"\tScraping {locale} container {containerId}...");
+                    var currentPercent = storeIdx * percentPerStore + containerIdx * percentPerStore * percentPerContainer;
+                    Console.WriteLine($"\tScraping {locale} container {containerId} ({currentPercent*100:##0.00}%)...");
                     var total = -1;
                     var start = 0;
                     do
@@ -151,9 +199,9 @@ namespace CompatBot.ThumbScrapper
                             }
                         }
                         start += take;
-                    } while ((returned > 0 || (total > -1 && start*take <= total)) && !cancellationToken.IsCancellationRequested);
+                    } while ((returned > 0 || (total > -1 && start * take <= total)) && !cancellationToken.IsCancellationRequested);
                     await ScrapeStateProvider.SetLastRunTimestampAsync(locale, containerId).ConfigureAwait(false);
-                    Console.WriteLine($"\tFinished scraping {locale} container {containerId}, processed {start-take+returned} items");
+                    Console.WriteLine($"\tFinished scraping {locale} container {containerId}, processed {start - take + returned} items");
                 }
                 await ScrapeStateProvider.SetLastRunTimestampAsync(locale).ConfigureAwait(false);
             }
@@ -217,7 +265,7 @@ namespace CompatBot.ThumbScrapper
                             if (string.IsNullOrEmpty(item.Id))
                                 continue;
 
-                            await AddOrUpdateThumbnailAsync(item.Id, item.Attributes?.ThumbnailUrlBase, cancellationToken).ConfigureAwait(false);
+                            await AddOrUpdateThumbnailAsync(item.Id, item.Attributes?.Name, item.Attributes?.ThumbnailUrlBase, cancellationToken).ConfigureAwait(false);
                             break;
 
                         case "legacy-sku":
@@ -241,7 +289,7 @@ namespace CompatBot.ThumbScrapper
                 }
         }
 
-        private static async Task AddOrUpdateThumbnailAsync(string contentId, string url, CancellationToken cancellationToken)
+        private static async Task AddOrUpdateThumbnailAsync(string contentId, string name, string url, CancellationToken cancellationToken)
         {
             var match = ContentIdMatcher.Match(contentId);
             if (!match.Success)
@@ -251,6 +299,7 @@ namespace CompatBot.ThumbScrapper
             if (!ProductCodeLookup.ProductCode.IsMatch(productCode))
                 return;
 
+            name = string.IsNullOrEmpty(name) ? null : name;
             using (var db = new ThumbnailDb())
             {
                 var savedItem = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
@@ -260,6 +309,7 @@ namespace CompatBot.ThumbScrapper
                     {
                         ProductCode = productCode,
                         ContentId = contentId,
+                        Name = name,
                         Url = url,
                         Timestamp = DateTime.UtcNow.Ticks,
                     };
@@ -267,10 +317,15 @@ namespace CompatBot.ThumbScrapper
                 }
                 else if (!string.IsNullOrEmpty(url))
                 {
-                    if (!ScrapeStateProvider.IsFresh(savedItem.Timestamp) && savedItem.Url != url)
+                    if (!ScrapeStateProvider.IsFresh(savedItem.Timestamp))
                     {
-                        savedItem.Url = url;
-                        savedItem.EmbeddableUrl = null;
+                        if (savedItem.Url != url)
+                        {
+                            savedItem.Url = url;
+                            savedItem.EmbeddableUrl = null;
+                        }
+                        if (name != null && savedItem.Name != name)
+                            savedItem.Name = name;
                     }
                     savedItem.ContentId = contentId;
                     savedItem.Timestamp = DateTime.UtcNow.Ticks;

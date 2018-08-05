@@ -15,43 +15,36 @@ namespace CompatBot.Commands
 {
     internal sealed partial class Warnings
     {
-        [Group("list"), Aliases("show")]
+        [Group("list"), Aliases("show"), TriggersTyping]
         [Description("Allows to list warnings in various ways. Users can only see their own warnings.")]
-        public class ListGroup : BaseCommandModule
+        public class ListGroup : BaseCommandModuleCustom
         {
             [GroupCommand, Priority(10)]
             [Description("Show warning list for a user. Default is to show warning list for yourself")]
             public async Task List(CommandContext ctx, [Description("Discord user to list warnings for")] DiscordUser user)
             {
-                var typingTask = ctx.TriggerTypingAsync();
                 if (await CheckListPermissionAsync(ctx, user.Id).ConfigureAwait(false))
                     await ListUserWarningsAsync(ctx.Client, ctx.Message, user.Id, user.Username.Sanitize(), false);
-                await typingTask.ConfigureAwait(false);
             }
 
             [GroupCommand]
             public async Task List(CommandContext ctx, [Description("Id of the user to list warnings for")] ulong userId)
             {
-                var typingTask = ctx.TriggerTypingAsync();
                 if (await CheckListPermissionAsync(ctx, userId).ConfigureAwait(false))
                     await ListUserWarningsAsync(ctx.Client, ctx.Message, userId, $"<@{userId}>", false);
-                await typingTask.ConfigureAwait(false);
             }
 
             [GroupCommand]
             [Description("List your own warning list")]
             public async Task List(CommandContext ctx)
             {
-                var typingTask = ctx.TriggerTypingAsync();
                 await List(ctx, ctx.Message.Author).ConfigureAwait(false);
-                await typingTask.ConfigureAwait(false);
             }
 
-            [Command("users"), RequiresBotModRole]
+            [Command("users"), RequiresBotModRole, TriggersTyping]
             [Description("List users with warnings, sorted from most warned to least")]
             public async Task Users(CommandContext ctx)
             {
-               await ctx.TriggerTypingAsync().ConfigureAwait(false);
                 var userIdColumn = ctx.Channel.IsPrivate ? $"{"User ID",-18} | " : "";
                 var header = $"{"User",-25} | {userIdColumn}Count";
                 var result = new StringBuilder("Warning count per user:").AppendLine("```")
@@ -77,11 +70,10 @@ namespace CompatBot.Commands
                 await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }
 
-            [Command("recent"), Aliases("last", "all"), RequiresBotModRole]
+            [Command("recent"), Aliases("last", "all"), RequiresBotModRole, TriggersTyping]
             [Description("Shows last issued warnings in chronological order")]
             public async Task Last(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {
-                await ctx.TriggerTypingAsync().ConfigureAwait(false);
                 if (number < 1)
                     number = 10;
                 var userIdColumn = ctx.Channel.IsPrivate ? $"{"User ID",-18} | " : "";
@@ -116,10 +108,7 @@ namespace CompatBot.Commands
                 if (userId == ctx.Message.Author.Id || ModProvider.IsMod(ctx.Message.Author.Id))
                     return true;
 
-                await Task.WhenAll(
-                    ctx.Message.CreateReactionAsync(Config.Reactions.Denied),
-                    ctx.RespondAsync("Regular users can only view their own warnings")
-                ).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Denied, "Regular users can only view their own warnings").ConfigureAwait(false);
                 return false;
             }
         }

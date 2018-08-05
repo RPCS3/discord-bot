@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -21,16 +24,18 @@ namespace CompatBot.Commands.Attributes
         public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
         {
             var result = await IsAllowed(ctx, help);
-            //await ctx.RespondAsync($"Check for {GetType().Name} resulted in {result}").ConfigureAwait(false);
+#if DEBUG
+            ctx.Client.DebugLogger.LogMessage(LogLevel.Debug, "", $"Check for {GetType().Name} resulted in {result}", DateTime.Now);
+#endif
             if (result)
             {
                 if (ReactOnSuccess != null && !help)
-                    await ctx.Message.CreateReactionAsync(ReactOnSuccess).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(ReactOnSuccess).ConfigureAwait(false);
             }
             else
             {
                 if (ReactOnFailure != null && !help)
-                    await ctx.Message.CreateReactionAsync(ReactOnFailure).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(ReactOnFailure, $"{ReactOnFailure} {ctx.Message.Author.Mention} you do not have required permissions, this incident will be reported").ConfigureAwait(false);
             }
             return result;
         }

@@ -104,7 +104,7 @@ namespace CompatBot.EventHandlers
                 if (reporters.Count < Config.Moderation.StarbucksThreshold)
                     return;
 
-                await message.CreateReactionAsync(emoji).ConfigureAwait(false);
+                await message.ReactWithAsync(client, emoji).ConfigureAwait(false);
                 await client.ReportAsync("User moderation report ⭐💵", message, reporters).ConfigureAwait(false);
 
             }

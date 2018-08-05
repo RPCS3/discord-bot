@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using org.mariuszgromada.math.mxparser;
 
 namespace CompatBot.Commands
 {
-    internal sealed class Misc: BaseCommandModule
+    internal sealed class Misc: BaseCommandModuleCustom
     {
         private readonly Random rng = new Random();
 
@@ -41,27 +43,40 @@ namespace CompatBot.Commands
             "So-so"
         };
 
+        private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "I", "me", "myself", "moi", "self"
+        };
+
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]
         public async Task Credits(CommandContext ctx)
         {
-            var embed = new DiscordEmbedBuilder
+            DiscordEmoji hcorion;
+            try
             {
-                Title = "RPCS3 Compatibility Bot",
-                Url = "https://github.com/RPCS3/discord-bot",
-                Description = "Made by:\n" +
-                              "　　Roberto Anić Banić aka nicba1010\n" +
-                              "　　13xforever".FixSpaces(),
-                Color = DiscordColor.Purple,
-            };
+                hcorion = DiscordEmoji.FromName(ctx.Client, ":hcorion:");
+            }
+            catch
+            {
+                hcorion = DiscordEmoji.FromUnicode("🍁");
+            }
+            var embed = new DiscordEmbedBuilder
+                {
+                    Title = "RPCS3 Compatibility Bot",
+                    Url = "https://github.com/RPCS3/discord-bot",
+                    Color = DiscordColor.Purple,
+                }.AddField("Made by", "🇭🇷 Roberto Anić Banić aka nicba1010\n" +
+                                      "💮 13xforever".FixSpaces())
+                .AddField("People who ~~broke~~ helped test the bot", "🐱 Juhn\n" +
+                                                                      $"{hcorion} hcorion");
             await ctx.RespondAsync(embed: embed.Build());
         }
 
-        [Command("math")]
+        [Command("math"), TriggersTyping]
         [Description("Math, here you go Juhn")]
         public async Task Math(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
         {
-            var typing = ctx.TriggerTypingAsync();
             var result = @"Something went wrong ¯\\_(ツ)\_/¯" + "\nMath is hard, yo";
             try
             {
@@ -73,35 +88,28 @@ namespace CompatBot.Commands
                 ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", "Math failed: " + e.Message, DateTime.Now);
             }
             await ctx.RespondAsync(result).ConfigureAwait(false);
-            await typing.ConfigureAwait(false);
-        }
-
-        [Command("roll")]
-        [Description("Generates a random number between 1 and N. Can also roll dices like `2d6`. Default is 1d6")]
-        public Task Roll(CommandContext ctx)
-        {
-            return Roll(ctx, 6);
         }
  
         [Command("roll")]
-        public async Task Roll(CommandContext ctx, [Description("Some positive number")] int maxValue)
+        [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
+        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [Description("Optional text"), RemainingText] string comment = null)
         {
             string result = null;
             if (maxValue > 1)
                     lock (rng) result = (rng.Next(maxValue) + 1).ToString();
             if (string.IsNullOrEmpty(result))
-                await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("💩")).ConfigureAwait(false);
+                await ctx.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), $"How is {maxValue} a positive natural number?").ConfigureAwait(false);
             else
                 await ctx.RespondAsync(result).ConfigureAwait(false);
         }
 
         [Command("roll")]
-        public async Task Roll(CommandContext ctx, [Description("Dices to roll (i.e. 2d6 for two 6-sided dices)")] string dices)
+        public async Task Roll(CommandContext ctx, [Description("Dices to roll (i.e. 2d6 for two 6-sided dices)")] string dices, [Description("Optional text"), RemainingText] string comment = null)
         {
             var result = "";
             if (dices is string dice && Regex.IsMatch(dice, @"\d+d\d+"))
             {
-                var typingTask = ctx.TriggerTypingAsync();
+                await ctx.TriggerTypingAsync().ConfigureAwait(false);
                 var diceParts = dice.Split('d', StringSplitOptions.RemoveEmptyEntries);
                 if (int.TryParse(diceParts[0], out var num) && int.TryParse(diceParts[1], out var face) &&
                     0 < num && num < 101 &&
@@ -117,10 +125,9 @@ namespace CompatBot.Commands
                     else
                         result = rolls.Sum().ToString();
                 }
-                await typingTask.ConfigureAwait(false);
             }
             if (string.IsNullOrEmpty(result))
-                await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("💩")).ConfigureAwait(false);
+                await ctx.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
             else
                 await ctx.RespondAsync(result).ConfigureAwait(false);
         }
@@ -130,7 +137,8 @@ namespace CompatBot.Commands
         public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
         {
             string answer;
-            lock (rng) answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
+            lock (rng)
+                answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
             await ctx.RespondAsync(answer).ConfigureAwait(false);
         }
 
@@ -138,8 +146,30 @@ namespace CompatBot.Commands
         [Description("Gives an ~~unrelated~~ expert judgement on the matter at hand")]
         public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever)
         {
-            string answer;
-            lock (rng) answer = RateAnswers[rng.Next(RateAnswers.Count)];
+            var choices = RateAnswers;
+            var whateverParts = whatever.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+            if (whatever is string neko && (neko.Contains("neko", StringComparison.InvariantCultureIgnoreCase) || neko.Contains("272032356922032139")))
+            {
+                choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", 100)).ToList();
+                if (await new DiscordUserConverter().ConvertAsync("272032356922032139", ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
+                    whatever = user.Value.Id.ToString();
+            }
+            else if (whatever is string sonic && sonic.Contains("sonic"))
+            {
+                choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", 100)).Concat(new []{"Sonic out of 🦔", "Sonic out of 10"}).ToList();
+                whatever = "Sonic";
+            }
+            else if (whateverParts.Length == 1)
+            {
+                if (Me.Contains(whateverParts[0]))
+                    whatever = ctx.Message.Author.Id.ToString();
+                else if (await new DiscordUserConverter().ConvertAsync(whateverParts[0], ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
+                    whatever = user.Value.Id.ToString();
+            }
+            whatever = DateTime.UtcNow.ToString("yyyyMMdd") + whatever?.Trim();
+            var seed = whatever.GetHashCode(StringComparison.CurrentCultureIgnoreCase);
+            var seededRng = new Random(seed);
+            var answer = choices[seededRng.Next(choices.Count)];
             await ctx.RespondAsync(answer).ConfigureAwait(false);
         }
     }

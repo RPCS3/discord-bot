@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
@@ -15,7 +16,7 @@ using DSharpPlus.Entities;
 
 namespace CompatBot.Commands
 {
-    internal sealed class CompatList : BaseCommandModule
+    internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client client = new Client();
 
@@ -84,15 +85,13 @@ Example usage:
             await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
         }
 
-        [Command("filters")]
+        [Command("filters"), TriggersTyping(InDmOnly = true)]
         [Description("Provides information about available filters for the !top command")]
         public async Task Filters(CommandContext ctx)
         {
             var getDmTask = ctx.CreateDmAsync();
-            if (ctx.Channel.IsPrivate)
-                await ctx.TriggerTypingAsync().ConfigureAwait(false);
             var embed = new DiscordEmbedBuilder {Description = "List of recognized tokens in each filter category", Color = Config.Colors.Help}
-                .AddField("Regions", DicToDesc(ApiConfig.Regions))
+                //.AddField("Regions", DicToDesc(ApiConfig.Regions))
                 .AddField("Statuses", DicToDesc(ApiConfig.Statuses))
                 .AddField("Release types", DicToDesc(ApiConfig.ReleaseTypes))
                 .Build();
@@ -100,12 +99,11 @@ Example usage:
             await dm.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
-        [Command("latest"), Aliases("download")]
+        [Command("latest"), Aliases("download"), TriggersTyping]
         [Description("Provides links to the latest RPCS3 build")]
         [Cooldown(1, 30, CooldownBucketType.Channel)]
         public async Task Latest(CommandContext ctx)
         {
-            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             var info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
             var embed = await info.AsEmbedAsync().ConfigureAwait(false);
             await ctx.RespondAsync(embed: embed.Build()).ConfigureAwait(false);

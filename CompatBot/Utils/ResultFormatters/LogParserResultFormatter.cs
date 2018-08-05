@@ -196,21 +196,28 @@ namespace CompatBot.Utils.ResultFormatters
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
         {
             if (items["rap_file"] is string rap)
-                builder.AddField("Missing License", $"Missing `{Path.GetFileName(rap)}`");
+            {
+                var licenseNames = rap.Split(Environment.NewLine).Distinct().Select(p => $"`{Path.GetFileName(p)}`");
+                builder.AddField("Missing Licenses", string.Join(Environment.NewLine, licenseNames));
+            }
             else if (items["fatal_error"] is string fatalError)
                 builder.AddField("Fatal Error", $"`{fatalError}`");
-            string notes = null;
+
+            var notes = new StringBuilder();
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
-                notes += "Log is empty. You need to run the game before uploading the log.";
+                notes.AppendLine("Log is empty. You need to run the game before uploading the log.");
+            if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
+                notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
-                notes += "Log was too large, showing last processed run";
+                notes.AppendLine("Log was too large, showing last processed run");
 
             // should be last check here
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
-                notes += $"{Environment.NewLine}Outdated RPCS3 build detected, consider updating";
-            if (notes != null)
-                builder.AddField("Notes", notes);
+                notes.AppendLine("Outdated RPCS3 build detected, consider updating");
+            var notesContent = notes.ToString().Trim();
+            if (!string.IsNullOrEmpty(notesContent))
+                builder.AddField("Notes", notesContent);
 
             if (updateInfo != null)
                 await updateInfo.AsEmbedAsync(builder).ConfigureAwait(false);

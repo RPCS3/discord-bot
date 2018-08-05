@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using DSharpPlus;
@@ -18,13 +19,12 @@ namespace CompatBot.Commands
 
         [Group("fix"), Hidden]
         [Description("Commands to fix various stuff")]
-        public sealed class Fix: BaseCommandModule
+        public sealed class Fix: BaseCommandModuleCustom
         {
-            [Command("timestamps")]
+            [Command("timestamps"), TriggersTyping]
             [Description("Fixes `timestamp` column in the `warning` table")]
             public async Task Timestamps(CommandContext ctx)
             {
-                await ctx.TriggerTypingAsync().ConfigureAwait(false);
                 try
                 {
                     var @fixed = 0;
@@ -52,11 +52,10 @@ namespace CompatBot.Commands
                 }
             }
 
-            [Command("channels")]
+            [Command("channels"), TriggersTyping]
             [Description("Fixes channel mentions in `warning` table")]
             public async Task Channels(CommandContext ctx)
             {
-                await ctx.TriggerTypingAsync().ConfigureAwait(false);
                 try
                 {
                     var @fixed = 0;

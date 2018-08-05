@@ -1,5 +1,5 @@
-RPCS3 Compatibility Bot reimplemented in C# for .NET Core
-=========================================================
+RPCS3 Compatibility Bot
+=======================
 
 Development Requirements
 ------------------------

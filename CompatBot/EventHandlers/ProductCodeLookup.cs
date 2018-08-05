@@ -52,9 +52,7 @@ namespace CompatBot.EventHandlers
             }
             var previousReplies = previousRepliesBuilder?.ToString() ?? "";
 
-            var codesToLookup = ProductCode.Matches(args.Message.Content)
-                .Select(match => (match.Groups["letters"].Value + match.Groups["numbers"]).ToUpper())
-                .Distinct()
+            var codesToLookup = GetProductIds(args.Message.Content)
                 .Where(c => !previousReplies.Contains(c, StringComparison.InvariantCultureIgnoreCase))
                 .Take(args.Channel.IsPrivate ? 50 : 5)
                 .ToList();
@@ -74,6 +72,14 @@ namespace CompatBot.EventHandlers
                 {
                     args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't post result for {result.code}: {e.Message}", DateTime.Now);
                 }
+        }
+
+        public static List<string> GetProductIds(string input)
+        {
+            return ProductCode.Matches(input)
+                .Select(match => (match.Groups["letters"].Value + match.Groups["numbers"]).ToUpper())
+                .Distinct()
+                .ToList();
         }
 
         private static bool NeedToSilence(DiscordMessage msg)
@@ -108,16 +114,14 @@ namespace CompatBot.EventHandlers
                 if (result?.ReturnCode == -1)
                     return TitleInfo.CommunicationError.AsEmbed(null, footer);
 
+                var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
                 if (result?.Results == null)
-                    return TitleInfo.Unknown.AsEmbed(code, footer);
+                    return TitleInfo.Unknown.AsEmbed(code, footer, thumbnailUrl);
 
                 if (result.Results.TryGetValue(code, out var info))
-                {
-                    var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
                     return info.AsEmbed(code, footer, thumbnailUrl);
-                }
 
-                return TitleInfo.Unknown.AsEmbed(code, footer);
+                return TitleInfo.Unknown.AsEmbed(code, footer, thumbnailUrl);
             }
             catch (Exception e)
             {

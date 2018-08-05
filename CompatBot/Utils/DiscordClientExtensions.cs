@@ -22,6 +22,16 @@ namespace CompatBot.Utils
             return ctx.Client.GetUserNameAsync(ctx.Channel, userId, forDmPurposes, defaultName);
         }
 
+        public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, DiscordUser user)
+        {
+            return (from g in client.Guilds
+                    where g.Key == guild.Id
+                    from u in g.Value.Members
+                    where u.Id == user.Id
+                    select u
+                ).FirstOrDefault();
+        }
+
         public static async Task<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
         {
             var isPrivate = forDmPurposes ?? channel.IsPrivate;
@@ -36,6 +46,20 @@ namespace CompatBot.Utils
             {
                 return isPrivate ? $"@{userId}" : defaultName;
             }
+        }
+
+        public static async Task ReactWithAsync(this DiscordMessage message, DiscordClient client, DiscordEmoji emoji, string fallbackMessage = null, bool showBoth = false)
+        {
+            var canReact = message.Channel.PermissionsFor(client.GetMember(message.Channel.Guild, client.CurrentUser)).HasPermission(Permissions.AddReactions);
+            if (canReact)
+                await message.CreateReactionAsync(emoji).ConfigureAwait(false);
+            if ((!canReact || showBoth) && !string.IsNullOrEmpty(fallbackMessage))
+                await message.Channel.SendMessageAsync(fallbackMessage).ConfigureAwait(false);
+        }
+
+        public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string fallbackMessage = null, bool showBoth = false)
+        {
+            return ReactWithAsync(ctx.Message, ctx.Client, emoji, fallbackMessage, showBoth);
         }
 
         public static async Task<IReadOnlyCollection<DiscordMessage>> GetMessagesBeforeAsync(this DiscordChannel channel, ulong beforeMessageId, int limit = 100, DateTime? timeLimit = null)
