@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Database.Providers;
+using CompatBot.ThumbScrapper;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using PsnClient.POCOs;
@@ -30,15 +31,30 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 result.Description = $"Total download size of all packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
                 foreach (var pkg in pkgs)
-                    result.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"⏬ [{Path.GetFileName(pkg.Url)}]({pkg.Url})");
+                {
+                    result.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"⏬ [{GetLinkName(pkg.Url)}]({pkg.Url})");
+                }
 
             }
             else
             {
                 result.Title = $"{title} update v{pkgs[0].Version} ({pkgs[0].Size.AsStorageUnit()})";
-                result.Description = $"⏬ [{Path.GetFileName(pkgs[0].Url)}]({pkgs[0].Url})";
+                result.Description = $"⏬ [{Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
             }
             return result.Build();
+        }
+
+        private static string GetLinkName(string link)
+        {
+            var fname = Path.GetFileName(link);
+            try
+            {
+                var match = PsnScraper.ContentIdMatcher.Match(fname);
+                if (match.Success)
+                    return fname.Substring(20);
+            }
+            catch { }
+            return fname;
         }
 
         private static string AsStorageUnit(this long bytes)
