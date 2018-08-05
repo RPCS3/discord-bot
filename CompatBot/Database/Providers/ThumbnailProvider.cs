@@ -59,6 +59,9 @@ namespace CompatBot.Database.Providers
 
         public static string GetTitleName(string productCode)
         {
+            if (string.IsNullOrEmpty(productCode))
+                return null;
+
             using (var db = new ThumbnailDb())
             {
                 var thumb = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode.ToUpperInvariant());
