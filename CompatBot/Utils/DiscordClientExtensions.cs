@@ -32,6 +32,15 @@ namespace CompatBot.Utils
                 ).FirstOrDefault();
         }
 
+        public static DiscordMember GetMember(this DiscordClient client, DiscordUser user)
+        {
+            return (from g in client.Guilds
+                    from u in g.Value.Members
+                    where u.Id == user.Id
+                    select u
+                ).FirstOrDefault();
+        }
+
         public static async Task<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
         {
             var isPrivate = forDmPurposes ?? channel.IsPrivate;
@@ -113,7 +122,7 @@ namespace CompatBot.Utils
                 .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content);
             if (needsAttention)
-                result.AddField("Link to the message", $"https://discordapp.com/channels/{message.Channel.Guild.Id}/{message.Channel.Id}/{message.Id}");
+                result.AddField("Link to the message", message.JumpLink.ToString());
             return result;
         }
     }
