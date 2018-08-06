@@ -40,20 +40,25 @@ namespace CompatBot.Commands
 
         private static readonly List<string> RateAnswers = new List<string>
         {
-            // 16
+            // 30
             "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
             "Glorious!", "Very good", "Excellent...", "Magnificent", "Rate bot says he likes, so you like too",
-            "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "🆗",
-            "Belissimo!",
+            "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "Belissimo!",
+            "Cool. Cool cool cool", "I am in awe", "Incredible!", "Radiates gloriousness", "Like a breath of fresh air",
+            "Sunshine for my digital soul 🌞", "Fantastic like petrichor 🌦", "Joyous like a rainbow 🌈", "Unbelievably good", "Can't recommend enough",
+            "Not perfect, but ok", "So good!", "A lucky find!", "💯 approved", "I don't see any downsides",
 
-            // 4
-            "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect",
+            // 15
+            "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect", "🆗",
+            "You already know, my boi", "Unexpected like a bouquet of sunflowers 🌻", "Hard to measure precisely...", "Requires more data to analyze", "Passable",
+            "Quite unique 🤔", "Less like an orange, and more like an apple", "I don't know, man...", "It is so tiring to grade everything...", "...",
 
-            // 18
+            // 21
             "Bad", "Very bad", "Pretty bad", "Horrible", "Ugly",
             "Disgusting", "Literally the worst", "Not interesting", "Simply ugh", "I don't like it! You shouldn't either!",
             "Just like you, 💩", "Not approved", "Big Mistake", "The opposite of good", "Could be better",
-            "🤮", "😐",  "So-so",
+            "🤮", "😐",  "So-so", "Not worth it", "Mediocre at best",
+            "Useless",
         };
 
         private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
@@ -149,7 +154,7 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync(result).ConfigureAwait(false);
         }
 
-        [Command("8ball")]
+        [Command("8ball"), LimitedToSpamChannel]
         [Description("Generates a ~~random~~ perfect answer to your question")]
         public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
         {
@@ -159,7 +164,7 @@ namespace CompatBot.Commands
             await ctx.RespondAsync(answer).ConfigureAwait(false);
         }
 
-        [Command("rate")]
+        [Command("rate"), LimitedToSpamChannel]
         [Description("Gives an ~~unrelated~~ expert judgement on the matter at hand")]
         public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever)
         {
