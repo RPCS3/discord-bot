@@ -18,35 +18,50 @@ namespace CompatBot.Commands
     {
         private readonly Random rng = new Random();
 
-        private static readonly List<string> EightBallAnswers = new List<string> {
-            "Nah mate", "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Nope", "Njet", "Da", "Maybe", "I don't know",
-            "I don't care", "Affirmative", "Sure", "Yeah, why not", "Most likely", "Sim", "Oui", "Heck yeah!", "Roger that",
-            "Aye!", "Yes without a doubt m8!", "Who cares", "Maybe yes, maybe not", "Maybe not, maybe yes", "Ugh",
-            "Probably", "Ask again later", "Error 404: answer not found", "Don't ask me that again",
-            "You should think twice before asking", "You what now?", "Bloody hell, answering that ain't so easy",
-            "Of course not", "Seriously no", "Noooooooooo", "Most likely not", "Não", "Non", "Hell no", "Absolutely not",
-            "Ask Neko", "Ask Ani", "I'm pretty sure that's illegal!", "<:cell_ok_hand:324618647857397760>",
-            "Don't be an idiot. YES.", "What do *you* think?", "Only on Wednesdays", "Look in the mirror, you know the answer already"
+        private static readonly List<string> EightBallAnswers = new List<string>
+        {
+            // 16
+            "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative",
+            "Sure", "Yeah, why not", "Most likely", "Sim", "Oui",
+            "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", "<:cell_ok_hand:324618647857397760>",
+            "Don't be an idiot. YES.",
+
+            //20
+            "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
+            "Maybe not, maybe yes", "Ugh", "Probably", "Ask again later", "Error 404: answer not found",
+            "Don't ask me that again", "You should think twice before asking", "You what now?", "Ask Neko", "Ask Ani",
+            "Bloody hell, answering that ain't so easy", "I'm pretty sure that's illegal!", "What do *you* think?", "Only on Wednesdays", "Look in the mirror, you know the answer already",
+
+            // 11
+            "Nah mate", "Nope", "Njet", "Of course not", "Seriously no", // 5
+            "Noooooooooo", "Most likely not", "Não", "Non", "Hell no",
+            "Absolutely not",
         };
 
         private static readonly List<string> RateAnswers = new List<string>
         {
-            "Bad", "Very bad", "Pretty bad", "Horrible", "Ugly", "Disgusting", "Literally the worst",
-            "Not interesting", "Simply ugh", "I don't like it! You shouldn't either!", "Just like you, 💩",
-            "Not approved", "Big Mistake", "Ask MsLow", "The opposite of good",
-            "Could be better", "Could be worse", "Not so bad",
-            "I likesss!", "Pretty good", "Guchi gud", "Amazing!", "Glorious!", "Very good", "Excellent...",
-            "Magnificent", "Rate bot says he likes, so you like too",
-            "If you reorganize the words it says \"pretty cool\"", "I approve",
-            "I need more time to think about it", "It's ok, nothing and no one is perfect",
-            "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "🆗", "😐", "🤮", "Belissimo!",
-            "So-so"
+            // 16
+            "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
+            "Glorious!", "Very good", "Excellent...", "Magnificent", "Rate bot says he likes, so you like too",
+            "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "🆗",
+            "Belissimo!",
+
+            // 4
+            "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect",
+
+            // 18
+            "Bad", "Very bad", "Pretty bad", "Horrible", "Ugly",
+            "Disgusting", "Literally the worst", "Not interesting", "Simply ugh", "I don't like it! You shouldn't either!",
+            "Just like you, 💩", "Not approved", "Big Mistake", "The opposite of good", "Could be better",
+            "🤮", "😐",  "So-so",
         };
 
         private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "I", "me", "myself", "moi", "self"
         };
+
+        private static readonly HashSet<char> Vowels = new HashSet<char> {'a', 'e', 'i', 'o', 'u'};
 
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]
@@ -66,10 +81,12 @@ namespace CompatBot.Commands
                     Title = "RPCS3 Compatibility Bot",
                     Url = "https://github.com/RPCS3/discord-bot",
                     Color = DiscordColor.Purple,
-                }.AddField("Made by", "🇭🇷 Roberto Anić Banić aka nicba1010\n" +
-                                      "💮 13xforever".FixSpaces())
-                .AddField("People who ~~broke~~ helped test the bot", "🐱 Juhn\n" +
-                                                                      $"{hcorion} hcorion");
+                }.AddField("Made by",
+                    "🇭🇷 Roberto Anić Banić aka nicba1010\n" +
+                    "💮 13xforever")
+                .AddField("People who ~~broke~~ helped test the bot",
+                    "🐱 Juhn\n" +
+                    $"{hcorion} hcorion");
             await ctx.RespondAsync(embed: embed.Build());
         }
 
@@ -147,26 +164,57 @@ namespace CompatBot.Commands
         public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever)
         {
             var choices = RateAnswers;
+            whatever = whatever.ToLowerInvariant().Trim();
             var whateverParts = whatever.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
-            if (whatever is string neko && (neko.Contains("neko", StringComparison.InvariantCultureIgnoreCase) || neko.Contains("272032356922032139")))
+            var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
+            if (whatever is string neko && (neko.Contains("272032356922032139") || neko.Contains("neko")))
             {
-                choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", 100)).ToList();
+                choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count*3)).ToList();
                 if (await new DiscordUserConverter().ConvertAsync("272032356922032139", ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
                     whatever = user.Value.Id.ToString();
             }
-            else if (whatever is string sonic && sonic.Contains("sonic"))
+            else if (whatever is string kd && (kd.Contains("272631898877198337") || kd.Contains("kd-11") || kd.Contains("kd11") || whateverParts.Any(p => p == "kd")))
             {
-                choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", 100)).Concat(new []{"Sonic out of 🦔", "Sonic out of 10"}).ToList();
-                whatever = "Sonic";
+                choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count*3)).ToList();
+                if (await new DiscordUserConverter().ConvertAsync("272631898877198337", ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
+                    whatever = user.Value.Id.ToString();
+            }
+            else if (whatever is string sonic && (sonic == "sonic" || sonic.Contains("sonic the")))
+            {
+                choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count)).Concat(new []{"Sonic out of 🦔", "Sonic out of 10"}).ToList();
+                whatever = "sonic";
             }
             else if (whateverParts.Length == 1)
             {
+                DiscordUser u = null;
                 if (Me.Contains(whateverParts[0]))
+                {
                     whatever = ctx.Message.Author.Id.ToString();
+                    u = ctx.Message.Author;
+                }
                 else if (await new DiscordUserConverter().ConvertAsync(whateverParts[0], ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
+                {
                     whatever = user.Value.Id.ToString();
+                    u = user.Value;
+                }
+                if (u != null)
+                {
+                    var roles = ctx.Client.GetMember(u)?.Roles.ToList();
+                    if (roles?.Count > 0)
+                    {
+
+                        var role = roles[new Random((prefix + u.Id).GetHashCode()).Next(roles.Count)].Name?.ToLowerInvariant();
+                        if (!string.IsNullOrEmpty(role))
+                        {
+                            if (role.EndsWith('s'))
+                                role = role.Substring(0, role.Length - 1);
+                            var article = Vowels.Contains(role[0]) ? "n" : "";
+                            choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
+                        }
+                    }
+                }
             }
-            whatever = DateTime.UtcNow.ToString("yyyyMMdd") + whatever?.Trim();
+            whatever = prefix + whatever?.Trim();
             var seed = whatever.GetHashCode(StringComparison.CurrentCultureIgnoreCase);
             var seededRng = new Random(seed);
             var answer = choices[seededRng.Next(choices.Count)];
