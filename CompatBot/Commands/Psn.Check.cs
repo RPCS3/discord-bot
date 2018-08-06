@@ -30,14 +30,8 @@ namespace CompatBot.Commands
                 }
 
                 var updateInfo = await Client.GetTitleUpdatesAsync(productId, Config.Cts.Token).ConfigureAwait(false);
-                if (updateInfo?.Tag?.Packages?.Length > 0)
-                {
-                    var embed = await updateInfo.AsEmbedAsync(ctx.Client).ConfigureAwait(false);
-                    await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
-                    return;
-                }
-
-                await ctx.RespondAsync("No updates were found").ConfigureAwait(false);
+                var embed = await updateInfo.AsEmbedAsync(ctx.Client, productId).ConfigureAwait(false);
+                await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             }
         }
     }
