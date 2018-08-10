@@ -98,9 +98,10 @@ namespace CompatBot
                     client.MessageReactionAdded += Starbucks.Handler;
 
                     client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
-                    client.MessageCreated += ProductCodeLookup.OnMessageMention;
+                    client.MessageCreated += ProductCodeLookup.OnMessageCreated;
                     client.MessageCreated += LogInfoHandler.OnMessageCreated;
                     client.MessageCreated += LogsAsTextMonitor.OnMessageCreated;
+                    client.MessageCreated += BotShutupHandler.OnMessageCreated;
 
                     client.MessageUpdated += AntipiracyMonitor.OnMessageEdit;
 
