@@ -26,7 +26,7 @@ namespace CompatBot.EventHandlers
             new ZipHandler(),
         };
 
-        private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount-1), Math.Max(1, Environment.ProcessorCount - 1));
+        private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
         private delegate void OnLog(MessageCreateEventArgs args);
         private static event OnLog OnNewLog;
 
