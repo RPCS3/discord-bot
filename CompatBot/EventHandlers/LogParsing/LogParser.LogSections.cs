@@ -11,6 +11,7 @@ namespace CompatBot.EventHandlers.LogParsing
     internal partial class LogParser
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.ExplicitCapture;
+        private const RegexOptions DefaultSingleLineOptions = RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
 
         /*
          * Extractors are defined in terms of trigger-extractor
@@ -29,7 +30,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["RPCS3"] = new Regex(@"(?<build_and_specs>.*)\r?$", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture),
+                    ["RPCS3"] = new Regex(@"(?<build_and_specs>.*)\r?$", DefaultSingleLineOptions),
                 },
                 EndTrigger = "·",
             },
@@ -59,7 +60,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["loop detection:"] = new Regex("detection: (?<spu_loop_detection>.*?)\r?$", DefaultOptions),
                     ["Lib Loader:"] = new Regex("[Ll]oader: (?<lib_loader>.*?)\r?$", DefaultOptions),
                     ["static functions:"] = new Regex("functions: (?<hook_static_functions>.*?)\r?$", DefaultOptions),
-                    ["Load libraries:"] = new Regex("libraries: (?<library_list>.*)", DefaultOptions),
+                    ["Load libraries:"] = new Regex("libraries:(?<library_list>.*?)$", DefaultSingleLineOptions),
                 },
                 EndTrigger = "VFS:",
             },
