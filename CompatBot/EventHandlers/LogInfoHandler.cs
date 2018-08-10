@@ -57,6 +57,7 @@ namespace CompatBot.EventHandlers
                 return;
             }
 
+            bool parsedLog = false;
             try
             {
                 foreach (var attachment in message.Attachments.Where(a => a.FileSize < Config.AttachmentSizeLimit))
@@ -65,6 +66,7 @@ namespace CompatBot.EventHandlers
                     {
                         await args.Channel.TriggerTypingAsync().ConfigureAwait(false);
                         Console.WriteLine($">>>>>>> {message.Id%100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
+                        parsedLog = true;
                         LogParseState result = null;
                         try
                         {
@@ -85,7 +87,7 @@ namespace CompatBot.EventHandlers
                             {
                                 if (result.Error == LogParseState.ErrorCode.PiracyDetected)
                                 {
-                                    if ((args.Message.Author as DiscordMember)?.Roles.IsWhitelisted() ?? false)
+                                    if (args.Author.IsWhitelisted(args.Client, args.Guild))
                                     {
                                         await Task.WhenAll(
                                             args.Channel.SendMessageAsync("I see wha' ye did thar ☠"),
@@ -137,7 +139,8 @@ namespace CompatBot.EventHandlers
             finally
             {
                 QueueLimiter.Release();
-                Console.WriteLine($"<<<<<<< {message.Id % 100} Finished parsing");
+                if (parsedLog)
+                    Console.WriteLine($"<<<<<<< {message.Id % 100} Finished parsing");
             }
         }
     }

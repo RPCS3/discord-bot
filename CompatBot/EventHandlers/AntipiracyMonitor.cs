@@ -14,15 +14,15 @@ namespace CompatBot.EventHandlers
     {
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            args.Handled = !await IsClean(args.Client, args.Message).ConfigureAwait(false);
+            args.Handled = !await IsClean(args.Client, args.Message, args.Guild).ConfigureAwait(false);
         }
 
         public static async Task OnMessageEdit(MessageUpdateEventArgs args)
         {
-            args.Handled = !await IsClean(args.Client, args.Message).ConfigureAwait(false);
+            args.Handled = !await IsClean(args.Client, args.Message, args.Guild).ConfigureAwait(false);
         }
 
-        private static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
+        private static async Task<bool> IsClean(DiscordClient client, DiscordMessage message, DiscordGuild guild)
         {
             if (message.Author.IsBot)
                 return true;
@@ -30,7 +30,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(message.Content) || message.Content.StartsWith(Config.CommandPrefix))
                 return true;
 
-            if ((message.Author as DiscordMember)?.Roles.IsWhitelisted() ?? false)
+            if (message.Author.IsWhitelisted(client, guild))
                 return true;
 
             string trigger = null;

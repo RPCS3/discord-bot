@@ -12,7 +12,6 @@ using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using NReco.Text;
 
 namespace CompatBot.EventHandlers
 {
@@ -21,9 +20,8 @@ namespace CompatBot.EventHandlers
         // see http://www.psdevwiki.com/ps3/Productcode
         public static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Client compatClient = new Client();
-        private static readonly AhoCorasickDoubleArrayTrie<string> ChillCheck = new AhoCorasickDoubleArrayTrie<string>(new[] {"shut up", "hush", "chill"}.ToDictionary(s => s, s => s), true);
 
-        public static async Task OnMessageMention(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
             if (args.Author.IsBot)
                 return;
@@ -33,7 +31,7 @@ namespace CompatBot.EventHandlers
 
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
             foreach (var msg in lastBotMessages)
-                if (NeedToSilence(msg))
+                if (BotShutupHandler.NeedToSilence(msg))
                     return;
 
             lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
@@ -80,24 +78,6 @@ namespace CompatBot.EventHandlers
                 .Select(match => (match.Groups["letters"].Value + match.Groups["numbers"]).ToUpper())
                 .Distinct()
                 .ToList();
-        }
-
-        private static bool NeedToSilence(DiscordMessage msg)
-        {
-            if (string.IsNullOrEmpty(msg.Content))
-                return false;
-
-            var needToChill = false;
-            ChillCheck.ParseText(msg.Content, h =>
-            {
-                needToChill = true;
-                return false;
-            });
-            if (!needToChill)
-                return false;
-
-            return msg.Content.Contains("bot") || (msg.MentionedUsers?.Any(u => u.IsCurrent) ?? false);
-
         }
 
         public static async Task<DiscordEmbed> LookupGameInfoAsync(this DiscordClient client, string code, bool footer = true)
