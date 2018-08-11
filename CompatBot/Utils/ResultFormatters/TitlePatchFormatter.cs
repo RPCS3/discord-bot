@@ -61,7 +61,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static string AsStorageUnit(this long bytes)
         {
             if (bytes < UnderKB)
-                return $"{bytes} byte{(bytes % 10 == 1 && bytes % 100 != 11 ? "" : "s")}";
+                return $"{bytes} byte{StringUtils.GetSuffix(bytes)}";
             if (bytes < UnderMB)
                 return $"{bytes / 1024.0:0.##} KB";
             if (bytes < UnderGB)

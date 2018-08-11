@@ -190,18 +190,36 @@ namespace CompatBot.Utils.ResultFormatters
         private static void BuildLibsSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
             if (items["lib_loader"] is string libs && libs.Contains("manual", StringComparison.InvariantCultureIgnoreCase))
-                builder.AddField("Selected Libraries", items["library_list"]);
+                builder.AddField("Selected Libraries", items["library_list"]?.Trim(1024));
         }
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
         {
             if (items["rap_file"] is string rap)
             {
-                var licenseNames = rap.Split(Environment.NewLine).Distinct().Select(p => $"`{Path.GetFileName(p)}`");
-                builder.AddField("Missing Licenses", string.Join(Environment.NewLine, licenseNames));
+                var licenseNames = rap.Split(Environment.NewLine).Distinct().Select(p => $"`{Path.GetFileName(p)}`").ToList();
+                string content;
+                if (licenseNames.Count > 10)
+                {
+                    content = string.Join(Environment.NewLine, licenseNames.Take(9));
+                    var other = licenseNames.Count - 9;
+                    content += $"{Environment.NewLine}and {other} other license{StringUtils.GetSuffix(other)}";
+                }
+                else
+                    content = string.Join(Environment.NewLine, licenseNames);
+                builder.AddField("Missing Licenses", content);
+/*
+                var fields = new EmbedPager().BreakInFieldContent(licenseNames, 100).ToList();
+                if (fields.Count > 1)
+                    for (var idx = 0; idx < fields.Count; idx++)
+                        builder.AddField($"Missing Licenses #{idx + 1} of {fields.Count}", fields[idx].content);
+                else
+                    builder.AddField("Missing Licenses", fields[0].content);
+*/
+
             }
             else if (items["fatal_error"] is string fatalError)
-                builder.AddField("Fatal Error", $"`{fatalError}`");
+                builder.AddField("Fatal Error", $"`{fatalError.Trim(1022)}`");
 
             var notes = new StringBuilder();
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
@@ -219,7 +237,14 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("Outdated RPCS3 build detected, consider updating");
             var notesContent = notes.ToString().Trim();
             if (!string.IsNullOrEmpty(notesContent))
-                builder.AddField("Notes", notesContent);
+            {
+                var fields = new EmbedPager().BreakInFieldContent(notesContent.Split(Environment.NewLine), 100).ToList();
+                if (fields.Count > 1)
+                    for (var idx = 0; idx < fields.Count; idx++)
+                        builder.AddField($"Notes #{idx + 1} of {fields.Count}", fields[idx].content);
+                else
+                    builder.AddField("Notes", fields[0].content);
+            }
 
             if (updateInfo != null)
                 await updateInfo.AsEmbedAsync(builder).ConfigureAwait(false);

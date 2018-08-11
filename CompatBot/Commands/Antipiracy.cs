@@ -52,7 +52,7 @@ namespace CompatBot.Commands
             if (failedIds.Count > 0)
                 await ctx.RespondAsync("Some ids couldn't be removed: " + string.Join(", ", failedIds)).ConfigureAwait(false);
             else
-                await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{(ids.Length == 1 ? "" : "s")} successfully removed!").ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
             await List(ctx).ConfigureAwait(false);
         }
     }
