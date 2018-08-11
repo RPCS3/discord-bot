@@ -31,7 +31,7 @@ namespace CompatBot.EventHandlers
 
             await args.Message.ReactWithAsync(args.Client, DiscordEmoji.FromUnicode("😟"), "Okay (._.)").ConfigureAwait(false);
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
-            if (lastBotMessages.OrderBy(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)
+            if (lastBotMessages.OrderByDescending(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)
                 await msg.DeleteAsync("asked to shut up").ConfigureAwait(false);
         }
 
