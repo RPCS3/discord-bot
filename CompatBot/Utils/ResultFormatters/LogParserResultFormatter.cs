@@ -42,11 +42,11 @@ namespace CompatBot.Utils.ResultFormatters
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {
                     state.PiracyContext = state.PiracyContext.Sanitize();
-                    var msg = $"{message.Author.Mention}, you are being denied further support until you legally dump the game!\n" +
-                              "Please note that the RPCS3 community and its developers do not support piracy!\n" +
-                              "Most of the issues caused by pirated dumps is because they have been tampered with in such a way " +
+                    var msg = $"{message.Author.Mention}, you are being denied further support until you legally dump the game.\n" +
+                              "Please note that the RPCS3 community and its developers do not support piracy.\n" +
+                              "Most of the issues caused by pirated dumps is because they have been tampered with in some way " +
                               "and therefore act unpredictably on RPCS3.\n" +
-                              "If you need help obtaining legal dumps please read <https://rpcs3.net/quickstart>";
+                              "If you need help obtaining legal dumps, please read <https://rpcs3.net/quickstart>";
                     builder.WithColor(Config.Colors.LogAlert)
                         .WithTitle("Pirated release detected")
                         .WithDescription(msg);
@@ -65,7 +65,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 builder = new DiscordEmbedBuilder
                 {
-                    Description = "Log analysis failed, most likely cause is an empty log. Try reuploading a new copy.",
+                    Description = "Log analysis failed, most likely cause is an empty log. Please try again.",
                     Color = Config.Colors.LogResultFailed,
                 };
             }
@@ -223,18 +223,18 @@ namespace CompatBot.Utils.ResultFormatters
 
             var notes = new StringBuilder();
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
-                notes.AppendLine("Log is empty. You need to run the game before uploading the log.");
+                notes.AppendLine("The log is empty. You need to run the game before uploading the log.");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
-                notes.AppendLine("Resolution was changed from recommended `1280x720`");
+                notes.AppendLine("Resolution was changed from the recommended `1280x720`");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
-                notes.AppendLine("Log was too large, showing last processed run");
+                notes.AppendLine("Log was too large, showing the last processed run only");
 
             // should be last check here
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
-                notes.AppendLine("Outdated RPCS3 build detected, consider updating");
+                notes.AppendLine("Outdated RPCS3 build detected, please consider updating it");
             var notesContent = notes.ToString().Trim();
             if (!string.IsNullOrEmpty(notesContent))
             {
