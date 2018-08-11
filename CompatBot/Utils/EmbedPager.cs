@@ -30,10 +30,12 @@ namespace CompatBot.Utils
                 yield return builder.Build();
         }
 
-        private IEnumerable<(string title, string content)> BreakInFieldContent(IEnumerable<string> lines, int maxLinesPerField = 10)
+        public IEnumerable<(string title, string content)> BreakInFieldContent(IEnumerable<string> lines, int maxLinesPerField = 10, Func<string, string, string> makeTitle = null)
         {
             if (maxLinesPerField < 1)
                 throw new ArgumentException("Expected a number greater than 0, but was " + maxLinesPerField, nameof(maxLinesPerField));
+
+            makeTitle = makeTitle ?? MakeTitle;
 
             var buffer = new StringBuilder();
             var lineCount = 0;
@@ -46,7 +48,7 @@ namespace CompatBot.Utils
 
                 if (lineCount == maxLinesPerField)
                 {
-                    yield return (MakeTitle(firstLine, lastLine), buffer.ToString());
+                    yield return (makeTitle(firstLine, lastLine), buffer.ToString());
                     buffer.Clear();
                     lineCount = 0;
                     firstLine = line;
@@ -57,10 +59,10 @@ namespace CompatBot.Utils
                     if (buffer.Length + line.Length > MaxFieldLength)
                     {
                         if (buffer.Length == 0)
-                            yield return (MakeTitle(line, line), line.Trim(MaxFieldLength));
+                            yield return (makeTitle(line, line), line.Trim(MaxFieldLength));
                         else
                         {
-                            yield return (MakeTitle(firstLine, lastLine), buffer.ToString());
+                            yield return (makeTitle(firstLine, lastLine), buffer.ToString());
                             buffer.Clear().Append(line);
                             lineCount = 1;
                             firstLine = line;
@@ -68,7 +70,7 @@ namespace CompatBot.Utils
                     }
                     else
                     {
-                        yield return (MakeTitle(firstLine, line), buffer.Append(line).ToString());
+                        yield return (makeTitle(firstLine, line), buffer.Append(line).ToString());
                         buffer.Clear();
                         lineCount = 0;
                     }
@@ -83,7 +85,7 @@ namespace CompatBot.Utils
                 }
             }
             if (buffer.Length > 0)
-                yield return (MakeTitle(firstLine, lastLine), buffer.ToString());
+                yield return (makeTitle(firstLine, lastLine), buffer.ToString());
         }
 
         private static string MakeTitle(string first, string last)

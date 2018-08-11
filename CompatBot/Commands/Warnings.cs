@@ -58,7 +58,7 @@ namespace CompatBot.Commands
                 removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             }
             if (removedCount == ids.Length)
-                await ctx.RespondAsync($"Warning{(ids.Length == 1 ? "" : "s")} successfully removed!").ConfigureAwait(false);
+                await ctx.RespondAsync($"Warning{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
             else
                 await ctx.RespondAsync($"Removed {removedCount} items, but was asked to remove {ids.Length}").ConfigureAwait(false);
         }
@@ -83,7 +83,7 @@ namespace CompatBot.Commands
                     db.Warning.RemoveRange(warningsToRemove);
                     removed = await db.SaveChangesAsync().ConfigureAwait(false);
                 }
-                await ctx.RespondAsync($"{removed} warning{(removed == 1 ? "" : "s")} successfully removed!").ConfigureAwait(false);
+                await ctx.RespondAsync($"{removed} warning{StringUtils.GetSuffix(removed)} successfully removed!").ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -114,7 +114,7 @@ namespace CompatBot.Commands
                     await db.SaveChangesAsync().ConfigureAwait(false);
                     count = await db.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
                 }
-                await message.RespondAsync($"User warning saved! User currently has {count} warning{(count % 10 == 1 && count % 100 != 11 ? "" : "s")}!").ConfigureAwait(false);
+                await message.RespondAsync($"User warning saved! User currently has {count} warning{StringUtils.GetSuffix(count)}!").ConfigureAwait(false);
                 if (count > 1)
                     await ListUserWarningsAsync(client, message, userId, userName).ConfigureAwait(false);
                 return true;

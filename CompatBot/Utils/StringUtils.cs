@@ -58,6 +58,8 @@ namespace CompatBot.Utils
             }
         }
 
+        public static string GetSuffix(long num) => num % 10 == 1 && num % 100 != 11 ? "" : "s";
+
         public static string FixSpaces(this string text) => text?.Replace("  ", " \u200d \u200d");
     }
 }

@@ -6,7 +6,6 @@ using CompatApiClient.Utils;
 using CompatApiClient.POCOs;
 using CompatBot.Database.Providers;
 using DSharpPlus.Entities;
-using Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionTranslators.Internal;
 
 namespace CompatBot.Utils.ResultFormatters
 {
