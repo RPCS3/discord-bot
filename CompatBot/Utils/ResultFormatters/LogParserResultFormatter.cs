@@ -206,6 +206,8 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new StringBuilder();
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("Log is empty. You need to run the game before uploading the log.");
+            if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
+                notes.AppendLine("Resolution was changed from recommended `1280x720`");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
