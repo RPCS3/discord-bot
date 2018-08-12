@@ -229,7 +229,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
-                notes.AppendLine("The log was too large so the last processed run is shown");
+                notes.AppendLine("The log was too large, so only the last processed run is shown");
 
             // should be last check here
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
