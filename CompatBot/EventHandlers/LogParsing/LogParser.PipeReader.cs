@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.Utils;
@@ -15,6 +16,7 @@ namespace CompatBot.EventHandlers.LogParsing
 
         public static async Task<LogParseState> ReadPipeAsync(PipeReader reader)
         {
+            var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
             var currentSectionLines = new LinkedList<ReadOnlySequence<byte>>();
             var state = new LogParseState();
             bool skippedBom = false;
@@ -58,7 +60,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     }
                 } while (lineEnd != null);
 
-                if (result.IsCanceled || Config.Cts.IsCancellationRequested)
+                if (result.IsCanceled || Config.Cts.IsCancellationRequested || timeout.IsCancellationRequested)
                     state.Error = LogParseState.ErrorCode.SizeLimit;
                 else if (result.IsCompleted)
                     await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
@@ -70,7 +72,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     state.Error = LogParseState.ErrorCode.SizeLimit;
                     break;
                 }
-            } while (!(result.IsCompleted || result.IsCanceled || Config.Cts.IsCancellationRequested));
+            } while (!(result.IsCompleted || result.IsCanceled || Config.Cts.IsCancellationRequested || timeout.IsCancellationRequested));
             reader.Complete();
             return state;
         }

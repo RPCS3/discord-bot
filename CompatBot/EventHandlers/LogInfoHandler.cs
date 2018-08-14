@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
@@ -57,6 +58,7 @@ namespace CompatBot.EventHandlers
             }
 
             bool parsedLog = false;
+            var startTime = Stopwatch.StartNew();
             try
             {
                 foreach (var attachment in message.Attachments.Where(a => a.FileSize < Config.AttachmentSizeLimit))
@@ -139,7 +141,7 @@ namespace CompatBot.EventHandlers
             {
                 QueueLimiter.Release();
                 if (parsedLog)
-                    Console.WriteLine($"<<<<<<< {message.Id % 100} Finished parsing");
+                    Console.WriteLine($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
             }
         }
     }
