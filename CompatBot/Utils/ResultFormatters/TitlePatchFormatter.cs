@@ -60,7 +60,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
             else
                 embedBuilder.Description = "No updates were found";
-            if (embedBuilder.Fields.Count > 0)
+            if (!result.Any() || embedBuilder.Fields.Any())
                 result.Add(embedBuilder.Build());
             return result;
         }
