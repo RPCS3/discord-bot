@@ -27,6 +27,7 @@ namespace CompatBot
 
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
         public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
+        public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(15);
 
         public static class Colors
         {
