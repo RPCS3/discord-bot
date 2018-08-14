@@ -8,9 +8,9 @@ namespace CompatBot.Utils
 {
     internal class EmbedPager
     {
-        private const int MaxFieldLength = 1024;
-        private const int MaxTitleSize = 256;
-        private const int MaxFields = 25;
+        public const int MaxFieldLength = 1024;
+        public const int MaxTitleSize = 256;
+        public const int MaxFields = 25;
 
         public IEnumerable<DiscordEmbed> BreakInEmbeds(DiscordEmbedBuilder builder, IEnumerable<string> lines, int maxLinesPerField = 10)
         {

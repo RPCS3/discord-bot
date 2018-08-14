@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Database.Providers;
@@ -6,6 +7,7 @@ using CompatBot.ThumbScrapper;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using PsnClient.POCOs;
+using CompatApiClient.Utils;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -15,13 +17,14 @@ namespace CompatBot.Utils.ResultFormatters
         private const long UnderMB = 1000 * 1024;
         private const long UnderGB = 1000 * 1024 * 1024;
 
-
-        public static async Task<DiscordEmbed> AsEmbedAsync(this TitlePatch patch, DiscordClient client, string productCode)
+        // thanks BCES00569
+        public static async Task<List<DiscordEmbed>> AsEmbedAsync(this TitlePatch patch, DiscordClient client, string productCode)
         {
+            var result = new List<DiscordEmbed>();
             var pkgs = patch?.Tag?.Packages;
             var title = pkgs?.Select(p => p.ParamSfo?.Title).LastOrDefault(t => !string.IsNullOrEmpty(t)) ?? ThumbnailProvider.GetTitleName(productCode) ?? productCode;
             var thumbnailUrl = await client.GetThumbnailUrlAsync(productCode).ConfigureAwait(false);
-            var result = new DiscordEmbedBuilder
+            var embedBuilder = new DiscordEmbedBuilder
             {
                 Title = title,
                 Color = Config.Colors.DownloadLinks,
@@ -29,20 +32,37 @@ namespace CompatBot.Utils.ResultFormatters
             };
             if (pkgs?.Length > 1)
             {
-                result.Description = $"Total download size of all packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
-                foreach (var pkg in pkgs)
+                var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
+                if (pages > 1)
+                    embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxTitleSize);
+                embedBuilder.Description = $"Total download size of all packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
+                var i = 0;
+                do
                 {
-                    result.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"⏬ [{GetLinkName(pkg.Url)}]({pkg.Url})");
-                }
+                    var pkg = pkgs[i++];
+                    embedBuilder.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"⏬ [{GetLinkName(pkg.Url)}]({pkg.Url})");
+                    if (i % EmbedPager.MaxFields == 0)
+                    {
+                        result.Add(embedBuilder.Build());
+                        embedBuilder = new DiscordEmbedBuilder
+                        {
+                            Title = $"{title} [Part {i/EmbedPager.MaxFields+1} of {pages}]".Trim(EmbedPager.MaxTitleSize),
+                            Color = Config.Colors.DownloadLinks,
+                            ThumbnailUrl = thumbnailUrl,
+                        };
+                    }
+                } while (i < pkgs.Length);
             }
             else if (pkgs?.Length == 1)
             {
-                result.Title = $"{title} update v{pkgs[0].Version} ({pkgs[0].Size.AsStorageUnit()})";
-                result.Description = $"⏬ [{Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
+                embedBuilder.Title = $"{title} update v{pkgs[0].Version} ({pkgs[0].Size.AsStorageUnit()})";
+                embedBuilder.Description = $"⏬ [{Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
             }
             else
-                result.Description = "No updates were found";
-            return result.Build();
+                embedBuilder.Description = "No updates were found";
+            if (embedBuilder.Fields.Count > 0)
+                result.Add(embedBuilder.Build());
+            return result;
         }
 
         private static string GetLinkName(string link)
