@@ -41,9 +41,9 @@ namespace CompatBot.Commands
                 }
             }
 
-            [Command("restart"), Aliases("update"), TriggersTyping]
-            [Description("Restarts bot and pulls newest commit")]
-            public async Task Restart(CommandContext ctx)
+            [Command("update"), Aliases("upgrade", "restart", "reboot", "pull"), TriggersTyping]
+            [Description("Restarts bot and pulls the newest commit")]
+            public async Task Update(CommandContext ctx)
             {
                 if (lockObj.Wait(0))
                 {

@@ -10,7 +10,10 @@ namespace CompatBot.EventHandlers
 {
     internal static class BotShutupHandler
     {
-        private static readonly AhoCorasickDoubleArrayTrie<string> ChillCheck = new AhoCorasickDoubleArrayTrie<string>(new[] { "shut the fuck up", "shut up", "shutup", "hush", "chill" }.ToDictionary(s => s, s => s), true);
+        private static readonly AhoCorasickDoubleArrayTrie<string> ChillCheck = new AhoCorasickDoubleArrayTrie<string>(new[]
+        {
+            "shut the fuck up", "shut up", "shutup", "hush", "chill", "take that back", "delete this", "bad bot",
+        }.ToDictionary(s => s, s => s), true);
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
