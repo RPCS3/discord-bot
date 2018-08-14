@@ -228,6 +228,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("Resolution was changed from the recommended `1280x720`");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
+            if (!string.IsNullOrEmpty(items["native_ui_input"]))
+                notes.AppendLine("Pad initialization problem detected. Try disabling Native UI.");
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.AppendLine("The log was too large, so only the last processed run is shown");
 
