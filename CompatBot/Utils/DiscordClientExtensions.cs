@@ -59,7 +59,7 @@ namespace CompatBot.Utils
 
         public static async Task ReactWithAsync(this DiscordMessage message, DiscordClient client, DiscordEmoji emoji, string fallbackMessage = null, bool showBoth = false)
         {
-            var canReact = message.Channel.PermissionsFor(client.GetMember(message.Channel.Guild, client.CurrentUser)).HasPermission(Permissions.AddReactions);
+            var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(client.GetMember(message.Channel.Guild, client.CurrentUser)).HasPermission(Permissions.AddReactions);
             if (canReact)
                 await message.CreateReactionAsync(emoji).ConfigureAwait(false);
             if ((!canReact || showBoth) && !string.IsNullOrEmpty(fallbackMessage))

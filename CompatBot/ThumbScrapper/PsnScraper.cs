@@ -16,10 +16,11 @@ namespace CompatBot.ThumbScrapper
     internal class PsnScraper
     {
         private static readonly PsnClient.Client Client = new PsnClient.Client();
-        public static readonly Regex ContentIdMatcher = new Regex(@"(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16})", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        public static readonly Regex ContentIdMatcher = new Regex(@"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
         private static readonly SemaphoreSlim LockObj = new SemaphoreSlim(1, 1);
         private static List<string> PsnStores = new List<string>();
         private static DateTime StoreRefreshTimestamp = DateTime.MinValue;
+        private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(32, 32);
 
         public async Task Run(CancellationToken cancellationToken)
         {
@@ -40,6 +41,50 @@ namespace CompatBot.ThumbScrapper
                 }
                 await Task.Delay(TimeSpan.FromHours(1), cancellationToken).ConfigureAwait(false);
             } while (!cancellationToken.IsCancellationRequested);
+        }
+
+        public static async void CheckContentId(string contentId, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(contentId))
+                return;
+
+            var match = ContentIdMatcher.Match(contentId);
+            if (!match.Success)
+                return;
+
+            if (!QueueLimiter.Wait(0))
+                return;
+
+            try
+            {
+                List<string> storesToScrape;
+                contentId = match.Groups["content_id"].Value;
+                await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    storesToScrape = new List<string>(PsnStores);
+                }
+                finally
+                {
+                    LockObj.Release();
+                }
+
+                foreach (var locale in storesToScrape)
+                {
+                    var relatedContainer = await Client.ResolveContentAsync(locale, contentId, 1, cancellationToken).ConfigureAwait(false);
+                    if (relatedContainer == null)
+                        continue;
+
+                    Console.WriteLine($"\tFound {contentId} in {locale} store");
+                    await ProcessIncludedGamesAsync(locale, relatedContainer, cancellationToken, false).ConfigureAwait(false);
+                    return;
+                }
+                Console.WriteLine($"\tDidn't find {contentId} in any PSN store");
+            }
+            finally
+            {
+                QueueLimiter.Release();
+            }
         }
 
         private static async Task RefreshStoresAsync(CancellationToken cancellationToken)
