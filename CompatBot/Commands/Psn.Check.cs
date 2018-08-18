@@ -55,7 +55,7 @@ namespace CompatBot.Commands
                 }
 
                 foreach (var id in itemsToCheck)
-                    PsnScraper.CheckContentId(id, Config.Cts.Token);
+                    PsnScraper.CheckContentIdAsync(ctx, id, Config.Cts.Token);
 
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Added {itemsToCheck.Count} ID{StringUtils.GetSuffix(itemsToCheck.Count)} to the scraping queue").ConfigureAwait(false);
             }

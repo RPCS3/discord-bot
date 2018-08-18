@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands;
@@ -59,7 +58,8 @@ namespace CompatBot
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
-                var psnScrappingTask = new PsnScraper().Run(Config.Cts.Token);
+                var psnScrappingTask = new PsnScraper().RunAsync(Config.Cts.Token);
+                var gameTdbScrapingTask = GameTdbScraper.RunAsync(Config.Cts.Token);
 
                 var config = new DiscordConfiguration
                 {
@@ -153,7 +153,10 @@ namespace CompatBot
                         await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}).ConfigureAwait(false);
                     }
                 }
-                await psnScrappingTask.ConfigureAwait(false);
+                await Task.WhenAll(
+                    psnScrappingTask,
+                    gameTdbScrapingTask
+                ).ConfigureAwait(false);
             }
             catch (TaskCanceledException)
             {
