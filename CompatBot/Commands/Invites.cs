@@ -8,7 +8,6 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Microsoft.EntityFrameworkCore;
@@ -27,17 +26,36 @@ namespace CompatBot.Commands
                 .AppendLine($"ID   | {"Guild ID",-18} | Guild Name")
                 .AppendLine("-------------------------------------------------");
             using (var db = new BotDb())
-                foreach (var item in await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false))
+            {
+                var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
+                if (whitelistedInvites.Count == 0)
                 {
-                    var guildName = item.Name ?? "Failed to resolve";
-                    try
-                    {
-                        var guild = await ctx.Client.GetGuildAsync(item.GuildId).ConfigureAwait(false);
-                        guildName = guild.Name;
-                    }
-                    catch (Exception e){ ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);}
+                    await ctx.RespondAsync("There are no whitelisted discord servers").ConfigureAwait(false);
+                    return;
+                }
+
+                foreach (var item in whitelistedInvites)
+                {
+                    string guildName = null;
+                    if (!string.IsNullOrEmpty(item.InviteCode))
+                        try
+                        {
+                            var invite = await ctx.Client.GetInviteByCodeAsync(item.InviteCode).ConfigureAwait(false);
+                            guildName = invite?.Guild.Name;
+                        }
+                        catch { }
+                    if (string.IsNullOrEmpty(guildName))
+                        try
+                        {
+                            var guild = await ctx.Client.GetGuildAsync(item.GuildId).ConfigureAwait(false);
+                            guildName = guild.Name;
+                        }
+                        catch { }
+                    if (string.IsNullOrEmpty(guildName))
+                        guildName = item.Name ?? "Failed to resolve";
                     result.AppendLine($"{item.Id:0000} | {item.GuildId,-18} | {guildName.Sanitize()}");
                 }
+            }
             await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
         }
 
