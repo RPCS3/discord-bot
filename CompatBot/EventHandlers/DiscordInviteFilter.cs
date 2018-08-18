@@ -52,8 +52,8 @@ namespace CompatBot.EventHandlers
             if (DefaultHandlerFilter.IsFluff(message))
                 return;
 
-            //if (message.Author.IsWhitelisted(client, message.Channel.Guild))
-            //    return;
+            if (message.Author.IsWhitelisted(client, message.Channel.Guild))
+                return;
 
             if (message.Reactions.Any(r => r.Emoji == Config.Reactions.Moderated && r.IsMe))
                 return;
