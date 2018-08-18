@@ -8,12 +8,13 @@ using System.Threading.Tasks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
+using DSharpPlus.CommandsNext;
 using PsnClient.POCOs;
 using PsnClient.Utils;
 
 namespace CompatBot.ThumbScrapper
 {
-    internal class PsnScraper
+    internal sealed class PsnScraper
     {
         private static readonly PsnClient.Client Client = new PsnClient.Client();
         public static readonly Regex ContentIdMatcher = new Regex(@"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
@@ -22,7 +23,7 @@ namespace CompatBot.ThumbScrapper
         private static DateTime StoreRefreshTimestamp = DateTime.MinValue;
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(32, 32);
 
-        public async Task Run(CancellationToken cancellationToken)
+        public async Task RunAsync(CancellationToken cancellationToken)
         {
             do
             {
@@ -43,7 +44,7 @@ namespace CompatBot.ThumbScrapper
             } while (!cancellationToken.IsCancellationRequested);
         }
 
-        public static async void CheckContentId(string contentId, CancellationToken cancellationToken)
+        public static async void CheckContentIdAsync(CommandContext ctx, string contentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(contentId))
                 return;
@@ -75,11 +76,11 @@ namespace CompatBot.ThumbScrapper
                     if (relatedContainer == null)
                         continue;
 
-                    Console.WriteLine($"\tFound {contentId} in {locale} store");
+                    await ctx.RespondAsync($"Found {contentId} in {locale} store").ConfigureAwait(false);
                     await ProcessIncludedGamesAsync(locale, relatedContainer, cancellationToken, false).ConfigureAwait(false);
                     return;
                 }
-                Console.WriteLine($"\tDidn't find {contentId} in any PSN store");
+                await ctx.RespondAsync($"Didn't find {contentId} in any PSN store").ConfigureAwait(false);
             }
             finally
             {

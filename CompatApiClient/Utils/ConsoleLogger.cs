@@ -5,7 +5,6 @@ namespace CompatApiClient.Utils
 {
     public static class ConsoleLogger
     {
-
         public static void PrintError(Exception e, HttpResponseMessage response, ConsoleColor color = ConsoleColor.Red)
         {
             Console.ForegroundColor = ConsoleColor.Red;

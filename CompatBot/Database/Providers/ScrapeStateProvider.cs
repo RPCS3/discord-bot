@@ -31,6 +31,19 @@ namespace CompatBot.Database.Providers
             return false;
         }
 
+
+        public static bool IsFresh(string locale, DateTime dataTimestamp)
+        {
+            using (var db = new ThumbnailDb())
+            {
+                var timestamp = string.IsNullOrEmpty(locale) ? db.State.OrderBy(s => s.Timestamp).FirstOrDefault() : db.State.FirstOrDefault(s => s.Locale == locale);
+                if (timestamp?.Timestamp is long checkDate && checkDate > 0)
+                    return new DateTime(checkDate, DateTimeKind.Utc) > dataTimestamp;
+            }
+            return false;
+        }
+
+
         public static async Task SetLastRunTimestampAsync(string locale, string containerId = null)
         {
             if (string.IsNullOrEmpty(locale))

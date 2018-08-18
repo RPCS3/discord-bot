@@ -10,6 +10,8 @@ namespace CompatBot.Database.Providers
 {
     internal static class ThumbnailProvider
     {
+        private static readonly HttpClient HttpClient = HttpClientFactory.Create();
+
         public static async Task<string> GetThumbnailUrlAsync(this DiscordClient client, string productCode)
         {
             using (var db = new ThumbnailDb())
@@ -30,8 +32,7 @@ namespace CompatBot.Database.Providers
 
                     try
                     {
-                        using (var httpClient = new HttpClient())
-                        using (var imgStream = await httpClient.GetStreamAsync(url).ConfigureAwait(false))
+                        using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
                         using (var memStream = new MemoryStream())
                         {
                             await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
