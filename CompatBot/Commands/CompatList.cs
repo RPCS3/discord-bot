@@ -40,11 +40,9 @@ namespace CompatBot.Commands
 Gets the x (default is 10 new) top games by specified criteria; order is flexible
 Example usage:
     !top 10 new
-    !top 10 new jpn
     !top 10 playable
-    !top 10 new ingame eu
-    !top 10 old psn intro
-    !top 10 old loadable us bluray")]
+    !top 10 new ingame
+    !top 10 old loadable bluray")]
         public async Task Top(CommandContext ctx, [Description("To see all filters do !filters")] params string[] filters)
         {
             var requestBuilder = RequestBuilder.Start();
@@ -62,9 +60,6 @@ Example usage:
                         break;
                     case string rel when ApiConfig.ReverseReleaseTypes.ContainsKey(rel):
                         requestBuilder.SetReleaseType(rel);
-                        break;
-                    case string reg when ApiConfig.ReverseRegions.ContainsKey(reg):
-                        requestBuilder.SetRegion(reg);
                         break;
                     case string num when int.TryParse(num, out var newAmount):
                         amount = newAmount.Clamp(1, Config.TopLimit);
@@ -91,7 +86,6 @@ Example usage:
         {
             var getDmTask = ctx.CreateDmAsync();
             var embed = new DiscordEmbedBuilder {Description = "List of recognized tokens in each filter category", Color = Config.Colors.Help}
-                //.AddField("Regions", DicToDesc(ApiConfig.Regions))
                 .AddField("Statuses", DicToDesc(ApiConfig.Statuses))
                 .AddField("Release types", DicToDesc(ApiConfig.ReleaseTypes))
                 .Build();
@@ -156,10 +150,7 @@ Example usage:
                     result.AppendLine($"{ctx.Message.Author.Mention} searched for: ***{request.search.Sanitize()}***");
                 else
                 {
-                    string[] region = null, media = null;
-                    if (request.region.HasValue) ApiConfig.Regions.TryGetValue(request.region.Value, out region);
-                    if (request.releaseType.HasValue) ApiConfig.Regions.TryGetValue(request.releaseType.Value, out media);
-                    var formattedHeader = string.Format(request.customHeader, ctx.Message.Author.Mention, request.amountRequested, region?.Last(), media?.Last());
+                    var formattedHeader = string.Format(request.customHeader, ctx.Message.Author.Mention, request.amountRequested, null, null);
                     result.AppendLine(formattedHeader.Replace("   ", " ").Replace("  ", " "));
                 }
                 result.AppendFormat(returnCode.info, compatResult.SearchTerm);

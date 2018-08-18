@@ -32,16 +32,6 @@ namespace CompatApiClient
             {'d', new []{"d", "desc", "descending"} },
         };
 
-        public static readonly Dictionary<char, string[]> Regions = new Dictionary<char, string[]>
-        {
-            {'j', new[] {"j", "jp", "ja", "japan", "japanese", "JPN"}},
-            {'u', new[] {"u", "us", "america", "american", "USA"}},
-            {'e', new[] {"e", "eu", "europe", "european", "EUR"}},
-            {'a', new[] {"a", "asia", "asian", "ch", "china", "chinese", "CHN"}},
-            {'k', new[] {"k", "kr", "korea", "korean", "KOR"}},
-            {'h', new[] {"h", "hong", "kong", "hongkong", "hong-kong", "HK"}},
-        };
-
         public static readonly Dictionary<string, int> Statuses = new Dictionary<string, int>
         {
             {"all", 0 },
@@ -67,10 +57,7 @@ namespace CompatApiClient
         };
 
         public static readonly Dictionary<string, char> ReverseDirections;
-        public static readonly Dictionary<string, char> ReverseRegions;
         public static readonly Dictionary<string, char> ReverseReleaseTypes;
-        public static readonly Dictionary<int, string> ReverseStatuses;
-        public static readonly Dictionary<int, string> ReverseSortTypes;
 
         private static Dictionary<TV, TK> Reverse<TK, TV>(this Dictionary<TK, TV[]> dic, IEqualityComparer<TV> comparer)
         {
@@ -86,10 +73,7 @@ namespace CompatApiClient
             try
             {
                 ReverseDirections = Directions.Reverse(StringComparer.InvariantCultureIgnoreCase);
-                ReverseRegions = Regions.Reverse(StringComparer.InvariantCultureIgnoreCase);
                 ReverseReleaseTypes = ReleaseTypes.Reverse(StringComparer.InvariantCultureIgnoreCase);
-                ReverseStatuses = Statuses.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-                ReverseSortTypes = SortTypes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
             }
             catch (Exception e)
             {

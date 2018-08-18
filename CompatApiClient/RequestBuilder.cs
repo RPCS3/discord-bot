@@ -77,13 +77,6 @@ namespace CompatApiClient
             return this;
         }
 
-        public RequestBuilder SetRegion(string region)
-        {
-            if (ApiConfig.ReverseRegions.TryGetValue(region, out var regionCode))
-                this.region = regionCode;
-            return this;
-        }
-
         public RequestBuilder SetAmount(int amount)
         {
             if (amount < 1)
