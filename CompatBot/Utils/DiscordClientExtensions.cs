@@ -81,10 +81,10 @@ namespace CompatBot.Utils
             return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
         }
 
-        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, bool needsAttention = false)
+        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, ReportSeverity severity)
         {
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-            var embedBuilder = MakeReportTemplate(infraction, message, needsAttention);
+            var embedBuilder = MakeReportTemplate(infraction, message, severity);
             var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
@@ -93,17 +93,19 @@ namespace CompatBot.Utils
             return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
         }
 
-        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordUser> reporters, bool needsAttention = true)
+        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordUser> reporters, ReportSeverity severity)
         {
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-            var embedBuilder = MakeReportTemplate(infraction, message, needsAttention);
+            var embedBuilder = MakeReportTemplate(infraction, message, severity);
             embedBuilder.AddField("Reporters", string.Join(Environment.NewLine, reporters.Select(r => r.Mention)));
             var logChannel = await getLogChannelTask.ConfigureAwait(false);
             return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
         }
 
-        private static DiscordEmbedBuilder MakeReportTemplate(string infraction, DiscordMessage message, bool needsAttention){
+        private static DiscordEmbedBuilder MakeReportTemplate(string infraction, DiscordMessage message, ReportSeverity severity)
+        {
             var content = message.Content;
+            var needsAttention = severity > ReportSeverity.Low;
             if (message.Attachments.Any())
             {
                 if (!string.IsNullOrEmpty(content))
@@ -115,8 +117,7 @@ namespace CompatBot.Utils
             var result = new DiscordEmbedBuilder
                 {
                     Title = infraction,
-                    Description = needsAttention ? "Not removed, requires attention! @here" : "Removed, doesn't require attention",
-                    Color = needsAttention ? Config.Colors.LogAlert : Config.Colors.LogNotice
+                    Color = GetColor(severity),
                 }.AddField("Violator", message.Author.Mention, true)
                 .AddField("Channel", message.Channel.Mention, true)
                 .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
@@ -124,6 +125,17 @@ namespace CompatBot.Utils
             if (needsAttention)
                 result.AddField("Link to the message", message.JumpLink.ToString());
             return result;
+        }
+
+        private static DiscordColor GetColor(ReportSeverity severity)
+        {
+            switch (severity)
+            {
+                case ReportSeverity.Low: return Config.Colors.LogInfo;
+                case ReportSeverity.Medium: return Config.Colors.LogNotice;
+                case ReportSeverity.High: return Config.Colors.LogAlert;
+                default: return Config.Colors.LogUnknown;
+            }
         }
     }
 }

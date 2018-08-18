@@ -26,6 +26,7 @@ namespace CompatBot
         public static readonly string Token;
 
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
+        public static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);
         public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(15);
 
@@ -35,7 +36,7 @@ namespace CompatBot
             public static readonly DiscordColor DownloadLinks = new DiscordColor(0x3b88c3);
             public static readonly DiscordColor Maintenance = new DiscordColor(0xffff00);
 
-            public static readonly DiscordColor CompatStatusNothing = new DiscordColor(0x455556);
+            public static readonly DiscordColor CompatStatusNothing = new DiscordColor(0x455556); // colors mimic compat list statuses
             public static readonly DiscordColor CompatStatusLoadable = new DiscordColor(0xe74c3c);
             public static readonly DiscordColor CompatStatusIntro = new DiscordColor(0xe08a1e);
             public static readonly DiscordColor CompatStatusIngame = new DiscordColor(0xf9b32f);
@@ -44,8 +45,10 @@ namespace CompatBot
 
             public static readonly DiscordColor LogResultFailed = DiscordColor.Gray;
 
-            public static readonly DiscordColor LogAlert = new DiscordColor(0xe74c3c);
-            public static readonly DiscordColor LogNotice = new DiscordColor(0xf9b32f);
+            public static readonly DiscordColor LogAlert = new DiscordColor(0xf04747); // colors mimic discord statuses
+            public static readonly DiscordColor LogNotice = new DiscordColor(0xfaa61a);
+            public static readonly DiscordColor LogInfo = new DiscordColor(0x43b581);
+            public static readonly DiscordColor LogUnknown = new DiscordColor(0x747f8d);
         }
 
         public static class Reactions
@@ -54,6 +57,7 @@ namespace CompatBot
             public static readonly DiscordEmoji Failure = DiscordEmoji.FromUnicode("⛔");
             public static readonly DiscordEmoji Denied = DiscordEmoji.FromUnicode("👮");
             public static readonly DiscordEmoji Starbucks = DiscordEmoji.FromUnicode("☕");
+            public static readonly DiscordEmoji Moderated = DiscordEmoji.FromUnicode("🔨");
         }
 
         public static class Moderation

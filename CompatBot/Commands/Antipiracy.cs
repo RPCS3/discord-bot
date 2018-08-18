@@ -43,7 +43,7 @@ namespace CompatBot.Commands
 
         [Command("remove"), Aliases("delete", "del")]
         [Description("Removes a piracy filter trigger")]
-        public async Task Remove(CommandContext ctx, [Description("Filter ids to remove separated with spaces")] params int[] ids)
+        public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
         {
             var failedIds = new List<int>();
             foreach (var id in ids)

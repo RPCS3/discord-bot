@@ -11,34 +11,20 @@ namespace CompatBot.EventHandlers
 {
     internal static class Starbucks
     {
-        private static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);
-
         public static Task Handler(MessageReactionAddEventArgs args)
         {
-            return CheckMessage(args.Client, args.Channel, args.User, args.Message, args.Emoji);
+            return CheckMessageAsync(args.Client, args.Channel, args.User, args.Message, args.Emoji);
         }
 
-        public static async Task CheckBacklog(this DiscordClient client)
+        public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
         {
             try
             {
-                var after = DateTime.UtcNow - ModerationTimeThreshold;
+                var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
                 var checkTasks = new List<Task>();
-                foreach (var channelId in Config.Moderation.Channels)
+                foreach (var channel in guild.Channels.Where(ch => Config.Moderation.Channels.Contains(ch.Id)))
                 {
-                    DiscordChannel channel;
-                    try
-                    {
-                        channel = await client.GetChannelAsync(channelId).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't check channel {channelId} for starbucks: {e.Message}", DateTime.Now);
-                        continue;
-                    }
-
                     var messages = await channel.GetMessagesAsync().ConfigureAwait(false);
-
                     var messagesToCheck = from msg in messages
                         where msg.CreationTimestamp > after && msg.Reactions.Any(r => r.Emoji == Config.Reactions.Starbucks && r.Count >= Config.Moderation.StarbucksThreshold)
                         select msg;
@@ -46,7 +32,7 @@ namespace CompatBot.EventHandlers
                     {
                         var reactionUsers = await message.GetReactionsAsync(Config.Reactions.Starbucks).ConfigureAwait(false);
                         if (reactionUsers.Count > 0)
-                            checkTasks.Add(CheckMessage(client, channel, reactionUsers[0], message, Config.Reactions.Starbucks));
+                            checkTasks.Add(CheckMessageAsync(client, channel, reactionUsers[0], message, Config.Reactions.Starbucks));
                     }
                 }
                 await Task.WhenAll(checkTasks).ConfigureAwait(false);
@@ -55,10 +41,9 @@ namespace CompatBot.EventHandlers
             {
                 client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
             }
-
         }
 
-        private static async Task CheckMessage(DiscordClient client, DiscordChannel channel, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
+        private static async Task CheckMessageAsync(DiscordClient client, DiscordChannel channel, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
         {
             try
             {
@@ -72,7 +57,7 @@ namespace CompatBot.EventHandlers
                     return;
 
                 // message.Timestamp throws if it's not in the cache AND is in local time zone
-                if (DateTime.UtcNow - message.CreationTimestamp > ModerationTimeThreshold)
+                if (DateTime.UtcNow - message.CreationTimestamp > Config.ModerationTimeThreshold)
                     return;
 
                 if (message.Reactions.Any(r => r.Emoji == emoji && (r.IsMe || r.Count < Config.Moderation.StarbucksThreshold)))
@@ -105,7 +90,7 @@ namespace CompatBot.EventHandlers
                     return;
 
                 await message.ReactWithAsync(client, emoji).ConfigureAwait(false);
-                await client.ReportAsync("User moderation report ⭐💵", message, reporters).ConfigureAwait(false);
+                await client.ReportAsync("User moderation report ⭐💵", message, reporters, ReportSeverity.Medium).ConfigureAwait(false);
 
             }
             catch (Exception e)

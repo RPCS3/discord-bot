@@ -12,6 +12,7 @@ namespace CompatBot.Database
         public DbSet<Warning> Warning { get; set; }
         public DbSet<Explanation> Explanation { get; set; }
         public DbSet<DisabledCommand> DisabledCommands { get; set; }
+        public DbSet<WhitelistedInvite> WhitelistedInvites { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -25,7 +26,8 @@ namespace CompatBot.Database
             modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).IsUnique().HasName("piracystring_string");
             modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasName("warning_discord_id");
             modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasName("explanation_keyword");
-            modelBuilder.Entity<DisabledCommand>().HasIndex(e => e.Command).IsUnique().HasName("disabled_command_command");
+            modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasName("disabled_command_command");
+            modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasName("whitelisted_invite_guild_id");
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
@@ -75,5 +77,13 @@ namespace CompatBot.Database
         public int Id { get; set; }
         [Required]
         public string Command { get; set; }
+    }
+
+    internal class WhitelistedInvite
+    {
+        public int Id { get; set; }
+        public ulong GuildId { get; set; }
+        public string Name { get; set; }
+        public string InviteCode { get; set; }
     }
 }
