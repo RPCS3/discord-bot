@@ -14,27 +14,24 @@ namespace CompatBot.EventHandlers
     {
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            args.Handled = !await IsClean(args.Client, args.Message, args.Guild).ConfigureAwait(false);
+            args.Handled = !await IsClean(args.Client, args.Message).ConfigureAwait(false);
         }
 
-        public static async Task OnMessageEdit(MessageUpdateEventArgs args)
+        public static async Task OnMessageUpdated(MessageUpdateEventArgs args)
         {
-            args.Handled = !await IsClean(args.Client, args.Message, args.Guild).ConfigureAwait(false);
+            args.Handled = !await IsClean(args.Client, args.Message).ConfigureAwait(false);
         }
 
-        private static async Task<bool> IsClean(DiscordClient client, DiscordMessage message, DiscordGuild guild)
+        private static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
         {
-            if (message.Author.IsBot)
+            if (DefaultHandlerFilter.IsFluff(message))
                 return true;
 
-            if (string.IsNullOrEmpty(message.Content) || message.Content.StartsWith(Config.CommandPrefix))
-                return true;
-
-            if (message.Author.IsWhitelisted(client, guild))
+            if (message.Author.IsWhitelisted(client, message.Channel.Guild))
                 return true;
 
             string trigger = null;
-            bool needsAttention = false;
+            var severity = ReportSeverity.Low;
             try
             {
                 trigger = await PiracyStringProvider.FindTriggerAsync(message.Content);
@@ -46,14 +43,14 @@ namespace CompatBot.EventHandlers
             catch (Exception e)
             {
                 client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't delete message in {message.Channel.Name}: {e.Message}", DateTime.Now);
-                needsAttention = true;
+                severity = ReportSeverity.High;
             }
             try
             {
                 var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
                 await Task.WhenAll(
                     message.Channel.SendMessageAsync($"{message.Author.Mention} Please follow the {rules.Mention} and do not discuss piracy on this server. Repeated offence may result in a ban."),
-                    client.ReportAsync("Mention of piracy", message, trigger, message.Content, needsAttention),
+                    client.ReportAsync("Mention of piracy", message, trigger, message.Content, severity),
                     Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Mention of piracy", message.Content.Sanitize())
                 ).ConfigureAwait(false);
             }

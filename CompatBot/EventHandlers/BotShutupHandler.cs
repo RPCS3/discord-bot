@@ -17,23 +17,17 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (args.Channel.IsPrivate)
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
-            if (args.Author.IsBot)
-                return;
-
-            if (string.IsNullOrEmpty(args.Message.Content) || args.Message.Content.StartsWith(Config.CommandPrefix))
-                return;
-
-            if (!args.Author.IsWhitelisted(args.Client, args.Guild))
+            if (!args.Author.IsWhitelisted(args.Client, args.Message.Channel.Guild))
                 return;
 
             if (!NeedToSilence(args.Message))
                 return;
 
             await args.Message.ReactWithAsync(args.Client, DiscordEmoji.FromUnicode("😟"), "Okay (._.)").ConfigureAwait(false);
-            var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
+            var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddMinutes(-5)).ConfigureAwait(false);
             if (lastBotMessages.OrderByDescending(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)
                 await msg.DeleteAsync("asked to shut up").ConfigureAwait(false);
         }

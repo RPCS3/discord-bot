@@ -92,24 +92,24 @@ namespace CompatBot.EventHandlers
                                     {
                                         await Task.WhenAll(
                                             args.Channel.SendMessageAsync("I see wha' ye did thar ☠"),
-                                            args.Client.ReportAsync("Pirated Release (whitelisted by role)", args.Message, result.PiracyTrigger, result.PiracyContext)
+                                            args.Client.ReportAsync("Pirated Release (whitelisted by role)", args.Message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low)
                                         ).ConfigureAwait(false);
                                     }
                                     else
                                     {
-                                        bool needsAttention = false;
+                                        var severity = ReportSeverity.Low;
                                         try
                                         {
                                             await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
                                         }
                                         catch (Exception e)
                                         {
-                                            needsAttention = true;
+                                            severity = ReportSeverity.High;
                                             args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unable to delete message in {args.Channel.Name}: {e.Message}", DateTime.Now);
                                         }
                                         await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
                                         await Task.WhenAll(
-                                            args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, needsAttention),
+                                            args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, severity),
                                             Warnings.AddAsync(args.Client, args.Message, args.Message.Author.Id, args.Message.Author.Username, args.Client.CurrentUser,
                                                 "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
                                         );

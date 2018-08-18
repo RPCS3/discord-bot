@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands;
@@ -83,6 +84,7 @@ namespace CompatBot
                     commands.RegisterCommands<Warnings>();
                     commands.RegisterCommands<Explain>();
                     commands.RegisterCommands<Psn>();
+                    commands.RegisterCommands<Invites>();
 
                     client.Ready += async r =>
                                     {
@@ -91,19 +93,35 @@ namespace CompatBot
                                         Console.WriteLine($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
                                         Console.WriteLine($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
                                         Console.WriteLine();
-                                        Console.WriteLine("Checking starbucks backlog...");
-                                        await r.Client.CheckBacklog().ConfigureAwait(false);
-                                        Console.WriteLine("Starbucks checked.");
                                     };
+                    client.GuildAvailable += async gaArgs =>
+                                             {
+                                                 gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"{gaArgs.Guild.Name} is available now", DateTime.Now);
+                                                 gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"Checking moderation backlogs in {gaArgs.Guild.Name}...", DateTime.Now);
+                                                 await Task.WhenAll(
+                                                     Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
+                                                     DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
+                                                 ).ConfigureAwait(false);
+                                                 Console.WriteLine($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
+                                             };
+                    client.GuildUnavailable += guArgs =>
+                                               {
+                                                   guArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"{guArgs.Guild.Name} is unavailable", DateTime.Now);
+                                                   return Task.CompletedTask;
+                                               };
+
+
                     client.MessageReactionAdded += Starbucks.Handler;
 
                     client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
                     client.MessageCreated += ProductCodeLookup.OnMessageCreated;
                     client.MessageCreated += LogInfoHandler.OnMessageCreated;
                     client.MessageCreated += LogsAsTextMonitor.OnMessageCreated;
+                    client.MessageCreated += DiscordInviteFilter.OnMessageCreated;
                     client.MessageCreated += BotShutupHandler.OnMessageCreated;
 
-                    client.MessageUpdated += AntipiracyMonitor.OnMessageEdit;
+                    client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
+                    client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
 
                     client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
 
