@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
@@ -14,10 +17,11 @@ namespace CompatBot.EventHandlers
 {
     internal static class DiscordInviteFilter
     {
-        private static readonly Regex DiscordInviteLink = new Regex(
-            @"https?://discord(app\.com/invite|\.gg)/(?<invite_id>.*?)(\s|$)",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline
-        );
+        private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline;
+        private static readonly Regex InviteLink = new Regex(@"https?://discord(((app\.com/invite|\.gg)/(?<invite_id>.*?))|(\.me/(?<me_id>.*?)))(\s|\W|$)", DefaultOptions);
+        private static readonly Regex DiscordInviteLink = new Regex(@"https?://discord(app\.com/invite|\.gg)/(?<invite_id>.*?)(\s|\W|$)", DefaultOptions);
+        private static readonly Regex DiscordMeLink = new Regex(@"https?://discord\.me/(?<me_id>.*?)(\s|$)", DefaultOptions);
+        private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
 
         public static Task OnMessageCreated(MessageCreateEventArgs args) => CheckMessageForInvitesAsync(args.Client, args.Message);
         public static Task OnMessageUpdated(MessageUpdateEventArgs args) => CheckMessageForInvitesAsync(args.Client, args.Message);
@@ -110,12 +114,43 @@ namespace CompatBot.EventHandlers
 
         public static async Task<(bool hasInvalidInvite, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, bool tryMessageAsACode = false)
         {
-            var inviteCodes = DiscordInviteLink.Matches(message).Select(m => m.Groups["invite_id"].Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
-            if (inviteCodes.Count == 0 && !tryMessageAsACode)
+            var inviteCodes = InviteLink.Matches(message).Select(m => m.Groups["invite_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+            var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+            if (inviteCodes.Count == 0 && discordMeLinks.Count == 0 && !tryMessageAsACode)
                 return (false, new List<DiscordInvite>(0));
+
+            foreach (var meLink in discordMeLinks)
+            {
+                try
+                {
+                    using (var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/" + meLink))
+                    {
+                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+                        request.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
+                        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                        using (var response = await HttpClient.SendAsync(request))
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                if (string.IsNullOrEmpty(html))
+                                    continue;
+
+                                foreach (Match match in DiscordInviteLink.Matches(html))
+                                    inviteCodes.Add(match.Groups["invite_id"].Value);
+                            }
+                            else
+                                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Got {response.StatusCode} from discord.me", DateTime.Now);
+                    }
+                }
+                catch (Exception e)
+                {
+                    client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                }
+            }
 
             if (tryMessageAsACode)
                 inviteCodes.Add(message);
+            inviteCodes = inviteCodes.Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
 
             var result = new List<DiscordInvite>(inviteCodes.Count);
             var hasInvalidInvites = false;
