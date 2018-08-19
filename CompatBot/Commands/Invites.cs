@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,7 +31,7 @@ namespace CompatBot.Commands
                 if (ctx.Channel.IsPrivate)
                     header += $" | {"Invite link".PadRight(linkLength)}";
                 header += " | Server Name";
-                var result = new StringBuilder("```")
+                var result = new StringBuilder("Whitelisted discord servers:\n```")
                     .AppendLine(header)
                     .AppendLine("".PadRight(header.Length + 10, '-'));
                 var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
