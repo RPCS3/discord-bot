@@ -157,7 +157,7 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync(result).ConfigureAwait(false);
         }
 
-        [Command("8ball"), LimitedToSpamChannel]
+        [Command("8ball"), Cooldown(20, 60, CooldownBucketType.Channel)]
         [Description("Generates a ~~random~~ perfect answer to your question")]
         public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
         {
@@ -167,7 +167,7 @@ namespace CompatBot.Commands
             await ctx.RespondAsync(answer).ConfigureAwait(false);
         }
 
-        [Command("rate"), LimitedToSpamChannel]
+        [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]
         [Description("Gives an ~~unrelated~~ expert judgement on the matter at hand")]
         public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever)
         {
