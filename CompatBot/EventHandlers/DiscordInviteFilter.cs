@@ -119,6 +119,7 @@ namespace CompatBot.EventHandlers
             if (inviteCodes.Count == 0 && discordMeLinks.Count == 0 && !tryMessageAsACode)
                 return (false, new List<DiscordInvite>(0));
 
+            var hasInvalidInvites = false;
             foreach (var meLink in discordMeLinks)
             {
                 try
@@ -129,9 +130,10 @@ namespace CompatBot.EventHandlers
                         request.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
                         request.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
                         using (var response = await HttpClient.SendAsync(request))
+                        {
+                            var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                             if (response.IsSuccessStatusCode)
                             {
-                                var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                                 if (string.IsNullOrEmpty(html))
                                     continue;
 
@@ -139,7 +141,11 @@ namespace CompatBot.EventHandlers
                                     inviteCodes.Add(match.Groups["invite_id"].Value);
                             }
                             else
-                                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Got {response.StatusCode} from discord.me", DateTime.Now);
+                            {
+                                hasInvalidInvites = true;
+                                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Got {response.StatusCode} from discord.me: {html}", DateTime.Now);
+                            }
+                        }
                     }
                 }
                 catch (Exception e)
@@ -153,7 +159,6 @@ namespace CompatBot.EventHandlers
             inviteCodes = inviteCodes.Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
 
             var result = new List<DiscordInvite>(inviteCodes.Count);
-            var hasInvalidInvites = false;
             foreach (var inviteCode in inviteCodes)
                 try
                 {
@@ -163,7 +168,7 @@ namespace CompatBot.EventHandlers
                 catch (Exception e)
                 {
                     hasInvalidInvites = true;
-                    client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Failed to get invite for code {inviteCode}: {e}", DateTime.Now);
+                    client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Failed to get invite for code {inviteCode}: {e.Message}", DateTime.Now);
                 }
             return (hasInvalidInvites, result);
         }

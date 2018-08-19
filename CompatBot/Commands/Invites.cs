@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -22,11 +23,18 @@ namespace CompatBot.Commands
         [Description("Lists all filters")]
         public async Task List(CommandContext ctx)
         {
-            var result = new StringBuilder("```")
-                .AppendLine($"ID   | {"Guild ID",-18} | Guild Name")
-                .AppendLine("-------------------------------------------------");
+            const string linkPrefix = "discord.gg/";
             using (var db = new BotDb())
             {
+                var maxInviteLength = await db.WhitelistedInvites.Select(i => i.InviteCode).Where(c => c != null).MaxAsync(c => c.Length).ConfigureAwait(false);
+                var linkLength = linkPrefix.Length + maxInviteLength;
+                var header = $"ID   | {"Server ID",-18}";
+                if (ctx.Channel.IsPrivate)
+                    header += $" | {"Invite link".PadRight(linkLength)}";
+                header += " | Server Name";
+                var result = new StringBuilder("```")
+                    .AppendLine(header)
+                    .AppendLine("".PadRight(header.Length + 10, '-'));
                 var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
                 if (whitelistedInvites.Count == 0)
                 {
@@ -52,11 +60,18 @@ namespace CompatBot.Commands
                         }
                         catch { }
                     if (string.IsNullOrEmpty(guildName))
-                        guildName = item.Name ?? "Failed to resolve";
-                    result.AppendLine($"{item.Id:0000} | {item.GuildId,-18} | {guildName.Sanitize()}");
+                        guildName = item.Name ?? "";
+                    var link = "";
+                    if (!string.IsNullOrEmpty(item.InviteCode))
+                        link = linkPrefix + item.InviteCode;
+                    //discord expands invite links even if they're inside the code block for some reason
+                    result.Append($"{item.Id:0000} | {item.GuildId,-18}");
+                    if (ctx.Channel.IsPrivate)
+                        result.Append(" | \u200d").Append(link.PadRight(linkLength));
+                    result.Append(" | ").AppendLine(guildName.Sanitize());
                 }
-            }
-            await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+             await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+           }
         }
 
         [Command("whitelist"), Aliases("add", "allow"), Priority(10)]

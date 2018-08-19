@@ -2,7 +2,6 @@
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using System.IO.Pipelines;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -20,7 +19,6 @@ namespace CompatBot.ThumbScrapper
     {
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
         private static readonly Uri TitleDownloadLink = new Uri("https://www.gametdb.com/ps3tdb.zip?LANG=EN");
-
 
         public static async Task RunAsync(CancellationToken cancellationToken)
         {
@@ -41,7 +39,7 @@ namespace CompatBot.ThumbScrapper
             } while (!cancellationToken.IsCancellationRequested);
         }
 
-        public static async Task UpdateGameTitlesAsync(CancellationToken cancellationToken)
+        private static async Task UpdateGameTitlesAsync(CancellationToken cancellationToken)
         {
             var container = Path.GetFileName(TitleDownloadLink.AbsolutePath);
             try
