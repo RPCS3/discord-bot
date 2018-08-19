@@ -82,7 +82,6 @@ namespace CompatBot.Commands
             foreach (var guildId in guildIds)
                 if (!await InviteWhitelistProvider.AddAsync(guildId).ConfigureAwait(false))
                     errors++;
-            await ctx.RespondAsync("command with the single ulong argument").ConfigureAwait(false);
 
             if (errors == 0)
                 await ctx.ReactWithAsync(Config.Reactions.Success, "Invite whitelist was successfully updated!").ConfigureAwait(false);
