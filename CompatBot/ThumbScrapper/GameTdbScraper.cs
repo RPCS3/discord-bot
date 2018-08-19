@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -19,6 +21,8 @@ namespace CompatBot.ThumbScrapper
     {
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
         private static readonly Uri TitleDownloadLink = new Uri("https://www.gametdb.com/ps3tdb.zip?LANG=EN");
+        private static readonly Regex CoverArtLink = new Regex(@"(?<cover_link>https?://art\.gametdb\.com/ps3/cover(?!full)[/\w\d]+\.jpg(\?\d+)?)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture);
+        private static readonly List<string> PreferredOrder = new List<string>{"coverHQ", "coverM", "cover"};
 
         public static async Task RunAsync(CancellationToken cancellationToken)
         {
@@ -37,6 +41,23 @@ namespace CompatBot.ThumbScrapper
                 }
                 await Task.Delay(TimeSpan.FromDays(30), cancellationToken).ConfigureAwait(false);
             } while (!cancellationToken.IsCancellationRequested);
+        }
+
+        public static async Task<string> GetThumbAsync(string productCode)
+        {
+            try
+            {
+                var html = await HttpClient.GetStringAsync("https://www.gametdb.com/PS3/" + productCode).ConfigureAwait(false);
+                var coverLinks = CoverArtLink.Matches(html).Select(m => m.Groups["cover_link"].Value).Distinct().Where(l => l.Contains(productCode, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                return coverLinks.FirstOrDefault(l => l.Contains("coverHQ", StringComparison.InvariantCultureIgnoreCase)) ??
+                       coverLinks.FirstOrDefault(l => l.Contains("coverM", StringComparison.InvariantCultureIgnoreCase)) ??
+                       coverLinks.FirstOrDefault();
+            }
+            catch (Exception e)
+            {
+                PrintError(e);
+            }
+            return null;
         }
 
         private static async Task UpdateGameTitlesAsync(CancellationToken cancellationToken)

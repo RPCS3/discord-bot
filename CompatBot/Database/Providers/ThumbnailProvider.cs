@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using CompatBot.ThumbScrapper;
 using DSharpPlus;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,12 +15,30 @@ namespace CompatBot.Database.Providers
 
         public static async Task<string> GetThumbnailUrlAsync(this DiscordClient client, string productCode)
         {
+            productCode = productCode.ToUpperInvariant();
             using (var db = new ThumbnailDb())
             {
                 var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode.ToUpperInvariant()).ConfigureAwait(false);
                 //todo: add search task if not found
                 if (thumb?.EmbeddableUrl is string embeddableUrl && !string.IsNullOrEmpty(embeddableUrl))
                     return embeddableUrl;
+
+                if (string.IsNullOrEmpty(thumb?.Url) || !ScrapeStateProvider.IsFresh(thumb.Timestamp))
+                {
+                    var gameTdbCoverUrl = await GameTdbScraper.GetThumbAsync(productCode).ConfigureAwait(false);
+                    if (!string.IsNullOrEmpty(gameTdbCoverUrl))
+                    {
+                        if (thumb == null)
+                        {
+                            var addResult = await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false);
+                            thumb = addResult.Entity;
+                        }
+                        else
+                            thumb.Url = gameTdbCoverUrl;
+                        thumb.Timestamp = DateTime.UtcNow.Ticks;
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                    }
+                }
 
                 if (thumb?.Url is string url && !string.IsNullOrEmpty(url))
                 {
