@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
@@ -16,6 +16,7 @@ namespace CompatBot.Commands
         // '2018-06-09 08:20:44.968000 - '
         // '2018-07-19T12:19:06.7888609Z - '
         private static readonly Regex Timestamp = new Regex(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex Channel = new Regex(@"(?<id><#\d+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
         [Group("fix"), Hidden]
         [Description("Commands to fix various stuff")]
@@ -83,27 +84,18 @@ namespace CompatBot.Commands
 
             public static async Task<string> FixChannelMentionAsync(CommandContext ctx, string msg)
             {
-                if (!string.IsNullOrEmpty(msg) && msg.Contains('#'))
+                if (string.IsNullOrEmpty(msg))
+                    return msg;
+
+                var entries = Channel.Matches(msg).Select(m => m.Groups["id"].Value).Distinct().ToList();
+                if (entries.Count == 0)
+                    return msg;
+
+                foreach (var channel in entries)
                 {
-                    var reasonParts = msg.Split(' ');
-                    var rebuiltMsg = new List<string>(reasonParts.Length);
-                    var changed = false;
-                    foreach (var p in reasonParts)
-                    {
-                        if (p.Contains('#'))
-                        {
-                            var ch = await new CustomDiscordChannelConverter().ConvertAsync(p, ctx).ConfigureAwait(false);
-                            if (ch.HasValue)
-                            {
-                                rebuiltMsg.Add("#" + ch.Value.Name);
-                                changed = true;
-                                continue;
-                            }
-                        }
-                        rebuiltMsg.Add(p);
-                    }
-                    if (changed)
-                        return string.Join(' ', rebuiltMsg);
+                    var ch = await new CustomDiscordChannelConverter().ConvertAsync(channel, ctx).ConfigureAwait(false);
+                    if (ch.HasValue)
+                        msg = msg.Replace(channel, "#" + ch.Value.Name);
                 }
                 return msg;
             }
