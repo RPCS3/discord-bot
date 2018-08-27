@@ -308,6 +308,7 @@ namespace CompatBot.ThumbScrapper
                     switch (item.Type)
                     {
                         case "game":
+                        case "game-related":
                             if (string.IsNullOrEmpty(item.Id))
                                 continue;
 
