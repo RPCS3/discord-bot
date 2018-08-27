@@ -39,7 +39,7 @@ namespace CompatBot.ThumbScrapper
                 {
                     PrintError(e);
                 }
-                await Task.Delay(TimeSpan.FromDays(30), cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromDays(1), cancellationToken).ConfigureAwait(false);
             } while (!cancellationToken.IsCancellationRequested);
         }
 
