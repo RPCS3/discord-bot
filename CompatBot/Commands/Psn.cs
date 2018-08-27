@@ -34,6 +34,20 @@ namespace CompatBot.Commands
             await ctx.RespondAsync($"Removed {linksToRemove.Count} cached links").ConfigureAwait(false);
         }
 
+        [Command("rescan"), RequiresBotModRole]
+        [Description("Forces a full PSN rescan")]
+        public async Task Rescan(CommandContext ctx)
+        {
+            using (var db = new ThumbnailDb())
+            {
+                var items = db.State.ToList();
+                foreach (var state in items)
+                    state.Timestamp = 0;
+                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+            }
+            await ctx.ReactWithAsync(Config.Reactions.Success, "Reset state timestamps").ConfigureAwait(false);
+        }
+
         private static async Task TryDeleteThumbnailCache(CommandContext ctx, List<(string contentId, string link)> linksToRemove)
         {
             var contentIds = linksToRemove.ToDictionary(l => l.contentId, l => l.link);
