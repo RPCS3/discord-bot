@@ -53,7 +53,7 @@ namespace CompatBot.EventHandlers.LogParsing
 #if DEBUG
                     Console.WriteLine($"regex {group.Name} = {group.Value}");
 #endif
-                    if (group.Name == "rap_file")
+                    if (group.Name == "rap_file" || group.Name == "vulkan_found_device")
                     {
                         var currentValue = state.WipCollection[group.Name];
                         if (!string.IsNullOrEmpty(currentValue))

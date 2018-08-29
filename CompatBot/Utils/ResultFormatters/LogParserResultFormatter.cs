@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
@@ -29,6 +30,9 @@ namespace CompatBot.Utils.ResultFormatters
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
         // rpcs3-v0.0.5-7105-064d0619_linux64.AppImage
         private static readonly Regex BuildInfoInUpdate = new Regex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_",
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         public static async Task<DiscordEmbed> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message)
@@ -80,7 +84,9 @@ namespace CompatBot.Utils.ResultFormatters
                 items["spu_threads"] = "Auto";
             if (items["spu_secondary_cores"] != null)
                 items["thread_scheduler"] = items["spu_secondary_cores"];
-            if (items["driver_manuf_new"] != null)
+            if (items["vulkan_initialized_device"] != null)
+                items["gpu_info"] = items["vulkan_initialized_device"];
+            else if (items["driver_manuf_new"] != null)
                 items["gpu_info"] = items["driver_manuf_new"];
             else if (items["vulkan_gpu"] != "\"\"")
                 items["gpu_info"] = items["vulkan_gpu"];
@@ -90,10 +96,12 @@ namespace CompatBot.Utils.ResultFormatters
                 items["gpu_info"] = items["driver_manuf"];
             else
                 items["gpu_info"] = "Unknown";
-            if (items["driver_version_new"] != null)
-                items["gpu_info"] = items["gpu_info"] + " (" + items["driver_version_new"] + ")";
-            else if (items["driver_version"] != null)
-                items["gpu_info"] = items["gpu_info"] + " (" + items["driver_version"] + ")";
+
+            items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], (items["driver_version_new"] ?? items["driver_version"])) ??
+                                           GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
+                                           GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
+            if (items["driver_version_info"] != null)
+                items["gpu_info"] += $" ({items["driver_version_info"]})";
             if (items["af_override"] is string af)
             {
                 if (af == "0")
@@ -216,7 +224,6 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     builder.AddField("Missing Licenses", fields[0].content);
 */
-
             }
             else if (items["fatal_error"] is string fatalError)
                 builder.AddField("Fatal Error", $"`{fatalError.Trim(1022)}`");
@@ -283,6 +290,65 @@ namespace CompatBot.Utils.ResultFormatters
 
             var len = Math.Min(commitA.Length, commitB.Length);
             return commitA.Substring(0, len) == commitB.Substring(0, len);
+        }
+
+        private static string GetOpenglDriverVersion(string gpuInfo, string version)
+        {
+            if (string.IsNullOrEmpty(version))
+                return null;
+
+            if (gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
+                return AmdDriverVersionProvider.GetFromOpengl(version);
+
+            return version;
+        }
+
+        private static string GetVulkanDriverVersion(string gpu, string foundDevices)
+        {
+            if (string.IsNullOrEmpty(gpu) || string.IsNullOrEmpty(foundDevices))
+                return null;
+
+            var info = (from line in foundDevices.Split(Environment.NewLine)
+                    let m = VulkanDeviceInfo.Match(line)
+                    where m.Success
+                    select m
+                ).FirstOrDefault(m => m.Groups["device_name"].Value == gpu);
+            return info?.Groups["version"].Value;
+        }
+
+        private static string GetVulkanDriverVersionRaw(string gpuInfo, string version)
+        {
+            if (string.IsNullOrEmpty(version))
+                return null;
+
+            var ver = int.Parse(version);
+            if (gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var major = (ver >> 22) & 0x3ff;
+                var minor = (ver >> 12) & 0x3ff;
+                var patch = ver & 0xfff;
+                var result = $"{major}.{minor}.{patch}";
+                return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
+            }
+            else
+            {
+                var major = (ver >> 22) & 0x3ff;
+                var minor = (ver >> 14) & 0xf;
+                var patch = ver & 0x3fff;
+                if (major == 0 && gpuInfo.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
+                    return $"{minor}.{patch}";
+
+                if (gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||
+                    gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
+                    gpuInfo.Contains("Quadro", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    if (patch == 0)
+                        return $"{major}.{minor}";
+                    return $"{major}.{minor}.{(patch >> 6) & 0xff}.{patch & 0x3f}";
+                }
+
+                return $"{major}.{minor}.{patch}";
+            }
         }
     }
 }
