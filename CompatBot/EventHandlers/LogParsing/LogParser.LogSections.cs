@@ -38,6 +38,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
+                    ["RSX:"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Serial:"] = new Regex(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
                     ["Path:"] = new Regex(@"Path: ((?<win_path>\w:/)|(?<lin_path>/[^/]))(.*(?<hdd_game_path>/dev_hdd0/game/.*)/USRDIR.*?|.*?)\r?$", DefaultOptions),
                     ["custom config:"] = new Regex("custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
@@ -106,6 +107,9 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["GL RENDERER:"] = new Regex(@"GL RENDERER: (?<driver_manuf_new>.*?)\r?\n", DefaultOptions),
                     ["GL VERSION:"] = new Regex(@"GL VERSION:(\d|\.|\s|\w|-)* (?<driver_version_new>(\d+\.)*\d+)\r?\n", DefaultOptions),
                     ["texel buffer size reported:"] = new Regex(@"RSX: Supported texel buffer size reported: (?<texel_buffer_size_new>\d*?) bytes", DefaultOptions),
+                    ["Physical device intialized"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
+                    ["Found vulkan-compatible GPU:"] = new Regex(@"Found vulkan-compatible GPU: (?<vulkan_found_device>.+)\r?$", DefaultOptions),
+                    ["Renderer initialized on device"] = new Regex(@"Renderer initialized on device '(?<vulkan_initialized_device>.+)'\r?$", DefaultOptions),
                     ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ {.+?} (?<fatal_error>.*?(\:\W*\r?\n\(.*?)*)\r?$", DefaultOptions),
                     ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?)\r?$", DefaultOptions),
                     ["Rap file not found:"] = new Regex(@"Rap file not found: (?<rap_file>.*?)\r?$", DefaultOptions),

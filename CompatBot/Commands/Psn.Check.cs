@@ -46,7 +46,7 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                var matches = PsnScraper.ContentIdMatcher.Matches(contentIds);
+                var matches = PsnScraper.ContentIdMatcher.Matches(contentIds.ToUpperInvariant());
                 var itemsToCheck = matches.Select(m => m.Groups["content_id"].Value).ToList();
                 if (itemsToCheck.Count == 0)
                 {

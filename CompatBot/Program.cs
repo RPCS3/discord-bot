@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
 using DSharpPlus;
@@ -49,6 +50,7 @@ namespace CompatBot
                     Console.WriteLine("No token was specified.");
                     return;
                 }
+                var amdDriverRefreshTask = AmdDriverVersionProvider.RefreshAsync();
 
                 using (var db = new BotDb())
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
@@ -60,6 +62,7 @@ namespace CompatBot
 
                 var psnScrappingTask = new PsnScraper().RunAsync(Config.Cts.Token);
                 var gameTdbScrapingTask = GameTdbScraper.RunAsync(Config.Cts.Token);
+                await amdDriverRefreshTask.ConfigureAwait(false);
 
                 var config = new DiscordConfiguration
                 {
