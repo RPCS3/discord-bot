@@ -333,7 +333,7 @@ namespace CompatBot.Utils.ResultFormatters
             else
             {
                 var major = (ver >> 22) & 0x3ff;
-                var minor = (ver >> 14) & 0xf;
+                var minor = (ver >> 14) & 0xff;
                 var patch = ver & 0x3fff;
                 if (major == 0 && gpuInfo.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
                     return $"{minor}.{patch}";
