@@ -66,7 +66,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                 var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;
                 totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
-                reader.AdvanceTo(sectionStart.Start, buffer.End);
+                reader.AdvanceTo(sectionStart.Start);
                 if (totalReadBytes >= Config.LogSizeLimit)
                 {
                     state.Error = LogParseState.ErrorCode.SizeLimit;
