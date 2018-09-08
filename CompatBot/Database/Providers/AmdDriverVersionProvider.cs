@@ -48,14 +48,43 @@ namespace CompatBot.Database.Providers
                 }
         }
 
-        public static string GetFromOpengl(string openglVersion)
+        public static async Task<string> GetFromOpenglAsync(string openglVersion, bool autoRefresh = true)
         {
             if (OpenglToDriver.TryGetValue(openglVersion, out var result) && result != null)
                 return result;
+
+            if (Version.TryParse(openglVersion, out var glVersion))
+            {
+                var glVersions = new List<(Version v, string vv)>(OpenglToDriver.Count);
+                foreach (var key in OpenglToDriver.Keys)
+                {
+                    if (Version.TryParse(key, out var ver))
+                        glVersions.Add((ver, OpenglToDriver[key]));
+                }
+                if (glVersions.Count == 0)
+                    return openglVersion;
+
+                glVersions.Sort((l, r) => l.v < r.v ? -1 : l.v > r.v ? 1 : 0);
+                if (glVersion < glVersions[0].v)
+                    return $"older than {glVersions[0].vv} ({openglVersion})";
+
+                var newest = glVersions.Last();
+                if (glVersion > newest.v)
+                {
+                    if (autoRefresh)
+                    {
+                        await RefreshAsync().ConfigureAwait(false);
+                        return await GetFromOpenglAsync(openglVersion, false).ConfigureAwait(false);
+                    }
+
+                    return $"newer than {newest.vv} ({openglVersion})";
+                }
+            }
+
             return openglVersion;
         }
 
-        public static async Task<string> GetFromVulkanAsync(string vulkanVersion)
+        public static async Task<string> GetFromVulkanAsync(string vulkanVersion, bool autoRefresh = true)
         {
             if (!VulkanToDriver.TryGetValue(vulkanVersion, out var result))
                 await RefreshAsync().ConfigureAwait(false);
@@ -80,11 +109,19 @@ namespace CompatBot.Database.Providers
 
                 vkVersions.Sort((l, r) => l.v < r.v ? -1 : l.v > r.v ? 1 : 0);
                 if (vkVer < vkVersions[0].v)
-                    return $"older than {vkVersions[0].vv}";
+                    return $"older than {vkVersions[0].vv} ({vulkanVersion})";
 
                 var newest = vkVersions.Last();
                 if (vkVer > newest.v)
-                    return $"newer than {newest.vv}";
+                {
+                    if (autoRefresh)
+                    {
+                        await RefreshAsync().ConfigureAwait(false);
+                        return await GetFromVulkanAsync(vulkanVersion, false).ConfigureAwait(false);
+                    }
+
+                    return $"newer than {newest.vv} ({vulkanVersion})";
+                }
             }
 
             return vulkanVersion;
