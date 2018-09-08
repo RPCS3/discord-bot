@@ -40,7 +40,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     ["RSX:"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Serial:"] = new Regex(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
-                    ["Path:"] = new Regex(@"Path: ((?<win_path>\w:/)|(?<lin_path>/[^/]))(.*(?<hdd_game_path>/dev_hdd0/game/.*)/USRDIR.*?|.*?)\r?$", DefaultOptions),
+                    ["LDR:"] = new Regex(@"(Path|Cache): ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
                     ["custom config:"] = new Regex("custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
                 },
                 OnNewLineAsync = PiracyCheckAsync,
@@ -100,6 +100,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
+                    ["Disc path:"] = new Regex(@"Disc path: .*(?<hdd_game_path>/dev_hdd0/game/.*?)\r?$", DefaultOptions),
                     ["RSX:"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
                                          @"RSX: [^\n]+\r?\n[^\n]*?" +
                                          @"RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?" +
