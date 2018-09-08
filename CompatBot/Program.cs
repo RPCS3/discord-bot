@@ -108,12 +108,19 @@ namespace CompatBot
                                     };
                     client.GuildAvailable += async gaArgs =>
                                              {
-                                                 gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"{gaArgs.Guild.Name} is available now", DateTime.Now);
+                                                 gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"Server {gaArgs.Guild.Name} is available now", DateTime.Now);
                                                  gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"Checking moderation backlogs in {gaArgs.Guild.Name}...", DateTime.Now);
-                                                 await Task.WhenAll(
-                                                     Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
-                                                     DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
-                                                 ).ConfigureAwait(false);
+                                                 try
+                                                 {
+                                                     await Task.WhenAll(
+                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
+                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
+                                                     ).ConfigureAwait(false);
+                                                 }
+                                                 catch (Exception e)
+                                                 {
+                                                     client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                                                 }
                                                  Console.WriteLine($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
                                              };
                     client.GuildUnavailable += guArgs =>
