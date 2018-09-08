@@ -47,7 +47,7 @@ Example usage:
         {
             var requestBuilder = RequestBuilder.Start();
             var age = "new";
-            var amount = 10;
+            var amount = ApiConfig.ResultAmount[0];
             foreach (var term in filters.Select(s => s.ToLowerInvariant()))
             {
                 switch (term)
@@ -147,7 +147,11 @@ Example usage:
             {
                 var result = new StringBuilder();
                 if (string.IsNullOrEmpty(request.customHeader))
+                {
                     result.AppendLine($"{ctx.Message.Author.Mention} searched for: ***{request.search.Sanitize()}***");
+                    if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase))
+                        result.AppendLine("Did you try searching for ***Unnamed*** instead?");
+                }
                 else
                 {
                     var formattedHeader = string.Format(request.customHeader, ctx.Message.Author.Mention, request.amountRequested, null, null);
