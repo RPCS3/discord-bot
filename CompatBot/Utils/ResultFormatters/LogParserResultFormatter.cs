@@ -298,7 +298,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             if (gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
-                return AmdDriverVersionProvider.GetFromOpengl(version);
+                return AmdDriverVersionProvider.GetFromOpenglAsync(version).GetAwaiter().GetResult();
 
             return version;
         }
@@ -313,7 +313,10 @@ namespace CompatBot.Utils.ResultFormatters
                     where m.Success
                     select m
                 ).FirstOrDefault(m => m.Groups["device_name"].Value == gpu);
-            return info?.Groups["version"].Value;
+            var result = info?.Groups["version"].Value;
+            if (gpu.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
+                return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
+            return result;
         }
 
         private static string GetVulkanDriverVersionRaw(string gpuInfo, string version)
