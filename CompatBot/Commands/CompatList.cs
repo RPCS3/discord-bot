@@ -119,8 +119,8 @@ Example usage:
             var embed = await info.AsEmbedAsync().ConfigureAwait(false);
             if (channel != null)
                 await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-            var updateLinks = info?.LatestBuild?.Windows?.Download + info?.LatestBuild?.Linux?.Download;
-            if (lastUpdateInfo != updateLinks && updateCheck.Wait(0))
+            var updateLinks = info?.LatestBuild?.Pr;
+            if (!string.IsNullOrEmpty(updateLinks) && lastUpdateInfo != updateLinks && updateCheck.Wait(0))
                 try
                 {
                     var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
@@ -135,6 +135,10 @@ Example usage:
                             currentState.Value = updateLinks;
                         await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                     }
+                }
+                catch (Exception e)
+                {
+                    discordClient.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
                 }
                 finally
                 {
