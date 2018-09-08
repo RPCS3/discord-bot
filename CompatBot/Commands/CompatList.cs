@@ -8,12 +8,14 @@ using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
+using CompatBot.Database;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
@@ -22,6 +24,13 @@ namespace CompatBot.Commands
         private static readonly Client client = new Client();
         private static SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
         private static string lastUpdateInfo = null;
+        private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
+
+        static CompatList()
+        {
+            using (var db = new BotDb())
+                lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+        }
 
         [Command("compat"), Aliases("c")]
         [Description("Searches the compatibility database, USE: !compat searchterm")]
@@ -115,8 +124,17 @@ Example usage:
                 try
                 {
                     var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
-                    lastUpdateInfo = updateLinks;
                     await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                    lastUpdateInfo = updateLinks;
+                    using (var db = new BotDb())
+                    {
+                        var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
+                        if (currentState == null)
+                            db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = updateLinks});
+                        else
+                            currentState.Value = updateLinks;
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    }
                 }
                 finally
                 {

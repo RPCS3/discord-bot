@@ -7,6 +7,7 @@ namespace CompatBot.Database
 {
     internal class BotDb: DbContext
     {
+        public DbSet<BotState> BotState { get; set; }
         public DbSet<Moderator> Moderator { get; set; }
         public DbSet<Piracystring> Piracystring { get; set; }
         public DbSet<Warning> Warning { get; set; }
@@ -22,6 +23,7 @@ namespace CompatBot.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //configure indices
+            modelBuilder.Entity<BotState>().HasIndex(m => m.Key).IsUnique().HasName("bot_state_key");
             modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasName("moderator_discord_id");
             modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).IsUnique().HasName("piracystring_string");
             modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasName("warning_discord_id");
@@ -35,6 +37,13 @@ namespace CompatBot.Database
             //configure name conversion for all configured entities from CamelCase to snake_case
             modelBuilder.ConfigureMapping(NamingStyles.Underscore);
         }
+    }
+
+    internal class BotState
+    {
+        public int Id { get; set; }
+        public string Key { get; set; }
+        public string Value { get; set; }
     }
 
     internal class Moderator
