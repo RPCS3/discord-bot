@@ -25,9 +25,15 @@ namespace CompatBot.Utils.ResultFormatters
             return DateTime.TryParseExact(info.Date, ApiConfig.DateInputFormat, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeUniversal, out var date) ? date.ToString(ApiConfig.DateOutputFormat) : null;
         }
 
-        private static string ToPrString(this TitleInfo info, string defaultString)
+        private static string ToPrString(this TitleInfo info, string defaultString, bool link = false)
         {
-            return (info.Pr ?? 0) == 0 ? defaultString : info.Pr.ToString();
+            if ((info.Pr ?? 0) == 0)
+                return defaultString;
+
+            if (link)
+                return $"[{info.Pr}](https://github.com/RPCS3/rpcs3/pull/{info.Pr})";
+
+            return info.Pr.ToString();
         }
 
         public static string AsString(this TitleInfo info, string titleId)
@@ -47,7 +53,7 @@ namespace CompatBot.Utils.ResultFormatters
             return $"Product code {titleId} was not found in compatibility database, possibly untested!";
         }
 
-        public static DiscordEmbed AsEmbed(this TitleInfo info, string titleId, bool footer = true, string thumbnailUrl = null)
+        public static DiscordEmbed AsEmbed(this TitleInfo info, string titleId, string gameTitle = null, bool forLog = false, string thumbnailUrl = null)
         {
             if (info.Status == TitleInfo.Maintenance.Status)
                 return new DiscordEmbedBuilder{Description = "API is undergoing maintenance, please try again later.", Color = Config.Colors.Maintenance}.Build();
@@ -55,20 +61,26 @@ namespace CompatBot.Utils.ResultFormatters
             if (info.Status == TitleInfo.CommunicationError.Status)
                 return new DiscordEmbedBuilder{Description = "Error communicating with compatibility API, please try again later.", Color = Config.Colors.Maintenance}.Build();
 
+            if (string.IsNullOrWhiteSpace(gameTitle))
+                gameTitle = null;
+
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
-                footer = footer && string.IsNullOrEmpty(thumbnailUrl);
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
-                var pr = info.ToPrString(footer ? @"¯\_(ツ)_ /¯" : @"¯\\\_(ツ)\_ /¯");
+                var pr = info.ToPrString(@"¯\\\_(ツ)\_ /¯", true);
                 var desc = $"Status: {info.Status}, PR: {pr}, Updated: {info.ToUpdated()}";
+                if (!forLog && !string.IsNullOrEmpty(info.AlternativeTitle))
+                    desc = info.AlternativeTitle + Environment.NewLine + desc;
+                if (!string.IsNullOrEmpty(info.WikiTitle))
+                    desc +=  $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={info.WikiTitle})";
                 return new DiscordEmbedBuilder
                     {
-                        Title = $"[{titleId}] {info.Title.Trim(200)}",
+                        Title = $"[{titleId}] {(gameTitle ?? info.Title).Trim(200)}",
                         Url = $"https://forums.rpcs3.net/thread-{info.Thread}.html",
-                        Description = footer ? null : desc,
+                        Description = desc,
                         Color = color,
                         ThumbnailUrl = thumbnailUrl
-                    }.WithFooter(footer ? desc : null)
+                    }
                     .Build();
             }
             else
@@ -82,11 +94,13 @@ namespace CompatBot.Utils.ResultFormatters
                     Color = Config.Colors.CompatStatusUnknown,
                     ThumbnailUrl = thumbnailUrl,
                 };
-                if (ThumbnailProvider.GetTitleName(titleId) is string titleName && !string.IsNullOrEmpty(titleName))
-                    result.Title = $"[{titleId}] {titleName.Sanitize().Trim(200)}";
+
+                if (gameTitle == null && ThumbnailProvider.GetTitleName(titleId) is string titleName && !string.IsNullOrEmpty(titleName))
+                    gameTitle = titleName;
+                if (!string.IsNullOrEmpty(gameTitle))
+                    result.Title = $"[{titleId}] {gameTitle.Sanitize().Trim(200)}";
                 return result.Build();
             }
-
         }
 
         public static string AsString(this KeyValuePair<string, TitleInfo> resultInfo)

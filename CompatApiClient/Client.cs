@@ -24,7 +24,7 @@ namespace CompatApiClient
             client = HttpClientFactory.Create(new CompressionMessageHandler());
             var settings = new JsonSerializerSettings
             {
-                ContractResolver = new JsonContractResolver(NamingStyles.Underscore),
+                ContractResolver = new JsonContractResolver(NamingStyles.Dashed),
                 NullValueHandling = NullValueHandling.Ignore
             };
             formatters = new MediaTypeFormatterCollection(new[] {new JsonMediaTypeFormatter {SerializerSettings = settings}});

@@ -80,33 +80,33 @@ namespace CompatBot.EventHandlers
                 .ToList();
         }
 
-        public static async Task<DiscordEmbed> LookupGameInfoAsync(this DiscordClient client, string code, bool footer = true)
+        public static async Task<DiscordEmbed> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false)
         {
             if (string.IsNullOrEmpty(code))
-                return TitleInfo.Unknown.AsEmbed(code, footer);
+                return TitleInfo.Unknown.AsEmbed(code);
 
             try
             {
                 var result = await compatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
                 if (result?.ReturnCode == -2)
-                    return TitleInfo.Maintenance.AsEmbed(null, footer);
+                    return TitleInfo.Maintenance.AsEmbed(null);
 
                 if (result?.ReturnCode == -1)
-                    return TitleInfo.CommunicationError.AsEmbed(null, footer);
+                    return TitleInfo.CommunicationError.AsEmbed(null);
 
                 var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
                 if (result?.Results == null)
-                    return TitleInfo.Unknown.AsEmbed(code, footer, thumbnailUrl);
+                    return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
 
                 if (result.Results.TryGetValue(code, out var info))
-                    return info.AsEmbed(code, footer, thumbnailUrl);
+                    return info.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
 
-                return TitleInfo.Unknown.AsEmbed(code, footer, thumbnailUrl);
+                return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
             }
             catch (Exception e)
             {
                 client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't get compat result for {code}: {e}", DateTime.Now);
-                return TitleInfo.CommunicationError.AsEmbed(null, footer);
+                return TitleInfo.CommunicationError.AsEmbed(null);
             }
         }
     }
