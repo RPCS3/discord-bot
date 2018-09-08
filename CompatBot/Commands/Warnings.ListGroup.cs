@@ -43,8 +43,10 @@ namespace CompatBot.Commands
 
             [Command("users"), RequiresBotModRole, TriggersTyping]
             [Description("List users with warnings, sorted from most warned to least")]
-            public async Task Users(CommandContext ctx)
+            public async Task Users(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {
+                if (number < 1)
+                    number = 10;
                 var userIdColumn = ctx.Channel.IsPrivate ? $"{"User ID",-18} | " : "";
                 var header = $"{"User",-25} | {userIdColumn}Count";
                 var result = new StringBuilder("Warning count per user:").AppendLine("```")
@@ -58,7 +60,7 @@ namespace CompatBot.Commands
                         let row = new {discordId = userGroup.Key, count = userGroup.Count()}
                         orderby row.count descending
                         select row;
-                    foreach (var row in query)
+                    foreach (var row in query.Take(number))
                     {
                         var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
                         result.Append($"{username,-25} | ");
