@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
@@ -19,6 +20,8 @@ namespace CompatBot.Commands
     internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client client = new Client();
+        private static SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
+        private static string lastUpdateInfo = null;
 
         [Command("compat"), Aliases("c")]
         [Description("Searches the compatibility database, USE: !compat searchterm")]
@@ -96,11 +99,29 @@ Example usage:
         [Command("latest"), Aliases("download"), TriggersTyping]
         [Description("Provides links to the latest RPCS3 build")]
         [Cooldown(1, 30, CooldownBucketType.Channel)]
-        public async Task Latest(CommandContext ctx)
+        public Task Latest(CommandContext ctx)
+        {
+            return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
+        }
+
+        public static async Task CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel)
         {
             var info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
             var embed = await info.AsEmbedAsync().ConfigureAwait(false);
-            await ctx.RespondAsync(embed: embed.Build()).ConfigureAwait(false);
+            if (channel != null)
+                await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+            var updateLinks = info?.LatestBuild?.Windows?.Download + info?.LatestBuild?.Linux?.Download;
+            if (lastUpdateInfo != updateLinks && updateCheck.Wait(0))
+                try
+                {
+                    var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
+                    lastUpdateInfo = updateLinks;
+                    await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                }
+                finally
+                {
+                    updateCheck.Release(1);
+                }
         }
 
         private static string DicToDesc(Dictionary<char, string[]> dictionary)
