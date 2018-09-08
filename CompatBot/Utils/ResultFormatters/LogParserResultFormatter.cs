@@ -35,6 +35,9 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
+        private const string TrueMark = "[x]";
+        private const string FalseMark = "[ ]";
+
         public static async Task<DiscordEmbed> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message)
         {
             DiscordEmbedBuilder builder;
@@ -124,8 +127,6 @@ namespace CompatBot.Utils.ResultFormatters
                 items["os_path"] = "Windows";
             else if (items["lin_path"] != null)
                 items["os_path"] = "Linux";
-            else
-                items["os_path"] = "Unknown";
             if (items["library_list"] is string libs)
             {
                 var libList = libs.Split('\n').Select(l => l.Trim(' ', '\t', '-', '\r', '[', ']')).Where(s => !string.IsNullOrEmpty(s)).ToList();
@@ -138,9 +139,9 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var value = items[key];
                 if ("true".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-                    value = "[x]";
+                    value = TrueMark;
                 else if ("false".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-                    value = "[ ]";
+                    value = FalseMark;
                 items[key] = value.Sanitize();
             }
         }
@@ -164,10 +165,10 @@ namespace CompatBot.Utils.ResultFormatters
                 .AppendLine($"`SPU Lower Thread Priority: {items["spu_lower_thread_priority"],7}`")
                 .AppendLine($"`SPU Loop Detection: {items["spu_loop_detection"],14}`")
                 .AppendLine($"`Thread Scheduler: {items["thread_scheduler"],16}`")
-                .AppendLine($"`Detected OS: {items["os_path"],21}`")
                 .AppendLine($"`SPU Threads: {items["spu_threads"],21}`")
+                .AppendLine($"`SPU Block Size: {items["spu_block_size"] ?? "N/A",18}`")
+                .AppendLine($"`Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",17}`")
                 .AppendLine($"`Force CPU Blit: {items["cpu_blit"] ?? "N/A",18}`")
-                .AppendLine($"`Hook Static Functions: {items["hook_static_functions"],11}`")
                 .AppendLine($"`Lib Loader: {items["lib_loader"],22}`")
                 .ToString()
                 .FixSpaces();
@@ -186,9 +187,9 @@ namespace CompatBot.Utils.ResultFormatters
                 .AppendLine($"`Resolution Scale: {items["resolution_scale"] ?? "N/A",16}`")
                 .AppendLine($"`Resolution Scale Threshold: {items["texture_scale_threshold"] ?? "N/A",6}`")
                 .AppendLine($"`Write Color Buffers: {items["write_color_buffers"],13}`")
-                .AppendLine($"`Use GPU texture scaling: {items["gpu_texture_scaling"],9}`")
                 .AppendLine($"`Anisotropic Filter: {items["af_override"] ?? "N/A",14}`")
                 .AppendLine($"`Frame Limit: {items["frame_limit"],21}`")
+                .AppendLine($"`Disable Async Shaders: {items["async_shaders"] ?? "N/A",11}`")
                 .AppendLine($"`Disable Vertex Cache: {items["vertex_cache"],12}`")
                 .ToString()
                 .FixSpaces();
@@ -201,8 +202,31 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.AddField("Selected Libraries", items["library_list"]?.Trim(1024));
         }
 
+        private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items)
+        {
+            var notes = new StringBuilder();
+            if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
+                notes.AppendLine("`Resolution` was changed from the recommended `1280x720`");
+            if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == TrueMark)
+                notes.AppendLine("`Hook Static Functions` is enabled, please disable");
+            if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == TrueMark)
+                notes.AppendLine("`GPU Texture Scaling` is enabled, please disable");
+            if (items["af_override"] is string af && af == "Disabled")
+                notes.AppendLine("`Anisotropic Filter` is `Disabled`, please use `Auto` instead");
+            if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
+                notes.AppendLine($"`Resolution Scale` is `{resScale}%`");
+            if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
+                notes.AppendLine("`Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
+            if (items["zcull"] is string zcull && zcull == TrueMark)
+                notes.AppendLine("`ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+
+            var notesContent = notes.ToString().Trim();
+            PageSection(builder, notesContent, "Important Settings to Review");
+        }
+
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
         {
+            BuildWeirdSettingsSection(builder, items);
             if (items["rap_file"] is string rap)
             {
                 var licenseNames = rap.Split(Environment.NewLine).Distinct().Select(p => $"`{Path.GetFileName(p)}`").ToList();
@@ -216,14 +240,6 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     content = string.Join(Environment.NewLine, licenseNames);
                 builder.AddField("Missing Licenses", content);
-/*
-                var fields = new EmbedPager().BreakInFieldContent(licenseNames, 100).ToList();
-                if (fields.Count > 1)
-                    for (var idx = 0; idx < fields.Count; idx++)
-                        builder.AddField($"Missing Licenses #{idx + 1} of {fields.Count}", fields[idx].content);
-                else
-                    builder.AddField("Missing Licenses", fields[0].content);
-*/
             }
             else if (items["fatal_error"] is string fatalError)
                 builder.AddField("Fatal Error", $"`{fatalError.Trim(1022)}`");
@@ -231,8 +247,8 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new StringBuilder();
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty. You need to run the game before uploading the log.");
-            if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
-                notes.AppendLine("Resolution was changed from the recommended `1280x720`");
+            if (!string.IsNullOrEmpty(items["os_path"]))
+                notes.Append("Detected OS: ").AppendLine(items["os_path"]);
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
@@ -245,18 +261,22 @@ namespace CompatBot.Utils.ResultFormatters
             if (updateInfo != null)
                 notes.AppendLine("Outdated RPCS3 build detected, please consider updating it");
             var notesContent = notes.ToString().Trim();
+            PageSection(builder, notesContent, "Notes");
+            if (updateInfo != null)
+                await updateInfo.AsEmbedAsync(builder).ConfigureAwait(false);
+        }
+
+        private static void PageSection(DiscordEmbedBuilder builder, string notesContent, string sectionName)
+        {
             if (!string.IsNullOrEmpty(notesContent))
             {
                 var fields = new EmbedPager().BreakInFieldContent(notesContent.Split(Environment.NewLine), 100).ToList();
                 if (fields.Count > 1)
                     for (var idx = 0; idx < fields.Count; idx++)
-                        builder.AddField($"Notes #{idx + 1} of {fields.Count}", fields[idx].content);
+                        builder.AddField($"{sectionName} #{idx + 1} of {fields.Count}", fields[idx].content);
                 else
-                    builder.AddField("Notes", fields[0].content);
+                    builder.AddField(sectionName, fields[0].content);
             }
-
-            if (updateInfo != null)
-                await updateInfo.AsEmbedAsync(builder).ConfigureAwait(false);
         }
 
         private static async Task<UpdateInfo> CheckForUpdateAsync(NameValueCollection items)
@@ -314,8 +334,14 @@ namespace CompatBot.Utils.ResultFormatters
                     select m
                 ).FirstOrDefault(m => m.Groups["device_name"].Value == gpu);
             var result = info?.Groups["version"].Value;
+            if (string.IsNullOrEmpty(result))
+                return null;
+
             if (gpu.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
+
+            if (result.EndsWith(".0.0"))
+                result = result.Substring(0, result.Length - 4);
             return result;
         }
 
