@@ -206,19 +206,19 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var notes = new StringBuilder();
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
-                notes.AppendLine("`Resolution` was changed from the recommended `1280x720`");
+                notes.AppendLine("`Resolution` was changed from the recommended `1280x720`.");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == TrueMark)
-                notes.AppendLine("`Hook Static Functions` is enabled, please disable");
+                notes.AppendLine("`Hook Static Functions` is enabled, please disable.");
             if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == TrueMark)
-                notes.AppendLine("`GPU Texture Scaling` is enabled, please disable");
+                notes.AppendLine("`GPU Texture Scaling` is enabled, please disable.");
             if (items["af_override"] is string af && af == "Disabled")
-                notes.AppendLine("`Anisotropic Filter` is `Disabled`, please use `Auto` instead");
+                notes.AppendLine("`Anisotropic Filter` is `Disabled`, please use `Auto` instead.");
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
-                notes.AppendLine($"`Resolution Scale` is `{resScale}%`");
+                notes.AppendLine($"`Resolution Scale` is `{resScale}%`.");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
-                notes.AppendLine("`Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
+                notes.AppendLine("`Force CPU Blit` is enabled, but `Write Color Buffers` is disabled.");
             if (items["zcull"] is string zcull && zcull == TrueMark)
-                notes.AppendLine("`ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+                notes.AppendLine("`ZCull Occlusion Queries` are disabled, can result in visual artifacts.");
 
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Important Settings to Review");
@@ -227,6 +227,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
         {
             BuildWeirdSettingsSection(builder, items);
+            var notes = new StringBuilder();
             if (items["rap_file"] is string rap)
             {
                 var licenseNames = rap.Split(Environment.NewLine).Distinct().Select(p => $"`{Path.GetFileName(p)}`").ToList();
@@ -242,9 +243,12 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.AddField("Missing Licenses", content);
             }
             else if (items["fatal_error"] is string fatalError)
-                builder.AddField("Fatal Error", $"`{fatalError.Trim(1022)}`");
+            {
+                builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
+                if (fatalError.Contains("psf.cpp"))
+                    notes.AppendLine("Game save data might be corrupted.");
+            }
 
-            var notes = new StringBuilder();
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty. You need to run the game before uploading the log.");
             if (!string.IsNullOrEmpty(items["os_path"]))
@@ -254,12 +258,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
                 notes.AppendLine("Pad initialization problem detected. Try disabling Native UI.");
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
-                notes.AppendLine("The log was too large, so only the last processed run is shown");
+                notes.AppendLine("The log was too large, so only the last processed run is shown.");
 
             // should be last check here
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
-                notes.AppendLine("Outdated RPCS3 build detected, please consider updating it");
+                notes.AppendLine("Outdated RPCS3 build detected, please consider updating it.");
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Notes");
             if (updateInfo != null)
