@@ -118,7 +118,6 @@ Example usage:
 
         private async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
         {
-            var botChannelTask = ctx.Client.GetChannelAsync(Config.BotChannelId);
             Console.WriteLine(requestBuilder.Build());
             CompatResult result;
             try
@@ -131,9 +130,9 @@ Example usage:
                 return;
             }
 
-            var botChannel = await botChannelTask.ConfigureAwait(false);
+            var channel = ctx.Channel.IsPrivate ? ctx.Channel : await ctx.Client.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
             foreach (var msg in FormatSearchResults(ctx, result))
-                await botChannel.SendAutosplitMessageAsync(msg).ConfigureAwait(false);
+                await channel.SendAutosplitMessageAsync(msg).ConfigureAwait(false);
         }
 
         private IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
@@ -145,16 +144,17 @@ Example usage:
                 yield return string.Format(returnCode.info, ctx.Message.Author.Mention);
             else
             {
+                var authorMention = ctx.Channel.IsPrivate ? "You" : ctx.Message.Author.Mention;
                 var result = new StringBuilder();
                 if (string.IsNullOrEmpty(request.customHeader))
                 {
-                    result.AppendLine($"{ctx.Message.Author.Mention} searched for: ***{request.search.Sanitize()}***");
+                    result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize()}***");
                     if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase))
                         result.AppendLine("Did you try searching for ***Unnamed*** instead?");
                 }
                 else
                 {
-                    var formattedHeader = string.Format(request.customHeader, ctx.Message.Author.Mention, request.amountRequested, null, null);
+                    var formattedHeader = string.Format(request.customHeader, authorMention, request.amountRequested, null, null);
                     result.AppendLine(formattedHeader.Replace("   ", " ").Replace("  ", " "));
                 }
                 result.AppendFormat(returnCode.info, compatResult.SearchTerm);
