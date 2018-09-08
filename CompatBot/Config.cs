@@ -9,6 +9,7 @@ namespace CompatBot
     internal static class Config
     {
         public static readonly string CommandPrefix = "!";
+        public static readonly ulong BotGuildId = 272035812277878785;
         public static readonly ulong BotChannelId = 291679908067803136;
         public static readonly ulong BotSpamId = 319224795785068545;
         public static readonly ulong BotLogId = 436972161572536329;

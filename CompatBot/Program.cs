@@ -40,7 +40,13 @@ namespace CompatBot
                                                     {
                                                         while (!Config.Cts.IsCancellationRequested)
                                                         {
-                                                            CompatList.CheckForRpcs3Updates((DiscordClient)client, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                                                            try
+                                                            {
+                                                                CompatList.CheckForRpcs3Updates((DiscordClient)client, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                                                            }
+                                                            catch
+                                                            {
+                                                            }
                                                             Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                                                         }
                                                     });
@@ -108,6 +114,17 @@ namespace CompatBot
                                     };
                     client.GuildAvailable += async gaArgs =>
                                              {
+                                                 if (gaArgs.Guild.Id != Config.BotGuildId)
+                                                 {
+#if DEBUG
+                                                     gaArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})", DateTime.Now);
+#else
+                                                     gaArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...", DateTime.Now);
+                                                     await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
+#endif
+                                                     return;
+                                                 }
+
                                                  gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"Server {gaArgs.Guild.Name} is available now", DateTime.Now);
                                                  gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"Checking moderation backlogs in {gaArgs.Guild.Name}...", DateTime.Now);
                                                  try
@@ -119,7 +136,7 @@ namespace CompatBot
                                                  }
                                                  catch (Exception e)
                                                  {
-                                                     client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                                                     gaArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
                                                  }
                                                  Console.WriteLine($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
                                              };
