@@ -32,18 +32,19 @@ namespace CompatBot.EventHandlers
                 {
                     brokenDump = true;
                     if (args.Message.Content.Contains("fs::file is null"))
-                        await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} this error usually indicates a missing `.rap` license file.{Environment.NewLine}").ConfigureAwait(false);
+                        await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} this error usually indicates a missing `.rap` license file.").ConfigureAwait(false);
                     else if (args.Message.Content.Contains("Invalid or unsupported file format"))
                         await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} this error usually indicates an encrypted or corrupted game dump.");
                     else
                         brokenDump = false;
                 }
                 if (brokenDump)
-                    await args.Channel.SendMessageAsync("Please follow the quickstart guide to get a proper dump of a digital title.\n" +
-                                                        "Also please upload full log file instead of pasting random bits that might or might not be relevant."
+                    await args.Channel.SendMessageAsync(
+                        "Please follow the quickstart guide to get a proper dump of a digital title.\n" +
+                        "Also please upload full log file instead of pasting random bits that might or might not be relevant."
                     ).ConfigureAwait(false);
                 else
-                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random bits that might be completely irrelevant").ConfigureAwait(false);
+                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random bits that might be completely irrelevant.").ConfigureAwait(false);
             }
         }
     }

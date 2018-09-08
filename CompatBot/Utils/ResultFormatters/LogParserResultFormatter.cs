@@ -44,7 +44,7 @@ namespace CompatBot.Utils.ResultFormatters
             var collection = state.CompleteCollection ?? state.WipCollection;
             if (collection?.Count > 0)
             {
-                var gameInfo = await client.LookupGameInfoAsync(collection["serial"], false).ConfigureAwait(false);
+                var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true).ConfigureAwait(false);
                 builder = new DiscordEmbedBuilder(gameInfo) {ThumbnailUrl = null}; // or this will fuck up all formatting
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {
@@ -252,7 +252,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty. You need to run the game before uploading the log.");
             if (!string.IsNullOrEmpty(items["os_path"]))
-                notes.Append("Detected OS: ").AppendLine(items["os_path"]);
+                notes.Append("Detected OS: ").Append(items["os_path"]).AppendLine(".");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
