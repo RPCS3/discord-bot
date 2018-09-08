@@ -55,6 +55,9 @@ namespace CompatBot.ThumbScrapper
             }
             catch (Exception e)
             {
+                if (e is HttpRequestException hre && hre.Message.Contains("404"))
+                    return null;
+
                 PrintError(e);
             }
             return null;
