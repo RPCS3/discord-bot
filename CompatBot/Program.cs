@@ -20,7 +20,7 @@ namespace CompatBot
 
         internal static async Task Main(string[] args)
         {
-            var thread = new Thread(() =>
+            var singleInstanceCheckThread = new Thread(() =>
                                     {
                                         using (var instanceLock = new Mutex(false, @"Global\RPCS3 Compatibility Bot"))
                                         {
@@ -36,9 +36,18 @@ namespace CompatBot
                                                 }
                                         }
                                     });
+            var rpcs3UpdateCheckThread = new Thread(client =>
+                                                    {
+                                                        while (!Config.Cts.IsCancellationRequested)
+                                                        {
+                                                            CompatList.CheckForRpcs3Updates((DiscordClient)client, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                                                            Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
+                                                        }
+                                                    });
+
             try
             {
-                thread.Start();
+                singleInstanceCheckThread.Start();
                 if (!InstanceCheck.Wait(1000))
                 {
                     Console.WriteLine("Another instance is already running.");
@@ -148,6 +157,8 @@ namespace CompatBot
                         await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
                     }
 
+                    Console.WriteLine("Running RPC3 update check thread");
+                    rpcs3UpdateCheckThread.Start(client);
 
                     while (!Config.Cts.IsCancellationRequested)
                     {
@@ -167,7 +178,8 @@ namespace CompatBot
             finally
             {
                 ShutdownCheck.Release();
-                thread.Join(100);
+                singleInstanceCheckThread.Join(100);
+                rpcs3UpdateCheckThread.Join(100);
                 Console.WriteLine("Exiting");
             }
         }

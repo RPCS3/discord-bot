@@ -6,9 +6,7 @@ namespace CompatApiClient.POCOs
 {
     public class CompatResult
     {
-        [JsonProperty(PropertyName = "return_code")]
         public int ReturnCode;
-        [JsonProperty(PropertyName = "search_term")]
         public string SearchTerm;
         public Dictionary<string, TitleInfo> Results;
 
@@ -25,7 +23,9 @@ namespace CompatApiClient.POCOs
         public static readonly TitleInfo Unknown = new TitleInfo { Status = "Unknown" };
 
         public string Title;
+        [JsonProperty(PropertyName = "alternative-title")]
         public string AlternativeTitle;
+        [JsonProperty(PropertyName = "wiki-title")]
         public string WikiTitle;
         public string Status;
         public string Date;
