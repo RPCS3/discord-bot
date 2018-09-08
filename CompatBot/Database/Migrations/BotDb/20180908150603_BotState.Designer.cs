@@ -3,14 +3,16 @@ using System;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CompatBot.Database.Migrations
 {
     [DbContext(typeof(BotDb))]
-    partial class BotDbModelSnapshot : ModelSnapshot
+    [Migration("20180908150603_BotState")]
+    partial class BotState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
