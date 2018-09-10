@@ -98,7 +98,7 @@ namespace CompatBot.Utils
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
             var embedBuilder = MakeReportTemplate(infraction, message, severity);
             var reportText = string.IsNullOrEmpty(comment) ? "" : comment.Sanitize() + Environment.NewLine;
-            embedBuilder.Description = reportText + embedBuilder.Description;
+            embedBuilder.Description = (reportText + embedBuilder.Description).Trim(EmbedPager.MaxDescriptionLength);
             embedBuilder.AddField("Reporters", string.Join(Environment.NewLine, reporters.Select(r => r.Mention)));
             var logChannel = await getLogChannelTask.ConfigureAwait(false);
             return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
