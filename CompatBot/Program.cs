@@ -157,6 +157,7 @@ namespace CompatBot
                     client.MessageCreated += LogsAsTextMonitor.OnMessageCreated;
                     client.MessageCreated += DiscordInviteFilter.OnMessageCreated;
                     client.MessageCreated += BotShutupHandler.OnMessageCreated;
+                    client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
 
                     client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
                     client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;

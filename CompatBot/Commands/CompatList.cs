@@ -113,7 +113,7 @@ Example usage:
             return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
         }
 
-        public static async Task CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel)
+        public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel)
         {
             var info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
             var embed = await info.AsEmbedAsync().ConfigureAwait(false);
@@ -134,6 +134,7 @@ Example usage:
                         else
                             currentState.Value = updateLinks;
                         await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                        return true;
                     }
                 }
                 catch (Exception e)
@@ -144,6 +145,7 @@ Example usage:
                 {
                     updateCheck.Release(1);
                 }
+            return false;
         }
 
         private static string DicToDesc(Dictionary<char, string[]> dictionary)
