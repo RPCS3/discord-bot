@@ -8,6 +8,7 @@ namespace CompatBot.Utils
 {
     internal class EmbedPager
     {
+        public const int MaxDescriptionLength = 2048;
         public const int MaxFieldLength = 1024;
         public const int MaxTitleSize = 256;
         public const int MaxFields = 25;
