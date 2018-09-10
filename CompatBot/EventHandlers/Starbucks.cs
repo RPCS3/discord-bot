@@ -90,8 +90,7 @@ namespace CompatBot.EventHandlers
                     return;
 
                 await message.ReactWithAsync(client, emoji).ConfigureAwait(false);
-                await client.ReportAsync("User moderation report ⭐💵", message, reporters, ReportSeverity.Medium).ConfigureAwait(false);
-
+                await client.ReportAsync("User moderation report ⭐💵", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
             }
             catch (Exception e)
             {

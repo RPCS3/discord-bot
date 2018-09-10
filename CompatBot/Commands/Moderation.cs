@@ -12,7 +12,7 @@ namespace CompatBot.Commands
     {
         [Command("report"), RequiresWhitelistedRole]
         [Description("Adds specified message to the moderation queue")]
-        public async Task Report(CommandContext ctx, [Description("Message ID from current channel to report")] ulong messageId)
+        public async Task Report(CommandContext ctx, [Description("Message ID from current channel to report")] ulong messageId, [RemainingText, Description("Optional report comment")] string comment = null)
         {
             try
             {
@@ -23,7 +23,7 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                await ctx.Client.ReportAsync("Message report", msg, new[] {ctx.Message.Author}, ReportSeverity.Medium).ConfigureAwait(false);
+                await ctx.Client.ReportAsync("Message report", msg, new[] {ctx.Message.Author}, comment, ReportSeverity.Medium).ConfigureAwait(false);
                 await msg.ReactWithAsync(ctx.Client, Config.Reactions.Moderated).ConfigureAwait(false);
                 await ctx.ReactWithAsync(Config.Reactions.Success, "Message reported").ConfigureAwait(false);
             }
