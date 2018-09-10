@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
@@ -62,8 +63,9 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     CleanupValues(collection);
                     BuildInfoSection(builder, collection);
-                    BuildCpuSection(builder, collection);
-                    BuildGpuSection(builder, collection);
+                    var colA = BuildCpuSection(collection);
+                    var colB = BuildGpuSection(collection);
+                    BuildSettingsSections(builder, collection, colA, colB);
                     BuildLibsSection(builder, collection);
                     await BuildNotesSectionAsync(builder, state, collection).ConfigureAwait(false);
                 }
@@ -161,46 +163,86 @@ namespace CompatBot.Utils.ResultFormatters
             builder.AddField("Build Info", systemInfo);
         }
 
-        private static void BuildCpuSection(DiscordEmbedBuilder builder, NameValueCollection items)
+        private static (string name, List<string> lines) BuildCpuSection(NameValueCollection items)
         {
             if (string.IsNullOrEmpty(items["ppu_decoder"]))
-                return;
+                return (null, null);
 
-            var content = new StringBuilder()
-                .AppendLine($"`PPU Decoder: {items["ppu_decoder"],21}`")
-                .AppendLine($"`SPU Decoder: {items["spu_decoder"],21}`")
-                .AppendLine($"`SPU Lower Thread Priority: {items["spu_lower_thread_priority"],7}`")
-                .AppendLine($"`SPU Loop Detection: {items["spu_loop_detection"],14}`")
-                .AppendLine($"`Thread Scheduler: {items["thread_scheduler"],16}`")
-                .AppendLine($"`SPU Threads: {items["spu_threads"],21}`")
-                .AppendLine($"`SPU Block Size: {items["spu_block_size"] ?? "N/A",18}`")
-                .AppendLine($"`Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",17}`")
-                .AppendLine($"`Force CPU Blit: {items["cpu_blit"] ?? "N/A",18}`")
-                .AppendLine($"`Lib Loader: {items["lib_loader"],22}`")
-                .ToString()
-                .FixSpaces();
-            builder.AddField(items["custom_config"] == null ? "CPU Settings" : "Per-game CPU Settings", content, true);
+            var lines = new List<string>
+            {
+                $"PPU Decoder: {items["ppu_decoder"],21}",
+                $"SPU Decoder: {items["spu_decoder"],21}",
+                $"SPU Lower Thread Priority: {items["spu_lower_thread_priority"],7}",
+                $"SPU Loop Detection: {items["spu_loop_detection"],14}",
+                $"Thread Scheduler: {items["thread_scheduler"],16}",
+                $"SPU Threads: {items["spu_threads"],21}",
+                $"SPU Block Size: {items["spu_block_size"] ?? "N/A",18}",
+                $"Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",17}",
+                $"Force CPU Blit: {items["cpu_blit"] ?? "N/A",18}",
+                $"Lib Loader: {items["lib_loader"],22}",
+            };
+            return ("CPU Settings", lines);
         }
 
-        private static void BuildGpuSection(DiscordEmbedBuilder builder, NameValueCollection items)
+        private static (string name, List<string> lines) BuildGpuSection(NameValueCollection items)
         {
             if (string.IsNullOrEmpty(items["renderer"]))
-                return;
+                return (null, null);
 
-            var content = new StringBuilder()
-                .AppendLine($"`Renderer: {items["renderer"],24}`")
-                .AppendLine($"`Aspect ratio: {items["aspect_ratio"],20}`")
-                .AppendLine($"`Resolution: {items["resolution"],22}`")
-                .AppendLine($"`Resolution Scale: {items["resolution_scale"] ?? "N/A",16}`")
-                .AppendLine($"`Resolution Scale Threshold: {items["texture_scale_threshold"] ?? "N/A",6}`")
-                .AppendLine($"`Write Color Buffers: {items["write_color_buffers"],13}`")
-                .AppendLine($"`Anisotropic Filter: {items["af_override"] ?? "N/A",14}`")
-                .AppendLine($"`Frame Limit: {items["frame_limit"],21}`")
-                .AppendLine($"`Disable Async Shaders: {items["async_shaders"] ?? "N/A",11}`")
-                .AppendLine($"`Disable Vertex Cache: {items["vertex_cache"],12}`")
-                .ToString()
-                .FixSpaces();
-            builder.AddField(items["custom_config"] == null ? "GPU Settings" : "Per-game GPU Settings", content, true);
+            var lines = new List<string>
+            {
+
+                $"Renderer: {items["renderer"], 24}",
+                $"Aspect ratio: {items["aspect_ratio"], 20}",
+                $"Resolution: {items["resolution"], 22}",
+                $"Resolution Scale: {items["resolution_scale"] ?? "N/A", 16}",
+                $"Resolution Scale Threshold: {items["texture_scale_threshold"] ?? "N/A", 6}",
+                $"Write Color Buffers: {items["write_color_buffers"], 13}",
+                $"Anisotropic Filter: {items["af_override"] ?? "N/A", 14}",
+                $"Frame Limit: {items["frame_limit"], 21}",
+                $"Disable Async Shaders: {items["async_shaders"] ?? "N/A", 11}",
+                $"Disable Vertex Cache: {items["vertex_cache"], 12}",
+            };
+            return ("GPU Settings", lines);
+        }
+
+        private static void BuildSettingsSections(DiscordEmbedBuilder builder, NameValueCollection items, (string name, List<string> lines) colA, (string name, List<string> lines) colB)
+        {
+            if (colA.lines?.Count > 0 && colB.lines?.Count > 0)
+            {
+                var isCustomSettings = items["custom_config"] != null;
+                var colAToRemove = colA.lines.Count(l => l.EndsWith("N/A"));
+                var colBToRemove = colB.lines.Count(l => l.EndsWith("N/A"));
+                var linesToRemove = Math.Min(colAToRemove, colBToRemove);
+                if (linesToRemove > 0)
+                {
+                    var linesToSkip = colAToRemove - linesToRemove;
+                    var tmp = colA.lines;
+                    colA.lines = new List<string>(tmp.Count - linesToRemove);
+                    for (var i = 0; i < tmp.Count; i++)
+                        if (!tmp[i].EndsWith("N/A") || (linesToSkip--) > 0)
+                            colA.lines.Add(tmp[i]);
+
+                    linesToSkip = colBToRemove - linesToRemove;
+                    tmp = colB.lines;
+                    colB.lines = new List<string>(tmp.Count - linesToRemove);
+                    for (var i = 0; i < tmp.Count; i++)
+                        if (!tmp[i].EndsWith("N/A") || (linesToSkip--) > 0)
+                            colB.lines.Add(tmp[i]);
+                }
+                AddSettingsSection(builder, colA.name, colA.lines, isCustomSettings);
+                AddSettingsSection(builder, colB.name, colB.lines, isCustomSettings);
+            }
+        }
+
+        private static void AddSettingsSection(DiscordEmbedBuilder builder, string name, List<string> lines, bool isCustomSettings)
+        {
+            var result = new StringBuilder();
+            foreach (var line in lines)
+                result.Append("`").Append(line).AppendLine("`");
+            if (isCustomSettings)
+                name = "Per-game " + name;
+            builder.AddField(name, result.ToString().FixSpaces(), true);
         }
 
         private static void BuildLibsSection(DiscordEmbedBuilder builder, NameValueCollection items)
