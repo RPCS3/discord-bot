@@ -38,17 +38,19 @@ namespace CompatBot
                                     });
             var rpcs3UpdateCheckThread = new Thread(client =>
                                                     {
-                                                        while (!Config.Cts.IsCancellationRequested)
+                                                        try
                                                         {
-                                                            try
+                                                            while (!Config.Cts.IsCancellationRequested)
                                                             {
-                                                                CompatList.CheckForRpcs3Updates((DiscordClient)client, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                                                                try
+                                                                {
+                                                                    CompatList.CheckForRpcs3Updates((DiscordClient)client, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                                                                }
+                                                                catch { }
+                                                                Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                                                             }
-                                                            catch
-                                                            {
-                                                            }
-                                                            Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                                                         }
+                                                        catch (TaskCanceledException) { }
                                                     });
 
             try
