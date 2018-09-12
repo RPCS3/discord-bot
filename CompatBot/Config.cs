@@ -9,13 +9,13 @@ namespace CompatBot
     internal static class Config
     {
         public static readonly string CommandPrefix = "!";
-        public static readonly ulong BotGuildId = 272035812277878785;
-        public static readonly ulong BotChannelId = 291679908067803136;
-        public static readonly ulong BotSpamId = 319224795785068545;
-        public static readonly ulong BotLogId = 436972161572536329;
-        public static readonly ulong BotRulesChannelId = 311894275015049216;
-        public static readonly ulong BotAdminId = 267367850706993152;
-        public static readonly ulong ThumbnailSpamId = 475678410098606100;
+        public static readonly ulong BotGuildId = 272035812277878785;       // discord server where the bot is supposed to be
+        public static readonly ulong BotChannelId = 291679908067803136;     // #compatbot; this is used for !compat/!top results and new builds announcements
+        public static readonly ulong BotSpamId = 319224795785068545;        // #bot-spam; this is a dedicated channel for bot abuse
+        public static readonly ulong BotLogId = 436972161572536329;         // #bot-log; a private channel for admin mod queue
+        public static readonly ulong BotRulesChannelId = 311894275015049216;// #rules-info; used to give links to rules
+        public static readonly ulong BotAdminId = 267367850706993152;       // discord user id for a bot admin
+        public static readonly ulong ThumbnailSpamId = 475678410098606100;  // whatever private chat where bot can upload game covers for future embedding
 
         public static readonly int ProductCodeLookupHistoryThrottle = 7;
 
