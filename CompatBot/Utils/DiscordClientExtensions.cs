@@ -84,7 +84,7 @@ namespace CompatBot.Utils
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, ReportSeverity severity)
         {
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-            var embedBuilder = MakeReportTemplate(infraction, message, severity);
+            var embedBuilder = MakeReportTemplate(client, infraction, message, severity);
             var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
@@ -96,15 +96,33 @@ namespace CompatBot.Utils
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordUser> reporters, string comment, ReportSeverity severity)
         {
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-            var embedBuilder = MakeReportTemplate(infraction, message, severity);
+            var embedBuilder = MakeReportTemplate(client, infraction, message, severity);
             var reportText = string.IsNullOrEmpty(comment) ? "" : comment.Sanitize() + Environment.NewLine;
             embedBuilder.Description = (reportText + embedBuilder.Description).Trim(EmbedPager.MaxDescriptionLength);
-            embedBuilder.AddField("Reporters", string.Join(Environment.NewLine, reporters.Select(r => r.Mention)));
+            var members = reporters.Select(client.GetMember);
+            embedBuilder.AddField("Reporters", string.Join(Environment.NewLine, members.Select(GetMentionWithNickname)));
             var logChannel = await getLogChannelTask.ConfigureAwait(false);
             return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
         }
 
-        private static DiscordEmbedBuilder MakeReportTemplate(string infraction, DiscordMessage message, ReportSeverity severity)
+        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, IEnumerable<DiscordMember> potentialVictims, ReportSeverity severity)
+        {
+            var result = new DiscordEmbedBuilder
+            {
+                Title = infraction,
+                Color = GetColor(severity),
+                Description = description.Trim(EmbedPager.MaxDescriptionLength),
+            }.AddField("Potential Targets", string.Join(Environment.NewLine, potentialVictims.Select(GetMentionWithNickname)).Trim(EmbedPager.MaxFieldLength));
+            var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
+            return await logChannel.SendMessageAsync(embed: result.Build()).ConfigureAwait(false);
+        }
+
+        public static string GetMentionWithNickname(this DiscordMember member)
+        {
+            return string.IsNullOrEmpty(member.Nickname) ? member.Mention : $"{member.Mention} ({member.Nickname.Sanitize()})";
+        }
+
+        private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity)
         {
             var content = message.Content;
             var needsAttention = severity > ReportSeverity.Low;
@@ -116,11 +134,12 @@ namespace CompatBot.Utils
             }
             if (string.IsNullOrEmpty(content))
                 content = "🤔 something fishy is going on here, there was no message or attachment";
+            var author = client.GetMember(message.Author);
             var result = new DiscordEmbedBuilder
                 {
                     Title = infraction,
                     Color = GetColor(severity),
-                }.AddField("Violator", message.Author.Mention, true)
+                }.AddField("Violator", GetMentionWithNickname(author), true)
                 .AddField("Channel", message.Channel.Mention, true)
                 .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content);

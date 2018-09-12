@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CompatApiClient\CompatApiClient.csproj" />
+    <ProjectReference Include="..\HomoglyphConverter\HomoglyphConverter.csproj" />
     <ProjectReference Include="..\PsnClient\PsnClient.csproj" />
   </ItemGroup>
 
