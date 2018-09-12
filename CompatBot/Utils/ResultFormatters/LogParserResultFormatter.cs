@@ -279,19 +279,20 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new StringBuilder();
             if (items["rap_file"] is string rap)
             {
+                var limitTo = 5;
                 var licenseNames = rap.Split(Environment.NewLine).Distinct().Select(p => $"`{Path.GetFileName(p)}`").ToList();
                 string content;
-                if (licenseNames.Count > 10)
+                if (licenseNames.Count > limitTo)
                 {
-                    content = string.Join(Environment.NewLine, licenseNames.Take(9));
-                    var other = licenseNames.Count - 9;
+                    content = string.Join(Environment.NewLine, licenseNames.Take(limitTo - 1));
+                    var other = licenseNames.Count - limitTo + 1;
                     content += $"{Environment.NewLine}and {other} other license{StringUtils.GetSuffix(other)}";
                 }
                 else
                     content = string.Join(Environment.NewLine, licenseNames);
                 builder.AddField("Missing Licenses", content);
             }
-            else if (items["fatal_error"] is string fatalError)
+            if (items["fatal_error"] is string fatalError)
             {
                 builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                 if (fatalError.Contains("psf.cpp"))
