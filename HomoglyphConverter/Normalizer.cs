@@ -18,7 +18,9 @@ namespace HomoglyphConverter
             ["vv"] = "w",
             ["VV"] = "W",
             ["\\/"] = "V",
+            ["\\Л/"] = "W",
             ["}|{"] = "Ж",
+            ["wv"] = "vw",
             ["WV"] = "VW",
         };
 
