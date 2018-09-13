@@ -63,14 +63,14 @@ namespace CompatBot.EventHandlers
                 ReportSeverity.Medium);
         }
 
-        private static List<DiscordMember> GetPotentialVictims(DiscordClient client, DiscordMember newMember, bool checkUsername, bool checkNickname)
+        internal static List<DiscordMember> GetPotentialVictims(DiscordClient client, DiscordMember newMember, bool checkUsername, bool checkNickname, List<DiscordMember> listToCheckAgainst = null)
         {
-            var membersWithRoles = (
-                from guild in client.Guilds
-                from member in guild.Value.Members
-                where member.Roles.Any()
-                select member
-            ).ToList();
+            var membersWithRoles = listToCheckAgainst ??
+                                   client.Guilds.SelectMany(guild => guild.Value.Members)
+                                       .Where(m => m.Roles.Any())
+                                       .OrderByDescending(m => m.Hierarchy)
+                                       .ThenByDescending(m => m.JoinedAt)
+                                       .ToList();
             var newUsername = Normalizer.ToCanonicalForm(newMember.Username);
             var newDisplayName = Normalizer.ToCanonicalForm(newMember.DisplayName);
             var potentialTargets = new List<DiscordMember>();
