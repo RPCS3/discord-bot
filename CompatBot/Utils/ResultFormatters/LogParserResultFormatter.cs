@@ -320,8 +320,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("Outdated RPCS3 build detected, please consider updating it");
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Notes");
-            if (updateInfo != null)
-                await updateInfo.AsEmbedAsync(builder).ConfigureAwait(false);
+            //if (updateInfo != null)
+            //    await updateInfo.AsEmbedAsync(builder).ConfigureAwait(false);
         }
 
         private static void PageSection(DiscordEmbedBuilder builder, string notesContent, string sectionName)
