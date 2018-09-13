@@ -119,7 +119,7 @@ namespace CompatBot.Utils
 
         public static string GetMentionWithNickname(this DiscordMember member)
         {
-            return string.IsNullOrEmpty(member.Nickname) ? $"{member.Mention} (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"{member.Mention} (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
+            return string.IsNullOrEmpty(member.Nickname) ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
         }
 
         private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity)
