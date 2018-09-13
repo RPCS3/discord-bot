@@ -8,7 +8,7 @@ using DSharpPlus.CommandsNext.Attributes;
 
 namespace CompatBot.Commands
 {
-    internal sealed class Moderation: BaseCommandModuleCustom
+    internal sealed partial class Moderation: BaseCommandModuleCustom
     {
         [Command("report"), RequiresWhitelistedRole]
         [Description("Adds specified message to the moderation queue")]
