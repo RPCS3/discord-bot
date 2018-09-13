@@ -303,6 +303,8 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["failed_to_decrypt"] is string _)
                 notes.AppendLine("Failed to decrypt game content, license file might be corrupted");
+            if (items["failed_to_boot"] is string _)
+                notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty, you need to run the game before uploading the log");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
