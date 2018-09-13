@@ -268,6 +268,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("`Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == TrueMark)
                 notes.AppendLine("`ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+            if (items["spu_block_size"] is string spuBlockSize && spuBlockSize == "Giga")
+                notes.AppendLine("`Giga` mode for `SPU Block Size` is not really supported and is not recommended to use");
 
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Important Settings to Review");
@@ -299,6 +301,8 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.AppendLine("Game save data might be corrupted");
             }
 
+            if (items["failed_to_decrypt"] is string _)
+                notes.AppendLine("Failed to decrypt game content, license file might be corrupted");
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty, you need to run the game before uploading the log");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
