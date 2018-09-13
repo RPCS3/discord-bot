@@ -106,6 +106,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 Extractors = new Dictionary<string, Regex>
                 {
                     ["Disc path:"] = new Regex(@"Disc path: .*(?<hdd_game_path>/dev_hdd0/game/.*?)\r?$", DefaultOptions),
+                    ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
                     ["RSX:"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
                                          @"RSX: [^\n]+\r?\n[^\n]*?" +
