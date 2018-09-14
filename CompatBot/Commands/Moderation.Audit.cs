@@ -22,9 +22,10 @@ namespace CompatBot.Commands
 
             [Command("spoofing"), Aliases("impersonation"), RequireDirectMessage]
             [Description("Checks every user on the server for name spoofing")]
-            public async Task Spoofing(CommandContext ctx)
+            public Task Spoofing(CommandContext ctx)
             {
                 SpoofingCheck(ctx);
+                return Task.CompletedTask;
             }
 
             private async void SpoofingCheck(CommandContext ctx)

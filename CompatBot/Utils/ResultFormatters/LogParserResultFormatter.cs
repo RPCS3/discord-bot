@@ -395,7 +395,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (string.IsNullOrEmpty(result))
                 return null;
 
-            if (gpu.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
+            if (gpu.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
+                gpu.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
+                gpu.Contains("ATI", StringComparison.InvariantCultureIgnoreCase))
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
 
             if (result.EndsWith(".0.0"))
@@ -409,7 +411,9 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var ver = int.Parse(version);
-            if (gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
+            if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
+                gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
+                gpuInfo.Contains("ATI", StringComparison.InvariantCultureIgnoreCase))
             {
                 var major = (ver >> 22) & 0x3ff;
                 var minor = (ver >> 12) & 0x3ff;
@@ -425,8 +429,8 @@ namespace CompatBot.Utils.ResultFormatters
                 if (major == 0 && gpuInfo.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
                     return $"{minor}.{patch}";
 
-                if (gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||
-                    gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
+                if (gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
+                    gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||
                     gpuInfo.Contains("Quadro", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (patch == 0)
