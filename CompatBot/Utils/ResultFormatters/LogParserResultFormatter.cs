@@ -269,7 +269,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["zcull"] is string zcull && zcull == TrueMark)
                 notes.AppendLine("`ZCull Occlusion Queries` are disabled, can result in visual artifacts");
             if (items["spu_block_size"] is string spuBlockSize && spuBlockSize == "Giga")
-                notes.AppendLine("`Giga` mode for `SPU Block Size` is not really supported and is not recommended to use");
+                notes.AppendLine("`Giga` mode for `SPU Block Size` is strongly not recommended to use");
 
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Important Settings to Review");
