@@ -402,6 +402,8 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (result.EndsWith(".0.0"))
                 result = result.Substring(0, result.Length - 4);
+            if (result.Length > 3 && result[result.Length - 2] == '.')
+                result = result.Substring(0, result.Length - 1) + "0" + result[result.Length - 1];
             return result;
         }
 
@@ -435,7 +437,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     if (patch == 0)
                         return $"{major}.{minor}";
-                    return $"{major}.{minor}.{(patch >> 6) & 0xff}.{patch & 0x3f}";
+                    return $"{major}.{minor:00}.{(patch >> 6) & 0xff}.{patch & 0x3f}";
                 }
 
                 return $"{major}.{minor}.{patch}";
