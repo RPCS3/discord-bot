@@ -134,12 +134,20 @@ namespace CompatBot.Utils
             }
             if (string.IsNullOrEmpty(content))
                 content = "🤔 something fishy is going on here, there was no message or attachment";
-            var author = client.GetMember(message.Author);
+            DiscordMember author = null;
+            try
+            {
+                author = client.GetMember(message.Author);
+            }
+            catch (Exception e)
+            {
+                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Failed to get the member info for user {message.Author.Id} ({message.Author.Username}): {e}", DateTime.Now);
+            }
             var result = new DiscordEmbedBuilder
                 {
                     Title = infraction,
                     Color = GetColor(severity),
-                }.AddField("Violator", GetMentionWithNickname(author), true)
+                }.AddField("Violator", author == null ? message.Author.Mention : GetMentionWithNickname(author), true)
                 .AddField("Channel", message.Channel.Mention, true)
                 .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content);
