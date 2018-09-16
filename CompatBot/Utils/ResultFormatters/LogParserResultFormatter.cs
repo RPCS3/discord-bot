@@ -375,7 +375,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (string.IsNullOrEmpty(version))
                 return null;
 
-            if (gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase))
+            if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
+                gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
+                gpuInfo.Contains("ATI", StringComparison.InvariantCultureIgnoreCase))
                 return AmdDriverVersionProvider.GetFromOpenglAsync(version).GetAwaiter().GetResult();
 
             return version;
