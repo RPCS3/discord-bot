@@ -377,7 +377,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
                 gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("ATI", StringComparison.InvariantCultureIgnoreCase))
+                gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
                 return AmdDriverVersionProvider.GetFromOpenglAsync(version).GetAwaiter().GetResult();
 
             return version;
@@ -399,7 +399,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (gpu.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
                 gpu.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
-                gpu.Contains("ATI", StringComparison.InvariantCultureIgnoreCase))
+                gpu.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
 
             if (result.EndsWith(".0.0"))
@@ -417,7 +417,7 @@ namespace CompatBot.Utils.ResultFormatters
             var ver = int.Parse(version);
             if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
                 gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("ATI", StringComparison.InvariantCultureIgnoreCase))
+                gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
             {
                 var major = (ver >> 22) & 0x3ff;
                 var minor = (ver >> 12) & 0x3ff;
