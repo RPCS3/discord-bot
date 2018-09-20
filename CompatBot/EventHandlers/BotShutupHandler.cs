@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using NReco.Text;
@@ -25,6 +26,13 @@ namespace CompatBot.EventHandlers
 
             if (!NeedToSilence(args.Message))
                 return;
+
+            var botMember = args.Guild?.CurrentMember ?? args.Client.GetMember(args.Client.CurrentUser);
+            if (!args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
+            {
+                await args.Message.ReactWithAsync(args.Client, DiscordEmoji.FromUnicode("🙅"), @"No can do, boss ¯\\_(ツ)\_/¯").ConfigureAwait(false);
+                return;
+            }
 
             await args.Message.ReactWithAsync(args.Client, DiscordEmoji.FromUnicode("😟"), "Okay (._.)").ConfigureAwait(false);
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddMinutes(-5)).ConfigureAwait(false);
