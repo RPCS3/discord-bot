@@ -45,7 +45,8 @@ namespace CompatBot.Utils
             {
                 if (buffer.Length + line.Length + blockEnd.Length > blockSize)
                 {
-                    await channel.SendMessageAsync(buffer.Append(blockEnd).ToString()).ConfigureAwait(false);
+                    var content = buffer.ToString().Trim(blockSize - blockEnd.Length) + blockEnd;
+                    await channel.SendMessageAsync(content).ConfigureAwait(false);
                     await channel.TriggerTypingAsync().ConfigureAwait(false);
                     buffer.Clear().Append(blockStart);
                 }

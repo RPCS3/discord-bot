@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using PsnClient.POCOs;
 using PsnClient.Utils;
@@ -81,6 +82,10 @@ namespace CompatBot.ThumbScrapper
                     return;
                 }
                 await ctx.RespondAsync($"Didn't find {contentId} in any PSN store").ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
             }
             finally
             {
