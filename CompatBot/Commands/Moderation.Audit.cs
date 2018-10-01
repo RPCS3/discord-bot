@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -35,6 +37,7 @@ namespace CompatBot.Commands
                     await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
                     return;
                 }
+
                 try
                 {
                     await ctx.TriggerTypingAsync().ConfigureAwait(false);
@@ -62,6 +65,12 @@ namespace CompatBot.Commands
                         await ctx.SendAutosplitMessageAsync(result, blockEnd: null, blockStart: null).ConfigureAwait(false);
                     else
                         await ctx.RespondAsync("No potential name spoofing was detected").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                    //should be extra careful, as async void will run on a thread pull, and will terminate the whole application with an uncaught exception
+                    try { await ctx.ReactWithAsync(Config.Reactions.Failure, "(X_X)").ConfigureAwait(false); } catch { }
                 }
                 finally
                 {
