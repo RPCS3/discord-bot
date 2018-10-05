@@ -263,3 +263,5 @@ launchSettings.json
 bot.db
 .vscode/
 thumbs.db
+
+logs/
