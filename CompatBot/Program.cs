@@ -85,7 +85,7 @@ namespace CompatBot
                 {
                     Token = Config.Token,
                     TokenType = TokenType.Bot,
-                    UseInternalLogHandler = true,
+                    //UseInternalLogHandler = true,
                     //LogLevel = LogLevel.Debug,
                 };
 
@@ -168,20 +168,19 @@ namespace CompatBot
                     client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
                     client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
 
-                    var botLog = NLog.LogManager.GetLogger("botLogger");
                     client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
                     {
-                        Action<string> logLevel = botLog.Info;
+                        Action<string> logLevel = Config.Log.Info;
                         if (eventArgs.Level == LogLevel.Debug)
-                            logLevel = botLog.Debug;
+                            logLevel = Config.Log.Debug;
                         //else if (eventArgs.Level == LogLevel.Info)
                         //    logLevel = botLog.Info;
                         else if (eventArgs.Level == LogLevel.Warning)
-                            logLevel = botLog.Warn;
+                            logLevel = Config.Log.Warn;
                         else if (eventArgs.Level == LogLevel.Error)
-                            logLevel = botLog.Error;
+                            logLevel = Config.Log.Error;
                         else if (eventArgs.Level == LogLevel.Critical)
-                            logLevel = botLog.Fatal;
+                            logLevel = Config.Log.Fatal;
                         logLevel(eventArgs.Message);
                     };
 
