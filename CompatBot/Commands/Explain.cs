@@ -25,7 +25,7 @@ namespace CompatBot.Commands
             await ctx.TriggerTypingAsync().ConfigureAwait(false);
             if (string.IsNullOrEmpty(term))
             {
-                await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list`").ConfigureAwait(false);
+                await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list` in any spam channel or bot's DMs").ConfigureAwait(false);
                 return;
             }
 
