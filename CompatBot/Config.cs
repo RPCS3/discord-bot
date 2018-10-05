@@ -143,7 +143,7 @@ namespace CompatBot
 #if DEBUG
             config.AddRule(LogLevel.Trace, LogLevel.Fatal, logTarget, "default"); // only echo messages from default logger to the console
 #else
-            config.AddRule(LogLevel.Warn, LogLevel.Fatal, logTarget, "default");
+            config.AddRule(LogLevel.Info, LogLevel.Fatal, logTarget, "default");
 #endif
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
             LogManager.Configuration = config;
