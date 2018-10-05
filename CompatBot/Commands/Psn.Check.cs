@@ -32,6 +32,8 @@ namespace CompatBot.Commands
 
                 var updateInfo = await Client.GetTitleUpdatesAsync(productId, Config.Cts.Token).ConfigureAwait(false);
                 var embeds = await updateInfo.AsEmbedAsync(ctx.Client, productId).ConfigureAwait(false);
+                if (embeds.Count > 1 || embeds[0].Fields?.Count > 0)
+                    embeds[embeds.Count - 1] = embeds.Last().WithFooter("Note that you need to install all listed updates one by one");
                 foreach (var embed in embeds)
                     await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             }
