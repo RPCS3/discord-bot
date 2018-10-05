@@ -71,7 +71,7 @@ namespace CompatBot.ThumbScrapper
                 if (ScrapeStateProvider.IsFresh(container))
                     return;
 
-                Console.WriteLine("Scraping GameTDB for game titles...");
+                Config.Log.Debug("Scraping GameTDB for game titles...");
                 using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
                 {
                     using (var downloadStream = await HttpClient.GetStreamAsync(TitleDownloadLink).ConfigureAwait(false))
@@ -144,15 +144,13 @@ namespace CompatBot.ThumbScrapper
             }
             finally
             {
-                Console.WriteLine("Finished scraping GameTDB for game titles");
+                Config.Log.Debug("Finished scraping GameTDB for game titles");
             }
         }
 
         private static void PrintError(Exception e)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Error scraping titles from GameTDB: " + e);
-            Console.ResetColor();
+            Config.Log.Error(e, "Error scraping titles from GameTDB");
         }
     }
 }

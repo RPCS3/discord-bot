@@ -43,7 +43,7 @@ namespace CompatBot.Commands
             }
             catch (Exception e)
             {
-                ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "asdf", e.Message, DateTime.Now);
+                Config.Log.Error(e, "Failed to get compat list info");
             }
         }
 
@@ -139,7 +139,7 @@ Example usage:
                 }
                 catch (Exception e)
                 {
-                    discordClient.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                    Config.Log.Warn(e, "Failed to check for RPCS3 update info");
                 }
                 finally
                 {
@@ -163,7 +163,7 @@ Example usage:
 
         private async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
         {
-            Console.WriteLine(requestBuilder.Build());
+            Config.Log.Info(requestBuilder.Build());
             CompatResult result;
             try
             {

@@ -69,7 +69,7 @@ namespace CompatBot.Utils
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                Config.Log.Warn(e);
             }
         }
 
@@ -148,7 +148,7 @@ namespace CompatBot.Utils
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Failed to get the member info for user {message.Author.Id} ({message.Author.Username}): {e}", DateTime.Now);
+                Config.Log.Warn(e, $"Failed to get the member info for user {message.Author.Id} ({message.Author.Username})");
             }
             var result = new DiscordEmbedBuilder
                 {

@@ -65,7 +65,7 @@ namespace PsnClient
             }
             catch (Exception e)
             {
-                ConsoleLogger.PrintError(e, null);
+                ApiConfig.Log.Error(e);
                 return null;
             }
         }
@@ -93,7 +93,7 @@ namespace PsnClient
             }
             catch (Exception e)
             {
-                ConsoleLogger.PrintError(e, null);
+                ApiConfig.Log.Error(e);
                 return null;
             }
         }
@@ -176,7 +176,7 @@ namespace PsnClient
             }
             catch (Exception e)
             {
-                ConsoleLogger.PrintError(e, null);
+                ApiConfig.Log.Error(e);
                 return null;
             }
         }
@@ -210,7 +210,7 @@ namespace PsnClient
             }
             catch (Exception e)
             {
-                ConsoleLogger.PrintError(e, null);
+                ApiConfig.Log.Error(e);
                 return null;
             }
         }
@@ -238,7 +238,7 @@ namespace PsnClient
             }
             catch (Exception e)
             {
-                ConsoleLogger.PrintError(e, null);
+                ApiConfig.Log.Error(e);
                 return null;
             }
         }
@@ -265,7 +265,7 @@ namespace PsnClient
             }
             catch (Exception e)
             {
-                ConsoleLogger.PrintError(e, null);
+                ApiConfig.Log.Error(e);
                 return null;
             }
         }
@@ -283,7 +283,7 @@ namespace PsnClient
                     using (var deleteMessage = new HttpRequestMessage(HttpMethod.Delete, uri))
                     using (response = await client.SendAsync(deleteMessage, cancellationToken))
                         if (response.StatusCode != HttpStatusCode.OK)
-                            ConsoleLogger.PrintError(new InvalidOperationException("Couldn't delete current session"), response, ConsoleColor.Yellow);
+                            ConsoleLogger.PrintError(new InvalidOperationException("Couldn't delete current session"), response, false);
 
                     var authMessage = new HttpRequestMessage(HttpMethod.Post, uri)
                     {
@@ -304,13 +304,16 @@ namespace PsnClient
                         }
                         catch (Exception e)
                         {
-                            ConsoleLogger.PrintError(e, response, tries < 3 ? ConsoleColor.Yellow : ConsoleColor.Red);
+                            ConsoleLogger.PrintError(e, response, tries > 2);
                             tries++;
                         }
                 }
                 catch (Exception e)
                 {
-                    ConsoleLogger.PrintError(e, null, tries < 3 ? ConsoleColor.Yellow : ConsoleColor.Red);
+                    if (tries < 3)
+                        ApiConfig.Log.Warn(e);
+                    else
+                        ApiConfig.Log.Error(e);
                     tries++;
                 }
             } while (tries < 3);

@@ -52,12 +52,12 @@ namespace CompatApiClient
                         }
                         catch (Exception e)
                         {
-                            ConsoleLogger.PrintError(e, response, ConsoleColor.Yellow);
+                            ConsoleLogger.PrintError(e, response, false);
                         }
                 }
                 catch (Exception e)
                 {
-                    ConsoleLogger.PrintError(e, null, ConsoleColor.Yellow);
+                    ApiConfig.Log.Warn(e);
                 }
                 tries++;
             } while (tries < 3);
@@ -79,12 +79,12 @@ namespace CompatApiClient
                         }
                         catch (Exception e)
                         {
-                            ConsoleLogger.PrintError(e, response, ConsoleColor.Yellow);
+                            ConsoleLogger.PrintError(e, response, false);
                         }
                 }
                 catch (Exception e)
                 {
-                    ConsoleLogger.PrintError(e, null, ConsoleColor.Yellow);
+                    ApiConfig.Log.Warn(e);
                 }
                 tries++;
             } while (tries < 3);
@@ -117,7 +117,7 @@ namespace CompatApiClient
             }
             catch (Exception e)
             {
-                ConsoleLogger.PrintError(e, null);
+                ApiConfig.Log.Error(e);
             }
             if (result == null)
             {

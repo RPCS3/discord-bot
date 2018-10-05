@@ -166,7 +166,7 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                        Config.Log.Error(e);
                     }
             }
         }

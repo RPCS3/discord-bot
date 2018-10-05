@@ -64,13 +64,13 @@ namespace CompatBot.Commands
                         }
                         catch (Exception e)
                         {
-                            ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", "Couldn't delete cached thumbnail image: " + e, DateTime.Now);
+                            Config.Log.Warn(e, "Couldn't delete cached thumbnail image");
                         }
                     }
             }
             catch (Exception e)
             {
-                ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                Config.Log.Warn(e);
             }
         }
     }

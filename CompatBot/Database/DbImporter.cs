@@ -14,34 +14,25 @@ namespace CompatBot.Database
         {
             try
             {
-                Console.WriteLine($"Upgrading {dbContext.GetType().Name} database if needed...");
+                Config.Log.Info($"Upgrading {dbContext.GetType().Name} database if needed...");
                 await dbContext.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (SqliteException e)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine(e.Message);
-                Console.WriteLine("Database upgrade failed, probably importing an unversioned one.");
-                Console.ResetColor();
+                Config.Log.Warn(e, "Database upgrade failed, probably importing an unversioned one.");
                 if (!(dbContext is BotDb botDb))
                     return false;
 
-                Console.WriteLine("Trying to apply a manual fixup...");
+                Config.Log.Info("Trying to apply a manual fixup...");
                 try
                 {
                     await ImportAsync(botDb, cancellationToken).ConfigureAwait(false);
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Manual fixup worked great. Let's try migrations again...");
-                    Console.ResetColor();
+                    Config.Log.Info("Manual fixup worked great. Let's try migrations again...");
                     await botDb.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
-
                 }
                 catch (Exception ex)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine("Well shit, I hope you had backups, son. You'll have to figure this one out on your own.");
-                    Console.ResetColor();
+                    Config.Log.Fatal(ex, "Well shit, I hope you had backups, son. You'll have to figure this one out on your own.");
                     return false;
                 }
             }
@@ -50,7 +41,7 @@ namespace CompatBot.Database
                 await botDb2.Moderator.AddAsync(new Moderator {DiscordId = Config.BotAdminId, Sudoer = true}, cancellationToken).ConfigureAwait(false);
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
-            Console.WriteLine("Database is ready.");
+            Config.Log.Info("Database is ready.");
             return true;
         }
 

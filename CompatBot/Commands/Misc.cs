@@ -110,7 +110,7 @@ namespace CompatBot.Commands
             }
             catch (Exception e)
             {
-                ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", "Math failed: " + e.Message, DateTime.Now);
+                Config.Log.Warn(e, "Math failed");
             }
             await ctx.RespondAsync(result).ConfigureAwait(false);
         }
@@ -230,7 +230,7 @@ namespace CompatBot.Commands
             }
             catch (Exception e)
             {
-                ctx.Client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                Config.Log.Warn(e, $"Failed to rate {whatever}");
             }
             var seed = whatever.GetHashCode(StringComparison.CurrentCultureIgnoreCase);
             var seededRng = new Random(seed);

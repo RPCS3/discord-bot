@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using DSharpPlus.Entities;
+using NLog;
+using NLog.Targets;
+using NLog.Targets.Wrappers;
 
 namespace CompatBot
 {
@@ -25,6 +28,9 @@ namespace CompatBot
         public static readonly int MinimumBufferSize = 512;
 
         public static readonly string Token;
+        public static readonly string LogPath = "logs/bot.log";
+
+        internal static readonly ILogger Log;
 
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
         public static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);
@@ -105,6 +111,8 @@ namespace CompatBot
                 var args = Environment.CommandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (args.Length > 1)
                     Token = args[1];
+
+                Log = GetLog();
             }
             catch (Exception e)
             {
@@ -112,6 +120,34 @@ namespace CompatBot
                 Console.WriteLine("Error initializing settings: " + e.Message);
                 Console.ResetColor();
             }
+        }
+
+        private static ILogger GetLog()
+        {
+            var config = new NLog.Config.LoggingConfiguration();
+            var fileTarget = new FileTarget("logfile") {
+                FileName = LogPath,
+                ArchiveEvery = FileArchivePeriod.Day,
+                KeepFileOpen = true,
+                ConcurrentWrites = false,
+                AutoFlush = false,
+                OpenFileFlushTimeout = 1,
+            };
+            var asyncFileTarget = new AsyncTargetWrapper(fileTarget)
+            {
+                TimeToSleepBetweenBatches = 0,
+                OverflowAction = AsyncTargetWrapperOverflowAction.Block,
+                BatchSize = 500,
+            };
+            var logTarget = new ColoredConsoleTarget("logconsole");
+#if DEBUG
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, logTarget, "default"); // only echo messages from default logger to the console
+#else
+            config.AddRule(LogLevel.Warn, LogLevel.Fatal, logTarget, "default");
+#endif
+            config.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
+            LogManager.Configuration = config;
+            return LogManager.GetLogger("default");
         }
     }
 }
