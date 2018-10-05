@@ -87,9 +87,8 @@ namespace CompatBot.Commands
             }
             catch (Exception e)
             {
-                ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                Config.Log.Error(e);
             }
-
         }
 
         internal static async Task<bool> AddAsync(CommandContext ctx, ulong userId, string userName, DiscordUser issuer, string reason, string fullReason = null)
@@ -121,7 +120,7 @@ namespace CompatBot.Commands
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Error, "", "Couldn't save the warning: " + e, DateTime.Now);
+                Config.Log.Error(e, "Couldn't save the warning");
                 return false;
             }
         }

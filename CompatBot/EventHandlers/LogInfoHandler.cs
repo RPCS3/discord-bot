@@ -68,7 +68,7 @@ namespace CompatBot.EventHandlers
                         if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
                         {
                             await args.Channel.TriggerTypingAsync().ConfigureAwait(false);
-                            Console.WriteLine($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
+                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
                             parsedLog = true;
                             LogParseState result = null;
                             try
@@ -80,11 +80,10 @@ namespace CompatBot.EventHandlers
                             }
                             catch (Exception e)
                             {
-                                args.Client.DebugLogger.LogMessage(LogLevel.Error, "", "Log parsing failed: " + e, DateTime.Now);
+                                Config.Log.Error(e, "Log parsing failed");
                             }
                             if (result == null)
-                                await args.Channel.SendMessageAsync("Log analysis failed, most likely cause is a truncated/invalid log. Please run the game again and reupload the new copy.")
-                                    .ConfigureAwait(false);
+                                await args.Channel.SendMessageAsync("Log analysis failed, most likely cause is a truncated/invalid log. Please run the game again and reupload the new copy.").ConfigureAwait(false);
                             else
                             {
                                 try
@@ -108,7 +107,7 @@ namespace CompatBot.EventHandlers
                                             catch (Exception e)
                                             {
                                                 severity = ReportSeverity.High;
-                                                args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unable to delete message in {args.Channel.Name}: {e.Message}", DateTime.Now);
+                                                Config.Log.Warn(e, $"Unable to delete message in {args.Channel.Name}");
                                             }
                                             await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
                                             await Task.WhenAll(
@@ -123,7 +122,7 @@ namespace CompatBot.EventHandlers
                                 }
                                 catch (Exception e)
                                 {
-                                    args.Client.DebugLogger.LogMessage(LogLevel.Error, "", "Sending log results failed: " + e, DateTime.Now);
+                                    Config.Log.Error(e, "Sending log results failed");
                                 }
                             }
                             return;
@@ -144,12 +143,12 @@ namespace CompatBot.EventHandlers
                 {
                     QueueLimiter.Release();
                     if (parsedLog)
-                        Console.WriteLine($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
+                        Config.Log.Debug($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
                 }
             }
             catch (Exception e)
             {
-                args.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                Config.Log.Error(e, "Error parsing log");
             }
         }
     }

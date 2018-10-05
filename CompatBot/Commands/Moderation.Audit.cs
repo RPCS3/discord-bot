@@ -68,7 +68,7 @@ namespace CompatBot.Commands
                 }
                 catch (Exception e)
                 {
-                    ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                    Config.Log.Error(e);
                     //should be extra careful, as async void will run on a thread pull, and will terminate the whole application with an uncaught exception
                     try { await ctx.ReactWithAsync(Config.Reactions.Failure, "(X_X)").ConfigureAwait(false); } catch { }
                 }

@@ -70,7 +70,7 @@ namespace CompatBot.Database.Providers
                     }
                     catch (Exception e)
                     {
-                        client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                        Config.Log.Warn(e);
                     }
                 }
             }

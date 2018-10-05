@@ -24,9 +24,7 @@ namespace CompatBot.Commands.Attributes
         public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
         {
             var result = await IsAllowed(ctx, help);
-#if DEBUG
-            ctx.Client.DebugLogger.LogMessage(LogLevel.Debug, "", $"Check for {GetType().Name} resulted in {result}", DateTime.Now);
-#endif
+            Config.Log.Debug($"Check for {GetType().Name} resulted in {result}");
             if (result)
             {
                 if (ReactOnSuccess != null && !help)

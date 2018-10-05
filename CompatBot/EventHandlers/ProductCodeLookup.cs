@@ -68,7 +68,7 @@ namespace CompatBot.EventHandlers
                 }
                 catch (Exception e)
                 {
-                    args.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't post result for {result.code}: {e.Message}", DateTime.Now);
+                    Config.Log.Warn(e, $"Couldn't post result for {result.code}");
                 }
         }
 
@@ -105,7 +105,7 @@ namespace CompatBot.EventHandlers
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't get compat result for {code}: {e}", DateTime.Now);
+                Config.Log.Warn(e, $"Couldn't get compat result for {code}");
                 return TitleInfo.CommunicationError.AsEmbed(null);
             }
         }

@@ -42,7 +42,7 @@ namespace CompatBot.EventHandlers
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't delete message in {message.Channel.Name}: {e.Message}", DateTime.Now);
+                Config.Log.Warn(e, $"Couldn't delete message in {message.Channel.Name}");
                 severity = ReportSeverity.High;
             }
             try
@@ -56,7 +56,7 @@ namespace CompatBot.EventHandlers
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Couldn't finish piracy trigger actions for a message in {message.Channel.Name}: {e}", DateTime.Now);
+                Config.Log.Warn(e, $"Couldn't finish piracy trigger actions for a message in {message.Channel.Name}");
             }
             return false;
         }

@@ -36,7 +36,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Config.Log.Error(e, "Error sniffing the zip content");
                 return false;
             }
         }
@@ -74,7 +74,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Config.Log.Error(e, "Error filling the log pipe");
                 writer.Complete(e);
                 return;
             }

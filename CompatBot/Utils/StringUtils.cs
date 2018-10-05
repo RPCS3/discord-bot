@@ -53,7 +53,7 @@ namespace CompatBot.Utils
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Config.Log.Error(e, $"Failed to decode string from {Latin8BitEncoding.EncodingName} to {Utf8.EncodingName}");
                 return str;
             }
         }

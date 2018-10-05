@@ -85,7 +85,7 @@ namespace CompatBot.ThumbScrapper
             }
             catch (Exception e)
             {
-                ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                Config.Log.Error(e);
             }
             finally
             {
@@ -145,11 +145,11 @@ namespace CompatBot.ThumbScrapper
 
                 if (ScrapeStateProvider.IsFresh(locale))
                 {
-                    //Console.WriteLine($"Cache for {locale} PSN is fresh, skipping");
+                    //Config.Log.Debug($"Cache for {locale} PSN is fresh, skipping");
                     continue;
                 }
 
-                Console.WriteLine($"Scraping {locale} PSN for PS3 games...");
+                Config.Log.Debug($"Scraping {locale} PSN for PS3 games...");
                 var knownContainers = new HashSet<string>();
                 // get containers from the left side navigation panel on the main page
                 var containerIds = await Client.GetMainPageNavigationContainerIdsAsync(locale, cancellationToken).ConfigureAwait(false);
@@ -164,7 +164,7 @@ namespace CompatBot.ThumbScrapper
 
                     await ScrapeContainerIdsAsync(locale, id, knownContainers, cancellationToken).ConfigureAwait(false);
                 }
-                Console.WriteLine($"\tFound {knownContainers.Count} containers");
+                Config.Log.Debug($"\tFound {knownContainers.Count} containers");
 
                 // now let's scrape for actual games in every container
                 var defaultFilters = new Dictionary<string, string>
@@ -184,12 +184,12 @@ namespace CompatBot.ThumbScrapper
 
                     if (ScrapeStateProvider.IsFresh(locale, containerId))
                     {
-                        //Console.WriteLine($"\tCache for {locale} container {containerId} is fresh, skipping");
+                        //Config.Log.Debug($"\tCache for {locale} container {containerId} is fresh, skipping");
                         continue;
                     }
 
                     var currentPercent = storeIdx * percentPerStore + containerIdx * percentPerStore * percentPerContainer;
-                    Console.WriteLine($"\tScraping {locale} container {containerId} ({currentPercent*100:##0.00}%)...");
+                    Config.Log.Debug($"\tScraping {locale} container {containerId} ({currentPercent*100:##0.00}%)...");
                     var total = -1;
                     var start = 0;
                     do
@@ -219,7 +219,7 @@ namespace CompatBot.ThumbScrapper
                             total = container.Data.Attributes.TotalResults;
                             var pages = (int)Math.Ceiling((double)total / take);
                             if (pages > 1)
-                                Console.WriteLine($"\t\tPage {start / take + 1} of {pages}");
+                                Config.Log.Debug($"\t\tPage {start / take + 1} of {pages}");
                             returned = container.Data?.Relationships?.Children?.Data?.Count(i => i.Type == "game" || i.Type == "legacy-sku") ?? 0;
                             // included contains full data already, so it's wise to get it first
                             await ProcessIncludedGamesAsync(locale, container, cancellationToken).ConfigureAwait(false);
@@ -252,11 +252,11 @@ namespace CompatBot.ThumbScrapper
                         start += take;
                     } while ((returned > 0 || (total > -1 && start * take <= total)) && !cancellationToken.IsCancellationRequested);
                     await ScrapeStateProvider.SetLastRunTimestampAsync(locale, containerId).ConfigureAwait(false);
-                    Console.WriteLine($"\tFinished scraping {locale} container {containerId}, processed {start - take + returned} items");
+                    Config.Log.Debug($"\tFinished scraping {locale} container {containerId}, processed {start - take + returned} items");
                 }
                 await ScrapeStateProvider.SetLastRunTimestampAsync(locale).ConfigureAwait(false);
             }
-            Console.WriteLine("Finished scraping all the PSN stores");
+            Config.Log.Debug("Finished scraping all the PSN stores");
         }
 
         private static List<string> GetLocalesInPreferredOrder(string[] locales)
@@ -288,7 +288,7 @@ namespace CompatBot.ThumbScrapper
             foreach (var locale in orderedLocales)
                 if (countries.Add(locale.AsLocaleData().country))
                     result.Add(locale);
-            Console.WriteLine($"Selected stores ({result.Count}): " + string.Join(' ', result));
+            Config.Log.Debug($"Selected stores ({result.Count}): " + string.Join(' ', result));
             return result;
         }
 
@@ -428,9 +428,7 @@ namespace CompatBot.ThumbScrapper
 
         private static void PrintError(Exception e)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Error scraping thumbnails: " + e);
-            Console.ResetColor();
+            Config.Log.Error(e, "Error scraping thumbnails");
         }
     }
 }

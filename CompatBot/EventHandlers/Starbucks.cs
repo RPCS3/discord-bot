@@ -39,7 +39,7 @@ namespace CompatBot.EventHandlers
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                Config.Log.Error(e);
             }
         }
 
@@ -94,7 +94,7 @@ namespace CompatBot.EventHandlers
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                Config.Log.Error(e);
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NLog;
 
 namespace CompatApiClient
 {
@@ -68,8 +69,11 @@ namespace CompatApiClient
             ).ToDictionary(rkvp => rkvp.val, rkvp => rkvp.Key, comparer);
         }
 
+        public static readonly ILogger Log;
+
         static ApiConfig()
         {
+            Log = LogManager.GetLogger("default");
             try
             {
                 ReverseDirections = Directions.Reverse(StringComparer.InvariantCultureIgnoreCase);
@@ -77,9 +81,7 @@ namespace CompatApiClient
             }
             catch (Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e);
-                Console.ResetColor();
+                Log.Fatal(e);
             }
         }
     }

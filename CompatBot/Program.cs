@@ -51,20 +51,20 @@ namespace CompatBot
                                                             }
                                                         }
                                                         catch (TaskCanceledException) { }
-                                                    });
+                                                    }){ IsBackground = true };
 
             try
             {
                 singleInstanceCheckThread.Start();
                 if (!InstanceCheck.Wait(1000))
                 {
-                    Console.WriteLine("Another instance is already running.");
+                    Config.Log.Fatal("Another instance is already running.");
                     return;
                 }
 
                 if (string.IsNullOrEmpty(Config.Token))
                 {
-                    Console.WriteLine("No token was specified.");
+                    Config.Log.Fatal("No token was specified.");
                     return;
                 }
                 var amdDriverRefreshTask = AmdDriverVersionProvider.RefreshAsync();
@@ -109,46 +109,45 @@ namespace CompatBot
 
                     client.Ready += async r =>
                                     {
-                                        Console.WriteLine("Bot is ready to serve!");
-                                        Console.WriteLine();
-                                        Console.WriteLine($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
-                                        Console.WriteLine($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
-                                        Console.WriteLine();
+                                        Config.Log.Info("Bot is ready to serve!");
+                                        Config.Log.Info("");
+                                        Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
+                                        Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
+                                        Config.Log.Info("");
                                     };
                     client.GuildAvailable += async gaArgs =>
                                              {
                                                  if (gaArgs.Guild.Id != Config.BotGuildId)
                                                  {
 #if DEBUG
-                                                     gaArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})", DateTime.Now);
+                                                     Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})");
 #else
-                                                     gaArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...", DateTime.Now);
+                                                     Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...");
                                                      await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
 #endif
                                                      return;
                                                  }
 
-                                                 gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"Server {gaArgs.Guild.Name} is available now", DateTime.Now);
-                                                 gaArgs.Client.DebugLogger.LogMessage(LogLevel.Info, "", $"Checking moderation backlogs in {gaArgs.Guild.Name}...", DateTime.Now);
+                                                 Config.Log.Info($"Server {gaArgs.Guild.Name} is available now");
+                                                 Config.Log.Info($"Checking moderation backlogs in {gaArgs.Guild.Name}...");
                                                  try
                                                  {
                                                      await Task.WhenAll(
-                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
-                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Console.WriteLine($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
+                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
+                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
                                                      ).ConfigureAwait(false);
                                                  }
                                                  catch (Exception e)
                                                  {
-                                                     gaArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                                                     Config.Log.Warn(e, "Error running backlog tasks");
                                                  }
-                                                 Console.WriteLine($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
+                                                 Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
                                              };
                     client.GuildUnavailable += guArgs =>
                                                {
-                                                   guArgs.Client.DebugLogger.LogMessage(LogLevel.Warning, "", $"{guArgs.Guild.Name} is unavailable", DateTime.Now);
+                                                   Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
                                                    return Task.CompletedTask;
                                                };
-
 
                     client.MessageReactionAdded += Starbucks.Handler;
 
@@ -169,27 +168,41 @@ namespace CompatBot
                     client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
                     client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
 
+                    var botLog = NLog.LogManager.GetLogger("botLogger");
+                    client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
+                    {
+                        Action<string> logLevel = botLog.Info;
+                        if (eventArgs.Level == LogLevel.Debug)
+                            logLevel = botLog.Debug;
+                        //else if (eventArgs.Level == LogLevel.Info)
+                        //    logLevel = botLog.Info;
+                        else if (eventArgs.Level == LogLevel.Warning)
+                            logLevel = botLog.Warn;
+                        else if (eventArgs.Level == LogLevel.Error)
+                            logLevel = botLog.Error;
+                        else if (eventArgs.Level == LogLevel.Critical)
+                            logLevel = botLog.Fatal;
+                        logLevel(eventArgs.Message);
+                    };
+
                     try
                     {
                         await client.ConnectAsync();
                     }
                     catch (Exception e)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(e.Message);
-                        Console.ResetColor();
-                        Console.WriteLine("Terminating.");
+                        Config.Log.Fatal(e, "Terminating");
                         return;
                     }
 
                     if (args.Length > 1 && ulong.TryParse(args[1], out var channelId))
                     {
-                        Console.WriteLine("Found channelId: " + args[1]);
+                        Config.Log.Info($"Found channelId: {args[1]}");
                         var channel = await client.GetChannelAsync(channelId).ConfigureAwait(false);
                         await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
                     }
 
-                    Console.WriteLine("Running RPC3 update check thread");
+                    Config.Log.Debug("Running RPC3 update check thread");
                     rpcs3UpdateCheckThread.Start(client);
 
                     while (!Config.Cts.IsCancellationRequested)
@@ -207,12 +220,18 @@ namespace CompatBot
             catch (TaskCanceledException)
             {
             }
+            catch(Exception e)
+            {
+                Config.Log.Fatal(e);
+            }
             finally
             {
                 ShutdownCheck.Release();
-                singleInstanceCheckThread.Join(100);
-                rpcs3UpdateCheckThread.Join(100);
-                Console.WriteLine("Exiting");
+                if (singleInstanceCheckThread.IsAlive)
+                    singleInstanceCheckThread.Join(100);
+                if (rpcs3UpdateCheckThread.IsAlive)
+                    rpcs3UpdateCheckThread.Join(100);
+                Config.Log.Info("Exiting");
             }
         }
     }

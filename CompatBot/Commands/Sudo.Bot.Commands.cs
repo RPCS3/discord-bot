@@ -77,7 +77,7 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                        Config.Log.Error(e);
                         await ctx.RespondAsync("Error while disabling the group").ConfigureAwait(false);
                     }
                 }
@@ -133,7 +133,7 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        ctx.Client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                        Config.Log.Error(e);
                         await ctx.RespondAsync("Error while enabling the group").ConfigureAwait(false);
                     }
                 }

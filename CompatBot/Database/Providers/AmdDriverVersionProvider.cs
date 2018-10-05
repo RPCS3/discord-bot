@@ -40,7 +40,7 @@ namespace CompatBot.Database.Providers
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    Config.Log.Warn(e, "Failed to update AMD version mapping");
                 }
                 finally
                 {

@@ -43,7 +43,7 @@ namespace CompatBot.EventHandlers
             }
             catch (Exception e)
             {
-                client.DebugLogger.LogMessage(LogLevel.Error, "", e.ToString(), DateTime.Now);
+                Config.Log.Error(e);
             }
         }
 
@@ -72,7 +72,7 @@ namespace CompatBot.EventHandlers
                 }
                 catch (Exception e)
                 {
-                    client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                    Config.Log.Warn(e);
                     await client.ReportAsync("An unapproved discord invite", message, "In invalid or expired invite", null, ReportSeverity.Medium).ConfigureAwait(false);
                     await message.ReactWithAsync(
                         client,
@@ -97,7 +97,7 @@ namespace CompatBot.EventHandlers
                     }
                     catch (Exception e)
                     {
-                        client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                        Config.Log.Warn(e);
                         await client.ReportAsync("An unapproved discord invite", message, $"Invite {invite.Code} was resolved to the {invite.Guild.Name} server", null, ReportSeverity.Medium).ConfigureAwait(false);
                         await message.ReactWithAsync(
                             client,
@@ -143,14 +143,14 @@ namespace CompatBot.EventHandlers
                             else
                             {
                                 hasInvalidInvites = true;
-                                client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Got {response.StatusCode} from discord.me: {html}", DateTime.Now);
+                                Config.Log.Warn($"Got {response.StatusCode} from discord.me: {html}");
                             }
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    client.DebugLogger.LogMessage(LogLevel.Warning, "", e.ToString(), DateTime.Now);
+                    Config.Log.Warn(e);
                 }
             }
 
@@ -168,7 +168,7 @@ namespace CompatBot.EventHandlers
                 catch (Exception e)
                 {
                     hasInvalidInvites = true;
-                    client.DebugLogger.LogMessage(LogLevel.Warning, "", $"Failed to get invite for code {inviteCode}: {e.Message}", DateTime.Now);
+                    Config.Log.Warn(e, $"Failed to get invite for code {inviteCode}");
                 }
             return (hasInvalidInvites, result);
         }

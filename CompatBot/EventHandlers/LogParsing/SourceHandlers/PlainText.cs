@@ -32,7 +32,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    Config.Log.Error(e, "Error filling the log pipe");
                     writer.Complete(e);
                     return;
                 }
