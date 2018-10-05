@@ -18,9 +18,9 @@ namespace CompatBot.Utils.ResultFormatters
         private const long UnderGB = 1000 * 1024 * 1024;
 
         // thanks BCES00569
-        public static async Task<List<DiscordEmbed>> AsEmbedAsync(this TitlePatch patch, DiscordClient client, string productCode)
+        public static async Task<List<DiscordEmbedBuilder>> AsEmbedAsync(this TitlePatch patch, DiscordClient client, string productCode)
         {
-            var result = new List<DiscordEmbed>();
+            var result = new List<DiscordEmbedBuilder>();
             var pkgs = patch?.Tag?.Packages;
             var title = pkgs?.Select(p => p.ParamSfo?.Title).LastOrDefault(t => !string.IsNullOrEmpty(t)) ?? ThumbnailProvider.GetTitleName(productCode) ?? productCode;
             var thumbnailUrl = await client.GetThumbnailUrlAsync(productCode).ConfigureAwait(false);
@@ -43,7 +43,7 @@ namespace CompatBot.Utils.ResultFormatters
                     embedBuilder.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"⏬ [{GetLinkName(pkg.Url)}]({pkg.Url})");
                     if (i % EmbedPager.MaxFields == 0)
                     {
-                        result.Add(embedBuilder.Build());
+                        result.Add(embedBuilder);
                         embedBuilder = new DiscordEmbedBuilder
                         {
                             Title = $"{title} [Part {i/EmbedPager.MaxFields+1} of {pages}]".Trim(EmbedPager.MaxTitleSize),
@@ -61,7 +61,7 @@ namespace CompatBot.Utils.ResultFormatters
             else
                 embedBuilder.Description = "No updates were found";
             if (!result.Any() || embedBuilder.Fields.Any())
-                result.Add(embedBuilder.Build());
+                result.Add(embedBuilder);
             return result;
         }
 
