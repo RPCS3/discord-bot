@@ -28,7 +28,7 @@ namespace CompatBot
         public static readonly int MinimumBufferSize = 512;
 
         public static readonly string Token;
-        public static readonly string LogPath = "logs/bot.log";
+        public static readonly string LogPath = "../../../logs/bot.log"; // paths are relative to the assembly, so this will put it in the project's root
 
         internal static readonly ILogger Log;
 
