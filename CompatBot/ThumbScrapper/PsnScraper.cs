@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using PsnClient.POCOs;
 using PsnClient.Utils;

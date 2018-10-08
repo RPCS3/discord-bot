@@ -95,7 +95,7 @@ namespace CompatBot.Utils
                 return first + last;
 
             if (first == last)
-                return first;
+                return first.Substring(0, 1);
 
             if (last.StartsWith(first))
                 return $"{first} - {last}";

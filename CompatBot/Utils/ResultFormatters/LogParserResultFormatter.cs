@@ -268,6 +268,17 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("`Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == TrueMark)
                 notes.AppendLine("`ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+            if (items["driver_recovery_timeout"] is string driverRecoveryTimeout && int.TryParse(driverRecoveryTimeout, out var drtValue) && drtValue != 1000000)
+            {
+                if (drtValue == 0)
+                    notes.AppendLine("`Driver Recovery Timeout` is set to 0 (infinite), please use default value of 1000000");
+                else if (drtValue < 10_000)
+                    notes.AppendLine($"`Driver Recovery Timeout` is set too low: {GetTimeFormat(drtValue)} (1 frame @ {(1_000_000.0 / drtValue):0.##} fps)");
+                else if (drtValue > 10_000_000)
+                    notes.AppendLine($"`Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
+            }
+            if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == TrueMark)
+                notes.AppendLine("`HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize && spuBlockSize == "Giga")
                 notes.AppendLine("`Giga` mode for `SPU Block Size` is strongly not recommended to use");
 
@@ -444,6 +455,15 @@ namespace CompatBot.Utils.ResultFormatters
 
                 return $"{major}.{minor}.{patch}";
             }
+        }
+
+        private static string GetTimeFormat(long microseconds)
+        {
+            if (microseconds < 1000)
+                return $"{microseconds} µs";
+            if (microseconds < 1_000_000)
+                return $"{microseconds / 1000.0:0.##} ms";
+            return $"{microseconds / 1_000_000.0:0.##} s";
         }
     }
 }
