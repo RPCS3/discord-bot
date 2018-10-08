@@ -368,6 +368,10 @@ namespace CompatBot.ThumbScrapper
                 }
                 else if (!string.IsNullOrEmpty(url))
                 {
+                    if (string.IsNullOrEmpty(savedItem.Url))
+                        savedItem.Url = url;
+                    if (string.IsNullOrEmpty(savedItem.Name) && !string.IsNullOrEmpty(name))
+                        savedItem.Name = name;
                     if (!ScrapeStateProvider.IsFresh(savedItem.Timestamp))
                     {
                         if (savedItem.Url != url)
