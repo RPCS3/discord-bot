@@ -18,7 +18,7 @@ namespace CompatBot.EventHandlers
     internal static class ProductCodeLookup
     {
         // see http://www.psdevwiki.com/ps3/Productcode
-        public static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM])[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM]|MRTC)[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Client compatClient = new Client();
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
