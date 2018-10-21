@@ -90,8 +90,8 @@ namespace CompatBot.Commands
                     Url = "https://github.com/RPCS3/discord-bot",
                     Color = DiscordColor.Purple,
                 }.AddField("Made by",
-                    "🇭🇷 Roberto Anić Banić aka nicba1010\n" +
-                    "💮 13xforever")
+                    "💮 13xforever" +
+                    "🇭🇷 Roberto Anić Banić aka nicba1010\n")
                 .AddField("People who ~~broke~~ helped test the bot",
                     "🐱 Juhn\n" +
                     $"{hcorion} hcorion");
