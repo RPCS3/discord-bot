@@ -160,7 +160,7 @@ namespace CompatBot.Commands
                 var showCount = Math.Min(maxWarningsInPublicChannel, totalWarningCount);
                 var result = new StringBuilder("Warning list for ").Append(userName);
                 if (!isPrivate && !isWhitelisted && totalWarningCount > maxWarningsInPublicChannel)
-                    result.Append($" (last {showCount} of {totalWarningCount})");
+                    result.Append($" (last {showCount} of {totalWarningCount}, full list in DMs)");
                 result.AppendLine(":").AppendLine("```");
                 var header = $"{"ID",-5} | {"Issued by",-15} | {"On date (UTC)",-20} | Reason";
                 if (isPrivate)
