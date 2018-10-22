@@ -5,7 +5,6 @@ using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Utils;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Converters;
@@ -29,6 +28,7 @@ namespace CompatBot.Commands
                 return;
             }
 
+            term = term.ToLowerInvariant();
             using (var db = new BotDb())
             {
                 var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
@@ -40,7 +40,7 @@ namespace CompatBot.Commands
             }
 
             term = term.StripQuotes();
-            var idx = term.LastIndexOf(" to ", StringComparison.InvariantCultureIgnoreCase);
+            var idx = term.LastIndexOf(" to ");
             if (idx > 0)
             {
                 var potentialUserId = term.Substring(idx + 4).Trim();
@@ -75,7 +75,7 @@ namespace CompatBot.Commands
             [Description("A term to explain. Quote it if it contains spaces")] string term,
             [RemainingText, Description("Explanation text")] string explanation)
         {
-            term = term.StripQuotes();
+            term = term.ToLowerInvariant().StripQuotes();
             if (string.IsNullOrEmpty(explanation))
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "An explanation for the term must be provided").ConfigureAwait(false);
             else
@@ -100,7 +100,7 @@ namespace CompatBot.Commands
             [Description("A term to update. Quote it if it contains spaces")] string term,
             [RemainingText, Description("New explanation text")] string explanation)
         {
-            term = term.StripQuotes();
+            term = term.ToLowerInvariant().StripQuotes();
             using (var db = new BotDb())
             {
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
@@ -120,8 +120,8 @@ namespace CompatBot.Commands
             [Description("A term to rename. Remember quotes if it contains spaces")] string oldTerm,
             [Description("New term. Again, quotes")] string newTerm)
         {
-            oldTerm = oldTerm.StripQuotes();
-            newTerm = newTerm.StripQuotes();
+            oldTerm = oldTerm.ToLowerInvariant().StripQuotes();
+            newTerm = newTerm.ToLowerInvariant().StripQuotes();
             using (var db = new BotDb())
             {
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == oldTerm).ConfigureAwait(false);
@@ -176,7 +176,7 @@ namespace CompatBot.Commands
         [Description("Removes an explanation from the definition list")]
         public async Task Remove(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
         {
-            term = term.StripQuotes();
+            term = term.ToLowerInvariant().StripQuotes();
             using (var db = new BotDb())
             {
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
