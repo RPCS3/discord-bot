@@ -153,17 +153,22 @@ namespace CompatBot.Commands
 
             const int maxWarningsInPublicChannel = 3;
             var isPrivate = channel.IsPrivate;
-            var result = new StringBuilder("Warning list for ").Append(userName).Append(isPrivate ? "": $" (last {maxWarningsInPublicChannel})").AppendLine(":")
-                .AppendLine("```");
-            var header = $"{"ID",-5} | {"Issued by",-15} | {"On date (UTC)",-20} | Reason";
-            if (isPrivate)
-                header += "          | Full reason";
-            result.AppendLine(header)
-                  .AppendLine("".PadLeft(header.Length, '-'));
+            var isWhitelisted = client.GetMember(message.Author).IsWhitelisted();
             using (var db = new BotDb())
             {
+                var totalWarningCount = db.Warning.Count(w => w.DiscordId == userId);
+                var showCount = Math.Min(maxWarningsInPublicChannel, totalWarningCount);
+                var result = new StringBuilder("Warning list for ").Append(userName);
+                if (!isPrivate && !isWhitelisted && totalWarningCount > maxWarningsInPublicChannel)
+                    result.Append($" (last {showCount} of {totalWarningCount})");
+                result.AppendLine(":").AppendLine("```");
+                var header = $"{"ID",-5} | {"Issued by",-15} | {"On date (UTC)",-20} | Reason";
+                if (isPrivate)
+                    header += "          | Full reason";
+                result.AppendLine(header)
+                    .AppendLine("".PadLeft(header.Length, '-'));
                 IQueryable<Warning> query = db.Warning.Where(w => w.DiscordId == userId).OrderByDescending(w => w.Id);
-                if (!isPrivate)
+                if (!isPrivate && !isWhitelisted)
                     query = query.Take(maxWarningsInPublicChannel);
                 foreach (var warning in query)
                 {
@@ -174,8 +179,8 @@ namespace CompatBot.Commands
                         result.Append(" | ").Append(warning.FullReason);
                     result.AppendLine();
                 }
+                await channel.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }
-            await channel.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
         }
     }
 }
