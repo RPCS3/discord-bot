@@ -94,7 +94,7 @@ namespace CompatBot.Commands
                 .AddField("People who ~~broke~~ helped test the bot",
                     "🐱 Juhn\n" +
                     $"{hcorion} hcorion\n" +
-                    "👴 TGE");
+                    "🙃 TGE");
             await ctx.RespondAsync(embed: embed.Build());
         }
 
