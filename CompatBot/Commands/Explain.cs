@@ -171,7 +171,6 @@ namespace CompatBot.Commands
             }
         }
 
-
         [Command("remove"), Aliases("delete", "del", "erase", "obliterate"), RequiresBotModRole]
         [Description("Removes an explanation from the definition list")]
         public async Task Remove(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
@@ -190,6 +189,5 @@ namespace CompatBot.Commands
                 }
             }
         }
-
     }
 }

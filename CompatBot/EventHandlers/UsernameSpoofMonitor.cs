@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using HomoglyphConverter;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
@@ -15,6 +17,8 @@ namespace CompatBot.EventHandlers
     {
         private static readonly Dictionary<string, string> UsernameMapping = new Dictionary<string, string>();
         private static readonly SemaphoreSlim UsernameLock = new SemaphoreSlim(1, 1);
+        private static readonly MemoryCache SpoofingReportThrottlingCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
+        private static readonly TimeSpan SnoozeDuration = TimeSpan.FromHours(1);
 
         public static async Task OnUserUpdated(UserUpdateEventArgs args)
         {
@@ -25,11 +29,14 @@ namespace CompatBot.EventHandlers
             if (!potentialTargets.Any())
                 return;
 
+            if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
+                return;
+
             var m = args.Client.GetMember(args.UserAfter);
             await args.Client.ReportAsync("Potential user impersonation",
-                $"User {m.GetMentionWithNickname()} has changed their username from " +
+                $"User {m.GetMentionWithNickname()} has changed their __username__ from " +
                 $"**{args.UserBefore.Username.Sanitize()}#{args.UserBefore.Discriminator}** to " +
-                $"`{args.UserAfter.Username.Sanitize()}#{args.UserAfter.Discriminator}`",
+                $"**{args.UserAfter.Username.Sanitize()}#{args.UserAfter.Discriminator}**",
                 potentialTargets,
                 ReportSeverity.Medium);
         }
@@ -43,10 +50,13 @@ namespace CompatBot.EventHandlers
             if (!potentialTargets.Any())
                 return;
 
+            if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
+                return;
+
             await args.Client.ReportAsync("Potential user impersonation",
-                $"Member {args.Member.GetMentionWithNickname()} has changed their display name from " +
+                $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ from " +
                 $"**{(args.NicknameBefore ?? args.Member.Username).Sanitize()}** to " +
-                $"`{args.Member.DisplayName.Sanitize()}`",
+                $"**{args.Member.DisplayName.Sanitize()}**",
                 potentialTargets,
                 ReportSeverity.Medium);
         }
@@ -55,6 +65,9 @@ namespace CompatBot.EventHandlers
         {
             var potentialTargets = GetPotentialVictims(args.Client, args.Member, true, true);
             if (!potentialTargets.Any())
+                return;
+
+            if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
                 return;
 
             await args.Client.ReportAsync("Potential user impersonation",
@@ -80,6 +93,33 @@ namespace CompatBot.EventHandlers
                 else if (checkNickname && newDisplayName == GetCanonical(memberWithRole.DisplayName) && newMember.Id != memberWithRole.Id)
                     potentialTargets.Add(memberWithRole);
             return potentialTargets;
+        }
+
+        private static async Task<bool> IsFlashmobAsync(DiscordClient client, List<DiscordMember> potentialVictims)
+        {
+            if (potentialVictims?.Count > 0)
+                try
+                {
+                    var displayName = Normalizer.ToCanonicalForm(potentialVictims[0].DisplayName);
+                    if (SpoofingReportThrottlingCache.TryGetValue(displayName, out var x) && x is string y && !string.IsNullOrEmpty(y))
+                    {
+                        SpoofingReportThrottlingCache.Set(displayName, y, SnoozeDuration);
+                        return true;
+                    }
+
+                    if (potentialVictims.Count > 3)
+                    {
+                        SpoofingReportThrottlingCache.Set(displayName, "y", SnoozeDuration);
+                        var channel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
+                        await channel.SendMessageAsync($"`{displayName.Sanitize()}` is a popular member! Snoozing notifications for an hour").ConfigureAwait(false);
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Debug(e);
+                }
+            return false;
         }
 
         private static string GetCanonical(string name)
