@@ -106,15 +106,24 @@ namespace CompatBot.Commands
             }
             try
             {
-                int count;
+                int totalCount;
                 using (var db = new BotDb())
                 {
-                    await db.Warning.AddAsync(new Warning {DiscordId = userId, IssuerId = issuer.Id, Reason = reason, FullReason = fullReason ?? "", Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
+                    await db.Warning.AddAsync(new Warning { DiscordId = userId, IssuerId = issuer.Id, Reason = reason, FullReason = fullReason ?? "", Timestamp = DateTime.UtcNow.Ticks }).ConfigureAwait(false);
                     await db.SaveChangesAsync().ConfigureAwait(false);
-                    count = await db.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
+
+                    var threshold = DateTime.UtcNow.AddMinutes(-15).Ticks;
+                    var recentCount = db.Warning.Count(w => w.DiscordId == userId && w.Timestamp > threshold);
+                    if (recentCount > 3)
+                    {
+                        Config.Log.Debug("Suicide behavior detected, not spamming with warning responses");
+                        return true;
+                    }
+
+                    totalCount = db.Warning.Count(w => w.DiscordId == userId);
                 }
-                await message.RespondAsync($"User warning saved! User currently has {count} warning{StringUtils.GetSuffix(count)}!").ConfigureAwait(false);
-                if (count > 1)
+                await message.RespondAsync($"User warning saved! User currently has {totalCount} warning{StringUtils.GetSuffix(totalCount)}!").ConfigureAwait(false);
+                if (totalCount > 1)
                     await ListUserWarningsAsync(client, message, userId, userName).ConfigureAwait(false);
                 return true;
             }
@@ -128,7 +137,8 @@ namespace CompatBot.Commands
         //note: be sure to pass a sanitized userName
         private static async Task ListUserWarningsAsync(DiscordClient client, DiscordMessage message, ulong userId, string userName, bool skipIfOne = true)
         {
-            await message.Channel.TriggerTypingAsync().ConfigureAwait(false);
+            var channel = message.Channel;
+            await channel.TriggerTypingAsync().ConfigureAwait(false);
             int count;
             using (var db = new BotDb())
                 count = await db.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
@@ -141,25 +151,31 @@ namespace CompatBot.Commands
             if (count == 1 && skipIfOne)
                 return;
 
-            var isPrivate = message.Channel.IsPrivate;
-            var result = new StringBuilder("Warning list for ").Append(userName).AppendLine(":")
+            const int maxWarningsInPublicChannel = 3;
+            var isPrivate = channel.IsPrivate;
+            var result = new StringBuilder("Warning list for ").Append(userName).Append(isPrivate ? "": $" (last {maxWarningsInPublicChannel})").AppendLine(":")
                 .AppendLine("```");
             var header = $"{"ID",-5} | {"Issued by",-15} | {"On date (UTC)",-20} | Reason";
             if (isPrivate)
                 header += "          | Full reason";
             result.AppendLine(header)
                   .AppendLine("".PadLeft(header.Length, '-'));
-            using(var db = new BotDb())
-                foreach (var warning in db.Warning.Where(w => w.DiscordId == userId))
+            using (var db = new BotDb())
+            {
+                IQueryable<Warning> query = db.Warning.Where(w => w.DiscordId == userId).OrderByDescending(w => w.Id);
+                if (!isPrivate)
+                    query = query.Take(maxWarningsInPublicChannel);
+                foreach (var warning in query)
                 {
-                    var issuerName = warning.IssuerId == 0 ? "" : await client.GetUserNameAsync(message.Channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
+                    var issuerName = warning.IssuerId == 0 ? "" : await client.GetUserNameAsync(channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
                     var timestamp = warning.Timestamp.HasValue ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
                     result.Append($"{warning.Id:00000} | {issuerName,-15} | {timestamp,-20} | {warning.Reason}");
                     if (isPrivate)
                         result.Append(" | ").Append(warning.FullReason);
                     result.AppendLine();
                 }
-            await message.Channel.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+            }
+            await channel.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
         }
     }
 }
