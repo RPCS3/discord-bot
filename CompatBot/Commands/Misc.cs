@@ -91,7 +91,7 @@ namespace CompatBot.Commands
                     Color = DiscordColor.Purple,
                 }.AddField("Made by",
                     "💮 13xforever\n" +
-                    "🇭🇷 Roberto Anić Banić aka nicba1010\n")
+                    "🇭🇷 Roberto Anić Banić aka nicba1010")
                 .AddField("People who ~~broke~~ helped test the bot",
                     "🐱 Juhn\n" +
                     $"{hcorion} hcorion");
