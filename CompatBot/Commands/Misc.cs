@@ -93,7 +93,8 @@ namespace CompatBot.Commands
                     "💮 13xforever")
                 .AddField("People who ~~broke~~ helped test the bot",
                     "🐱 Juhn\n" +
-                    $"{hcorion} hcorion");
+                    $"{hcorion} hcorion\n" +
+                    "👴 TGE");
             await ctx.RespondAsync(embed: embed.Build());
         }
 
