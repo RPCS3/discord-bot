@@ -126,10 +126,22 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Rap file not found:"] = new Regex(@"Rap file not found: (?<rap_file>.*?)\r?$", DefaultOptions),
                     ["Pad handler expected but none initialized"] = new Regex(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
                     ["XAudio2Thread"] = new Regex(@"XAudio2Thread\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
+                    ["PPU executable hash:"] = new Regex(@"PPU executable hash: PPU-(?<ppu_hash>\w+) \(<-\s*(?<ppu_hash_patch>(?!0)\d+)\).*?\r?$", DefaultOptions),
+                    ["Loaded SPU image:"] = new Regex(@"Loaded SPU image: SPU-(?<spu_hash>\w+) \(<-\s*(?<spu_hash_patch>(?!0)\d+)\).*?\r?$", DefaultOptions),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
             }
+        };
+
+        public static readonly HashSet<string> MultiValueItems = new HashSet<string>
+        {
+            "rap_file",
+            "vulkan_found_device",
+            "ppu_hash",
+            "ppu_hash_patch",
+            "spu_hash",
+            "spu_hash_patch",
         };
 
         private static async Task PiracyCheckAsync(string line, LogParseState state)

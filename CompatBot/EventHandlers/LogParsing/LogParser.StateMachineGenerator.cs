@@ -51,7 +51,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 if (!string.IsNullOrEmpty(group.Name) && group.Name != "0" && !string.IsNullOrWhiteSpace(group.Value))
                 {
                     Config.Log.Debug($"regex {group.Name} = {group.Value}");
-                    if (group.Name == "rap_file" || group.Name == "vulkan_found_device")
+                    if (MultiValueItems.Contains(group.Name))
                     {
                         var currentValue = state.WipCollection[group.Name];
                         if (!string.IsNullOrEmpty(currentValue))
