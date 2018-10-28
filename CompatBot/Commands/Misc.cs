@@ -65,7 +65,7 @@ namespace CompatBot.Commands
 
         private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
-            "I", "me", "myself", "moi", "self"
+            "I", "me", "myself", "moi"
         };
 
         private static readonly HashSet<char> Vowels = new HashSet<char> {'a', 'e', 'i', 'o', 'u'};
@@ -173,6 +173,8 @@ namespace CompatBot.Commands
         {
             var choices = RateAnswers;
             whatever = whatever.ToLowerInvariant().Trim();
+            if (whatever.Contains("my", StringComparison.InvariantCultureIgnoreCase))
+                whatever = string.Join(" ", whatever.Split(' ').Select(p => p.Equals("my", StringComparison.InvariantCultureIgnoreCase) ? $"<@{ctx.Message.Author.Id}>'s" : p));
             try
             {
                 var whateverParts = whatever.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];

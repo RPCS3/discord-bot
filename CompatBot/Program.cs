@@ -153,8 +153,8 @@ namespace CompatBot
 
                     client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
                     client.MessageCreated += ProductCodeLookup.OnMessageCreated;
-                    client.MessageCreated += LogInfoHandler.OnMessageCreated;
-                    client.MessageCreated += LogsAsTextMonitor.OnMessageCreated;
+                    client.MessageCreated += LogParsingHandler.OnMessageCreated;
+                    client.MessageCreated += LogAsTextMonitor.OnMessageCreated;
                     client.MessageCreated += DiscordInviteFilter.OnMessageCreated;
                     client.MessageCreated += BotShutupHandler.OnMessageCreated;
                     client.MessageCreated += NewBuildsMonitor.OnMessageCreated;

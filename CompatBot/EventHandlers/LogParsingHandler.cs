@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
@@ -11,12 +12,11 @@ using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
-    internal static class LogInfoHandler
+    internal static class LogParsingHandler
     {
         private static readonly char[] linkSeparator = { ' ', '>', '\r', '\n' };
         private static readonly ISourceHandler[] handlers =
@@ -30,7 +30,7 @@ namespace CompatBot.EventHandlers
         private delegate void OnLog(MessageCreateEventArgs args);
         private static event OnLog OnNewLog;
 
-        static LogInfoHandler()
+        static LogParsingHandler()
         {
             OnNewLog += BackgroundProcessor;
         }
@@ -63,7 +63,7 @@ namespace CompatBot.EventHandlers
                 var startTime = Stopwatch.StartNew();
                 try
                 {
-                    foreach (var attachment in message.Attachments.Where(a => a.FileSize < Config.AttachmentSizeLimit))
+                    foreach (var attachment in message.Attachments.Where(a => a.FileSize < Config.AttachmentSizeLimit && !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
                     foreach (var handler in handlers)
                         if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
                         {
@@ -128,7 +128,26 @@ namespace CompatBot.EventHandlers
                             return;
                         }
 
-                    if (string.IsNullOrEmpty(message.Content) || !"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
+                    if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
+                        return;
+
+                    var potentialLogExtension = message.Attachments.Select(a => Path.GetExtension(a.FileName).ToUpperInvariant().TrimStart('.')).FirstOrDefault();
+                    switch (potentialLogExtension)
+                    {
+                        case "RAR":
+                        case "7Z":
+                        {
+                            await args.Channel.SendMessageAsync($"{message.Author.Mention} {potentialLogExtension} archive type is not supported, re-upload log compressed as **ZIP**").ConfigureAwait(false);
+                            return;
+                        }
+                        case "TXT":
+                        {
+                            await args.Channel.SendMessageAsync($"{message.Author.Mention} please do not copy/paste logs from UI, they do not contain all the required information; ask if you do not know how to upload full log file").ConfigureAwait(false);
+                            return;
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(message.Content))
                         return;
 
                     var linkStart = message.Content.IndexOf("http");
