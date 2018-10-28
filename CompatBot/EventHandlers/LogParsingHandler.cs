@@ -63,7 +63,7 @@ namespace CompatBot.EventHandlers
                 var startTime = Stopwatch.StartNew();
                 try
                 {
-                    foreach (var attachment in message.Attachments.Where(a => a.FileSize < Config.AttachmentSizeLimit))
+                    foreach (var attachment in message.Attachments.Where(a => a.FileSize < Config.AttachmentSizeLimit && !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
                     foreach (var handler in handlers)
                         if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
                         {
