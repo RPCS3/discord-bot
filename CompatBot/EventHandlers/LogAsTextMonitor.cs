@@ -7,7 +7,7 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
-    internal static class LogsAsTextMonitor
+    internal static class LogAsTextMonitor
     {
         private static readonly Regex LogLine = new Regex(@"^[`""]?(·|(\w|!)) ({(rsx|PPU|SPU)|LDR:)|E LDR:", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
