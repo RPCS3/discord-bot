@@ -311,6 +311,25 @@ namespace CompatBot.Utils.ResultFormatters
                 if (fatalError.Contains("psf.cpp"))
                     notes.AppendLine("Game save data might be corrupted");
             }
+/*
+            var patchCount = 0;
+            if (items["ppu_hash_patch"] is string ppuPatch)
+                patchCount += ppuPatch.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Select(s =>
+                                                                                                                  {
+                                                                                                                      int.TryParse(s, out var result);
+                                                                                                                      return result;
+                                                                                                                  }).Sum();
+            if (items["spu_hash_patch"] is string spuPatch)
+                patchCount += spuPatch.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Select(s =>
+                                                                                                                  {
+                                                                                                                      int.TryParse(s, out var result);
+                                                                                                                      return result;
+                                                                                                                  }).Sum();
+            if (patchCount > 0)
+                notes.AppendLine($"{patchCount} game patch{(patchCount == 1 ? " was" : "es were")} applied");
+*/
+            if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
+                notes.AppendLine("Game-specific patches were applied");
 
             if (items["failed_to_decrypt"] is string _)
                 notes.AppendLine("Failed to decrypt game content, license file might be corrupted");
