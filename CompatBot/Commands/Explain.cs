@@ -24,7 +24,8 @@ namespace CompatBot.Commands
             await ctx.TriggerTypingAsync().ConfigureAwait(false);
             if (string.IsNullOrEmpty(term))
             {
-                await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list` in a bot spam channel or bot DMs").ConfigureAwait(false);
+                var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list` in {spamChannel.Mention} or bot DMs").ConfigureAwait(false);
                 return;
             }
 
@@ -66,7 +67,8 @@ namespace CompatBot.Commands
                 }
             }
 
-            await ctx.RespondAsync($"Unknown term `{term.Sanitize()}`. Use `!explain list` to look at defined terms in a bot spam channel or bot DMs").ConfigureAwait(false);
+            var spamCh = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+            await ctx.RespondAsync($"Unknown term `{term.Sanitize()}`. Use `!explain list` to look at defined terms in {spamCh.Mention} or bot DMs").ConfigureAwait(false);
         }
 
         [Command("add"), RequiresBotModRole]

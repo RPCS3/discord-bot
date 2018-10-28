@@ -41,6 +41,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["RSX:"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Serial:"] = new Regex(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
                     ["Title:"] = new Regex(@"Title: (?<game_title>.*)?\r?$", DefaultOptions),
+                    ["Category:"] = new Regex(@"Category: (?<game_category>.*)?\r?$", DefaultOptions),
                     ["LDR:"] = new Regex(@"(Path|Cache): ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
                     ["custom config:"] = new Regex("custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
                 },

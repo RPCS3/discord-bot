@@ -318,8 +318,10 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty, you need to run the game before uploading the log");
-            if (!string.IsNullOrEmpty(items["hdd_game_path"]) && (items["serial"]?.StartsWith("BL", StringComparison.InvariantCultureIgnoreCase) ?? false))
+            if (!string.IsNullOrEmpty(items["hdd_game_path"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
+            if ((items["game_category"] == "HG") && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))
+                notes.AppendLine("Disc game installed as a PKG 🔨; please follow the quickstart guide");
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
                 notes.AppendLine("Pad initialization problem detected; try disabling `Native UI`");
             if (!string.IsNullOrEmpty(items["xaudio_init_error"]))
