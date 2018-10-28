@@ -322,6 +322,9 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
                 notes.AppendLine("Pad initialization problem detected; try disabling `Native UI`");
+            if (!string.IsNullOrEmpty(items["xaudio_init_error"]))
+                notes.AppendLine("XAudio initialization failed; make sure you have audio output device working");
+
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.AppendLine("The log was too large, so only the last processed run is shown");
 
