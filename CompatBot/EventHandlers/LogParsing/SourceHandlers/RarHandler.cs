@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
-using System.IO.Compression;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Utils;
 using DSharpPlus.Entities;
+using SharpCompress.Archives.Rar;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
-    public class ZipHandler: ISourceHandler
+    public class RarHandler: ISourceHandler
     {
         private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
 
         public async Task<bool> CanHandleAsync(DiscordAttachment attachment)
         {
-            if (!attachment.FileName.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
+            if (!attachment.FileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
                 return false;
 
             try
@@ -43,7 +42,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             }
             catch (Exception e)
             {
-                Config.Log.Error(e, "Error sniffing the zip content");
+                Config.Log.Error(e, "Error sniffing the rar content");
                 return false;
             }
         }
@@ -58,32 +57,32 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     using (var downloadStream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
                         await downloadStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
-                    using (var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read))
-                    {
-                        var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase));
-                        if (logEntry == null)
-                            throw new InvalidOperationException("No zip entries that match the log criteria");
-
-                        using (var zipStream = logEntry.Open())
-                        {
-                            int read;
-                            FlushResult flushed;
-                            do
+                    using (var rarArchive = RarArchive.Open(fileStream))
+                    using (var rarReader = rarArchive.ExtractAllEntries())
+                        while (rarReader.MoveToNextEntry())
+                            if (!rarReader.Entry.IsDirectory && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                var memory = writer.GetMemory(Config.MinimumBufferSize);
-                                read = await zipStream.ReadAsync(memory, Config.Cts.Token);
-                                writer.Advance(read);
-                                flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
-                            } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
-                        }
-                    }
+                                using (var rarStream = rarReader.OpenEntryStream())
+                                {
+                                    int read;
+                                    FlushResult flushed;
+                                    do
+                                    {
+                                        var memory = writer.GetMemory(Config.MinimumBufferSize);
+                                        read = await rarStream.ReadAsync(memory, Config.Cts.Token);
+                                        writer.Advance(read);
+                                        flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
+                                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
+                                }
+                                writer.Complete();
+                                return;
+                            }
+                    Config.Log.Warn("No rar entries that match the log criteria");
                 }
             }
             catch (Exception e)
             {
                 Config.Log.Error(e, "Error filling the log pipe");
-                writer.Complete(e);
-                return;
             }
             writer.Complete();
         }

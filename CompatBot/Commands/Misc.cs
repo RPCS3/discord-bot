@@ -158,7 +158,7 @@ namespace CompatBot.Commands
         }
 
         [Command("8ball"), Cooldown(20, 60, CooldownBucketType.Channel)]
-        [Description("Generates a ~~random~~ perfect answer to your question")]
+        [Description("Provides a ~~random~~ objectively best answer to your question")]
         public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
         {
             string answer;
@@ -168,7 +168,7 @@ namespace CompatBot.Commands
         }
 
         [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]
-        [Description("Gives an ~~unrelated~~ expert judgement on the matter at hand")]
+        [Description("Gives a ~~random~~ expert judgment on the matter at hand")]
         public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever)
         {
             var choices = RateAnswers;
