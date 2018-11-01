@@ -260,9 +260,7 @@ paket-files/
 __pycache__/
 *.pyc
 launchSettings.json
-bot.db
 .vscode/
-thumbs.db
+*.db
 *.db-journal
-
 logs/

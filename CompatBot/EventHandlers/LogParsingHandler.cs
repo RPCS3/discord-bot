@@ -24,6 +24,7 @@ namespace CompatBot.EventHandlers
             new GzipHandler(),
             new PlainTextHandler(),
             new ZipHandler(),
+            new RarHandler(),
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
@@ -134,7 +135,6 @@ namespace CompatBot.EventHandlers
                     var potentialLogExtension = message.Attachments.Select(a => Path.GetExtension(a.FileName).ToUpperInvariant().TrimStart('.')).FirstOrDefault();
                     switch (potentialLogExtension)
                     {
-                        case "RAR":
                         case "7Z":
                         {
                             await args.Channel.SendMessageAsync($"{message.Author.Mention} {potentialLogExtension} archive type is not supported, re-upload log compressed as **ZIP**").ConfigureAwait(false);

@@ -26,6 +26,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.1.2" />
     <PackageReference Include="NLog" Version="4.5.10" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.1" />
+    <PackageReference Include="SharpCompress" Version="0.22.0" />
     <PackageReference Include="System.IO.Pipelines" Version="4.5.2" />
   </ItemGroup>
 
