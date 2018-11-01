@@ -36,6 +36,9 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
+        private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
+        private static readonly Version RecommendedOpenGLVersion = new Version(4, 5);
+
         private const string TrueMark = "[x]";
         private const string FalseMark = "[ ]";
 
@@ -310,6 +313,24 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                 if (fatalError.Contains("psf.cpp"))
                     notes.AppendLine("Game save data might be corrupted");
+            }
+            Version oglVersion = null;
+            if (items["opengl_version"] is string oglVersionString)
+                Version.TryParse(oglVersionString, out oglVersion);
+            if (items["glsl_version"] is string glslVersionString && Version.TryParse(glslVersionString, out var glslVersion))
+            {
+                glslVersion = new Version(glslVersion.Major, glslVersion.Minor/10);
+                if (oglVersion == null || glslVersion > oglVersion)
+                    oglVersion = glslVersion;
+            }
+            if (oglVersion != null)
+            {
+                if (oglVersion < MinimumOpenGLVersion)
+                    notes.AppendLine($"GPU only supports OpenGL {oglVersion.Major}.{oglVersion.Minor}, which is below the minimum requirement of {MinimumOpenGLVersion}");
+/*
+                else if (oglVersion < RecommendedOpenGLVersion)
+                    notes.AppendLine($"GPU only supports OpenGL {oglVersion.Major}.{oglVersion.Minor}, which is below the recommended requirement of {RecommendedOpenGLVersion}");
+*/
             }
 /*
             var patchCount = 0;

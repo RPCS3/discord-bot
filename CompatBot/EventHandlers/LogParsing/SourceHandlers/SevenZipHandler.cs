@@ -21,6 +21,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 return false;
 
             return true;
+/*
             try
             {
                 using (var client = HttpClientFactory.Create())
@@ -47,6 +48,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 Config.Log.Error(e, "Error sniffing the 7z content");
                 return false;
             }
+*/
         }
 
         public async Task FillPipeAsync(DiscordAttachment attachment, PipeWriter writer)
