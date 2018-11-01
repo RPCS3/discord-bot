@@ -128,6 +128,7 @@ namespace CompatBot
             var fileTarget = new FileTarget("logfile") {
                 FileName = LogPath,
                 ArchiveEvery = FileArchivePeriod.Day,
+                ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
                 KeepFileOpen = true,
                 ConcurrentWrites = false,
                 AutoFlush = false,
