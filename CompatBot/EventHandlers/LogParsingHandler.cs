@@ -25,6 +25,7 @@ namespace CompatBot.EventHandlers
             new PlainTextHandler(),
             new ZipHandler(),
             new RarHandler(),
+            new SevenZipHandler(),
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
@@ -135,11 +136,6 @@ namespace CompatBot.EventHandlers
                     var potentialLogExtension = message.Attachments.Select(a => Path.GetExtension(a.FileName).ToUpperInvariant().TrimStart('.')).FirstOrDefault();
                     switch (potentialLogExtension)
                     {
-                        case "7Z":
-                        {
-                            await args.Channel.SendMessageAsync($"{message.Author.Mention} {potentialLogExtension} archive type is not supported, re-upload log compressed as **ZIP**").ConfigureAwait(false);
-                            return;
-                        }
                         case "TXT":
                         {
                             await args.Channel.SendMessageAsync($"{message.Author.Mention} please do not copy/paste logs from UI, they do not contain all the required information; ask if you do not know how to upload full log file").ConfigureAwait(false);

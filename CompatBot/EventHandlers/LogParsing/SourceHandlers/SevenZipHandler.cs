@@ -1,38 +1,39 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
-using System.IO.Compression;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Utils;
 using DSharpPlus.Entities;
+using SharpCompress.Archives.SevenZip;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
-    public class ZipHandler: ISourceHandler
+    public class SevenZipHandler: ISourceHandler
     {
         private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
 
         public async Task<bool> CanHandleAsync(DiscordAttachment attachment)
         {
-            if (!attachment.FileName.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
+            if (!attachment.FileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
                 return false;
 
+            return true;
             try
             {
                 using (var client = HttpClientFactory.Create())
                 using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
                 {
-                    var buf = bufferPool.Rent(1024);
+                    var buf = bufferPool.Rent(4096);
                     bool result;
                     try
                     {
                         var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                        var firstEntry = Encoding.ASCII.GetString(new ReadOnlySpan<byte>(buf, 0, read));
-                        result = firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase);
+                        using (var memStream = new MemoryStream(read))
+                        using (var zipArchive = SevenZipArchive.Open(memStream))
+                            result = zipArchive.Entries.Any(e => !e.IsDirectory && e.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase));
                     }
                     finally
                     {
@@ -43,7 +44,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             }
             catch (Exception e)
             {
-                Config.Log.Error(e, "Error sniffing the zip content");
+                Config.Log.Error(e, "Error sniffing the 7z content");
                 return false;
             }
         }
@@ -58,32 +59,32 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     using (var downloadStream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
                         await downloadStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
-                    using (var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read))
-                    {
-                        var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase));
-                        if (logEntry == null)
-                            throw new InvalidOperationException("No zip entries that match the log criteria");
-
-                        using (var zipStream = logEntry.Open())
-                        {
-                            int read;
-                            FlushResult flushed;
-                            do
+                    using (var zipArchive = SevenZipArchive.Open(fileStream))
+                    using (var zipReader = zipArchive.ExtractAllEntries())
+                        while (zipReader.MoveToNextEntry())
+                            if (!zipReader.Entry.IsDirectory && zipReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                var memory = writer.GetMemory(Config.MinimumBufferSize);
-                                read = await zipStream.ReadAsync(memory, Config.Cts.Token);
-                                writer.Advance(read);
-                                flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
-                            } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
-                        }
-                    }
+                                using (var rarStream = zipReader.OpenEntryStream())
+                                {
+                                    int read;
+                                    FlushResult flushed;
+                                    do
+                                    {
+                                        var memory = writer.GetMemory(Config.MinimumBufferSize);
+                                        read = await rarStream.ReadAsync(memory, Config.Cts.Token);
+                                        writer.Advance(read);
+                                        flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
+                                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
+                                }
+                                writer.Complete();
+                                return;
+                            }
+                    Config.Log.Warn("No 7z entries that match the log criteria");
                 }
             }
             catch (Exception e)
             {
                 Config.Log.Error(e, "Error filling the log pipe");
-                writer.Complete(e);
-                return;
             }
             writer.Complete();
         }

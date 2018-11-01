@@ -2,7 +2,6 @@
 using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,10 +26,17 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
                 {
                     var buf = bufferPool.Rent(1024);
-                    var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                    var firstEntry = Encoding.ASCII.GetString(new ReadOnlySpan<byte>(buf, 0, read));
-                    var result = firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase);
-                    bufferPool.Return(buf);
+                    bool result;
+                    try
+                    {
+                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                        var firstEntry = Encoding.ASCII.GetString(new ReadOnlySpan<byte>(buf, 0, read));
+                        result = firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase);
+                    }
+                    finally
+                    {
+                        bufferPool.Return(buf);
+                    }
                     return result;
                 }
             }
@@ -52,31 +58,25 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         await downloadStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
                     using (var rarArchive = RarArchive.Open(fileStream))
-                    {
-                        using (var rarReader = rarArchive.ExtractAllEntries())
-                        {
-                            while (rarReader.MoveToNextEntry())
+                    using (var rarReader = rarArchive.ExtractAllEntries())
+                        while (rarReader.MoveToNextEntry())
+                            if (!rarReader.Entry.IsDirectory && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                if (!rarReader.Entry.IsDirectory && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase))
+                                using (var rarStream = rarReader.OpenEntryStream())
                                 {
-                                    using (var rarStream = rarReader.OpenEntryStream())
+                                    int read;
+                                    FlushResult flushed;
+                                    do
                                     {
-                                        int read;
-                                        FlushResult flushed;
-                                        do
-                                        {
-                                            var memory = writer.GetMemory(Config.MinimumBufferSize);
-                                            read = await rarStream.ReadAsync(memory, Config.Cts.Token);
-                                            writer.Advance(read);
-                                            flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
-                                        } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
-                                    }
-                                    writer.Complete();
-                                    return;
+                                        var memory = writer.GetMemory(Config.MinimumBufferSize);
+                                        read = await rarStream.ReadAsync(memory, Config.Cts.Token);
+                                        writer.Advance(read);
+                                        flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
+                                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
                                 }
+                                writer.Complete();
+                                return;
                             }
-                        }
-                    }
                     Config.Log.Warn("No rar entries that match the log criteria");
                 }
             }
