@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -30,6 +32,64 @@ namespace CompatBot.Commands
                 return Task.CompletedTask;
             }
 
+            [Command("members"), Aliases("users"), RequireDirectMessage]
+            [Description("Dumps server member information, including usernames, nicknames, and roles")]
+            public async Task Members(CommandContext ctx)
+            {
+                try
+                {
+                    var members = GetMembers(ctx.Client);
+                    using (var compressedResult = new MemoryStream())
+                    {
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            using (var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true))
+                            {
+                                foreach (var member in members)
+                                    writer.WriteLine($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}");
+                                writer.Flush();
+                            }
+                            memoryStream.Seek(0, SeekOrigin.Begin);
+                            if (memoryStream.Length <= Config.AttachmentSizeLimit)
+                            {
+                                await ctx.RespondWithFileAsync("names.txt", memoryStream).ConfigureAwait(false);
+                                return;
+                            }
+
+                            using (var gzip = new GZipStream(compressedResult, CompressionLevel.Optimal, true))
+                            {
+                                memoryStream.CopyTo(gzip);
+                                gzip.Flush();
+                            }
+                        }
+
+                        if (compressedResult.Length <= Config.AttachmentSizeLimit)
+                        {
+                            compressedResult.Seek(0, SeekOrigin.Begin);
+                            await ctx.RespondWithFileAsync("names.txt.gz", compressedResult).ConfigureAwait(false);
+                        }
+                        else
+                            await ctx.RespondAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to dump guild members");
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to dump guild members").ConfigureAwait(false);
+                }
+            }
+
+            private List<DiscordMember> GetMembers(DiscordClient client)
+            {
+                //owner -> white name
+                //newbs -> veterans
+                return client.Guilds.Select(g => g.Value.GetAllMembersAsync().ConfigureAwait(false))
+                    .SelectMany(l => l.GetAwaiter().GetResult())
+                    .OrderByDescending(m => m.Hierarchy)
+                    .ThenByDescending(m => m.JoinedAt)
+                    .ToList();
+            }
+
             private async void SpoofingCheck(CommandContext ctx)
             {
                 if (!CheckLock.Wait(0))
@@ -41,16 +101,11 @@ namespace CompatBot.Commands
                 try
                 {
                     await ctx.TriggerTypingAsync().ConfigureAwait(false);
-                    //owner -> white name
-                    //newbs -> veterans
-                    var members = ctx.Client.Guilds.SelectMany(g => g.Value.Members)
-                        .OrderByDescending(m => m.Hierarchy)
-                        .ThenByDescending(m => m.JoinedAt)
-                        .ToList();
+                    var members = GetMembers(ctx.Client);
                     if (members.Count < 2)
                         return;
 
-                    var result = new StringBuilder("List of potential impersonators -> victims:").AppendLine();
+                    var result = new StringBuilder("List of potential impersonators → victims:").AppendLine();
                     var headerLength = result.Length;
                     var checkedMembers = new List<DiscordMember>(members.Count) {members[0]};
                     for (var i = 1; i < members.Count; i++)
@@ -58,7 +113,7 @@ namespace CompatBot.Commands
                         var member = members[i];
                         var victims = UsernameSpoofMonitor.GetPotentialVictims(ctx.Client, member, true, true, checkedMembers);
                         if (victims.Any())
-                            result.Append(member.GetMentionWithNickname()).Append(" -> ").AppendLine(string.Join(", ", victims.Select(m => m.GetMentionWithNickname())));
+                            result.Append(member.GetMentionWithNickname()).Append(" → ").AppendLine(string.Join(", ", victims.Select(m => m.GetMentionWithNickname())));
                         checkedMembers.Add(member);
                     }
                     if (result.Length > headerLength)
