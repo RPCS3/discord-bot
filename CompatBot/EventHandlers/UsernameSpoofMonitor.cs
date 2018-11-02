@@ -84,13 +84,13 @@ namespace CompatBot.EventHandlers
                                        .OrderByDescending(m => m.Hierarchy)
                                        .ThenByDescending(m => m.JoinedAt)
                                        .ToList();
-            var newUsername = Normalizer.ToCanonicalForm(newMember.Username);
-            var newDisplayName = Normalizer.ToCanonicalForm(newMember.DisplayName);
+            var newUsername = GetCanonical(newMember.Username);
+            var newDisplayName = GetCanonical(newMember.DisplayName);
             var potentialTargets = new List<DiscordMember>();
             foreach (var memberWithRole in membersWithRoles)
                 if (checkUsername && newUsername == GetCanonical(memberWithRole.Username) && newMember.Id != memberWithRole.Id)
                     potentialTargets.Add(memberWithRole);
-                else if (checkNickname && newDisplayName == GetCanonical(memberWithRole.DisplayName) && newMember.Id != memberWithRole.Id)
+                else if (checkNickname && (newDisplayName == GetCanonical(memberWithRole.DisplayName) || newDisplayName == GetCanonical(memberWithRole.Username)) && newMember.Id != memberWithRole.Id)
                     potentialTargets.Add(memberWithRole);
             return potentialTargets;
         }
@@ -100,7 +100,7 @@ namespace CompatBot.EventHandlers
             if (potentialVictims?.Count > 0)
                 try
                 {
-                    var displayName = Normalizer.ToCanonicalForm(potentialVictims[0].DisplayName);
+                    var displayName = GetCanonical(potentialVictims[0].DisplayName);
                     if (SpoofingReportThrottlingCache.TryGetValue(displayName, out var x) && x is string y && !string.IsNullOrEmpty(y))
                     {
                         SpoofingReportThrottlingCache.Set(displayName, y, SnoozeDuration);

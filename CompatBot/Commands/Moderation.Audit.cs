@@ -38,6 +38,7 @@ namespace CompatBot.Commands
             {
                 try
                 {
+                    await ctx.TriggerTypingAsync().ConfigureAwait(false);
                     var members = GetMembers(ctx.Client);
                     using (var compressedResult = new MemoryStream())
                     {
