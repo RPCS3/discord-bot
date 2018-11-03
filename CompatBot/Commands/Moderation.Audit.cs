@@ -36,6 +36,12 @@ namespace CompatBot.Commands
             [Description("Dumps server member information, including usernames, nicknames, and roles")]
             public async Task Members(CommandContext ctx)
             {
+                if (!CheckLock.Wait(0))
+                {
+                    await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
+                    return;
+                }
+
                 try
                 {
                     await ctx.TriggerTypingAsync().ConfigureAwait(false);
@@ -63,12 +69,9 @@ namespace CompatBot.Commands
                                 gzip.Flush();
                             }
                         }
-
+                        compressedResult.Seek(0, SeekOrigin.Begin);
                         if (compressedResult.Length <= Config.AttachmentSizeLimit)
-                        {
-                            compressedResult.Seek(0, SeekOrigin.Begin);
                             await ctx.RespondWithFileAsync("names.txt.gz", compressedResult).ConfigureAwait(false);
-                        }
                         else
                             await ctx.RespondAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
                     }
@@ -77,6 +80,10 @@ namespace CompatBot.Commands
                 {
                     Config.Log.Warn(e, "Failed to dump guild members");
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to dump guild members").ConfigureAwait(false);
+                }
+                finally
+                {
+                    CheckLock.Release(1);
                 }
             }
 
@@ -117,10 +124,41 @@ namespace CompatBot.Commands
                             result.Append(member.GetMentionWithNickname()).Append(" → ").AppendLine(string.Join(", ", victims.Select(m => m.GetMentionWithNickname())));
                         checkedMembers.Add(member);
                     }
-                    if (result.Length > headerLength)
-                        await ctx.SendAutosplitMessageAsync(result, blockEnd: null, blockStart: null).ConfigureAwait(false);
-                    else
-                        await ctx.RespondAsync("No potential name spoofing was detected").ConfigureAwait(false);
+
+                    using (var compressedStream = new MemoryStream())
+                    {
+                        using (var uncompressedStream = new MemoryStream())
+                        {
+                            using (var writer = new StreamWriter(uncompressedStream, new UTF8Encoding(false), 4096, true))
+                            {
+                                writer.Write(result.ToString());
+                                writer.Flush();
+                            }
+                            uncompressedStream.Seek(0, SeekOrigin.Begin);
+                            if (result.Length <= headerLength)
+                            {
+                                await ctx.RespondAsync("No potential name spoofing was detected").ConfigureAwait(false);
+                                return;
+                            }
+
+                            if (uncompressedStream.Length <= Config.AttachmentSizeLimit)
+                            {
+                                await ctx.RespondWithFileAsync("spoofing_check_results.txt", uncompressedStream).ConfigureAwait(false);
+                                return;
+                            }
+
+                            using (var gzip = new GZipStream(compressedStream, CompressionLevel.Optimal, true))
+                            {
+                                uncompressedStream.CopyTo(gzip);
+                                gzip.Flush();
+                            }
+                            compressedStream.Seek(0, SeekOrigin.Begin);
+                            if (compressedStream.Length <= Config.AttachmentSizeLimit)
+                                await ctx.RespondWithFileAsync("spoofing_check_results.txt.gz", compressedStream).ConfigureAwait(false);
+                            else
+                                await ctx.RespondAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
