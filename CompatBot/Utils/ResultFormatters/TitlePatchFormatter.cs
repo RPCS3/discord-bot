@@ -35,7 +35,7 @@ namespace CompatBot.Utils.ResultFormatters
                 var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
                 if (pages > 1)
                     embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxTitleSize);
-                embedBuilder.Description = $"Total download size of all packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
+                embedBuilder.Description = $"Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
                 var i = 0;
                 do
                 {
