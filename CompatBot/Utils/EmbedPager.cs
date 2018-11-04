@@ -10,7 +10,7 @@ namespace CompatBot.Utils
     {
         public const int MaxDescriptionLength = 2048;
         public const int MaxFieldLength = 1024;
-        public const int MaxTitleSize = 256;
+        public const int MaxFieldTitleLength = 256;
         public const int MaxFields = 25;
 
         public IEnumerable<DiscordEmbed> BreakInEmbeds(DiscordEmbedBuilder builder, IEnumerable<string> lines, int maxLinesPerField = 10)
@@ -24,7 +24,7 @@ namespace CompatBot.Utils
                     builder.ClearFields();
                     fieldCount = 0;
                 }
-                builder.AddField(field.title.Trim(MaxTitleSize).ToUpperInvariant(), field.content, true);
+                builder.AddField(field.title.Trim(MaxFieldTitleLength).ToUpperInvariant(), field.content, true);
                 fieldCount++;
             }
             if (fieldCount > 0)
@@ -101,7 +101,7 @@ namespace CompatBot.Utils
                 return $"{first} - {last}";
 
             var commonPrefix = "";
-            var maxPrefixSize = Math.Min(Math.Min(first.Length, last.Length), MaxTitleSize/2);
+            var maxPrefixSize = Math.Min(Math.Min(first.Length, last.Length), MaxFieldTitleLength/2);
             for (var i = 0; i < maxPrefixSize; i++)
             {
                 if (first[i] == last[i])

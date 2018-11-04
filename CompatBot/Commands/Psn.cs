@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Utils;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 

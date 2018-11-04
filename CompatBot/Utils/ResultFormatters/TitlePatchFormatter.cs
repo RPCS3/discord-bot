@@ -34,7 +34,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
                 if (pages > 1)
-                    embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxTitleSize);
+                    embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxFieldTitleLength);
                 embedBuilder.Description = $"Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
                 var i = 0;
                 do
@@ -46,7 +46,7 @@ namespace CompatBot.Utils.ResultFormatters
                         result.Add(embedBuilder);
                         embedBuilder = new DiscordEmbedBuilder
                         {
-                            Title = $"{title} [Part {i/EmbedPager.MaxFields+1} of {pages}]".Trim(EmbedPager.MaxTitleSize),
+                            Title = $"{title} [Part {i/EmbedPager.MaxFields+1} of {pages}]".Trim(EmbedPager.MaxFieldTitleLength),
                             Color = Config.Colors.DownloadLinks,
                             ThumbnailUrl = thumbnailUrl,
                         };

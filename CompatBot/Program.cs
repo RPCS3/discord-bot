@@ -106,6 +106,7 @@ namespace CompatBot
                     commands.RegisterCommands<Psn>();
                     commands.RegisterCommands<Invites>();
                     commands.RegisterCommands<Moderation>();
+                    commands.RegisterCommands<Ird>();
 
                     client.Ready += async r =>
                                     {

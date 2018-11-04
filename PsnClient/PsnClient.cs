@@ -319,6 +319,5 @@ namespace PsnClient
             } while (tries < 3);
             throw new InvalidOperationException("Couldn't obtain web session");
         }
-
     }
 }
