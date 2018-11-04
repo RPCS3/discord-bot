@@ -29,7 +29,7 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (parts.Length == 1)
                     parts = new[] {null, item.Filename};
                 result.AddField(
-                    $"[{parts?[0]}] {item.Title?.Sanitize().Trim(EmbedPager.MaxFieldTitleLength)}",
+                    $"[{parts?[0]} v{item.GameVersion}] {item.Title?.Sanitize().Trim(EmbedPager.MaxFieldTitleLength)}",
                     $"⏬ [`{parts[1]?.Sanitize().Trim(200)}`]({IrdClient.GetDownloadLink(item.Filename)})　ℹ [Info]({IrdClient.GetInfoLink(item.Filename)})"
                 );
             }
