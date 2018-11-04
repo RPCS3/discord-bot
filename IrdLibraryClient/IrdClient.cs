@@ -70,7 +70,7 @@ namespace IrdLibraryClient
                         ["start"] = "0",
                         ["length"] = "10",
 
-                        ["search[value]"] = query,
+                        ["search[value]"] = query.Trim(100),
 
                         ["_"] = DateTime.UtcNow.Ticks.ToString(),
                     });
