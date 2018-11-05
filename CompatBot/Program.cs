@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands;
@@ -81,6 +82,16 @@ namespace CompatBot
                 var gameTdbScrapingTask = GameTdbScraper.RunAsync(Config.Cts.Token);
                 await amdDriverRefreshTask.ConfigureAwait(false);
 
+                try
+                {
+                    if (!Directory.Exists(Config.IrdCachePath))
+                        Directory.CreateDirectory(Config.IrdCachePath);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Failed to create new folder {Config.IrdCachePath}: {e.Message}");
+                }
+
                 var config = new DiscordConfiguration
                 {
                     Token = Config.Token,
@@ -88,7 +99,6 @@ namespace CompatBot
                     //UseInternalLogHandler = true,
                     //LogLevel = LogLevel.Debug,
                 };
-
                 using (var client = new DiscordClient(config))
                 {
                     var commands = client.UseCommandsNext(new CommandsNextConfiguration

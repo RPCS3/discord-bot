@@ -29,6 +29,7 @@ namespace CompatBot
 
         public static readonly string Token;
         public static readonly string LogPath = "../../../logs/bot.log"; // paths are relative to the assembly, so this will put it in the project's root
+        public static readonly string IrdCachePath = "./ird/";
 
         internal static readonly ILogger Log;
 

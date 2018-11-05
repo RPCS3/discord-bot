@@ -33,7 +33,7 @@ namespace CompatBot.Commands
         }
 
         [Command("compat"), Aliases("c")]
-        [Description("Searches the compatibility database, USE: !compat searchterm")]
+        [Description("Searches the compatibility database, USE: !compat search term")]
         public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string title)
         {
             try
@@ -205,7 +205,7 @@ Example usage:
                 result.AppendFormat(returnCode.info, compatResult.SearchTerm);
                 yield return result.ToString();
                 result.Clear();
-                var footer = $"Retrieved from: *<{request.Build(false).ToString().Replace(' ', '+')}>* in {compatResult.RequestDuration.TotalMilliseconds:0} milliseconds!";
+                //var footer = $"Retrieved from: *<{request.Build(false).ToString().Replace(' ', '+')}>* in {compatResult.RequestDuration.TotalMilliseconds:0} milliseconds!";
 
                 if (returnCode.displayResults)
                 {
@@ -217,10 +217,10 @@ Example usage:
                     }
                     result.Append("```");
                     yield return result.ToString();
-                    yield return footer;
+                    //yield return footer;
                 }
-                else if (returnCode.displayFooter)
-                    yield return footer;
+                //else if (returnCode.displayFooter)
+                //    yield return footer;
             }
         }
     }
