@@ -116,7 +116,7 @@ namespace CompatBot.EventHandlers.LogParsing
                                          @"RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?" +
                                          @"RSX: Supported texel buffer size", DefaultOptions),
                     ["GL RENDERER:"] = new Regex(@"GL RENDERER: (?<driver_manuf_new>.*?)\r?$", DefaultOptions),
-                    ["GL VERSION:"] = new Regex(@"GL VERSION: (?<opengl_version>(\d|\.)+)(\d|\.|\s|\w|-)*( (?<driver_version_new>(\d+\.)*\d+))?\r?$", DefaultOptions),
+                    ["GL VERSION:"] = new Regex(@"GL VERSION: (?<opengl_version>(\d|\.)+)(\d|\.|\s|\w|-)*?( (?<driver_version_new>(\d+\.)*\d+))?\r?$", DefaultOptions),
                     ["GLSL VERSION:"] = new Regex(@"GLSL VERSION: (?<glsl_version>(\d|\.)+).*?\r?$", DefaultOptions),
                     ["texel buffer size reported:"] = new Regex(@"RSX: Supported texel buffer size reported: (?<texel_buffer_size_new>\d*?) bytes", DefaultOptions),
                     ["Physical device intialized"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
