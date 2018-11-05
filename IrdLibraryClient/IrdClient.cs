@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
+using IrdLibraryClient.IrdFormat;
 using IrdLibraryClient.POCOs;
 using Newtonsoft.Json;
 using JsonContractResolver = CompatApiClient.JsonContractResolver;
@@ -102,9 +103,9 @@ namespace IrdLibraryClient
             }
         }
 
-        public async Task<List<byte[]>> DownloadAsync(string productCode, string localCachePath, CancellationToken cancellationToken)
+        public async Task<List<Ird>> DownloadAsync(string productCode, string localCachePath, CancellationToken cancellationToken)
         {
-            var result = new List<byte[]>();
+            var result = new List<Ird>();
             try
             {
                 // first we search local cache and try to load whatever data we can
@@ -116,7 +117,7 @@ namespace IrdLibraryClient
                     {
                         try
                         {
-                            result.Add(File.ReadAllBytes(Path.Combine(localCachePath, item)));
+                            result.Add(IrdParser.Parse(File.ReadAllBytes(Path.Combine(localCachePath, item))));
                             localCacheItems.Add(item);
                         }
                         catch (Exception ex)
@@ -154,7 +155,7 @@ namespace IrdLibraryClient
                         var localItemPath = Path.Combine(localCachePath, item);
                         if (File.Exists(localItemPath))
                         {
-                            result.Add(File.ReadAllBytes(localItemPath));
+                            result.Add(IrdParser.Parse(File.ReadAllBytes(localItemPath)));
                             localCacheItems.Add(item);
                         }
                         else
@@ -176,10 +177,9 @@ namespace IrdLibraryClient
                         try
                         {
                             var resultBytes = await client.GetByteArrayAsync(GetDownloadLink(item)).ConfigureAwait(false);
-                            result.Add(resultBytes);
+                            result.Add(IrdParser.Parse(resultBytes));
                             try
                             {
-                                //todo: check if it's a valid .ird file before caching
                                 File.WriteAllBytes(Path.Combine(localCachePath, item), resultBytes);
                             }
                             catch (Exception ex)
