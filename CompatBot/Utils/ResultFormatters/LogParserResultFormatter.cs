@@ -362,8 +362,13 @@ namespace CompatBot.Utils.ResultFormatters
                 if (fatalError.Contains("psf.cpp"))
                     notes.AppendLine("Game save data might be corrupted");
             }
+            if (items["failed_to_decrypt"] is string _)
+                notes.AppendLine("Failed to decrypt game content, license file might be corrupted");
+            if (items["failed_to_boot"] is string _)
+                notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
             if (brokenDump)
                 notes.AppendLine("Some game files are missing or corrupted, please check and redump if needed.");
+
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
                 Version.TryParse(oglVersionString, out oglVersion);
@@ -377,35 +382,9 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 if (oglVersion < MinimumOpenGLVersion)
                     notes.AppendLine($"GPU only supports OpenGL {oglVersion.Major}.{oglVersion.Minor}, which is below the minimum requirement of {MinimumOpenGLVersion}");
-/*
-                else if (oglVersion < RecommendedOpenGLVersion)
-                    notes.AppendLine($"GPU only supports OpenGL {oglVersion.Major}.{oglVersion.Minor}, which is below the recommended requirement of {RecommendedOpenGLVersion}");
-*/
             }
-/*
-            var patchCount = 0;
-            if (items["ppu_hash_patch"] is string ppuPatch)
-                patchCount += ppuPatch.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Select(s =>
-                                                                                                                  {
-                                                                                                                      int.TryParse(s, out var result);
-                                                                                                                      return result;
-                                                                                                                  }).Sum();
-            if (items["spu_hash_patch"] is string spuPatch)
-                patchCount += spuPatch.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Select(s =>
-                                                                                                                  {
-                                                                                                                      int.TryParse(s, out var result);
-                                                                                                                      return result;
-                                                                                                                  }).Sum();
-            if (patchCount > 0)
-                notes.AppendLine($"{patchCount} game patch{(patchCount == 1 ? " was" : "es were")} applied");
-*/
             if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
                 notes.AppendLine("Game-specific patches were applied");
-
-            if (items["failed_to_decrypt"] is string _)
-                notes.AppendLine("Failed to decrypt game content, license file might be corrupted");
-            if (items["failed_to_boot"] is string _)
-                notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty, you need to run the game before uploading the log");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))
@@ -458,10 +437,27 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var latestBuildInfo = BuildInfoInUpdate.Match(link.ToLowerInvariant());
-            if (!latestBuildInfo.Success || SameCommits(buildInfo.Groups["commit"].Value, latestBuildInfo.Groups["commit"].Value))
-                return null;
+            if (latestBuildInfo.Success && VersionIsTooOld(buildInfo, latestBuildInfo))
+                return updateInfo;
 
-            return updateInfo;
+            return null;
+        }
+
+        private static bool VersionIsTooOld(Match log, Match update)
+        {
+            if (Version.TryParse(log.Groups["version"].Value, out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
+            {
+                if (logVersion < updateVersion)
+                    return true;
+
+                if (int.TryParse(log.Groups["build"].Value, out var logBuild) && int.TryParse(update.Groups["build"].Value, out var updateBuild))
+                {
+                    if (logBuild + Config.MaxBuildNumberDifferenceForOutdatedBuilds < updateBuild)
+                        return true;
+                }
+                return false;
+            }
+            return !SameCommits(log.Groups["commit"].Value, update.Groups["commit"].Value);
         }
 
         private static bool SameCommits(string commitA, string commitB)
