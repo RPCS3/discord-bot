@@ -9,17 +9,21 @@ using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
+using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using IrdLibraryClient;
+using IrdLibraryClient.IrdFormat;
 
 namespace CompatBot.Utils.ResultFormatters
 {
     internal static class LogParserResult
     {
         private static readonly Client compatClient = new Client();
+        private static readonly IrdClient irdClient = new IrdClient();
 
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
         // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
@@ -289,10 +293,8 @@ namespace CompatBot.Utils.ResultFormatters
             PageSection(builder, notesContent, "Important Settings to Review");
         }
 
-        private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
+        private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
-            BuildWeirdSettingsSection(builder, items);
-            var notes = new StringBuilder();
             if (items["rap_file"] is string rap)
             {
                 var limitTo = 5;
@@ -308,12 +310,60 @@ namespace CompatBot.Utils.ResultFormatters
                     content = string.Join(Environment.NewLine, licenseNames);
                 builder.AddField("Missing Licenses", content);
             }
+        }
+
+        private static async Task<bool> BuildMissingFilesSection(DiscordEmbedBuilder builder, NameValueCollection items)
+        {
+            if (!(items["serial"] is string productCode))
+                return false;
+
+            if (!productCode.StartsWith("B") && !productCode.StartsWith("M"))
+                return false;
+
+            if (string.IsNullOrEmpty(items["broken_directory"]) && string.IsNullOrEmpty(items["broken_filename"]))
+                return false;
+
+            var getIrdTask = irdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token);
+            var missingDirs = items["broken_directory"]?.Split(Environment.NewLine).Distinct().ToList() ?? new List<string>(0);
+            var missingFiles = items["broken_filename"]?.Split(Environment.NewLine).Distinct().ToList() ?? new List<string>(0);
+            HashSet<string> knownFiles;
+            try
+            {
+                var irdFiles = await getIrdTask.ConfigureAwait(false);
+                knownFiles = new HashSet<string>(
+                    from ird in irdFiles
+                    from name in ird.GetFilenames()
+                    select name,
+                    StringComparer.InvariantCultureIgnoreCase
+                );
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to get IRD files for " + productCode);
+                return false;
+            }
+            var broken = missingFiles.Any(knownFiles.Contains);
+            if (broken)
+                return true;
+
+            var knownDirs = new HashSet<string>(knownFiles.Select(f => Path.GetDirectoryName(f).Replace('\\', '/')), StringComparer.InvariantCultureIgnoreCase);
+            return missingDirs.Any(knownDirs.Contains);
+        }
+
+        private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
+        {
+            BuildWeirdSettingsSection(builder, items);
+            BuildMissingLicensesSection(builder, items);
+            var brokenDump = await BuildMissingFilesSection(builder, items).ConfigureAwait(false);
+            var notes = new StringBuilder();
             if (items["fatal_error"] is string fatalError)
             {
                 builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                 if (fatalError.Contains("psf.cpp"))
                     notes.AppendLine("Game save data might be corrupted");
             }
+            if (brokenDump)
+                notes.AppendLine("Some game files are missing or corrupted, please check and redump if needed.");
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
                 Version.TryParse(oglVersionString, out oglVersion);

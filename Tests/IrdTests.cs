@@ -34,7 +34,7 @@ namespace Tests
                 var ird = IrdParser.Parse(bytes);
                 Assert.That(ird.FileCount, Is.GreaterThan(0));
 
-                var fileList = IsoHeaderParser.GetFilenames(ird.Header);
+                var fileList = ird.GetFilenames();
                 Assert.That(fileList.Count, Is.EqualTo(ird.FileCount));
             }
         }

@@ -82,17 +82,17 @@ namespace IrdLibraryClient.IrdFormat
 
     public static class IsoHeaderParser
     {
-        public static List<string> GetFilenames(byte[] compressedHeader)
+        public static List<string> GetFilenames(this Ird ird)
         {
             using (var decompressedStream = new MemoryStream())
             {
-                using (var compressedStream = new MemoryStream(compressedHeader, false))
+                using (var compressedStream = new MemoryStream(ird.Header, false))
                 using (var gzip = new GZipStream(compressedStream, CompressionMode.Decompress))
                     gzip.CopyTo(decompressedStream);
 
                 decompressedStream.Seek(0, SeekOrigin.Begin);
                 var reader = new CDReader(decompressedStream, true, true);
-                return reader.GetFiles(reader.Root.FullName, "*.*", SearchOption.AllDirectories).Distinct().ToList();
+                return reader.GetFiles(reader.Root.FullName, "*.*", SearchOption.AllDirectories).Distinct().Select(n => n.TrimStart('\\').Replace('\\', '/')).ToList();
             }
         }
     }

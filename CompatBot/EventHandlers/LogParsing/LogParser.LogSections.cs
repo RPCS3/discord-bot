@@ -129,6 +129,8 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["XAudio2Thread"] = new Regex(@"XAudio2Thread\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["PPU executable hash:"] = new Regex(@"PPU executable hash: PPU-(?<ppu_hash>\w+) \(<-\s*(?<ppu_hash_patch>(?!0)\d+)\).*?\r?$", DefaultOptions),
                     ["Loaded SPU image:"] = new Regex(@"Loaded SPU image: SPU-(?<spu_hash>\w+) \(<-\s*(?<spu_hash_patch>(?!0)\d+)\).*?\r?$", DefaultOptions),
+                    ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_filename>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
+                    ["'sys_fs_opendir' failed"] = new Regex(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
@@ -143,6 +145,8 @@ namespace CompatBot.EventHandlers.LogParsing
             "ppu_hash_patch",
             "spu_hash",
             "spu_hash_patch",
+            "broken_filename",
+            "broken_directory",
         };
 
         private static async Task PiracyCheckAsync(string line, LogParseState state)
