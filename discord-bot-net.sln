@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsnClient", "PsnClient\PsnC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomoglyphConverter", "HomoglyphConverter\HomoglyphConverter.csproj", "{A1E6566C-F506-43C8-B06E-9A472AEBF447}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IrdLibraryClient", "IrdLibraryClient\IrdLibraryClient.csproj", "{AA2A333B-CD30-41A5-A680-CC9BCB2D726B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IrdLibraryClient", "IrdLibraryClient\IrdLibraryClient.csproj", "{AA2A333B-CD30-41A5-A680-CC9BCB2D726B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{815D60C3-F84B-4AE2-B4E4-48004515FCFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,9 @@ Global
 		{AA2A333B-CD30-41A5-A680-CC9BCB2D726B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA2A333B-CD30-41A5-A680-CC9BCB2D726B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA2A333B-CD30-41A5-A680-CC9BCB2D726B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{815D60C3-F84B-4AE2-B4E4-48004515FCFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{815D60C3-F84B-4AE2-B4E4-48004515FCFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{815D60C3-F84B-4AE2-B4E4-48004515FCFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

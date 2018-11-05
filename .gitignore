@@ -264,3 +264,4 @@ launchSettings.json
 *.db
 *.db-journal
 logs/
+*.ird
