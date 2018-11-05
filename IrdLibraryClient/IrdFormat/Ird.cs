@@ -23,6 +23,7 @@ namespace IrdLibraryClient.IrdFormat
         public List<byte[]> RegionMd5Checksums; // 16 each
         public int FileCount;
         public List<IrdFile> Files;
+        public int Unknown; // always 0?
         public byte[] Pic; // 115, v9 only?
         public byte[] Data1; // 16
         public byte[] Data2; // 16

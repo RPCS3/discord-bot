@@ -19,11 +19,10 @@ namespace IrdLibraryClient.IrdFormat
 
             if (BitConverter.ToInt32(content, 0) != Ird.Magic)
                 using (var compressedStream = new MemoryStream(content, false))
+                using (var gzip = new GZipStream(compressedStream, CompressionMode.Decompress))
                 using (var decompressedStream = new MemoryStream())
-                using (var gzip = new GZipStream(decompressedStream, CompressionMode.Decompress))
                 {
-                    compressedStream.CopyTo(gzip);
-                    gzip.Flush();
+                    gzip.CopyTo(decompressedStream);
                     content = decompressedStream.ToArray();
                 }
             if (BitConverter.ToInt32(content, 0) != Ird.Magic)
@@ -33,6 +32,7 @@ namespace IrdLibraryClient.IrdFormat
             using (var stream = new MemoryStream(content, false))
             using (var reader = new BinaryReader(stream, Encoding.UTF8))
             {
+                reader.ReadInt32(); // magic
                 result.Version = reader.ReadByte();
                 result.ProductCode = Encoding.ASCII.GetString(reader.ReadBytes(9));
                 result.TitleLength = reader.ReadByte();
@@ -59,6 +59,7 @@ namespace IrdLibraryClient.IrdFormat
                     file.Md5Checksum = reader.ReadBytes(16);
                     result.Files.Add(file);
                 }
+                result.Unknown = reader.ReadInt32();
                 if (result.Version == 9)
                     result.Pic = reader.ReadBytes(115);
                 result.Data1 = reader.ReadBytes(16);
@@ -69,10 +70,9 @@ namespace IrdLibraryClient.IrdFormat
                 var dataLength = reader.BaseStream.Position;
                 result.Crc32 = reader.ReadUInt32();
 
-                reader.BaseStream.Seek(0, SeekOrigin.Begin);
                 var crc32 = Crc32Algorithm.Compute(content, 0, (int)dataLength);
                 if (result.Crc32 != crc32)
-                    throw new InvalidDataException("Corrupted IRD data");
+                    throw new InvalidDataException($"Corrupted IRD data, expected {result.Crc32:x8}, but was {crc32:x8}");
             }
             return result;
         }

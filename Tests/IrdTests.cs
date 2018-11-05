@@ -17,7 +17,7 @@ namespace Tests
             foreach (var file in testFiles)
             {
                 var bytes = File.ReadAllBytes(file);
-                Assert.That(() => IrdParser.Parse(bytes), Throws.Nothing);
+                Assert.That(() => IrdParser.Parse(bytes), Throws.Nothing, "Failed to parse " + Path.GetFileName(file));
             }
         }
     }
