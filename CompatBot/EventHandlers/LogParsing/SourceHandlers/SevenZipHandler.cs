@@ -2,10 +2,8 @@
 using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using CompatBot.Utils;
 using DSharpPlus.Entities;
 using SharpCompress.Archives.SevenZip;
 
@@ -15,40 +13,12 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     {
         private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
 
-        public async Task<bool> CanHandleAsync(DiscordAttachment attachment)
+        public Task<bool> CanHandleAsync(DiscordAttachment attachment)
         {
             if (!attachment.FileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
-                return false;
+                return Task.FromResult(false);
 
-            return true;
-/*
-            try
-            {
-                using (var client = HttpClientFactory.Create())
-                using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
-                {
-                    var buf = bufferPool.Rent(4096);
-                    bool result;
-                    try
-                    {
-                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                        using (var memStream = new MemoryStream(read))
-                        using (var zipArchive = SevenZipArchive.Open(memStream))
-                            result = zipArchive.Entries.Any(e => !e.IsDirectory && e.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase));
-                    }
-                    finally
-                    {
-                        bufferPool.Return(buf);
-                    }
-                    return result;
-                }
-            }
-            catch (Exception e)
-            {
-                Config.Log.Error(e, "Error sniffing the 7z content");
-                return false;
-            }
-*/
+            return Task.FromResult(true);
         }
 
         public async Task FillPipeAsync(DiscordAttachment attachment, PipeWriter writer)
