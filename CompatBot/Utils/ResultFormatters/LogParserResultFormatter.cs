@@ -342,6 +342,9 @@ namespace CompatBot.Utils.ResultFormatters
                 Config.Log.Warn(e, "Failed to get IRD files for " + productCode);
                 return false;
             }
+            if (knownFiles.Count == 0)
+                return false;
+
             var broken = missingFiles.Any(knownFiles.Contains);
             if (broken)
                 return true;
