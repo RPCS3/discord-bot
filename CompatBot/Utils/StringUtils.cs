@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -12,6 +13,20 @@ namespace CompatBot.Utils
                                                                  .GetEncoding()
                                                              ?? Encoding.ASCII;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
+        private static readonly HashSet<char> SpaceCharacters = new HashSet<char>
+        {
+            '\u00a0',
+            '\u2002', '\u2003', '\u2004', '\u2005', '\u2006',
+            '\u2007', '\u2008', '\u2009', '\u200a', '\u200b',
+            '\u200c', '\u200d', '\u200e', '\u200f',
+            '\u2028', '\u2029', '\u202a', '\u202b', '\u202c',
+            '\u202c', '\u202d', '\u202e', '\u202f',
+            '\u205f', '\u2060', '\u2061', '\u2062', '\u2063',
+            '\u2064', '\u2065', '\u2066', '\u2067', '\u2068',
+            '\u2069', '\u206a', '\u206b', '\u206c', '\u206d',
+            '\u206e', '\u206f',
+            '\u3000', '\u303f',
+        };
 
         public static string StripQuotes(this string str)
         {
@@ -21,6 +36,24 @@ namespace CompatBot.Utils
             if (str.StartsWith('"') && str.EndsWith('"'))
                 return str.Substring(1, str.Length - 2);
             return str;
+        }
+
+        public static string TrimEager(this string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return str;
+
+            int end = str.Length - 1;
+            int start = 0;
+            for (start = 0; start < str.Length; start++)
+                if (!char.IsWhiteSpace(str[start]) && !IsFormat(str[start]))
+                    break;
+
+            for (end = str.Length - 1; end >= start; end--)
+                if (!char.IsWhiteSpace(str[end]) && !IsFormat(str[end]))
+                break;
+
+            return CreateTrimmedString(str, start, end);
         }
 
         public static string AsString(this ReadOnlySequence<byte> buffer, Encoding encoding = null)
@@ -61,5 +94,19 @@ namespace CompatBot.Utils
         public static string GetSuffix(long num) => num % 10 == 1 && num % 100 != 11 ? "" : "s";
 
         public static string FixSpaces(this string text) => text?.Replace("  ", " \u200d \u200d");
+
+        private static bool IsFormat(char c) => SpaceCharacters.Contains(c);
+
+        private static string CreateTrimmedString(string str, int start, int end)
+        {
+            int len = end - start + 1;
+            if (len == str.Length)
+                return str;
+
+            if (len == 0)
+                return "";
+
+            return str.Substring(start, len);
+        }
     }
 }

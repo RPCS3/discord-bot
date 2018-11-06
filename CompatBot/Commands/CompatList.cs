@@ -36,9 +36,16 @@ namespace CompatBot.Commands
         [Description("Searches the compatibility database, USE: !compat search term")]
         public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string title)
         {
+            title = title?.TrimEager().Truncate(40);
+            if (string.IsNullOrEmpty(title))
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "You should specify what you're looking for").ConfigureAwait(false);
+                return;
+            }
+
             try
             {
-                var requestBuilder = RequestBuilder.Start().SetSearch(title?.Truncate(40));
+                var requestBuilder = RequestBuilder.Start().SetSearch(title);
                 await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
             }
             catch (Exception e)
