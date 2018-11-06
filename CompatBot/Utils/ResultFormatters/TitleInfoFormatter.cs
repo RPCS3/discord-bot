@@ -31,9 +31,9 @@ namespace CompatBot.Utils.ResultFormatters
                 return defaultString;
 
             if (link)
-                return $"[{info.Pr}](https://github.com/RPCS3/rpcs3/pull/{info.Pr})";
+                return $"[#{info.Pr}](https://github.com/RPCS3/rpcs3/pull/{info.Pr})";
 
-            return info.Pr.ToString();
+            return $"#{info.Pr}";
         }
 
         public static string AsString(this TitleInfo info, string titleId)
@@ -47,7 +47,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (StatusColors.TryGetValue(info.Status, out _))
             {
                 var title = info.Title.Trim(40);
-                return $"ID:{titleId,-9} Title:{title,-40} PR:{info.ToPrString("???"),-4} Status:{info.Status,-8} Updated:{info.ToUpdated(),-10}";
+                return $"`[{titleId,-9}] {title,-40} {info.Status,8} since {info.ToUpdated(),-10} (PR {info.ToPrString("#????"),-5})` https://forums.rpcs3.net/thread-{info.Thread}.html";
             }
 
             return $"Product code {titleId} was not found in compatibility database, possibly untested!";
@@ -67,8 +67,10 @@ namespace CompatBot.Utils.ResultFormatters
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
-                var pr = info.ToPrString(@"¯\\\_(ツ)\_ /¯", true);
-                var desc = $"Status: {info.Status}, PR: {pr}, Updated: {info.ToUpdated()}";
+                var pr = info.ToPrString(null, true);
+                var desc = $"{info.Status} since {info.ToUpdated()}";
+                if (pr is string _)
+                    desc += $" (PR {pr})";
                 if (!forLog && !string.IsNullOrEmpty(info.AlternativeTitle))
                     desc = info.AlternativeTitle + Environment.NewLine + desc;
                 if (!string.IsNullOrEmpty(info.WikiTitle))
