@@ -177,7 +177,7 @@ Example usage:
 
             var channel = ctx.Channel.IsPrivate ? ctx.Channel : await ctx.Client.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
             foreach (var msg in FormatSearchResults(ctx, result))
-                await channel.SendAutosplitMessageAsync(msg).ConfigureAwait(false);
+                await channel.SendAutosplitMessageAsync(msg, blockStart:"", blockEnd:"").ConfigureAwait(false);
         }
 
         private IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
@@ -204,23 +204,18 @@ Example usage:
                 }
                 result.AppendFormat(returnCode.info, compatResult.SearchTerm);
                 yield return result.ToString();
+
                 result.Clear();
-                //var footer = $"Retrieved from: *<{request.Build(false).ToString().Replace(' ', '+')}>* in {compatResult.RequestDuration.TotalMilliseconds:0} milliseconds!";
 
                 if (returnCode.displayResults)
                 {
-                    result.Append("```");
                     foreach (var resultInfo in compatResult.Results.Take(request.amountRequested))
                     {
                         var info = resultInfo.AsString();
                         result.AppendLine(info);
                     }
-                    result.Append("```");
                     yield return result.ToString();
-                    //yield return footer;
                 }
-                //else if (returnCode.displayFooter)
-                //    yield return footer;
             }
         }
     }
