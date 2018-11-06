@@ -13,6 +13,7 @@ namespace CompatBot.Utils
                                                                  .GetEncoding()
                                                              ?? Encoding.ASCII;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
+
         private static readonly HashSet<char> SpaceCharacters = new HashSet<char>
         {
             '\u00a0',
@@ -43,15 +44,14 @@ namespace CompatBot.Utils
             if (string.IsNullOrEmpty(str))
                 return str;
 
-            int end = str.Length - 1;
-            int start = 0;
+            int start, end;
             for (start = 0; start < str.Length; start++)
                 if (!char.IsWhiteSpace(str[start]) && !IsFormat(str[start]))
                     break;
 
             for (end = str.Length - 1; end >= start; end--)
                 if (!char.IsWhiteSpace(str[end]) && !IsFormat(str[end]))
-                break;
+                    break;
 
             return CreateTrimmedString(str, start, end);
         }
@@ -99,14 +99,11 @@ namespace CompatBot.Utils
 
         private static string CreateTrimmedString(string str, int start, int end)
         {
-            int len = end - start + 1;
+            var len = end - start + 1;
             if (len == str.Length)
                 return str;
 
-            if (len == 0)
-                return "";
-
-            return str.Substring(start, len);
+            return len == 0 ? "" : str.Substring(start, len);
         }
     }
 }
