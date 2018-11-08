@@ -48,7 +48,7 @@ namespace CompatBot
                                                                     CompatList.CheckForRpcs3Updates((DiscordClient)client, null).ConfigureAwait(false).GetAwaiter().GetResult();
                                                                 }
                                                                 catch { }
-                                                                Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
+                                                                Task.Delay(TimeSpan.FromHours(1), Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                                                             }
                                                         }
                                                         catch (TaskCanceledException) { }
