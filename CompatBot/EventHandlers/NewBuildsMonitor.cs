@@ -22,10 +22,10 @@ namespace CompatBot.EventHandlers
                 return;
 
             if (BuildResult.IsMatch(args.Message.Content))
-                if (!await CompatList.CheckForRpcs3Updates(args.Client, null).ConfigureAwait(false))
+                if (!await CompatList.UpdatesCheck.CheckForRpcs3Updates(args.Client, null).ConfigureAwait(false))
                 {
                     await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-                    await CompatList.CheckForRpcs3Updates(args.Client, null).ConfigureAwait(false);
+                    await CompatList.UpdatesCheck.CheckForRpcs3Updates(args.Client, null).ConfigureAwait(false);
                 }
         }
     }
