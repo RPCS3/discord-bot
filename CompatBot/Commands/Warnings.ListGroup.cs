@@ -41,7 +41,7 @@ namespace CompatBot.Commands
                 await List(ctx, ctx.Message.Author).ConfigureAwait(false);
             }
 
-            [Command("users"), RequiresBotModRole, TriggersTyping]
+            [Command("users"), Aliases("top"), RequiresBotModRole, TriggersTyping]
             [Description("List users with warnings, sorted from most warned to least")]
             public async Task Users(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {
