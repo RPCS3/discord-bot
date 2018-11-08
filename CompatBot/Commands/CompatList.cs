@@ -124,24 +124,14 @@ Example usage:
                 return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
             }
 
-            [Command("cached")]
-            [Description("Gets the latest known update links, without checking the API")]
-            public async Task Cached(CommandContext ctx)
-            {
-                var tmp = CachedUpdateInfo;
-                if (tmp is UpdateInfo info)
-                {
-                    var embed = await info.AsEmbedAsync().ConfigureAwait(false);
-                    await ctx.RespondAsync(embed: embed.Build()).ConfigureAwait(false);
-                }
-                else
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "No update information was cached yet").ConfigureAwait(false);
-            }
-
             public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel)
             {
                 var info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
                 var embed = await info.AsEmbedAsync().ConfigureAwait(false);
+                if (embed.Color == Config.Colors.Maintenance)
+                    embed = await CachedUpdateInfo.AsEmbedAsync().ConfigureAwait(false);
+                else
+                    CachedUpdateInfo = info;
                 if (channel != null)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 var updateLinks = info?.LatestBuild?.Pr;
@@ -151,7 +141,6 @@ Example usage:
                         var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
                         await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                         lastUpdateInfo = updateLinks;
-                        CachedUpdateInfo = info;
                         using (var db = new BotDb())
                         {
                             var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
