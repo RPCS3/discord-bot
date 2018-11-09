@@ -10,7 +10,13 @@ namespace CompatBot.EventHandlers
     {
         private static readonly Regex BuildResult = new Regex("build (succeed|pass)ed", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-        public static async void OnMessageCreated(MessageCreateEventArgs args)
+        public static Task OnMessageCreated(MessageCreateEventArgs args)
+        {
+            OnMessageCreatedInternal(args);
+            return Task.CompletedTask;
+        }
+
+        public static async void OnMessageCreatedInternal(MessageCreateEventArgs args)
         {
             if (!args.Author.IsBot)
                 return;
