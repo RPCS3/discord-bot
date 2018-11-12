@@ -22,10 +22,15 @@ namespace CompatBot.Commands
         public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
         {
             await ctx.TriggerTypingAsync().ConfigureAwait(false);
-            if (string.IsNullOrEmpty(term))
+            string inSpecificLocation = null;
+            if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
             {
                 var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-                await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list` in {spamChannel.Mention} or bot DMs").ConfigureAwait(false);
+                inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
+            }
+            if (string.IsNullOrEmpty(term))
+            {
+                await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list`{inSpecificLocation}").ConfigureAwait(false);
                 return;
             }
 
@@ -67,8 +72,8 @@ namespace CompatBot.Commands
                 }
             }
 
-            var spamCh = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-            await ctx.RespondAsync($"Unknown term `{term.Sanitize()}`. Use `!explain list` to look at defined terms in {spamCh.Mention} or bot DMs").ConfigureAwait(false);
+            var msg = $"Unknown term `{term.Sanitize()}`. Use `{Config.CommandPrefix}explain list` to look at defined terms{inSpecificLocation}";
+            await ctx.RespondAsync(msg).ConfigureAwait(false);
         }
 
         [Command("add"), RequiresBotModRole]
@@ -151,10 +156,11 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
         }
 
-        [Command("list"), LimitedToSpamChannel, TriggersTyping]
+        [Command("list"), LimitedToSpamChannel]
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
+            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             using (var db = new BotDb())
             {
                 var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
