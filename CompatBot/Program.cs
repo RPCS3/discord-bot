@@ -10,6 +10,7 @@ using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot
@@ -18,6 +19,7 @@ namespace CompatBot
     {
         private static readonly SemaphoreSlim InstanceCheck = new SemaphoreSlim(0, 1);
         private static readonly SemaphoreSlim ShutdownCheck = new SemaphoreSlim(0, 1);
+        private const ulong InvalidChannelId = 13;
 
         internal static async Task Main(string[] args)
         {
@@ -208,8 +210,17 @@ namespace CompatBot
                     if (args.Length > 1 && ulong.TryParse(args[1], out var channelId))
                     {
                         Config.Log.Info($"Found channelId: {args[1]}");
-                        var channel = await client.GetChannelAsync(channelId).ConfigureAwait(false);
-                        await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
+                        DiscordChannel channel;
+                        if (channelId == InvalidChannelId)
+                        {
+                            channel = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                            await channel.SendMessageAsync("Bot has suffered some catastrophic failure and was restarted").ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            channel = await client.GetChannelAsync(channelId).ConfigureAwait(false);
+                            await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
+                        }
                     }
 
                     Config.Log.Debug("Running RPC3 update check thread");
@@ -232,7 +243,8 @@ namespace CompatBot
             }
             catch(Exception e)
             {
-                Config.Log.Fatal(e);
+                Config.Log.Fatal(e, $"Experienced catastrofic failure, attempting to restart...");
+                Sudo.Bot.Restart(InvalidChannelId);
             }
             finally
             {
