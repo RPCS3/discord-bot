@@ -156,10 +156,11 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
         }
 
-        [Command("list"), LimitedToSpamChannel, TriggersTyping]
+        [Command("list"), LimitedToSpamChannel]
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
+            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             using (var db = new BotDb())
             {
                 var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
