@@ -67,19 +67,7 @@ namespace CompatBot.Commands
                                 await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
                         }
                         await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
-                        using (var self = new Process
-                        {
-#if DEBUG
-                            StartInfo = new ProcessStartInfo("dotnet", $"run -- {Config.Token} {ctx.Channel.Id}")
-#else
-                            StartInfo = new ProcessStartInfo("dotnet", $"run -c Release -- {Config.Token} {ctx.Channel.Id}")
-#endif
-                        })
-                        {
-                            self.Start();
-                            Config.Cts.Cancel();
-                            return;
-                        }
+                        Restart(ctx.Channel.Id);
                     }
                     catch (Exception e)
                     {
@@ -105,6 +93,23 @@ namespace CompatBot.Commands
                 Config.Cts.Cancel();
             }
 
+
+            internal static void Restart(ulong channelId)
+            {
+                using (var self = new Process
+                {
+#if DEBUG
+                    StartInfo = new ProcessStartInfo("dotnet", $"run -- {Config.Token} {channelId}")
+#else
+                    StartInfo = new ProcessStartInfo("dotnet", $"run -c Release -- {Config.Token} {channelId}")
+#endif
+                })
+                {
+                    self.Start();
+                    Config.Cts.Cancel();
+                    return;
+                }
+            }
         }
     }
 }
