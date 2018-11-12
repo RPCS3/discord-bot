@@ -21,7 +21,7 @@ namespace CompatBot.Commands.Attributes
                 var msgList = await ctx.Channel.GetMessagesAsync(10).ConfigureAwait(false);
                 if (msgList.Any(m => m.Author.IsCurrent && m.Content is string s && s.Contains("explain list")))
                 {
-                    await ctx.ReactWithAsync(Config.Reactions.Denied).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                     return false; // we just explained to use #bot-spam or DMs, can't help if people can't read
                 }
             }
