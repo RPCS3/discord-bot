@@ -128,7 +128,7 @@ Example usage:
             {
                 var info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
                 var embed = await info.AsEmbedAsync().ConfigureAwait(false);
-                if (embed.Color == Config.Colors.Maintenance)
+                if (info == null || embed.Color == Config.Colors.Maintenance)
                     embed = await CachedUpdateInfo.AsEmbedAsync().ConfigureAwait(false);
                 else
                     CachedUpdateInfo = info;
@@ -212,6 +212,14 @@ Example usage:
                     result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize()}***");
                     if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase))
                         result.AppendLine("Did you try searching for ***Unnamed*** instead?");
+                    else if (ctx.Message.Author.Id == 197163728867688448 &&
+                             (request.search.Contains("afrika", StringComparison.InvariantCultureIgnoreCase) ||
+                              request.search.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
+                              request.search.Contains("BLUS30399", StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        var sqvat = DiscordEmoji.FromName(ctx.Client, ":sqvat:");
+                        result.AppendLine($"One day this meme will die {sqvat}");
+                    }
                 }
                 else
                 {

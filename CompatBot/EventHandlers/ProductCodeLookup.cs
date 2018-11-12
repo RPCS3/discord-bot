@@ -57,6 +57,13 @@ namespace CompatBot.EventHandlers
             if (codesToLookup.Count == 0)
                 return;
 
+            if (args.Message.Author.Id == 197163728867688448 && codesToLookup.Any(c => c == "BLUS30399"))
+            {
+                var sqvat = DiscordEmoji.FromName(args.Client, ":sqvat:");
+                await args.Message.ReactWithAsync(args.Client, sqvat, "How about no (๑•ิཬ•ั๑)").ConfigureAwait(false);
+                return;
+            }
+
             await args.Channel.TriggerTypingAsync().ConfigureAwait(false);
             var results = new List<(string code, Task<DiscordEmbed> task)>(codesToLookup.Count);
             foreach (var code in codesToLookup)
