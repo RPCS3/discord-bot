@@ -57,25 +57,42 @@ namespace CompatBot.EventHandlers
             if (codesToLookup.Count == 0)
                 return;
 
-            if (args.Message.Author.Id == 197163728867688448 && codesToLookup.Any(c => c == "BLUS30399"))
-            {
-                var sqvat = DiscordEmoji.FromName(args.Client, ":sqvat:");
-                await args.Message.ReactWithAsync(args.Client, sqvat, "How about no (๑•ิཬ•ั๑)").ConfigureAwait(false);
-                return;
-            }
-
             await args.Channel.TriggerTypingAsync().ConfigureAwait(false);
             var results = new List<(string code, Task<DiscordEmbed> task)>(codesToLookup.Count);
             foreach (var code in codesToLookup)
                 results.Add((code, args.Client.LookupGameInfoAsync(code)));
+            var formattedResults = new List<DiscordEmbed>(results.Count);
             foreach (var result in results)
                 try
                 {
-                    await args.Channel.SendMessageAsync(embed: await result.task.ConfigureAwait(false)).ConfigureAwait(false);
+                    formattedResults.Add(await result.task.ConfigureAwait(false));
                 }
                 catch (Exception e)
                 {
-                    Config.Log.Warn(e, $"Couldn't post result for {result.code}");
+                    Config.Log.Warn(e, $"Couldn't get product code info for {result.code}");
+                }
+            
+            // get only results with unique titles
+            formattedResults = formattedResults.GroupBy(e => e.Title).Select(g => g.First()).ToList();
+            DiscordEmoji sqvat = null;
+            foreach (var result in formattedResults)
+                try
+                {
+                    if (args.Message.Author.Id == 197163728867688448 && (
+                            result.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
+                            result.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                        ))
+                    {
+                        sqvat = sqvat ?? DiscordEmoji.FromName(args.Client, ":sqvat:");
+                        await args.Message.ReactWithAsync(args.Client, sqvat, "How about no (๑•ิཬ•ั๑)").ConfigureAwait(false);
+                        continue;
+                    }
+
+                    await args.Channel.SendMessageAsync(embed: result).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Couldn't post result for {result.Title}");
                 }
         }
 
