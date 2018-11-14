@@ -78,7 +78,8 @@ namespace CompatBot.EventHandlers
             foreach (var result in formattedResults)
                 try
                 {
-                    if (args.Message.Author.Id == 197163728867688448 && (
+                    if (!args.Channel.IsPrivate &&
+                        args.Message.Author.Id == 197163728867688448 && (
                             result.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
                             result.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
                         ))

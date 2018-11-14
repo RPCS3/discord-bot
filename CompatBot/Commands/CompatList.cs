@@ -212,10 +212,11 @@ Example usage:
                     result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize()}***");
                     if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase))
                         result.AppendLine("Did you try searching for ***Unnamed*** instead?");
-                    else if (ctx.Message.Author.Id == 197163728867688448 &&
-                             (request.search.Contains("afrika", StringComparison.InvariantCultureIgnoreCase) ||
-                              request.search.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
-                              request.search.Contains("BLUS30399", StringComparison.InvariantCultureIgnoreCase)))
+                    else if (!ctx.Channel.IsPrivate &&
+                             ctx.Message.Author.Id == 197163728867688448 &&
+                             (compatResult.Results.Values.Any(i => i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase) ||
+                                                                   i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
+                    )
                     {
                         var sqvat = DiscordEmoji.FromName(ctx.Client, ":sqvat:");
                         result.AppendLine($"One day this meme will die {sqvat}");
