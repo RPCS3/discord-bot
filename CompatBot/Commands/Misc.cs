@@ -36,7 +36,7 @@ namespace CompatBot.Commands
             "Nah mate", "Nope", "Njet", "Of course not", "Seriously no",
             "Noooooooooo", "Most likely not", "Não", "Non", "Hell no",
             "Absolutely not", "Nuh-uh!", "Nyet!", "Negatory!", "Heck no",
-            "Nein!", "I think not", "I'm afraid not"
+            "Nein!", "I think not", "I'm afraid not",
         };
 
         private static readonly List<string> RateAnswers = new List<string>
@@ -64,7 +64,7 @@ namespace CompatBot.Commands
             "Just like you, 💩", "Not approved", "Big Mistake", "The opposite of good", "Could be better",
             "🤮", "😐",  "So-so", "Not worth it", "Mediocre at best",
             "Useless", "I think you misspelled `poop` there", "Nothing special", "😔", "Real shame",
-            "Boooooooo!"
+            "Boooooooo!",
         };
 
         private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
