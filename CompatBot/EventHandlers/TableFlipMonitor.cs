@@ -26,12 +26,13 @@ namespace CompatBot.EventHandlers
              * (ノ^_^)ノ┻━┻
              * (/¯◡ ‿ ◡)/¯ ~ ┻━┻
              *
+             * this might look the same, but only because of the font choice
+             *
              * ┻━┻
              * ┻━┻
              */
             try
             {
-                var response = "";
                 if (!(content.Contains("┻━┻") ||
                       content.Contains("┻━┻")))
                     return;
