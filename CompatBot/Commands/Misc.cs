@@ -19,12 +19,12 @@ namespace CompatBot.Commands
 
         private static readonly List<string> EightBallAnswers = new List<string>
         {
-            // 22
+            // 24
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
             "Sure", "Yeah, why not", "Most likely", "Sim", "Oui",
             "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", "<:cell_ok_hand:324618647857397760>",
             "Don't be an idiot. YES.", "Mhm!", "Many Yes", "Yiss", "Sir, yes, Sir!", 
-            "Yah!", "Ja",
+            "Yah!", "Ja", "Umu!", "Make it so", 
 
             // 20
             "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
@@ -50,7 +50,7 @@ namespace CompatBot.Commands
             "Not perfect, but ok", "So good!", "A lucky find!", "💯 approved", "I don't see any downsides",
             "Here's my seal of approval 💮", "As good as it gets", "A benchmark to pursue", "Should make you warm and fuzzy inside", "Fabulous",
             "Cool like a cup of good wine 🍷", "Magical ✨", "Wondrous like a unicorn 🦄", "Soothing sight for these tired eyes", "Lovely",
-            "So cute!", "It's so nice, I think about it every day!", ":blush: Never expected to be this pretty!", "It's overflowing with charm!",
+            "So cute!", "It's so nice, I think about it every day!", "😊 Never expected to be this pretty!", "It's overflowing with charm!",
 
             // 20
             "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect", "🆗",
