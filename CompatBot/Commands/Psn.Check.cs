@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
@@ -7,6 +8,7 @@ using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using PsnClient;
 
 namespace CompatBot.Commands
@@ -32,6 +34,24 @@ namespace CompatBot.Commands
 
                 var updateInfo = await Client.GetTitleUpdatesAsync(productId, Config.Cts.Token).ConfigureAwait(false);
                 var embeds = await updateInfo.AsEmbedAsync(ctx.Client, productId).ConfigureAwait(false);
+                if (!ctx.Channel.IsPrivate
+                    && ctx.Message.Author.Id == 197163728867688448
+                    && (
+                        embeds[0].Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
+                        embeds[0].Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                    ))
+                {
+                    foreach (var embed in embeds)
+                    {
+                        var newTitle = "(๑•ิཬ•ั๑)";
+                        var partStart = embed.Title.IndexOf(" [Part");
+                        if (partStart > -1)
+                            newTitle += embed.Title.Substring(partStart);
+                        embed.Title = newTitle;
+                    }
+                    var sqvat = DiscordEmoji.FromName(ctx.Client, ":sqvat:");
+                    await ctx.Message.ReactWithAsync(ctx.Client, sqvat).ConfigureAwait(false);
+                }
                 if (embeds.Count > 1 || embeds[0].Fields?.Count > 0)
                     embeds[embeds.Count - 1] = embeds.Last().WithFooter("Note that you need to install all listed updates one by one");
                 foreach (var embed in embeds)
