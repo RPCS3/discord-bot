@@ -53,13 +53,13 @@ namespace CompatBot.Utils.ResultFormatters
             return $"Product code {titleId} was not found in compatibility database, possibly untested!";
         }
 
-        public static DiscordEmbed AsEmbed(this TitleInfo info, string titleId, string gameTitle = null, bool forLog = false, string thumbnailUrl = null)
+        public static DiscordEmbedBuilder AsEmbed(this TitleInfo info, string titleId, string gameTitle = null, bool forLog = false, string thumbnailUrl = null)
         {
             if (info.Status == TitleInfo.Maintenance.Status)
-                return new DiscordEmbedBuilder{Description = "API is undergoing maintenance, please try again later.", Color = Config.Colors.Maintenance}.Build();
+                return new DiscordEmbedBuilder{Description = "API is undergoing maintenance, please try again later.", Color = Config.Colors.Maintenance};
 
             if (info.Status == TitleInfo.CommunicationError.Status)
-                return new DiscordEmbedBuilder{Description = "Error communicating with compatibility API, please try again later.", Color = Config.Colors.Maintenance}.Build();
+                return new DiscordEmbedBuilder{Description = "Error communicating with compatibility API, please try again later.", Color = Config.Colors.Maintenance};
 
             if (string.IsNullOrWhiteSpace(gameTitle))
                 gameTitle = null;
@@ -82,8 +82,7 @@ namespace CompatBot.Utils.ResultFormatters
                         Description = desc,
                         Color = color,
                         ThumbnailUrl = thumbnailUrl
-                    }
-                    .Build();
+                    };
             }
             else
             {
@@ -101,7 +100,7 @@ namespace CompatBot.Utils.ResultFormatters
                     gameTitle = titleName;
                 if (!string.IsNullOrEmpty(gameTitle))
                     result.Title = $"[{titleId}] {gameTitle.Sanitize().Trim(200)}";
-                return result.Build();
+                return result;
             }
         }
 

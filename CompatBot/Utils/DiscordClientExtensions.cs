@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatApiClient;
 using CompatApiClient.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -127,6 +128,19 @@ namespace CompatBot.Utils
         public static string GetMentionWithNickname(this DiscordMember member)
         {
             return string.IsNullOrEmpty(member.Nickname) ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
+        }
+
+        public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, DiscordEmoji fallbackEmoji = null)
+        {
+            try
+            {
+                return DiscordEmoji.FromName(client, emojiName);
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Warn(e);
+                return fallbackEmoji;
+            }
         }
 
         private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity)

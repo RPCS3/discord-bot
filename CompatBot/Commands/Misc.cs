@@ -78,15 +78,7 @@ namespace CompatBot.Commands
         [Description("Author Credit")]
         public async Task Credits(CommandContext ctx)
         {
-            DiscordEmoji hcorion;
-            try
-            {
-                hcorion = DiscordEmoji.FromName(ctx.Client, ":hcorion:");
-            }
-            catch
-            {
-                hcorion = DiscordEmoji.FromUnicode("🍁");
-            }
+            var hcorion = ctx.Client.GetEmoji(":hcorion:", DiscordEmoji.FromUnicode("🍁"));
             var embed = new DiscordEmbedBuilder
                 {
                     Title = "RPCS3 Compatibility Bot",
@@ -98,7 +90,8 @@ namespace CompatBot.Commands
                 .AddField("People who ~~broke~~ helped test the bot",
                     "🐱 Juhn\n" +
                     $"{hcorion} hcorion\n" +
-                    "🙃 TGE");
+                    "🙃 TGE\n" +
+                    "🍒 Maru");
             await ctx.RespondAsync(embed: embed.Build());
         }
 

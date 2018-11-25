@@ -58,10 +58,10 @@ namespace CompatBot.EventHandlers
                 return;
 
             await args.Channel.TriggerTypingAsync().ConfigureAwait(false);
-            var results = new List<(string code, Task<DiscordEmbed> task)>(codesToLookup.Count);
+            var results = new List<(string code, Task<DiscordEmbedBuilder> task)>(codesToLookup.Count);
             foreach (var code in codesToLookup)
                 results.Add((code, args.Client.LookupGameInfoAsync(code)));
-            var formattedResults = new List<DiscordEmbed>(results.Count);
+            var formattedResults = new List<DiscordEmbedBuilder>(results.Count);
             foreach (var result in results)
                 try
                 {
@@ -85,11 +85,12 @@ namespace CompatBot.EventHandlers
                             result.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
                         ))
                     {
-                        sqvat = sqvat ?? DiscordEmoji.FromName(args.Client, ":sqvat:");
-                        await args.Message.ReactWithAsync(args.Client, sqvat, "How about no (๑•ิཬ•ั๑)").ConfigureAwait(false);
-                        continue;
+                        sqvat = sqvat ?? args.Client.GetEmoji(":sqvat:", Config.Reactions.No);
+                        result.Title = "How about no (๑•ิཬ•ั๑)";
+                        if (!string.IsNullOrEmpty(result.ThumbnailUrl))
+                            result.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
+                        await args.Message.ReactWithAsync(args.Client, sqvat).ConfigureAwait(false);
                     }
-
                     await args.Channel.SendMessageAsync(embed: result).ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -106,7 +107,7 @@ namespace CompatBot.EventHandlers
                 .ToList();
         }
 
-        public static async Task<DiscordEmbed> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false)
+        public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false)
         {
             if (string.IsNullOrEmpty(code))
                 return TitleInfo.Unknown.AsEmbed(code);

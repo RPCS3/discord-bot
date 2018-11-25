@@ -22,9 +22,12 @@ namespace CompatBot.EventHandlers
             args.Handled = !await IsClean(args.Client, args.Message).ConfigureAwait(false);
         }
 
-        private static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
+        public static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
         {
-            if (DefaultHandlerFilter.IsFluff(message))
+            if (message.Channel.IsPrivate)
+                return true;
+
+            if (message.Author.IsBot)
                 return true;
 
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
