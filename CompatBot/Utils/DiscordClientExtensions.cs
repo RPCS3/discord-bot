@@ -147,17 +147,17 @@ namespace CompatBot.Utils
         {
             var content = message.Content;
             var needsAttention = severity > ReportSeverity.Low;
-            if (message.Embeds.Any())
+            if (message.Embeds?.Any() ?? false)
             {
                 if (!string.IsNullOrEmpty(content))
                     content += Environment.NewLine;
 
                 var srcEmbed = message.Embeds.First();
                 content += $"🔤 {srcEmbed.Title}";
-                if (srcEmbed.Fields.Any())
+                if (srcEmbed.Fields?.Any() ?? false)
                     content += $"{Environment.NewLine}{srcEmbed.Description}{Environment.NewLine}+{srcEmbed.Fields.Count} fields";
             }
-            if (message.Attachments.Any())
+            if (message.Attachments?.Any() ?? false)
             {
                 if (!string.IsNullOrEmpty(content))
                     content += Environment.NewLine;
