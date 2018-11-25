@@ -48,8 +48,10 @@ namespace CompatBot.Commands
                         if (partStart > -1)
                             newTitle += embed.Title.Substring(partStart);
                         embed.Title = newTitle;
+                        if (!string.IsNullOrEmpty(embed.ThumbnailUrl))
+                            embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
                     }
-                    var sqvat = DiscordEmoji.FromName(ctx.Client, ":sqvat:");
+                    var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
                     await ctx.Message.ReactWithAsync(ctx.Client, sqvat).ConfigureAwait(false);
                 }
                 if (embeds.Count > 1 || embeds[0].Fields?.Count > 0)

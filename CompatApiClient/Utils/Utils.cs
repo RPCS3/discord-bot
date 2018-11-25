@@ -33,7 +33,8 @@ namespace CompatApiClient.Utils
 
         public static string Sanitize(this string str)
         {
-            return str?.Replace("`", "`\u200d").Replace("@", "@\u200d");
+            return str?.Replace("`", "`\u200d").Replace("@", "@\u200d")
+                .Replace(".", ".\u200d").Replace(":", ":\u200d");
         }
 
         public static int Clamp(this int amount, int low, int high)

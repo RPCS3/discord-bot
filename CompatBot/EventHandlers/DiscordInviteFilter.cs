@@ -23,10 +23,17 @@ namespace CompatBot.EventHandlers
         private static readonly Regex DiscordMeLink = new Regex(@"(https?://)?discord\.me/(?<me_id>.*?)(\s|$)", DefaultOptions);
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
 
-        public static Task OnMessageCreated(MessageCreateEventArgs args) => CheckMessageForInvitesAsync(args.Client, args.Message);
-        public static Task OnMessageUpdated(MessageUpdateEventArgs args) => CheckMessageForInvitesAsync(args.Client, args.Message);
+        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        {
+            args.Handled = !await CheckMessageForInvitesAsync(args.Client, args.Message).ConfigureAwait(false);
+        }
 
-        public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
+        public static async Task OnMessageUpdated(MessageUpdateEventArgs args)
+        {
+            args.Handled = !await CheckMessageForInvitesAsync(args.Client, args.Message).ConfigureAwait(false);
+        }
+
+    public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
         {
             try
             {
@@ -47,20 +54,23 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        private static async Task CheckMessageForInvitesAsync(DiscordClient client, DiscordMessage message)
+        public static async Task<bool> CheckMessageForInvitesAsync(DiscordClient client, DiscordMessage message)
         {
-            if (DefaultHandlerFilter.IsFluff(message))
-                return;
+            if (message.Channel.IsPrivate)
+                return true;
+
+            if (message.Author.IsBot)
+                return true;
 
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
-                return;
+                return true;
 
             if (message.Reactions.Any(r => r.Emoji == Config.Reactions.Moderated && r.IsMe))
-                return;
+                return true;
 
             var (hasInvalidResults, invites) = await client.GetInvitesAsync(message.Content).ConfigureAwait(false);
             if (!hasInvalidResults && invites.Count == 0)
-                return;
+                return true;
 
             if (hasInvalidResults)
             {
@@ -81,7 +91,7 @@ namespace CompatBot.EventHandlers
                         true
                     ).ConfigureAwait(false);
                 }
-                return;
+                return false;
             }
 
             foreach (var invite in invites)
@@ -107,9 +117,10 @@ namespace CompatBot.EventHandlers
                             true
                         ).ConfigureAwait(false);
                     }
-                    return;
+                    return false;
                 }
             }
+            return true;
         }
 
         public static async Task<(bool hasInvalidInvite, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, bool tryMessageAsACode = false)

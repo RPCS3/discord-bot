@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -28,6 +29,15 @@ namespace CompatBot.Commands
                 var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                 inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
             }
+
+
+            if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
+                return;
+
+            if (!await AntipiracyMonitor.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
+                return;
+
+
             if (string.IsNullOrEmpty(term))
             {
                 await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list`{inSpecificLocation}").ConfigureAwait(false);

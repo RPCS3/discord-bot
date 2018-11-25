@@ -9,6 +9,7 @@ using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
@@ -43,6 +44,12 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "You should specify what you're looking for").ConfigureAwait(false);
                 return;
             }
+
+            if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
+                return;
+
+            if (!await AntipiracyMonitor.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
+                return;
 
             try
             {
@@ -218,7 +225,7 @@ Example usage:
                                                                    i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
                     )
                     {
-                        var sqvat = DiscordEmoji.FromName(ctx.Client, ":sqvat:");
+                        var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
                         result.AppendLine($"One day this meme will die {sqvat}");
                     }
                 }
