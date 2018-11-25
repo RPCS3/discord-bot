@@ -91,7 +91,7 @@ namespace CompatBot.Commands
                     "🐱 Juhn\n" +
                     $"{hcorion} hcorion\n" +
                     "🙃 TGE\n" +
-                    "Ⓜ Maru");
+                    "🍒 Maru");
             await ctx.RespondAsync(embed: embed.Build());
         }
 
