@@ -147,12 +147,23 @@ namespace CompatBot.Utils
         {
             var content = message.Content;
             var needsAttention = severity > ReportSeverity.Low;
+            if (message.Embeds.Any())
+            {
+                if (!string.IsNullOrEmpty(content))
+                    content += Environment.NewLine;
+
+                var srcEmbed = message.Embeds.First();
+                content += $"🔤 {srcEmbed.Title}";
+                if (srcEmbed.Fields.Any())
+                    content += $"{Environment.NewLine}{srcEmbed.Description}{Environment.NewLine}+{srcEmbed.Fields.Count} fields";
+            }
             if (message.Attachments.Any())
             {
                 if (!string.IsNullOrEmpty(content))
                     content += Environment.NewLine;
                 content += string.Join(Environment.NewLine, message.Attachments.Select(a => "📎 " + a.FileName));
             }
+
             if (string.IsNullOrEmpty(content))
                 content = "🤔 something fishy is going on here, there was no message or attachment";
             DiscordMember author = null;
