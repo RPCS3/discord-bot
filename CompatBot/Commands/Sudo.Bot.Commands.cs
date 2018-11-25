@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
@@ -13,7 +12,7 @@ namespace CompatBot.Commands
 {
     internal partial class Sudo
     {
-        [Group]
+        [Group("commands"), Aliases("command")]
         [Description("Used to enabe and disable bot commands at runtime")]
         public sealed class Commands : BaseCommandModule
         {
