@@ -33,6 +33,9 @@ namespace CompatBot.EventHandlers
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
                 return true;
 
+            if (string.IsNullOrEmpty(message.Content))
+                return true;
+
             string trigger = null;
             var severity = ReportSeverity.Low;
             try
