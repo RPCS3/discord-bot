@@ -31,10 +31,12 @@ namespace CompatApiClient.Utils
             return str.Substring(0, maxLength);
         }
 
-        public static string Sanitize(this string str)
+        public static string Sanitize(this string str, bool breakLinks = true)
         {
-            return str?.Replace("`", "`\u200d").Replace("@", "@\u200d")
-                .Replace(".", ".\u200d").Replace(":", ":\u200d");
+            var result = str?.Replace("`", "`\u200d").Replace("@", "@\u200d");
+            if (breakLinks)
+                result = result.Replace(".", ".\u200d").Replace(":", ":\u200d");
+            return result;
         }
 
         public static int Clamp(this int amount, int low, int high)
