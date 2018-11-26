@@ -151,7 +151,7 @@ namespace CompatBot.Utils.ResultFormatters
                     value = TrueMark;
                 else if ("false".Equals(value, StringComparison.CurrentCultureIgnoreCase))
                     value = FalseMark;
-                items[key] = value.Sanitize();
+                items[key] = value.Sanitize(false);
             }
         }
 
