@@ -102,8 +102,8 @@ namespace CompatBot.EventHandlers
                     {
                         await message.DeleteAsync("Not a white-listed discord invite link").ConfigureAwait(false);
                         await client.ReportAsync("An unapproved discord invite", message, $"Invite {invite.Code} was resolved to the {invite.Guild.Name} server", null, ReportSeverity.Low).ConfigureAwait(false);
-                        await message.Channel.SendMessageAsync($"{message.Author.Mention} invites to the {invite.Guild.Name.Sanitize()} server are not whitelisted.\n" +
-                                                               $"Please refrain from posting it again until you have recieved an approval from a moderator.").ConfigureAwait(false);
+                        await message.Channel.SendMessageAsync($"{message.Author.Mention} invites to other servers must be whitelisted first.\n" +
+                                                               $"Please refrain from posting it again until you have received an approval from a moderator.").ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
@@ -112,8 +112,8 @@ namespace CompatBot.EventHandlers
                         await message.ReactWithAsync(
                             client,
                             Config.Reactions.Moderated,
-                            $"{message.Author.Mention} invites to the {invite.Guild.Name.Sanitize()} server are not whitelisted.\n" +
-                            $"Please remove it and refrain from posting it again until you have recieved an approval from a moderator.",
+                            $"{message.Author.Mention} invites to other servers must be whitelisted first.\n" +
+                            $"Please remove it and refrain from posting it again until you have received an approval from a moderator.",
                             true
                         ).ConfigureAwait(false);
                     }
