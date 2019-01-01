@@ -33,11 +33,13 @@ namespace CompatBot.Utils.ResultFormatters
                     prInfo = await client.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
                     pr = $"PR #{pr} by {prInfo?.User?.Login ?? "???"}";
                 }
+                if (!string.IsNullOrEmpty(build?.Datetime))
+                    pr += $" (built on {build.Datetime})";
             }
             builder = builder ?? new DiscordEmbedBuilder {Title = pr, Url = url, Description = prInfo?.Title, Color = Config.Colors.DownloadLinks};
             return builder
-                .AddField($"Windows ({build?.Windows?.Datetime})   ".FixSpaces(), GetLinkMessage(build?.Windows?.Download, true), true)
-                .AddField($"Linux ({build?.Linux?.Datetime})   ".FixSpaces(), GetLinkMessage(build?.Linux?.Download, true), true);
+                .AddField($"Windows   ".FixSpaces(), GetLinkMessage(build?.Windows?.Download, true), true)
+                .AddField($"Linux   ".FixSpaces(), GetLinkMessage(build?.Linux?.Download, true), true);
         }
 
         private static string GetLinkMessage(string link, bool simpleName)
@@ -51,7 +53,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (simpleName && text.Contains('_'))
                 text = text.Split('_', 2)[0] + Path.GetExtension(text);
 
-            return $"⏬ [{text}]({link}){"   ".FixSpaces()}";
+            return $"[⏬ {text}]({link}){"   ".FixSpaces()}";
         }
 
     }
