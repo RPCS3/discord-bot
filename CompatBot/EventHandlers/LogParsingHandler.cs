@@ -138,7 +138,7 @@ namespace CompatBot.EventHandlers
                     {
                         case "TXT":
                         {
-                            await args.Channel.SendMessageAsync($"{message.Author.Mention} please do not copy/paste logs from UI, they do not contain all the required information; ask if you do not know how to upload full log file").ConfigureAwait(false);
+                            await args.Channel.SendMessageAsync($"{message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of copying the logs from RPCS3's interface, as it doesn't contain all the required information.").ConfigureAwait(false);
                             return;
                         }
                     }
