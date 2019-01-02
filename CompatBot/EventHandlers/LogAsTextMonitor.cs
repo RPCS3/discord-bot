@@ -41,10 +41,10 @@ namespace CompatBot.EventHandlers
                 if (brokenDump)
                     await args.Channel.SendMessageAsync(
                         "Please follow the quickstart guide to get a proper dump of a digital title.\n" +
-                        "Also please upload full log file instead of pasting random bits that might or might not be relevant."
+                        "Also please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of pasting only a section which may be completely irrelevant."
                     ).ConfigureAwait(false);
                 else
-                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} please upload the full log file instead of pasting some random bits that might be completely irrelevant.").ConfigureAwait(false);
+                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of pasting only a section which may be completely irrelevant.").ConfigureAwait(false);
             }
         }
     }
