@@ -64,8 +64,10 @@ namespace CompatApiClient
             throw new HttpRequestException("Couldn't communicate with the API");
         }
 
-        public async Task<UpdateInfo> GetUpdateAsync(CancellationToken cancellationToken, string commit = "somecommit")
+        public async Task<UpdateInfo> GetUpdateAsync(CancellationToken cancellationToken, string commit = null)
         {
+            if (string.IsNullOrEmpty(commit))
+                commit = "somecommit";
             var tries = 3;
             do
             {

@@ -26,7 +26,8 @@ namespace CompatBot
         public static readonly int AttachmentSizeLimit = 8 * 1024 * 1024;
         public static readonly int LogSizeLimit = 64 * 1024 * 1024;
         public static readonly int MinimumBufferSize = 512;
-        public static readonly int MaxBuildNumberDifferenceForOutdatedBuilds = 10;
+        public static readonly int BuildNumberDifferenceForOutdatedBuilds = 10;
+        public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
 
         public static readonly string Token;
         public static readonly string LogPath = "../../../logs/bot.log"; // paths are relative to the assembly, so this will put it in the project's root

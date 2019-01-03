@@ -16,15 +16,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00553" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00553" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00553" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00560" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00560" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00560" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.2.2" />
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.1.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.1.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.1.4" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.1.2" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.2.0" />
     <PackageReference Include="NLog" Version="4.5.11" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.1" />
     <PackageReference Include="SharpCompress" Version="0.22.0" />
