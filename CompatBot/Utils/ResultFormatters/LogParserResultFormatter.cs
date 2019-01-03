@@ -445,7 +445,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (!buildInfo.Success || buildInfo.Groups["branch"].Value != "head")
                 return null;
 
-            var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token, buildInfo.Groups["commit"].Value).ConfigureAwait(false);
+            var currentBuildCommit = buildInfo.Groups["commit"].Value;
+            if (string.IsNullOrEmpty(currentBuildCommit))
+                currentBuildCommit = null;
+            var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
+            if (updateInfo?.ReturnCode != 1 && currentBuildCommit != null)
+                updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
             var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download;
             if (string.IsNullOrEmpty(link))
                 return null;
