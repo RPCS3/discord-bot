@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -369,7 +370,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["fatal_error"] is string fatalError)
             {
                 builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
-                if (fatalError.Contains("psf.cpp"))
+                if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>"))
                     notes.AppendLine("Game save data might be corrupted");
             }
             if (items["failed_to_decrypt"] is string _)
@@ -412,7 +413,10 @@ namespace CompatBot.Utils.ResultFormatters
             // should be last check here
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
-                notes.AppendLine("Outdated RPCS3 build detected, please consider updating it");
+            {
+                var timeDeltaStr = updateInfo.GetUpdateDelta() is TimeSpan timeDelta ? timeDelta.GetTimeDeltaDescription(): "outdated";
+                notes.AppendLine($"This RPCS3 build is {timeDeltaStr} old, please consider updating it");
+            }
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Notes");
             //if (updateInfo != null)
@@ -441,28 +445,31 @@ namespace CompatBot.Utils.ResultFormatters
             if (!buildInfo.Success || buildInfo.Groups["branch"].Value != "head")
                 return null;
 
-            var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+            var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token, buildInfo.Groups["commit"].Value).ConfigureAwait(false);
             var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download;
             if (string.IsNullOrEmpty(link))
                 return null;
 
             var latestBuildInfo = BuildInfoInUpdate.Match(link.ToLowerInvariant());
-            if (latestBuildInfo.Success && VersionIsTooOld(buildInfo, latestBuildInfo))
+            if (latestBuildInfo.Success && VersionIsTooOld(buildInfo, latestBuildInfo, updateInfo))
                 return updateInfo;
 
             return null;
         }
 
-        private static bool VersionIsTooOld(Match log, Match update)
+        private static bool VersionIsTooOld(Match log, Match update, UpdateInfo updateInfo)
         {
             if (Version.TryParse(log.Groups["version"].Value, out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
             {
                 if (logVersion < updateVersion)
                     return true;
 
+                if (UpdateInfoFormatter.GetUpdateDelta(updateInfo) is TimeSpan updateTimeDelta && updateTimeDelta > Config.BuildTimeDifferenceForOutdatedBuilds)
+                    return true;
+
                 if (int.TryParse(log.Groups["build"].Value, out var logBuild) && int.TryParse(update.Groups["build"].Value, out var updateBuild))
                 {
-                    if (logBuild + Config.MaxBuildNumberDifferenceForOutdatedBuilds < updateBuild)
+                    if (logBuild + Config.BuildNumberDifferenceForOutdatedBuilds < updateBuild)
                         return true;
                 }
                 return false;

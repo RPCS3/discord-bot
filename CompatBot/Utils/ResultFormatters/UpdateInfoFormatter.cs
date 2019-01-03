@@ -33,10 +33,21 @@ namespace CompatBot.Utils.ResultFormatters
                     prInfo = await client.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
                     pr = $"PR #{pr} by {prInfo?.User?.Login ?? "???"}";
                 }
-                if (!string.IsNullOrEmpty(build?.Datetime))
-                    pr += $" (built on {build.Datetime})";
             }
             builder = builder ?? new DiscordEmbedBuilder {Title = pr, Url = url, Description = prInfo?.Title, Color = Config.Colors.DownloadLinks};
+            if (!justAppend)
+            {
+                if (!string.IsNullOrEmpty(build?.Datetime))
+                {
+                    var timestampInfo = build.Datetime;
+                    if (info.CurrentBuild?.Pr is string buildPr
+                        && buildPr != pr
+                        && GetUpdateDelta(info) is TimeSpan timeDelta)
+                        timestampInfo += $" ({timeDelta.GetTimeDeltaDescription()} newer)";
+
+                    builder.AddField("Build timestamp", timestampInfo);
+                }
+            }
             return builder
                 .AddField($"Windows   ".FixSpaces(), GetLinkMessage(build?.Windows?.Download, true), true)
                 .AddField($"Linux   ".FixSpaces(), GetLinkMessage(build?.Linux?.Download, true), true);
@@ -56,5 +67,48 @@ namespace CompatBot.Utils.ResultFormatters
             return $"[⏬ {text}]({link}){"   ".FixSpaces()}";
         }
 
+        public static TimeSpan? GetUpdateDelta(this UpdateInfo updateInfo)
+        {
+            if (updateInfo?.LatestBuild?.Datetime is string latestDateTimeStr
+                && DateTime.TryParse(latestDateTimeStr, out var latestDateTime)
+                && updateInfo.CurrentBuild?.Datetime is string dateTimeBuildStr
+                && DateTime.TryParse(dateTimeBuildStr, out var dateTimeBuild))
+                return latestDateTime - dateTimeBuild;
+            return null;
+        }
+
+        public static string GetTimeDeltaDescription(this TimeSpan delta)
+        {
+            if (delta.TotalHours < 1)
+            {
+                var minutes = (int)delta.TotalMinutes;
+                return $"{minutes} minute{(minutes == 1 ? "" : "s")}";
+            }
+            else if (delta.TotalDays < 1)
+            {
+                var hours = (int) delta.TotalHours;
+                return $"{hours} hour{(hours == 1 ? "": "s")}";
+            }
+            else if (delta.TotalDays < 7)
+            {
+                var days = (int) delta.TotalDays;
+                return $"{days} day{(days == 1 ? "": "s")}";
+            }
+            else if (delta.TotalDays < 30)
+            {
+                var weeks = (int)(delta.TotalDays/7);
+                return $"{weeks} week{(weeks == 1 ? "" : "s")}";
+            }
+            else if (delta.TotalDays < 365)
+            {
+                var months = (int)(delta.TotalDays/30);
+                return $"{months} month{(months == 1 ? "" : "s")}";
+            }
+            else
+            {
+                var years = (int)(delta.TotalDays/365);
+                return $"{years} year{(years == 1 ? "" : "s")}";
+            }
+        }
     }
 }

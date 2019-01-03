@@ -131,9 +131,16 @@ Example usage:
                 return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
             }
 
-            public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel)
+            [Command("since")]
+            [Description("Show additinal info about changes since specified update")]
+            public Task Since(CommandContext ctx, [Description("Commit hash of the update, such as `46abe0f31`")] string commit)
             {
-                var info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                return CheckForRpcs3Updates(ctx.Client, ctx.Channel, commit);
+            }
+
+            public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null)
+            {
+                var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
                 var embed = await info.AsEmbedAsync().ConfigureAwait(false);
                 if (info == null || embed.Color == Config.Colors.Maintenance)
                     embed = await CachedUpdateInfo.AsEmbedAsync().ConfigureAwait(false);
