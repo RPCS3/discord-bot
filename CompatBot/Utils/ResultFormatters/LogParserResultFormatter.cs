@@ -286,8 +286,15 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == TrueMark)
                 notes.AppendLine("`HLE lwmutex` is enabled, might affect compatibility");
-            if (items["spu_block_size"] is string spuBlockSize && spuBlockSize == "Giga")
-                notes.AppendLine("`Giga` mode for `SPU Block Size` is strongly not recommended to use");
+            if (items["spu_block_size"] is string spuBlockSize)
+            {
+/*
+                if (spuBlockSize == "Giga")
+                    notes.AppendLine("`Giga` mode for `SPU Block Size` is strongly not recommended to use");
+*/
+                if (spuBlockSize != "Safe")
+                    notes.AppendLine($"Please use `Safe` mode for `SPU Block Size`. `{spuBlockSize}` is currently unstable.");
+            }
 
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Important Settings to Review");
