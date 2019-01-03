@@ -141,6 +141,8 @@ Example usage:
             public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null)
             {
                 var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
+                if (info?.ReturnCode != 1 && sinceCommit != null)
+                    info = await client.GetUpdateAsync(Config.Cts.Token, null).ConfigureAwait(false);
                 var embed = await info.AsEmbedAsync().ConfigureAwait(false);
                 if (info == null || embed.Color == Config.Colors.Maintenance)
                     embed = await CachedUpdateInfo.AsEmbedAsync().ConfigureAwait(false);

@@ -41,7 +41,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     var timestampInfo = build.Datetime;
                     if (info.CurrentBuild?.Pr is string buildPr
-                        && buildPr != pr
+                        && buildPr != info.LatestBuild?.Pr
                         && GetUpdateDelta(info) is TimeSpan timeDelta)
                         timestampInfo += $" ({timeDelta.GetTimeDeltaDescription()} newer)";
 
