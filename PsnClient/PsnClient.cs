@@ -270,6 +270,35 @@ namespace PsnClient
             }
         }
 
+        public async Task<TitleMeta> GetTitleMetaAsync(string productId, CancellationToken cancellationToken)
+        {
+            var id = productId + "_00";
+            var hash = TmdbHasher.GetTitleHash(id);
+            try
+            {
+                using (var message = new HttpRequestMessage(HttpMethod.Get, $"http://tmdb.np.dl.playstation.net/tmdb/{id}_{hash}/{id}.xml"))
+                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                    try
+                    {
+                        if (response.StatusCode == HttpStatusCode.NotFound)
+                            return null;
+
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        return await response.Content.ReadAsAsync<TitleMeta>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response);
+                        return null;
+                    }
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+                return null;
+            }
+        }
+
         private async Task<string> GetSessionCookies(string locale, CancellationToken cancellationToken)
         {
             var loc = locale.AsLocaleData();
