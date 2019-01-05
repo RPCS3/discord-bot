@@ -12,10 +12,15 @@ namespace CompatBot.Database.Providers
     internal static class ThumbnailProvider
     {
         private static readonly HttpClient HttpClient = HttpClientFactory.Create();
+        private static readonly PsnClient.Client PsnClient = new PsnClient.Client();
 
         public static async Task<string> GetThumbnailUrlAsync(this DiscordClient client, string productCode)
         {
             productCode = productCode.ToUpperInvariant();
+            var tmdbInfo = await PsnClient.GetTitleMetaAsync(productCode, Config.Cts.Token).ConfigureAwait(false);
+            if (tmdbInfo?.Icon.Url is string tmdbIconUrl)
+                return tmdbIconUrl;
+
             using (var db = new ThumbnailDb())
             {
                 var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode.ToUpperInvariant()).ConfigureAwait(false);
