@@ -180,6 +180,7 @@ namespace CompatBot
                     client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
 
                     client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
+                    client.GuildMemberAdded += Greeter.OnMemberAdded;
                     client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
                     client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
 
