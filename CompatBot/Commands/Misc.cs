@@ -72,7 +72,6 @@ namespace CompatBot.Commands
         };
 
         private static readonly HashSet<char> Vowels = new HashSet<char> {'a', 'e', 'i', 'o', 'u'};
-        private static readonly char[] DiceParts = {'d', '+'};
 
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]

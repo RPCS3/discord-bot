@@ -13,16 +13,6 @@ namespace CompatBot.Utils
 {
     public static class DiscordClientExtensions
     {
-        public static async Task<DiscordChannel> CreateDmAsync(this CommandContext ctx)
-        {
-            return ctx.Channel.IsPrivate ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
-        }
-
-        public static Task<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
-        {
-            return ctx.Client.GetUserNameAsync(ctx.Channel, userId, forDmPurposes, defaultName);
-        }
-
         public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, DiscordUser user)
         {
             return (from g in client.Guilds
