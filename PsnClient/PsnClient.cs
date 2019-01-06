@@ -276,7 +276,7 @@ namespace PsnClient
             var hash = TmdbHasher.GetTitleHash(id);
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, $"http://tmdb.np.dl.playstation.net/tmdb/{id}_{hash}/{id}.xml"))
+                using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://tmdb.np.dl.playstation.net/tmdb/{id}_{hash}/{id}.xml"))
                 using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
                     try
                     {
