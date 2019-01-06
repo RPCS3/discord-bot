@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,7 +9,6 @@ using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
-using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
@@ -268,8 +266,13 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("`Hook Static Functions` is enabled, please disable");
             if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == TrueMark)
                 notes.AppendLine("`GPU Texture Scaling` is enabled, please disable");
-            if (items["af_override"] is string af && af == "Disabled")
-                notes.AppendLine("`Anisotropic Filter` is `Disabled`, please use `Auto` instead");
+            if (items["af_override"] is string af)
+            {
+                if (af == "Disabled")
+                    notes.AppendLine("`Anisotropic Filter` is `Disabled`, please use `Auto` instead");
+                else if (af != "16")
+                    notes.AppendLine($"`Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
+            }
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
                 notes.AppendLine($"`Resolution Scale` is `{resScale}%`.");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
