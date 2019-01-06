@@ -7,7 +7,7 @@ namespace CompatBot.Utils
 {
     public static class CommandContextExtensions
     {
-        private static readonly Regex MessageLinkRegex = new Regex(@"(?:https?://)?discordapp.com/channels/(?<guild>\d+)/(?<channel>\d+)/(?<message>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        internal static readonly Regex MessageLinkRegex = new Regex(@"(?:https?://)?discordapp.com/channels/(?<guild>\d+)/(?<channel>\d+)/(?<message>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         public static async Task<DiscordChannel> CreateDmAsync(this CommandContext ctx)
         {

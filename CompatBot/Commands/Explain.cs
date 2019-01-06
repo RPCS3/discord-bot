@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
@@ -11,6 +13,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace CompatBot.Commands
 {
@@ -206,6 +209,49 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed `{term}`").ConfigureAwait(false);
                 }
             }
+        }
+
+        [Command("dump"), Aliases("download")]
+        [Description("Returns explanation text as a file attachment")]
+        public async Task Dump(CommandContext ctx, [RemainingText, Description("Term to dump **or** a link to a message containing the explanation")] string term)
+        {
+            term = term.ToLowerInvariant().StripQuotes();
+            var isLink = CommandContextExtensions.MessageLinkRegex.IsMatch(term);
+            if (isLink)
+            {
+                await DumpLink(ctx, term).ConfigureAwait(false);
+                return;
+            }
+
+            using (var db = new BotDb())
+            {
+                var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(item?.Text))
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term.Sanitize()}` is not defined").ConfigureAwait(false);
+                else
+                    using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text)))
+                        await ctx.Channel.SendFileAsync($"{term}.txt", stream).ConfigureAwait(false);
+            }
+        }
+
+        private async Task DumpLink(CommandContext ctx, string messageLink)
+        {
+            string explanation = null;
+            DiscordMessage msg = null;
+            try { msg = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false); } catch {}
+            if (msg != null)
+            {
+                if (msg.Embeds.FirstOrDefault() is DiscordEmbed embed && !string.IsNullOrEmpty(embed.Description))
+                    explanation = embed.Description;
+                else if (!string.IsNullOrEmpty(msg.Content))
+                    explanation = msg.Content;
+            }
+
+            if (string.IsNullOrEmpty(explanation))
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't find any text in the specified message").ConfigureAwait(false);
+            else
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(explanation)))
+                    await ctx.Channel.SendFileAsync("explanation.txt", stream).ConfigureAwait(false);
         }
     }
 }
