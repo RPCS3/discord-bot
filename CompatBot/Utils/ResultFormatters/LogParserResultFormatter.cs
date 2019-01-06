@@ -270,7 +270,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 if (af == "Disabled")
                     notes.AppendLine("`Anisotropic Filter` is `Disabled`, please use `Auto` instead");
-                else if (af != "16")
+                else if (af.ToLowerInvariant() != "auto" && af != "16")
                     notes.AppendLine($"`Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
