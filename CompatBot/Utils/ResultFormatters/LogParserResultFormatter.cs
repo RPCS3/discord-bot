@@ -467,12 +467,12 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static bool VersionIsTooOld(Match log, Match update, UpdateInfo updateInfo)
         {
+            if (updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta && updateTimeDelta > Config.BuildTimeDifferenceForOutdatedBuilds)
+                return true;
+
             if (Version.TryParse(log.Groups["version"].Value, out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
             {
                 if (logVersion < updateVersion)
-                    return true;
-
-                if (UpdateInfoFormatter.GetUpdateDelta(updateInfo) is TimeSpan updateTimeDelta && updateTimeDelta > Config.BuildTimeDifferenceForOutdatedBuilds)
                     return true;
 
                 if (int.TryParse(log.Groups["build"].Value, out var logBuild) && int.TryParse(update.Groups["build"].Value, out var updateBuild))
