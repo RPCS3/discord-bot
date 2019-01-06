@@ -13,7 +13,6 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace CompatBot.Commands
 {
@@ -213,24 +212,34 @@ namespace CompatBot.Commands
 
         [Command("dump"), Aliases("download")]
         [Description("Returns explanation text as a file attachment")]
-        public async Task Dump(CommandContext ctx, [RemainingText, Description("Term to dump **or** a link to a message containing the explanation")] string term)
+        public async Task Dump(CommandContext ctx, [RemainingText, Description("Term to dump **or** a link to a message containing the explanation")] string termOrLink = null)
         {
-            term = term.ToLowerInvariant().StripQuotes();
-            var isLink = CommandContextExtensions.MessageLinkRegex.IsMatch(term);
+            if (string.IsNullOrEmpty(termOrLink))
+            {
+                var term = ctx.Message.Content.Split(' ', 2).Last();
+                await ShowExplanation(ctx, term).ConfigureAwait(false);
+                return;
+            }
+
+            termOrLink = termOrLink.ToLowerInvariant().StripQuotes();
+            var isLink = CommandContextExtensions.MessageLinkRegex.IsMatch(termOrLink);
             if (isLink)
             {
-                await DumpLink(ctx, term).ConfigureAwait(false);
+                await DumpLink(ctx, termOrLink).ConfigureAwait(false);
                 return;
             }
 
             using (var db = new BotDb())
             {
-                var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == termOrLink).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(item?.Text))
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term.Sanitize()}` is not defined").ConfigureAwait(false);
+                {
+                    var term = ctx.Message.Content.Split(' ', 2).Last();
+                    await ShowExplanation(ctx, term).ConfigureAwait(false);
+                }
                 else
                     using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text)))
-                        await ctx.Channel.SendFileAsync($"{term}.txt", stream).ConfigureAwait(false);
+                        await ctx.Channel.SendFileAsync($"{termOrLink}.txt", stream).ConfigureAwait(false);
             }
         }
 
