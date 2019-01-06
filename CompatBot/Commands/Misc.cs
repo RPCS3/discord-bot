@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -71,6 +72,7 @@ namespace CompatBot.Commands
         };
 
         private static readonly HashSet<char> Vowels = new HashSet<char> {'a', 'e', 'i', 'o', 'u'};
+        private static readonly char[] DiceParts = {'d', '+'};
 
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]
@@ -95,7 +97,7 @@ namespace CompatBot.Commands
 
         [Command("roll")]
         [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
-        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [Description("Optional text"), RemainingText] string comment = null)
+        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string comment = null)
         {
             string result = null;
             if (maxValue > 1)
@@ -107,30 +109,59 @@ namespace CompatBot.Commands
         }
 
         [Command("roll")]
-        public async Task Roll(CommandContext ctx, [Description("Dices to roll (i.e. 2d6 for two 6-sided dices)")] string dices, [Description("Optional text"), RemainingText] string comment = null)
+        public async Task Roll(CommandContext ctx, [RemainingText, Description("Dices to roll (i.e. 2d6+1 for two 6-sided dices with a bonus 1)")] string dices)
         {
             var result = "";
-            if (dices is string dice && Regex.IsMatch(dice, @"\d+d\d+"))
+            var embed = new DiscordEmbedBuilder();
+            if (dices is string dice && Regex.Matches(dice, @"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?") is MatchCollection matches && matches.Count > 0 && matches.Count <= EmbedPager.MaxFields)
             {
                 await ctx.TriggerTypingAsync().ConfigureAwait(false);
-                var diceParts = dice.Split('d', StringSplitOptions.RemoveEmptyEntries);
-                if (int.TryParse(diceParts[0], out var num) && int.TryParse(diceParts[1], out var face) &&
-                    0 < num && num < 101 &&
-                    1 < face && face < 1001)
+                var grandTotal = 0;
+                foreach (Match m in matches)
                 {
-                    List<int> rolls;
-                    lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
-                    if (rolls.Count > 1)
+                    result = "";
+                    if (!int.TryParse(m.Groups["num"].Value, out var num))
+                        num = 1;
+                    if (int.TryParse(m.Groups["face"].Value, out var face)
+                        && 0 < num && num < 101
+                        && 1 < face && face < 1001)
                     {
-                        result = "Total: " + rolls.Sum();
-                        result += "\nRolls: " + string.Join(' ', rolls);
+                        List<int> rolls;
+                        lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
+                        var total = rolls.Sum();
+                        var totalStr = total.ToString();
+                        int.TryParse(m.Groups["mod"].Value, out var mod);
+                        if (mod > 0)
+                            totalStr += $" + {mod} = {total + mod}";
+                        var rollsStr = string.Join(' ', rolls);
+                        if (rolls.Count > 1)
+                        {
+                            result = "Total: " + totalStr;
+                            result += "\nRolls: " + rollsStr;
+                        }
+                        else
+                            result = totalStr;
+                        grandTotal += total + mod;
+                        var diceDesc = $"{num}d{face}";
+                        if (mod > 0)
+                            diceDesc += "+" + mod;
+                        embed.AddField(diceDesc, result.Trim(EmbedPager.MaxFieldLength), true);
                     }
-                    else
-                        result = rolls.Sum().ToString();
+                }
+                if (matches.Count == 1)
+                    embed = null;
+                else
+                {
+                    embed.Description = "Grand total: " + grandTotal;
+                    embed.Title = $"Result of {matches.Count} dice rolls";
+                    embed.Color = Config.Colors.Help;
+                    result = null;
                 }
             }
-            if (string.IsNullOrEmpty(result))
+            if (string.IsNullOrEmpty(result) && embed == null)
                 await ctx.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
+            else if (embed != null)
+                await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             else
                 await ctx.RespondAsync(result).ConfigureAwait(false);
         }
