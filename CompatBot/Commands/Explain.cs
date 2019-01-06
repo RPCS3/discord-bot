@@ -39,7 +39,6 @@ namespace CompatBot.Commands
             if (!await AntipiracyMonitor.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
                 return;
 
-
             if (string.IsNullOrEmpty(term))
             {
                 await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list`{inSpecificLocation}").ConfigureAwait(false);
