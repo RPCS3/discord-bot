@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
-using org.mariuszgromada.math.mxparser;
 
 namespace CompatBot.Commands
 {
@@ -95,23 +93,6 @@ namespace CompatBot.Commands
             await ctx.RespondAsync(embed: embed.Build());
         }
 
-        [Command("math"), TriggersTyping]
-        [Description("Math, here you go Juhn")]
-        public async Task Math(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
-        {
-            var result = @"Something went wrong ¯\\_(ツ)\_/¯" + "\nMath is hard, yo";
-            try
-            {
-                var expr = new Expression(expression);
-                result = expr.calculate().ToString();
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e, "Math failed");
-            }
-            await ctx.RespondAsync(result).ConfigureAwait(false);
-        }
- 
         [Command("roll")]
         [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
         public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [Description("Optional text"), RemainingText] string comment = null)
