@@ -72,6 +72,10 @@ namespace CompatBot.EventHandlers.LogParsing
             },
             new LogSection
             {
+                Extractors = new Dictionary<string, Regex>
+                {
+                    ["Enable /host_root/:"] = new Regex("Enable /host_root/: (?<host_root>.*?)\r?$", DefaultOptions),
+                },
                 EndTrigger = "Video:",
             },
             new LogSection
@@ -109,6 +113,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 Extractors = new Dictionary<string, Regex>
                 {
                     ["Disc path:"] = new Regex(@"Disc path: .*(?<hdd_game_path>/dev_hdd0/game/.*?)\r?$", DefaultOptions),
+                    ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path>.*?)\r?$", DefaultOptions),
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
                     ["RSX:"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
