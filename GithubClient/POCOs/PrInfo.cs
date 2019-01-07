@@ -1,4 +1,4 @@
-﻿namespace CompatApiClient.POCOs
+﻿namespace GithubClient.POCOs
 {
     public class PrInfo
     {

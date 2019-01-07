@@ -2,15 +2,16 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using CompatApiClient;
 using CompatApiClient.POCOs;
 using DSharpPlus.Entities;
+using GithubClient.POCOs;
 
 namespace CompatBot.Utils.ResultFormatters
 {
     internal static class UpdateInfoFormatter
     {
-        private static readonly Client client = new Client();
+        private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
+        private static readonly GithubClient.Client githubClient = new GithubClient.Client();
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordEmbedBuilder builder = null)
         {
@@ -30,7 +31,7 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                 {
                     url = "https://github.com/RPCS3/rpcs3/pull/" + pr;
-                    prInfo = await client.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
+                    prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
                     pr = $"PR #{pr} by {prInfo?.User?.Login ?? "???"}";
                 }
             }
