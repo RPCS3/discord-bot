@@ -157,6 +157,12 @@ namespace CompatBot.Commands
                     result = null;
                 }
             }
+            else
+            {
+                await Roll(ctx).ConfigureAwait(false);
+                return;
+            }
+
             if (string.IsNullOrEmpty(result) && embed == null)
                 await ctx.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
             else if (embed != null)
