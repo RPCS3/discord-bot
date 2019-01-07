@@ -156,6 +156,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void BuildInfoSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
+            if (string.IsNullOrEmpty(items["serial"] + items["game_title"]) && items["fw_version_installed"] is string fwVersion)
+                builder.Description = $"The log contains only installation of firmware {fwVersion}.\nPlease boot the game and uploading a new log";
             var systemInfo = $"{items["build_and_specs"]}";
             if (!string.IsNullOrEmpty(items["os_path"]) && !string.IsNullOrEmpty(systemInfo))
             {
@@ -371,6 +373,9 @@ namespace CompatBot.Utils.ResultFormatters
             BuildWeirdSettingsSection(builder, items);
             BuildMissingLicensesSection(builder, items);
             var brokenDump = await BuildMissingFilesSection(builder, items).ConfigureAwait(false);
+            var elfBootPath = items["elf_boot_path"] ?? "";
+            var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
+            var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var notes = new StringBuilder();
             if (items["fatal_error"] is string fatalError)
             {
@@ -384,10 +389,10 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
             if (brokenDump)
                 notes.AppendLine("Some game files are missing or corrupted, please check and redump if needed.");
-            if (!string.IsNullOrEmpty(items["host_root_in_boot"])
-                && items["elf_boot_path"] is string elfBootPath
-                && elfBootPath.TrimEnd().EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase))
-                notes.AppendLine("Retail game was booted as an ELF through the `/root_host/`, probably due to passing boot path as an argument; please boot through the game library list for now");
+            if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
+                notes.AppendLine("Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
+            if (!string.IsNullOrEmpty(items["serial"]) && isElf)
+                notes.AppendLine($"Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
 
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
@@ -406,7 +411,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
                 notes.AppendLine("Game-specific patches were applied");
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
-                notes.AppendLine("The log is empty, you need to run the game before uploading the log");
+                notes.AppendLine("The log is empty; you need to run the game before uploading the log");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if ((items["game_category"] == "HG") && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))

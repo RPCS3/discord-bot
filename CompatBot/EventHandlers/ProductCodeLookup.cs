@@ -110,7 +110,9 @@ namespace CompatBot.EventHandlers
         public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false)
         {
             if (string.IsNullOrEmpty(code))
-                return TitleInfo.Unknown.AsEmbed(code);
+            {
+                return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog);
+            }
 
             try
             {
