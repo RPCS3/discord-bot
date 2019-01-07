@@ -13,7 +13,11 @@ namespace CompatBot.EventHandlers
     {
         private static readonly AhoCorasickDoubleArrayTrie<string> ChillCheck = new AhoCorasickDoubleArrayTrie<string>(new[]
         {
-            "shut the fuck up", "shut up", "shutup", "hush", "chill", "take that back", "delete this", "bad bot",
+            "shut the fuck up", "shut up", "shutup", "shuddup", "hush", "chill", "bad bot",
+            "no one asked you",
+            "take this back", "take that back",
+            "delete this", "delete that",
+            "remove this", "remove that",
         }.ToDictionary(s => s, s => s), true);
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
