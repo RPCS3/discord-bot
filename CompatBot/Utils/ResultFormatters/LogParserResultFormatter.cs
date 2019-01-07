@@ -264,6 +264,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("`Resolution` was changed from the recommended `1280x720`");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == TrueMark)
                 notes.AppendLine("`Hook Static Functions` is enabled, please disable");
+            if (items["host_root"] is string hostRoot && hostRoot == TrueMark)
+                notes.AppendLine("`/host_root/` is enabled");
             if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == TrueMark)
                 notes.AppendLine("`GPU Texture Scaling` is enabled, please disable");
             if (items["af_override"] is string af)
@@ -382,6 +384,10 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
             if (brokenDump)
                 notes.AppendLine("Some game files are missing or corrupted, please check and redump if needed.");
+            if (!string.IsNullOrEmpty(items["host_root_in_boot"])
+                && items["elf_boot_path"] is string elfBootPath
+                && elfBootPath.TrimEnd().EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase))
+                notes.AppendLine("Retail game was booted as an ELF through the `/root_host/`, probably due to passing boot path as an argument; please boot through the game library list for now");
 
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
