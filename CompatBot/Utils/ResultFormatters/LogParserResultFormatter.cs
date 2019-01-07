@@ -156,8 +156,6 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void BuildInfoSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
-            if (string.IsNullOrEmpty(items["serial"] + items["game_title"]) && items["fw_version_installed"] is string fwVersion)
-                builder.Description = $"The log contains only installation of firmware {fwVersion}.\nPlease boot the game and uploading a new log";
             var systemInfo = $"{items["build_and_specs"]}";
             if (!string.IsNullOrEmpty(items["os_path"]) && !string.IsNullOrEmpty(systemInfo))
             {
@@ -393,6 +391,12 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine("Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
                 notes.AppendLine($"Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
+            if (string.IsNullOrEmpty(items["serial"] + items["game_title"]) && items["fw_version_installed"] is string fwVersion)
+                notes.AppendLine($"The log contains only installation of firmware {fwVersion}")
+                    .AppendLine("Please boot the game and uploading a new log");
+            if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
+                notes.AppendLine("The log is empty")
+                    .AppendLine("Please boot the game and uploading a new log");
 
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
@@ -410,8 +414,6 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
                 notes.AppendLine("Game-specific patches were applied");
-            if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
-                notes.AppendLine("The log is empty; you need to run the game before uploading the log");
             if (!string.IsNullOrEmpty(items["hdd_game_path"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))
                 notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
             if ((items["game_category"] == "HG") && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))

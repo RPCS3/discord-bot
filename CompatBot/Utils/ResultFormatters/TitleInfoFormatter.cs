@@ -87,16 +87,8 @@ namespace CompatBot.Utils.ResultFormatters
             }
             else
             {
-                var isElf = gameTitle != null
-                            && (gameTitle.EndsWith(".elf", StringComparison.InvariantCultureIgnoreCase)
-                                || gameTitle.EndsWith(".self", StringComparison.InvariantCultureIgnoreCase));
                 var desc = "";
-                if (string.IsNullOrEmpty(titleId))
-                {
-                    if (!isElf)
-                        desc = "No product id was found; log might be corrupted, please reupload a new copy";
-                }
-                else
+                if (!string.IsNullOrEmpty(titleId))
                     desc = $"Product code {titleId} was not found in compatibility database, possibly untested!";
                 var result = new DiscordEmbedBuilder
                 {
