@@ -67,6 +67,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
+                var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
                 var pr = info.ToPrString(null, true);
                 var desc = $"{info.Status} since {info.ToUpdated()}";
                 if (pr is string _)
@@ -77,7 +78,7 @@ namespace CompatBot.Utils.ResultFormatters
                     desc +=  $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={info.WikiTitle})";
                 return new DiscordEmbedBuilder
                     {
-                        Title = $"[{titleId}] {(gameTitle ?? info.Title).Trim(200)}",
+                        Title = $"{productCodePart}{(gameTitle ?? info.Title).Trim(200)}",
                         Url = $"https://forums.rpcs3.net/thread-{info.Thread}.html",
                         Description = desc,
                         Color = color,
@@ -86,9 +87,17 @@ namespace CompatBot.Utils.ResultFormatters
             }
             else
             {
-                var desc = string.IsNullOrEmpty(titleId)
-                    ? "No product id was found; log might be corrupted, please reupload a new copy"
-                    : $"Product code {titleId} was not found in compatibility database, possibly untested!";
+                var isElf = gameTitle != null
+                            && (gameTitle.EndsWith(".elf", StringComparison.InvariantCultureIgnoreCase)
+                                || gameTitle.EndsWith(".self", StringComparison.InvariantCultureIgnoreCase));
+                var desc = "";
+                if (string.IsNullOrEmpty(titleId))
+                {
+                    if (!isElf)
+                        desc = "No product id was found; log might be corrupted, please reupload a new copy";
+                }
+                else
+                    desc = $"Product code {titleId} was not found in compatibility database, possibly untested!";
                 var result = new DiscordEmbedBuilder
                 {
                     Description = desc,
@@ -99,7 +108,10 @@ namespace CompatBot.Utils.ResultFormatters
                 if (gameTitle == null && ThumbnailProvider.GetTitleName(titleId) is string titleName && !string.IsNullOrEmpty(titleName))
                     gameTitle = titleName;
                 if (!string.IsNullOrEmpty(gameTitle))
-                    result.Title = $"[{titleId}] {gameTitle.Sanitize().Trim(200)}";
+                {
+                    var productCodePart = string.IsNullOrEmpty(titleId) ? "" : $"[{titleId}] ";
+                    result.Title = $"{productCodePart}{gameTitle.Sanitize().Trim(200)}";
+                }
                 return result;
             }
         }

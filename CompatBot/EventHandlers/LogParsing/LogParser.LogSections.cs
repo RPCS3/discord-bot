@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -40,6 +41,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     ["RSX:"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Serial:"] = new Regex(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
+                    ["Successfully installed PS3 firmware"] = new Regex(@"Successfully installed PS3 firmware version (?<fw_version_installed>\d+\.\d+).*\r?$", DefaultOptions),
                     ["Title:"] = new Regex(@"Title: (?<game_title>.*)?\r?$", DefaultOptions),
                     ["Category:"] = new Regex(@"Category: (?<game_category>.*)?\r?$", DefaultOptions),
                     ["LDR:"] = new Regex(@"(Path|Cache): ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
@@ -179,11 +181,17 @@ namespace CompatBot.EventHandlers.LogParsing
                 "driver_version", "driver_manuf",
                 "driver_manuf_new", "driver_version_new"
             );
+#if DEBUG
+            Console.WriteLine("===== cleared");
+#endif
         }
 
         private static void MarkAsComplete(LogParseState state)
         {
             state.CompleteCollection = state.WipCollection;
+#if DEBUG
+            Console.WriteLine("----- complete section");
+#endif
         }
 
         private static void MarkAsCompleteAndReset(LogParseState state)
