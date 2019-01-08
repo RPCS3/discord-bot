@@ -4,6 +4,10 @@ namespace CompatApiClient.Utils
 {
     public static class Utils
     {
+        private const long UnderKB = 1000;
+        private const long UnderMB = 1000 * 1024;
+        private const long UnderGB = 1000 * 1024 * 1024;
+
         public static string Trim(this string str, int maxLength)
         {
             const int minSaneLimit = 4;
@@ -42,6 +46,17 @@ namespace CompatApiClient.Utils
         public static int Clamp(this int amount, int low, int high)
         {
             return Math.Min(high, Math.Max(amount, low));
+        }
+
+        public static string AsStorageUnit(this long bytes)
+        {
+            if (bytes < UnderKB)
+                return $"{bytes} byte{(bytes == 1 ? "" : "s")}";
+            if (bytes < UnderMB)
+                return $"{bytes / 1024.0:0.##} KB";
+            if (bytes < UnderGB)
+                return $"{bytes / 1024.0 / 1024:0.##} MB";
+            return $"{bytes / 1024.0 / 1024 / 1024:0.##} GB";
         }
     }
 }

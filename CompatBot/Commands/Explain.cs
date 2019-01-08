@@ -220,6 +220,9 @@ namespace CompatBot.Commands
                 return;
             }
 
+            if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
+                return;
+
             termOrLink = termOrLink.ToLowerInvariant().StripQuotes();
             var isLink = CommandContextExtensions.MessageLinkRegex.IsMatch(termOrLink);
             if (isLink)
