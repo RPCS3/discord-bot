@@ -8,7 +8,7 @@ using org.mariuszgromada.math.mxparser;
 
 namespace CompatBot.Commands
 {
-    [Group("math"), TriggersTyping]
+    [Group("math")]
     [Description("Math, here you go Juhn. Use `math help` for syntax help")]
     internal sealed class BotMath : BaseCommandModuleCustom
     {

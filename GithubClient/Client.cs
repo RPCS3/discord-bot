@@ -83,10 +83,9 @@ namespace GithubClient
         public async Task<List<PrInfo>> GetOpenPrsAsync(CancellationToken cancellationToken)
         {
             var requestUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=open";
-            if (StatusesCache.TryGetValue(requestUri, out var o) && o is List<PrInfo> result)
+            if (StatusesCache.TryGetValue(requestUri, out List<PrInfo> result))
                 return result;
 
-            result = null;
             try
             {
                 using (var message = new HttpRequestMessage(HttpMethod.Get, requestUri))
@@ -117,10 +116,9 @@ namespace GithubClient
 
         public async Task<List<StatusInfo>> GetStatusesAsync(string statusesUrl, CancellationToken cancellationToken)
         {
-            if (StatusesCache.TryGetValue(statusesUrl, out var o) && o is List<StatusInfo> result)
+            if (StatusesCache.TryGetValue(statusesUrl, out List<StatusInfo> result))
                 return result;
 
-            result = null;
             try
             {
                 using (var message = new HttpRequestMessage(HttpMethod.Get, statusesUrl))

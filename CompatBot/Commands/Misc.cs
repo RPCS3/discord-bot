@@ -114,7 +114,6 @@ namespace CompatBot.Commands
             var embed = new DiscordEmbedBuilder();
             if (dices is string dice && Regex.Matches(dice, @"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?") is MatchCollection matches && matches.Count > 0 && matches.Count <= EmbedPager.MaxFields)
             {
-                await ctx.TriggerTypingAsync().ConfigureAwait(false);
                 var grandTotal = 0;
                 foreach (Match m in matches)
                 {

@@ -15,7 +15,7 @@ namespace CompatBot.Commands
         [Description("Used to manage bot moderators")]
         public sealed class Mod : BaseCommandModuleCustom
         {
-            [Command("add"), TriggersTyping]
+            [Command("add")]
             [Description("Adds a new moderator")]
             public async Task Add(CommandContext ctx, [Description("Discord user to add to the bot mod list")] DiscordMember user)
             {
@@ -30,7 +30,7 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"{user.Mention} is already a moderator").ConfigureAwait(false);
             }
 
-            [Command("remove"), Aliases("delete", "del"), TriggersTyping]
+            [Command("remove"), Aliases("delete", "del")]
             [Description("Removes a moderator")]
             public async Task Remove(CommandContext ctx, [Description("Discord user to remove from the bot mod list")] DiscordMember user)
             {
@@ -46,7 +46,7 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"{user.Mention} is not a moderator").ConfigureAwait(false);
             }
 
-            [Command("list"), Aliases("show"), TriggersTyping]
+            [Command("list"), Aliases("show")]
             [Description("Lists all moderators")]
             public async Task List(CommandContext ctx)
             {
@@ -56,7 +56,7 @@ namespace CompatBot.Commands
                 await ctx.SendAutosplitMessageAsync(list.Append("```")).ConfigureAwait(false);
             }
 
-            [Command("sudo"), TriggersTyping]
+            [Command("sudo")]
             [Description("Makes a moderator a sudoer")]
             public async Task Sudo(CommandContext ctx, [Description("Discord user on the moderator list to grant the sudoer rights to")] DiscordMember moderator)
             {
@@ -71,7 +71,7 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"{moderator.Mention} is not a moderator (yet)").ConfigureAwait(false);
             }
 
-            [Command("unsudo"), TriggersTyping]
+            [Command("unsudo")]
             [Description("Makes a sudoer a regular moderator")]
             public async Task Unsudo(CommandContext ctx, [Description("Discord user on the moderator list to strip the sudoer rights from")] DiscordMember sudoer)
             {

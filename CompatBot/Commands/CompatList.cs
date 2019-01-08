@@ -107,7 +107,7 @@ Example usage:
             await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
         }
 
-        [Command("filters"), TriggersTyping(InDmOnly = true)]
+        [Command("filters")]
         [Description("Provides information about available filters for the !top command")]
         public async Task Filters(CommandContext ctx)
         {

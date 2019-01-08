@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("invite"), Aliases("invites"), RequiresBotModRole, TriggersTyping]
+    [Group("invite"), Aliases("invites"), RequiresBotModRole]
     [Description("Used to manage Discord invites whitelist")]
     internal sealed class Invites: BaseCommandModuleCustom
     {

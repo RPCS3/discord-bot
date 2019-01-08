@@ -69,7 +69,7 @@ namespace CompatBot.EventHandlers
                     foreach (var handler in handlers)
                         if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
                         {
-                            await args.Channel.TriggerTypingAsync().ConfigureAwait(false);
+                            await args.Message.ReactWithAsync(args.Client, Config.Reactions.PleaseWait).ConfigureAwait(false);
                             Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
                             parsedLog = true;
                             LogParseState result = null;
@@ -157,6 +157,7 @@ namespace CompatBot.EventHandlers
                 finally
                 {
                     QueueLimiter.Release();
+                    await args.Message.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     if (parsedLog)
                         Config.Log.Debug($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
                 }

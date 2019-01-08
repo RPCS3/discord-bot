@@ -2,7 +2,9 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AppveyorClient.POCOs;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
@@ -11,12 +13,13 @@ using GithubClient.POCOs;
 
 namespace CompatBot.Commands
 {
-    [Group("pr")]
+    [Group("pr"), TriggersTyping]
     [Description("Commands to list opened pull requests information")]
     internal sealed class Pr: BaseCommandModuleCustom
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
+        private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
         private const string appveyorContext = "continuous-integration/appveyor/pr";
 
         [GroupCommand]
@@ -29,15 +32,16 @@ namespace CompatBot.Commands
                 return;
             }
 
+            var prState = prInfo.GetState();
             var embed = prInfo.AsEmbed();
-            if (prInfo.State == "open")
+            if (prState.state == "Open" || prState.state == "Closed")
             {
+                var downloadHeader = "PR Build Download";
+                var downloadText = "";
                 if (prInfo.StatusesUrl is string statusesUrl)
                 {
                     var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
                     statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
-                    var downloadHeader = "PR Build Download";
-                    var downloadText = "";
                     if (statuses?.Count > 0)
                     {
                         if (statuses.FirstOrDefault(s => s.State == "success") is StatusInfo statusSuccess)
@@ -52,12 +56,29 @@ namespace CompatBot.Commands
                                 downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
                             }
                         }
+                        else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                        {
+                            if (artifactInfo.Artifact.Created is DateTime buildTime)
+                                downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                            downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
+                        }
                         else
                             downloadText = statuses.First().Description;
                     }
-                    if (!string.IsNullOrEmpty(downloadText))
-                        embed.AddField(downloadHeader, downloadText);
                 }
+                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                {
+                    if (artifactInfo.Artifact.Created is DateTime buildTime)
+                        downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                    downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
+                }
+                if (!string.IsNullOrEmpty(downloadText))
+                    embed.AddField(downloadHeader, downloadText);
+            }
+            else if (prState.state == "Merged")
+            {
+                var updateInfo = await compatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                embed = await updateInfo.AsEmbedAsync(embed).ConfigureAwait(false);
             }
             await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
         }

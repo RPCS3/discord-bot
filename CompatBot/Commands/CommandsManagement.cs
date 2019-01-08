@@ -14,7 +14,7 @@ namespace CompatBot.Commands
     [Description("Used to enabe and disable bot commands at runtime")]
     public sealed class CommandsManagement : BaseCommandModule
     {
-        [Command("list"), Aliases("show"), TriggersTyping]
+        [Command("list"), Aliases("show")]
         [Description("Lists the disabled commands")]
         public async Task List(CommandContext ctx)
         {

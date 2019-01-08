@@ -36,18 +36,18 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
             builder = builder ?? new DiscordEmbedBuilder {Title = pr, Url = url, Description = prInfo?.Title, Color = Config.Colors.DownloadLinks};
-            if (!justAppend)
+            if (!string.IsNullOrEmpty(build?.Datetime))
             {
-                if (!string.IsNullOrEmpty(build?.Datetime))
-                {
-                    var timestampInfo = build.Datetime;
-                    if (info.CurrentBuild?.Pr is string buildPr
-                        && buildPr != info.LatestBuild?.Pr
-                        && GetUpdateDelta(info) is TimeSpan timeDelta)
-                        timestampInfo += $" ({timeDelta.GetTimeDeltaDescription()} newer)";
+                var timestampInfo = build.Datetime;
+                if (info.CurrentBuild?.Pr is string buildPr
+                    && buildPr != info.LatestBuild?.Pr
+                    && GetUpdateDelta(info) is TimeSpan timeDelta)
+                    timestampInfo += $" ({timeDelta.GetTimeDeltaDescription()} newer)";
 
+                if (justAppend)
+                    builder.AddField($"Latest master build ({timestampInfo})", "This pull request has been merged, and is a part of `master` now");
+                else
                     builder.AddField("Build timestamp", timestampInfo);
-                }
             }
             return builder
                 .AddField($"Windows   ".FixSpaces(), GetLinkMessage(build?.Windows?.Download, true), true)

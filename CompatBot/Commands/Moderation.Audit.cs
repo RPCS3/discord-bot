@@ -44,7 +44,7 @@ namespace CompatBot.Commands
 
                 try
                 {
-                    await ctx.TriggerTypingAsync().ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     var members = GetMembers(ctx.Client);
                     using (var compressedResult = new MemoryStream())
                     {
@@ -84,6 +84,7 @@ namespace CompatBot.Commands
                 finally
                 {
                     CheckLock.Release(1);
+                    await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                 }
             }
 
@@ -108,7 +109,7 @@ namespace CompatBot.Commands
 
                 try
                 {
-                    await ctx.TriggerTypingAsync().ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     var members = GetMembers(ctx.Client);
                     if (members.Count < 2)
                         return;
@@ -169,6 +170,7 @@ namespace CompatBot.Commands
                 finally
                 {
                     CheckLock.Release(1);
+                    await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                 }
             }
         }

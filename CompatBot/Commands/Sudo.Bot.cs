@@ -18,7 +18,7 @@ namespace CompatBot.Commands
         [Description("Commands to manage the bot instance")]
         public sealed partial class Bot: BaseCommandModuleCustom
         {
-            [Command("version"), TriggersTyping]
+            [Command("version")]
             [Description("Returns currently checked out bot commit")]
             public async Task Version(CommandContext ctx)
             {
@@ -41,7 +41,7 @@ namespace CompatBot.Commands
                 }
             }
 
-            [Command("update"), Aliases("upgrade", "restart", "reboot", "pull"), TriggersTyping]
+            [Command("update"), Aliases("upgrade", "restart", "reboot", "pull")]
             [Description("Restarts bot and pulls the newest commit")]
             public async Task Update(CommandContext ctx)
             {

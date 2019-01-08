@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("piracy"), RequiresBotModRole, RequiresDm, TriggersTyping]
+    [Group("piracy"), RequiresBotModRole, RequiresDm]
     [Description("Used to manage piracy filters **in DM**")]
     internal sealed class Antipiracy: BaseCommandModuleCustom
     {

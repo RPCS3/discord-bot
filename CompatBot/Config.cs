@@ -73,6 +73,7 @@ namespace CompatBot
             public static readonly DiscordEmoji Starbucks = DiscordEmoji.FromUnicode("☕");
             public static readonly DiscordEmoji Moderated = DiscordEmoji.FromUnicode("🔨");
             public static readonly DiscordEmoji No = DiscordEmoji.FromUnicode("😐");
+            public static readonly DiscordEmoji PleaseWait = DiscordEmoji.FromUnicode("👀");
         }
 
         public static class Moderation
