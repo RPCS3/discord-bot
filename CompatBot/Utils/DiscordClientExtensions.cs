@@ -48,6 +48,18 @@ namespace CompatBot.Utils
             }
         }
 
+        public static async Task RemoveReactionAsync(this DiscordMessage message, DiscordEmoji emoji)
+        {
+            try
+            {
+                await message.DeleteOwnReactionAsync(emoji).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
+        }
+
         public static async Task ReactWithAsync(this DiscordMessage message, DiscordClient client, DiscordEmoji emoji, string fallbackMessage = null, bool showBoth = false)
         {
             try
@@ -62,6 +74,11 @@ namespace CompatBot.Utils
             {
                 Config.Log.Warn(e);
             }
+        }
+
+        public static Task RemoveReactionAsync(this CommandContext ctx, DiscordEmoji emoji)
+        {
+            return RemoveReactionAsync(ctx.Message, emoji);
         }
 
         public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string fallbackMessage = null, bool showBoth = false)

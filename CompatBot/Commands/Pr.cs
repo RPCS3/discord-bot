@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AppveyorClient.POCOs;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
@@ -12,7 +13,7 @@ using GithubClient.POCOs;
 
 namespace CompatBot.Commands
 {
-    [Group("pr")]
+    [Group("pr"), TriggersTyping]
     [Description("Commands to list opened pull requests information")]
     internal sealed class Pr: BaseCommandModuleCustom
     {
