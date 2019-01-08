@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CompatApiClient\CompatApiClient.csproj" />
+    <ProjectReference Include="..\GithubClient\GithubClient.csproj" />
     <ProjectReference Include="..\HomoglyphConverter\HomoglyphConverter.csproj" />
     <ProjectReference Include="..\IrdLibraryClient\IrdLibraryClient.csproj" />
     <ProjectReference Include="..\PsnClient\PsnClient.csproj" />

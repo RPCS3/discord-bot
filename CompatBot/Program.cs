@@ -120,6 +120,7 @@ namespace CompatBot
                     commands.RegisterCommands<Moderation>();
                     commands.RegisterCommands<Ird>();
                     commands.RegisterCommands<BotMath>();
+                    commands.RegisterCommands<Pr>();
 
                     client.Ready += async r =>
                                     {

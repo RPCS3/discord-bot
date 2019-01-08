@@ -59,6 +59,10 @@ namespace CompatBot
             public static readonly DiscordColor LogNotice = new DiscordColor(0xfaa61a);
             public static readonly DiscordColor LogInfo = new DiscordColor(0x43b581);
             public static readonly DiscordColor LogUnknown = new DiscordColor(0x747f8d);
+
+            public static readonly DiscordColor PrOpen = new DiscordColor(0x2cbe4e);
+            public static readonly DiscordColor PrMerged = new DiscordColor(0x6f42c1);
+            public static readonly DiscordColor PrClosed = new DiscordColor(0xcb2431);
         }
 
         public static class Reactions
