@@ -15,7 +15,7 @@ namespace CompatBot.Commands
 {
     internal sealed partial class Warnings
     {
-        [Group("list"), Aliases("show"), TriggersTyping]
+        [Group("list"), Aliases("show")]
         [Description("Allows to list warnings in various ways. Users can only see their own warnings.")]
         public class ListGroup : BaseCommandModuleCustom
         {
@@ -72,7 +72,7 @@ namespace CompatBot.Commands
                 await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }
 
-            [Command("recent"), Aliases("last", "all"), RequiresBotModRole, TriggersTyping]
+            [Command("recent"), Aliases("last", "all"), RequiresBotModRole]
             [Description("Shows last issued warnings in chronological order")]
             public async Task Last(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {

@@ -44,7 +44,7 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't save the warning, please try again").ConfigureAwait(false);
         }
 
-        [Command("remove"), Aliases("delete", "del"), RequiresBotModRole, TriggersTyping]
+        [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
         [Description("Removes specified warnings")]
         public async Task Remove(CommandContext ctx, [Description("Warning IDs to remove separated with space")] params int[] ids)
         {
@@ -68,7 +68,7 @@ namespace CompatBot.Commands
             return Clear(ctx, user.Id);
         }
 
-        [Command("clear"), RequiresBotModRole, TriggersTyping]
+        [Command("clear"), RequiresBotModRole]
         public async Task Clear(CommandContext ctx, [Description("User ID to clear warnings for")] ulong userId)
         {
             try

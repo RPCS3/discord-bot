@@ -18,11 +18,11 @@ namespace CompatBot.Commands
         private static readonly Regex Timestamp = new Regex(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
         private static readonly Regex Channel = new Regex(@"(?<id><#\d+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
-        [Group("fix"), Hidden]
+        [Group("fix"), Hidden, TriggersTyping]
         [Description("Commands to fix various stuff")]
         public sealed class Fix: BaseCommandModuleCustom
         {
-            [Command("timestamps"), TriggersTyping]
+            [Command("timestamps")]
             [Description("Fixes `timestamp` column in the `warning` table")]
             public async Task Timestamps(CommandContext ctx)
             {
@@ -53,7 +53,7 @@ namespace CompatBot.Commands
                 }
             }
 
-            [Command("channels"), TriggersTyping]
+            [Command("channels")]
             [Description("Fixes channel mentions in `warning` table")]
             public async Task Channels(CommandContext ctx)
             {
