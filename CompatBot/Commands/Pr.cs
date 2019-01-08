@@ -17,6 +17,7 @@ namespace CompatBot.Commands
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
+        private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
         private const string appveyorContext = "continuous-integration/appveyor/pr";
 
         [GroupCommand]
@@ -29,15 +30,16 @@ namespace CompatBot.Commands
                 return;
             }
 
+            var prState = prInfo.GetState();
             var embed = prInfo.AsEmbed();
-            if (prInfo.State == "open")
+            if (prState.state == "Open")
             {
+                var downloadHeader = "PR Build Download";
+                var downloadText = "";
                 if (prInfo.StatusesUrl is string statusesUrl)
                 {
                     var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
                     statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
-                    var downloadHeader = "PR Build Download";
-                    var downloadText = "";
                     if (statuses?.Count > 0)
                     {
                         if (statuses.FirstOrDefault(s => s.State == "success") is StatusInfo statusSuccess)
@@ -55,9 +57,14 @@ namespace CompatBot.Commands
                         else
                             downloadText = statuses.First().Description;
                     }
-                    if (!string.IsNullOrEmpty(downloadText))
-                        embed.AddField(downloadHeader, downloadText);
                 }
+                if (!string.IsNullOrEmpty(downloadText))
+                    embed.AddField(downloadHeader, downloadText);
+            }
+            else if (prState.state == "Merged")
+            {
+                var updateInfo = await compatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                embed = await updateInfo.AsEmbedAsync(embed).ConfigureAwait(false);
             }
             await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
         }
