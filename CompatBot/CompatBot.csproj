@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AppveyorClient\AppveyorClient.csproj" />
     <ProjectReference Include="..\CompatApiClient\CompatApiClient.csproj" />
     <ProjectReference Include="..\GithubClient\GithubClient.csproj" />
     <ProjectReference Include="..\HomoglyphConverter\HomoglyphConverter.csproj" />

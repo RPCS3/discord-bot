@@ -13,10 +13,6 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static class TitlePatchFormatter
     {
-        private const long UnderKB = 1000;
-        private const long UnderMB = 1000 * 1024;
-        private const long UnderGB = 1000 * 1024 * 1024;
-
         // thanks BCES00569
         public static async Task<List<DiscordEmbedBuilder>> AsEmbedAsync(this TitlePatch patch, DiscordClient client, string productCode)
         {
@@ -76,17 +72,6 @@ namespace CompatBot.Utils.ResultFormatters
             }
             catch { }
             return fname;
-        }
-
-        private static string AsStorageUnit(this long bytes)
-        {
-            if (bytes < UnderKB)
-                return $"{bytes} byte{StringUtils.GetSuffix(bytes)}";
-            if (bytes < UnderMB)
-                return $"{bytes / 1024.0:0.##} KB";
-            if (bytes < UnderGB)
-                return $"{bytes / 1024.0 / 1024:0.##} MB";
-            return $"{bytes / 1024.0 / 1024 / 1024:0.##} GB";
         }
     }
 }

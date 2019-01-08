@@ -17,6 +17,7 @@ namespace GithubClient.POCOs
         public int Additions;
         public int Deletions;
         public int ChangedFiles;
+        public string Message;
     }
 
     public class GithubUser
