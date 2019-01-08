@@ -41,10 +41,14 @@ namespace AppveyorClient
         {
             try
             {
-                if (!int.TryParse(new Uri(githubStatusTargetUrl).Segments.Last(), out var buildNumber))
+                var buildUrl = githubStatusTargetUrl.Replace("ci.appveyor.com/project/", "ci.appveyor.com/api/projects/");
+                if (buildUrl == githubStatusTargetUrl)
+                {
+                    ApiConfig.Log.Warn("Unexpected AppVeyor link: " + githubStatusTargetUrl);
                     return null;
+                }
 
-                var buildInfo = await GetBuildInfoAsync(buildNumber, cancellationToken).ConfigureAwait(false);
+                var buildInfo = await GetBuildInfoAsync(buildUrl, cancellationToken).ConfigureAwait(false);
                 var job = buildInfo?.Build.Jobs?.FirstOrDefault(j => j.Status == "success");
                 if (string.IsNullOrEmpty(job?.JobId))
                     return null;
@@ -70,12 +74,11 @@ namespace AppveyorClient
             return o as ArtifactInfo;
         }
 
-        public async Task<BuildInfo> GetBuildInfoAsync(int buildNumber, CancellationToken cancellationToken)
+        private async Task<BuildInfo> GetBuildInfoAsync(string buildUrl, CancellationToken cancellationToken)
         {
-            var requestUri = "https://ci.appveyor.com/api/projects/rpcs3/rpcs3/builds/" + buildNumber;
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, requestUri))
+                using (var message = new HttpRequestMessage(HttpMethod.Get, buildUrl))
                 {
                     message.Headers.UserAgent.Add(ProductInfoHeader);
                     using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
@@ -84,7 +87,7 @@ namespace AppveyorClient
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                             var result =  await response.Content.ReadAsAsync<BuildInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                            ResponseCache.Set(requestUri, result, CacheTime);
+                            ResponseCache.Set(buildUrl, result, CacheTime);
                             return result;
                         }
                         catch (Exception e)
@@ -98,7 +101,7 @@ namespace AppveyorClient
             {
                 ApiConfig.Log.Error(e);
             }
-            ResponseCache.TryGetValue(requestUri, out var o);
+            ResponseCache.TryGetValue(buildUrl, out var o);
             return o as BuildInfo;
         }
 
