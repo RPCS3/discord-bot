@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
@@ -59,6 +60,61 @@ namespace CompatBot.Commands
                 }
             }
             await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+        }
+
+        [GroupCommand]
+        public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description"), RemainingText] string searchStr = null)
+        {
+            var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
+            if (openPrList == null)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't retrieve open pull requests list, try again later").ConfigureAwait(false);
+                return;
+            }
+
+            if (openPrList.Count == 0)
+            {
+                await ctx.RespondAsync("It looks like there are no open pull requests at the moment 🎉").ConfigureAwait(false);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(searchStr))
+            {
+                var filteredList = openPrList.Where(pr => pr.Title.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) || pr.User.Login.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                if (filteredList.Count == 0)
+                {
+                    var searchParts = searchStr.Split(' ', 2);
+                    if (searchParts.Length == 2)
+                    {
+                        var author = searchParts[0].Trim();
+                        var substr = searchParts[1].Trim();
+                        openPrList = openPrList.Where(pr => pr.User.Login.Contains(author, StringComparison.InvariantCultureIgnoreCase) && pr.Title.Contains(substr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                    }
+                    else
+                        openPrList = filteredList;
+                }
+                else
+                    openPrList = filteredList;
+            }
+
+            if (openPrList.Count == 0)
+            {
+                await ctx.RespondAsync("No open pull requests were found for specified filter").ConfigureAwait(false);
+                return;
+            }
+
+            if (openPrList.Count == 1)
+            {
+                await List(ctx, openPrList[0].Number).ConfigureAwait(false);
+                return;
+            }
+
+            var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
+            var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n```");
+            foreach (var pr in openPrList)
+                result.Append(("#" + pr.Number).PadLeft(maxNum)).AppendLine($" by {pr.User.Login}: {pr.Title.Trim(80)}");
+            result.Append("```");
+            await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
         }
     }
 }

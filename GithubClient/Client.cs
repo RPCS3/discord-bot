@@ -80,6 +80,41 @@ namespace GithubClient
             }
         }
 
+        public async Task<List<PrInfo>> GetOpenPrsAsync(CancellationToken cancellationToken)
+        {
+            var requestUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=open";
+            if (StatusesCache.TryGetValue(requestUri, out var o) && o is List<PrInfo> result)
+                return result;
+
+            result = null;
+            try
+            {
+                using (var message = new HttpRequestMessage(HttpMethod.Get, requestUri))
+                {
+                    message.Headers.UserAgent.Add(ProductInfoHeader);
+                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                    {
+                        try
+                        {
+                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            result = await response.Content.ReadAsAsync<List<PrInfo>>(formatters, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception e)
+                        {
+                            ConsoleLogger.PrintError(e, response);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+            }
+            if (result != null)
+                StatusesCache.Set(requestUri, result, PrStatusCacheTime);
+            return result;
+        }
+
         public async Task<List<StatusInfo>> GetStatusesAsync(string statusesUrl, CancellationToken cancellationToken)
         {
             if (StatusesCache.TryGetValue(statusesUrl, out var o) && o is List<StatusInfo> result)
