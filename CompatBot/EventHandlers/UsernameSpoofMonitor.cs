@@ -101,9 +101,9 @@ namespace CompatBot.EventHandlers
                 try
                 {
                     var displayName = GetCanonical(potentialVictims[0].DisplayName);
-                    if (SpoofingReportThrottlingCache.TryGetValue(displayName, out var x) && x is string y && !string.IsNullOrEmpty(y))
+                    if (SpoofingReportThrottlingCache.TryGetValue(displayName, out string s) && !string.IsNullOrEmpty(s))
                     {
-                        SpoofingReportThrottlingCache.Set(displayName, y, SnoozeDuration);
+                        SpoofingReportThrottlingCache.Set(displayName, s, SnoozeDuration);
                         return true;
                     }
 

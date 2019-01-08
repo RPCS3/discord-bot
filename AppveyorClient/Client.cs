@@ -70,8 +70,72 @@ namespace AppveyorClient
             {
                 ApiConfig.Log.Error(e);
             }
-            ResponseCache.TryGetValue(githubStatusTargetUrl, out var o);
-            return o as ArtifactInfo;
+            ResponseCache.TryGetValue(githubStatusTargetUrl, out ArtifactInfo o);
+            return o;
+        }
+
+        public async Task<ArtifactInfo> GetPrDownloadAsync(int prNumber, DateTime dateTimeLimit, CancellationToken cancellationToken)
+        {
+            if (ResponseCache.TryGetValue(prNumber, out ArtifactInfo result))
+                return result;
+
+            try
+            {
+                var baseUrl = new Uri("https://ci.appveyor.com/api/projects/rpcs3/RPCS3/history?recordsNumber=100");
+                var historyUrl = baseUrl;
+                HistoryInfo historyPage = null;
+                Build build = null;
+                do
+                {
+                    using (var message = new HttpRequestMessage(HttpMethod.Get, historyUrl))
+                    {
+                        message.Headers.UserAgent.Add(ProductInfoHeader);
+                        using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                        {
+                            try
+                            {
+                                await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                                historyPage = await response.Content.ReadAsAsync<HistoryInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                                build = historyPage.Builds.FirstOrDefault(b => b.PullRequestId == prNumber && b.Status == "success");
+                            }
+                            catch (Exception e)
+                            {
+                                ConsoleLogger.PrintError(e, response);
+                                break;
+                            }
+                        }
+                    }
+                    historyUrl = baseUrl.SetQueryParameter("startBuildId", historyPage.Builds.Last().BuildId.ToString());
+                } while (build == null && historyPage.Builds?.Count > 0 && historyPage.Builds.Last(b => b.Started.HasValue).Started > dateTimeLimit);
+
+                var buildInfo = await GetBuildInfoAsync(build.BuildId, cancellationToken).ConfigureAwait(false);
+                var job = buildInfo?.Build.Jobs?.FirstOrDefault(j => j.Status == "success");
+                if (string.IsNullOrEmpty(job?.JobId))
+                    return null;
+
+                var artifacts = await GetJobArtifactsAsync(job.JobId, cancellationToken).ConfigureAwait(false);
+                var rpcs3Build = artifacts?.FirstOrDefault(a => a.Name == "rpcs3");
+                if (rpcs3Build == null)
+                    return null;
+
+                result = new ArtifactInfo
+                {
+                    Artifact = rpcs3Build,
+                    DownloadUrl = $"https://ci.appveyor.com/api/buildjobs/{job.JobId}/artifacts/{rpcs3Build.FileName}",
+                };
+                ResponseCache.Set(prNumber, result, CacheTime);
+                return result;
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+            }
+            return null;
+        }
+
+        private Task<BuildInfo> GetBuildInfoAsync(int buildId, CancellationToken cancellationToken)
+        {
+            return GetBuildInfoAsync("https://ci.appveyor.com/api/projects/rpcs3/rpcs3/builds/" + buildId, cancellationToken);
         }
 
         private async Task<BuildInfo> GetBuildInfoAsync(string buildUrl, CancellationToken cancellationToken)
@@ -101,8 +165,8 @@ namespace AppveyorClient
             {
                 ApiConfig.Log.Error(e);
             }
-            ResponseCache.TryGetValue(buildUrl, out var o);
-            return o as BuildInfo;
+            ResponseCache.TryGetValue(buildUrl, out BuildInfo o);
+            return o;
         }
 
         public async Task<List<Artifact>> GetJobArtifactsAsync(string jobId, CancellationToken cancellationToken)
@@ -133,8 +197,9 @@ namespace AppveyorClient
             {
                 ApiConfig.Log.Error(e);
             }
-            ResponseCache.TryGetValue(requestUri, out var o);
-            return o as List<Artifact>;
+            ResponseCache.TryGetValue(requestUri, out List<Artifact> o);
+            return o;
         }
+
     }
 }

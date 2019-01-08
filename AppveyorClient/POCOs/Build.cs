@@ -19,7 +19,7 @@ namespace AppveyorClient.POCOs
         public string PullRequestHeadBranch;
         public string PullRequestHeadCommitId;
         public string PullRequestHeadRepository;
-        public string PullRequestId;
+        public int PullRequestId;
         public string PullRequestName;
         public string Status;
         public string Version;

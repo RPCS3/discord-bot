@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace AppveyorClient.POCOs
+﻿namespace AppveyorClient.POCOs
 {
     public class BuildInfo
     {

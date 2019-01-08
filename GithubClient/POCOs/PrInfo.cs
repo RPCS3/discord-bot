@@ -9,7 +9,7 @@ namespace GithubClient.POCOs
         public string State;
         public string Title;
         public GithubUser User;
-        public DateTime? CreatedAt;
+        public DateTime CreatedAt;
         public DateTime? UpdatedAt;
         public DateTime? ClosedAt;
         public DateTime? MergedAt;

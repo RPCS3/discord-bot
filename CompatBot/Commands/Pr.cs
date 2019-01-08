@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AppveyorClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
@@ -54,9 +55,21 @@ namespace CompatBot.Commands
                                 downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
                             }
                         }
+                        else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                        {
+                            if (artifactInfo.Artifact.Created is DateTime buildTime)
+                                downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                            downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
+                        }
                         else
                             downloadText = statuses.First().Description;
                     }
+                }
+                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                {
+                    if (artifactInfo.Artifact.Created is DateTime buildTime)
+                        downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                    downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
                 }
                 if (!string.IsNullOrEmpty(downloadText))
                     embed.AddField(downloadHeader, downloadText);
