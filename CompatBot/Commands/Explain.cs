@@ -24,7 +24,6 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
         {
-            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             string inSpecificLocation = null;
             if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
             {
@@ -171,7 +170,6 @@ namespace CompatBot.Commands
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
-            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             using (var db = new BotDb())
             {
                 var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);

@@ -26,7 +26,6 @@ namespace CompatBot.Commands
             if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
                 return;
 
-            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             if (await AddAsync(ctx, user.Id, user.Username.Sanitize(), ctx.Message.Author, reason).ConfigureAwait(false))
                 await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             else
@@ -39,7 +38,6 @@ namespace CompatBot.Commands
             if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
                 return;
 
-            await ctx.TriggerTypingAsync().ConfigureAwait(false);
             if (await AddAsync(ctx, userId, $"<@{userId}>", ctx.Message.Author, reason).ConfigureAwait(false))
                 await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             else
@@ -138,7 +136,6 @@ namespace CompatBot.Commands
         private static async Task ListUserWarningsAsync(DiscordClient client, DiscordMessage message, ulong userId, string userName, bool skipIfOne = true)
         {
             var channel = message.Channel;
-            await channel.TriggerTypingAsync().ConfigureAwait(false);
             int count;
             using (var db = new BotDb())
                 count = await db.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
