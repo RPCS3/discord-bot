@@ -63,7 +63,7 @@ namespace CompatBot.Commands
         }
 
         [GroupCommand]
-        public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description"), RemainingText] string searchStr = null)
+        public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string searchStr = null)
         {
             var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
             if (openPrList == null)
