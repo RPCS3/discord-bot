@@ -109,12 +109,14 @@ namespace CompatBot.Commands
                 return;
             }
 
+            const int maxTitleLength = 80;
             var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
-            var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n```");
+            var maxAuthor = openPrList.Max(pr => pr.User.Login.Length);
+            var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.Length), maxTitleLength);
+            var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
             foreach (var pr in openPrList)
-                result.Append(("#" + pr.Number).PadLeft(maxNum)).AppendLine($" by {pr.User.Login}: {pr.Title.Trim(80)}");
-            result.Append("```");
-            await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
+                result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRight(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRight(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
+            await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
     }
 }
