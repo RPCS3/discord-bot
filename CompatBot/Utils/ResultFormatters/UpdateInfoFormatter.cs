@@ -45,7 +45,7 @@ namespace CompatBot.Utils.ResultFormatters
                     timestampInfo += $" ({timeDelta.GetTimeDeltaDescription()} newer)";
 
                 if (justAppend)
-                    builder.AddField($"Latest master build ({timestampInfo})", "This pull request has been merged, and is a part of the master now");
+                    builder.AddField($"Latest master build ({timestampInfo})", "This pull request has been merged, and is a part of `master` now");
                 else
                     builder.AddField("Build timestamp", timestampInfo);
             }

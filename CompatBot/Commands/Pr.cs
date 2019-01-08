@@ -32,7 +32,7 @@ namespace CompatBot.Commands
 
             var prState = prInfo.GetState();
             var embed = prInfo.AsEmbed();
-            if (prState.state == "Open")
+            if (prState.state == "Open" || prState.state == "Closed")
             {
                 var downloadHeader = "PR Build Download";
                 var downloadText = "";
