@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -251,6 +253,17 @@ namespace CompatBot.Commands
             var seededRng = new Random(seed);
             var answer = choices[seededRng.Next(choices.Count)];
             await ctx.RespondAsync(answer).ConfigureAwait(false);
+        }
+
+        [Command("stats"), RequiresBotModRole]
+        [Description("Use to look at various runtime stats")]
+        public async Task Stats(CommandContext ctx)
+        {
+            var result = new StringBuilder("```")
+                .AppendLine($"Current uptime   : {Config.Uptime.Elapsed}")
+                .AppendLine($"Github rate limit: {GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit}, will be reset on {GithubClient.Client.RateLimitResetTime:u}")
+                .Append("```");
+            await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
         }
     }
 }

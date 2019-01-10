@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
@@ -23,6 +24,10 @@ namespace GithubClient
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(1);
         private static readonly MemoryCache StatusesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
+
+        public static int RateLimit { get; private set; }
+        public static int RateLimitRemaining { get; private set; }
+        public static DateTime RateLimitResetTime { get; private set; }
 
         public Client()
         {
@@ -53,6 +58,7 @@ namespace GithubClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            UpdateRateLimitStats(response.Headers);
                             result = await response.Content.ReadAsAsync<PrInfo>(formatters, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception e)
@@ -96,6 +102,7 @@ namespace GithubClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            UpdateRateLimitStats(response.Headers);
                             result = await response.Content.ReadAsAsync<List<PrInfo>>(formatters, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception e)
@@ -135,6 +142,7 @@ namespace GithubClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            UpdateRateLimitStats(response.Headers);
                             result = await response.Content.ReadAsAsync<List<StatusInfo>>(formatters, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception e)
@@ -155,6 +163,27 @@ namespace GithubClient
                 ApiConfig.Log.Debug($"Cached item for {statusesUrl} for {PrStatusCacheTime}");
             }
             return result;
+        }
+
+        private static void UpdateRateLimitStats(HttpResponseHeaders headers)
+        {
+            if (headers.TryGetValues("X-RateLimit-Limit", out var rateLimitValues)
+                && rateLimitValues?.FirstOrDefault() is string limitValue
+                && int.TryParse(limitValue, out var limit)
+                && limit > 0)
+                RateLimit = limit;
+            if (headers.TryGetValues("X-RateLimit-Remaining", out var rateLimitRemainingValues)
+                && rateLimitRemainingValues?.FirstOrDefault() is string remainingValue
+                && int.TryParse(remainingValue, out var remaining)
+                && remaining > 0)
+                RateLimitRemaining = remaining;
+            if (headers.TryGetValues("X-RateLimit-Reset", out var rateLimitResetValues)
+                && rateLimitResetValues?.FirstOrDefault() is string resetValue
+                && long.TryParse(resetValue, out var resetSeconds)
+                && resetSeconds > 0)
+                RateLimitResetTime = DateTimeOffset.FromUnixTimeSeconds(resetSeconds).UtcDateTime;
+            if (RateLimitRemaining < 10)
+                ApiConfig.Log.Warn($"Github rate limit is low: {RateLimitRemaining} out of {RateLimit}, will be reset on {RateLimitResetTime:u}");
         }
     }
 }

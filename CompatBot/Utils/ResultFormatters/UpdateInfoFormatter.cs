@@ -10,7 +10,6 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static class UpdateInfoFormatter
     {
-        private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordEmbedBuilder builder = null)

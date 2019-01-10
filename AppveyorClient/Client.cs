@@ -198,7 +198,7 @@ namespace AppveyorClient
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                             var result =  await response.Content.ReadAsAsync<List<Artifact>>(formatters, cancellationToken).ConfigureAwait(false);
                             ResponseCache.Set(requestUri, result, CacheTime);
-                            ApiConfig.Log.Debug($"Caching {nameof(Artifact)} for {jobId} for {CacheTime}");
+                            ApiConfig.Log.Debug($"Cached {nameof(Artifact)} for {jobId} for {CacheTime}");
                             return result;
                         }
                         catch (Exception e)
