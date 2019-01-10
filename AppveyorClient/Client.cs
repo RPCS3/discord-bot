@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Formatting;
@@ -64,20 +63,25 @@ namespace AppveyorClient
                     DownloadUrl = $"https://ci.appveyor.com/api/buildjobs/{job.JobId}/artifacts/{rpcs3Build.FileName}",
                 };
                 ResponseCache.Set(githubStatusTargetUrl, result, CacheTime);
+                ApiConfig.Log.Debug($"Cached item for {githubStatusTargetUrl} for {CacheTime}");
                 return result;
             }
             catch (Exception e)
             {
                 ApiConfig.Log.Error(e);
             }
-            ResponseCache.TryGetValue(githubStatusTargetUrl, out ArtifactInfo o);
+            if (ResponseCache.TryGetValue(githubStatusTargetUrl, out ArtifactInfo o))
+                ApiConfig.Log.Debug($"Returned cached item for {githubStatusTargetUrl}");
             return o;
         }
 
         public async Task<ArtifactInfo> GetPrDownloadAsync(int prNumber, DateTime dateTimeLimit, CancellationToken cancellationToken)
         {
             if (ResponseCache.TryGetValue(prNumber, out ArtifactInfo result))
+            {
+                ApiConfig.Log.Debug($"Returned cached {nameof(ArtifactInfo)} for {prNumber}");
                 return result;
+            }
 
             try
             {
@@ -111,12 +115,18 @@ namespace AppveyorClient
                 var buildInfo = await GetBuildInfoAsync(build.BuildId, cancellationToken).ConfigureAwait(false);
                 var job = buildInfo?.Build.Jobs?.FirstOrDefault(j => j.Status == "success");
                 if (string.IsNullOrEmpty(job?.JobId))
+                {
+                    ApiConfig.Log.Debug($"No successful {nameof(Job.JobId)}");
                     return null;
+                }
 
                 var artifacts = await GetJobArtifactsAsync(job.JobId, cancellationToken).ConfigureAwait(false);
                 var rpcs3Build = artifacts?.FirstOrDefault(a => a.Name == "rpcs3");
                 if (rpcs3Build == null)
+                {
+                    ApiConfig.Log.Debug("No rpcs3 artifacts");
                     return null;
+                }
 
                 result = new ArtifactInfo
                 {
@@ -124,12 +134,14 @@ namespace AppveyorClient
                     DownloadUrl = $"https://ci.appveyor.com/api/buildjobs/{job.JobId}/artifacts/{rpcs3Build.FileName}",
                 };
                 ResponseCache.Set(prNumber, result, CacheTime);
+                ApiConfig.Log.Debug($"Cached {nameof(ArtifactInfo)} for {prNumber} for {CacheTime}");
                 return result;
             }
             catch (Exception e)
             {
                 ApiConfig.Log.Error(e);
             }
+            ApiConfig.Log.Debug($"Failed to get {nameof(ArtifactInfo)} for {prNumber}");
             return null;
         }
 
@@ -152,6 +164,7 @@ namespace AppveyorClient
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                             var result =  await response.Content.ReadAsAsync<BuildInfo>(formatters, cancellationToken).ConfigureAwait(false);
                             ResponseCache.Set(buildUrl, result, CacheTime);
+                            ApiConfig.Log.Debug($"Cached {nameof(BuildInfo)} for {buildUrl} for {CacheTime}");
                             return result;
                         }
                         catch (Exception e)
@@ -165,7 +178,8 @@ namespace AppveyorClient
             {
                 ApiConfig.Log.Error(e);
             }
-            ResponseCache.TryGetValue(buildUrl, out BuildInfo o);
+            if (ResponseCache.TryGetValue(buildUrl, out BuildInfo o))
+                ApiConfig.Log.Debug($"Returning cached {nameof(BuildInfo)} for {buildUrl}");
             return o;
         }
 
@@ -184,6 +198,7 @@ namespace AppveyorClient
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                             var result =  await response.Content.ReadAsAsync<List<Artifact>>(formatters, cancellationToken).ConfigureAwait(false);
                             ResponseCache.Set(requestUri, result, CacheTime);
+                            ApiConfig.Log.Debug($"Caching {nameof(Artifact)} for {jobId} for {CacheTime}");
                             return result;
                         }
                         catch (Exception e)
@@ -197,7 +212,8 @@ namespace AppveyorClient
             {
                 ApiConfig.Log.Error(e);
             }
-            ResponseCache.TryGetValue(requestUri, out List<Artifact> o);
+            if (ResponseCache.TryGetValue(requestUri, out List<Artifact> o))
+                ApiConfig.Log.Debug($"Returning cached {nameof(Artifact)} for {jobId}");
             return o;
         }
 
