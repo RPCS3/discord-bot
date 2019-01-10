@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
@@ -21,9 +22,12 @@ namespace GithubClient
         private readonly MediaTypeFormatterCollection formatters;
 
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
-        private static readonly Dictionary<string, PrInfo> prInfoCache = new Dictionary<string, PrInfo>();
         private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(1);
         private static readonly MemoryCache StatusesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
+
+        public static int RateLimit { get; private set; }
+        public static int RateLimitRemaining { get; private set; }
+        public static DateTime RateLimitResetTime { get; private set; }
 
         public Client()
         {
@@ -36,10 +40,13 @@ namespace GithubClient
             formatters = new MediaTypeFormatterCollection(new[] { new JsonMediaTypeFormatter { SerializerSettings = settings } });
         }
 
-        public async Task<PrInfo> GetPrInfoAsync(string pr, CancellationToken cancellationToken)
+        public async Task<PrInfo> GetPrInfoAsync(int pr, CancellationToken cancellationToken)
         {
-            if (prInfoCache.TryGetValue(pr, out var result))
+            if (StatusesCache.TryGetValue(pr, out PrInfo result))
+            {
+                ApiConfig.Log.Debug($"Returned {nameof(PrInfo)} for {pr} from cache");
                 return result;
+            }
 
             try
             {
@@ -51,6 +58,7 @@ namespace GithubClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            UpdateRateLimitStats(response.Headers);
                             result = await response.Content.ReadAsAsync<PrInfo>(formatters, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception e)
@@ -66,25 +74,23 @@ namespace GithubClient
             }
             if (result == null)
             {
-                int.TryParse(pr, out var prnum);
-                return new PrInfo { Number = prnum };
+                ApiConfig.Log.Debug($"Failed to get {nameof(PrInfo)}, returning empty result");
+                return new PrInfo { Number = pr };
             }
 
-            lock (prInfoCache)
-            {
-                if (prInfoCache.TryGetValue(pr, out var cachedResult))
-                    return cachedResult;
-
-                prInfoCache[pr] = result;
-                return result;
-            }
+            StatusesCache.Set(pr, result, PrStatusCacheTime);
+            ApiConfig.Log.Debug($"Cached {nameof(PrInfo)} for {pr} for {PrStatusCacheTime}");
+            return result;
         }
 
         public async Task<List<PrInfo>> GetOpenPrsAsync(CancellationToken cancellationToken)
         {
             var requestUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=open";
             if (StatusesCache.TryGetValue(requestUri, out List<PrInfo> result))
+            {
+                ApiConfig.Log.Debug("Returned list of opened PRs from cache");
                 return result;
+            }
 
             try
             {
@@ -96,6 +102,7 @@ namespace GithubClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            UpdateRateLimitStats(response.Headers);
                             result = await response.Content.ReadAsAsync<List<PrInfo>>(formatters, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception e)
@@ -110,14 +117,20 @@ namespace GithubClient
                 ApiConfig.Log.Error(e);
             }
             if (result != null)
+            {
                 StatusesCache.Set(requestUri, result, PrStatusCacheTime);
+                ApiConfig.Log.Debug($"Cached list of open PRs for {PrStatusCacheTime}");
+            }
             return result;
         }
 
         public async Task<List<StatusInfo>> GetStatusesAsync(string statusesUrl, CancellationToken cancellationToken)
         {
             if (StatusesCache.TryGetValue(statusesUrl, out List<StatusInfo> result))
+            {
+                ApiConfig.Log.Debug($"Returned cached item for {statusesUrl}");
                 return result;
+            }
 
             try
             {
@@ -129,6 +142,7 @@ namespace GithubClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            UpdateRateLimitStats(response.Headers);
                             result = await response.Content.ReadAsAsync<List<StatusInfo>>(formatters, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception e)
@@ -144,8 +158,32 @@ namespace GithubClient
             }
 
             if (result != null)
+            {
                 StatusesCache.Set(statusesUrl, result, PrStatusCacheTime);
+                ApiConfig.Log.Debug($"Cached item for {statusesUrl} for {PrStatusCacheTime}");
+            }
             return result;
+        }
+
+        private static void UpdateRateLimitStats(HttpResponseHeaders headers)
+        {
+            if (headers.TryGetValues("X-RateLimit-Limit", out var rateLimitValues)
+                && rateLimitValues?.FirstOrDefault() is string limitValue
+                && int.TryParse(limitValue, out var limit)
+                && limit > 0)
+                RateLimit = limit;
+            if (headers.TryGetValues("X-RateLimit-Remaining", out var rateLimitRemainingValues)
+                && rateLimitRemainingValues?.FirstOrDefault() is string remainingValue
+                && int.TryParse(remainingValue, out var remaining)
+                && remaining > 0)
+                RateLimitRemaining = remaining;
+            if (headers.TryGetValues("X-RateLimit-Reset", out var rateLimitResetValues)
+                && rateLimitResetValues?.FirstOrDefault() is string resetValue
+                && long.TryParse(resetValue, out var resetSeconds)
+                && resetSeconds > 0)
+                RateLimitResetTime = DateTimeOffset.FromUnixTimeSeconds(resetSeconds).UtcDateTime;
+            if (RateLimitRemaining < 10)
+                ApiConfig.Log.Warn($"Github rate limit is low: {RateLimitRemaining} out of {RateLimit}, will be reset on {RateLimitResetTime:u}");
         }
     }
 }

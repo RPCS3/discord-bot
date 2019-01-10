@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using DSharpPlus.Entities;
@@ -39,6 +40,8 @@ namespace CompatBot
         public static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);
         public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(15);
+
+        public static readonly Stopwatch Uptime = Stopwatch.StartNew();
 
         public static class Colors
         {

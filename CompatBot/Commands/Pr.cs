@@ -25,7 +25,7 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr)
         {
-            var prInfo = await githubClient.GetPrInfoAsync(pr.ToString(), Config.Cts.Token).ConfigureAwait(false);
+            var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
             if (prInfo.Number == 0)
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);

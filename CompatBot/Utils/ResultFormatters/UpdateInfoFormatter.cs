@@ -10,7 +10,6 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static class UpdateInfoFormatter
     {
-        private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordEmbedBuilder builder = null)
@@ -26,14 +25,14 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!justAppend)
             {
-                if (pr == "0")
-                    pr = "PR #???";
-                else
+                if (int.TryParse(pr, out var prNum) && prNum > 0)
                 {
-                    url = "https://github.com/RPCS3/rpcs3/pull/" + pr;
-                    prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
+                    prInfo = await githubClient.GetPrInfoAsync(prNum, Config.Cts.Token).ConfigureAwait(false);
+                    url = prInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + pr;
                     pr = $"PR #{pr} by {prInfo?.User?.Login ?? "???"}";
                 }
+                else
+                    pr = "PR #???";
             }
             builder = builder ?? new DiscordEmbedBuilder {Title = pr, Url = url, Description = prInfo?.Title, Color = Config.Colors.DownloadLinks};
             if (!string.IsNullOrEmpty(build?.Datetime))
