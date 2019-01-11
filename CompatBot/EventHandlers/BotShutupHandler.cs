@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Utils;
@@ -32,7 +33,8 @@ namespace CompatBot.EventHandlers
         {
             "😶", "😣", "😥", "🤐", "😯", "😫", "😓", "😔", "😕", "☹",
             "🙁", "😖", "😞", "😟", "😢", "😭", "😦", "😧", "😨", "😩",
-            "😰", "🥺", "🙊",
+            "😰",  "🙊",
+            // "🥺",
         }.Select(DiscordEmoji.FromUnicode).ToArray();
 
         private static readonly string[] SadMessages =
@@ -44,9 +46,10 @@ namespace CompatBot.EventHandlers
         private static readonly DiscordEmoji[] ThankYouReactions = new[]
         {
             "😊", "😘", "😍", "🤗", "😳",
-            "🙌", "✌", "👌", "👋", "🤟", "🙏", "🤝",
+            "🙌", "✌", "👌", "👋", "🙏", "🤝",
             "🎉", "✨",
-            "❤", "🧡", "💛", "💙", "💚", "💜", "💖",
+            "❤", "💛", "💙", "💚", "💜", "💖",
+            // "🤟", "🧡",
         }.Select(DiscordEmoji.FromUnicode).ToArray();
 
         private static readonly string[] ThankYouMessages =
@@ -65,6 +68,47 @@ namespace CompatBot.EventHandlers
 
             if (!args.Author.IsWhitelisted(args.Client, args.Message.Channel.Guild))
                 return;
+
+#if DEBUG
+            if (args.Message.Content == "emoji test")
+            {
+                var badEmojis = new List<DiscordEmoji>(SadReactions.Concat(ThankYouReactions));
+                var posted = 0;
+                var line = 1;
+                var msg = await args.Channel.SendMessageAsync("Line " + line).ConfigureAwait(false);
+                for (var i = 0; i < 5; i++)
+                {
+                    var tmp = new List<DiscordEmoji>();
+                    foreach (var emoji in badEmojis)
+                    {
+                        try
+                        {
+                            await msg.CreateReactionAsync(emoji).ConfigureAwait(false);
+                            if (++posted == 15)
+                            {
+                                line++;
+                                posted = 0;
+                                msg = await args.Channel.SendMessageAsync("Line " + line).ConfigureAwait(false);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Config.Log.Debug(e);
+                            tmp.Add(emoji);
+                        }
+                    }
+                    badEmojis = tmp;
+                    if (badEmojis.Any())
+                        await Task.Delay(1000).ConfigureAwait(false);
+
+                }
+                if (badEmojis.Any())
+                    await args.Channel.SendMessageAsync("Bad emojis: " + string.Concat(badEmojis)).ConfigureAwait(false);
+                else
+                    await args.Channel.SendMessageAsync("Everything looks fine").ConfigureAwait(false);
+                return;
+            }
+#endif
 
             var (needToSilence, needToThank) = NeedToSilence(args.Message);
             if (!(needToSilence || needToThank))
