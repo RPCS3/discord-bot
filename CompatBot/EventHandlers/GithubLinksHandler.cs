@@ -78,6 +78,5 @@ namespace CompatBot.EventHandlers
         {
             return new HashSet<string>(IssueLink.Matches(input).Select(match => match.Groups["number"].Value));
         }
-
     }
 }
