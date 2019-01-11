@@ -56,11 +56,11 @@ namespace CompatBot.Utils.ResultFormatters
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {
                     state.PiracyContext = state.PiracyContext.Sanitize();
-                    var msg = $"{message.Author.Mention}, you are being denied further support until you legally dump the game.\n" +
+                    var msg = "__You are being denied further support until you legally dump the game__.\n" +
                               "Please note that the RPCS3 community and its developers do not support piracy.\n" +
                               "Most of the issues with pirated dumps occur due to them having been tampered with in some way " +
                               "and therefore act unpredictably on RPCS3.\n" +
-                              "If you need help obtaining legal dumps, please read <https://rpcs3.net/quickstart>";
+                              "If you need help obtaining legal dumps, please read [the quickstart guide](https://rpcs3.net/quickstart).";
                     builder.WithColor(Config.Colors.LogAlert)
                         .WithTitle("Pirated release detected")
                         .WithDescription(msg);

@@ -50,7 +50,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return $"`[{titleId,-9}] {title,-40} {info.Status,8} since {info.ToUpdated(),-10} (PR {info.ToPrString("#????"),-5})` https://forums.rpcs3.net/thread-{info.Thread}.html";
             }
 
-            return $"Product code {titleId} was not found in compatibility database, possibly untested!";
+            return $"Product code {titleId} was not found in compatibility database";
         }
 
         public static DiscordEmbedBuilder AsEmbed(this TitleInfo info, string titleId, string gameTitle = null, bool forLog = false, string thumbnailUrl = null)
@@ -89,7 +89,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var desc = "";
                 if (!string.IsNullOrEmpty(titleId))
-                    desc = $"Product code {titleId} was not found in compatibility database, possibly untested!";
+                    desc = $"Product code {titleId} was not found in compatibility database";
                 var result = new DiscordEmbedBuilder
                 {
                     Description = desc,
