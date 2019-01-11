@@ -23,7 +23,8 @@ namespace AppveyorClient
 
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
-        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+        private static readonly TimeSpan JobToBuildCacheTime = TimeSpan.FromDays(30);
+        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromHours(1)});
 
         public Client()
         {
@@ -33,7 +34,7 @@ namespace AppveyorClient
                 ContractResolver = new JsonContractResolver(NamingStyles.CamelCase),
                 NullValueHandling = NullValueHandling.Ignore
             };
-            formatters = new MediaTypeFormatterCollection(new[] { new JsonMediaTypeFormatter { SerializerSettings = settings } });
+            formatters = new MediaTypeFormatterCollection(new[] {new JsonMediaTypeFormatter {SerializerSettings = settings}});
         }
 
         public async Task<ArtifactInfo> GetPrDownloadAsync(string githubStatusTargetUrl, CancellationToken cancellationToken)
@@ -85,32 +86,16 @@ namespace AppveyorClient
 
             try
             {
-                var baseUrl = new Uri("https://ci.appveyor.com/api/projects/rpcs3/RPCS3/history?recordsNumber=100");
-                var historyUrl = baseUrl;
-                HistoryInfo historyPage = null;
-                Build build = null;
-                do
+                var build = await FindBuildAsync(
+                    historyPage => historyPage.Builds.Last(b => b.Started.HasValue).Started > dateTimeLimit,
+                    b => b.PullRequestId == prNumber && b.Status == "success",
+                    cancellationToken
+                ).ConfigureAwait(false);
+                if (build == null)
                 {
-                    using (var message = new HttpRequestMessage(HttpMethod.Get, historyUrl))
-                    {
-                        message.Headers.UserAgent.Add(ProductInfoHeader);
-                        using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                        {
-                            try
-                            {
-                                await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                                historyPage = await response.Content.ReadAsAsync<HistoryInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                                build = historyPage.Builds.FirstOrDefault(b => b.PullRequestId == prNumber && b.Status == "success");
-                            }
-                            catch (Exception e)
-                            {
-                                ConsoleLogger.PrintError(e, response);
-                                break;
-                            }
-                        }
-                    }
-                    historyUrl = baseUrl.SetQueryParameter("startBuildId", historyPage.Builds.Last().BuildId.ToString());
-                } while (build == null && historyPage.Builds?.Count > 0 && historyPage.Builds.Last(b => b.Started.HasValue).Started > dateTimeLimit);
+                    ApiConfig.Log.Debug($"Couldn't find successful build for PR {prNumber} in appveyor history");
+                    return null;
+                }
 
                 var buildInfo = await GetBuildInfoAsync(build.BuildId, cancellationToken).ConfigureAwait(false);
                 var job = buildInfo?.Build.Jobs?.FirstOrDefault(j => j.Status == "success");
@@ -145,12 +130,9 @@ namespace AppveyorClient
             return null;
         }
 
-        private Task<BuildInfo> GetBuildInfoAsync(int buildId, CancellationToken cancellationToken)
-        {
-            return GetBuildInfoAsync("https://ci.appveyor.com/api/projects/rpcs3/rpcs3/builds/" + buildId, cancellationToken);
-        }
+        public Task<BuildInfo> GetBuildInfoAsync(int buildId, CancellationToken cancellationToken) { return GetBuildInfoAsync("https://ci.appveyor.com/api/projects/rpcs3/rpcs3/builds/" + buildId, cancellationToken); }
 
-        private async Task<BuildInfo> GetBuildInfoAsync(string buildUrl, CancellationToken cancellationToken)
+        public async Task<BuildInfo> GetBuildInfoAsync(string buildUrl, CancellationToken cancellationToken)
         {
             try
             {
@@ -162,7 +144,7 @@ namespace AppveyorClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            var result =  await response.Content.ReadAsAsync<BuildInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                            var result = await response.Content.ReadAsAsync<BuildInfo>(formatters, cancellationToken).ConfigureAwait(false);
                             ResponseCache.Set(buildUrl, result, CacheTime);
                             ApiConfig.Log.Debug($"Cached {nameof(BuildInfo)} for {buildUrl} for {CacheTime}");
                             return result;
@@ -183,6 +165,30 @@ namespace AppveyorClient
             return o;
         }
 
+        public async Task<Build> GetBuildAsync(string jobId, CancellationToken cancellationToken)
+        {
+            if (ResponseCache.TryGetValue(jobId, out Build result))
+                return result;
+            try
+            {
+                return await FindBuildAsync(
+                    _ => true,
+                    b =>
+                    {
+                        var buildInfo = GetBuildInfoAsync(b.BuildId, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+                        return buildInfo?.Build?.Jobs?.Any(j => j.JobId == jobId) ?? false;
+                    },
+                    cancellationToken
+                );
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+            }
+            ApiConfig.Log.Debug($"Failed to find {nameof(Build)} for job {jobId}");
+            return null;
+        }
+
         public async Task<List<Artifact>> GetJobArtifactsAsync(string jobId, CancellationToken cancellationToken)
         {
             var requestUri = $"https://ci.appveyor.com/api/buildjobs/{jobId}/artifacts";
@@ -196,7 +202,7 @@ namespace AppveyorClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            var result =  await response.Content.ReadAsAsync<List<Artifact>>(formatters, cancellationToken).ConfigureAwait(false);
+                            var result = await response.Content.ReadAsAsync<List<Artifact>>(formatters, cancellationToken).ConfigureAwait(false);
                             ResponseCache.Set(requestUri, result, CacheTime);
                             ApiConfig.Log.Debug($"Cached {nameof(Artifact)} for {jobId} for {CacheTime}");
                             return result;
@@ -217,5 +223,47 @@ namespace AppveyorClient
             return o;
         }
 
+        public async Task<Build> FindBuildAsync(Func<HistoryInfo, bool> takePredicate, Func<Build, bool> selectPredicate, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var baseUrl = new Uri("https://ci.appveyor.com/api/projects/rpcs3/RPCS3/history?recordsNumber=100");
+                var historyUrl = baseUrl;
+                HistoryInfo historyPage = null;
+                Build build = null;
+                do
+                {
+                    using (var message = new HttpRequestMessage(HttpMethod.Get, historyUrl))
+                    {
+                        message.Headers.UserAgent.Add(ProductInfoHeader);
+                        using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                        {
+                            try
+                            {
+                                await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                                historyPage = await response.Content.ReadAsAsync<HistoryInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                                foreach (var b in historyPage?.Builds ?? Enumerable.Empty<Build>())
+                                foreach (var j in b?.Jobs ?? Enumerable.Empty<Job>())
+                                    ResponseCache.Set(j.JobId, b, JobToBuildCacheTime);
+                                build = historyPage?.Builds?.FirstOrDefault(selectPredicate);
+                            }
+                            catch (Exception e)
+                            {
+                                ConsoleLogger.PrintError(e, response);
+                                break;
+                            }
+                        }
+                    }
+                    historyUrl = baseUrl.SetQueryParameter("startBuildId", historyPage?.Builds?.Last().BuildId.ToString());
+                } while (build == null && historyPage?.Builds?.Count > 0 && takePredicate(historyPage));
+                return build;
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+            }
+            ApiConfig.Log.Debug($"Failed to find {nameof(Build)}");
+            return null;
+        }
     }
 }

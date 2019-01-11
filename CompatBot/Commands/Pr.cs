@@ -7,8 +7,10 @@ using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using GithubClient.POCOs;
 
 namespace CompatBot.Commands
@@ -23,65 +25,7 @@ namespace CompatBot.Commands
         private const string appveyorContext = "continuous-integration/appveyor/pr";
 
         [GroupCommand]
-        public async Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr)
-        {
-            var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
-            if (prInfo.Number == 0)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
-                return;
-            }
-
-            var prState = prInfo.GetState();
-            var embed = prInfo.AsEmbed();
-            if (prState.state == "Open" || prState.state == "Closed")
-            {
-                var downloadHeader = "PR Build Download";
-                var downloadText = "";
-                if (prInfo.StatusesUrl is string statusesUrl)
-                {
-                    var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
-                    statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
-                    if (statuses?.Count > 0)
-                    {
-                        if (statuses.FirstOrDefault(s => s.State == "success") is StatusInfo statusSuccess)
-                        {
-                            var artifactInfo = await appveyorClient.GetPrDownloadAsync(statusSuccess.TargetUrl, Config.Cts.Token).ConfigureAwait(false);
-                            if (artifactInfo == null)
-                                downloadText = $"[⏬ {statusSuccess.Description}]({statusSuccess.TargetUrl})";
-                            else
-                            {
-                                if (artifactInfo.Artifact.Created is DateTime buildTime)
-                                    downloadHeader = $"{downloadHeader} ({buildTime:u})";
-                                downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
-                            }
-                        }
-                        else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
-                        {
-                            if (artifactInfo.Artifact.Created is DateTime buildTime)
-                                downloadHeader = $"{downloadHeader} ({buildTime:u})";
-                            downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
-                        }
-                        else
-                            downloadText = statuses.First().Description;
-                    }
-                }
-                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
-                {
-                    if (artifactInfo.Artifact.Created is DateTime buildTime)
-                        downloadHeader = $"{downloadHeader} ({buildTime:u})";
-                    downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
-                }
-                if (!string.IsNullOrEmpty(downloadText))
-                    embed.AddField(downloadHeader, downloadText);
-            }
-            else if (prState.state == "Merged")
-            {
-                var updateInfo = await compatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
-                embed = await updateInfo.AsEmbedAsync(embed).ConfigureAwait(false);
-            }
-            await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
-        }
+        public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
 
         [GroupCommand]
         public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string searchStr = null)
@@ -126,7 +70,7 @@ namespace CompatBot.Commands
 
             if (openPrList.Count == 1)
             {
-                await List(ctx, openPrList[0].Number).ConfigureAwait(false);
+                await LinkPrBuild(ctx.Client, ctx.Message, openPrList[0].Number).ConfigureAwait(false);
                 return;
             }
 
@@ -138,6 +82,66 @@ namespace CompatBot.Commands
             foreach (var pr in openPrList)
                 result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRight(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRight(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
             await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+        }
+
+        public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)
+        {
+            var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
+            if (prInfo.Number == 0)
+            {
+                await message.ReactWithAsync(client, Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
+                return;
+            }
+
+            var prState = prInfo.GetState();
+            var embed = prInfo.AsEmbed();
+            if (prState.state == "Open" || prState.state == "Closed")
+            {
+                var downloadHeader = "Latest PR Build Download";
+                var downloadText = "";
+                if (prInfo.StatusesUrl is string statusesUrl)
+                {
+                    var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
+                    statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
+                    if (statuses?.Count > 0)
+                    {
+                        if (statuses.FirstOrDefault(s => s.State == "success") is StatusInfo statusSuccess)
+                        {
+                            var artifactInfo = await appveyorClient.GetPrDownloadAsync(statusSuccess.TargetUrl, Config.Cts.Token).ConfigureAwait(false);
+                            if (artifactInfo == null)
+                                downloadText = $"[⏬ {statusSuccess.Description}]({statusSuccess.TargetUrl})";
+                            else
+                            {
+                                if (artifactInfo.Artifact.Created is DateTime buildTime)
+                                    downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                                downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
+                            }
+                        }
+                        else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                        {
+                            if (artifactInfo.Artifact.Created is DateTime buildTime)
+                                downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                            downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
+                        }
+                        else
+                            downloadText = statuses.First().Description;
+                    }
+                }
+                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                {
+                    if (artifactInfo.Artifact.Created is DateTime buildTime)
+                        downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                    downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
+                }
+                if (!string.IsNullOrEmpty(downloadText))
+                    embed.AddField(downloadHeader, downloadText);
+            }
+            else if (prState.state == "Merged")
+            {
+                var updateInfo = await compatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                embed = await updateInfo.AsEmbedAsync(embed).ConfigureAwait(false);
+            }
+            await message.RespondAsync(embed: embed).ConfigureAwait(false);
         }
     }
 }
