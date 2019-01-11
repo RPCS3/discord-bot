@@ -22,6 +22,7 @@ namespace CompatBot.Commands
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
+        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(20);
         private const string appveyorContext = "continuous-integration/appveyor/pr";
 
         [GroupCommand]
@@ -138,8 +139,21 @@ namespace CompatBot.Commands
             }
             else if (prState.state == "Merged")
             {
+                var mergeTime = prInfo.MergedAt.GetValueOrDefault();
+                var now = DateTime.UtcNow;
                 var updateInfo = await compatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
-                embed = await updateInfo.AsEmbedAsync(embed).ConfigureAwait(false);
+                if (updateInfo != null)
+                {
+                    if (DateTime.TryParse(updateInfo.LatestBuild?.Datetime, out var masterBuildTime) && masterBuildTime.Ticks >= mergeTime.Ticks)
+                        embed = await updateInfo.AsEmbedAsync(embed).ConfigureAwait(false);
+                    else
+                    {
+                        var waitTime = TimeSpan.FromMinutes(5);
+                        if (now < (mergeTime + AvgBuildTime))
+                            waitTime = mergeTime + AvgBuildTime - now;
+                        embed.AddField("Latest master build", $"This pull request has been merged, and will be part of `master` very soon.\nPlease check again in {waitTime.GetTimeDeltaDescription()}.");
+                    }
+                }
             }
             await message.RespondAsync(embed: embed).ConfigureAwait(false);
         }
