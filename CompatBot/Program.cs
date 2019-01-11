@@ -55,6 +55,7 @@ namespace CompatBot
                                                             }
                                                         }
                                                         catch (TaskCanceledException) { }
+                                                        catch (Exception e) { Config.Log.Error(e);}
                                                     }){ IsBackground = true };
 
             try
@@ -246,12 +247,10 @@ namespace CompatBot
                 }
                 await backgroundTasks.ConfigureAwait(false);
             }
-            catch (TaskCanceledException)
-            {
-            }
+            catch (TaskCanceledException) { }
             catch(Exception e)
             {
-                Config.Log.Fatal(e, $"Experienced catastrofic failure, attempting to restart...");
+                Config.Log.Fatal(e, "Experienced catastrofic failure, attempting to restart...");
                 Sudo.Bot.Restart(InvalidChannelId);
             }
             finally
