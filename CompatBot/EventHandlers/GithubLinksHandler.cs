@@ -12,7 +12,7 @@ namespace CompatBot.EventHandlers
     internal sealed class GithubLinksHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex IssueMention = new Regex(@"\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)\b", DefaultOptions);
+        private static readonly Regex IssueMention = new Regex(@"(\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|#(?<also_number>\d{4}))\b", DefaultOptions);
         private static readonly Regex IssueLink = new Regex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
         private static readonly GithubClient.Client Client = new GithubClient.Client();
 
@@ -26,7 +26,7 @@ namespace CompatBot.EventHandlers
 
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
             foreach (var msg in lastBotMessages)
-                if (BotShutupHandler.NeedToSilence(msg))
+                if (BotShutupHandler.NeedToSilence(msg).needToChill)
                     return;
 
             lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
@@ -67,16 +67,28 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static List<string> GetIssueIds(string input)
+        public static List<int> GetIssueIds(string input)
         {
             return IssueMention.Matches(input)
-                .Select(match => match.Groups["number"].Value)
+                .SelectMany(match => new[] {match.Groups["number"].Value, match.Groups["also_number"].Value})
                 .Distinct()
+                .Select(n => {
+                            int.TryParse(n, out var i);
+                            return i;
+                        })
+                .Where(n => n > 0)
                 .ToList();
         }
-        public static HashSet<string> GetIssueIdsFromLinks(string input)
+        public static HashSet<int> GetIssueIdsFromLinks(string input)
         {
-            return new HashSet<string>(IssueLink.Matches(input).Select(match => match.Groups["number"].Value));
+            return new HashSet<int>(
+                IssueLink.Matches(input)
+                    .Select(match =>
+                            {
+                                int.TryParse(match.Groups["number"].Value, out var n);
+                                return n;
+                            })
+            );
         }
     }
 }

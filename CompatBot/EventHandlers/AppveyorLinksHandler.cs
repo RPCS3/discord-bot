@@ -10,6 +10,7 @@ namespace CompatBot.EventHandlers
     internal sealed class AppveyorLinksHandler
     {
         // https://ci.appveyor.com/project/rpcs3/rpcs3/build/0.0.4-7952/artifacts
+        // https://ci.appveyor.com/project/rpcs3/rpcs3/build/0.0.5-952c5c92/artifacts
         // https://ci.appveyor.com/project/rpcs3/rpcs3/builds/21496243/artifacts
         // https://ci.appveyor.com/api/buildjobs/08a2gmwttqo1j86r/artifacts/rpcs3-v0.0.5-8362ab1e_win64.7z
 
