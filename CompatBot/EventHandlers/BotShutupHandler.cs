@@ -24,7 +24,7 @@ namespace CompatBot.EventHandlers
                 "good bot", "gud bot", "good boy", "goodboy", "gud boy", "gud boi",
                 "thank you", "thankyou", "thnk", "thnx", "thnku", "thank u", "tnx",
                 "arigato", "aregato", "arigatou", "aregatou", "oregato", "origato",
-                "poor bot",
+                "poor bot", "good job", "well done", "good work", "excellent work",
             }.ToDictionary(s => s, _ => false)
         ), true);
 
