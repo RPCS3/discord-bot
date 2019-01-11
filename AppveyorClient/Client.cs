@@ -24,6 +24,7 @@ namespace AppveyorClient
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
         private static readonly TimeSpan JobToBuildCacheTime = TimeSpan.FromDays(30);
+        private static readonly TimeSpan JobIdSearchThreshold = TimeSpan.FromDays(6 * 30);
         private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromHours(1)});
 
         public Client()
@@ -171,8 +172,9 @@ namespace AppveyorClient
                 return result;
             try
             {
+                var oldestBuildDate = DateTime.UtcNow - JobIdSearchThreshold;
                 return await FindBuildAsync(
-                    _ => true,
+                    h => h.Builds.Last().Created > oldestBuildDate,
                     b =>
                     {
                         var buildInfo = GetBuildInfoAsync(b.BuildId, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
