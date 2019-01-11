@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using AppveyorClient.POCOs;
 using CompatBot.Commands;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
@@ -70,7 +71,6 @@ namespace CompatBot
                     Config.Log.Fatal("No token was specified.");
                     return;
                 }
-                var amdDriverRefreshTask = AmdDriverVersionProvider.RefreshAsync();
 
                 using (var db = new BotDb())
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
@@ -80,9 +80,13 @@ namespace CompatBot
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
-                var psnScrappingTask = new PsnScraper().RunAsync(Config.Cts.Token);
-                var gameTdbScrapingTask = GameTdbScraper.RunAsync(Config.Cts.Token);
-                await amdDriverRefreshTask.ConfigureAwait(false);
+                var backgroundTasks = Task.WhenAll(
+                    AmdDriverVersionProvider.RefreshAsync(),
+                    new PsnScraper().RunAsync(Config.Cts.Token),
+                    GameTdbScraper.RunAsync(Config.Cts.Token),
+                    new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token)
+                );
+                Config.Log.Debug($"Started background tasks with status {backgroundTasks.Status}");
 
                 try
                 {
@@ -240,10 +244,7 @@ namespace CompatBot
                         await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}).ConfigureAwait(false);
                     }
                 }
-                await Task.WhenAll(
-                    psnScrappingTask,
-                    gameTdbScrapingTask
-                ).ConfigureAwait(false);
+                await backgroundTasks.ConfigureAwait(false);
             }
             catch (TaskCanceledException)
             {

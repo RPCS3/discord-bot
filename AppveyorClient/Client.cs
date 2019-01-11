@@ -176,6 +176,13 @@ namespace AppveyorClient
                     b =>
                     {
                         var buildInfo = GetBuildInfoAsync(b.BuildId, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+                        foreach (var j in buildInfo?.Build?.Jobs ?? Enumerable.Empty<Job>())
+                        {
+                            ResponseCache.Set(j.JobId, b, JobToBuildCacheTime);
+#if DEBUG
+                            ApiConfig.Log.Debug($"Cached {b.GetType().Name} for {j.JobId}");
+#endif
+                        }
                         return buildInfo?.Build?.Jobs?.Any(j => j.JobId == jobId) ?? false;
                     },
                     cancellationToken
@@ -242,9 +249,6 @@ namespace AppveyorClient
                             {
                                 await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                                 historyPage = await response.Content.ReadAsAsync<HistoryInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                                foreach (var b in historyPage?.Builds ?? Enumerable.Empty<Build>())
-                                foreach (var j in b?.Jobs ?? Enumerable.Empty<Job>())
-                                    ResponseCache.Set(j.JobId, b, JobToBuildCacheTime);
                                 build = historyPage?.Builds?.FirstOrDefault(selectPredicate);
                             }
                             catch (Exception e)
