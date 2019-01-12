@@ -22,7 +22,7 @@ namespace CompatBot.Commands
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
-        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(20);
+        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(40); // it's 20, but on merge we have pr + master builds
         private const string appveyorContext = "continuous-integration/appveyor/pr";
 
         [GroupCommand]
