@@ -41,7 +41,9 @@ namespace CompatBot.Utils.ResultFormatters
                 if (info.CurrentBuild?.Pr is string buildPr
                     && buildPr != info.LatestBuild?.Pr
                     && GetUpdateDelta(info) is TimeSpan timeDelta)
-                    timestampInfo += $" ({timeDelta.GetTimeDeltaDescription()} newer)";
+                    timestampInfo += $" ({timeDelta.AsTimeDeltaDescription()} newer)";
+                else if (DateTime.TryParse(build.Datetime, out var buildDateTime) && DateTime.UtcNow.Ticks > buildDateTime.Ticks)
+                    timestampInfo += $" ({(DateTime.UtcNow - buildDateTime.AsUtc()).AsTimeDeltaDescription()} ago)";
 
                 if (justAppend)
                     builder.AddField($"Latest master build ({timestampInfo})", "This pull request has been merged, and is a part of `master` now");
@@ -77,7 +79,7 @@ namespace CompatBot.Utils.ResultFormatters
             return null;
         }
 
-        public static string GetTimeDeltaDescription(this TimeSpan delta)
+        public static string AsTimeDeltaDescription(this TimeSpan delta)
         {
             if (delta.TotalHours < 1)
             {
