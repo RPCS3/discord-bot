@@ -151,7 +151,7 @@ namespace CompatBot.Commands
                         var waitTime = TimeSpan.FromMinutes(5);
                         if (now < (mergeTime + AvgBuildTime))
                             waitTime = mergeTime + AvgBuildTime - now;
-                        embed.AddField("Latest master build", $"This pull request has been merged, and will be part of `master` very soon.\nPlease check again in {waitTime.GetTimeDeltaDescription()}.");
+                        embed.AddField("Latest master build", $"This pull request has been merged, and will be part of `master` very soon.\nPlease check again in {waitTime.AsTimeDeltaDescription()}.");
                     }
                 }
             }

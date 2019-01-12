@@ -430,7 +430,7 @@ namespace CompatBot.Utils.ResultFormatters
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
             {
-                var timeDeltaStr = updateInfo.GetUpdateDelta() is TimeSpan timeDelta ? timeDelta.GetTimeDeltaDescription() + " old": "outdated";
+                var timeDeltaStr = updateInfo.GetUpdateDelta() is TimeSpan timeDelta ? timeDelta.AsTimeDeltaDescription() + " old": "outdated";
                 notes.AppendLine($"This RPCS3 build is {timeDeltaStr}, please consider updating it");
             }
             var notesContent = notes.ToString().Trim();
