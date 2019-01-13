@@ -76,7 +76,7 @@ namespace CompatBot.EventHandlers
                 await message.ReactWithAsync(
                     client,
                     Config.Reactions.Moderated,
-                    $"{message.Author.Mention} please delete this link to fake emulator. it was proven to be fake and used for malicious purposes. Please avoid it in the future."
+                    $"{message.Author.Mention} please delete this link to fake emulator. It was proven to be fake and used for malicious purposes. Please avoid it in the future."
                     ).ConfigureAwait(false);
             }
             return false;
