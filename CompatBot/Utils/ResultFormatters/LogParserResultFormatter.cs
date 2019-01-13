@@ -325,7 +325,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static async Task<bool> BuildMissingFilesSection(DiscordEmbedBuilder builder, NameValueCollection items)
+        private static async Task<bool> HasBrokenFilesAsync(NameValueCollection items)
         {
             if (!(items["serial"] is string productCode))
                 return false;
@@ -333,7 +333,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (!productCode.StartsWith("B") && !productCode.StartsWith("M"))
                 return false;
 
-            if (string.IsNullOrEmpty(items["broken_directory"]) && string.IsNullOrEmpty(items["broken_filename"]))
+            if (string.IsNullOrEmpty(items["broken_directory"])
+                && string.IsNullOrEmpty(items["broken_filename"]))
                 return false;
 
             var getIrdTask = irdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token);
@@ -370,7 +371,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             BuildWeirdSettingsSection(builder, items);
             BuildMissingLicensesSection(builder, items);
-            var brokenDump = await BuildMissingFilesSection(builder, items).ConfigureAwait(false);
+            var brokenDump = !string.IsNullOrEmpty("edat_block_offset") || await HasBrokenFilesAsync(items).ConfigureAwait(false);
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
@@ -386,7 +387,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["failed_to_boot"] is string _)
                 notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
             if (brokenDump)
-                notes.AppendLine("Some game files are missing or corrupted, please check and redump if needed.");
+                notes.AppendLine("Some game files are missing or corrupted, please re-dump and validate.");
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
                 notes.AppendLine("Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
