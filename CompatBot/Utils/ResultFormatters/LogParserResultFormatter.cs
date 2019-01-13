@@ -371,7 +371,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             BuildWeirdSettingsSection(builder, items);
             BuildMissingLicensesSection(builder, items);
-            var brokenDump = !string.IsNullOrEmpty("edat_block_offset") || await HasBrokenFilesAsync(items).ConfigureAwait(false);
+            var brokenDump = !string.IsNullOrEmpty(items["edat_block_offset"]) || await HasBrokenFilesAsync(items).ConfigureAwait(false);
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
