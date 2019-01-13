@@ -154,7 +154,8 @@ namespace CompatBot
                                                  {
                                                      await Task.WhenAll(
                                                          Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
-                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
+                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}.")),
+                                                         FakeEmulatorFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Fake Emulator links backlog checked in {gaArgs.Guild.Name}."))
                                                      ).ConfigureAwait(false);
                                                  }
                                                  catch (Exception e)
@@ -181,9 +182,11 @@ namespace CompatBot
                     client.MessageCreated += GithubLinksHandler.OnMessageCreated;
                     client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
                     client.MessageCreated += TableFlipMonitor.OnMessageCreated;
+                    client.MessageCreated += FakeEmulatorFilter.OnMessageCreated;
 
                     client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
                     client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
+                    client.MessageUpdated += FakeEmulatorFilter.OnMessageUpdated;
 
                     client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
 
