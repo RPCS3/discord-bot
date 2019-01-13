@@ -42,7 +42,7 @@ namespace CompatBot.Utils.ResultFormatters
                     && buildPr != info.LatestBuild?.Pr
                     && GetUpdateDelta(info) is TimeSpan timeDelta)
                     timestampInfo += $" ({timeDelta.AsTimeDeltaDescription()} newer)";
-                else if (DateTime.TryParse(build.Datetime, out var buildDateTime) && DateTime.UtcNow.Ticks > buildDateTime.Ticks)
+                else if (!justAppend && DateTime.TryParse(build.Datetime, out var buildDateTime) && DateTime.UtcNow.Ticks > buildDateTime.Ticks)
                     timestampInfo += $" ({(DateTime.UtcNow - buildDateTime.AsUtc()).AsTimeDeltaDescription()} ago)";
 
                 if (justAppend)
