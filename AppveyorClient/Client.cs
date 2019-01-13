@@ -182,7 +182,7 @@ namespace AppveyorClient
                         {
                             ResponseCache.Set(j.JobId, b, JobToBuildCacheTime);
 #if DEBUG
-                            ApiConfig.Log.Debug($"Cached {b.GetType().Name} for {j.JobId}");
+                            //ApiConfig.Log.Debug($"Cached {b.GetType().Name} for {j.JobId}");
 #endif
                         }
                         return buildInfo?.Build?.Jobs?.Any(j => j.JobId == jobId) ?? false;
