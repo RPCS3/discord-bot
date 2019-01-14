@@ -15,7 +15,7 @@ using GithubClient.POCOs;
 
 namespace CompatBot.Commands
 {
-    [Group("pr"), TriggersTyping]
+    [Group("pr"), TriggersTyping, Cooldown(1, 1*60, CooldownBucketType.User)]
     [Description("Commands to list opened pull requests information")]
     internal sealed class Pr: BaseCommandModuleCustom
     {
@@ -24,6 +24,7 @@ namespace CompatBot.Commands
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
         private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30); // it's 20, but on merge we have pr + master builds
         private const string appveyorContext = "continuous-integration/appveyor/pr";
+        private static readonly int maxEmbedSize = 5;
 
         [GroupCommand]
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
@@ -32,6 +33,9 @@ namespace CompatBot.Commands
         public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string searchStr = null)
         {
             if (string.IsNullOrEmpty(searchStr) && !(await new LimitedToSpamChannel().ExecuteCheckAsync(ctx, false).ConfigureAwait(false)))
+                return;
+
+            if (searchStr.Length < 1)
                 return;
 
             var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -83,7 +87,9 @@ namespace CompatBot.Commands
             var maxAuthor = openPrList.Max(pr => pr.User.Login.Length);
             var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.Length), maxTitleLength);
             var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
-            foreach (var pr in openPrList)
+            //add the first 5 pull requests to the embed to stop spam
+            var subOpenPrList = openPrList.GetRange(0, Math.Min(maxEmbedSize, openPrList.Count));
+            foreach (var pr in subOpenPrList)
                 result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRight(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRight(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
             await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
