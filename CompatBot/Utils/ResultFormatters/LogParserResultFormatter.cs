@@ -495,8 +495,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static bool VersionIsTooOld(Match log, Match update, UpdateInfo updateInfo)
         {
-            if (updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta && updateTimeDelta > Config.BuildTimeDifferenceForOutdatedBuilds)
-                return true;
+            if ((updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta) && (updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuilds))
+                return false;
 
             if (Version.TryParse(log.Groups["version"].Value, out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
             {
