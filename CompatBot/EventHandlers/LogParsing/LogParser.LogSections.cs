@@ -114,7 +114,9 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["Disc path:"] = new Regex(@"Disc path: .*(?<hdd_game_path>/dev_hdd0/game/.*?)\r?$", DefaultOptions),
+                    ["LDR: Game:"] = new Regex(@"Game: .*(?<ldr_game>/dev_hdd0/game/(?<ldr_game_serial>[^/]+).*?)\r?$", DefaultOptions),
+                    ["LDR: Disc"]  = new Regex(@"Disc( path)?: .*(?<ldr_disc>/dev_hdd0/game/(?<ldr_disc_serial>[^/]+).*?)\r?$", DefaultOptions),
+                    ["LDR: Path:"] = new Regex(@"Path: .*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/]+).*?)\r?$", DefaultOptions),
                     ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path>.*?)\r?$", DefaultOptions),
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
@@ -138,7 +140,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Loaded SPU image:"] = new Regex(@"Loaded SPU image: SPU-(?<spu_hash>\w+) \(<-\s*(?<spu_hash_patch>(?!0)\d+)\).*?\r?$", DefaultOptions),
                     ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_filename>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["'sys_fs_opendir' failed"] = new Regex(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
-                    ["EDAT: "] = new Regex(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
+                    ["LDR: EDAT: "] = new Regex(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
