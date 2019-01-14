@@ -25,6 +25,7 @@ namespace CompatBot.Commands
         private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30); // it's 20, but on merge we have pr + master builds
         private const string appveyorContext = "continuous-integration/appveyor/pr";
         private static readonly int maxEmbedSize = 5;
+        private static readonly int minSearchLength = 1;
 
         [GroupCommand]
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
@@ -35,7 +36,7 @@ namespace CompatBot.Commands
             if (string.IsNullOrEmpty(searchStr) && !(await new LimitedToSpamChannel().ExecuteCheckAsync(ctx, false).ConfigureAwait(false)))
                 return;
 
-            if (searchStr.Length < 1)
+            if (searchStr.Length <= minSearchLength)
                 return;
 
             var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
