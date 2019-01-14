@@ -147,7 +147,7 @@ namespace AppveyorClient
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                             var result = await response.Content.ReadAsAsync<BuildInfo>(formatters, cancellationToken).ConfigureAwait(false);
                             ResponseCache.Set(buildUrl, result, CacheTime);
-                            ApiConfig.Log.Debug($"Cached {nameof(BuildInfo)} for {buildUrl} for {CacheTime}");
+                            //ApiConfig.Log.Debug($"Cached {nameof(BuildInfo)} for {buildUrl} for {CacheTime}");
                             return result;
                         }
                         catch (Exception e)

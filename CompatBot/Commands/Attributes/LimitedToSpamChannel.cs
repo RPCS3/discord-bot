@@ -19,7 +19,9 @@ namespace CompatBot.Commands.Attributes
             try
             {
                 var msgList = await ctx.Channel.GetMessagesAsync(10).ConfigureAwait(false);
-                if (msgList.Any(m => m.Author.IsCurrent && m.Content is string s && s.Contains("explain list")))
+                if (msgList.Any(m => m.Author.IsCurrent
+                                     && m.Content is string s
+                                     && s.Contains(ctx.Command.QualifiedName, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                     return false; // we just explained to use #bot-spam or DMs, can't help if people can't read
@@ -27,7 +29,8 @@ namespace CompatBot.Commands.Attributes
             }
             catch {}
 
-            await ctx.RespondAsync($"`{Config.CommandPrefix}{ctx.Command.QualifiedName}` is limited to bot spam channel and DMs").ConfigureAwait(false);
+            var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+            await ctx.RespondAsync($"`{Config.CommandPrefix}{ctx.Command.QualifiedName}` is limited to {spamChannel.Mention} and DMs").ConfigureAwait(false);
             return false;
         }
 

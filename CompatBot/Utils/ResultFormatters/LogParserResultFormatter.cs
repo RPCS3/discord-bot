@@ -73,7 +73,7 @@ namespace CompatBot.Utils.ResultFormatters
                     var colB = BuildGpuSection(collection);
                     BuildSettingsSections(builder, collection, colA, colB);
                     BuildLibsSection(builder, collection);
-                    await BuildNotesSectionAsync(builder, state, collection).ConfigureAwait(false);
+                    await BuildNotesSectionAsync(builder, state, collection, client).ConfigureAwait(false);
                 }
             }
             else
@@ -367,7 +367,7 @@ namespace CompatBot.Utils.ResultFormatters
             return missingDirs.Any(knownDirs.Contains);
         }
 
-        private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items)
+        private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items, DiscordClient discordClient)
         {
             BuildWeirdSettingsSection(builder, items);
             BuildMissingLicensesSection(builder, items);
@@ -415,10 +415,24 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
                 notes.AppendLine("Game-specific patches were applied");
-            if (!string.IsNullOrEmpty(items["hdd_game_path"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))
-                notes.AppendLine($"Disc game inside `{items["hdd_game_path"]}`");
-            if ((items["game_category"] == "HG") && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false))
-                notes.AppendLine("Disc game installed as a PKG 🔨; please follow the quickstart guide");
+
+            bool discInsideGame = false;
+            bool discAsPkg = false;
+            if (items["game_category"] == "DG")
+            {
+                discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
+                discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
+                discAsPkg |= items["ldr_game_serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
+            }
+            discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
+            if (discInsideGame)
+                notes.AppendLine($"Disc game inside `{items["ldr_disc"]}`");
+            if (discAsPkg)
+            {
+                var emoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
+                notes.Append("Disc game installed as a PKG ").AppendLine(emoji);
+            }
+
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
                 notes.AppendLine("Pad initialization problem detected; try disabling `Native UI`");
             if (!string.IsNullOrEmpty(items["xaudio_init_error"]))
@@ -481,8 +495,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static bool VersionIsTooOld(Match log, Match update, UpdateInfo updateInfo)
         {
-            if (updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta && updateTimeDelta > Config.BuildTimeDifferenceForOutdatedBuilds)
-                return true;
+            if ((updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta) && (updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuilds))
+                return false;
 
             if (Version.TryParse(log.Groups["version"].Value, out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
             {
