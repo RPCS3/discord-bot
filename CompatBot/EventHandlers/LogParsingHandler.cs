@@ -31,7 +31,7 @@ namespace CompatBot.EventHandlers
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
-        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message);
+        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null);
         private static event OnLog OnNewLog;
 
         static LogParsingHandler()
@@ -52,7 +52,7 @@ namespace CompatBot.EventHandlers
             return Task.CompletedTask;
         }
 
-        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message)
+        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null)
         {
             try
             {
@@ -121,7 +121,10 @@ namespace CompatBot.EventHandlers
                                         }
                                     }
                                     else
-                                        await channel.SendMessageAsync(embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)).ConfigureAwait(false);
+                                        await channel.SendMessageAsync(
+                                            requester == null ? null : $"Reanalyzed log from {client.GetMember(channel.Guild, message.Author).GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                            embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
+                                        ).ConfigureAwait(false);
                                 }
                                 catch (Exception e)
                                 {
