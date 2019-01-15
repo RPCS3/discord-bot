@@ -31,7 +31,6 @@ namespace CompatBot.Commands
                 inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
             }
 
-
             if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
                 return;
 
@@ -166,10 +165,11 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
         }
 
-        [Command("list"), LimitedToSpamChannel]
+        [Command("list")]
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
+            var responseChannel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
             using (var db = new BotDb())
             {
                 var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
@@ -179,7 +179,7 @@ namespace CompatBot.Commands
                     try
                     {
                         foreach (var embed in new EmbedPager().BreakInEmbeds(new DiscordEmbedBuilder {Title = "Defined terms", Color = Config.Colors.Help}, keywords))
-                            await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+                            await responseChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
