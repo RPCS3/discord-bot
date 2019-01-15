@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -38,6 +39,41 @@ namespace CompatBot.Commands
             catch (Exception)
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to report the message").ConfigureAwait(false);
+            }
+        }
+
+        [Command("reanalyze"), Aliases("analyze", "parse")]
+        [Description("Make bot to look at the attached log again")]
+        public async Task Reanalyze(CommandContext ctx, [Description("Message ID from the same channel")]ulong messageId)
+        {
+            try
+            {
+                var msg = await ctx.Channel.GetMessageAsync(messageId).ConfigureAwait(false);
+                if (msg == null)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                else
+                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, msg);
+            }
+            catch
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+            }
+        }
+
+        [Command("reanalyze")]
+        public async Task Reanalyze(CommandContext ctx, [Description("Full message link")]string messageLink)
+        {
+            try
+            {
+                var msg = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false);
+                if (msg == null)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                else
+                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, msg);
+            }
+            catch
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
             }
         }
 
