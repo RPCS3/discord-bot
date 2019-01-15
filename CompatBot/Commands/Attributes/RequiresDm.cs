@@ -13,7 +13,7 @@ namespace CompatBot.Commands.Attributes
             if (ctx.Channel.IsPrivate || help)
                 return true;
 
-            await ctx.RespondAsync($"{ctx.Message.Author.Mention} https://i.imgflip.com/24qx11.jpg").ConfigureAwait(false);
+            await ctx.RespondAsync($"{ctx.Message.Author.Mention} https://cdn.discordapp.com/attachments/417347469521715210/534798232858001418/24qx11.jpg").ConfigureAwait(false);
             return false;
         }
     }

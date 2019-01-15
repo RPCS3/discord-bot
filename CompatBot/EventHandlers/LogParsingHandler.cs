@@ -12,6 +12,8 @@ using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
+using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -29,12 +31,12 @@ namespace CompatBot.EventHandlers
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
-        private delegate void OnLog(MessageCreateEventArgs args);
+        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null);
         private static event OnLog OnNewLog;
 
         static LogParsingHandler()
         {
-            OnNewLog += BackgroundProcessor;
+            OnNewLog += EnqueueLogProcessing;
         }
 
         public static Task OnMessageCreated(MessageCreateEventArgs args)
@@ -46,18 +48,17 @@ namespace CompatBot.EventHandlers
             if (!string.IsNullOrEmpty(message.Content) && message.Content.StartsWith(Config.CommandPrefix))
                 return Task.CompletedTask;
 
-            OnNewLog(args);
+            OnNewLog(args.Client, args.Channel, args.Message);
             return Task.CompletedTask;
         }
 
-        public static async void BackgroundProcessor(MessageCreateEventArgs args)
+        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null)
         {
             try
             {
-                var message = args.Message;
                 if (!QueueLimiter.Wait(0))
                 {
-                    await args.Channel.SendMessageAsync("Log processing is rate limited, try again a bit later").ConfigureAwait(false);
+                    await channel.SendMessageAsync("Log processing is rate limited, try again a bit later").ConfigureAwait(false);
                     return;
                 }
 
@@ -65,11 +66,11 @@ namespace CompatBot.EventHandlers
                 var startTime = Stopwatch.StartNew();
                 try
                 {
-                    foreach (var attachment in message.Attachments.Where(a => a.FileSize < Config.AttachmentSizeLimit && !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
+                    foreach (var attachment in message.Attachments.Where(a => !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
                     foreach (var handler in handlers)
                         if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
                         {
-                            await args.Message.ReactWithAsync(args.Client, Config.Reactions.PleaseWait).ConfigureAwait(false);
+                            await message.ReactWithAsync(client, Config.Reactions.PleaseWait).ConfigureAwait(false);
                             Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
                             parsedLog = true;
                             LogParseState result = null;
@@ -85,18 +86,18 @@ namespace CompatBot.EventHandlers
                                 Config.Log.Error(e, "Log parsing failed");
                             }
                             if (result == null)
-                                await args.Channel.SendMessageAsync("Log analysis failed, most likely cause is a truncated/invalid log. Please run the game again and reupload the new copy.").ConfigureAwait(false);
+                                await channel.SendMessageAsync("Log analysis failed, most likely cause is a truncated/invalid log. Please run the game again and reupload the new copy.").ConfigureAwait(false);
                             else
                             {
                                 try
                                 {
                                     if (result.Error == LogParseState.ErrorCode.PiracyDetected)
                                     {
-                                        if (args.Author.IsWhitelisted(args.Client, args.Guild))
+                                        if (message.Author.IsWhitelisted(client, channel.Guild))
                                         {
                                             await Task.WhenAll(
-                                                args.Channel.SendMessageAsync("I see wha' ye did thar ☠"),
-                                                args.Client.ReportAsync("Pirated Release (whitelisted by role)", args.Message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low)
+                                                channel.SendMessageAsync("I see wha' ye did thar ☠"),
+                                                client.ReportAsync("Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low)
                                             ).ConfigureAwait(false);
                                         }
                                         else
@@ -109,18 +110,21 @@ namespace CompatBot.EventHandlers
                                             catch (Exception e)
                                             {
                                                 severity = ReportSeverity.High;
-                                                Config.Log.Warn(e, $"Unable to delete message in {args.Channel.Name}");
+                                                Config.Log.Warn(e, $"Unable to delete message in {channel.Name}");
                                             }
-                                            await args.Channel.SendMessageAsync($"{args.Message.Author.Mention}, please read carefully:", embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
+                                            await channel.SendMessageAsync($"{message.Author.Mention}, please read carefully:", embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)).ConfigureAwait(false);
                                             await Task.WhenAll(
-                                                args.Client.ReportAsync("Pirated Release", args.Message, result.PiracyTrigger, result.PiracyContext, severity),
-                                                Warnings.AddAsync(args.Client, args.Message, args.Message.Author.Id, args.Message.Author.Username, args.Client.CurrentUser,
+                                                client.ReportAsync("Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity),
+                                                Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser,
                                                     "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
                                             );
                                         }
                                     }
                                     else
-                                        await args.Channel.SendMessageAsync(embed: await result.AsEmbedAsync(args.Client, args.Message).ConfigureAwait(false)).ConfigureAwait(false);
+                                        await channel.SendMessageAsync(
+                                            requester == null ? null : $"Reanalyzed log from {client.GetMember(channel.Guild, message.Author).GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                            embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
+                                        ).ConfigureAwait(false);
                                 }
                                 catch (Exception e)
                                 {
@@ -130,7 +134,7 @@ namespace CompatBot.EventHandlers
                             return;
                         }
 
-                    if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
+                    if (!"help".Equals(channel.Name, StringComparison.InvariantCultureIgnoreCase))
                         return;
 
                     var potentialLogExtension = message.Attachments.Select(a => Path.GetExtension(a.FileName).ToUpperInvariant().TrimStart('.')).FirstOrDefault();
@@ -138,7 +142,7 @@ namespace CompatBot.EventHandlers
                     {
                         case "TXT":
                         {
-                            await args.Channel.SendMessageAsync($"{message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of copying the logs from RPCS3's interface, as it doesn't contain all the required information.").ConfigureAwait(false);
+                            await channel.SendMessageAsync($"{message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of copying the logs from RPCS3's interface, as it doesn't contain all the required information.").ConfigureAwait(false);
                             return;
                         }
                     }
@@ -151,13 +155,13 @@ namespace CompatBot.EventHandlers
                     {
                         var link = message.Content.Substring(linkStart).Split(linkSeparator, 2)[0];
                         if (link.Contains(".log", StringComparison.InvariantCultureIgnoreCase) || link.Contains("rpcs3.zip", StringComparison.CurrentCultureIgnoreCase))
-                            await args.Channel.SendMessageAsync("If you intended to upload a log file please re-upload it directly to discord").ConfigureAwait(false);
+                            await channel.SendMessageAsync("If you intended to upload a log file please re-upload it directly to discord").ConfigureAwait(false);
                     }
                 }
                 finally
                 {
                     QueueLimiter.Release();
-                    await args.Message.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                    await message.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     if (parsedLog)
                         Config.Log.Debug($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
                 }

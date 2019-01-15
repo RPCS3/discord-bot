@@ -302,6 +302,14 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.AppendLine($"Please use `Safe` mode for `SPU Block Size`. `{spuBlockSize}` is currently unstable.");
             }
 
+            if (items["lib_loader"] is string libLoader
+                && libLoader.Contains("Auto", StringComparison.InvariantCultureIgnoreCase)
+                && (libLoader == "Auto"
+                    || (libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase) && string.IsNullOrEmpty(items["library_list"]))))
+            {
+                notes.AppendLine("Please use `Load liblv2.sprx only` as a `Library loader`");
+            }
+
             var notesContent = notes.ToString().Trim();
             PageSection(builder, notesContent, "Important Settings to Review");
         }
