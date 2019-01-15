@@ -169,7 +169,7 @@ namespace CompatBot.Commands
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
-            var responseChannel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+            var responseChannel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.CreateDmAsync().ConfigureAwait(false);
             using (var db = new BotDb())
             {
                 var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
