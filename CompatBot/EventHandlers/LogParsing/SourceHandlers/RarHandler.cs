@@ -20,6 +20,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             if (!attachment.FileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
                 return false;
 
+            if (attachment.FileSize > Config.AttachmentSizeLimit)
+                return false;
+
             try
             {
                 using (var client = HttpClientFactory.Create())

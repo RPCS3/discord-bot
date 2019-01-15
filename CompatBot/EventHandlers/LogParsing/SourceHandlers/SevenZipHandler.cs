@@ -18,6 +18,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             if (!attachment.FileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
                 return Task.FromResult(false);
 
+            if (attachment.FileSize > Config.AttachmentSizeLimit)
+                return Task.FromResult(false);
+
             return Task.FromResult(true);
         }
 
