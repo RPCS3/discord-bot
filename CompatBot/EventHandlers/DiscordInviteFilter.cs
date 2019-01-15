@@ -6,7 +6,6 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
-using CompatApiClient.Utils;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus;
@@ -33,12 +32,12 @@ namespace CompatBot.EventHandlers
             args.Handled = !await CheckMessageForInvitesAsync(args.Client, args.Message).ConfigureAwait(false);
         }
 
-    public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
+        public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
         {
             try
             {
                 var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
-                foreach (var channel in guild.Channels.Where(ch => !ch.IsCategory))
+                foreach (var channel in guild.Channels.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
                 {
                     var messages = await channel.GetMessagesAsync(500).ConfigureAwait(false);
                     var messagesToCheck = from msg in messages

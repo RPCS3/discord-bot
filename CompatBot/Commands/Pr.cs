@@ -31,9 +31,6 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string searchStr = null)
         {
-            if (string.IsNullOrEmpty(searchStr) && !(await new LimitedToSpamChannel().ExecuteCheckAsync(ctx, false).ConfigureAwait(false)))
-                return;
-
             var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
             if (openPrList == null)
             {
@@ -78,6 +75,7 @@ namespace CompatBot.Commands
                 return;
             }
 
+            var responseChannel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.CreateDmAsync().ConfigureAwait(false);
             const int maxTitleLength = 80;
             var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
             var maxAuthor = openPrList.Max(pr => pr.User.Login.Length);
@@ -85,7 +83,7 @@ namespace CompatBot.Commands
             var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
             foreach (var pr in openPrList)
                 result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRight(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRight(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
-            await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+            await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
 
         public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)

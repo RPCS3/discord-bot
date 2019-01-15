@@ -48,11 +48,11 @@ namespace CompatBot.Utils.ResultFormatters
                 if (justAppend)
                     builder.AddField($"Latest master build ({timestampInfo})", "This pull request has been merged, and is a part of `master` now");
                 else
-                    builder.AddField("Build timestamp", timestampInfo);
+                    builder.AddField("Merge timestamp", timestampInfo);
             }
             return builder
-                .AddField($"Windows   ".FixSpaces(), GetLinkMessage(build?.Windows?.Download, true), true)
-                .AddField($"Linux   ".FixSpaces(), GetLinkMessage(build?.Linux?.Download, true), true);
+                .AddField("Windows   ".FixSpaces(), GetLinkMessage(build?.Windows?.Download, true), true)
+                .AddField("Linux   ".FixSpaces(), GetLinkMessage(build?.Linux?.Download, true), true);
         }
 
         private static string GetLinkMessage(string link, bool simpleName)
