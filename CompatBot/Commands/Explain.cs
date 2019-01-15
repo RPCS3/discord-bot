@@ -143,6 +143,8 @@ namespace CompatBot.Commands
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == oldTerm).ConfigureAwait(false);
                 if (item == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{oldTerm}` is not defined").ConfigureAwait(false);
+                else if (await db.Explanation.AnyAsync(e => e.Keyword == newTerm).ConfigureAwait(false))
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{newTerm}` already defined, can't replace it with explanation for `{oldTerm}`").ConfigureAwait(false);
                 else
                 {
                     item.Keyword = newTerm;
