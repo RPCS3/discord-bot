@@ -87,7 +87,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 await FlushAllLinesAsync(buffer, sectionLines, state).ConfigureAwait(false);
                 SectionParsers[state.Id].OnSectionEnd?.Invoke(state);
                 state.Id++;
-                return;
+                currentProcessor = SectionParsers[state.Id];
             }
             if (sectionLines.Count == 50)
                 await ProcessFirstLineInBufferAsync(buffer, sectionLines, state).ConfigureAwait(false);

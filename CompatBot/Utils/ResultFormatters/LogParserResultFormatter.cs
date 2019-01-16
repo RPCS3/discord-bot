@@ -42,6 +42,14 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
         private static readonly Version RecommendedOpenGLVersion = new Version(4, 5);
 
+        private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            {"BLES00932", "NPEB01202"},
+            {"BLUS30443", "NPUB30910"},
+            //{"BCJS30022", "NPJA00102"},
+            {"BCJS70013", "NPJA00102"},
+        };
+
         private const string TrueMark = "[x]";
         private const string FalseMark = "[ ]";
 
@@ -105,14 +113,21 @@ namespace CompatBot.Utils.ResultFormatters
                 items["gpu_info"] = items["d3d_gpu"];
             else if (items["driver_manuf"] != null)
                 items["gpu_info"] = items["driver_manuf"];
-            else
-                items["gpu_info"] = "Unknown";
-
-            items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], (items["driver_version_new"] ?? items["driver_version"])) ??
-                                           GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
-                                           GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
+            if (!string.IsNullOrEmpty(items["gpu_info"]))
+                items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], (items["driver_version_new"] ?? items["driver_version"])) ??
+                                               GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
+                                               GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
             if (items["driver_version_info"] != null)
                 items["gpu_info"] += $" ({items["driver_version_info"]})";
+
+            if (items["vulkan_compatible_device_name"] is string vulkanDevices)
+            {
+                var deviceNames = vulkanDevices.Split(Environment.NewLine)
+                    .Distinct()
+                    .Select(n => $"{n} ({GetVulkanDriverVersion(n, items["vulkan_found_device"])})");
+                items["gpu_available_info"] = string.Join(Environment.NewLine, deviceNames);
+            }
+
             if (items["af_override"] is string af)
             {
                 if (af == "0")
@@ -166,7 +181,12 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["gpu_info"] is string gpu)
                 systemInfo += $"{Environment.NewLine}GPU: {gpu}";
-            builder.AddField("Build Info", systemInfo);
+            else if (items["gpu_available_info"] is string availableGpus)
+            {
+                var multiple = availableGpus.Contains(Environment.NewLine);
+                systemInfo +=$"{Environment.NewLine}GPU{(multiple ? "s" : "")}:{(multiple ? Environment.NewLine : " ")}{availableGpus}";
+            }
+            builder.AddField("Build Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
         }
 
         private static (string name, List<string> lines) BuildCpuSection(NameValueCollection items)
@@ -430,7 +450,11 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
                 discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
-                discAsPkg |= items["ldr_game_serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
+                discAsPkg |= items["ldr_game_serial"] is string ldrGameSerial
+                             && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase)
+                             && KnownDiscOnPsnIds.TryGetValue(items["serial"], out var whitelistedPsnMatch)
+                             && whitelistedPsnMatch is string matchingPsnId
+                             && !ldrGameSerial.Equals(matchingPsnId, StringComparison.InvariantCultureIgnoreCase);
             }
             discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
@@ -563,7 +587,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (gpu.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
                 gpu.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
                 gpu.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (gpu.Contains("RADV", StringComparison.InvariantCultureIgnoreCase))
+                    return result;
+
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
+            }
 
             if (result.EndsWith(".0.0"))
                 result = result.Substring(0, result.Length - 4);
@@ -586,6 +615,9 @@ namespace CompatBot.Utils.ResultFormatters
                 var minor = (ver >> 12) & 0x3ff;
                 var patch = ver & 0xfff;
                 var result = $"{major}.{minor}.{patch}";
+                if (gpuInfo.Contains("RADV", StringComparison.InvariantCultureIgnoreCase))
+                    return result;
+
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
             }
             else
