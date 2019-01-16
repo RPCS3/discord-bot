@@ -113,14 +113,21 @@ namespace CompatBot.Utils.ResultFormatters
                 items["gpu_info"] = items["d3d_gpu"];
             else if (items["driver_manuf"] != null)
                 items["gpu_info"] = items["driver_manuf"];
-            else
-                items["gpu_info"] = "Unknown";
-
-            items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], (items["driver_version_new"] ?? items["driver_version"])) ??
-                                           GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
-                                           GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
+            if (!string.IsNullOrEmpty(items["gpu_info"]))
+                items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], (items["driver_version_new"] ?? items["driver_version"])) ??
+                                               GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
+                                               GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
             if (items["driver_version_info"] != null)
                 items["gpu_info"] += $" ({items["driver_version_info"]})";
+
+            if (items["vulkan_compatible_device_name"] is string vulkanDevices)
+            {
+                var deviceNames = vulkanDevices.Split(Environment.NewLine)
+                    .Distinct()
+                    .Select(n => $"{n} ({GetVulkanDriverVersion(n, items["vulkan_found_device"])})");
+                items["gpu_available_info"] = string.Join(Environment.NewLine, deviceNames);
+            }
+
             if (items["af_override"] is string af)
             {
                 if (af == "0")
@@ -174,7 +181,12 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["gpu_info"] is string gpu)
                 systemInfo += $"{Environment.NewLine}GPU: {gpu}";
-            builder.AddField("Build Info", systemInfo);
+            else if (items["gpu_available_info"] is string availableGpus)
+            {
+                var multiple = availableGpus.Contains(Environment.NewLine);
+                systemInfo +=$"{Environment.NewLine}GPU{(multiple ? "s" : "")}:{(multiple ? Environment.NewLine : " ")}{availableGpus}";
+            }
+            builder.AddField("Build Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
         }
 
         private static (string name, List<string> lines) BuildCpuSection(NameValueCollection items)

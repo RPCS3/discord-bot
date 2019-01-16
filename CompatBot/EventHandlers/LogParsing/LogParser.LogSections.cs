@@ -39,7 +39,8 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["RSX:"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
+                    ["Physical device intialized"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
+                    ["Found vulkan-compatible GPU:"] = new Regex(@"Found vulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
                     ["Serial:"] = new Regex(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
                     ["Successfully installed PS3 firmware"] = new Regex(@"Successfully installed PS3 firmware version (?<fw_version_installed>\d+\.\d+).*\r?$", DefaultOptions),
                     ["Title:"] = new Regex(@"Title: (?<game_title>.*)?\r?$", DefaultOptions),
@@ -151,6 +152,7 @@ namespace CompatBot.EventHandlers.LogParsing
         {
             "rap_file",
             "vulkan_found_device",
+            "vulkan_compatible_device_name",
             "ppu_hash",
             "ppu_hash_patch",
             "spu_hash",
