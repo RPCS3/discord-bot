@@ -575,7 +575,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (gpu.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
                 gpu.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
                 gpu.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (gpu.Contains("RADV", StringComparison.InvariantCultureIgnoreCase))
+                    return result;
+
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
+            }
 
             if (result.EndsWith(".0.0"))
                 result = result.Substring(0, result.Length - 4);
@@ -598,6 +603,9 @@ namespace CompatBot.Utils.ResultFormatters
                 var minor = (ver >> 12) & 0x3ff;
                 var patch = ver & 0xfff;
                 var result = $"{major}.{minor}.{patch}";
+                if (gpuInfo.Contains("RADV", StringComparison.InvariantCultureIgnoreCase))
+                    return result;
+
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
             }
             else
