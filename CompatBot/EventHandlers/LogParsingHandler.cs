@@ -112,11 +112,17 @@ namespace CompatBot.EventHandlers
                                                 severity = ReportSeverity.High;
                                                 Config.Log.Warn(e, $"Unable to delete message in {channel.Name}");
                                             }
-                                            await channel.SendMessageAsync($"{message.Author.Mention}, please read carefully:", embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)).ConfigureAwait(false);
+                                            try
+                                            {
+                                                await channel.SendMessageAsync($"{message.Author.Mention}, please read carefully:", embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)).ConfigureAwait(false);
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                Config.Log.Error(e, "Failed to send piracy warning");
+                                            }
                                             await Task.WhenAll(
                                                 client.ReportAsync("Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity),
-                                                Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser,
-                                                    "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
+                                                Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
                                             );
                                         }
                                     }
