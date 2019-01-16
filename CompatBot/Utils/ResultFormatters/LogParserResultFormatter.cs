@@ -59,6 +59,14 @@ namespace CompatBot.Utils.ResultFormatters
             var collection = state.CompleteCollection ?? state.WipCollection;
             if (collection?.Count > 0)
             {
+                if (KnownDiscOnPsnIds.TryGetValue(collection["serial"], out var psnSerial)
+                    && collection["ldr_game_serial"] is string ldrGameSerial
+                    && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase)
+                    && ldrGameSerial.Equals(psnSerial, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    collection["serial"] = psnSerial;
+                    collection["game_category"] = "HG";
+                }
                 var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true).ConfigureAwait(false);
                 builder = new DiscordEmbedBuilder(gameInfo) {ThumbnailUrl = null}; // or this will fuck up all formatting
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
@@ -451,10 +459,7 @@ namespace CompatBot.Utils.ResultFormatters
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
                 discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
                 discAsPkg |= items["ldr_game_serial"] is string ldrGameSerial
-                             && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase)
-                             && KnownDiscOnPsnIds.TryGetValue(items["serial"], out var whitelistedPsnMatch)
-                             && whitelistedPsnMatch is string matchingPsnId
-                             && !ldrGameSerial.Equals(matchingPsnId, StringComparison.InvariantCultureIgnoreCase);
+                             && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase);
             }
             discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
