@@ -42,6 +42,14 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
         private static readonly Version RecommendedOpenGLVersion = new Version(4, 5);
 
+        private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            {"BLES00932", "NPEB01202"},
+            {"BLUS30443", "NPUB30910"},
+            //{"BCJS30022", "NPJA00102"},
+            {"BCJS70013", "NPJA00102"},
+        };
+
         private const string TrueMark = "[x]";
         private const string FalseMark = "[ ]";
 
@@ -430,7 +438,11 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
                 discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
-                discAsPkg |= items["ldr_game_serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
+                discAsPkg |= items["ldr_game_serial"] is string ldrGameSerial
+                             && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase)
+                             && KnownDiscOnPsnIds.TryGetValue(items["serial"], out var whitelistedPsnMatch)
+                             && whitelistedPsnMatch is string matchingPsnId
+                             && !ldrGameSerial.Equals(matchingPsnId, StringComparison.InvariantCultureIgnoreCase);
             }
             discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
