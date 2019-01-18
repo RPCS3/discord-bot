@@ -97,7 +97,9 @@ namespace CompatBot.Utils.ResultFormatters
                     ThumbnailUrl = thumbnailUrl,
                 };
 
-                if (gameTitle == null && ThumbnailProvider.GetTitleName(titleId) is string titleName && !string.IsNullOrEmpty(titleName))
+                if (gameTitle == null
+                    && ThumbnailProvider.GetTitleNameAsync(titleId, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult() is string titleName
+                    && !string.IsNullOrEmpty(titleName))
                     gameTitle = titleName;
                 if (!string.IsNullOrEmpty(gameTitle))
                 {
