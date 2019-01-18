@@ -18,7 +18,9 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var result = new List<DiscordEmbedBuilder>();
             var pkgs = patch?.Tag?.Packages;
-            var title = pkgs?.Select(p => p.ParamSfo?.Title).LastOrDefault(t => !string.IsNullOrEmpty(t)) ?? ThumbnailProvider.GetTitleName(productCode) ?? productCode;
+            var title = pkgs?.Select(p => p.ParamSfo?.Title).LastOrDefault(t => !string.IsNullOrEmpty(t))
+                        ?? await ThumbnailProvider.GetTitleNameAsync(productCode, Config.Cts.Token).ConfigureAwait(false)
+                        ?? productCode;
             var thumbnailUrl = await client.GetThumbnailUrlAsync(productCode).ConfigureAwait(false);
             var embedBuilder = new DiscordEmbedBuilder
             {

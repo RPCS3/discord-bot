@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.ThumbScrapper;
 using DSharpPlus;
@@ -82,15 +83,46 @@ namespace CompatBot.Database.Providers
             return null;
         }
 
-        public static string GetTitleName(string productCode)
+        public static async Task<string> GetTitleNameAsync(string productCode, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(productCode))
                 return null;
 
+            productCode = productCode.ToUpperInvariant();
             using (var db = new ThumbnailDb())
             {
-                var thumb = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode.ToUpperInvariant());
-                return thumb?.Name;
+                var thumb = await db.Thumbnail.FirstOrDefaultAsync(
+                    t => t.ProductCode == productCode,
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
+                if (thumb?.Name is string title)
+                    return title;
+
+                var meta = await PsnClient.GetTitleMetaAsync(productCode, cancellationToken).ConfigureAwait(false);
+                title = meta?.Name;
+                try
+                {
+                    if (!string.IsNullOrEmpty(title))
+                    {
+                        if (thumb == null)
+                            thumb = (
+                                await db.Thumbnail.AddAsync(new Thumbnail
+                                {
+                                    ProductCode = productCode,
+                                    Name = title,
+                                }, cancellationToken).ConfigureAwait(false)
+                            ).Entity;
+                        else
+                            thumb.Name = title;
+                        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e);
+                }
+
+                return title;
             }
         }
     }
