@@ -90,7 +90,8 @@ namespace CompatBot.Database.Providers
             using (var db = new ThumbnailDb())
             {
                 var thumb = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode.ToUpperInvariant());
-                return thumb?.Name;
+                if (thumb?.Name is string title)
+                    return title;
             }
         }
     }

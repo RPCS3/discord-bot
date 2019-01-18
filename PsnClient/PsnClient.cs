@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using PsnClient.POCOs;
 using PsnClient.Utils;
@@ -23,6 +24,7 @@ namespace PsnClient
         private readonly MediaTypeFormatterCollection dashedFormatters;
         private readonly MediaTypeFormatterCollection underscoreFormatters;
         private readonly MediaTypeFormatterCollection xmlFormatters;
+        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
         private static readonly Regex ContainerIdLink = new Regex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
 
         public Client()
@@ -245,6 +247,9 @@ namespace PsnClient
 
         public async Task<TitlePatch> GetTitleUpdatesAsync(string productId, CancellationToken cancellationToken)
         {
+            if (ResponseCache.TryGetValue(productId, out TitlePatch patchInfo))
+                return patchInfo;
+
             try
             {
                 using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml"))
@@ -255,7 +260,9 @@ namespace PsnClient
                             return null;
 
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        return await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                        patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                        ResponseCache.Set(productId, patchInfo);
+                        return patchInfo;
                     }
                     catch (Exception e)
                     {
@@ -273,6 +280,9 @@ namespace PsnClient
         public async Task<TitleMeta> GetTitleMetaAsync(string productId, CancellationToken cancellationToken)
         {
             var id = productId + "_00";
+            if (ResponseCache.TryGetValue(id, out TitleMeta meta))
+                return meta;
+
             var hash = TmdbHasher.GetTitleHash(id);
             try
             {
@@ -284,7 +294,9 @@ namespace PsnClient
                             return null;
 
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        return await response.Content.ReadAsAsync<TitleMeta>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                        meta = await response.Content.ReadAsAsync<TitleMeta>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                        ResponseCache.Set(id, meta);
+                        return meta;
                     }
                     catch (Exception e)
                     {
