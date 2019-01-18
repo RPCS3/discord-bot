@@ -431,10 +431,10 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.AppendLine($"Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
             if (string.IsNullOrEmpty(items["serial"] + items["game_title"]) && items["fw_version_installed"] is string fwVersion)
                 notes.AppendLine($"The log contains only installation of firmware {fwVersion}")
-                    .AppendLine("Please boot the game and uploading a new log");
+                    .AppendLine("Please boot the game and upload a new log");
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
                 notes.AppendLine("The log is empty")
-                    .AppendLine("Please boot the game and uploading a new log");
+                    .AppendLine("Please boot the game and upload a new log");
 
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
