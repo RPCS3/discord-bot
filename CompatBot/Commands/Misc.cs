@@ -196,7 +196,7 @@ namespace CompatBot.Commands
 
         [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]
         [Description("Gives a ~~random~~ expert judgment on the matter at hand")]
-        public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever)
+        public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever = "")
         {
             try
             {
@@ -247,6 +247,28 @@ namespace CompatBot.Commands
                         suffix = "'s" + suffix;
                         word = word.Substring(0, word.Length - 2);
                     }
+
+                    void MakeCustomRoleRating(DiscordMember m)
+                    {
+                        if (m != null && !choiceFlags.Contains('f'))
+                        {
+                            var roleList = m.Roles.ToList();
+                            if (roleList.Any())
+                            {
+
+                                var role = roleList[new Random((prefix + m.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
+                                if (!string.IsNullOrEmpty(role))
+                                {
+                                    if (role.EndsWith('s'))
+                                        role = role.Substring(0, role.Length - 1);
+                                    var article = Vowels.Contains(role[0]) ? "n" : "";
+                                    choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
+                                    choiceFlags.Add('f');
+                                }
+                            }
+                        }
+                    }
+
                     if (Me.Contains(word))
                         result.Append(ctx.Message.Author.Mention);
                     else if (word == "my")
@@ -257,27 +279,12 @@ namespace CompatBot.Commands
                         result.Append(ctx.Client.CurrentUser.Mention).Append("'s");
                     else if (word.StartsWith("actually") || word.StartsWith("nevermind") || word.StartsWith("nvm"))
                         result.Clear();
-                    else if (i == 0 && await new DiscordUserConverter().ConvertAsync(word, ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
+                    else if (i == 0 && await new DiscordMemberConverter().ConvertAsync(word, ctx).ConfigureAwait(false) is Optional<DiscordMember> member && member.HasValue)
                     {
-                        var u = user.Value;
-                        result.Append(u.Mention);
-                        var roles = ctx.Client.GetMember(u)?.Roles.ToList();
-                        if (roles?.Count > 0)
-                        {
+                        var m = member.Value;
+                        MakeCustomRoleRating(m);
+                        result.Append(m.Mention);
 
-                            var role = roles[new Random((prefix + u.Id).GetHashCode()).Next(roles.Count)].Name?.ToLowerInvariant();
-                            if (!string.IsNullOrEmpty(role))
-                            {
-                                if (role.EndsWith('s'))
-                                    role = role.Substring(0, role.Length - 1);
-                                var article = Vowels.Contains(role[0]) ? "n" : "";
-                                if (!choiceFlags.Contains('f'))
-                                {
-                                    choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
-                                    choiceFlags.Add('f');
-                                }
-                            }
-                        }
                     }
                     else if (nekoMatch.Contains(word))
                     {
@@ -286,6 +293,7 @@ namespace CompatBot.Commands
                             choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3)).ToList();
                             choiceFlags.Add('n');
                         }
+                        MakeCustomRoleRating(nekoMember);
                         result.Append(nekoUser.Mention);
                     }
                     else if (kdMatch.Contains(word))
@@ -295,6 +303,7 @@ namespace CompatBot.Commands
                             choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3)).ToList();
                             choiceFlags.Add('k');
                         }
+                        MakeCustomRoleRating(kdMember);
                         result.Append(kdUser.Mention);
                     }
                     else
