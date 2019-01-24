@@ -318,10 +318,16 @@ namespace CompatBot.Commands
                     whatever = whatever.Substring("rate ".Length);
                 if (whatever == "sonic" || whatever.Contains("sonic the"))
                     choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count)).Concat(new[] {"Sonic out of 🦔", "Sonic out of 10"}).ToList();
-                var seed = (prefix + whatever).GetHashCode(StringComparison.CurrentCultureIgnoreCase);
-                var seededRng = new Random(seed);
-                var answer = choices[seededRng.Next(choices.Count)];
-                await ctx.RespondAsync(answer).ConfigureAwait(false);
+
+                if (string.IsNullOrEmpty(whatever))
+                    await ctx.RespondAsync("Rating nothing makes _**so much**_ sense, right?").ConfigureAwait(false);
+                else
+                {
+                    var seed = (prefix + whatever).GetHashCode(StringComparison.CurrentCultureIgnoreCase);
+                    var seededRng = new Random(seed);
+                    var answer = choices[seededRng.Next(choices.Count)];
+                    await ctx.RespondAsync(answer).ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
