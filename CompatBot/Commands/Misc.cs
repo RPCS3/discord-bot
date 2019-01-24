@@ -282,28 +282,27 @@ namespace CompatBot.Commands
                     else if (i == 0 && await new DiscordMemberConverter().ConvertAsync(word, ctx).ConfigureAwait(false) is Optional<DiscordMember> member && member.HasValue)
                     {
                         var m = member.Value;
-                        MakeCustomRoleRating(m);
+                        if (suffix.Length == 0)
+                            MakeCustomRoleRating(m);
                         result.Append(m.Mention);
 
                     }
                     else if (nekoMatch.Contains(word))
                     {
-                        if (!choiceFlags.Contains('n'))
+                        if (i == 0 && suffix.Length == 0)
                         {
                             choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3)).ToList();
-                            choiceFlags.Add('n');
+                            MakeCustomRoleRating(nekoMember);
                         }
-                        MakeCustomRoleRating(nekoMember);
                         result.Append(nekoUser.Mention);
                     }
                     else if (kdMatch.Contains(word))
                     {
-                        if (!choiceFlags.Contains('k'))
+                        if (i == 0 && suffix.Length == 0)
                         {
                             choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3)).ToList();
-                            choiceFlags.Add('k');
+                            MakeCustomRoleRating(kdMember);
                         }
-                        MakeCustomRoleRating(kdMember);
                         result.Append(kdUser.Mention);
                     }
                     else
