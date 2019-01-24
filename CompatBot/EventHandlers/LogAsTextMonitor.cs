@@ -28,23 +28,26 @@ namespace CompatBot.EventHandlers
             if (LogLine.IsMatch(args.Message.Content))
             {
                 var brokenDump = false;
+                string msg = "";
                 if (args.Message.Content.Contains("LDR:"))
                 {
                     brokenDump = true;
                     if (args.Message.Content.Contains("fs::file is null"))
-                        await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} this error usually indicates a missing `.rap` license file.").ConfigureAwait(false);
+                        msg = $"{args.Message.Author.Mention} this error usually indicates a missing `.rap` license file.\n";
                     else if (args.Message.Content.Contains("Invalid or unsupported file format"))
-                        await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} this error usually indicates an encrypted or corrupted game dump.");
+                        msg = $"{args.Message.Author.Mention} this error usually indicates an encrypted or corrupted game dump.\n";
                     else
                         brokenDump = false;
                 }
+                var logUploadExplain = await PostLogHelpHandler.GetLogUploadExplanationAsync().ConfigureAwait(false);
                 if (brokenDump)
-                    await args.Channel.SendMessageAsync(
-                        "Please follow the quickstart guide to get a proper dump of a digital title.\n" +
-                        "Also please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of pasting only a section which may be completely irrelevant."
-                    ).ConfigureAwait(false);
+                    msg += "Please follow the quickstart guide to get a proper dump of a digital title.\n" +
+                           "Also please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant.\n" +
+                           logUploadExplain;
                 else
-                    await args.Channel.SendMessageAsync($"{args.Message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of pasting only a section which may be completely irrelevant.").ConfigureAwait(false);
+                    msg = $"{args.Message.Author.Mention} please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant." +
+                        logUploadExplain;
+                await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
             }
         }
     }
