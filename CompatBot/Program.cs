@@ -182,6 +182,7 @@ namespace CompatBot
                     client.MessageCreated += GithubLinksHandler.OnMessageCreated;
                     client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
                     client.MessageCreated += TableFlipMonitor.OnMessageCreated;
+                    client.MessageCreated += IsTheGamePlayableHandler.OnMessageCreated;
 
                     client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
                     client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;

@@ -20,7 +20,7 @@ namespace CompatBot.Utils.ResultFormatters
             {"Playable", Config.Colors.CompatStatusPlayable},
         };
 
-        private static string ToUpdated(this TitleInfo info)
+        public static string ToUpdated(this TitleInfo info)
         {
             return DateTime.TryParseExact(info.Date, ApiConfig.DateInputFormat, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeUniversal, out var date) ? date.ToString(ApiConfig.DateOutputFormat) : null;
         }

@@ -134,7 +134,7 @@ namespace CompatBot.EventHandlers
                 }
                 await args.Message.ReactWithAsync(args.Client, emoji, sadMessage).ConfigureAwait(false);
 
-                if (args.Author.IsWhitelisted(args.Client, args.Message.Channel.Guild))
+                if (args.Author.IsSmartlisted(args.Client, args.Message.Channel.Guild))
                 {
                     var botMember = args.Guild?.CurrentMember ?? args.Client.GetMember(args.Client.CurrentUser);
                     if (args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
