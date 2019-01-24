@@ -34,7 +34,7 @@ namespace CompatBot.Commands
                 lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
         }
 
-        [Command("compat"), Aliases("c")]
+        [Command("compat"), Aliases("c", "compatibility")]
         [Description("Searches the compatibility database, USE: !compat search term")]
         public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string title)
         {
