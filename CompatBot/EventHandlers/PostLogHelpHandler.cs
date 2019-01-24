@@ -2,8 +2,10 @@
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus.EventArgs;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.EventHandlers
 {
@@ -14,6 +16,7 @@ namespace CompatBot.EventHandlers
         private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
         private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
         private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
+        public const string DefaultLogUploadExplanation = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon.";
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
@@ -42,13 +45,27 @@ namespace CompatBot.EventHandlers
                     if (BotShutupHandler.NeedToSilence(msg).needToChill)
                         return;
 
-                await args.Channel.SendMessageAsync("To upload log, completely close RPCS3 then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon.").ConfigureAwait(false);
+                var explanation = await GetLogUploadExplanationAsync().ConfigureAwait(false);
+                await args.Channel.SendMessageAsync(explanation).ConfigureAwait(false);
                 lastMention = DateTime.UtcNow;
             }
             finally
             {
                 TheDoor.Release();
             }
+        }
+
+        public static async Task<string> GetLogUploadExplanationAsync()
+        {
+            string explanation;
+            using (var db = new BotDb())
+            {
+                var result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == "log").ConfigureAwait(false);
+                explanation = result?.Text;
+            }
+            if (string.IsNullOrEmpty(explanation))
+                explanation = DefaultLogUploadExplanation;
+            return explanation;
         }
     }
 }
