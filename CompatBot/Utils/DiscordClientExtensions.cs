@@ -13,24 +13,28 @@ namespace CompatBot.Utils
 {
     public static class DiscordClientExtensions
     {
-        public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, DiscordUser user)
+        public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, ulong userId)
         {
             return (from g in client.Guilds
                     where g.Key == guild.Id
                     from u in g.Value.Members
-                    where u.Id == user.Id
+                    where u.Id == userId
                     select u
                 ).FirstOrDefault();
         }
 
-        public static DiscordMember GetMember(this DiscordClient client, DiscordUser user)
+        public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, DiscordUser user) => GetMember(client, guild, user.Id);
+
+        public static DiscordMember GetMember(this DiscordClient client, ulong userId)
         {
             return (from g in client.Guilds
                     from u in g.Value.Members
-                    where u.Id == user.Id
+                    where u.Id == userId
                     select u
                 ).FirstOrDefault();
         }
+
+        public static DiscordMember GetMember(this DiscordClient client, DiscordUser user) => GetMember(client, user.Id);
 
         public static async Task<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
         {
