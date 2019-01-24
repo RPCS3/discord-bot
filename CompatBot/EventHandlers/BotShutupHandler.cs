@@ -67,9 +67,6 @@ namespace CompatBot.EventHandlers
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
-            if (!args.Author.IsWhitelisted(args.Client, args.Message.Channel.Guild))
-                return;
-
 #if DEBUG
             if (args.Message.Content == "emoji test")
             {
@@ -128,13 +125,6 @@ namespace CompatBot.EventHandlers
             }
             if (needToSilence)
             {
-                var botMember = args.Guild?.CurrentMember ?? args.Client.GetMember(args.Client.CurrentUser);
-                if (!args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
-                {
-                    await args.Message.ReactWithAsync(args.Client, DiscordEmoji.FromUnicode("🙅"), @"No can do, boss ¯\\_(ツ)\_/¯").ConfigureAwait(false);
-                    return;
-                }
-
                 DiscordEmoji emoji;
                 string sadMessage;
                 lock (theDoor)
@@ -143,9 +133,19 @@ namespace CompatBot.EventHandlers
                     sadMessage = SadMessages[rng.Next(SadMessages.Length)];
                 }
                 await args.Message.ReactWithAsync(args.Client, emoji, sadMessage).ConfigureAwait(false);
-                var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddMinutes(-5)).ConfigureAwait(false);
-                if (lastBotMessages.OrderByDescending(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)
-                    await msg.DeleteAsync("asked to shut up").ConfigureAwait(false);
+
+                if (args.Author.IsWhitelisted(args.Client, args.Message.Channel.Guild))
+                {
+                    var botMember = args.Guild?.CurrentMember ?? args.Client.GetMember(args.Client.CurrentUser);
+                    if (args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
+                    {
+                        var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddMinutes(-5)).ConfigureAwait(false);
+                        if (lastBotMessages.OrderByDescending(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)
+                            await msg.DeleteAsync("asked to shut up").ConfigureAwait(false);
+                    }
+                    else
+                        await args.Message.ReactWithAsync(args.Client, DiscordEmoji.FromUnicode("🙅"), @"No can do, boss ¯\\_(ツ)\_/¯").ConfigureAwait(false);
+                }
             }
         }
 
