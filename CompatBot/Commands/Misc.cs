@@ -68,12 +68,24 @@ namespace CompatBot.Commands
             "Boooooooo!",
         };
 
+        private static readonly char[] Separators = { ' ', '　', '\r', '\n' };
+        private static readonly char[] Suffixes = {',', '.', ':', ';', '!', '?', ')', '}', ']', '>', '+', '-', '/', '*', '=', '"', '\'', '`'};
+        private static readonly char[] Prefixes = {'@', '(', '{', '[', '<', '!', '`', '"', '\'', '#'};
+        private static readonly char[] EveryTimable = Separators.Concat(Suffixes).Concat(Prefixes).Distinct().ToArray();
+
         private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "I", "me", "myself", "moi"
         };
 
+        private static readonly HashSet<string> Your = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "your", "you're", "yor", "ur", "yours", "your's",
+        };
+
         private static readonly HashSet<char> Vowels = new HashSet<char> {'a', 'e', 'i', 'o', 'u'};
+
+        private static readonly Regex Instead = new Regex("rate (?<instead>.+) instead", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]
@@ -102,7 +114,7 @@ namespace CompatBot.Commands
         {
             string result = null;
             if (maxValue > 1)
-                    lock (rng) result = (rng.Next(maxValue) + 1).ToString();
+                lock (rng) result = (rng.Next(maxValue) + 1).ToString();
             if (string.IsNullOrEmpty(result))
                 await ctx.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), $"How is {maxValue} a positive natural number?").ConfigureAwait(false);
             else
@@ -186,48 +198,69 @@ namespace CompatBot.Commands
         [Description("Gives a ~~random~~ expert judgment on the matter at hand")]
         public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever)
         {
-            var choices = RateAnswers;
-            whatever = whatever.ToLowerInvariant().Trim();
-            if (whatever.Contains("my", StringComparison.InvariantCultureIgnoreCase))
-                whatever = string.Join(" ", whatever.Split(' ').Select(p => p.Equals("my", StringComparison.InvariantCultureIgnoreCase) ? $"<@{ctx.Message.Author.Id}>'s" : p));
             try
             {
-                var whateverParts = whatever.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+                var choices = RateAnswers;
+                var choiceFlags = new HashSet<char>();
+                whatever = whatever.ToLowerInvariant();
+                var matches = Instead.Matches(whatever);
+                if (matches.Any())
+                {
+                    var insteadWhatever = matches.Last().Groups["instead"].Value.TrimEager();
+                    if (!string.IsNullOrEmpty(insteadWhatever))
+                        whatever = insteadWhatever;
+                }
+                foreach (var attachment in ctx.Message.Attachments)
+                    whatever += $" {attachment.FileSize}";
+
+
+                var nekoUser = await ctx.Client.GetUserAsync(272032356922032139ul).ConfigureAwait(false);
+                var nekoMember = ctx.Client.GetMember(ctx.Guild, nekoUser);
+                var nekoMatch = new HashSet<string>(new[] {nekoUser.Id.ToString(), nekoUser.Username, nekoMember?.DisplayName ?? "neko", "neko", "nekotekina",});
+                var kdUser = await ctx.Client.GetUserAsync(272631898877198337ul).ConfigureAwait(false);
+                var kdMember = ctx.Client.GetMember(ctx.Guild, kdUser);
+                var kdMatch = new HashSet<string>(new[] {kdUser.Id.ToString(), kdUser.Username, kdMember?.DisplayName ?? "kd-11", "kd", "kd-11", "kd11", });
+                var botMember = ctx.Client.GetMember(ctx.Client.CurrentUser);
+                var botMatch = new HashSet<string>(new[] {botMember.Id.ToString(), botMember.Username, botMember.DisplayName, "yourself", "urself", "yoself",});
+
                 var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
-                var nekoNick = await ctx.GetUserNameAsync(272032356922032139ul, null, "Nekotekina").ConfigureAwait(false);
-                var kdNick = await ctx.GetUserNameAsync(272631898877198337, null, "kd-11").ConfigureAwait(false);
-                if (whatever is string neko && (neko.Contains("272032356922032139") || neko.Contains("neko") || neko.Contains(nekoNick)))
+                var words = whatever.Split(Separators);
+                var result = new StringBuilder();
+                for (var i = 0; i < words.Length; i++)
                 {
-                    choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3)).ToList();
-                    if (await new DiscordUserConverter().ConvertAsync("272032356922032139", ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
-                        whatever = user.Value.Id.ToString();
-                }
-                else if (whatever is string kd && (kd.Contains("272631898877198337") || kd.Contains("kd-11") || kd.Contains("kd11") || kd.Contains(kdNick) || whateverParts.Any(p => p == "kd")))
-                {
-                    choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3)).ToList();
-                    if (await new DiscordUserConverter().ConvertAsync("272631898877198337", ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
-                        whatever = user.Value.Id.ToString();
-                }
-                else if (whatever is string sonic && (sonic == "sonic" || sonic.Contains("sonic the")))
-                {
-                    choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count)).Concat(new[] {"Sonic out of 🦔", "Sonic out of 10"}).ToList();
-                    whatever = "sonic";
-                }
-                else if (whateverParts.Length == 1)
-                {
-                    DiscordUser u = null;
-                    if (Me.Contains(whateverParts[0]))
+                    var word = words[i].TrimEager();
+                    var suffix = "";
+                    var tmp = word.TrimEnd(Suffixes);
+                    if (tmp.Length != word.Length)
                     {
-                        whatever = ctx.Message.Author.Id.ToString();
-                        u = ctx.Message.Author;
+                        suffix = word.Substring(tmp.Length);
+                        word = tmp;
                     }
-                    else if (await new DiscordUserConverter().ConvertAsync(whateverParts[0], ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
+                    tmp = word.TrimStart(Prefixes);
+                    if (tmp.Length != word.Length)
                     {
-                        whatever = user.Value.Id.ToString();
-                        u = user.Value;
+                        result.Append(word.Substring(0, word.Length - tmp.Length));
+                        word = tmp;
                     }
-                    if (u != null)
+                    if (word.EndsWith("'s"))
                     {
+                        suffix = "'s" + suffix;
+                        word = word.Substring(0, word.Length - 2);
+                    }
+                    if (Me.Contains(word))
+                        result.Append(ctx.Message.Author.Mention);
+                    else if (word == "my")
+                        result.Append(ctx.Message.Author.Mention).Append("'s");
+                    else if (botMatch.Contains(word))
+                        result.Append(ctx.Client.CurrentUser.Mention);
+                    else if (Your.Contains(word))
+                        result.Append(ctx.Client.CurrentUser.Mention).Append("'s");
+                    else if (word.StartsWith("actually") || word.StartsWith("nevermind") || word.StartsWith("nvm"))
+                        result.Clear();
+                    else if (i == 0 && await new DiscordUserConverter().ConvertAsync(word, ctx).ConfigureAwait(false) is Optional<DiscordUser> user && user.HasValue)
+                    {
+                        var u = user.Value;
+                        result.Append(u.Mention);
                         var roles = ctx.Client.GetMember(u)?.Roles.ToList();
                         if (roles?.Count > 0)
                         {
@@ -238,21 +271,54 @@ namespace CompatBot.Commands
                                 if (role.EndsWith('s'))
                                     role = role.Substring(0, role.Length - 1);
                                 var article = Vowels.Contains(role[0]) ? "n" : "";
-                                choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
+                                if (!choiceFlags.Contains('f'))
+                                {
+                                    choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
+                                    choiceFlags.Add('f');
+                                }
                             }
                         }
                     }
+                    else if (nekoMatch.Contains(word))
+                    {
+                        if (!choiceFlags.Contains('n'))
+                        {
+                            choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3)).ToList();
+                            choiceFlags.Add('n');
+                        }
+                        result.Append(nekoUser.Mention);
+                    }
+                    else if (kdMatch.Contains(word))
+                    {
+                        if (!choiceFlags.Contains('k'))
+                        {
+                            choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3)).ToList();
+                            choiceFlags.Add('k');
+                        }
+                        result.Append(kdUser.Mention);
+                    }
+                    else
+                        result.Append(word);
+                    result.Append(suffix).Append(" ");
                 }
-                whatever = prefix + whatever?.Trim();
+                whatever = result.ToString();
+                var cutIdx = whatever.LastIndexOf("never mind");
+                if (cutIdx > -1)
+                    whatever = whatever.Substring(cutIdx);
+                whatever = whatever.Replace("'s's", "'s").TrimStart(EveryTimable).Trim();
+                if (whatever.StartsWith("rate "))
+                    whatever = whatever.Substring("rate ".Length);
+                if (whatever == "sonic" || whatever.Contains("sonic the"))
+                    choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count)).Concat(new[] {"Sonic out of 🦔", "Sonic out of 10"}).ToList();
+                var seed = (prefix + whatever).GetHashCode(StringComparison.CurrentCultureIgnoreCase);
+                var seededRng = new Random(seed);
+                var answer = choices[seededRng.Next(choices.Count)];
+                await ctx.RespondAsync(answer).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e, $"Failed to rate {whatever}");
             }
-            var seed = whatever.GetHashCode(StringComparison.CurrentCultureIgnoreCase);
-            var seededRng = new Random(seed);
-            var answer = choices[seededRng.Next(choices.Count)];
-            await ctx.RespondAsync(answer).ConfigureAwait(false);
         }
 
         [Command("stats"), RequiresBotModRole]

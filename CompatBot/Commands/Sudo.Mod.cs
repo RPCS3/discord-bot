@@ -37,7 +37,7 @@ namespace CompatBot.Commands
                 if (user.Id == Config.BotAdminId)
                 {
                     var dm = await user.CreateDmChannelAsync().ConfigureAwait(false);
-                    await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your mod role ¯\_(ツ)_/¯").ConfigureAwait(false);
+                    await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your mod role ¯\\_(ツ)_/¯").ConfigureAwait(false);
                     await ctx.ReactWithAsync(Config.Reactions.Denied, $"{ctx.Message.Author.Mention} why would you even try this?! Alerting {user.Mention}", true).ConfigureAwait(false);
                 }
                 else if (await ModProvider.RemoveAsync(user.Id).ConfigureAwait(false))
@@ -78,7 +78,7 @@ namespace CompatBot.Commands
                 if (sudoer.Id == Config.BotAdminId)
                 {
                     var dm = await sudoer.CreateDmChannelAsync().ConfigureAwait(false);
-                    await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your sudo permissions ¯\_(ツ)_/¯").ConfigureAwait(false);
+                    await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your sudo permissions ¯\\_(ツ)_/¯").ConfigureAwait(false);
                     await ctx.ReactWithAsync(Config.Reactions.Denied, $"{ctx.Message.Author.Mention} why would you even try this?! Alerting {sudoer.Mention}", true).ConfigureAwait(false);
                 }
                 else if (ModProvider.IsMod(sudoer.Id))
