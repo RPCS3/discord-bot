@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
@@ -23,7 +22,7 @@ namespace CompatBot.Commands
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Success,
                         $"{user.Mention} was successfully added as moderator!\n" +
-                         "Try using `!help` to see new commands available to you"
+                         $"Try using `{Config.CommandPrefix}help` to see new commands available to you"
                     ).ConfigureAwait(false);
                 }
                 else

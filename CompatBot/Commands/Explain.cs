@@ -24,11 +24,12 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
         {
-            string inSpecificLocation = null;
-            if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+            if (string.IsNullOrEmpty(term))
             {
-                var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-                inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
+                var ch = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
+                await ch.SendMessageAsync("Please specify term to explain").ConfigureAwait(false);
+                await List(ctx).ConfigureAwait(false);
+                return;
             }
 
             if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
@@ -36,12 +37,6 @@ namespace CompatBot.Commands
 
             if (!await AntipiracyMonitor.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
                 return;
-
-            if (string.IsNullOrEmpty(term))
-            {
-                await ctx.RespondAsync($"You may want to look at available terms by using `{Config.CommandPrefix}explain list`{inSpecificLocation}").ConfigureAwait(false);
-                return;
-            }
 
             term = term.ToLowerInvariant();
             using (var db = new BotDb())
@@ -81,6 +76,12 @@ namespace CompatBot.Commands
                 }
             }
 
+            string inSpecificLocation = null;
+            if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+            {
+                var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
+            }
             var msg = $"Unknown term `{term.Sanitize()}`. Use `{Config.CommandPrefix}explain list` to look at defined terms{inSpecificLocation}";
             await ctx.RespondAsync(msg).ConfigureAwait(false);
         }

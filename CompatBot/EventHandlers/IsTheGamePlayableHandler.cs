@@ -69,7 +69,7 @@ namespace CompatBot.EventHandlers
                     var info = status.Results.First().Value;
                     var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                     var msg = $"{args.Author.Mention} {info.Title} is {info.Status.ToLowerInvariant()} since {info.ToUpdated()}\n" +
-                              $"for more results please use compatibility list (<https://rpcs3.net/compatibility>) or `!c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
+                              $"for more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
                     await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
                     CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
                 }
