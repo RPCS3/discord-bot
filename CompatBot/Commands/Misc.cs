@@ -188,6 +188,9 @@ namespace CompatBot.Commands
         {
             var choices = RateAnswers;
             whatever = whatever.ToLowerInvariant().Trim();
+            foreach (var attachment in ctx.Message.Attachments)
+                whatever += $"\n{attachment.FileSize}";
+            whatever = whatever.TrimStart();
             if (whatever.Contains("my", StringComparison.InvariantCultureIgnoreCase))
                 whatever = string.Join(" ", whatever.Split(' ').Select(p => p.Equals("my", StringComparison.InvariantCultureIgnoreCase) ? $"<@{ctx.Message.Author.Id}>'s" : p));
             try
