@@ -12,7 +12,7 @@ namespace CompatBot.EventHandlers
     internal sealed class PostLogHelpHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex UploadLogMention = new Regex(@"\b(post|upload|send)\s+(a|the|rpcs3('s)?|your|you're|ur|my)?\blogs?\b", DefaultOptions);
+        private static readonly Regex UploadLogMention = new Regex(@"\b(post|upload|send)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full)\s+)*\blogs?\b", DefaultOptions);
         private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
         private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
         private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
