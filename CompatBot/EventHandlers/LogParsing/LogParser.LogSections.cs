@@ -186,7 +186,9 @@ namespace CompatBot.EventHandlers.LogParsing
                 "build_and_specs",
                 "vulkan_gpu", "d3d_gpu",
                 "driver_version", "driver_manuf",
-                "driver_manuf_new", "driver_version_new"
+                "driver_manuf_new", "driver_version_new",
+                "vulkan_found_device", "vulkan_compatible_device_name",
+                "vulkan_gpu", "vulkan_driver_version_raw"
             );
 #if DEBUG
             Console.WriteLine("===== cleared");

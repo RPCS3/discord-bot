@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Utils;
@@ -16,7 +15,6 @@ namespace CompatBot.EventHandlers
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
         private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|(?<dumb>^))(?<game_title>.+?)(\s+((now|currently)\s+)?((is )?playable|work(s|ing)?)(?(dumb)\?))", DefaultOptions);
-        private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
         private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new ConcurrentDictionary<ulong, DateTime>();
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
         private static readonly Client Client = new Client();
