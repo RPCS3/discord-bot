@@ -16,6 +16,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DuoVia.FuzzyStrings;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -255,9 +256,29 @@ Example usage:
 
                 result.Clear();
 
+                double GetScore(string search, TitleInfo titleInfo)
+                {
+                    return Math.Max(
+                        search.GetFuzzyCoefficientCached(titleInfo.Title),
+                        search.GetFuzzyCoefficientCached(titleInfo.AlternativeTitle)
+                    );
+                }
+
                 if (returnCode.displayResults)
                 {
-                    foreach (var resultInfo in compatResult.Results.Take(request.amountRequested))
+                    var sortedList = compatResult.Results.ToList();
+                    if (!string.IsNullOrEmpty(request.search))
+                        sortedList = sortedList
+                            .OrderByDescending(kvp => GetScore(request.search, kvp.Value))
+                            .ThenBy(kvp => kvp.Value.Title)
+                            .ThenBy(kvp => kvp.Key)
+                            .ToList();
+                    if (GetScore(request.search, sortedList.First().Value) < 0.3)
+                        sortedList = sortedList
+                            .OrderBy(kvp => kvp.Value.Title)
+                            .ThenBy(kvp => kvp.Key)
+                            .ToList();
+                    foreach (var resultInfo in sortedList.Take(request.amountRequested))
                     {
                         var info = resultInfo.AsString();
                         result.AppendLine(info);
