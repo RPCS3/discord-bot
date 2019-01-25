@@ -151,7 +151,9 @@ Example usage:
                 if (channel != null)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 var updateLinks = info?.LatestBuild?.Pr;
-                if (!string.IsNullOrEmpty(updateLinks) && lastUpdateInfo != updateLinks && updateCheck.Wait(0))
+                if (!string.IsNullOrEmpty(updateLinks)
+                    && lastUpdateInfo != updateLinks
+                    && updateCheck.Wait(0))
                     try
                     {
                         var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
@@ -162,6 +164,7 @@ Example usage:
                             return false;
                         }
 
+                        embed.Title = $"[New Update] {embed.Title}";
                         await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                         lastUpdateInfo = updateLinks;
                         using (var db = new BotDb())
