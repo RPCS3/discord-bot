@@ -42,7 +42,7 @@ namespace CompatBot
             var rpcs3UpdateCheckThread = new Thread(client =>
             {
                 var lastCheck = DateTime.UtcNow.AddDays(-1);
-                var resetThreshold = TimeSpan.FromHours(1);
+                var resetThreshold = TimeSpan.FromMinutes(5);
                 try
                 {
                     while (!Config.Cts.IsCancellationRequested)
