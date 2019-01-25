@@ -111,13 +111,12 @@ Example usage:
         [Description("Provides information about available filters for the !top command")]
         public async Task Filters(CommandContext ctx)
         {
-            var getDmTask = ctx.CreateDmAsync();
             var embed = new DiscordEmbedBuilder {Description = "List of recognized tokens in each filter category", Color = Config.Colors.Help}
                 .AddField("Statuses", DicToDesc(ApiConfig.Statuses))
                 .AddField("Release types", DicToDesc(ApiConfig.ReleaseTypes))
                 .Build();
-            var dm = await getDmTask.ConfigureAwait(false);
-            await dm.SendMessageAsync(embed: embed).ConfigureAwait(false);
+            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
+            await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
         [Group("latest"), Aliases("download"), TriggersTyping]
@@ -215,7 +214,7 @@ Example usage:
                 return;
             }
 
-            var channel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
+            var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             foreach (var msg in FormatSearchResults(ctx, result))
                 await channel.SendAutosplitMessageAsync(msg, blockStart:"", blockEnd:"").ConfigureAwait(false);
         }

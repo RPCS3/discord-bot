@@ -26,7 +26,7 @@ namespace CompatBot.Commands
         {
             if (string.IsNullOrEmpty(term))
             {
-                var ch = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
+                var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
                 await ch.SendMessageAsync("Please specify term to explain").ConfigureAwait(false);
                 await List(ctx).ConfigureAwait(false);
                 return;
@@ -172,7 +172,7 @@ namespace CompatBot.Commands
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
-            var responseChannel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.CreateDmAsync().ConfigureAwait(false);
+            var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             using (var db = new BotDb())
             {
                 var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
