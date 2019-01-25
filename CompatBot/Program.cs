@@ -40,22 +40,33 @@ namespace CompatBot
                                         }
                                     });
             var rpcs3UpdateCheckThread = new Thread(client =>
-                                                    {
-                                                        try
-                                                        {
-                                                            while (!Config.Cts.IsCancellationRequested)
-                                                            {
-                                                                try
-                                                                {
-                                                                    CompatList.UpdatesCheck.CheckForRpcs3Updates((DiscordClient)client, null).ConfigureAwait(false).GetAwaiter().GetResult();
-                                                                }
-                                                                catch { }
-                                                                Task.Delay(TimeSpan.FromHours(1), Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
-                                                            }
-                                                        }
-                                                        catch (TaskCanceledException) { }
-                                                        catch (Exception e) { Config.Log.Error(e);}
-                                                    }){ IsBackground = true };
+            {
+                var lastCheck = DateTime.UtcNow.AddDays(-1);
+                var resetThreshold = TimeSpan.FromHours(1);
+                try
+                {
+                    while (!Config.Cts.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            if (DateTime.UtcNow - lastCheck > NewBuildsMonitor.CheckInterval)
+                            {
+                                CompatList.UpdatesCheck
+                                    .CheckForRpcs3Updates((DiscordClient) client, null)
+                                    .ConfigureAwait(false)
+                                    .GetAwaiter()
+                                    .GetResult();
+                                lastCheck = DateTime.UtcNow;
+                                if (DateTime.UtcNow - resetThreshold > NewBuildsMonitor.RapidStart)
+                                    NewBuildsMonitor.Reset();
+                            }
+                        } catch {}
+                        Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
+                    }
+                }
+                catch (TaskCanceledException) {}
+                catch (Exception e) { Config.Log.Error(e); }
+            }) {IsBackground = true};
 
             try
             {

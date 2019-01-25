@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Commands;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -9,31 +8,35 @@ namespace CompatBot.EventHandlers
     internal static class NewBuildsMonitor
     {
         private static readonly Regex BuildResult = new Regex("build (succeed|pass)ed", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromHours(1);
+        private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(5);
+        public static TimeSpan CheckInterval { get; private set; } = PassiveCheckInterval;
+        public static DateTime? RapidStart { get; private set; } = null;
 
         public static Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            OnMessageCreatedInternal(args);
+            if (args.Author.IsBot
+                && !args.Author.IsCurrent
+                && "github".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
+                && !string.IsNullOrEmpty(args.Message.Content)
+                && BuildResult.IsMatch(args.Message.Content)
+            )
+            {
+                Activate();
+            }
             return Task.CompletedTask;
         }
 
-        public static async void OnMessageCreatedInternal(MessageCreateEventArgs args)
+        public static void Reset()
         {
-            if (!args.Author.IsBot)
-                return;
+            CheckInterval = PassiveCheckInterval;
+            RapidStart = null;
+        }
 
-            if (!"github".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
-                return;
-
-            if (string.IsNullOrEmpty(args.Message.Content) || args.Message.Content.StartsWith(Config.CommandPrefix))
-                return;
-
-            await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-            if (BuildResult.IsMatch(args.Message.Content))
-                if (!await CompatList.UpdatesCheck.CheckForRpcs3Updates(args.Client, null).ConfigureAwait(false))
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-                    await CompatList.UpdatesCheck.CheckForRpcs3Updates(args.Client, null).ConfigureAwait(false);
-                }
+        private static void Activate()
+        {
+            CheckInterval = ActiveCheckInterval;
+            RapidStart = DateTime.UtcNow;
         }
     }
 }
