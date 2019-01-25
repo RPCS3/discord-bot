@@ -110,6 +110,23 @@ namespace CompatBot.Utils
             return len == 0 ? "" : str.Substring(start, len);
         }
 
+        internal static string GetAcronym(this string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return str;
+
+            var result = "";
+            bool previousWasLetter = false;
+            foreach (var c in str)
+            {
+                var isLetter = char.IsLetterOrDigit(c);
+                if (isLetter && !previousWasLetter)
+                    result += c;
+                previousWasLetter = isLetter;
+            }
+            return result;
+        }
+
         internal static double GetFuzzyCoefficientCached(this string strA, string strB)
         {
             strA = strA?.ToLowerInvariant() ?? "";
@@ -122,10 +139,18 @@ namespace CompatBot.Utils
                 {
                     StrA = strA,
                     StrB = strB,
-                    Coefficient = Normalizer.ToCanonicalForm(strA).DiceCoefficient(Normalizer.ToCanonicalForm(strB)),
+                    Coefficient = Normalizer.ToCanonicalForm(strA).GetScoreWithAcronym(Normalizer.ToCanonicalForm(strB)),
                 };
             FuzzyPairCache.Set(cacheKey, match);
             return match.Coefficient;
+        }
+
+        private static double GetScoreWithAcronym(this string strA, string strB)
+        {
+            return Math.Max(
+                strA.DiceCoefficient(strB),
+                strA.DiceCoefficient(strB.GetAcronym().ToLowerInvariant())
+            );
         }
 
         private static (long, int) GetFuzzyCacheKey(string strA, string strB)

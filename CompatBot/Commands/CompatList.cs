@@ -215,6 +215,9 @@ Example usage:
                 return;
             }
 
+#if DEBUG
+            await Task.Delay(5_000).ConfigureAwait(false);
+#endif
             var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             foreach (var msg in FormatSearchResults(ctx, result))
                 await channel.SendAutosplitMessageAsync(msg, blockStart:"", blockEnd:"").ConfigureAwait(false);
@@ -234,12 +237,14 @@ Example usage:
                 if (string.IsNullOrEmpty(request.customHeader))
                 {
                     result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize()}***");
-                    if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase))
+                    if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase)
+                        || request.search.Contains("p5", StringComparison.InvariantCultureIgnoreCase))
                         result.AppendLine("Did you try searching for ***Unnamed*** instead?");
-                    else if (!ctx.Channel.IsPrivate &&
-                             ctx.Message.Author.Id == 197163728867688448 &&
-                             (compatResult.Results.Values.Any(i => i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase) ||
-                                                                   i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
+                    else if (!ctx.Channel.IsPrivate
+                             && ctx.Message.Author.Id == 197163728867688448
+                             && (compatResult.Results.Values.Any(i =>
+                                 i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                                 || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
                     )
                     {
                         var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
@@ -258,10 +263,13 @@ Example usage:
 
                 double GetScore(string search, TitleInfo titleInfo)
                 {
-                    return Math.Max(
+                    var score = Math.Max(
                         search.GetFuzzyCoefficientCached(titleInfo.Title),
                         search.GetFuzzyCoefficientCached(titleInfo.AlternativeTitle)
                     );
+                    if (score > 0.3)
+                        return score;
+                    return 0;
                 }
 
                 if (returnCode.displayResults)
@@ -273,7 +281,7 @@ Example usage:
                             .ThenBy(kvp => kvp.Value.Title)
                             .ThenBy(kvp => kvp.Key)
                             .ToList();
-                    if (GetScore(request.search, sortedList.First().Value) < 0.3)
+                    if (GetScore(request.search, sortedList.First().Value) < 0.2)
                         sortedList = sortedList
                             .OrderBy(kvp => kvp.Value.Title)
                             .ThenBy(kvp => kvp.Key)
@@ -281,6 +289,9 @@ Example usage:
                     foreach (var resultInfo in sortedList.Take(request.amountRequested))
                     {
                         var info = resultInfo.AsString();
+#if DEBUG
+                        info = $"`{GetScore(request.search, resultInfo.Value):0.000000}` {info}";
+#endif
                         result.AppendLine(info);
                     }
                     yield return result.ToString();
