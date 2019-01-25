@@ -14,7 +14,7 @@ namespace CompatBot.EventHandlers
     internal static class IsTheGamePlayableHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|(?<dumb>^))(?<game_title>.+?)(\s+((now|currently)\s+)?((is )?playable|work(s|ing)?)(?(dumb)\?))", DefaultOptions);
+        private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|(?<dumb>^))(?<game_title>.+?)(\s+((now|currently|at all|possibly)\s+)?((is )?playable|work(s|ing)?)(?(dumb)\?))", DefaultOptions);
         private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new ConcurrentDictionary<ulong, DateTime>();
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
         private static readonly Client Client = new Client();
@@ -67,10 +67,12 @@ namespace CompatBot.EventHandlers
             {
                 var requestBuilder = RequestBuilder.Start().SetSearch(gameTitle);
                 var status = await Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
-                if (status.ReturnCode == 0 && status.Results.Any())
+                if ((status.ReturnCode == 0 || status.ReturnCode == 2) && status.Results.Any())
                 {
                     var info = status.GetSortedList().First().Value;
-                    if (CompatApiResultUtils.GetScore(gameTitle, info) < 0.2)
+                    var score = CompatApiResultUtils.GetScore(gameTitle, info);
+                    Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info.Title}\" with score {score}");
+                    if (score < 0.2)
                         return;
 
                     var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
