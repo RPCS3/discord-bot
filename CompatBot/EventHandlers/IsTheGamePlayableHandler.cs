@@ -26,7 +26,7 @@ namespace CompatBot.EventHandlers
             if (args.Author.IsBot)
                 return;
 
-            if (!(args.Channel.Id == Config.BotGenralChannelId
+            if (!(args.Channel.Id == Config.BotGeneralChannelId
                   || args.Channel.Name.Equals("help", StringComparison.InvariantCultureIgnoreCase)))
                 return;
 
