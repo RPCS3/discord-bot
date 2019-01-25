@@ -41,7 +41,7 @@ namespace CompatBot.Commands
 
             term = term.ToLowerInvariant();
             var result = await LookupTerm(term).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(result.explanation))
+            if (string.IsNullOrEmpty(result.explanation) || !string.IsNullOrEmpty(result.fuzzyMatch))
             {
                 term = term.StripQuotes();
                 var idx = term.LastIndexOf(" to ");
@@ -51,28 +51,33 @@ namespace CompatBot.Commands
                     bool hasMention = false;
                     try
                     {
-                        var lookup = await new DiscordUserConverter().ConvertAsync(potentialUserId, ctx)
-                            .ConfigureAwait(false);
+                        var lookup = await new DiscordUserConverter().ConvertAsync(potentialUserId, ctx).ConfigureAwait(false);
                         hasMention = lookup.HasValue;
                     }
-                    catch
-                    {
-                    }
+                    catch {}
 
                     if (hasMention)
                     {
                         term = term.Substring(0, idx).TrimEnd();
-                        result = await LookupTerm(term).ConfigureAwait(false);
+                        var mentionResult = await LookupTerm(term).ConfigureAwait(false);
+                        if (mentionResult.score > result.score)
+                            result = mentionResult;
                     }
                 }
             }
 
             try
             {
-                if (!string.IsNullOrEmpty(result.explanation))
+                if (result.score > 0.5)
                 {
                     if (!string.IsNullOrEmpty(result.fuzzyMatch))
-                        await ctx.RespondAsync($"Showing explanation for `{result.fuzzyMatch}`:").ConfigureAwait(false);
+                    {
+                        var fuzzyNotice = $"Showing explanation for `{result.fuzzyMatch}`:";
+#if DEBUG
+                        fuzzyNotice = $"Showing explanation for `{result.fuzzyMatch}` ({result.score:0.######}):";
+#endif
+                        await ctx.RespondAsync(fuzzyNotice).ConfigureAwait(false);
+                    }
                     await ctx.RespondAsync(result.explanation).ConfigureAwait(false);
                     return;
                 }
@@ -253,9 +258,10 @@ namespace CompatBot.Commands
             }
         }
 
-        private async Task<(string explanation, string fuzzyMatch)> LookupTerm(string term)
+        private async Task<(string term, string explanation, string fuzzyMatch, double score)> LookupTerm(string term)
         {
             string fuzzyMatch = null;
+            double coefficient;
             Explanation explanation;
             using (var db = new BotDb())
             {
@@ -264,14 +270,14 @@ namespace CompatBot.Commands
                 {
                     var termList = await db.Explanation.Select(e => e.Keyword).ToListAsync().ConfigureAwait(false);
                     var bestSuggestion = termList.OrderByDescending(term.GetFuzzyCoefficientCached).First();
-                    if (term.GetFuzzyCoefficientCached(bestSuggestion) > 0.2)
-                    {
-                        explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == bestSuggestion).ConfigureAwait(false);
-                        fuzzyMatch = bestSuggestion;
-                    }
+                    coefficient = term.GetFuzzyCoefficientCached(bestSuggestion);
+                    explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == bestSuggestion).ConfigureAwait(false);
+                    fuzzyMatch = bestSuggestion;
                 }
+                else
+                    coefficient = 2.0;
             }
-            return (explanation?.Text, fuzzyMatch);
+            return (term, explanation?.Text, fuzzyMatch, coefficient);
         }
 
         private async Task DumpLink(CommandContext ctx, string messageLink)
