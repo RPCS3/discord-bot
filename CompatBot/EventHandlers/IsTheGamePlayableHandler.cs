@@ -12,7 +12,7 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
-    internal sealed class IsTheGamePlayableHandler
+    internal static class IsTheGamePlayableHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
         private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|^)(?<game_title>.+?)(\s+((now|currently)\s+)?((is )?playable|work(ing)?)\??)", DefaultOptions);
