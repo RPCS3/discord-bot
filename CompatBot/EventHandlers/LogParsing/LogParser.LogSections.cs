@@ -143,6 +143,8 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_filename>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["'sys_fs_opendir' failed"] = new Regex(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["LDR: EDAT: "] = new Regex(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
+                    ["PS3 firmware is not installed"] = new Regex(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
+                    ["do you have the PS3 firmware installed"] = new Regex(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
