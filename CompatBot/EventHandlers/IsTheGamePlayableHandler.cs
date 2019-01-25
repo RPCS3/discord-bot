@@ -26,7 +26,7 @@ namespace CompatBot.EventHandlers
             if (args.Author.IsBot)
                 return;
 
-            if (!(args.Channel.Id == Config.BotGenralChannelId
+            if (!(args.Channel.Id == Config.BotGeneralChannelId
                   || args.Channel.Name.Equals("help", StringComparison.InvariantCultureIgnoreCase)))
                 return;
 
@@ -48,6 +48,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(gameTitle))
                 return;
 
+            gameTitle = gameTitle.Trim(40);
             if (gameTitle.Equals("persona 5", StringComparison.InvariantCultureIgnoreCase)
                 || gameTitle.Equals("p5", StringComparison.InvariantCultureIgnoreCase))
                 gameTitle = "unnamed";
