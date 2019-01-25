@@ -67,7 +67,10 @@ namespace CompatBot.EventHandlers
                 var status = await Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
                 if (status.ReturnCode == 0 && status.Results.Any())
                 {
-                    var info = status.Results.First().Value;
+                    var info = status.GetSortedList().First().Value;
+                    if (CompatApiResultUtils.GetScore(gameTitle, info) < 0.2)
+                        return;
+
                     var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                     var msg = $"{args.Author.Mention} {info.Title} is {info.Status.ToLowerInvariant()} since {info.ToUpdated()}\n" +
                               $"for more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";

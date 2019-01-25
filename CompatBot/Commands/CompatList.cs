@@ -261,36 +261,14 @@ Example usage:
 
                 result.Clear();
 
-                double GetScore(string search, TitleInfo titleInfo)
-                {
-                    var score = Math.Max(
-                        search.GetFuzzyCoefficientCached(titleInfo.Title),
-                        search.GetFuzzyCoefficientCached(titleInfo.AlternativeTitle)
-                    );
-                    if (score > 0.3)
-                        return score;
-                    return 0;
-                }
-
                 if (returnCode.displayResults)
                 {
-                    var sortedList = compatResult.Results.ToList();
-                    if (!string.IsNullOrEmpty(request.search))
-                        sortedList = sortedList
-                            .OrderByDescending(kvp => GetScore(request.search, kvp.Value))
-                            .ThenBy(kvp => kvp.Value.Title)
-                            .ThenBy(kvp => kvp.Key)
-                            .ToList();
-                    if (GetScore(request.search, sortedList.First().Value) < 0.2)
-                        sortedList = sortedList
-                            .OrderBy(kvp => kvp.Value.Title)
-                            .ThenBy(kvp => kvp.Key)
-                            .ToList();
+                    var sortedList = compatResult.GetSortedList();
                     foreach (var resultInfo in sortedList.Take(request.amountRequested))
                     {
                         var info = resultInfo.AsString();
 #if DEBUG
-                        info = $"`{GetScore(request.search, resultInfo.Value):0.000000}` {info}";
+                        info = $"`{CompatApiResultUtils.GetScore(request.search, resultInfo.Value):0.000000}` {info}";
 #endif
                         result.AppendLine(info);
                     }
