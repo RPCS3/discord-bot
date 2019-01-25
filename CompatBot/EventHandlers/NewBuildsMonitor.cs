@@ -11,7 +11,7 @@ namespace CompatBot.EventHandlers
         private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromHours(1);
         private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(5);
         public static TimeSpan CheckInterval { get; private set; } = PassiveCheckInterval;
-        public static DateTime? RapidStart { get; private set; } = null;
+        public static DateTime? RapidStart { get; private set; }
 
         public static Task OnMessageCreated(MessageCreateEventArgs args)
         {
