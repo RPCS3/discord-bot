@@ -40,12 +40,14 @@ namespace CompatBot.EventHandlers
 
             try
             {
+                var explanation = await GetLogUploadExplanationAsync().ConfigureAwait(false);
+
                 var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
                 foreach (var msg in lastBotMessages)
-                    if (BotShutupHandler.NeedToSilence(msg).needToChill)
+                    if (BotShutupHandler.NeedToSilence(msg).needToChill
+                        || (msg.Author.IsCurrent && msg.Content == explanation))
                         return;
 
-                var explanation = await GetLogUploadExplanationAsync().ConfigureAwait(false);
                 await args.Channel.SendMessageAsync(explanation).ConfigureAwait(false);
                 lastMention = DateTime.UtcNow;
             }

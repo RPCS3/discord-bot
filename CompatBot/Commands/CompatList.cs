@@ -16,6 +16,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DuoVia.FuzzyStrings;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -111,13 +112,12 @@ Example usage:
         [Description("Provides information about available filters for the !top command")]
         public async Task Filters(CommandContext ctx)
         {
-            var getDmTask = ctx.CreateDmAsync();
             var embed = new DiscordEmbedBuilder {Description = "List of recognized tokens in each filter category", Color = Config.Colors.Help}
                 .AddField("Statuses", DicToDesc(ApiConfig.Statuses))
                 .AddField("Release types", DicToDesc(ApiConfig.ReleaseTypes))
                 .Build();
-            var dm = await getDmTask.ConfigureAwait(false);
-            await dm.SendMessageAsync(embed: embed).ConfigureAwait(false);
+            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
+            await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
         [Group("latest"), Aliases("download"), TriggersTyping]
@@ -215,7 +215,10 @@ Example usage:
                 return;
             }
 
-            var channel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
+#if DEBUG
+            await Task.Delay(5_000).ConfigureAwait(false);
+#endif
+            var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             foreach (var msg in FormatSearchResults(ctx, result))
                 await channel.SendAutosplitMessageAsync(msg, blockStart:"", blockEnd:"").ConfigureAwait(false);
         }
@@ -234,12 +237,14 @@ Example usage:
                 if (string.IsNullOrEmpty(request.customHeader))
                 {
                     result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize()}***");
-                    if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase))
+                    if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase)
+                        || request.search.Contains("p5", StringComparison.InvariantCultureIgnoreCase))
                         result.AppendLine("Did you try searching for ***Unnamed*** instead?");
-                    else if (!ctx.Channel.IsPrivate &&
-                             ctx.Message.Author.Id == 197163728867688448 &&
-                             (compatResult.Results.Values.Any(i => i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase) ||
-                                                                   i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
+                    else if (!ctx.Channel.IsPrivate
+                             && ctx.Message.Author.Id == 197163728867688448
+                             && (compatResult.Results.Values.Any(i =>
+                                 i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                                 || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
                     )
                     {
                         var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
@@ -258,9 +263,13 @@ Example usage:
 
                 if (returnCode.displayResults)
                 {
-                    foreach (var resultInfo in compatResult.Results.Take(request.amountRequested))
+                    var sortedList = compatResult.GetSortedList();
+                    foreach (var resultInfo in sortedList.Take(request.amountRequested))
                     {
                         var info = resultInfo.AsString();
+#if DEBUG
+                        info = $"`{CompatApiResultUtils.GetScore(request.search, resultInfo.Value):0.000000}` {info}";
+#endif
                         result.AppendLine(info);
                     }
                     yield return result.ToString();

@@ -75,7 +75,7 @@ namespace CompatBot.Commands
                 return;
             }
 
-            var responseChannel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.CreateDmAsync().ConfigureAwait(false);
+            var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             const int maxTitleLength = 80;
             var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
             var maxAuthor = openPrList.Max(pr => pr.User.Login.Length);

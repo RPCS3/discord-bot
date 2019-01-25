@@ -143,6 +143,8 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_filename>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["'sys_fs_opendir' failed"] = new Regex(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["LDR: EDAT: "] = new Regex(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
+                    ["PS3 firmware is not installed"] = new Regex(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
+                    ["do you have the PS3 firmware installed"] = new Regex(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
@@ -186,7 +188,9 @@ namespace CompatBot.EventHandlers.LogParsing
                 "build_and_specs",
                 "vulkan_gpu", "d3d_gpu",
                 "driver_version", "driver_manuf",
-                "driver_manuf_new", "driver_version_new"
+                "driver_manuf_new", "driver_version_new",
+                "vulkan_found_device", "vulkan_compatible_device_name",
+                "vulkan_gpu", "vulkan_driver_version_raw"
             );
 #if DEBUG
             Console.WriteLine("===== cleared");

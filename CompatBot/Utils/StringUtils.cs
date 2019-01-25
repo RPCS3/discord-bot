@@ -3,6 +3,9 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using DuoVia.FuzzyStrings;
+using HomoglyphConverter;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Utils
 {
@@ -13,6 +16,7 @@ namespace CompatBot.Utils
                                                                  .GetEncoding()
                                                              ?? Encoding.ASCII;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
+        private static readonly MemoryCache FuzzyPairCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
 
         private static readonly HashSet<char> SpaceCharacters = new HashSet<char>
         {
@@ -104,6 +108,63 @@ namespace CompatBot.Utils
                 return str;
 
             return len == 0 ? "" : str.Substring(start, len);
+        }
+
+        internal static string GetAcronym(this string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return str;
+
+            var result = "";
+            bool previousWasLetter = false;
+            foreach (var c in str)
+            {
+                var isLetter = char.IsLetterOrDigit(c);
+                if (isLetter && !previousWasLetter)
+                    result += c;
+                previousWasLetter = isLetter;
+            }
+            return result;
+        }
+
+        internal static double GetFuzzyCoefficientCached(this string strA, string strB)
+        {
+            strA = strA?.ToLowerInvariant() ?? "";
+            strB = strB?.ToLowerInvariant() ?? "";
+            var cacheKey = GetFuzzyCacheKey(strA, strB);
+            if (!FuzzyPairCache.TryGetValue(cacheKey, out FuzzyCacheValue match)
+                || strA != match.StrA
+                || strB != match.StrB)
+                match = new FuzzyCacheValue
+                {
+                    StrA = strA,
+                    StrB = strB,
+                    Coefficient = Normalizer.ToCanonicalForm(strA).GetScoreWithAcronym(Normalizer.ToCanonicalForm(strB)),
+                };
+            FuzzyPairCache.Set(cacheKey, match);
+            return match.Coefficient;
+        }
+
+        private static double GetScoreWithAcronym(this string strA, string strB)
+        {
+            return Math.Max(
+                strA.DiceCoefficient(strB),
+                strA.DiceCoefficient(strB.GetAcronym().ToLowerInvariant())
+            );
+        }
+
+        private static (long, int) GetFuzzyCacheKey(string strA, string strB)
+        {
+            var hashPair = (((long) (strA.GetHashCode())) << (sizeof(int) * 8)) | (((long) strB.GetHashCode()) & ((long) uint.MaxValue));
+            var lengthPair = (strA.Length << (sizeof(short) * 8)) | (strB.Length & ushort.MaxValue);
+            return (hashPair, lengthPair);
+        }
+
+        private class FuzzyCacheValue
+        {
+            public string StrA;
+            public string StrB;
+            public double Coefficient;
         }
     }
 }

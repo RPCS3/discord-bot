@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Utils;
@@ -12,11 +11,10 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
-    internal sealed class IsTheGamePlayableHandler
+    internal static class IsTheGamePlayableHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|^)(?<game_title>.+?)(\s+((now|currently)\s+)?((is )?playable|work(ing)?)|\?)", DefaultOptions);
-        private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
+        private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|(?<dumb>^))(?<game_title>.+?)(\s+((now|currently)\s+)?((is )?playable|work(s|ing)?)(?(dumb)\?))", DefaultOptions);
         private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new ConcurrentDictionary<ulong, DateTime>();
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
         private static readonly Client Client = new Client();
@@ -67,7 +65,10 @@ namespace CompatBot.EventHandlers
                 var status = await Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
                 if (status.ReturnCode == 0 && status.Results.Any())
                 {
-                    var info = status.Results.First().Value;
+                    var info = status.GetSortedList().First().Value;
+                    if (CompatApiResultUtils.GetScore(gameTitle, info) < 0.2)
+                        return;
+
                     var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                     var msg = $"{args.Author.Mention} {info.Title} is {info.Status.ToLowerInvariant()} since {info.ToUpdated()}\n" +
                               $"for more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";

@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 
@@ -12,6 +13,11 @@ namespace CompatBot.Utils
         public static async Task<DiscordChannel> CreateDmAsync(this CommandContext ctx)
         {
             return ctx.Channel.IsPrivate ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
+        }
+
+        public static Task<DiscordChannel> GetChannelForSpamAsync(this CommandContext ctx)
+        {
+            return LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? Task.FromResult(ctx.Channel) : ctx.CreateDmAsync();
         }
 
         public static Task<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")

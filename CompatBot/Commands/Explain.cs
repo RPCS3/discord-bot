@@ -24,9 +24,10 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
         {
+            var sourceTerm = term;
             if (string.IsNullOrEmpty(term))
             {
-                var ch = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
+                var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
                 await ch.SendMessageAsync("Please specify term to explain").ConfigureAwait(false);
                 await List(ctx).ConfigureAwait(false);
                 return;
@@ -39,41 +40,47 @@ namespace CompatBot.Commands
                 return;
 
             term = term.ToLowerInvariant();
-            using (var db = new BotDb())
+            var result = await LookupTerm(term).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(result.explanation))
             {
-                var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-                if (explanation != null)
+                term = term.StripQuotes();
+                var idx = term.LastIndexOf(" to ");
+                if (idx > 0)
                 {
-                    await ctx.RespondAsync(explanation.Text).ConfigureAwait(false);
-                    return;
+                    var potentialUserId = term.Substring(idx + 4).Trim();
+                    bool hasMention = false;
+                    try
+                    {
+                        var lookup = await new DiscordUserConverter().ConvertAsync(potentialUserId, ctx)
+                            .ConfigureAwait(false);
+                        hasMention = lookup.HasValue;
+                    }
+                    catch
+                    {
+                    }
+
+                    if (hasMention)
+                    {
+                        term = term.Substring(0, idx).TrimEnd();
+                        result = await LookupTerm(term).ConfigureAwait(false);
+                    }
                 }
             }
 
-            term = term.StripQuotes();
-            var idx = term.LastIndexOf(" to ");
-            if (idx > 0)
+            try
             {
-                var potentialUserId = term.Substring(idx + 4).Trim();
-                bool hasMention = false;
-                try
+                if (!string.IsNullOrEmpty(result.explanation))
                 {
-                    var lookup = await new DiscordUserConverter().ConvertAsync(potentialUserId, ctx).ConfigureAwait(false);
-                    hasMention = lookup.HasValue;
+                    if (!string.IsNullOrEmpty(result.fuzzyMatch))
+                        await ctx.RespondAsync($"Showing explanation for `{result.fuzzyMatch}`:").ConfigureAwait(false);
+                    await ctx.RespondAsync(result.explanation).ConfigureAwait(false);
+                    return;
                 }
-                catch { }
-                if (hasMention)
-                {
-                    term = term.Substring(0, idx).TrimEnd();
-                    using (var db = new BotDb())
-                    {
-                        var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-                        if (explanation != null)
-                        {
-                            await ctx.RespondAsync(explanation.Text).ConfigureAwait(false);
-                            return;
-                        }
-                    }
-                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, "Failed to explain " + sourceTerm);
+                return;
             }
 
             string inSpecificLocation = null;
@@ -172,7 +179,7 @@ namespace CompatBot.Commands
         [Description("List all known terms that could be used for !explain command")]
         public async Task List(CommandContext ctx)
         {
-            var responseChannel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.CreateDmAsync().ConfigureAwait(false);
+            var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             using (var db = new BotDb())
             {
                 var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
@@ -244,6 +251,27 @@ namespace CompatBot.Commands
                     using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text)))
                         await ctx.Channel.SendFileAsync($"{termOrLink}.txt", stream).ConfigureAwait(false);
             }
+        }
+
+        private async Task<(string explanation, string fuzzyMatch)> LookupTerm(string term)
+        {
+            string fuzzyMatch = null;
+            Explanation explanation;
+            using (var db = new BotDb())
+            {
+                explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                if (explanation == null)
+                {
+                    var termList = await db.Explanation.Select(e => e.Keyword).ToListAsync().ConfigureAwait(false);
+                    var bestSuggestion = termList.OrderByDescending(term.GetFuzzyCoefficientCached).First();
+                    if (term.GetFuzzyCoefficientCached(bestSuggestion) > 0.2)
+                    {
+                        explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == bestSuggestion).ConfigureAwait(false);
+                        fuzzyMatch = bestSuggestion;
+                    }
+                }
+            }
+            return (explanation?.Text, fuzzyMatch);
         }
 
         private async Task DumpLink(CommandContext ctx, string messageLink)

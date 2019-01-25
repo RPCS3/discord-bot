@@ -476,6 +476,11 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["xaudio_init_error"]))
                 notes.AppendLine("XAudio initialization failed; make sure you have audio output device working");
 
+            if (!string.IsNullOrEmpty(items["fw_missing_msg"])
+                || !string.IsNullOrEmpty(items["fw_missing_something"]))
+                notes.AppendLine("PS3 firmware is missing or corrupted");
+
+
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.AppendLine("The log was too large, so only the last processed run is shown");
 
