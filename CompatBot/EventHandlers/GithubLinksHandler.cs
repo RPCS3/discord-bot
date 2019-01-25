@@ -9,7 +9,7 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
-    internal sealed class GithubLinksHandler
+    internal static class GithubLinksHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
         private static readonly Regex IssueMention = new Regex(@"(\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|(\W|^)#(?<also_number>\d{4}))\b", DefaultOptions);
