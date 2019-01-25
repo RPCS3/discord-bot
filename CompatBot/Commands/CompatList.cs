@@ -207,7 +207,7 @@ Example usage:
                 return;
             }
 
-            var channel = ctx.Channel.IsPrivate ? ctx.Channel : await ctx.Client.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
+            var channel = LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
             foreach (var msg in FormatSearchResults(ctx, result))
                 await channel.SendAutosplitMessageAsync(msg, blockStart:"", blockEnd:"").ConfigureAwait(false);
         }
