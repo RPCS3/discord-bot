@@ -15,7 +15,7 @@ namespace CompatBot.EventHandlers
     internal sealed class IsTheGamePlayableHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|^)(?<game_title>.+?)(\s+((now|currently)\s+)?((is )?playable|work(ing)?)|\?)", DefaultOptions);
+        private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|^)(?<game_title>.+?)(\s+((now|currently)\s+)?((is )?playable|work(ing)?)\??)", DefaultOptions);
         private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
         private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new ConcurrentDictionary<ulong, DateTime>();
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
