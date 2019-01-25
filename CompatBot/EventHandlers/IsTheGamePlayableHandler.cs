@@ -24,9 +24,11 @@ namespace CompatBot.EventHandlers
             if (args.Author.IsBot)
                 return;
 
+#if !DEBUG
             if (!(args.Channel.Id == Config.BotGeneralChannelId
                   || args.Channel.Name.Equals("help", StringComparison.InvariantCultureIgnoreCase)))
                 return;
+#endif
 
             if (CooldownBuckets.TryGetValue(args.Channel.Id, out var lastCheck)
                 && DateTime.UtcNow - lastCheck < CooldownThreshold)
@@ -35,8 +37,10 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(args.Message.Content) || args.Message.Content.StartsWith(Config.CommandPrefix))
                 return;
 
+#if !DEBUG
             if (args.Author.IsSmartlisted(args.Client, args.Guild))
                 return;
+#endif
 
             var matches = GameNameStatusMention.Matches(args.Message.Content);
             if (!matches.Any())
