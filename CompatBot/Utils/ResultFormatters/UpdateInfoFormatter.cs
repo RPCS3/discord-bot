@@ -11,6 +11,7 @@ namespace CompatBot.Utils.ResultFormatters
     internal static class UpdateInfoFormatter
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
+        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordEmbedBuilder builder = null)
         {
@@ -18,41 +19,63 @@ namespace CompatBot.Utils.ResultFormatters
                 return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
 
             var justAppend = builder != null;
-            var build = info.LatestBuild;
-            var pr = build?.Pr ?? "0";
+            var latestBuild = info.LatestBuild;
+            var latestPr = latestBuild?.Pr;
+            var currentPr = info.CurrentBuild?.Pr;
             string url = null;
-            PrInfo prInfo = null;
+            PrInfo latestPrInfo = null;
+            PrInfo currentPrInfo = null;
 
+            string prDesc = "";
             if (!justAppend)
             {
-                if (int.TryParse(pr, out var prNum) && prNum > 0)
+                if (latestPr > 0)
                 {
-                    prInfo = await githubClient.GetPrInfoAsync(prNum, Config.Cts.Token).ConfigureAwait(false);
-                    url = prInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + pr;
-                    pr = $"PR #{pr} by {prInfo?.User?.Login ?? "???"}";
+                    latestPrInfo = await githubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    url = latestPrInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + latestPr;
+                    prDesc = $"PR #{latestPr} by {latestPrInfo?.User?.Login ?? "???"}";
                 }
                 else
-                    pr = "PR #???";
+                    prDesc = "PR #???";
+
+                if (currentPr > 0 && currentPr != latestPr)
+                    currentPrInfo = await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
             }
-            builder = builder ?? new DiscordEmbedBuilder {Title = pr, Url = url, Description = prInfo?.Title, Color = Config.Colors.DownloadLinks};
-            if (!string.IsNullOrEmpty(build?.Datetime))
+            builder = builder ?? new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = latestPrInfo?.Title, Color = Config.Colors.DownloadLinks};
+            var currentCommit = currentPrInfo?.MergeCommitSha;
+            var latestCommit = latestPrInfo?.MergeCommitSha;
+            var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+            var latestAppveyorBuild = await appveyorClient.GetMasterBuildAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+            var buildTimestampKind = "Build";
+            var latestBuildTimestamp = latestAppveyorBuild?.Finished?.ToUniversalTime();
+            var currentBuildTimestamp = currentAppveyorBuild?.Finished?.ToUniversalTime();
+            if (!latestBuildTimestamp.HasValue)
             {
-                var timestampInfo = build.Datetime;
-                if (info.CurrentBuild?.Pr is string buildPr
-                    && buildPr != info.LatestBuild?.Pr
-                    && GetUpdateDelta(info) is TimeSpan timeDelta)
+                buildTimestampKind = "Merge";
+                latestBuildTimestamp = latestPrInfo?.MergedAt;
+                currentBuildTimestamp = currentPrInfo?.MergedAt;
+            }
+
+            if (!string.IsNullOrEmpty(latestBuild?.Datetime))
+            {
+                var timestampInfo = latestBuildTimestamp?.ToString("u") ?? latestBuild.Datetime;
+                if (currentPr > 0
+                    && currentPr != latestPr
+                    && GetUpdateDelta(latestBuildTimestamp, currentBuildTimestamp) is TimeSpan timeDelta)
                     timestampInfo += $" ({timeDelta.AsTimeDeltaDescription()} newer)";
-                else if (!justAppend && DateTime.TryParse(build.Datetime, out var buildDateTime) && DateTime.UtcNow.Ticks > buildDateTime.Ticks)
-                    timestampInfo += $" ({(DateTime.UtcNow - buildDateTime.AsUtc()).AsTimeDeltaDescription()} ago)";
+                else if (!justAppend
+                         && latestBuildTimestamp.HasValue
+                         && DateTime.UtcNow.Ticks > latestBuildTimestamp.Value.Ticks)
+                    timestampInfo += $" ({(DateTime.UtcNow - latestBuildTimestamp.Value).AsTimeDeltaDescription()} ago)";
 
                 if (justAppend)
                     builder.AddField($"Latest master build ({timestampInfo})", "This pull request has been merged, and is a part of `master` now");
                 else
-                    builder.AddField("Merge timestamp", timestampInfo);
+                    builder.AddField($"{buildTimestampKind} timestamp", timestampInfo);
             }
             return builder
-                .AddField("Windows   ".FixSpaces(), GetLinkMessage(build?.Windows?.Download, true), true)
-                .AddField("Linux   ".FixSpaces(), GetLinkMessage(build?.Linux?.Download, true), true);
+                .AddField("Windows   ".FixSpaces(), GetLinkMessage(latestBuild?.Windows?.Download, true), true)
+                .AddField("Linux   ".FixSpaces(), GetLinkMessage(latestBuild?.Linux?.Download, true), true);
         }
 
         private static string GetLinkMessage(string link, bool simpleName)
@@ -67,6 +90,13 @@ namespace CompatBot.Utils.ResultFormatters
                 text = text.Split('_', 2)[0] + Path.GetExtension(text);
 
             return $"[⏬ {text}]({link}){"   ".FixSpaces()}";
+        }
+
+        public static TimeSpan? GetUpdateDelta(DateTime? latest, DateTime? current)
+        {
+            if (latest.HasValue && current.HasValue)
+                return latest - current;
+            return null;
         }
 
         public static TimeSpan? GetUpdateDelta(this UpdateInfo updateInfo)

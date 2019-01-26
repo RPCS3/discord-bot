@@ -150,7 +150,7 @@ Example usage:
                     CachedUpdateInfo = info;
                 if (channel != null)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                var updateLinks = info?.LatestBuild?.Pr;
+                var updateLinks = info?.LatestBuild?.Pr?.ToString();
                 if (!string.IsNullOrEmpty(updateLinks)
                     && lastUpdateInfo != updateLinks
                     && updateCheck.Wait(0))

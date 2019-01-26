@@ -24,6 +24,7 @@ namespace AppveyorClient
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
         private static readonly TimeSpan JobToBuildCacheTime = TimeSpan.FromDays(30);
+        private static readonly TimeSpan MasterBuildCacheTime = TimeSpan.FromDays(1);
         private static readonly TimeSpan JobIdSearchThreshold = TimeSpan.FromDays(6 * 30);
         private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromHours(1)});
 
@@ -170,6 +171,7 @@ namespace AppveyorClient
         {
             if (ResponseCache.TryGetValue(jobId, out Build result))
                 return result;
+
             try
             {
                 var oldestBuildDate = DateTime.UtcNow - JobIdSearchThreshold;
@@ -230,6 +232,34 @@ namespace AppveyorClient
             if (ResponseCache.TryGetValue(requestUri, out List<Artifact> o))
                 ApiConfig.Log.Debug($"Returning cached {nameof(Artifact)} for {jobId}");
             return o;
+        }
+
+        public async Task<Build> GetMasterBuildAsync(string commit, DateTime? mergeDate, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(commit))
+                return null;
+
+            if (ResponseCache.TryGetValue(commit, out Build result))
+                return result;
+
+            try
+            {
+                mergeDate = mergeDate ?? (DateTime.UtcNow - JobIdSearchThreshold);
+                result = await FindBuildAsync(
+                    h => h.Builds.Last().Created > mergeDate,
+                    b => b.CommitId.StartsWith(commit, StringComparison.InvariantCultureIgnoreCase) && b.Status == "success",
+                    cancellationToken
+                );
+                if (result != null)
+                    ResponseCache.Set(commit, result, MasterBuildCacheTime);
+                return result;
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+            }
+            ApiConfig.Log.Debug($"Failed to find master {nameof(Build)} for commit {commit}");
+            return null;
         }
 
         public async Task<Build> FindBuildAsync(Func<HistoryInfo, bool> takePredicate, Func<Build, bool> selectPredicate, CancellationToken cancellationToken)

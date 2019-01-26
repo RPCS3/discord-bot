@@ -13,6 +13,7 @@ namespace GithubClient.POCOs
         public DateTime? UpdatedAt;
         public DateTime? ClosedAt;
         public DateTime? MergedAt;
+        public string MergeCommitSha;
         public string StatusesUrl;
         public int Additions;
         public int Deletions;
