@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using NReco.Text;
@@ -15,18 +17,21 @@ namespace CompatBot.EventHandlers
         private static readonly AhoCorasickDoubleArrayTrie<bool> ChillCheck = new AhoCorasickDoubleArrayTrie<bool>(new[]
         {
             "shut the fuck up", "shut up", "shutup", "shuddup", "hush", "chill", "bad bot",
-            "no one asked you", "useless bot",
+            "no one asked you", "useless bot", "bot sux", "fuck this bot", "fuck bot",
+            "shit bot", "succ",
+
             "take this back", "take that back",
-            "delete this", "delete that",
-            "remove this", "remove that",
+            "delete this", "delete that", "remove this", "remove that",
         }.ToDictionary(s => s, _ => true).Concat(
             new[]
             {
                 "good bot", "gud bot", "good boy", "goodboy", "gud boy", "gud boi",
-                "cool", "nice", "clever", "sophisticated", "helpful",
+                "cool", "nice", "clever", "sophisticated", "helpful", "fantastic",
                 "thank you", "thankyou", "thanks", "thnk", "thnks", "thnx", "thnku", "thank u", "tnx",
                 "arigato", "aregato", "arigatou", "aregatou", "oregato", "origato",
                 "poor bot", "good job", "well done", "good work", "excellent work",
+                "bot is love", "love this bot", "love you", "like this bot", "awesome",
+                "great",
             }.ToDictionary(s => s, _ => false)
         ), true);
 
@@ -119,7 +124,7 @@ namespace CompatBot.EventHandlers
                 lock (theDoor)
                 {
                     emoji = ThankYouReactions[rng.Next(ThankYouReactions.Length)];
-                    thankYouMessage = ThankYouMessages[rng.Next(ThankYouMessages.Length)];
+                    thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel) ? ThankYouMessages[rng.Next(ThankYouMessages.Length)] : null;
                 }
                 await args.Message.ReactWithAsync(args.Client, emoji, thankYouMessage).ConfigureAwait(false);
             }
@@ -156,14 +161,15 @@ namespace CompatBot.EventHandlers
 
             var needToChill = false;
             var needToThank = false;
-            ChillCheck.ParseText(msg.Content, h =>
+            var msgContent = msg.Content.ToLowerInvariant();
+            ChillCheck.ParseText(msgContent, h =>
                                               {
                                                   if (h.Value)
                                                       needToChill = true;
                                                   else
                                                       needToThank = true;
                                               });
-            var mentionsBot = msg.Content.Contains("bot") || (msg.MentionedUsers?.Any(u => u.IsCurrent) ?? false);
+            var mentionsBot = msgContent.Contains("bot") || (msg.MentionedUsers?.Any(u => u.IsCurrent) ?? false);
             return (needToChill && mentionsBot, needToThank && mentionsBot);
         }
 
