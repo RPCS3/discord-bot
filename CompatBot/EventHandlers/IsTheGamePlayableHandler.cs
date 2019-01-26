@@ -14,7 +14,7 @@ namespace CompatBot.EventHandlers
     internal static class IsTheGamePlayableHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex GameNameStatusMention = new Regex(@"((is|does|can I play)\s+|(?<dumb>^))(?<game_title>.+?)(\s+((now|currently|at all|possibly)\s+)?((is )?playable|work(s|ing)?)(?(dumb)\?))", DefaultOptions);
+        private static readonly Regex GameNameStatusMention = new Regex(@"\b((is|does|can I play)\s+|(?<dumb>^))(?<game_title>.+?)(\s+((now|currently|at all|possibly|fully)\s+)?((is )?playable|work(s|ing)?)\b(?(dumb)\?))", DefaultOptions);
         private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new ConcurrentDictionary<ulong, DateTime>();
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
         private static readonly Client Client = new Client();
@@ -72,7 +72,7 @@ namespace CompatBot.EventHandlers
                     var info = status.GetSortedList().First().Value;
                     var score = CompatApiResultUtils.GetScore(gameTitle, info);
                     Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info.Title}\" with score {score}");
-                    if (score < 0.2)
+                    if (score < 0.5)
                         return;
 
                     var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
