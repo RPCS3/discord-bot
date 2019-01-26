@@ -16,6 +16,7 @@ namespace AppveyorClient.POCOs
         public DateTime? Finished;
         public List<Job> Jobs;
         public string Message;
+        public string CommitId;
         public string PullRequestHeadBranch;
         public string PullRequestHeadCommitId;
         public string PullRequestHeadRepository;

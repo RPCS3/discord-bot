@@ -9,7 +9,7 @@
 
     public class BuildInfo
     {
-        public string Pr;
+        public int? Pr;
         public string Datetime;
         public BuildLink Windows;
         public BuildLink Linux;
