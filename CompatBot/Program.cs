@@ -181,6 +181,7 @@ namespace CompatBot
                                                };
 
                     client.MessageReactionAdded += Starbucks.Handler;
+                    client.MessageReactionAdded += AntipiracyMonitor.OnReaction;
 
                     client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
                     client.MessageCreated += ProductCodeLookup.OnMessageCreated;
