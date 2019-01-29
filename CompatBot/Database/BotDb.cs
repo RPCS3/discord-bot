@@ -14,6 +14,7 @@ namespace CompatBot.Database
         public DbSet<Explanation> Explanation { get; set; }
         public DbSet<DisabledCommand> DisabledCommands { get; set; }
         public DbSet<WhitelistedInvite> WhitelistedInvites { get; set; }
+        public DbSet<E3Schedule> E3Schedule { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -30,6 +31,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasName("explanation_keyword");
             modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasName("disabled_command_command");
             modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasName("whitelisted_invite_guild_id");
+            modelBuilder.Entity<E3Schedule>().HasIndex(e3s => e3s.Year).HasName("e3schedule_year");
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
@@ -94,5 +96,14 @@ namespace CompatBot.Database
         public ulong GuildId { get; set; }
         public string Name { get; set; }
         public string InviteCode { get; set; }
+    }
+
+    internal class E3Schedule
+    {
+        public int Id { get; set; }
+        public int Year { get; set; }
+        public long Start { get; set; }
+        public long End { get; set; }
+        public string Name { get; set; }
     }
 }

@@ -11,5 +11,10 @@ namespace CompatBot.Utils
 
             return new DateTime(dateTime.Ticks, DateTimeKind.Utc);
         }
+
+        public static DateTime AsUtc(this long ticks)
+        {
+            return new DateTime(ticks, DateTimeKind.Utc);
+        }
     }
 }

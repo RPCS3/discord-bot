@@ -22,6 +22,15 @@ namespace CompatBot.EventHandlers
             args.Handled = !await IsClean(args.Client, args.Message).ConfigureAwait(false);
         }
 
+        public static Task OnReaction(MessageReactionAddEventArgs e)
+        {
+            var emoji = e.Client.GetEmoji("piratethink", Config.Reactions.PiracyCheck);
+            if (e.Emoji != emoji)
+                return Task.CompletedTask;
+
+            return IsClean(e.Client, e.Message);
+        }
+
         public static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
         {
             if (message.Channel.IsPrivate)

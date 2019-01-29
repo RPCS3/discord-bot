@@ -137,6 +137,7 @@ namespace CompatBot
                     commands.RegisterCommands<Ird>();
                     commands.RegisterCommands<BotMath>();
                     commands.RegisterCommands<Pr>();
+                    commands.RegisterCommands<E3>();
 
                     client.Ready += async r =>
                                     {
@@ -181,6 +182,7 @@ namespace CompatBot
                                                };
 
                     client.MessageReactionAdded += Starbucks.Handler;
+                    client.MessageReactionAdded += AntipiracyMonitor.OnReaction;
 
                     client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
                     client.MessageCreated += ProductCodeLookup.OnMessageCreated;
