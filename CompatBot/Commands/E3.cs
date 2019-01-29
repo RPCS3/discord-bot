@@ -67,11 +67,7 @@ namespace CompatBot.Commands
             [Description("Event duration (e.g. 1h30m or 1:00)")] string duration,
             [Description("Event name"), RemainingText] string name)
         {
-            start = start.ToUpperInvariant()
-                .Replace("PST", "-08:00")
-                .Replace("EST", "-05:00")
-                .Replace("BST", "-03:00")
-                .Replace("AEST", "+10:00");
+            start = FixTimeString(start);
             if (!DateTime.TryParse(start, out var startDateTime))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{start}` as a date", true).ConfigureAwait(false);
@@ -79,24 +75,12 @@ namespace CompatBot.Commands
             }
 
             startDateTime = Normalize(startDateTime);
-            var d = Duration.Match(duration);
-            if (!d.Success)
+            var timeDiff = await TryParseTimeSpanAsync(ctx, duration).ConfigureAwait(false);
+            if (timeDiff.HasValue)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
-                return;
+                var endDateTime = startDateTime + timeDiff.Value;
+                await Add(ctx, startDateTime, endDateTime, name);
             }
-
-            int.TryParse(d.Groups["hours"].Value, out var hours);
-            int.TryParse(d.Groups["mins"].Value, out var mins);
-            if (hours == 0 && mins == 0)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
-                return;
-            }
-            
-            var timeDiff = new TimeSpan(0, hours, mins, 0);
-            var endDateTime = startDateTime + timeDiff;
-            await Add(ctx, startDateTime, endDateTime, name);
         }
 
         public async Task Add(CommandContext ctx, DateTime start, DateTime end, string name)
@@ -190,6 +174,77 @@ namespace CompatBot.Commands
             await ctx.RespondAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
+        [Command("rename"), RequiresBotModRole]
+        [Description("Renames event with the specified ID")]
+        public async Task Rename(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newName)
+        {
+            using (var db = new BotDb())
+            {
+                var evt = await db.E3Schedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                if (evt == null)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
+                else
+                {
+                    var oldName = evt.Name;
+                    evt.Name = newName;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed `{oldName}` to `{newName}`").ConfigureAwait(false);
+                }
+            }
+        }
+
+        [Command("shift"), RequiresBotModRole]
+        [Description("Moves event to a new time")]
+        public async Task Shift(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newStartTime)
+        {
+            newStartTime = FixTimeString(newStartTime);
+            if (!DateTime.TryParse(newStartTime, out var newTime))
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't parse `{newStartTime}` as a date").ConfigureAwait(false);
+                return;
+            }
+
+            using (var db = new BotDb())
+            {
+                var evt = await db.E3Schedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                if (evt == null)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
+                else
+                {
+                    var oldTime = evt.Start;
+                    evt.Start = Normalize(newTime).Ticks;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Shifted {evt.Name} from {oldTime.AsUtc():u} to {newTime:u}").ConfigureAwait(false);
+                }
+            }
+        }
+
+        [Command("adjust"), Aliases("shrink", "stretch"), RequiresBotModRole]
+        [Description("Adjusts event length")]
+        public async Task Adjust(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newDuration)
+        {
+            var newLength = await TryParseTimeSpanAsync(ctx, newDuration).ConfigureAwait(false);
+            if (!newLength.HasValue)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't parse `{newDuration}` as a time duration").ConfigureAwait(false);
+                return;
+            }
+
+            using (var db = new BotDb())
+            {
+                var evt = await db.E3Schedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                if (evt == null)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
+                else
+                {
+                    var oldDuration = evt.End.AsUtc() - evt.Start.AsUtc();
+                    evt.End = (evt.Start.AsUtc() + newLength.Value).Ticks;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Success, $@"Adjusted {evt.Name} duration from {oldDuration:h\:mm} to {newLength:h\:mm}").ConfigureAwait(false);
+                }
+            }
+        }
+
         [Command("schedule"), Aliases("show", "list")]
         [Description("Outputs current schedule")]
         public async Task List(CommandContext ctx, [Description("Optional year to list")] int? year = null)
@@ -235,6 +290,15 @@ namespace CompatBot.Commands
         [Description("Provides countdown for the nearest known E3 event")]
         public Task Countdown(CommandContext ctx) => E3Countdown(ctx);
 
+        private static string FixTimeString(string dateTime)
+        {
+            return dateTime.ToUpperInvariant()
+                .Replace("PST", "-08:00")
+                .Replace("EST", "-05:00")
+                .Replace("BST", "-03:00")
+                .Replace("AEST", "+10:00");
+        }
+
         private static DateTime Normalize(DateTime date)
         {
             if (date.Kind == DateTimeKind.Utc)
@@ -244,7 +308,27 @@ namespace CompatBot.Commands
             return date.AsUtc();
         }
 
-        private string FormatCountdown(TimeSpan timeSpan)
+        private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration)
+        {
+            var d = Duration.Match(duration);
+            if (!d.Success)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
+                return null;
+            }
+
+            int.TryParse(d.Groups["hours"].Value, out var hours);
+            int.TryParse(d.Groups["mins"].Value, out var mins);
+            if (hours == 0 && mins == 0)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
+                return null;
+            }
+
+            return new TimeSpan(0, hours, mins, 0);
+        }
+
+        private static string FormatCountdown(TimeSpan timeSpan)
         {
             var result = "";
             var days = (int)timeSpan.TotalDays;

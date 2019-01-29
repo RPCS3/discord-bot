@@ -64,14 +64,15 @@ namespace CompatBot.Utils
             }
         }
 
-        public static async Task ReactWithAsync(this DiscordMessage message, DiscordClient client, DiscordEmoji emoji, string fallbackMessage = null, bool showBoth = false)
+        public static async Task ReactWithAsync(this DiscordMessage message, DiscordClient client, DiscordEmoji emoji, string fallbackMessage = null, bool? showBoth = null)
         {
             try
             {
+                showBoth = showBoth ?? message.Channel.IsPrivate;
                 var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(Permissions.AddReactions);
                 if (canReact)
                     await message.CreateReactionAsync(emoji).ConfigureAwait(false);
-                if ((!canReact || showBoth) && !string.IsNullOrEmpty(fallbackMessage))
+                if ((!canReact || showBoth.Value) && !string.IsNullOrEmpty(fallbackMessage))
                     await message.Channel.SendMessageAsync(fallbackMessage).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -85,7 +86,7 @@ namespace CompatBot.Utils
             return RemoveReactionAsync(ctx.Message, emoji);
         }
 
-        public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string fallbackMessage = null, bool showBoth = false)
+        public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string fallbackMessage = null, bool? showBoth = null)
         {
             return ReactWithAsync(ctx.Message, ctx.Client, emoji, fallbackMessage, showBoth);
         }
