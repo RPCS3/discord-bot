@@ -275,13 +275,16 @@ namespace CompatBot.Commands
                     if (currentYear > 0)
                         msg.AppendLine();
                     currentYear = evt.Year;
-                    msg.AppendLine($"**{(evt.Year == DateTime.UtcNow.Year ? "Current E3" : "E3 " + evt.Year)} schedule**:");
+                    msg.AppendLine($"**{(evt.Year == DateTime.UtcNow.Year ? "Current E3" : "E3 " + evt.Year)} schedule** (UTC):");
                 }
 
                 msg.Append("`");
                 if (ctx.Channel.IsPrivate && ModProvider.IsMod(ctx.Message.Author.Id))
                     msg.Append($"[{evt.Id:0000}] ");
-                msg.AppendLine($"{evt.Start.AsUtc():u} - {evt.End.AsUtc():u}`: {evt.Name}");
+                msg.Append($"{evt.Start.AsUtc():u}");
+                if (ctx.Channel.IsPrivate)
+                    msg.Append($@" - {evt.End.AsUtc():u}");
+                msg.AppendLine($@" ({evt.End.AsUtc() - evt.Start.AsUtc():h\:mm})`: {evt.Name}");
             }
             await ctx.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
