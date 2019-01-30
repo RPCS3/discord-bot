@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IrdLibraryClient\IrdLibraryClient.csproj" />
+    <ProjectReference Include="..\Clients\IrdLibraryClient\IrdLibraryClient.csproj" />
   </ItemGroup>
 
   <ItemGroup>

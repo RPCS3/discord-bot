@@ -5,21 +5,21 @@ VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompatBot", "CompatBot\CompatBot.csproj", "{6D9CA448-60C1-4D66-91D6-EC6C586508E6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompatApiClient", "CompatApiClient\CompatApiClient.csproj", "{8AF3C23B-D695-4391-A298-5BA4AAB8E13B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompatApiClient", "Clients\CompatApiClient\CompatApiClient.csproj", "{8AF3C23B-D695-4391-A298-5BA4AAB8E13B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsnClient", "PsnClient\PsnClient.csproj", "{AA5FF441-BD1D-4444-9178-7DC7BFF3C139}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsnClient", "Clients\PsnClient\PsnClient.csproj", "{AA5FF441-BD1D-4444-9178-7DC7BFF3C139}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomoglyphConverter", "HomoglyphConverter\HomoglyphConverter.csproj", "{A1E6566C-F506-43C8-B06E-9A472AEBF447}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IrdLibraryClient", "IrdLibraryClient\IrdLibraryClient.csproj", "{AA2A333B-CD30-41A5-A680-CC9BCB2D726B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IrdLibraryClient", "Clients\IrdLibraryClient\IrdLibraryClient.csproj", "{AA2A333B-CD30-41A5-A680-CC9BCB2D726B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{815D60C3-F84B-4AE2-B4E4-48004515FCFD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{E7FE0ADD-CBA6-4321-8A1C-0A3B5C3F54C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GithubClient", "GithubClient\GithubClient.csproj", "{AF8FDA29-864E-4A1C-9568-99DECB7E4B36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GithubClient", "Clients\GithubClient\GithubClient.csproj", "{AF8FDA29-864E-4A1C-9568-99DECB7E4B36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppveyorClient", "AppveyorClient\AppveyorClient.csproj", "{595ED201-1456-49F9-AD60-54B08499A5C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppveyorClient", "Clients\AppveyorClient\AppveyorClient.csproj", "{595ED201-1456-49F9-AD60-54B08499A5C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
