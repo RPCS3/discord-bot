@@ -33,12 +33,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AppveyorClient\AppveyorClient.csproj" />
-    <ProjectReference Include="..\CompatApiClient\CompatApiClient.csproj" />
-    <ProjectReference Include="..\GithubClient\GithubClient.csproj" />
+    <ProjectReference Include="..\Clients\AppveyorClient\AppveyorClient.csproj" />
+    <ProjectReference Include="..\Clients\CompatApiClient\CompatApiClient.csproj" />
+    <ProjectReference Include="..\Clients\GithubClient\GithubClient.csproj" />
     <ProjectReference Include="..\HomoglyphConverter\HomoglyphConverter.csproj" />
-    <ProjectReference Include="..\IrdLibraryClient\IrdLibraryClient.csproj" />
-    <ProjectReference Include="..\PsnClient\PsnClient.csproj" />
+    <ProjectReference Include="..\Clients\IrdLibraryClient\IrdLibraryClient.csproj" />
+    <ProjectReference Include="..\Clients\PsnClient\PsnClient.csproj" />
   </ItemGroup>
 
 </Project>
