@@ -14,7 +14,12 @@ namespace CompatBot.EventHandlers
     internal static class IsTheGamePlayableHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex GameNameStatusMention = new Regex(@"\b((is|does|can I play)\s+|(?<dumb>^))(?<game_title>.+?)(\s+((now|currently|at all|possibly|fully)\s+)?((is )?playable|work(s|ing)?)\b(?(dumb)\?))", DefaultOptions);
+        private static readonly Regex GameNameStatusMention1 = new Regex(
+            @"(\b((is|does|can I play|any(one|1) tr(y|ied))\s+)(?<game_title_1>.+?)\s+((now|currently|at all|possibly|fully|(on (this|the) )emu(lator))\s+)?((is )?playable|work(s|ing)?))" +
+            @"|(\b((can I play|any(one|1) tr(y|ied))\s+)(?<game_title_2>.+?)(\s+((now|currently|at all|possibly|fully)\s+)?((is )?playable|work(s|ing)?)|\?|$))" +
+            @"|(^(?<game_title_3>.+?)\s+((is )?(playable|work(s|ing)?))\?)",
+            DefaultOptions
+        );
         private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new ConcurrentDictionary<ulong, DateTime>();
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
         private static readonly Client Client = new Client();
@@ -42,11 +47,14 @@ namespace CompatBot.EventHandlers
                 return;
 #endif
 
-            var matches = GameNameStatusMention.Matches(args.Message.Content);
+            var matches = GameNameStatusMention1.Matches(args.Message.Content);
             if (!matches.Any())
                 return;
 
-            var gameTitle = matches.First().Groups["game_title"].Value.Trim();
+            var gameTitle = matches.Select(m => m.Groups["game_title_1"].Value)
+                .Concat(matches.Select(m => m.Groups["game_title_2"].Value))
+                .Concat(matches.Select(m => m.Groups["game_title_3"].Value))
+                .FirstOrDefault(t => !string.IsNullOrEmpty(t));
             if (string.IsNullOrEmpty(gameTitle))
                 return;
 
