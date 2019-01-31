@@ -100,31 +100,21 @@ namespace CompatBot.Commands
             if (prState.state == "Open" || prState.state == "Closed")
             {
                 var downloadHeader = "Latest PR Build Download";
-                var downloadText = "";
+                var downloadText = "Waiting for the first successful build";
                 if (prInfo.StatusesUrl is string statusesUrl)
                 {
-                    var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
-                    statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
-                    if (statuses?.Count > 0 && statuses.FirstOrDefault(s => s.State == "success") is StatusInfo statusSuccess)
-                    {
-                        var artifactInfo = await appveyorClient.GetPrDownloadAsync(statusSuccess.TargetUrl, Config.Cts.Token).ConfigureAwait(false);
-                        if (artifactInfo == null)
-                            downloadText = $"[⏬ {statusSuccess.Description}]({statusSuccess.TargetUrl})";
-                        else
-                        {
-                            if (artifactInfo.Artifact.Created is DateTime buildTime)
-                                downloadHeader = $"{downloadHeader} ({buildTime:u})";
-                            downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
-                        }
-                    }
-                    else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                    if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                     {
                         if (artifactInfo.Artifact.Created is DateTime buildTime)
                             downloadHeader = $"{downloadHeader} ({buildTime:u})";
                         downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
                     }
                     else
+                    {
+                        var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
+                        statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
                         downloadText = statuses?.First().Description ?? downloadText;
+                    }
                 }
                 else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                 {
