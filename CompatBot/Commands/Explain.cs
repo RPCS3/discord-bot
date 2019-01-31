@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -41,7 +43,7 @@ namespace CompatBot.Commands
 
             term = term.ToLowerInvariant();
             var result = await LookupTerm(term).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(result.explanation) || !string.IsNullOrEmpty(result.fuzzyMatch))
+            if (result.explanation == null || !string.IsNullOrEmpty(result.fuzzyMatch))
             {
                 term = term.StripQuotes();
                 var idx = term.LastIndexOf(" to ");
@@ -68,7 +70,7 @@ namespace CompatBot.Commands
 
             try
             {
-                if (result.score > 0.5)
+                if (result.explanation != null && result.score > 0.5)
                 {
                     if (!string.IsNullOrEmpty(result.fuzzyMatch))
                     {
@@ -78,7 +80,14 @@ namespace CompatBot.Commands
 #endif
                         await ctx.RespondAsync(fuzzyNotice).ConfigureAwait(false);
                     }
-                    await ctx.RespondAsync(result.explanation).ConfigureAwait(false);
+
+                    if (result.explanation.Attachment?.Length > 0)
+                    {
+                        using (var memoryStream = new MemoryStream(result.explanation.Attachment))
+                            await ctx.Channel.SendFileAsync(result.explanation.AttachmentFilename, memoryStream, result.explanation.Text).ConfigureAwait(false);
+                    }
+                    else
+                        await ctx.RespondAsync(result.explanation.Text).ConfigureAwait(false);
                     return;
                 }
             }
@@ -102,24 +111,52 @@ namespace CompatBot.Commands
         [Description("Adds a new explanation to the list")]
         public async Task Add(CommandContext ctx,
             [Description("A term to explain. Quote it if it contains spaces")] string term,
-            [RemainingText, Description("Explanation text")] string explanation)
+            [RemainingText, Description("Explanation text. Can have attachment")] string explanation)
         {
-            term = term.ToLowerInvariant().StripQuotes();
-            if (string.IsNullOrEmpty(explanation))
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "An explanation for the term must be provided").ConfigureAwait(false);
-            else
+            try
             {
-                using (var db = new BotDb())
+                term = term.ToLowerInvariant().StripQuotes();
+                byte[] attachment = null;
+                string attachmentFilename = null;
+                if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment att)
                 {
-                    if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
-                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{term}` is already defined. Use `update` to update an existing term.").ConfigureAwait(false);
-                    else
+                    attachmentFilename = att.FileName;
+                    try
                     {
-                        await db.Explanation.AddAsync(new Explanation {Keyword = term, Text = explanation}).ConfigureAwait(false);
-                        await db.SaveChangesAsync().ConfigureAwait(false);
-                        await ctx.ReactWithAsync(Config.Reactions.Success, $"`{term}` was successfully added").ConfigureAwait(false);
+                        using (var httpClient = HttpClientFactory.Create(new CompressionMessageHandler()))
+                            attachment = await httpClient.GetByteArrayAsync(att.Url).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e, "Failed to download explanation attachment " + ctx);
                     }
                 }
+
+                if (string.IsNullOrEmpty(explanation) && string.IsNullOrEmpty(attachmentFilename))
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "An explanation for the term must be provided").ConfigureAwait(false);
+                else
+                {
+                    using (var db = new BotDb())
+                    {
+                        if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
+                            await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{term}` is already defined. Use `update` to update an existing term.").ConfigureAwait(false);
+                        else
+                        {
+                            var entity = new Explanation
+                            {
+                                Keyword = term, Text = explanation ?? "", Attachment = attachment,
+                                AttachmentFilename = attachmentFilename
+                            };
+                            await db.Explanation.AddAsync(entity).ConfigureAwait(false);
+                            await db.SaveChangesAsync().ConfigureAwait(false);
+                            await ctx.ReactWithAsync(Config.Reactions.Success, $"`{term}` was successfully added").ConfigureAwait(false);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, $"Failed to add explanation for `{term}`");
             }
         }
 
@@ -130,6 +167,21 @@ namespace CompatBot.Commands
             [RemainingText, Description("New explanation text")] string explanation)
         {
             term = term.ToLowerInvariant().StripQuotes();
+            byte[] attachment = null;
+            string attachmentFilename = null;
+            if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment att)
+            {
+                attachmentFilename = att.FileName;
+                try
+                {
+                    using (var httpClient = HttpClientFactory.Create(new CompressionMessageHandler()))
+                        attachment = await httpClient.GetByteArrayAsync(att.Url).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to download explanation attachment " + ctx);
+                }
+            }
             using (var db = new BotDb())
             {
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
@@ -137,7 +189,12 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
                 else
                 {
-                    item.Text = explanation;
+                    item.Text = explanation ?? "";
+                    if (attachment?.Length > 0)
+                    {
+                        item.Attachment = attachment;
+                        item.AttachmentFilename = attachmentFilename;
+                    }
                     await db.SaveChangesAsync().ConfigureAwait(false);
                     await ctx.ReactWithAsync(Config.Reactions.Success, "Term was updated").ConfigureAwait(false);
                 }
@@ -203,21 +260,72 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("remove"), Aliases("delete", "del", "erase", "obliterate"), RequiresBotModRole]
+        [Group("remove"), Aliases("delete", "del", "erase", "obliterate"), RequiresBotModRole]
         [Description("Removes an explanation from the definition list")]
-        public async Task Remove(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
+        internal sealed class Remove: BaseCommandModuleCustom
         {
-            term = term.ToLowerInvariant().StripQuotes();
-            using (var db = new BotDb())
+            [GroupCommand]
+            public async Task RemoveExplanation(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
             {
-                var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-                if (item == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
-                else
+                term = term.ToLowerInvariant().StripQuotes();
+                using (var db = new BotDb())
                 {
-                    db.Explanation.Remove(item);
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed `{term}`").ConfigureAwait(false);
+                    var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                    if (item == null)
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
+                    else
+                    {
+                        db.Explanation.Remove(item);
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed `{term}`").ConfigureAwait(false);
+                    }
+                }
+            }
+
+            [Command("attachment"), Aliases("image", "picture", "file")]
+            [Description("Removes attachment from specified explanation. If there is no text, the whole explanation is removed")]
+            public async Task Attachment(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
+            {
+                term = term.ToLowerInvariant().StripQuotes();
+                using (var db = new BotDb())
+                {
+                    var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                    if (item == null)
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
+                    else if (string.IsNullOrEmpty(item.AttachmentFilename))
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` doesn't have any attachments").ConfigureAwait(false);
+                    else if (string.IsNullOrEmpty(item.Text))
+                        await RemoveExplanation(ctx, term).ConfigureAwait(false);
+                    else
+                    {
+                        item.Attachment = null;
+                        item.AttachmentFilename = null;
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed attachment for `{term}`").ConfigureAwait(false);
+                    }
+                }
+            }
+
+            [Command("text"), Aliases("description")]
+            [Description("Removes explanation text. If there is no attachment, the whole explanation is removed")]
+            public async Task Text(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
+            {
+                term = term.ToLowerInvariant().StripQuotes();
+                using (var db = new BotDb())
+                {
+                    var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+                    if (item == null)
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
+                    else if (string.IsNullOrEmpty(item.Text))
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` doesn't have any text").ConfigureAwait(false);
+                    else if (string.IsNullOrEmpty(item.AttachmentFilename))
+                        await RemoveExplanation(ctx, term).ConfigureAwait(false);
+                    else
+                    {
+                        item.Text = "";
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed explanation text for `{term}`").ConfigureAwait(false);
+                    }
                 }
             }
         }
@@ -247,18 +355,24 @@ namespace CompatBot.Commands
             using (var db = new BotDb())
             {
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == termOrLink).ConfigureAwait(false);
-                if (string.IsNullOrEmpty(item?.Text))
+                if (item == null)
                 {
                     var term = ctx.Message.Content.Split(' ', 2).Last();
                     await ShowExplanation(ctx, term).ConfigureAwait(false);
                 }
                 else
-                    using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text)))
-                        await ctx.Channel.SendFileAsync($"{termOrLink}.txt", stream).ConfigureAwait(false);
+                {
+                    if (!string.IsNullOrEmpty(item.Text))
+                        using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text)))
+                            await ctx.Channel.SendFileAsync($"{termOrLink}.txt", stream).ConfigureAwait(false);
+                    if (!string.IsNullOrEmpty(item.AttachmentFilename))
+                        using (var stream = new MemoryStream(item.Attachment))
+                            await ctx.Channel.SendFileAsync(item.AttachmentFilename, stream).ConfigureAwait(false);
+                }
             }
         }
 
-        private async Task<(string term, string explanation, string fuzzyMatch, double score)> LookupTerm(string term)
+        private async Task<(Explanation explanation, string fuzzyMatch, double score)> LookupTerm(string term)
         {
             string fuzzyMatch = null;
             double coefficient;
@@ -277,7 +391,7 @@ namespace CompatBot.Commands
                 else
                     coefficient = 2.0;
             }
-            return (term, explanation?.Text, fuzzyMatch, coefficient);
+            return (explanation, fuzzyMatch, coefficient);
         }
 
         private async Task DumpLink(CommandContext ctx, string messageLink)

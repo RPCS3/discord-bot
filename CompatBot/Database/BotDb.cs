@@ -81,6 +81,9 @@ namespace CompatBot.Database
         public string Keyword { get; set; }
         [Required]
         public string Text { get; set; }
+        [MaxLength(7*1024*1024)]
+        public byte[] Attachment { get; set; }
+        public string AttachmentFilename { get; set; }
     }
 
     internal class DisabledCommand
