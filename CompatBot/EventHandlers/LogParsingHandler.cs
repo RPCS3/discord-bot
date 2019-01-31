@@ -122,7 +122,7 @@ namespace CompatBot.EventHandlers
                                             }
                                             await Task.WhenAll(
                                                 client.ReportAsync("Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity),
-                                                Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{message.Content.Sanitize()} - {result.PiracyTrigger}")
+                                                Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.PiracyTrigger} - {result.PiracyContext.Sanitize()}")
                                             );
                                         }
                                     }
