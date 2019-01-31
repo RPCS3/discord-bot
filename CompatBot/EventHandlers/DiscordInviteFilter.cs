@@ -6,11 +6,13 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
+using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
@@ -21,6 +23,8 @@ namespace CompatBot.EventHandlers
         private static readonly Regex DiscordInviteLink = new Regex(@"(https?://)?discord(app\.com/invite|\.gg)/(?<invite_id>.*?)(\s|\W|$)", DefaultOptions);
         private static readonly Regex DiscordMeLink = new Regex(@"(https?://)?discord\.me/(?<me_id>.*?)(\s|$)", DefaultOptions);
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
+        private static readonly MemoryCache InviteCodeCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
@@ -61,13 +65,15 @@ namespace CompatBot.EventHandlers
             if (message.Author.IsBot)
                 return true;
 
+#if !DEBUG
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
                 return true;
+#endif
 
             if (message.Reactions.Any(r => r.Emoji == Config.Reactions.Moderated && r.IsMe))
                 return true;
 
-            var (hasInvalidResults, invites) = await client.GetInvitesAsync(message.Content).ConfigureAwait(false);
+            var (hasInvalidResults, attemptedWorkaround, invites) = await client.GetInvitesAsync(message.Content, message.Author).ConfigureAwait(false);
             if (!hasInvalidResults && invites.Count == 0)
                 return true;
 
@@ -97,37 +103,63 @@ namespace CompatBot.EventHandlers
             {
                 if (!await InviteWhitelistProvider.IsWhitelistedAsync(invite).ConfigureAwait(false))
                 {
+                    if (!InviteCodeCache.TryGetValue(message.Author.Id, out HashSet<string> recentInvites))
+                        recentInvites = new HashSet<string>();
+                    var circumventionAttempt = !recentInvites.Add(invite.Code) && attemptedWorkaround; //do not flip, must add to cache always
+                    InviteCodeCache.Set(message.Author.Id, recentInvites, CacheDuration);
+                    var removed = false;
                     try
                     {
-                        await message.DeleteAsync("Not a white-listed discord invite link").ConfigureAwait(false);
-                        await client.ReportAsync("An unapproved discord invite", message, $"Invite {invite.Code} was resolved to the {invite.Guild.Name} server", null, ReportSeverity.Low).ConfigureAwait(false);
-                        await message.Channel.SendMessageAsync($"{message.Author.Mention} invites to other servers must be whitelisted first.\n" +
-                                                               $"Please refrain from posting it again until you have received an approval from a moderator.").ConfigureAwait(false);
+                        await message.DeleteAsync("Not a white-listed discord invite").ConfigureAwait(false);
+                        removed = true;
                     }
                     catch (Exception e)
                     {
                         Config.Log.Warn(e);
-                        await client.ReportAsync("An unapproved discord invite", message, $"Invite {invite.Code} was resolved to the {invite.Guild.Name} server", null, ReportSeverity.Medium).ConfigureAwait(false);
-                        await message.ReactWithAsync(
-                            client,
-                            Config.Reactions.Moderated,
-                            $"{message.Author.Mention} invites to other servers must be whitelisted first.\n" +
-                            $"Please remove it and refrain from posting it again until you have received an approval from a moderator.",
-                            true
-                        ).ConfigureAwait(false);
                     }
+
+                    var codeResolveMsg = $"Invite {invite.Code} was resolved to the {invite.Guild?.Name} server";
+                    var reportMsg = codeResolveMsg;
+                    string userMsg;
+                    if (circumventionAttempt)
+                    {
+                        reportMsg += "\nAlso tried to workaround filter despite being asked not to do so.";
+                        userMsg = $"{message.Author.Mention} you have been asked nicely to not post invites to this unapproved discord server before.";
+                    }
+                    else
+                    {
+                        userMsg = $"{message.Author.Mention} invites to other servers must be whitelisted first.\n";
+                        if (removed)
+                            userMsg += "Please refrain from posting it again until you have received an approval from a moderator.";
+                        else
+                            userMsg += "Please remove it and refrain from posting it again until you have received an approval from a moderator.";
+                    }
+                    await client.ReportAsync("An unapproved discord invite", message, reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
+                    await message.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
+                    if (circumventionAttempt)
+                        await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Attempted to circumvent discord invite filter", codeResolveMsg);
                     return false;
                 }
             }
             return true;
         }
 
-        public static async Task<(bool hasInvalidInvite, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, bool tryMessageAsACode = false)
+        public static async Task<(bool hasInvalidInvite, bool attemptToWorkaround, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, DiscordUser author = null, bool tryMessageAsACode = false)
         {
-            var inviteCodes = InviteLink.Matches(message).Select(m => m.Groups["invite_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+            var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"]?.Value).Where(s => !string.IsNullOrEmpty(s)));
             var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+            var attemptedWorkaround = false;
+            if (author != null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string> recentInvites))
+            {
+                foreach (var c in recentInvites)
+                    if (message.Contains(c))
+                    {
+                        attemptedWorkaround |= inviteCodes.Add(c);
+                        InviteCodeCache.Set(author.Id, recentInvites, CacheDuration);
+                    }
+            }
             if (inviteCodes.Count == 0 && discordMeLinks.Count == 0 && !tryMessageAsACode)
-                return (false, new List<DiscordInvite>(0));
+                return (false, attemptedWorkaround, new List<DiscordInvite>(0));
 
             var hasInvalidInvites = false;
             foreach (var meLink in discordMeLinks)
@@ -166,7 +198,6 @@ namespace CompatBot.EventHandlers
 
             if (tryMessageAsACode)
                 inviteCodes.Add(message);
-            inviteCodes = inviteCodes.Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
 
             var result = new List<DiscordInvite>(inviteCodes.Count);
             foreach (var inviteCode in inviteCodes)
@@ -180,7 +211,7 @@ namespace CompatBot.EventHandlers
                     hasInvalidInvites = true;
                     Config.Log.Warn(e, $"Failed to get invite for code {inviteCode}");
                 }
-            return (hasInvalidInvites, result);
+            return (hasInvalidInvites, attemptedWorkaround, result);
         }
 
     }

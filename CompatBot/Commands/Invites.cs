@@ -93,7 +93,7 @@ namespace CompatBot.Commands
         [Description("Adds a new guild to the whitelist")]
         public async Task Add(CommandContext ctx, [RemainingText, Description("An invite link or just an invite token")] string invite)
         {
-            var (_, invites) = await ctx.Client.GetInvitesAsync(invite, true).ConfigureAwait(false);
+            var (_, _, invites) = await ctx.Client.GetInvitesAsync(invite, tryMessageAsACode: true).ConfigureAwait(false);
             if (invites.Count == 0)
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Need to specify an invite link or a server id").ConfigureAwait(false);
