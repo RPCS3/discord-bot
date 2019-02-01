@@ -189,7 +189,8 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
                 else
                 {
-                    item.Text = explanation ?? "";
+                    if (!string.IsNullOrEmpty(explanation))
+                        item.Text = explanation;
                     if (attachment?.Length > 0)
                     {
                         item.Attachment = attachment;
