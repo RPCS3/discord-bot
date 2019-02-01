@@ -155,7 +155,9 @@ namespace CompatBot.Utils
             }
             catch (Exception e)
             {
+#if DEBUG
                 ApiConfig.Log.Warn(e);
+#endif
                 return fallbackEmoji;
             }
         }
