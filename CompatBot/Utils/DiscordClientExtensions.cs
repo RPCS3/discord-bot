@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -160,6 +161,14 @@ namespace CompatBot.Utils
 #endif
                 return fallbackEmoji;
             }
+        }
+
+        public static Task SendMessageAsync(this DiscordChannel channel, string message, byte[] attachment, string filename)
+        {
+            if (!string.IsNullOrEmpty(filename) && attachment?.Length > 0)
+                return channel.SendFileAsync(filename, new MemoryStream(attachment), message);
+            else
+                return channel.SendMessageAsync(message);
         }
 
         private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity)
