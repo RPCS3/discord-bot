@@ -81,13 +81,8 @@ namespace CompatBot.Commands
                         await ctx.RespondAsync(fuzzyNotice).ConfigureAwait(false);
                     }
 
-                    if (result.explanation.Attachment?.Length > 0)
-                    {
-                        using (var memoryStream = new MemoryStream(result.explanation.Attachment))
-                            await ctx.Channel.SendFileAsync(result.explanation.AttachmentFilename, memoryStream, result.explanation.Text).ConfigureAwait(false);
-                    }
-                    else
-                        await ctx.RespondAsync(result.explanation.Text).ConfigureAwait(false);
+                    var explain = result.explanation;
+                    await ctx.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
                     return;
                 }
             }

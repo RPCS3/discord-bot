@@ -16,7 +16,7 @@ namespace CompatBot.EventHandlers
                 if (explanation != null)
                 {
                     var dm = await args.Member.CreateDmChannelAsync().ConfigureAwait(false);
-                    await dm.SendMessageAsync(explanation.Text).ConfigureAwait(false);
+                    await dm.SendMessageAsync(explanation.Text, explanation.Attachment, explanation.AttachmentFilename).ConfigureAwait(false);
                     Config.Log.Info($"Sent motd to {args.Member.GetMentionWithNickname()}");
                 }
             }

@@ -9,14 +9,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.EventHandlers
 {
-    internal sealed class PostLogHelpHandler
+    internal static class PostLogHelpHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
         private static readonly Regex UploadLogMention = new Regex(@"\b(post|upload|send)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full)\s+)*\blogs?\b", DefaultOptions);
         private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
         private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
+        private static readonly Explanation DefaultLogUploadExplanation = new Explanation{ Text = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon."};
         private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
-        public const string DefaultLogUploadExplanation = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon.";
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
@@ -43,14 +43,13 @@ namespace CompatBot.EventHandlers
             try
             {
                 var explanation = await GetLogUploadExplanationAsync().ConfigureAwait(false);
-
                 var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 10).ConfigureAwait(false);
                 foreach (var msg in lastBotMessages)
                     if (BotShutupHandler.NeedToSilence(msg).needToChill
-                        || (msg.Author.IsCurrent && msg.Content == explanation))
+                        || (msg.Author.IsCurrent && msg.Content == explanation.Text))
                         return;
 
-                await args.Channel.SendMessageAsync(explanation).ConfigureAwait(false);
+                await args.Channel.SendMessageAsync(explanation.Text, explanation.Attachment, explanation.AttachmentFilename).ConfigureAwait(false);
                 lastMention = DateTime.UtcNow;
             }
             finally
@@ -59,17 +58,12 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task<string> GetLogUploadExplanationAsync()
+        public static async Task<Explanation> GetLogUploadExplanationAsync()
         {
-            string explanation;
+            Explanation result;
             using (var db = new BotDb())
-            {
-                var result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == "log").ConfigureAwait(false);
-                explanation = result?.Text;
-            }
-            if (string.IsNullOrEmpty(explanation))
-                explanation = DefaultLogUploadExplanation;
-            return explanation;
+                result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == "log").ConfigureAwait(false);
+            return result ?? DefaultLogUploadExplanation;
         }
     }
 }
