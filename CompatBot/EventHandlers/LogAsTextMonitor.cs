@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Utils;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
@@ -43,11 +44,11 @@ namespace CompatBot.EventHandlers
                 if (brokenDump)
                     msg += "Please follow the quickstart guide to get a proper dump of a digital title.\n" +
                            "Also please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant.\n" +
-                           logUploadExplain;
+                           logUploadExplain.Text;
                 else
                     msg = $"{args.Message.Author.Mention} please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant." +
-                        logUploadExplain;
-                await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+                          logUploadExplain.Text;
+                await args.Channel.SendMessageAsync(msg, logUploadExplain.Attachment, logUploadExplain.AttachmentFilename).ConfigureAwait(false);
             }
         }
     }
