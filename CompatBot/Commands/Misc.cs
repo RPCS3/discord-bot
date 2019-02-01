@@ -213,7 +213,6 @@ namespace CompatBot.Commands
                 foreach (var attachment in ctx.Message.Attachments)
                     whatever += $" {attachment.FileSize}";
 
-
                 var nekoUser = await ctx.Client.GetUserAsync(272032356922032139ul).ConfigureAwait(false);
                 var nekoMember = ctx.Client.GetMember(ctx.Guild, nekoUser);
                 var nekoMatch = new HashSet<string>(new[] {nekoUser.Id.ToString(), nekoUser.Username, nekoMember?.DisplayName ?? "neko", "neko", "nekotekina",});
@@ -279,13 +278,11 @@ namespace CompatBot.Commands
                         result.Append(ctx.Client.CurrentUser.Mention).Append("'s");
                     else if (word.StartsWith("actually") || word.StartsWith("nevermind") || word.StartsWith("nvm"))
                         result.Clear();
-                    else if (i == 0 && await new DiscordMemberConverter().ConvertAsync(word, ctx).ConfigureAwait(false) is Optional<DiscordMember> member && member.HasValue)
+                    else if (i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
                     {
-                        var m = member.Value;
                         if (suffix.Length == 0)
                             MakeCustomRoleRating(m);
                         result.Append(m.Mention);
-
                     }
                     else if (nekoMatch.Contains(word))
                     {

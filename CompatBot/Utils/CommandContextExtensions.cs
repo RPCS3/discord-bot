@@ -1,7 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils
@@ -9,6 +12,22 @@ namespace CompatBot.Utils
     public static class CommandContextExtensions
     {
         internal static readonly Regex MessageLinkRegex = new Regex(@"(?:https?://)?discordapp.com/channels/(?<guild>\d+)/(?<channel>\d+)/(?<message>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        public static async Task<DiscordMember> ResolveMemberAsync(this CommandContext ctx, string word)
+        {
+            try
+            {
+                var result = await new DiscordMemberConverter().ConvertAsync(word, ctx).ConfigureAwait(false);
+                return result.HasValue ? result.Value : null;
+            }
+            catch (Exception e)
+            {
+#if DEBUG
+                Config.Log.Warn(e, $"Failed to resolve member {word}");
+#endif
+                return null;
+            }
+        }
 
         public static async Task<DiscordChannel> CreateDmAsync(this CommandContext ctx)
         {
