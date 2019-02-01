@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
+using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Commands
@@ -26,6 +29,61 @@ namespace CompatBot.Commands
         public Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
         {
             return Say(ctx, ctx.Channel, message);
+        }
+
+        [Command("react")]
+        [Description("Add reactions to the specified message")]
+        public async Task React(
+            CommandContext ctx,
+            [Description("Message link")] string messageLink,
+            [RemainingText, Description("List of reactions to add")]string emojis
+        )
+        {
+            try
+            {
+                var message = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false);
+                if (message == null)
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't find the message").ConfigureAwait(false);
+                    return;
+                }
+
+                string emoji = "";
+                for (var i = 0; i < emojis.Length; i++)
+                {
+                    try
+                    {
+                        var c = emojis[i];
+                        if (char.IsHighSurrogate(c))
+                            emoji += c;
+                        else
+                        {
+                            DiscordEmoji de;
+                            if (c == '<')
+                            {
+                                var endIdx = emojis.IndexOf('>', i);
+                                if (endIdx < i)
+                                    endIdx = emojis.Length;
+                                emoji = emojis.Substring(i, endIdx - i);
+                                i = endIdx - 1;
+                                var emojiId = ulong.Parse(emoji.Substring(emoji.LastIndexOf(':') + 1));
+                                de = DiscordEmoji.FromGuildEmote(ctx.Client, emojiId);
+                            }
+                            else
+                                de = DiscordEmoji.FromUnicode(emoji + c);
+                            emoji = "";
+                            await message.ReactWithAsync(ctx.Client, de).ConfigureAwait(false);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Debug(e);
+            }
         }
     }
 }

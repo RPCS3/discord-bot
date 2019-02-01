@@ -5,14 +5,13 @@ using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus;
-using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using NReco.Text;
 
 namespace CompatBot.EventHandlers
 {
-    internal static class BotShutupHandler
+    internal static class BotReactionsHandler
     {
         private static readonly AhoCorasickDoubleArrayTrie<bool> ChillCheck = new AhoCorasickDoubleArrayTrie<bool>(new[]
         {
@@ -31,7 +30,7 @@ namespace CompatBot.EventHandlers
                 "arigato", "aregato", "arigatou", "aregatou", "oregato", "origato",
                 "poor bot", "good job", "well done", "good work", "excellent work",
                 "bot is love", "love this bot", "love you", "like this bot", "awesome",
-                "great",
+                "great", "neat bot",
             }.ToDictionary(s => s, _ => false)
         ), true);
 

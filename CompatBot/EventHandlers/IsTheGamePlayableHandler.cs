@@ -68,7 +68,7 @@ namespace CompatBot.EventHandlers
 
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
             foreach (var msg in lastBotMessages)
-                if (BotShutupHandler.NeedToSilence(msg).needToChill)
+                if (BotReactionsHandler.NeedToSilence(msg).needToChill)
                     return;
 
             try
