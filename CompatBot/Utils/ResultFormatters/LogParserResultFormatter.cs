@@ -52,12 +52,12 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly TimeSpan OldBuild = TimeSpan.FromDays(30);
         private static readonly TimeSpan VeryOldBuild = TimeSpan.FromDays(60);
-        private static readonly TimeSpan VeryVeryOldBuild = TimeSpan.FromDays(90);
+        //private static readonly TimeSpan VeryVeryOldBuild = TimeSpan.FromDays(90);
         private static readonly TimeSpan AncientBuild = TimeSpan.FromDays(180);
         private static readonly TimeSpan PrehistoricBuild = TimeSpan.FromDays(365);
 
         private static readonly char[] PrioritySeparator = {' '};
-        private static readonly string[] EmojiPriority = { "😱", "‼", "❗", "💢", "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
+        private static readonly string[] EmojiPriority = { "😱", "💢", "‼", "❗",  "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
         private const string TrueMark = "[x]";
         private const string FalseMark = "[ ]";
 
@@ -509,9 +509,11 @@ namespace CompatBot.Utils.ResultFormatters
                         prefix = "😱";
                     else if (timeDelta > AncientBuild)
                         prefix = "💢";
-                    else if (timeDelta > VeryVeryOldBuild)
-                        prefix = "‼";
+                    //else if (timeDelta > VeryVeryOldBuild)
+                    //    prefix = "💢";
                     else if (timeDelta > VeryOldBuild)
+                        prefix = "‼";
+                    else if (timeDelta > OldBuild)
                         prefix = "❗";
                 }
                 else
