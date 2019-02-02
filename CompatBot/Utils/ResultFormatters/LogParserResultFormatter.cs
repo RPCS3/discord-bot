@@ -310,10 +310,10 @@ namespace CompatBot.Utils.ResultFormatters
                 if (af == "Disabled")
                     notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
                 else if (af.ToLowerInvariant() != "auto" && af != "16")
-                    notes.Add($"⁉ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
+                    notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
-                notes.Add($"⁉ `Resolution Scale` is `{resScale}%`.");
+                notes.Add($"❔ `Resolution Scale` is `{resScale}%`.");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
                 notes.Add("⚠ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == TrueMark)
@@ -482,10 +482,11 @@ namespace CompatBot.Utils.ResultFormatters
             discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
                 notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
+            DiscordEmoji pirateEmoji = null;
             if (discAsPkg)
             {
-                var emoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
-                notes.Add($"{emoji} Disc game installed as a PKG ");
+                pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
+                notes.Add($"{pirateEmoji} Disc game installed as a PKG ");
             }
 
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
@@ -525,7 +526,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
 
             var notesContent = new StringBuilder();
-            foreach (var line in SortLines(notes))
+            foreach (var line in SortLines(notes, pirateEmoji))
                 notesContent.AppendLine(line);
             PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
@@ -701,7 +702,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             var priorityList = new List<string>(EmojiPriority);
             if (piracyEmoji != null)
-                priorityList.Add(piracyEmoji.ToString());
+                priorityList.Insert(0, piracyEmoji.ToString());
             return notes
                 .Select(s =>
                         {
