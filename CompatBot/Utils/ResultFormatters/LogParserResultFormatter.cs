@@ -50,6 +50,14 @@ namespace CompatBot.Utils.ResultFormatters
             {"BCJS70013", "NPJA00102"},
         };
 
+        private static readonly TimeSpan OldBuild = TimeSpan.FromDays(30);
+        private static readonly TimeSpan VeryOldBuild = TimeSpan.FromDays(60);
+        //private static readonly TimeSpan VeryVeryOldBuild = TimeSpan.FromDays(90);
+        private static readonly TimeSpan AncientBuild = TimeSpan.FromDays(180);
+        private static readonly TimeSpan PrehistoricBuild = TimeSpan.FromDays(365);
+
+        private static readonly char[] PrioritySeparator = {' '};
+        private static readonly string[] EmojiPriority = { "😱", "💢", "‼", "❗",  "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
         private const string TrueMark = "[x]";
         private const string FalseMark = "[ ]";
 
@@ -288,39 +296,39 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
-            var notes = new StringBuilder();
+            var notes = new List<string>();
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
-                notes.AppendLine("`Resolution` was changed from the recommended `1280x720`");
+                notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == TrueMark)
-                notes.AppendLine("`Hook Static Functions` is enabled, please disable");
+                notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == TrueMark)
-                notes.AppendLine("`/host_root/` is enabled");
+                notes.Add("❔ `/host_root/` is enabled");
             if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == TrueMark)
-                notes.AppendLine("`GPU Texture Scaling` is enabled, please disable");
+                notes.Add("⚠ `GPU Texture Scaling` is enabled, please disable");
             if (items["af_override"] is string af)
             {
                 if (af == "Disabled")
-                    notes.AppendLine("`Anisotropic Filter` is `Disabled`, please use `Auto` instead");
+                    notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
                 else if (af.ToLowerInvariant() != "auto" && af != "16")
-                    notes.AppendLine($"`Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
+                    notes.Add($"⁉ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
-                notes.AppendLine($"`Resolution Scale` is `{resScale}%`.");
+                notes.Add($"⁉ `Resolution Scale` is `{resScale}%`.");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
-                notes.AppendLine("`Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
+                notes.Add("⚠ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == TrueMark)
-                notes.AppendLine("`ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+                notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout && int.TryParse(driverRecoveryTimeout, out var drtValue) && drtValue != 1000000)
             {
                 if (drtValue == 0)
-                    notes.AppendLine("`Driver Recovery Timeout` is set to 0 (infinite), please use default value of 1000000");
+                    notes.Add("⚠ `Driver Recovery Timeout` is set to 0 (infinite), please use default value of 1000000");
                 else if (drtValue < 10_000)
-                    notes.AppendLine($"`Driver Recovery Timeout` is set too low: {GetTimeFormat(drtValue)} (1 frame @ {(1_000_000.0 / drtValue):0.##} fps)");
+                    notes.Add($"⚠ `Driver Recovery Timeout` is set too low: {GetTimeFormat(drtValue)} (1 frame @ {(1_000_000.0 / drtValue):0.##} fps)");
                 else if (drtValue > 10_000_000)
-                    notes.AppendLine($"`Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
+                    notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
             }
             if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == TrueMark)
-                notes.AppendLine("`HLE lwmutex` is enabled, might affect compatibility");
+                notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
 /*
@@ -328,7 +336,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.AppendLine("`Giga` mode for `SPU Block Size` is strongly not recommended to use");
 */
                 if (spuBlockSize != "Safe")
-                    notes.AppendLine($"Please use `Safe` mode for `SPU Block Size`. `{spuBlockSize}` is currently unstable.");
+                    notes.Add($"⚠ Please use `Safe` mode for `SPU Block Size`. `{spuBlockSize}` is currently unstable.");
             }
 
             if (items["lib_loader"] is string libLoader
@@ -336,11 +344,13 @@ namespace CompatBot.Utils.ResultFormatters
                 && (libLoader == "Auto"
                     || (libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase) && string.IsNullOrEmpty(items["library_list"]))))
             {
-                notes.AppendLine("Please use `Load liblv2.sprx only` as a `Library loader`");
+                notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
             }
 
-            var notesContent = notes.ToString().Trim();
-            PageSection(builder, notesContent, "Important Settings to Review");
+            var notesContent = new StringBuilder();
+            foreach (var line in SortLines(notes))
+                notesContent.AppendLine(line);
+            PageSection(builder, notesContent.ToString().Trim(), "Important Settings to Review");
         }
 
         private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, NameValueCollection items)
@@ -362,17 +372,17 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static async Task<bool> HasBrokenFilesAsync(NameValueCollection items)
+        private static async Task<(bool irdChecked, bool broken)> HasBrokenFilesAsync(NameValueCollection items)
         {
             if (!(items["serial"] is string productCode))
-                return false;
+                return (false, false);
 
             if (!productCode.StartsWith("B") && !productCode.StartsWith("M"))
-                return false;
+                return (false, false);
 
             if (string.IsNullOrEmpty(items["broken_directory"])
                 && string.IsNullOrEmpty(items["broken_filename"]))
-                return false;
+                return (false, false);
 
             var getIrdTask = irdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token);
             var missingDirs = items["broken_directory"]?.Split(Environment.NewLine).Distinct().ToList() ?? new List<string>(0);
@@ -391,50 +401,57 @@ namespace CompatBot.Utils.ResultFormatters
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to get IRD files for " + productCode);
-                return false;
+                return (false, false);
             }
             if (knownFiles.Count == 0)
-                return false;
+                return (false, false);
 
             var broken = missingFiles.Any(knownFiles.Contains);
             if (broken)
-                return true;
+                return (true, true);
 
             var knownDirs = new HashSet<string>(knownFiles.Select(f => Path.GetDirectoryName(f).Replace('\\', '/')), StringComparer.InvariantCultureIgnoreCase);
-            return missingDirs.Any(knownDirs.Contains);
+            return (true, missingDirs.Any(knownDirs.Contains));
         }
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items, DiscordClient discordClient)
         {
             BuildWeirdSettingsSection(builder, items);
             BuildMissingLicensesSection(builder, items);
-            var brokenDump = !string.IsNullOrEmpty(items["edat_block_offset"]) || await HasBrokenFilesAsync(items).ConfigureAwait(false);
+            var (irdChecked, brokenDump) = await HasBrokenFilesAsync(items).ConfigureAwait(false);
+            brokenDump |= !string.IsNullOrEmpty(items["edat_block_offset"]);
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
-            var notes = new StringBuilder();
+            var notes = new List<string>();
             if (items["fatal_error"] is string fatalError)
             {
                 builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                 if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>"))
-                    notes.AppendLine("Game save data might be corrupted");
+                    notes.Add("⚠ Game save data might be corrupted");
             }
             if (items["failed_to_decrypt"] is string _)
-                notes.AppendLine("Failed to decrypt game content, license file might be corrupted");
+                notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
             if (items["failed_to_boot"] is string _)
-                notes.AppendLine("Failed to boot the game, the dump might be encrypted or corrupted");
+                notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
             if (brokenDump)
-                notes.AppendLine("Some game files are missing or corrupted, please re-dump and validate.");
+                notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
+            else if (irdChecked)
+                notes.Add("✅ Checked against IRD file and found no issues");
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
-                notes.AppendLine("Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
+                notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
-                notes.AppendLine($"Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
+                notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
             if (string.IsNullOrEmpty(items["serial"] + items["game_title"]) && items["fw_version_installed"] is string fwVersion)
-                notes.AppendLine($"The log contains only installation of firmware {fwVersion}")
-                    .AppendLine("Please boot the game and upload a new log");
+            {
+                notes.Add($"ℹ The log contains only installation of firmware {fwVersion}");
+                notes.Add("ℹ Please boot the game and upload a new log");
+            }
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
-                notes.AppendLine("The log is empty")
-                    .AppendLine("Please boot the game and upload a new log");
+            {
+                notes.Add("ℹ The log is empty");
+                notes.Add("ℹ Please boot the game and upload a new log");
+            }
 
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
@@ -448,10 +465,10 @@ namespace CompatBot.Utils.ResultFormatters
             if (oglVersion != null)
             {
                 if (oglVersion < MinimumOpenGLVersion)
-                    notes.AppendLine($"GPU only supports OpenGL {oglVersion.Major}.{oglVersion.Minor}, which is below the minimum requirement of {MinimumOpenGLVersion}");
+                    notes.Add($"❌ GPU only supports OpenGL {oglVersion.Major}.{oglVersion.Minor}, which is below the minimum requirement of {MinimumOpenGLVersion}");
             }
             if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
-                notes.AppendLine("Game-specific patches were applied");
+                notes.Add("ℹ Game-specific patches were applied");
 
             bool discInsideGame = false;
             bool discAsPkg = false;
@@ -464,37 +481,53 @@ namespace CompatBot.Utils.ResultFormatters
             }
             discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
-                notes.AppendLine($"Disc game inside `{items["ldr_disc"]}`");
+                notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
             if (discAsPkg)
             {
                 var emoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
-                notes.Append("Disc game installed as a PKG ").AppendLine(emoji);
+                notes.Add($"{emoji} Disc game installed as a PKG ");
             }
 
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
-                notes.AppendLine("Pad initialization problem detected; try disabling `Native UI`");
+                notes.Add("⚠ Pad initialization problem detected; try disabling `Native UI`");
             if (!string.IsNullOrEmpty(items["xaudio_init_error"]))
-                notes.AppendLine("XAudio initialization failed; make sure you have audio output device working");
+                notes.Add("❌ XAudio initialization failed; make sure you have audio output device working");
 
             if (!string.IsNullOrEmpty(items["fw_missing_msg"])
                 || !string.IsNullOrEmpty(items["fw_missing_something"]))
-                notes.AppendLine("PS3 firmware is missing or corrupted");
+                notes.Add("❌ PS3 firmware is missing or corrupted");
 
-
-            if (state.Error == LogParseState.ErrorCode.SizeLimit)
-                notes.AppendLine("The log was too large, so only the last processed run is shown");
-
-            // should be last check here
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
             {
-                var timeDeltaStr = updateInfo.GetUpdateDelta() is TimeSpan timeDelta ? timeDelta.AsTimeDeltaDescription() + " old": "outdated";
-                notes.AppendLine($"This RPCS3 build is {timeDeltaStr}, please consider updating it");
+                string prefix = "⚠";
+                string timeDeltaStr;
+                if (updateInfo.GetUpdateDelta() is TimeSpan timeDelta)
+                {
+                    timeDeltaStr = timeDelta.AsTimeDeltaDescription() + " old";
+                    if (timeDelta > PrehistoricBuild)
+                        prefix = "😱";
+                    else if (timeDelta > AncientBuild)
+                        prefix = "💢";
+                    //else if (timeDelta > VeryVeryOldBuild)
+                    //    prefix = "💢";
+                    else if (timeDelta > VeryOldBuild)
+                        prefix = "‼";
+                    else if (timeDelta > OldBuild)
+                        prefix = "❗";
+                }
+                else
+                    timeDeltaStr = "outdated";
+                notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
             }
-            var notesContent = notes.ToString().Trim();
-            PageSection(builder, notesContent, "Notes");
-            //if (updateInfo != null)
-            //    await updateInfo.AsEmbedAsync(builder).ConfigureAwait(false);
+
+            if (state.Error == LogParseState.ErrorCode.SizeLimit)
+                notes.Add("ℹ The log was too large, so only the last processed run is shown");
+
+            var notesContent = new StringBuilder();
+            foreach (var line in SortLines(notes))
+                notesContent.AppendLine(line);
+            PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
 
         private static void PageSection(DiscordEmbedBuilder builder, string notesContent, string sectionName)
@@ -659,6 +692,30 @@ namespace CompatBot.Utils.ResultFormatters
             if (microseconds < 1_000_000)
                 return $"{microseconds / 1000.0:0.##} ms";
             return $"{microseconds / 1_000_000.0:0.##} s";
+        }
+
+        private static List<string> SortLines(List<string> notes, DiscordEmoji piracyEmoji = null)
+        {
+            if (notes == null || notes.Count < 2)
+                return notes;
+
+            var priorityList = new List<string>(EmojiPriority);
+            if (piracyEmoji != null)
+                priorityList.Add(piracyEmoji.ToString());
+            return notes
+                .Select(s =>
+                        {
+                            var prioritySymbol = s.Split(PrioritySeparator, 2)[0];
+                            var priority = priorityList.IndexOf(prioritySymbol);
+                            return new
+                            {
+                                priority = priority == -1 ? 69 : priority,
+                                line = s
+                            };
+                        })
+                .OrderBy(i => i.priority)
+                .Select(i => i.line)
+                .ToList();
         }
     }
 }
