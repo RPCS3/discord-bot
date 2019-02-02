@@ -50,8 +50,14 @@ namespace CompatBot.Utils.ResultFormatters
             {"BCJS70013", "NPJA00102"},
         };
 
+        private static readonly TimeSpan OldBuild = TimeSpan.FromDays(30);
+        private static readonly TimeSpan VeryOldBuild = TimeSpan.FromDays(60);
+        private static readonly TimeSpan VeryVeryOldBuild = TimeSpan.FromDays(90);
+        private static readonly TimeSpan AncientBuild = TimeSpan.FromDays(180);
+        private static readonly TimeSpan PrehistoricBuild = TimeSpan.FromDays(365);
+
         private static readonly char[] PrioritySeparator = {' '};
-        private static readonly string[] EmojiPriority = { "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
+        private static readonly string[] EmojiPriority = { "😱", "‼", "❗", "💢", "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
         private const string TrueMark = "[x]";
         private const string FalseMark = "[ ]";
 
@@ -494,8 +500,23 @@ namespace CompatBot.Utils.ResultFormatters
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             if (updateInfo != null)
             {
-                var timeDeltaStr = updateInfo.GetUpdateDelta() is TimeSpan timeDelta ? timeDelta.AsTimeDeltaDescription() + " old": "outdated";
-                notes.Add($"⚠ This RPCS3 build is {timeDeltaStr}, please consider updating it");
+                string prefix = "⚠";
+                string timeDeltaStr;
+                if (updateInfo.GetUpdateDelta() is TimeSpan timeDelta)
+                {
+                    timeDeltaStr = timeDelta.AsTimeDeltaDescription() + " old";
+                    if (timeDelta > PrehistoricBuild)
+                        prefix = "😱";
+                    else if (timeDelta > AncientBuild)
+                        prefix = "💢";
+                    else if (timeDelta > VeryVeryOldBuild)
+                        prefix = "‼";
+                    else if (timeDelta > VeryOldBuild)
+                        prefix = "❗";
+                }
+                else
+                    timeDeltaStr = "outdated";
+                notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
             }
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
