@@ -8,8 +8,9 @@ Development Requirements
 
 Runtime Requirements
 --------------------
-* [.NET Core 2.1 Runtime](https://www.microsoft.com/net/download/windows) or newer for compiled version
 * [.NET Core 2.1 SDK](https://www.microsoft.com/net/download/windows) or newer to run from sources
+	* needs `dotnet` command available (i.e. alias for the Snap package)
+* [.NET Core 2.1 Runtime](https://www.microsoft.com/net/download/windows) or newer for compiled version
 
 How to Build
 ------------
@@ -28,3 +29,7 @@ How to Run in Production
 * Put `bot.db` in `CompatBot/`
 * `$ cd CompatBot`
 * `$ dotnet run -c Release [token]`
+
+External resources that need manual updates
+-------------------------------------------
+* [Unicode confusables](http://www.unicode.org/Public/security/latest/confusables.txt) gzipped, for Homoglyph checks
