@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers
     {
         // see http://www.psdevwiki.com/ps3/Productcode
         public static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABSM]|MRTC)[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Client compatClient = new Client();
+        private static readonly Client CompatClient = new Client();
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
@@ -57,12 +57,17 @@ namespace CompatBot.EventHandlers
             if (codesToLookup.Count == 0)
                 return;
 
-            await args.Message.ReactWithAsync(args.Client, Config.Reactions.PleaseWait).ConfigureAwait(false);
+            await LookupAndPostProductCodeEmbedAsync(args.Client, args.Message, codesToLookup).ConfigureAwait(false);
+        }
+
+        public static async Task LookupAndPostProductCodeEmbedAsync(DiscordClient client, DiscordMessage message, List<string> codesToLookup)
+        {
+            await message.ReactWithAsync(client, Config.Reactions.PleaseWait).ConfigureAwait(false);
             try
             {
                 var results = new List<(string code, Task<DiscordEmbedBuilder> task)>(codesToLookup.Count);
                 foreach (var code in codesToLookup)
-                    results.Add((code, args.Client.LookupGameInfoAsync(code)));
+                    results.Add((code, client.LookupGameInfoAsync(code)));
                 var formattedResults = new List<DiscordEmbedBuilder>(results.Count);
                 foreach (var result in results)
                     try
@@ -80,20 +85,20 @@ namespace CompatBot.EventHandlers
                 foreach (var result in formattedResults)
                     try
                     {
-                        if (!args.Channel.IsPrivate
-                            && args.Message.Author.Id == 197163728867688448
+                        if (!message.Channel.IsPrivate
+                            && message.Author.Id == 197163728867688448
                             && (
                                 result.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
                                 result.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
                             ))
                         {
-                            sqvat = sqvat ?? args.Client.GetEmoji(":sqvat:", Config.Reactions.No);
+                            sqvat = sqvat ?? client.GetEmoji(":sqvat:", Config.Reactions.No);
                             result.Title = "How about no (๑•ิཬ•ั๑)";
                             if (!string.IsNullOrEmpty(result.ThumbnailUrl))
                                 result.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
-                            await args.Message.ReactWithAsync(args.Client, sqvat).ConfigureAwait(false);
+                            await message.ReactWithAsync(client, sqvat).ConfigureAwait(false);
                         }
-                        await args.Channel.SendMessageAsync(embed: result).ConfigureAwait(false);
+                        await message.Channel.SendMessageAsync(embed: result).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
@@ -102,7 +107,7 @@ namespace CompatBot.EventHandlers
             }
             finally
             {
-                await args.Message.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                await message.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
             }
         }
 
@@ -123,7 +128,7 @@ namespace CompatBot.EventHandlers
 
             try
             {
-                var result = await compatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
+                var result = await CompatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
                 if (result?.ReturnCode == -2)
                     return TitleInfo.Maintenance.AsEmbed(null);
 
