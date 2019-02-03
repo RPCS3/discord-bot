@@ -16,7 +16,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using DuoVia.FuzzyStrings;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -51,6 +50,13 @@ namespace CompatBot.Commands
 
             if (!await AntipiracyMonitor.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
                 return;
+
+            var productCodes = ProductCodeLookup.GetProductIds(ctx.Message.Content);
+            if (productCodes.Any())
+            {
+                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, productCodes).ConfigureAwait(false);
+                return;
+            }
 
             try
             {
