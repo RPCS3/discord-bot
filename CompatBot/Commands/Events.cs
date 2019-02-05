@@ -14,11 +14,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("events"), Aliases("event")]
+    [Group("events"), Aliases("event", "e")]
     [Description("Provides information about the various events in the game industry")]
-    internal sealed class Events: BaseCommandModuleCustom
+    internal class Events: BaseCommandModuleCustom
     {
-        internal static readonly Regex Duration = new Regex(@"((?<hours>\d+)[\:h ])?((?<mins>\d+)m?)?", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        private static readonly Regex Duration = new Regex(@"((?<hours>\d+)[\:h ])?((?<mins>\d+)m?)?", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
         [GroupCommand]
         public async Task NearestEvent(CommandContext ctx, [Description("Optional event name"), RemainingText] string eventName = null)
@@ -40,11 +40,7 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                var knownEventNames = await db.EventSchedule.Select(e => e.EventName).Distinct().ToListAsync().ConfigureAwait(false);
-                var eventMatch = knownEventNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
-                if (eventMatch.score > 0.8)
-                    eventName = eventMatch.name;
-
+                eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
                 var promo = "";
                 if (currentEvent != null)
                     promo = $"\nMeanwhile check out this {(string.IsNullOrEmpty(currentEvent.EventName) ? "" : currentEvent.EventName + " " + currentEvent.Year + " ")}event in progress: {currentEvent.Name} (going for {FormatCountdown(current - currentEvent.Start.AsUtc())})";
@@ -122,67 +118,6 @@ namespace CompatBot.Commands
                 var endDateTime = startDateTime + timeDiff.Value;
                 await Add(ctx, eventName, startDateTime, endDateTime, entryName);
             }
-        }
-
-        private async Task Add(CommandContext ctx, string eventName, DateTime start, DateTime end, string name)
-        {
-            start = Normalize(start);
-            end = Normalize(end);
-            var year = start.Year;
-
-/*
-            if (end < start)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Start date must be before End date", true).ConfigureAwait(false);
-                return;
-            }
-
-            if (start.Year != end.Year)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Start and End dates must be for the same year", true).ConfigureAwait(false);
-                return;
-            }
-
-            if (DateTime.UtcNow.Year < year)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Aren't you a bit hasty?").ConfigureAwait(false);
-                return;
-            }
-*/
-
-            var startTicks = start.Ticks;
-            var endTicks = end.Ticks;
-            using (var db = new BotDb())
-            {
-/*
-                var entries = await db.EventSchedule.Where(e => e.Year == year).OrderBy(e => e.Start).ToListAsync().ConfigureAwait(false);
-                var overlaps = entries.Where(e =>
-                        e.Start >= startTicks && e.Start < endTicks // existing event starts inside
-                        || e.End > startTicks && e.End <= endTicks // existing event ends inside
-                ).ToList();
-                if (overlaps.Any())
-                {
-                    var msg = new StringBuilder().AppendLine($"Specified event overlaps with the following event{(overlaps.Count == 1 ? "" : "s")}:");
-                    foreach (var evt in overlaps)
-                        msg.AppendLine($"`{evt.Start.AsUtc():u} - {evt.End.AsUtc():u}`: {evt.Name}");
-                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
-                    await ctx.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
-                    return;
-                }
-*/
-
-                await db.EventSchedule.AddAsync(new EventSchedule
-                {
-                    Year = year,
-                    EventName = eventName,
-                    Start = startTicks,
-                    End = endTicks,
-                    Name = name,
-                }).ConfigureAwait(false);
-                await db.SaveChangesAsync().ConfigureAwait(false);
-            }
-
-            await ctx.ReactWithAsync(Config.Reactions.Success, $"Added new {(string.IsNullOrEmpty(eventName) ? "" : eventName + " ")}event: `{name}`").ConfigureAwait(false);
         }
 
         [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
@@ -313,7 +248,9 @@ namespace CompatBot.Commands
 
         [Command("schedule"), Aliases("show", "list")]
         [Description("Outputs current schedule")]
-        public async Task List(CommandContext ctx, [Description("Optional year to list")] int? year = null)
+        public async Task List(CommandContext ctx,
+            [Description("Optional event name to list schedule for")] string eventName = null,
+            [Description("Optional year to list")] int? year = null)
         {
             var currentTicks = DateTime.UtcNow.Ticks;
             List<EventSchedule> events;
@@ -322,8 +259,13 @@ namespace CompatBot.Commands
                 IQueryable<EventSchedule> query = db.EventSchedule;
                 if (year.HasValue)
                     query = query.Where(e => e.Year == year);
-                else
+                else if (!ctx.Channel.IsPrivate)
                     query = query.Where(e => e.End > currentTicks);
+                if (!string.IsNullOrEmpty(eventName))
+                {
+                    eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
+                    query = query.Where(e => e.EventName == eventName);
+                }
                 events = await query
                     .OrderBy(e => e.Start)
                     .ToListAsync()
@@ -366,7 +308,75 @@ namespace CompatBot.Commands
 
         [Command("countdown")]
         [Description("Provides countdown for the nearest known event")]
-        public Task Countdown(CommandContext ctx) => NearestEvent(ctx);
+        public Task Countdown(CommandContext ctx, string eventName = null) => NearestEvent(ctx, eventName);
+
+        private async Task Add(CommandContext ctx, string eventName, DateTime start, DateTime end, string name)
+        {
+            start = Normalize(start);
+            end = Normalize(end);
+            var year = start.Year;
+
+            /*
+                        if (end < start)
+                        {
+                            await ctx.ReactWithAsync(Config.Reactions.Failure, "Start date must be before End date", true).ConfigureAwait(false);
+                            return;
+                        }
+
+                        if (start.Year != end.Year)
+                        {
+                            await ctx.ReactWithAsync(Config.Reactions.Failure, "Start and End dates must be for the same year", true).ConfigureAwait(false);
+                            return;
+                        }
+
+                        if (DateTime.UtcNow.Year < year)
+                        {
+                            await ctx.ReactWithAsync(Config.Reactions.Failure, "Aren't you a bit hasty?").ConfigureAwait(false);
+                            return;
+                        }
+            */
+
+            var startTicks = start.Ticks;
+            var endTicks = end.Ticks;
+            using (var db = new BotDb())
+            {
+                /*
+                                var entries = await db.EventSchedule.Where(e => e.Year == year).OrderBy(e => e.Start).ToListAsync().ConfigureAwait(false);
+                                var overlaps = entries.Where(e =>
+                                        e.Start >= startTicks && e.Start < endTicks // existing event starts inside
+                                        || e.End > startTicks && e.End <= endTicks // existing event ends inside
+                                ).ToList();
+                                if (overlaps.Any())
+                                {
+                                    var msg = new StringBuilder().AppendLine($"Specified event overlaps with the following event{(overlaps.Count == 1 ? "" : "s")}:");
+                                    foreach (var evt in overlaps)
+                                        msg.AppendLine($"`{evt.Start.AsUtc():u} - {evt.End.AsUtc():u}`: {evt.Name}");
+                                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                                    await ctx.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                                    return;
+                                }
+                */
+
+                await db.EventSchedule.AddAsync(new EventSchedule
+                {
+                    Year = year,
+                    EventName = eventName,
+                    Start = startTicks,
+                    End = endTicks,
+                    Name = name,
+                }).ConfigureAwait(false);
+                await db.SaveChangesAsync().ConfigureAwait(false);
+            }
+
+            await ctx.ReactWithAsync(Config.Reactions.Success, $"Added new {(string.IsNullOrEmpty(eventName) ? "" : eventName + " ")}event: `{name}`").ConfigureAwait(false);
+        }
+
+        private static async Task<string> FuzzyMatchEventName(BotDb db, string eventName)
+        {
+            var knownEventNames = await db.EventSchedule.Select(e => e.EventName).Distinct().ToListAsync().ConfigureAwait(false);
+            var (score, name) = knownEventNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
+            return score > 0.8 ? name : eventName;
+        }
 
         private static string FixTimeString(string dateTime)
         {
