@@ -16,6 +16,8 @@ namespace CompatBot.Utils
     {
         public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, ulong userId)
         {
+            if (guild == null)
+                return GetMember(client, userId);
             return (from g in client.Guilds
                     where g.Key == guild.Id
                     from u in g.Value.Members
