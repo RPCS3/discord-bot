@@ -49,8 +49,8 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                var currentEvent = await db.E3Schedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.End >= currentTicks).ConfigureAwait(false);
-                var nextEvent = await db.E3Schedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start >= currentTicks).ConfigureAwait(false);
+                var currentEvent = await db.E3Schedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.Start <= currentTicks && e.End >= currentTicks).ConfigureAwait(false);
+                var nextEvent = await db.E3Schedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
                 var msg = $"E3 {current.Year} is already in progress!\n";
                 if (currentEvent != null)
                     msg += $"Current event: {currentEvent.Name} (going for {FormatCountdown(current - currentEvent.Start.AsUtc())})\n";
