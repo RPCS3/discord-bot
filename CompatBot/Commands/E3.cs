@@ -27,35 +27,52 @@ namespace CompatBot.Commands
             var currentTicks = current.Ticks;
             using (var db = new BotDb())
             {
-                var firstEvent = await db.E3Schedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year == current.Year).ConfigureAwait(false);
-                if (firstEvent == null)
-                {
-                    await ctx.RespondAsync("No information about the upcoming E3 at the moment").ConfigureAwait(false);
-                    return;
-                }
-                if (firstEvent.Start >= currentTicks)
-                {
-                    await ctx.RespondAsync(
-                        $"{FormatCountdown(firstEvent.Start.AsUtc() - current)} until E3 {current.Year}!\n" +
-                        $"First event: {firstEvent.Name}"
-                    ).ConfigureAwait(false);
-                    return;
-                }
-
-                var lastEvent = await db.E3Schedule.OrderByDescending(e => e.End).FirstOrDefaultAsync(e => e.Year == current.Year).ConfigureAwait(false);
-                if (lastEvent.End <= currentTicks)
-                {
-                    await ctx.RespondAsync($"E3 {current.Year} has ended. See you next year!").ConfigureAwait(false);
-                    return;
-                }
-
-                var currentEvent = await db.E3Schedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.Start <= currentTicks && e.End >= currentTicks).ConfigureAwait(false);
-                var nextEvent = await db.E3Schedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
-                var msg = $"E3 {current.Year} is already in progress!\n";
+                var currentEvent = await db.EventSchedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.Start <= currentTicks && e.End >= currentTicks).ConfigureAwait(false);
+                var nextEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
+                var promo = "";
                 if (currentEvent != null)
-                    msg += $"Current event: {currentEvent.Name} (going for {FormatCountdown(current - currentEvent.Start.AsUtc())})\n";
-                if (nextEvent != null)
-                    msg += $"Next event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
+                    promo = $"\nMeanwhile check out this {(string.IsNullOrEmpty(currentEvent.EventName) ? "" : currentEvent.EventName + " " + currentEvent.Year + " ")}event in progress: {currentEvent.Name} (going for {FormatCountdown(current - currentEvent.Start.AsUtc())})";
+                else if (nextEvent != null)
+                    promo = $"\nMeanwhile check out this upcoming {(string.IsNullOrEmpty(nextEvent.EventName) ? "" : nextEvent.EventName + " " + nextEvent.Year + " ")}event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
+
+                var firstE3Event = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year == current.Year && e.EventName == "E3").ConfigureAwait(false);
+                if (firstE3Event == null)
+                {
+                    var noEventMsg = "No information about the upcoming E3 at the moment";
+                    if (!string.IsNullOrEmpty(promo))
+                        noEventMsg += promo;
+                    await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
+                    return;
+                }
+
+                if (firstE3Event.Start >= currentTicks)
+                {
+                    var upcomingE3Msg = $"__{FormatCountdown(firstE3Event.Start.AsUtc() - current)} until E3 {current.Year}!__";
+                    if (string.IsNullOrEmpty(promo))
+                        upcomingE3Msg += $"\nFirst event: {firstE3Event.Name}";
+                    else
+                        upcomingE3Msg += promo;
+                    await ctx.RespondAsync(upcomingE3Msg).ConfigureAwait(false);
+                    return;
+                }
+
+                var lastE3Event = await db.EventSchedule.OrderByDescending(e => e.End).FirstOrDefaultAsync(e => e.Year == current.Year && e.EventName == "E3").ConfigureAwait(false);
+                if (lastE3Event.End <= currentTicks)
+                {
+                    var e3EndedMsg = $"E3 {current.Year} has ended. See you next year!";
+                    if (!string.IsNullOrEmpty(promo))
+                        e3EndedMsg += promo;
+                    await ctx.RespondAsync(e3EndedMsg).ConfigureAwait(false);
+                    return;
+                }
+
+                var currentE3Event = await db.EventSchedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.Start <= currentTicks && e.End >= currentTicks && e.EventName == "E3").ConfigureAwait(false);
+                var nextE3Event = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks && e.EventName == "E3").ConfigureAwait(false);
+                var msg = $"E3 {current.Year} is already in progress!\n";
+                if (currentE3Event != null)
+                    msg += $"Current event: {currentE3Event.Name} (going for {FormatCountdown(current - currentE3Event.Start.AsUtc())})\n";
+                if (nextE3Event != null)
+                    msg += $"Next event: {nextE3Event.Name} (starts in {FormatCountdown(nextE3Event.Start.AsUtc() - current)})";
                 await ctx.SendAutosplitMessageAsync(msg.TrimEnd(), blockStart: "", blockEnd: "").ConfigureAwait(false);
             }
         }
@@ -110,7 +127,7 @@ namespace CompatBot.Commands
             var endTicks = end.Ticks;
             using (var db = new BotDb())
             {
-                var entries = await db.E3Schedule.Where(e => e.Year == year).OrderBy(e => e.Start).ToListAsync().ConfigureAwait(false);
+                var entries = await db.EventSchedule.Where(e => e.Year == year).OrderBy(e => e.Start).ToListAsync().ConfigureAwait(false);
                 var overlaps = entries.Where(e =>
                         e.Start >= startTicks && e.Start < endTicks // existing event starts inside
                         || e.End > startTicks && e.End <= endTicks // existing event ends inside
@@ -126,7 +143,7 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                await db.E3Schedule.AddAsync(new E3Schedule
+                await db.EventSchedule.AddAsync(new EventSchedule
                 {
                     Year = year,
                     Start = startTicks,
@@ -145,8 +162,8 @@ namespace CompatBot.Commands
             int removedCount;
             using (var db = new BotDb())
             {
-                var eventsToRemove = await db.E3Schedule.Where(e3e => ids.Contains(e3e.Id)).ToListAsync().ConfigureAwait(false);
-                db.E3Schedule.RemoveRange(eventsToRemove);
+                var eventsToRemove = await db.EventSchedule.Where(e3e => ids.Contains(e3e.Id)).ToListAsync().ConfigureAwait(false);
+                db.EventSchedule.RemoveRange(eventsToRemove);
                 removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             }
             if (removedCount == ids.Length)
@@ -163,12 +180,12 @@ namespace CompatBot.Commands
             int removedCount;
             using (var db = new BotDb())
             {
-                var itemsToRemove = await db.E3Schedule.Where(e3e =>
+                var itemsToRemove = await db.EventSchedule.Where(e3e =>
                     year.HasValue
                         ? e3e.Year == year
                         : e3e.Year < currentYear
                 ).ToListAsync().ConfigureAwait(false);
-                db.E3Schedule.RemoveRange(itemsToRemove);
+                db.EventSchedule.RemoveRange(itemsToRemove);
                 removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             }
             await ctx.RespondAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
@@ -180,7 +197,7 @@ namespace CompatBot.Commands
         {
             using (var db = new BotDb())
             {
-                var evt = await db.E3Schedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
                 if (evt == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
                 else
@@ -206,7 +223,7 @@ namespace CompatBot.Commands
 
             using (var db = new BotDb())
             {
-                var evt = await db.E3Schedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
                 if (evt == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
                 else
@@ -232,7 +249,7 @@ namespace CompatBot.Commands
 
             using (var db = new BotDb())
             {
-                var evt = await db.E3Schedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
                 if (evt == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
                 else
@@ -249,12 +266,12 @@ namespace CompatBot.Commands
         [Description("Outputs current schedule")]
         public async Task List(CommandContext ctx, [Description("Optional year to list")] int? year = null)
         {
-            List<E3Schedule> events;
+            List<EventSchedule> events;
             using (var db = new BotDb())
             {
-                IQueryable<E3Schedule> query = db.E3Schedule;
+                IQueryable<EventSchedule> query = db.EventSchedule;
                 if (year.HasValue)
-                    query = query.Where(e3e => e3e.Year == year);
+                    query = query.Where(e => e.Year == year);
                 events = await query
                     .OrderBy(e => e.Start)
                     .ToListAsync()
@@ -268,14 +285,21 @@ namespace CompatBot.Commands
 
             var msg = new StringBuilder();
             var currentYear = -1;
+            var currentEvent = Guid.NewGuid().ToString();
             foreach (var evt in events)
             {
                 if (evt.Year != currentYear)
                 {
                     if (currentYear > 0)
                         msg.AppendLine();
+                    currentEvent = Guid.NewGuid().ToString();
                     currentYear = evt.Year;
-                    msg.AppendLine($"**{(evt.Year == DateTime.UtcNow.Year ? "Current E3" : "E3 " + evt.Year)} schedule** (UTC):");
+                }
+                if (currentEvent != evt.EventName)
+                {
+                    currentEvent = evt.EventName;
+                    var printName = string.IsNullOrEmpty(currentEvent) ? "Generic event schedule" : $"**{currentEvent} {currentYear} schedule**";
+                    msg.AppendLine($"{printName} (UTC):");
                 }
 
                 msg.Append("`");
