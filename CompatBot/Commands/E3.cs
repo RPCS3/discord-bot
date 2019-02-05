@@ -7,7 +7,7 @@ namespace CompatBot.Commands
 {
     [Group("e3")]
     [Description("Provides information about the E3 event")]
-    internal sealed class E3: Events
+    internal sealed class E3: EventsBaseCommand
     {
         [GroupCommand]
         public Task E3Countdown(CommandContext ctx) => NearestEvent(ctx, "E3");
