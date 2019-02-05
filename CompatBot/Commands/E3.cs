@@ -27,7 +27,7 @@ namespace CompatBot.Commands
             => Remove(ctx, ids);
         
 
-        [Command("Clean"), Aliases("cleanup", "Clear"), RequiresBotModRole]
+        [Command("clean"), Aliases("cleanup", "Clear"), RequiresBotModRole]
         [Description("Removes past events")]
         public Task ClearE3(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
             => Clear(ctx, year);
