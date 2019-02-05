@@ -10,7 +10,8 @@ namespace CompatBot.Commands
     internal sealed class E3: EventsBaseCommand
     {
         [GroupCommand]
-        public Task E3Countdown(CommandContext ctx) => NearestEvent(ctx, "E3");
+        public Task E3Countdown(CommandContext ctx)
+            => NearestEvent(ctx, "E3");
 
         [Command("add"), RequiresBotModRole]
         [Description("Adds new E3 event to the schedule")]
@@ -53,6 +54,7 @@ namespace CompatBot.Commands
 
         [Command("countdown")]
         [Description("Provides countdown for the nearest known E3 event")]
-        public Task Countdown(CommandContext ctx) => E3Countdown(ctx);
+        public Task Countdown(CommandContext ctx)
+            => E3Countdown(ctx);
     }
 }

@@ -55,7 +55,7 @@ namespace CompatBot.Commands
             => Rename(ctx, id, newName);
 
         [Command("assign"), Aliases("tag"), RequiresBotModRole]
-        [Description("Assignes specified schedule entry to specific event")]
+        [Description("Assigns specified schedule entry to specific event")]
         public Task AssignGeneric(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newName)
             => Assign(ctx, id, newName);
 
