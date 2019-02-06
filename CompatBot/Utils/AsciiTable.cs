@@ -133,10 +133,10 @@ namespace CompatBot.Utils
                 throw new InvalidOperationException("Can't format table as every column is disabled");
 
             // header
-            result.Append(columns[firstIdx].Trim(width[firstIdx]).PadRightVisible(width[firstIdx]));
+            result.Append(columns[firstIdx].TrimVisible(maxWidth[firstIdx]).PadRightVisible(width[firstIdx]));
             for (var i = firstIdx+1; i < columns.Length; i++)
                 if (!disabled[i])
-                    result.Append(" │ ").Append(columns[i].Trim(width[i]).PadRightVisible(width[i])); // header is always aligned to the left
+                    result.Append(" │ ").Append(columns[i].TrimVisible(maxWidth[i]).PadRightVisible(width[i])); // header is always aligned to the left
             result.AppendLine();
             //header separator
             result.Append("".PadRight(width[firstIdx], '─'));
@@ -147,12 +147,12 @@ namespace CompatBot.Utils
             //rows
             foreach (var row in rows)
             {
-                var cell = row[firstIdx].Trim(width[firstIdx]);
+                var cell = row[firstIdx].TrimVisible(maxWidth[firstIdx]);
                 result.Append(alignToRight[firstIdx] ? cell.PadLeftVisible(width[firstIdx]) : cell.PadRightVisible(width[firstIdx]));
                 for (var i = firstIdx+1; i < row.Length; i++)
                     if (!disabled[i])
                     {
-                        cell = row[i].Trim(width[i]);
+                        cell = row[i].TrimVisible(maxWidth[i]);
                         result.Append(" │ ").Append(alignToRight[i] ?cell.PadLeftVisible(width[i]) : cell.PadRightVisible(width[i]));
                     }
                 result.AppendLine();

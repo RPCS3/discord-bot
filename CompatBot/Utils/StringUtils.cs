@@ -118,6 +118,32 @@ namespace CompatBot.Utils
             return c;
         }
 
+        public static string TrimVisible(this string s, int maxLength)
+        {
+            if (string.IsNullOrEmpty(s))
+                return s;
+
+            if (maxLength < 1)
+                throw new ArgumentException("Max length can't be less than 1", nameof(maxLength));
+
+            if (s.Length <= maxLength)
+                return s;
+
+            var c = 0;
+            var e = StringInfo.GetTextElementEnumerator(s.Normalize());
+            var result = new StringBuilder();
+            while (e.MoveNext() && c < maxLength-1)
+            {
+                var strEl = e.GetTextElement();
+                result.Append(strEl);
+                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format)
+                    continue;
+
+                c++;
+            }
+            return result.Append("…").ToString();
+        }
+
         public static string PadLeftVisible(this string s, int totalWidth, char padding = ' ')
         {
             s = s ?? "";
