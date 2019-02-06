@@ -78,11 +78,11 @@ namespace CompatBot.Commands
             var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             const int maxTitleLength = 80;
             var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
-            var maxAuthor = openPrList.Max(pr => pr.User.Login.Length);
-            var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.Length), maxTitleLength);
+            var maxAuthor = openPrList.Max(pr => pr.User.Login.GetVisibleLength());
+            var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.GetVisibleLength()), maxTitleLength);
             var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
             foreach (var pr in openPrList)
-                result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRight(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRight(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
+                result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRightVisible(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
             await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
 

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using CompatApiClient.Utils;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace CompatBot.Utils
 {
@@ -126,22 +128,33 @@ namespace CompatBot.Utils
                 width[i] = Math.Min(width[i], maxWidth[i]);
 
             var result = new StringBuilder().AppendLine("```");
+            var firstIdx = disabled.IndexOf(false);
+            if (firstIdx < 0)
+                throw new InvalidOperationException("Can't format table as every column is disabled");
+
             // header
-            result.Append(alignToRight[0] ? columns[0].PadLeftVisible(width[0]) : columns[0].PadRightVisible(width[0]));
-            for (var i = 1; i < columns.Length; i++)
-                result.Append(" │ ").Append(alignToRight[i] ? columns[i].PadLeftVisible(width[i]) : columns[i].PadRightVisible(width[i]));
+            result.Append(columns[firstIdx].Trim(width[firstIdx]).PadRightVisible(width[firstIdx]));
+            for (var i = firstIdx+1; i < columns.Length; i++)
+                if (!disabled[i])
+                    result.Append(" │ ").Append(columns[i].Trim(width[i]).PadRightVisible(width[i])); // header is always aligned to the left
             result.AppendLine();
             //header separator
-            result.Append("".PadRight(width[0], '─'));
-            for (var i = 1; i < columns.Length; i++)
-                result.Append("─┼─").Append("".PadRight(width[i], '─'));
+            result.Append("".PadRight(width[firstIdx], '─'));
+            for (var i = firstIdx+1; i < columns.Length; i++)
+                if (!disabled[i])
+                    result.Append("─┼─").Append("".PadRight(width[i], '─'));
             result.AppendLine();
             //rows
             foreach (var row in rows)
             {
-                result.Append(alignToRight[0] ? row[0].PadLeftVisible(width[0]) : row[0].PadRightVisible(width[0]));
-                for (var i = 1; i < row.Length; i++)
-                    result.Append(" │ ").Append(alignToRight[i] ? row[i].PadLeftVisible(width[i]) : row[i].PadRightVisible(width[i]));
+                var cell = row[firstIdx].Trim(width[firstIdx]);
+                result.Append(alignToRight[firstIdx] ? cell.PadLeftVisible(width[firstIdx]) : cell.PadRightVisible(width[firstIdx]));
+                for (var i = firstIdx+1; i < row.Length; i++)
+                    if (!disabled[i])
+                    {
+                        cell = row[i].Trim(width[i]);
+                        result.Append(" │ ").Append(alignToRight[i] ?cell.PadLeftVisible(width[i]) : cell.PadRightVisible(width[i]));
+                    }
                 result.AppendLine();
             }
             result.Append("```");
