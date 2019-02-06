@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("events"), Aliases("event", "e")]
+    [Group("event"), Aliases("events", "e")]
     [Description("Provides information about the various events in the game industry")]
     internal sealed class Events: EventsBaseCommand
     {
@@ -44,7 +44,7 @@ namespace CompatBot.Commands
         public Task RemoveGeneric(CommandContext ctx, [Description("Event IDs to remove separated with space")] params int[] ids)
             => Remove(ctx, ids);
 
-        [Command("Clean"), Aliases("cleanup", "Clear"), RequiresBotModRole]
+        [Command("clean"), Aliases("cleanup", "Clear"), RequiresBotModRole]
         [Description("Removes past events")]
         public Task ClearGeneric(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
              => Clear(ctx, year);
@@ -55,7 +55,7 @@ namespace CompatBot.Commands
             => Rename(ctx, id, newName);
 
         [Command("assign"), Aliases("tag"), RequiresBotModRole]
-        [Description("Assignes specified schedule entry to specific event")]
+        [Description("Assigns specified schedule entry to specific event")]
         public Task AssignGeneric(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newName)
             => Assign(ctx, id, newName);
 
@@ -71,9 +71,23 @@ namespace CompatBot.Commands
 
         [Command("schedule"), Aliases("show", "list")]
         [Description("Outputs current schedule")]
+        public Task ListGeneric(CommandContext ctx)
+            => List(ctx, null, null);
+
+        [Command("schedule")]
         public Task ListGeneric(CommandContext ctx,
-            [Description("Optional event name to list schedule for")] string eventName = null,
-            [Description("Optional year to list")] int? year = null)
+            [Description("Optional year to list")] int year)
+            => List(ctx, null, year);
+
+        [Command("schedule")]
+        public Task ListGeneric(CommandContext ctx,
+            [Description("Optional event name to list schedule for")] string eventName)
+            => List(ctx, eventName, null);
+
+        [Command("schedule")]
+        public Task ListGeneric(CommandContext ctx,
+            [Description("Optional event name to list schedule for")] string eventName,
+            [Description("Optional year to list")] int year)
             => List(ctx, eventName, year);
 
         [Command("countdown")]

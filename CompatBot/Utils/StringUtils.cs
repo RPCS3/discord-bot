@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using DuoVia.FuzzyStrings;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Utils
 {
-    internal static class StringUtils
+    public static class StringUtils
     {
         private static readonly Encoding Latin8BitEncoding = Encoding.GetEncodings()
                                                                  .FirstOrDefault(e => e.CodePage == 1250 || e.CodePage == 1252 || e.CodePage == 28591)?
@@ -98,6 +99,42 @@ namespace CompatBot.Utils
         public static string GetSuffix(long num) => num == 1 ? "" : "s";
 
         public static string FixSpaces(this string text) => text?.Replace(" ", " \u200d");
+
+        public static int GetVisibleLength(this string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return 0;
+
+            var c = 0;
+            var e = StringInfo.GetTextElementEnumerator(s.Normalize());
+            while (e.MoveNext())
+            {
+                var strEl = e.GetTextElement();
+                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format)
+                    continue;
+
+                c++;
+            }
+            return c;
+        }
+
+        public static string PadLeftVisible(this string s, int totalWidth, char padding = ' ')
+        {
+            s = s ?? "";
+            var valueWidth = s.GetVisibleLength();
+            var diff = s.Length - valueWidth;
+            totalWidth += diff;
+            return s.PadLeft(totalWidth, padding);
+        }
+
+        public static string PadRightVisible(this string s, int totalWidth, char padding = ' ')
+        {
+            s = s ?? "";
+            var valueWidth = s.GetVisibleLength();
+            var diff = s.Length - valueWidth;
+            totalWidth += diff;
+            return s.PadRight(totalWidth, padding);
+        }
 
         private static bool IsFormat(char c) => SpaceCharacters.Contains(c);
 

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
@@ -49,10 +50,13 @@ namespace CompatBot.Commands
             [Description("Lists all moderators")]
             public async Task List(CommandContext ctx)
             {
-                var list = new StringBuilder("```");
-                foreach (var mod in ModProvider.Mods.Values)
-                    list.AppendLine($"{await ctx.GetUserNameAsync(mod.DiscordId),-32} | {(mod.Sudoer ? "sudo" : "not sudo")}");
-                await ctx.SendAutosplitMessageAsync(list.Append("```")).ConfigureAwait(false);
+                var table = new AsciiTable(
+                    new AsciiColumn( "Username", maxWidth: 32),
+                    new AsciiColumn("Sudo")
+                );
+                foreach (var mod in ModProvider.Mods.Values.OrderByDescending(m => m.Sudoer))
+                    table.Add(await ctx.GetUserNameAsync(mod.DiscordId), mod.Sudoer ? "✅" :"");
+                await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
             }
 
             [Command("sudo")]

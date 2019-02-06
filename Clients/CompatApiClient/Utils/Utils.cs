@@ -10,16 +10,11 @@ namespace CompatApiClient.Utils
 
         public static string Trim(this string str, int maxLength)
         {
-            const int minSaneLimit = 4;
-
-            if (maxLength < minSaneLimit)
-                throw new ArgumentException("Argument cannot be less than " + minSaneLimit, nameof(maxLength));
-
             if (string.IsNullOrEmpty(str))
                 return str;
 
             if (str.Length > maxLength)
-                return str.Substring(0, maxLength - 3) + "...";
+                return str.Substring(0, maxLength - 1) + "…";
 
             return str;
         }

@@ -47,11 +47,11 @@ namespace CompatBot.Commands
             {
                 if (number < 1)
                     number = 10;
-                var userIdColumn = ctx.Channel.IsPrivate ? $"{"User ID",-18} | " : "";
-                var header = $"{"User",-25} | {userIdColumn}Count";
-                var result = new StringBuilder("Warning count per user:").AppendLine("```")
-                    .AppendLine(header)
-                    .AppendLine("".PadLeft(header.Length, '-'));
+                var table = new AsciiTable(
+                    new AsciiColumn("Username", maxWidth: 24),
+                    new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
+                    new AsciiColumn("Count", alignToRight: true)
+                    );
                 using (var db = new BotDb())
                 {
                     var query = from warn in db.Warning
@@ -63,13 +63,10 @@ namespace CompatBot.Commands
                     foreach (var row in query.Take(number))
                     {
                         var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
-                        result.Append($"{username,-25} | ");
-                        if (ctx.Channel.IsPrivate)
-                            result.Append($"{row.discordId,-18} | ");
-                        result.AppendLine($"{row.count,2}");
+                        table.Add(username, row.discordId.ToString(), row.count.ToString());
                     }
                 }
-                await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                await ctx.SendAutosplitMessageAsync(new StringBuilder("Warning count per user:").Append(table)).ConfigureAwait(false);
             }
 
             [Command("recent"), Aliases("last", "all"), RequiresBotModRole]
@@ -78,11 +75,15 @@ namespace CompatBot.Commands
             {
                 if (number < 1)
                     number = 10;
-                var userIdColumn = ctx.Channel.IsPrivate ? $"{"User ID",-18} | " : "";
-                var header = $"ID    | {"User",-25} | {userIdColumn}{"Issued by",-15} | {"On date (UTC)",-20} | Reason              ";
-                var result = new StringBuilder("Last issued warnings:").AppendLine("```")
-                    .AppendLine(header)
-                    .AppendLine("".PadLeft(header.Length, '-'));
+                var table = new AsciiTable(
+                    new AsciiColumn("ID", alignToRight: true),
+                    new AsciiColumn("Username", maxWidth: 24),
+                    new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
+                    new AsciiColumn("Issued by", maxWidth: 15),
+                    new AsciiColumn("On date (UTC)"),
+                    new AsciiColumn("Reason", maxWidth: 40),
+                    new AsciiColumn("Context", disabled: !ctx.Channel.IsPrivate, maxWidth: 40)
+                );
                 using (var db = new BotDb())
                 {
                     var query = from warn in db.Warning
@@ -92,17 +93,11 @@ namespace CompatBot.Commands
                     {
                         var username = await ctx.GetUserNameAsync(row.DiscordId).ConfigureAwait(false);
                         var modname = await ctx.GetUserNameAsync(row.IssuerId, defaultName: "Unknown mod").ConfigureAwait(false);
-                        result.Append($"{row.Id:00000} | {username,-25} | ");
-                        if (ctx.Channel.IsPrivate)
-                            result.Append($"{row.DiscordId,-18} | ");
                         var timestamp = row.Timestamp.HasValue ? new DateTime(row.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
-                        result.Append($"{modname,-15} | {timestamp,-20} | {row.Reason}");
-                        if (ctx.Channel.IsPrivate)
-                            result.Append(" | ").Append(row.FullReason);
-                        result.AppendLine();
+                        table.Add(row.Id.ToString(), username, row.DiscordId.ToString(), modname, timestamp, row.Reason, row.FullReason);
                     }
                 }
-                await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                await ctx.SendAutosplitMessageAsync(new StringBuilder("Last issued warnings:").Append(table)).ConfigureAwait(false);
             }
 
             private async Task<bool> CheckListPermissionAsync(CommandContext ctx, ulong userId)

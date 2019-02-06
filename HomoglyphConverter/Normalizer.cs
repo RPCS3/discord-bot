@@ -25,7 +25,7 @@ namespace HomoglyphConverter
         };
 
         // as per http://www.unicode.org/reports/tr39/#Confusable_Detection
-        public static string ToSkeletonString(string input)
+        public static string ToSkeletonString(this string input)
         {
             if (string.IsNullOrEmpty(input))
                 return input;
@@ -38,7 +38,7 @@ namespace HomoglyphConverter
             return input.Normalize(NormalizationForm.FormD);
         }
 
-        public static string ToCanonicalForm(string input)
+        public static string ToCanonicalForm(this string input)
         {
             if (string.IsNullOrEmpty(input))
                 return input;

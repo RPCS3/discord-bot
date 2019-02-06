@@ -157,15 +157,13 @@ namespace CompatBot.Commands
                 {
                     var totalWarningCount = db.Warning.Count(w => w.DiscordId == userId);
                     var showCount = Math.Min(maxWarningsInPublicChannel, totalWarningCount);
-                    var result = new StringBuilder("Warning list for ").Append(userName);
-                    if (!isPrivate && !isWhitelisted && totalWarningCount > maxWarningsInPublicChannel)
-                        result.Append($" (last {showCount} of {totalWarningCount}, full list in DMs)");
-                    result.AppendLine(":").AppendLine("```");
-                    var header = $"{"ID",-5} | {"Issued by",-15} | {"On date (UTC)",-20} | Reason";
-                    if (isPrivate)
-                        header += "          | Full reason";
-                    result.AppendLine(header)
-                        .AppendLine("".PadLeft(header.Length, '-'));
+                    var table = new AsciiTable(
+                        new AsciiColumn("ID", alignToRight: true),
+                        new AsciiColumn("Issued by", maxWidth: 15),
+                        new AsciiColumn("On date (UTC)"),
+                        new AsciiColumn("Reason", maxWidth: 40),
+                        new AsciiColumn("Context", disabled: !isPrivate, maxWidth: 40)
+                        );
                     IQueryable<Warning> query = db.Warning.Where(w => w.DiscordId == userId).OrderByDescending(w => w.Id);
                     if (!isPrivate && !isWhitelisted)
                         query = query.Take(maxWarningsInPublicChannel);
@@ -177,12 +175,13 @@ namespace CompatBot.Commands
                         var timestamp = warning.Timestamp.HasValue
                             ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u")
                             : null;
-                        result.Append($"{warning.Id:00000} | {issuerName,-15} | {timestamp,-20} | {warning.Reason}");
-                        if (isPrivate)
-                            result.Append(" | ").Append(warning.FullReason);
-                        result.AppendLine();
+                        table.Add(warning.Id.ToString(), issuerName, timestamp, warning.Reason, warning.FullReason);
                     }
-                    await channel.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                    var result = new StringBuilder("Warning list for ").Append(userName);
+                    if (!isPrivate && !isWhitelisted && totalWarningCount > maxWarningsInPublicChannel)
+                        result.Append($" (last {showCount} of {totalWarningCount}, full list in DMs)");
+                    result.AppendLine(":").Append(table);
+                    await channel.SendAutosplitMessageAsync(result).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
