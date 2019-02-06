@@ -88,6 +88,52 @@ namespace CompatBot.Commands
                 }
             }
 
+            /*
+            [Command("locales"), Aliases("locale", "languages", "language", "lang", "loc")]
+            public async Task UserLocales(CommandContext ctx)
+            {
+                if (!CheckLock.Wait(0))
+                {
+                    await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
+                    return;
+                }
+
+                try
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                    var members = GetMembers(ctx.Client);
+                    var stats = new Dictionary<string, int>();
+                    foreach (var m in members)
+                    {
+                        var loc = m.Locale ?? "Unknown";
+                        if (stats.ContainsKey(loc))
+                            stats[loc]++;
+                        else
+                            stats[loc] = 1;
+                    }
+                    var table = new AsciiTable(
+                        new AsciiColumn("Locale"),
+                        new AsciiColumn("Count", alignToRight: true),
+                        new AsciiColumn("%", alignToRight: true)
+                    );
+                    var total = stats.Values.Sum();
+                    foreach (var lang in stats.OrderByDescending(l => l.Value).ThenBy(l => l.Key))
+                        table.Add(lang.Key, lang.Value.ToString(), $"{100.0 * lang.Value / total:0.00}%");
+                    await ctx.SendAutosplitMessageAsync(new StringBuilder().AppendLine("Member locale stats:").Append(table)).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to get locale stats");
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to get locale stats").ConfigureAwait(false);
+                }
+                finally
+                {
+                    CheckLock.Release(1);
+                    await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                }
+            }
+            */
+
             private List<DiscordMember> GetMembers(DiscordClient client)
             {
                 //owner -> white name
