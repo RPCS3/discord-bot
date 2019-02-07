@@ -24,7 +24,7 @@ namespace CompatBot.EventHandlers
 
         public static Task OnReaction(MessageReactionAddEventArgs e)
         {
-            var emoji = e.Client.GetEmoji("piratethink", Config.Reactions.PiracyCheck);
+            var emoji = e.Client.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
             if (e.Emoji != emoji)
                 return Task.CompletedTask;
 
