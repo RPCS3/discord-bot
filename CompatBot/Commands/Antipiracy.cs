@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -19,13 +18,14 @@ namespace CompatBot.Commands
         [Description("Lists all filters")]
         public async Task List(CommandContext ctx)
         {
-            var result = new StringBuilder("```")
-                .AppendLine("ID   | Trigger")
-                .AppendLine("-----------------------------");
+            var table = new AsciiTable(
+                new AsciiColumn("ID", alignToRight: true),
+                new AsciiColumn("Trigger")
+            );
             using (var db = new BotDb())
                 foreach (var item in await db.Piracystring.ToListAsync().ConfigureAwait(false))
-                    result.AppendLine($"{item.Id:0000} | {item.String}");
-            await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                    table.Add(item.Id.ToString(), item.String);
+            await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
         }
 
         [Command("add")]
