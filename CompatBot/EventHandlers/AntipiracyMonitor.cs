@@ -22,13 +22,17 @@ namespace CompatBot.EventHandlers
             args.Handled = !await IsClean(args.Client, args.Message).ConfigureAwait(false);
         }
 
-        public static Task OnReaction(MessageReactionAddEventArgs e)
+        public static async Task OnReaction(MessageReactionAddEventArgs e)
         {
+            if (e.User.IsBot)
+                return;
+
             var emoji = e.Client.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
             if (e.Emoji != emoji)
-                return Task.CompletedTask;
+                return;
 
-            return IsClean(e.Client, e.Message);
+            var message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
+            await IsClean(e.Client, message).ConfigureAwait(false);
         }
 
         public static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
@@ -39,8 +43,10 @@ namespace CompatBot.EventHandlers
             if (message.Author.IsBot)
                 return true;
 
+#if !DEBUG
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
                 return true;
+#endif
 
             if (string.IsNullOrEmpty(message.Content))
                 return true;
