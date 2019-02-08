@@ -161,8 +161,8 @@ namespace CompatBot.Commands
                         new AsciiColumn("ID", alignToRight: true),
                         new AsciiColumn("Issued by", maxWidth: 15),
                         new AsciiColumn("On date (UTC)"),
-                        new AsciiColumn("Reason", maxWidth: 40),
-                        new AsciiColumn("Context", disabled: !isPrivate, maxWidth: 40)
+                        new AsciiColumn("Reason"),
+                        new AsciiColumn("Context", disabled: !isPrivate)
                         );
                     IQueryable<Warning> query = db.Warning.Where(w => w.DiscordId == userId).OrderByDescending(w => w.Id);
                     if (!isPrivate && !isWhitelisted)

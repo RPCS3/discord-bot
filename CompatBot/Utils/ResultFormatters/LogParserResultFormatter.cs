@@ -437,7 +437,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (brokenDump)
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
             else if (irdChecked)
-                notes.Add("✅ Checked against IRD file and found no issues");
+                notes.Add("✅ Checked missing files against IRD");
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)

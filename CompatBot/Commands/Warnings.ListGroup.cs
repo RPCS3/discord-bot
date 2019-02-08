@@ -81,8 +81,8 @@ namespace CompatBot.Commands
                     new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
                     new AsciiColumn("Issued by", maxWidth: 15),
                     new AsciiColumn("On date (UTC)"),
-                    new AsciiColumn("Reason", maxWidth: 40),
-                    new AsciiColumn("Context", disabled: !ctx.Channel.IsPrivate, maxWidth: 40)
+                    new AsciiColumn("Reason"),
+                    new AsciiColumn("Context", disabled: !ctx.Channel.IsPrivate)
                 );
                 using (var db = new BotDb())
                 {

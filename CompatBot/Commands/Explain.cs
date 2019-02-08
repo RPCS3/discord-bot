@@ -368,7 +368,7 @@ namespace CompatBot.Commands
             }
         }
 
-        private async Task<(Explanation explanation, string fuzzyMatch, double score)> LookupTerm(string term)
+        internal static async Task<(Explanation explanation, string fuzzyMatch, double score)> LookupTerm(string term)
         {
             string fuzzyMatch = null;
             double coefficient;
@@ -390,7 +390,7 @@ namespace CompatBot.Commands
             return (explanation, fuzzyMatch, coefficient);
         }
 
-        private async Task DumpLink(CommandContext ctx, string messageLink)
+        private static async Task DumpLink(CommandContext ctx, string messageLink)
         {
             string explanation = null;
             DiscordMessage msg = null;
