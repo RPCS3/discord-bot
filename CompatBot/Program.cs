@@ -11,6 +11,7 @@ using CompatBot.ThumbScrapper;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot
@@ -141,6 +142,9 @@ namespace CompatBot
                     commands.RegisterCommands<E3>();
 
                     commands.CommandErrored += UnknownCommandHandler.OnError;
+
+                    var interactivityConfig = new InteractivityConfiguration { };
+                    client.UseInteractivity(interactivityConfig);
 
                     client.Ready += async r =>
                                     {

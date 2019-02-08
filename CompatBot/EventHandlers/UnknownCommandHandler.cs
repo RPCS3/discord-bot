@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
@@ -37,11 +38,17 @@ namespace CompatBot.EventHandlers
             if (pos < 0)
                 return;
 
-            var term = e.Context.Message.Content.Substring(pos).Trim().ToLowerInvariant();
+            var term = e.Context.Message.Content.Substring(pos).Trim(40).ToLowerInvariant();
             var lookup = await Explain.LookupTerm(term).ConfigureAwait(false);
             if (lookup.score < 0.5 || lookup.explanation == null)
             {
-                await e.Context.RespondAsync($"Please use `{Config.CommandPrefix}help` to look at bot commands or `{Config.CommandPrefix}explain list` to look at the list of available explanations").ConfigureAwait(false);
+                var ch = await e.Context.GetChannelForSpamAsync().ConfigureAwait(false);
+                await ch.SendMessageAsync(
+                    $"I am not sure what you wanted me to do, please use one of the following commands:\n" +
+                    $"`{Config.CommandPrefix}c {term.Sanitize()}` to check the game status\n" +
+                    $"`{Config.CommandPrefix}explain list` to look at the list of available explanations\n" +
+                    $"`{Config.CommandPrefix}help` to look at available bot commands\n"
+                ).ConfigureAwait(false);
                 return;
             }
 

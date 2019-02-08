@@ -16,6 +16,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -41,8 +42,17 @@ namespace CompatBot.Commands
             title = title?.TrimEager().Truncate(40);
             if (string.IsNullOrEmpty(title))
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "You should specify what you're looking for").ConfigureAwait(false);
-                return;
+                var prompt = await ctx.RespondAsync($"{ctx.Message.Author.Mention} what game do you want to check?").ConfigureAwait(false);
+                var interact = ctx.Client.GetInteractivity();
+                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.Message.Author).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(response?.Message?.Content))
+                {
+                    await prompt.ModifyAsync("You should specify what you're looking for").ConfigureAwait(false);
+                    return;
+                }
+
+                await prompt.DeleteAsync().ConfigureAwait(false);
+                title = response.Message.Content.TrimEager().Truncate(40);
             }
 
             if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
