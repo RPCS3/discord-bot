@@ -161,10 +161,10 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
                 else
                 {
-                    var oldName = evt.Name;
-                    evt.Name = newName;
+                    var oldName = evt.EventName;
+                    evt.EventName = newName;
                     await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed `{oldName}` to `{newName}`").ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Reassigned `{evt.Name}` from `{oldName}` to `{newName}`").ConfigureAwait(false);
                 }
             }
         }
@@ -256,9 +256,11 @@ namespace CompatBot.Commands
                     currentEvent = Guid.NewGuid().ToString();
                     currentYear = evt.Year;
                 }
-                if (currentEvent != evt.EventName)
+
+                var evtName = evt.EventName ?? "";
+                if (currentEvent != evtName)
                 {
-                    currentEvent = evt.EventName;
+                    currentEvent = evtName;
                     var printName = string.IsNullOrEmpty(currentEvent) ? "Various independent events" : $"**{currentEvent} {currentYear} schedule**";
                     msg.AppendLine($"{printName} (UTC):");
                 }
