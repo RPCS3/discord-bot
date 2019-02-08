@@ -140,6 +140,8 @@ namespace CompatBot
                     commands.RegisterCommands<Events>();
                     commands.RegisterCommands<E3>();
 
+                    commands.CommandErrored += UnknownCommandHandler.OnError;
+
                     client.Ready += async r =>
                                     {
                                         Config.Log.Info("Bot is ready to serve!");
