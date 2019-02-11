@@ -295,5 +295,16 @@ Example usage:
                 }
             }
         }
+
+        public static string FixGameTitleSearch(string title)
+        {
+            title = title.Trim(40);
+            if (title.Equals("persona 5", StringComparison.InvariantCultureIgnoreCase)
+                || title.Equals("p5", StringComparison.InvariantCultureIgnoreCase))
+                title = "unnamed";
+            else if (title.Equals("nnk", StringComparison.InvariantCultureIgnoreCase))
+                title = "ni no kuni: wrath of the white witch";
+            return title;
+        }
     }
 }
