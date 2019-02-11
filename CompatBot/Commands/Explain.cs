@@ -14,6 +14,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -23,16 +24,37 @@ namespace CompatBot.Commands
     [Description("Used to manage and show explanations")]
     internal sealed class Explain: BaseCommandModuleCustom
     {
+        private const string TermListTitle = "Defined terms";
+
         [GroupCommand]
         public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
         {
             var sourceTerm = term;
             if (string.IsNullOrEmpty(term))
             {
-                var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-                await ch.SendMessageAsync("Please specify term to explain").ConfigureAwait(false);
-                await List(ctx).ConfigureAwait(false);
-                return;
+                var botMsg = await ctx.RespondAsync("Please specify term to explain").ConfigureAwait(false);
+                var lastBotMessages = await ctx.Channel.GetMessagesBeforeAsync(ctx.Message.Id, 10).ConfigureAwait(false);
+                var showList = true;
+                foreach (var pastMsg in lastBotMessages)
+                    if (pastMsg.Embeds.FirstOrDefault() is DiscordEmbed pastEmbed
+                        && pastEmbed.Title == TermListTitle
+                        || BotReactionsHandler.NeedToSilence(pastMsg).needToChill)
+                    {
+                        showList = false;
+                        break;
+                    }
+                if (showList)
+                    await List(ctx).ConfigureAwait(false);
+                var interact = ctx.Client.GetInteractivity();
+                var newMessage = await interact.WaitForMessageAsync(m => m.Author == ctx.User && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
+                await botMsg.DeleteAsync().ConfigureAwait(false);
+                if (string.IsNullOrEmpty(newMessage?.Message?.Content))
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                    return;
+                }
+
+                sourceTerm = term = newMessage.Message.Content;
             }
 
             if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
@@ -246,7 +268,7 @@ namespace CompatBot.Commands
                 else
                     try
                     {
-                        foreach (var embed in new EmbedPager().BreakInEmbeds(new DiscordEmbedBuilder {Title = "Defined terms", Color = Config.Colors.Help}, keywords))
+                        foreach (var embed in new EmbedPager().BreakInEmbeds(new DiscordEmbedBuilder {Title = TermListTitle, Color = Config.Colors.Help}, keywords))
                             await responseChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                     }
                     catch (Exception e)
