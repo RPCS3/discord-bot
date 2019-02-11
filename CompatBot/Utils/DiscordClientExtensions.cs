@@ -156,11 +156,8 @@ namespace CompatBot.Utils
             {
                 return DiscordEmoji.FromName(client, emojiName);
             }
-            catch (Exception e)
+            catch
             {
-#if DEBUG
-                ApiConfig.Log.Warn(e);
-#endif
                 return fallbackEmoji;
             }
         }

@@ -85,19 +85,7 @@ namespace CompatBot.EventHandlers
                 foreach (var result in formattedResults)
                     try
                     {
-                        if (!message.Channel.IsPrivate
-                            && message.Author.Id == 197163728867688448
-                            && (
-                                result.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
-                                result.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
-                            ))
-                        {
-                            sqvat = sqvat ?? client.GetEmoji(":sqvat:", Config.Reactions.No);
-                            result.Title = "How about no (๑•ิཬ•ั๑)";
-                            if (!string.IsNullOrEmpty(result.ThumbnailUrl))
-                                result.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
-                            await message.ReactWithAsync(client, sqvat).ConfigureAwait(false);
-                        }
+                        await FixAfrikaAsync(client, message, result).ConfigureAwait(false);
                         await message.Channel.SendMessageAsync(embed: result).ConfigureAwait(false);
                     }
                     catch (Exception e)
@@ -148,6 +136,23 @@ namespace CompatBot.EventHandlers
             {
                 Config.Log.Warn(e, $"Couldn't get compat result for {code}");
                 return TitleInfo.CommunicationError.AsEmbed(null);
+            }
+        }
+
+        public static async Task FixAfrikaAsync(DiscordClient client, DiscordMessage message, DiscordEmbedBuilder titleInfoEmbed)
+        {
+            if (!message.Channel.IsPrivate
+                && message.Author.Id == 197163728867688448
+                && (
+                    titleInfoEmbed.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
+                    titleInfoEmbed.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                ))
+            {
+                var sqvat = client.GetEmoji(":sqvat:", Config.Reactions.No);
+                titleInfoEmbed.Title = "How about no (๑•ิཬ•ั๑)";
+                if (!string.IsNullOrEmpty(titleInfoEmbed.ThumbnailUrl))
+                    titleInfoEmbed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
+                await message.ReactWithAsync(client, sqvat).ConfigureAwait(false);
             }
         }
     }

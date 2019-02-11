@@ -71,6 +71,7 @@ namespace CompatBot.EventHandlers
             {
                 var thumbUrl = await e.Context.Client.GetThumbnailUrlAsync(productCode).ConfigureAwait(false);
                 var embed = titleInfo.AsEmbed(productCode, thumbnailUrl: thumbUrl);
+                await ProductCodeLookup.FixAfrikaAsync(e.Context.Client, e.Context.Message, embed).ConfigureAwait(false);
                 await e.Context.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                 return;
             }
