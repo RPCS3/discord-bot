@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -135,87 +135,189 @@ namespace CompatBot.Commands
             await ctx.RespondAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
-        public async Task Rename(CommandContext ctx, int id, string newName)
+
+        public async Task Update(CommandContext ctx, int id, string eventName = null)
         {
             using (var db = new BotDb())
             {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                var evt = eventName == null
+                    ? db.EventSchedule.FirstOrDefault(e => e.Id == id)
+                    : db.EventSchedule.FirstOrDefault(e => e.Id == id && e.EventName == eventName);
                 if (evt == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
-                else
                 {
-                    var oldName = evt.Name;
-                    evt.Name = newName;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed `{oldName}` to `{newName}`").ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
+                    return;
                 }
-            }
-        }
 
-        public async Task Assign(CommandContext ctx, int id, string newName)
-        {
-            using (var db = new BotDb())
-            {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
-                if (evt == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
-                else
+                var interact = ctx.Client.GetInteractivity();
+                var back = DiscordEmoji.FromUnicode("⏪");
+                var skip = DiscordEmoji.FromUnicode("⏩");
+                var trash = DiscordEmoji.FromUnicode("🗑");
+                var yes = DiscordEmoji.FromUnicode("✅");
+                var no = DiscordEmoji.FromUnicode("⛔");
+
+                var skipEventNameStep = !string.IsNullOrEmpty(eventName);
+                DiscordMessage msg = null;
+                MessageContext txt;
+                ReactionContext emoji;
+step1:
+                // step 1: get the new start date
+                var embed = FormatEvent(evt, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} [PST]`\nBy default all times use UTC, only limited number of time zones supported");
+                msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, $"Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
+                (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, skip).ConfigureAwait(false);
+                if (emoji != null)
+                    ; // skip
+                else if (txt != null)
                 {
-                    var oldName = evt.EventName;
-                    evt.EventName = newName;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Reassigned `{evt.Name}` from `{oldName}` to `{newName}`").ConfigureAwait(false);
-                }
-            }
-        }
+                    var newStartTime = FixTimeString(txt.Message.Content);
+                    if (!DateTime.TryParse(newStartTime, out var newTime))
+                    {
+                        await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, $"Couldn't parse `{newStartTime}` as a start date and time, changes weren't saved").ConfigureAwait(false);
+                        return;
+                    }
 
-        public async Task Shift(CommandContext ctx, int id, string newStartTime)
-        {
-            newStartTime = FixTimeString(newStartTime);
-            if (!DateTime.TryParse(newStartTime, out var newTime))
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't parse `{newStartTime}` as a date").ConfigureAwait(false);
-                return;
-            }
-
-            using (var db = new BotDb())
-            {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
-                if (evt == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
-                else
-                {
-                    var oldTime = evt.Start;
+                    var duration = evt.End - evt.Start;
                     evt.Start = Normalize(newTime).Ticks;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Shifted {evt.Name} from {oldTime.AsUtc():u} to {newTime:u}").ConfigureAwait(false);
+                    evt.End = evt.Start + duration;
                 }
-            }
-        }
-
-        public async Task Adjust(CommandContext ctx, int id, string newDuration)
-        {
-            var newLength = await TryParseTimeSpanAsync(ctx, newDuration).ConfigureAwait(false);
-            if (!newLength.HasValue)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't parse `{newDuration}` as a time duration").ConfigureAwait(false);
-                return;
-            }
-
-            using (var db = new BotDb())
-            {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
-                if (evt == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
                 else
                 {
-                    var oldDuration = evt.End.AsUtc() - evt.Start.AsUtc();
-                    evt.End = (evt.Start.AsUtc() + newLength.Value).Ticks;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $@"Adjusted {evt.Name} duration from {oldDuration:h\:mm} to {newLength:h\:mm}").ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
+                    return;
                 }
+step2:
+                // step 2: get the new duration
+                embed = FormatEvent(evt, 2).WithDescription("Example: `1h15m`, or `1:00`");
+                msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
+                (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, back, skip).ConfigureAwait(false);
+                if (emoji != null)
+                {
+                    if (emoji.Emoji == back)
+                        goto step1;
+                    else
+                    {
+                        if (skipEventNameStep)
+                            goto step4;
+                        else
+                            goto step3;
+                    }
+                }
+                else if (txt != null)
+                {
+                    var newLength = await TryParseTimeSpanAsync(ctx, txt.Message.Content).ConfigureAwait(false);
+                    if (!newLength.HasValue)
+                    {
+                        await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, $"Couldn't parse `{txt.Message.Content}` as a duration, changes weren't saved").ConfigureAwait(false);
+                        return;
+                    }
+
+                    evt.End = (evt.Start.AsUtc() + newLength.Value).Ticks;
+                }
+                else
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
+                    return;
+                }
+step3:
+                // step 3: get the new event name
+                embed = FormatEvent(evt, 3);
+                msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event name**", embed: embed.Build()).ConfigureAwait(false);
+                var availableReactions = string.IsNullOrEmpty(evt.EventName) ? new[] {back, skip} : new[] {back, trash, skip};
+                (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, availableReactions).ConfigureAwait(false);
+                if (emoji != null)
+                {
+                    if (emoji.Emoji == trash)
+                        evt.EventName = null;
+                    else if (emoji.Emoji == back)
+                        goto step2;
+                }
+                else if (txt != null)
+                    evt.EventName = string.IsNullOrEmpty(txt.Message.Content) ? null : txt.Message.Content;
+                else
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
+                    return;
+                }
+step4:
+                // step 4: get the new schedule entry name
+                embed = FormatEvent(evt, 4);
+                msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **schedule entry title**", embed: embed.Build()).ConfigureAwait(false);
+                (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, back, skip).ConfigureAwait(false);
+                if (emoji != null)
+                {
+                    if (emoji.Emoji == back)
+                    {
+                        if (skipEventNameStep)
+                            goto step2;
+                        else
+                            goto step3;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(txt?.Message.Content))
+                    evt.Name = txt.Message.Content;
+                else
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
+                    return;
+                }
+step5:
+                // step 5: confirm
+                embed = FormatEvent(evt);
+                msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
+                (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, back, yes, no).ConfigureAwait(false);
+                if (emoji != null)
+                {
+                    if (emoji.Emoji == back)
+                        goto step4;
+                    else if (emoji.Emoji == no)
+                    {
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
+                        return;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(txt?.Message.Content))
+                {
+                    switch (txt.Message.Content.ToLowerInvariant())
+                    {
+                        case "yes":
+                        case "y":
+                        case "✅":
+                        case "☑":
+                        case "✔":
+                        case "👌":
+                        case "👍":
+                            break;
+                        case "no":
+                        case "n":
+                        case "❎":
+                        case "❌":
+                        case "👎":
+                            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
+                            return;
+                        default:
+                            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "I don't know what you mean, so I'll just abort; changes weren't saved").ConfigureAwait(false);
+                            return;
+                    }
+                }
+                else
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
+                    return;
+                }
+
+                await db.SaveChangesAsync().ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
             }
         }
+       
 
         public async Task List(CommandContext ctx, string eventName = null, int? year = null)
         {
@@ -361,12 +463,13 @@ namespace CompatBot.Commands
             return date.AsUtc();
         }
 
-        private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration)
+        private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration, bool react = true)
         {
             var d = Duration.Match(duration);
             if (!d.Success)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
+                if (react)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
                 return null;
             }
 
@@ -374,7 +477,8 @@ namespace CompatBot.Commands
             int.TryParse(d.Groups["mins"].Value, out var mins);
             if (hours == 0 && mins == 0)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
+                if (react)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
                 return null;
             }
 
@@ -402,6 +506,21 @@ namespace CompatBot.Commands
                 result += $"{mins} minute{(mins == 1 ? "" : "s")} ";
             result += $"{secs} second{(secs == 1 ? "" : "s")}";
             return result;
+        }
+
+        private static DiscordEmbedBuilder FormatEvent(EventSchedule evt, int highlight = -1)
+        {
+            var start = evt.Start.AsUtc();
+            var field = 1;
+            return new DiscordEmbedBuilder
+                {
+                    Title = "Schedule entry preview",
+                    Color = Config.Colors.Help,
+                }
+                .AddFieldEx("Start time", evt.Start == 0 ? "-" : start.ToString("u"), highlight == field++, true)
+                .AddFieldEx("Duration", evt.Start == evt.End ? "-" : (evt.End.AsUtc() - start).ToString(@"h\:mm"), highlight == field++, true)
+                .AddFieldEx("Event name", string.IsNullOrEmpty(evt.EventName) ? "-" : evt.EventName, highlight == field++, true)
+                .AddFieldEx("Schedule entry title", string.IsNullOrEmpty(evt.Name) ? "-" : evt.Name, highlight == field++, true);
         }
     }
 }

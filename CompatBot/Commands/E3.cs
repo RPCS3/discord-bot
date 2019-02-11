@@ -32,20 +32,10 @@ namespace CompatBot.Commands
         public Task ClearE3(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
             => Clear(ctx, year);
 
-        [Command("rename"), RequiresBotModRole]
-        [Description("Renames event with the specified ID")]
-        public Task RenameE3(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newName)
-            => Rename(ctx, id, newName);
-
-        [Command("shift"), RequiresBotModRole]
-        [Description("Moves event to a new time")]
-        public Task ShiftE3(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newStartTime)
-            => Shift(ctx, id, newStartTime);
-
-        [Command("adjust"), Aliases("shrink", "stretch"), RequiresBotModRole]
-        [Description("Adjusts event length")]
-        public Task AdjustE3(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newDuration)
-            => Adjust(ctx, id, newDuration);
+        [Command("update"), Aliases("adjust", "change", "modify"), RequiresBotModRole]
+        [Description("Updates the event entry properties")]
+        public Task AdjustE3(CommandContext ctx, [Description("Event ID")] int id)
+            => Update(ctx, id, "E3");
 
         [Command("schedule"), Aliases("show", "list")]
         [Description("Outputs current schedule")]

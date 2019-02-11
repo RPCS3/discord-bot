@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
-using CompatBot.Database;
-using CompatBot.Database.Providers;
-using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
@@ -49,25 +40,10 @@ namespace CompatBot.Commands
         public Task ClearGeneric(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
              => Clear(ctx, year);
 
-        [Command("rename"), RequiresBotModRole]
-        [Description("Renames schedule entry with the specified ID")]
-        public Task RenameGeneric(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newName)
-            => Rename(ctx, id, newName);
-
-        [Command("assign"), Aliases("tag"), RequiresBotModRole]
-        [Description("Assigns specified schedule entry to specific event")]
-        public Task AssignGeneric(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newName)
-            => Assign(ctx, id, newName);
-
-        [Command("shift"), RequiresBotModRole]
-        [Description("Moves schedule entry to a new time")]
-        public Task ShiftGeneric(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newStartTime)
-            => Shift(ctx, id, newStartTime);
-
-        [Command("adjust"), Aliases("shrink", "stretch"), RequiresBotModRole]
-        [Description("Adjusts schedule entry duration")]
-        public Task AdjustGeneric(CommandContext ctx, [Description("Event ID")] int id, [RemainingText] string newDuration)
-            => Adjust(ctx, id, newDuration);
+        [Command("update"), Aliases("adjust", "change", "modify"), RequiresBotModRole]
+        [Description("Updates the event entry properties")]
+        public Task AdjustGeneric(CommandContext ctx, [Description("Event ID")] int id)
+            => Update(ctx, id);
 
         [Command("schedule"), Aliases("show", "list")]
         [Description("Outputs current schedule")]
