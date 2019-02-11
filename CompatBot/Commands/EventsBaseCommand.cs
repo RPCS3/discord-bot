@@ -16,7 +16,8 @@ namespace CompatBot.Commands
 {
     internal class EventsBaseCommand: BaseCommandModuleCustom
     {
-        private static readonly Regex Duration = new Regex(@"((?<hours>\d+)[\:h ])?((?<mins>\d+)m?)?", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        private static readonly Regex Duration = new Regex(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
         protected async Task NearestEvent(CommandContext ctx, string eventName = null)
         {
@@ -265,7 +266,7 @@ namespace CompatBot.Commands
 
         step2:
             // step 2: get the new duration
-            embed = FormatEvent(evt, errorMsg, 2).WithDescription("Example: `1h15m`, or `1:00`");
+            embed = FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`");
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
             (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, back, skip).ConfigureAwait(false);
@@ -313,7 +314,7 @@ namespace CompatBot.Commands
                     evt.EventName = null;
             }
             else if (txt != null)
-                evt.EventName = string.IsNullOrEmpty(txt.Message.Content) ? null : txt.Message.Content;
+                evt.EventName = string.IsNullOrWhiteSpace(txt.Message.Content) || txt.Message.Content == "-" ? null : txt.Message.Content;
             else
                 return (false, msg);
 
@@ -428,16 +429,17 @@ namespace CompatBot.Commands
                 return null;
             }
 
+            int.TryParse(d.Groups["days"].Value, out var days);
             int.TryParse(d.Groups["hours"].Value, out var hours);
             int.TryParse(d.Groups["mins"].Value, out var mins);
-            if (hours == 0 && mins == 0)
+            if (days == 0 && hours == 0 && mins == 0)
             {
                 if (react)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
                 return null;
             }
 
-            return new TimeSpan(0, hours, mins, 0);
+            return new TimeSpan(days, hours, mins, 0);
         }
 
         private static string FormatCountdown(TimeSpan timeSpan)
@@ -474,9 +476,14 @@ namespace CompatBot.Commands
                 };
             if (!string.IsNullOrEmpty(error))
                 result.AddField("Entry error", error);
+            var currentTime = DateTime.UtcNow;
+            if (evt.Start > currentTime.Ticks)
+                result.WithFooter($"Starts in {FormatCountdown(evt.Start.AsUtc() - currentTime)}");
+            else if (evt.End > currentTime.Ticks)
+                result.WithFooter($"Ends in {FormatCountdown(evt.End.AsUtc() - currentTime)}");
             return result
                 .AddFieldEx("Start time", evt.Start == 0 ? "-" : start.ToString("u"), highlight == field++, true)
-                .AddFieldEx("Duration", evt.Start == evt.End ? "-" : (evt.End.AsUtc() - start).ToString(@"h\:mm"), highlight == field++, true)
+                .AddFieldEx("Duration", evt.Start == evt.End ? "-" : (evt.End.AsUtc() - start).ToString(@"d\d\ h\h\ m\m"), highlight == field++, true)
                 .AddFieldEx("Event name", string.IsNullOrEmpty(evt.EventName) ? "-" : evt.EventName, highlight == field++, true)
                 .AddFieldEx("Schedule entry title", string.IsNullOrEmpty(evt.Name) ? "-" : evt.Name, highlight == field++, true);
         }
