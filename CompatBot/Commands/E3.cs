@@ -15,11 +15,8 @@ namespace CompatBot.Commands
 
         [Command("add"), RequiresBotModRole]
         [Description("Adds new E3 event to the schedule")]
-        public Task AddE3(CommandContext ctx,
-            [Description("Event start time in `yyyy-mm-dd hh:mm[:ss][z]` format (24-hour, z for UTC), inclusive")] string start,
-            [Description("Event duration (e.g. 1h30m or 1:00)")] string duration,
-            [Description("Event entry name"), RemainingText] string name)
-            => Add(ctx, "E3", start, duration, name);
+        public Task AddE3(CommandContext ctx)
+            => Add(ctx, "E3");
 
         [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
         [Description("Removes event with the specified IDs")]

@@ -15,20 +15,8 @@ namespace CompatBot.Commands
 
         [Command("add"), RequiresBotModRole]
         [Description("Adds a new entry to the schedule")]
-        public Task AddGeneric(CommandContext ctx,
-            [Description("Event start time in `yyyy-mm-dd hh:mm[:ss][z]` format (24-hour, z for UTC), inclusive")] string start,
-            [Description("Event duration (e.g. 1h30m or 1:00)")] string duration,
-            [Description("Event entry name (e.g. Microsoft or Nintendo Direct)")] string entryName)
-            => Add(ctx, null, start, duration, entryName);
-
-        [Command("add"), RequiresBotModRole]
-        [Description("Adds a new entry to the schedule")]
-        public Task AddGeneric(CommandContext ctx,
-            [Description("Event name (e.g. E3 or CES)")] string eventName,
-            [Description("Event start time in `yyyy-mm-dd hh:mm[:ss][z]` format (24-hour, z for UTC), inclusive")] string start,
-            [Description("Event duration (e.g. 1h30m or 1:00)")] string duration,
-            [Description("Event entry name (e.g. Microsoft or Nintendo Direct)")] string entryName)
-            => Add(ctx, eventName, start, duration, entryName);
+        public Task AddGeneric(CommandContext ctx)
+            => Add(ctx);
 
         [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
         [Description("Removes schedule entries with the specified IDs")]
