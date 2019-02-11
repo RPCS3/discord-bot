@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -18,7 +18,7 @@ namespace CompatBot.Commands
     {
         private static readonly Regex Duration = new Regex(@"((?<hours>\d+)[\:h ])?((?<mins>\d+)m?)?", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
-        public async Task NearestEvent(CommandContext ctx, string eventName = null)
+        protected async Task NearestEvent(CommandContext ctx, string eventName = null)
         {
             var current = DateTime.UtcNow;
             var currentTicks = current.Ticks;
@@ -85,25 +85,25 @@ namespace CompatBot.Commands
             }
         }
 
-        public async Task Add(CommandContext ctx, string eventName, string start, string duration, string entryName)
+        protected async Task Add(CommandContext ctx, string eventName = null)
         {
-            start = FixTimeString(start);
-            if (!DateTime.TryParse(start, out var startDateTime))
+            var evt = new EventSchedule();
+            var (success, msg) = await EditEventPropertiesAsync(ctx, evt, eventName).ConfigureAwait(false);
+            if (success)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{start}` as a date", true).ConfigureAwait(false);
-                return;
+                using (var db = new BotDb())
+                {
+                    await db.EventSchedule.AddAsync(evt).ConfigureAwait(false);
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                }
+                await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Added a new schedule entry").ConfigureAwait(false);
             }
-
-            startDateTime = Normalize(startDateTime);
-            var timeDiff = await TryParseTimeSpanAsync(ctx, duration).ConfigureAwait(false);
-            if (timeDiff.HasValue)
-            {
-                var endDateTime = startDateTime + timeDiff.Value;
-                await Add(ctx, eventName, startDateTime, endDateTime, entryName);
-            }
+            else
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event creation aborted").ConfigureAwait(false);
         }
 
-        public async Task Remove(CommandContext ctx, params int[] ids)
+        protected async Task Remove(CommandContext ctx, params int[] ids)
         {
             int removedCount;
             using (var db = new BotDb())
@@ -118,7 +118,7 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync($"Removed {removedCount} event{StringUtils.GetSuffix(removedCount)}, but was asked to remove {ids.Length}").ConfigureAwait(false);
         }
 
-        public async Task Clear(CommandContext ctx, int? year = null)
+        protected async Task Clear(CommandContext ctx, int? year = null)
         {
             var currentYear = DateTime.UtcNow.Year;
             int removedCount;
@@ -135,89 +135,33 @@ namespace CompatBot.Commands
             await ctx.RespondAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
-        public async Task Rename(CommandContext ctx, int id, string newName)
+        protected async Task Update(CommandContext ctx, int id, string eventName = null)
         {
             using (var db = new BotDb())
             {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
+                var evt = eventName == null
+                    ? db.EventSchedule.FirstOrDefault(e => e.Id == id)
+                    : db.EventSchedule.FirstOrDefault(e => e.Id == id && e.EventName == eventName);
                 if (evt == null)
+                {
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
+                    return;
+                }
+
+                var (success, msg) = await EditEventPropertiesAsync(ctx, evt, eventName).ConfigureAwait(false);
+                if (success)
+                {
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
+                }
                 else
                 {
-                    var oldName = evt.Name;
-                    evt.Name = newName;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed `{oldName}` to `{newName}`").ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
                 }
             }
         }
 
-        public async Task Assign(CommandContext ctx, int id, string newName)
-        {
-            using (var db = new BotDb())
-            {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
-                if (evt == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
-                else
-                {
-                    var oldName = evt.Name;
-                    evt.Name = newName;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed `{oldName}` to `{newName}`").ConfigureAwait(false);
-                }
-            }
-        }
-
-        public async Task Shift(CommandContext ctx, int id, string newStartTime)
-        {
-            newStartTime = FixTimeString(newStartTime);
-            if (!DateTime.TryParse(newStartTime, out var newTime))
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't parse `{newStartTime}` as a date").ConfigureAwait(false);
-                return;
-            }
-
-            using (var db = new BotDb())
-            {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
-                if (evt == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
-                else
-                {
-                    var oldTime = evt.Start;
-                    evt.Start = Normalize(newTime).Ticks;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Shifted {evt.Name} from {oldTime.AsUtc():u} to {newTime:u}").ConfigureAwait(false);
-                }
-            }
-        }
-
-        public async Task Adjust(CommandContext ctx, int id, string newDuration)
-        {
-            var newLength = await TryParseTimeSpanAsync(ctx, newDuration).ConfigureAwait(false);
-            if (!newLength.HasValue)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't parse `{newDuration}` as a time duration").ConfigureAwait(false);
-                return;
-            }
-
-            using (var db = new BotDb())
-            {
-                var evt = await db.EventSchedule.FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
-                if (evt == null)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
-                else
-                {
-                    var oldDuration = evt.End.AsUtc() - evt.Start.AsUtc();
-                    evt.End = (evt.Start.AsUtc() + newLength.Value).Ticks;
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $@"Adjusted {evt.Name} duration from {oldDuration:h\:mm} to {newLength:h\:mm}").ConfigureAwait(false);
-                }
-            }
-        }
-
-        public async Task List(CommandContext ctx, string eventName = null, int? year = null)
+        protected async Task List(CommandContext ctx, string eventName = null, int? year = null)
         {
             var currentTicks = DateTime.UtcNow.Ticks;
             List<EventSchedule> events;
@@ -256,9 +200,11 @@ namespace CompatBot.Commands
                     currentEvent = Guid.NewGuid().ToString();
                     currentYear = evt.Year;
                 }
-                if (currentEvent != evt.EventName)
+
+                var evtName = evt.EventName ?? "";
+                if (currentEvent != evtName)
                 {
-                    currentEvent = evt.EventName;
+                    currentEvent = evtName;
                     var printName = string.IsNullOrEmpty(currentEvent) ? "Various independent events" : $"**{currentEvent} {currentYear} schedule**";
                     msg.AppendLine($"{printName} (UTC):");
                 }
@@ -273,65 +219,178 @@ namespace CompatBot.Commands
             await ctx.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
 
-        private async Task Add(CommandContext ctx, string eventName, DateTime start, DateTime end, string name)
+        private async Task<(bool success, DiscordMessage message)> EditEventPropertiesAsync(CommandContext ctx, EventSchedule evt, string eventName = null)
         {
-            start = Normalize(start);
-            end = Normalize(end);
-            var year = start.Year;
+            var interact = ctx.Client.GetInteractivity();
+            var abort = DiscordEmoji.FromUnicode("🛑");
+            var back = DiscordEmoji.FromUnicode("⏪");
+            var skip = DiscordEmoji.FromUnicode("⏩");
+            var trash = DiscordEmoji.FromUnicode("🗑");
+            var yes = DiscordEmoji.FromUnicode("👍");
 
-            /*
-                        if (end < start)
-                        {
-                            await ctx.ReactWithAsync(Config.Reactions.Failure, "Start date must be before End date", true).ConfigureAwait(false);
-                            return;
-                        }
+            var skipEventNameStep = !string.IsNullOrEmpty(eventName);
+            DiscordMessage msg = null;
+            string errorMsg = null;
+            MessageContext txt;
+            ReactionContext emoji;
 
-                        if (start.Year != end.Year)
-                        {
-                            await ctx.ReactWithAsync(Config.Reactions.Failure, "Start and End dates must be for the same year", true).ConfigureAwait(false);
-                            return;
-                        }
-
-                        if (DateTime.UtcNow.Year < year)
-                        {
-                            await ctx.ReactWithAsync(Config.Reactions.Failure, "Aren't you a bit hasty?").ConfigureAwait(false);
-                            return;
-                        }
-            */
-
-            var startTicks = start.Ticks;
-            var endTicks = end.Ticks;
-            using (var db = new BotDb())
+        step1:
+            // step 1: get the new start date
+            var embed = FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} [PST]`\nBy default all times use UTC, only limited number of time zones supported");
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
+            errorMsg = null;
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, skip).ConfigureAwait(false);
+            if (emoji != null)
             {
-                /*
-                                var entries = await db.EventSchedule.Where(e => e.Year == year).OrderBy(e => e.Start).ToListAsync().ConfigureAwait(false);
-                                var overlaps = entries.Where(e =>
-                                        e.Start >= startTicks && e.Start < endTicks // existing event starts inside
-                                        || e.End > startTicks && e.End <= endTicks // existing event ends inside
-                                ).ToList();
-                                if (overlaps.Any())
-                                {
-                                    var msg = new StringBuilder().AppendLine($"Specified event overlaps with the following event{(overlaps.Count == 1 ? "" : "s")}:");
-                                    foreach (var evt in overlaps)
-                                        msg.AppendLine($"`{evt.Start.AsUtc():u} - {evt.End.AsUtc():u}`: {evt.Name}");
-                                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
-                                    await ctx.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
-                                    return;
-                                }
-                */
-
-                await db.EventSchedule.AddAsync(new EventSchedule
+                if (emoji.Emoji == abort)
+                    return (false, msg);
+            }
+            else if (txt != null)
+            {
+                var newStartTime = FixTimeString(txt.Message.Content);
+                if (!DateTime.TryParse(newStartTime, out var newTime))
                 {
-                    Year = year,
-                    EventName = eventName,
-                    Start = startTicks,
-                    End = endTicks,
-                    Name = name,
-                }).ConfigureAwait(false);
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                    errorMsg = $"Couldn't parse `{newStartTime}` as a start date and time";
+                    goto step1;
+                }
+
+                var duration = evt.End - evt.Start;
+                newTime = Normalize(newTime);
+                evt.Start = newTime.Ticks;
+                evt.End = evt.Start + duration;
+                evt.Year = newTime.Year;
+            }
+            else
+                return (false, msg);
+
+        step2:
+            // step 2: get the new duration
+            embed = FormatEvent(evt, errorMsg, 2).WithDescription("Example: `1h15m`, or `1:00`");
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
+            errorMsg = null;
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, back, skip).ConfigureAwait(false);
+            if (emoji != null)
+            {
+                if (emoji.Emoji == abort)
+                    return (false, msg);
+
+                if (emoji.Emoji == back)
+                    goto step1;
+
+                if (skipEventNameStep)
+                    goto step4;
+            }
+            else if (txt != null)
+            {
+                var newLength = await TryParseTimeSpanAsync(ctx, txt.Message.Content, false).ConfigureAwait(false);
+                if (!newLength.HasValue)
+                {
+                    errorMsg = $"Couldn't parse `{txt.Message.Content}` as a duration";
+                    goto step2;
+                }
+
+                evt.End = (evt.Start.AsUtc() + newLength.Value).Ticks;
+            }
+            else
+                return (false, msg);
+
+        step3:
+            // step 3: get the new event name
+            embed = FormatEvent(evt, errorMsg, 3);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event name**", embed: embed.Build()).ConfigureAwait(false);
+            var availableReactions = string.IsNullOrEmpty(evt.EventName) ? new[] { abort, back, skip } : new[] { abort, back, trash, skip };
+            errorMsg = null;
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, availableReactions).ConfigureAwait(false);
+            if (emoji != null)
+            {
+                if (emoji.Emoji == abort)
+                    return (false, msg);
+
+                if (emoji.Emoji == back)
+                    goto step2;
+
+                if (emoji.Emoji == trash)
+                    evt.EventName = null;
+            }
+            else if (txt != null)
+                evt.EventName = string.IsNullOrEmpty(txt.Message.Content) ? null : txt.Message.Content;
+            else
+                return (false, msg);
+
+        step4:
+            // step 4: get the new schedule entry name
+            embed = FormatEvent(evt, errorMsg, 4);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **schedule entry title**", embed: embed.Build()).ConfigureAwait(false);
+            errorMsg = null;
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, back, skip).ConfigureAwait(false);
+            if (emoji != null)
+            {
+                if (emoji.Emoji == abort)
+                    return (false, msg);
+
+                if (emoji.Emoji == back)
+                {
+                    if (skipEventNameStep)
+                        goto step2;
+                    goto step3;
+                }
+            }
+            else if (txt != null)
+            {
+                if (string.IsNullOrEmpty(txt.Message.Content))
+                {
+                    errorMsg = "Entry title cannot be empty";
+                    goto step4;
+                }
+
+                evt.Name = txt.Message.Content;
+            }
+            else
+                return (false, msg);
+
+        step5:
+            // step 5: confirm
+            embed = FormatEvent(evt, errorMsg);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
+            errorMsg = null;
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, back, yes).ConfigureAwait(false);
+            if (emoji != null)
+            {
+                if (emoji.Emoji == abort)
+                    return (false, msg);
+
+                if (emoji.Emoji == back)
+                    goto step4;
+            }
+            else if (!string.IsNullOrEmpty(txt?.Message.Content))
+            {
+                switch (txt.Message.Content.ToLowerInvariant())
+                {
+                    case "yes":
+                    case "y":
+                    case "✅":
+                    case "☑":
+                    case "✔":
+                    case "👌":
+                    case "👍":
+                        break;
+                    case "no":
+                    case "n":
+                    case "❎":
+                    case "❌":
+                    case "👎":
+                        return (false, msg);
+                    default:
+                        errorMsg = "I don't know what you mean, so I'll just abort";
+                        goto step5;
+                }
+            }
+            else
+            {
+                return (false, msg);
             }
 
-            await ctx.ReactWithAsync(Config.Reactions.Success, $"Added new {(string.IsNullOrEmpty(eventName) ? "" : eventName + " ")}event: `{name}`").ConfigureAwait(false);
+            return (true, msg);
         }
 
         private static async Task<string> FuzzyMatchEventName(BotDb db, string eventName)
@@ -359,12 +418,13 @@ namespace CompatBot.Commands
             return date.AsUtc();
         }
 
-        private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration)
+        private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration, bool react = true)
         {
             var d = Duration.Match(duration);
             if (!d.Success)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
+                if (react)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
                 return null;
             }
 
@@ -372,7 +432,8 @@ namespace CompatBot.Commands
             int.TryParse(d.Groups["mins"].Value, out var mins);
             if (hours == 0 && mins == 0)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
+                if (react)
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to parse `{duration}` as a time", true).ConfigureAwait(false);
                 return null;
             }
 
@@ -400,6 +461,24 @@ namespace CompatBot.Commands
                 result += $"{mins} minute{(mins == 1 ? "" : "s")} ";
             result += $"{secs} second{(secs == 1 ? "" : "s")}";
             return result;
+        }
+
+        private static DiscordEmbedBuilder FormatEvent(EventSchedule evt, string error = null, int highlight = -1)
+        {
+            var start = evt.Start.AsUtc();
+            var field = 1;
+            var result = new DiscordEmbedBuilder
+                {
+                    Title = "Schedule entry preview",
+                    Color = string.IsNullOrEmpty(error) ? Config.Colors.Help : Config.Colors.Maintenance,
+                };
+            if (!string.IsNullOrEmpty(error))
+                result.AddField("Entry error", error);
+            return result
+                .AddFieldEx("Start time", evt.Start == 0 ? "-" : start.ToString("u"), highlight == field++, true)
+                .AddFieldEx("Duration", evt.Start == evt.End ? "-" : (evt.End.AsUtc() - start).ToString(@"h\:mm"), highlight == field++, true)
+                .AddFieldEx("Event name", string.IsNullOrEmpty(evt.EventName) ? "-" : evt.EventName, highlight == field++, true)
+                .AddFieldEx("Schedule entry title", string.IsNullOrEmpty(evt.Name) ? "-" : evt.Name, highlight == field++, true);
         }
     }
 }

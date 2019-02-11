@@ -9,7 +9,6 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Commands

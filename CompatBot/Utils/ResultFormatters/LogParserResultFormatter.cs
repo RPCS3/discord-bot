@@ -499,7 +499,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ PS3 firmware is missing or corrupted");
 
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
-            if (updateInfo != null)
+            var buildBranch = items["build_branch"];
+            if (updateInfo != null &&  (buildBranch == "head" || buildBranch == "spu_perf"))
             {
                 string prefix = "⚠";
                 string timeDeltaStr;
@@ -520,6 +521,8 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     timeDeltaStr = "outdated";
                 notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
+                if (buildBranch == "spu_perf")
+                    notes.Add($"ℹ `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
             }
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
@@ -550,7 +553,8 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var buildInfo = BuildInfoInLog.Match(buildAndSpecs.ToLowerInvariant());
-            if (!buildInfo.Success || buildInfo.Groups["branch"].Value != "head")
+            items["build_branch"] = buildInfo.Groups["branch"].Value;
+            if (!buildInfo.Success)
                 return null;
 
             var currentBuildCommit = buildInfo.Groups["commit"].Value;
@@ -568,6 +572,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return updateInfo;
 
             return null;
+
         }
 
         private static bool VersionIsTooOld(Match log, Match update, UpdateInfo updateInfo)
