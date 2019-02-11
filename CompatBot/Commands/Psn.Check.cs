@@ -8,7 +8,6 @@ using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 using PsnClient;
 
 namespace CompatBot.Commands
@@ -23,17 +22,17 @@ namespace CompatBot.Commands
         {
             [Command("updates"), Aliases("update")]
             [Description("Checks if specified product has any updates")]
-            public async Task Updates(CommandContext ctx, [RemainingText, Description("Product ID such as `BLUS12345`")] string productId)
+            public async Task Updates(CommandContext ctx, [RemainingText, Description("Product code such as `BLUS12345`")] string productCode)
             {
-                productId = ProductCodeLookup.GetProductIds(productId).FirstOrDefault();
-                if (string.IsNullOrEmpty(productId))
+                var id = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault();
+                if (string.IsNullOrEmpty(id))
                 {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{productId.Sanitize()}` is not a valid product ID").ConfigureAwait(false);
+                    await ctx.RespondAsync($"`{productCode.Sanitize()}` is not a valid product code (e.g. BLUS12345 or NPEB98765)").ConfigureAwait(false);
                     return;
                 }
 
-                var updateInfo = await Client.GetTitleUpdatesAsync(productId, Config.Cts.Token).ConfigureAwait(false);
-                var embeds = await updateInfo.AsEmbedAsync(ctx.Client, productId).ConfigureAwait(false);
+                var updateInfo = await Client.GetTitleUpdatesAsync(id, Config.Cts.Token).ConfigureAwait(false);
+                var embeds = await updateInfo.AsEmbedAsync(ctx.Client, id).ConfigureAwait(false);
                 if (!ctx.Channel.IsPrivate
                     && ctx.Message.Author.Id == 197163728867688448
                     && (
