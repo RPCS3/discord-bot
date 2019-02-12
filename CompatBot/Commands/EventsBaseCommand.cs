@@ -224,10 +224,12 @@ namespace CompatBot.Commands
         {
             var interact = ctx.Client.GetInteractivity();
             var abort = DiscordEmoji.FromUnicode("🛑");
-            var back = DiscordEmoji.FromUnicode("⏪");
-            var skip = DiscordEmoji.FromUnicode("⏩");
+            var lastPage = DiscordEmoji.FromUnicode("↪");
+            var firstPage = DiscordEmoji.FromUnicode("↩");
+            var previousPage = DiscordEmoji.FromUnicode("⏪");
+            var nextPage = DiscordEmoji.FromUnicode("⏩");
             var trash = DiscordEmoji.FromUnicode("🗑");
-            var yes = DiscordEmoji.FromUnicode("👍");
+            var saveEdit = DiscordEmoji.FromUnicode("💾");
 
             var skipEventNameStep = !string.IsNullOrEmpty(eventName);
             DiscordMessage msg = null;
@@ -240,11 +242,17 @@ namespace CompatBot.Commands
             var embed = FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} [PST]`\nBy default all times use UTC, only limited number of time zones supported");
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, skip).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, lastPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
                     return (false, msg);
+
+                if (emoji.Emoji == saveEdit)
+                    return (true, msg);
+
+                if (emoji.Emoji == lastPage)
+                    goto step4;
             }
             else if (txt != null)
             {
@@ -269,13 +277,16 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`");
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, back, skip).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
                     return (false, msg);
 
-                if (emoji.Emoji == back)
+                if (emoji.Emoji == saveEdit)
+                    return (true, msg);
+
+                if (emoji.Emoji == previousPage)
                     goto step1;
 
                 if (skipEventNameStep)
@@ -299,15 +310,17 @@ namespace CompatBot.Commands
             // step 3: get the new event name
             embed = FormatEvent(evt, errorMsg, 3);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event name**", embed: embed.Build()).ConfigureAwait(false);
-            var availableReactions = string.IsNullOrEmpty(evt.EventName) ? new[] { abort, back, skip } : new[] { abort, back, trash, skip };
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, availableReactions).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, (string.IsNullOrEmpty(evt.EventName) ? null : trash), nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
                     return (false, msg);
 
-                if (emoji.Emoji == back)
+                if (emoji.Emoji == saveEdit)
+                    return (true, msg);
+
+                if (emoji.Emoji == previousPage)
                     goto step2;
 
                 if (emoji.Emoji == trash)
@@ -323,13 +336,19 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg, 4);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **schedule entry title**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, back, skip).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
                     return (false, msg);
 
-                if (emoji.Emoji == back)
+                if (emoji.Emoji == saveEdit)
+                    return (true, msg);
+
+                if (emoji.Emoji == firstPage)
+                    goto step1;
+
+                if (emoji.Emoji == previousPage)
                 {
                     if (skipEventNameStep)
                         goto step2;
@@ -351,16 +370,21 @@ namespace CompatBot.Commands
 
         step5:
             // step 5: confirm
+            if (errorMsg == null && !evt.IsComplete())
+                errorMsg = "Some required properties are not defined";
             embed = FormatEvent(evt, errorMsg);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, back, yes).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
                     return (false, msg);
 
-                if (emoji.Emoji == back)
+                if (emoji.Emoji == saveEdit)
+                    return (true, msg);
+
+                if (emoji.Emoji == previousPage)
                     goto step4;
             }
             else if (!string.IsNullOrEmpty(txt?.Message.Content))
@@ -374,7 +398,7 @@ namespace CompatBot.Commands
                     case "✔":
                     case "👌":
                     case "👍":
-                        break;
+                        return (true, msg);
                     case "no":
                     case "n":
                     case "❎":

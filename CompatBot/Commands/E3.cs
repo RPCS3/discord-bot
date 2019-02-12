@@ -29,7 +29,7 @@ namespace CompatBot.Commands
         public Task ClearE3(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
             => Clear(ctx, year);
 
-        [Command("update"), Aliases("adjust", "change", "modify"), RequiresBotModRole]
+        [Command("edit"), Aliases("adjust", "change", "modify", "update"), RequiresBotModRole]
         [Description("Updates the event entry properties")]
         public Task AdjustE3(CommandContext ctx, [Description("Event ID")] int id)
             => Update(ctx, id, "E3");
