@@ -386,6 +386,9 @@ namespace CompatBot.Commands
 
                 if (emoji.Emoji == previousPage)
                     goto step4;
+
+                if (emoji.Emoji == firstPage)
+                    goto step1;
             }
             else if (!string.IsNullOrEmpty(txt?.Message.Content))
             {
@@ -415,7 +418,7 @@ namespace CompatBot.Commands
                 return (false, msg);
             }
 
-            return (true, msg);
+            return (false, msg);
         }
 
         private static async Task<string> FuzzyMatchEventName(BotDb db, string eventName)
