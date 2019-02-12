@@ -19,8 +19,8 @@ namespace CompatBot.EventHandlers
     internal static class DiscordInviteFilter
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline;
-        private static readonly Regex InviteLink = new Regex(@"(https?://)?discord(((app\.com/invite|\.gg)/(?<invite_id>.*?))|(\.me/(?<me_id>.*?)))(\s|\W|$)", DefaultOptions);
-        private static readonly Regex DiscordInviteLink = new Regex(@"(https?://)?discord(app\.com/invite|\.gg)/(?<invite_id>.*?)(\s|\W|$)", DefaultOptions);
+        private static readonly Regex InviteLink = new Regex(@"(https?://)?discord(((app\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|$))", DefaultOptions);
+        private static readonly Regex DiscordInviteLink = new Regex(@"(https?://)?discord(app\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+)", DefaultOptions);
         private static readonly Regex DiscordMeLink = new Regex(@"(https?://)?discord\.me/(?<me_id>.*?)(\s|$)", DefaultOptions);
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
         private static readonly MemoryCache InviteCodeCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
