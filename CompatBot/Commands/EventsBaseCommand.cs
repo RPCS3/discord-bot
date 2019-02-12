@@ -164,6 +164,7 @@ namespace CompatBot.Commands
 
         protected async Task List(CommandContext ctx, string eventName = null, int? year = null)
         {
+            var showAll = "all".Equals(eventName, StringComparison.InvariantCultureIgnoreCase);
             var currentTicks = DateTime.UtcNow.Ticks;
             List<EventSchedule> events;
             using (var db = new BotDb())
@@ -171,9 +172,12 @@ namespace CompatBot.Commands
                 IQueryable<EventSchedule> query = db.EventSchedule;
                 if (year.HasValue)
                     query = query.Where(e => e.Year == year);
-                else if (!ctx.Channel.IsPrivate)
-                    query = query.Where(e => e.End > currentTicks);
-                if (!string.IsNullOrEmpty(eventName))
+                else
+                {
+                    if (!ctx.Channel.IsPrivate && !showAll)
+                        query = query.Where(e => e.End > currentTicks);
+                }
+                if (!string.IsNullOrEmpty(eventName) && !showAll)
                 {
                     eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
                     query = query.Where(e => e.EventName == eventName);
@@ -210,7 +214,7 @@ namespace CompatBot.Commands
                     msg.AppendLine($"{printName} (UTC):");
                 }
                 msg.Append("`");
-                if (ctx.Channel.IsPrivate && ModProvider.IsMod(ctx.Message.Author.Id))
+                if (ModProvider.IsMod(ctx.Message.Author.Id))
                     msg.Append($"[{evt.Id:0000}] ");
                 msg.Append($"{evt.Start.AsUtc():u}");
                 if (ctx.Channel.IsPrivate)
