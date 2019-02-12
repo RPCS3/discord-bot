@@ -396,6 +396,9 @@ namespace CompatBot.Commands
             }
             else if (!string.IsNullOrEmpty(txt?.Message.Content))
             {
+                if (!evt.IsComplete())
+                    goto step5;
+
                 switch (txt.Message.Content.ToLowerInvariant())
                 {
                     case "yes":
