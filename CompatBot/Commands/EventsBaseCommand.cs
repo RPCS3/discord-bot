@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
@@ -21,6 +22,7 @@ namespace CompatBot.Commands
 
         protected async Task NearestEvent(CommandContext ctx, string eventName = null)
         {
+            eventName = eventName.Trim(40);
             var current = DateTime.UtcNow;
             var currentTicks = current.Ticks;
             using (var db = new BotDb())
@@ -47,7 +49,7 @@ namespace CompatBot.Commands
                 var firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year && e.EventName == eventName).ConfigureAwait(false);
                 if (firstNamedEvent == null)
                 {
-                    var noEventMsg = $"No information about the upcoming {eventName} at the moment";
+                    var noEventMsg = $"No information about the upcoming {eventName.Sanitize()} at the moment";
                     if (!string.IsNullOrEmpty(promo))
                         noEventMsg += promo;
                     await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
