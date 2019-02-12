@@ -25,6 +25,7 @@ namespace CompatBot.Utils
             if (reactions.Length == 0)
                 throw new ArgumentException("At least one reaction must be specified", nameof(reactions));
 
+            reactions = reactions.Where(r => r != null).ToArray();
             foreach (var emoji in reactions)
                 await message.ReactWithAsync(interactivity.Client, emoji).ConfigureAwait(false);
             var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && !string.IsNullOrEmpty(m.Content), timeout);
