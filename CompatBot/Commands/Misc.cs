@@ -88,7 +88,7 @@ namespace CompatBot.Commands
 
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]
-        public async Task Credits(CommandContext ctx)
+        public async Task About(CommandContext ctx)
         {
             var hcorion = ctx.Client.GetEmoji(":hcorion:", DiscordEmoji.FromUnicode("🍁"));
             var embed = new DiscordEmbedBuilder
@@ -103,7 +103,8 @@ namespace CompatBot.Commands
                     "🐱 Juhn\n" +
                     $"{hcorion} hcorion\n" +
                     "🙃 TGE\n" +
-                    "🍒 Maru");
+                    "🍒 Maru\n" +
+                    "♋ Tourghool");
             await ctx.RespondAsync(embed: embed.Build());
         }
 
