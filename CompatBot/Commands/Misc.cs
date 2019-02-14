@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
+using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -343,10 +344,38 @@ namespace CompatBot.Commands
                 .AppendLine($"Discord latency       : {ctx.Client.Ping} ms")
                 .AppendLine($".NET Runtime version  : {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}")
                 .AppendLine($".NET Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+            AppendPiracyStats(result);
             AppendCmdStats(ctx, result);
             AppendExplainStats(result);
             AppendGameLookupStats(result);
             await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+        }
+
+        private static void AppendPiracyStats(StringBuilder statsBuilder)
+        {
+            try
+            {
+                using (var db = new BotDb())
+                {
+                    var longestGapBetweenWarning = db.Warning
+                        .Where(w => w.Timestamp.HasValue)
+                        .OrderBy(w => w.Timestamp)
+                        .Pairwise((l, r) => r.Timestamp - l.Timestamp)
+                        .Max();
+                    var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
+                    var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
+                    var lastWarn = db.Warning.LastOrDefault()?.Timestamp;
+                    if (longestGapBetweenWarning.HasValue)
+                        statsBuilder.AppendLine($@"Longest time between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning.Value):d\d\ h\h\ m\m}");
+                    if (lastWarn.HasValue)
+                        statsBuilder.AppendLine($@"Time since last warning      : {DateTime.UtcNow - lastWarn.Value.AsUtc():d\d\ h\h\ m\m}");
+                    statsBuilder.AppendLine($"Warnings in the last day     : {warnCount}");
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
         }
 
         private static void AppendCmdStats(CommandContext ctx, StringBuilder statsBuilder)
