@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
+using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -340,14 +342,16 @@ namespace CompatBot.Commands
         {
             var embed = new DiscordEmbedBuilder
             {
+/*
                 Title = "Some bot stats",
-                Color = DiscordColor.Purple,
                 Description = "Most stats are for the current run only, and are not persistent",
+*/
+                Color = DiscordColor.Purple,
             }
-                .AddField("Current uptime", Config.Uptime.Elapsed.ToString(@"d\d\ h\h\ m\m"), true)
+                .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
                 .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
-                .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset on {GithubClient.Client.RateLimitResetTime:u}", true)
-                .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+                .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
+                .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);
             AppendExplainStats(embed);
@@ -370,12 +374,16 @@ namespace CompatBot.Commands
                     var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
                     var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
                     var lastWarn = db.Warning.LastOrDefault()?.Timestamp;
+                    if (lastWarn.HasValue && longestGapBetweenWarning.HasValue)
+                        longestGapBetweenWarning = Math.Max(longestGapBetweenWarning.Value, DateTime.UtcNow.Ticks - lastWarn.Value);
                     var statsBuilder = new StringBuilder();
                     if (longestGapBetweenWarning.HasValue)
-                        statsBuilder.AppendLine($@"Longest time between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning.Value):d\d\ h\h\ m\m}");
+                        statsBuilder.AppendLine($@"Longest between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning.Value).AsShortTimespan()}");
                     if (lastWarn.HasValue)
-                        statsBuilder.AppendLine($@"Time since last warning: {DateTime.UtcNow - lastWarn.Value.AsUtc():d\d\ h\h\ m\m}");
-                    statsBuilder.AppendLine($"Warnings in the last day: {warnCount}");
+                        statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
+                    statsBuilder.Append($"Warnings in the last day: {warnCount}");
+                    if (warnCount == 0)
+                        statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
                     embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);
                 }
             }

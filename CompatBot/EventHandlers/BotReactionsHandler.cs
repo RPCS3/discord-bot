@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
@@ -65,6 +66,9 @@ namespace CompatBot.EventHandlers
 
         private static readonly Random rng = new Random();
         private static readonly object theDoor = new object();
+
+        public static DiscordEmoji RandomNegativeReaction { get { lock (theDoor) return SadReactions[rng.Next(SadReactions.Length)]; } }
+        public static DiscordEmoji RandomPositiveReaction { get { lock (theDoor) return ThankYouReactions[rng.Next(ThankYouReactions.Length)]; } }
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
