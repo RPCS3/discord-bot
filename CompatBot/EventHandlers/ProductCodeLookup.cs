@@ -6,12 +6,14 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
+using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
@@ -110,9 +112,7 @@ namespace CompatBot.EventHandlers
         public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false)
         {
             if (string.IsNullOrEmpty(code))
-            {
                 return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog);
-            }
 
             try
             {

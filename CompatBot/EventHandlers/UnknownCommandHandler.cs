@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
@@ -8,6 +7,7 @@ using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
@@ -54,6 +54,8 @@ namespace CompatBot.EventHandlers
                     await e.Context.RespondAsync(fuzzyNotice).ConfigureAwait(false);
                 }
                 var explain = lookup.explanation;
+                BaseCommandModuleCustom.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
+                BaseCommandModuleCustom.ExplainStatCache.Set(explain.Keyword, ++stat, BaseCommandModuleCustom.CacheTime);
                 await e.Context.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
                 return;
             }

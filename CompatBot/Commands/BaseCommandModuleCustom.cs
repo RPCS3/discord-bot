@@ -13,8 +13,10 @@ namespace CompatBot.Commands
 {
     internal class BaseCommandModuleCustom : BaseCommandModule
     {
-        private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
+        internal static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
         protected static readonly MemoryCache CmdStatCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromDays(1)});
+        internal static readonly MemoryCache ExplainStatCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromDays(1)});
+        internal static readonly MemoryCache GameStatCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromDays(1)});
 
         public override async Task BeforeExecutionAsync(CommandContext ctx)
         {

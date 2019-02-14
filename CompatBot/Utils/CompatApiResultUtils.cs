@@ -7,20 +7,26 @@ namespace CompatBot.Utils
 {
     internal static class CompatApiResultUtils
     {
-        public static List<KeyValuePair<string, TitleInfo>> GetSortedList(this CompatResult result)
+        public static List<(string code, TitleInfo info, double score)> GetSortedList(this CompatResult result)
         {
             var search = result.RequestBuilder.search;
-            var sortedList = result.Results.ToList();
-            if (!string.IsNullOrEmpty(search))
-                sortedList = sortedList
-                    .OrderByDescending(kvp => GetScore(search, kvp.Value))
-                    .ThenBy(kvp => kvp.Value.Title)
-                    .ThenBy(kvp => kvp.Key)
-                    .ToList();
-            if (GetScore(search, sortedList.First().Value) < 0.2)
-                sortedList = sortedList
+            if (string.IsNullOrEmpty(search) || !result.Results.Any())
+                return result.Results
                     .OrderBy(kvp => kvp.Value.Title)
                     .ThenBy(kvp => kvp.Key)
+                    .Select(kvp => (kvp.Key, kvp.Value, 0.0))
+                    .ToList();
+
+            var sortedList = result.Results
+                .Select(kvp => (code: kvp.Key, info: kvp.Value, score: GetScore(search, kvp.Value)))
+                .OrderByDescending(t => t.score)
+                .ThenBy(t => t.info.Title)
+                .ThenBy(t => t.code)
+                .ToList();
+            if (sortedList.First().score < 0.2)
+                sortedList = sortedList
+                    .OrderBy(kvp => kvp.info.Title)
+                    .ThenBy(kvp => kvp.code)
                     .ToList();
             return sortedList;
         }

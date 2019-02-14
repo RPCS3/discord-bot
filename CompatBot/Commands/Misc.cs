@@ -337,6 +337,20 @@ namespace CompatBot.Commands
         [Description("Use to look at various runtime stats")]
         public async Task Stats(CommandContext ctx)
         {
+            var result = new StringBuilder("```")
+                .AppendLine($"Current uptime        : {Config.Uptime.Elapsed}")
+                .AppendLine($"Github rate limit     : {GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available, will be reset on {GithubClient.Client.RateLimitResetTime:u}")
+                .AppendLine($"Discord latency       : {ctx.Client.Ping} ms")
+                .AppendLine($".NET Runtime version  : {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}")
+                .AppendLine($".NET Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+            AppendCmdStats(ctx, result);
+            AppendExplainStats(result);
+            AppendGameLookupStats(result);
+            await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+        }
+
+        private static void AppendCmdStats(CommandContext ctx, StringBuilder statsBuilder)
+        {
             var commandStats = ctx.CommandsNext.RegisteredCommands.Values
                 .Select(c => c.QualifiedName)
                 .Distinct()
@@ -346,23 +360,55 @@ namespace CompatBot.Commands
                 .OrderByDescending(t => t.stat)
                 .ToList();
             var totalCalls = commandStats.Sum(t => t.stat);
-            var top = commandStats.Take(5);
-            var result = new StringBuilder("```")
-                .AppendLine($"Current uptime        : {Config.Uptime.Elapsed}")
-                .AppendLine($"Github rate limit     : {GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available, will be reset on {GithubClient.Client.RateLimitResetTime:u}")
-                .AppendLine($"Discord latency       : {ctx.Client.Ping}ms")
-                .AppendLine($".NET Runtime version  : {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}")
-                .AppendLine($".NET Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+            var top = commandStats.Take(5).ToList();
             if (top.Any())
             {
-                result.AppendLine("Top 5 recent commands:");
+                statsBuilder.AppendLine("Top 5 recent commands:");
                 var n = 1;
                 foreach (var cmdStat in top)
-                    result.AppendLine(
-                        $"  {n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.00}%)");
+                    statsBuilder.AppendLine($"  {n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.00}%)");
+                statsBuilder.AppendLine($"    Total commands executed: {totalCalls}");
             }
+        }
 
-            await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+        private static void AppendExplainStats(StringBuilder statsBuilder)
+        {
+            var terms = ExplainStatCache.GetCacheKeys<string>();
+            var sortedTerms = terms
+                .Select(t => (term: t, stat: ExplainStatCache.Get(t) as int?))
+                .Where(t => t.stat.HasValue)
+                .OrderByDescending(t => t.stat)
+                .ToList();
+            var totalExplains = sortedTerms.Sum(t => t.stat);
+            var top = sortedTerms.Take(5).ToList();
+            if (top.Any())
+            {
+                statsBuilder.AppendLine("Top 5 recent explanations:");
+                var n = 1;
+                foreach (var explain in top)
+                    statsBuilder.AppendLine($"  {n++}. {explain.term} ({explain.stat} display{(explain.stat == 1 ? "" : "s")}, {explain.stat * 100.0 / totalExplains:0.00}%)");
+                statsBuilder.AppendLine($"    Total explanations shown: {totalExplains}");
+            }
+        }
+
+        private static void AppendGameLookupStats(StringBuilder statsBuilder)
+        {
+            var gameTitles = GameStatCache.GetCacheKeys<string>();
+            var sortedTitles = gameTitles
+                .Select(t => (title: t, stat: GameStatCache.Get(t) as int?))
+                .Where(t => t.stat.HasValue)
+                .OrderByDescending(t => t.stat)
+                .ToList();
+            var totalLookups = sortedTitles.Sum(t => t.stat);
+            var top = sortedTitles.Take(5).ToList();
+            if (top.Any())
+            {
+                statsBuilder.AppendLine("Top 5 recent game lookups:");
+                var n = 1;
+                foreach (var title in top)
+                    statsBuilder.AppendLine($"  {n++}. {title.title} ({title.stat} search{(title.stat == 1 ? "" : "es")}, {title.stat * 100.0 / totalLookups:0.00}%)");
+                statsBuilder.AppendLine($"    Total game lookups: {totalLookups}");
+            }
         }
     }
 }

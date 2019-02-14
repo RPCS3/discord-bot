@@ -11,6 +11,7 @@ using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
@@ -86,11 +87,16 @@ namespace CompatBot.EventHandlers
                 var status = await Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
                 if ((status.ReturnCode == 0 || status.ReturnCode == 2) && status.Results.Any())
                 {
-                    var (code, info) = status.GetSortedList().First();
-                    var score = CompatApiResultUtils.GetScore(gameTitle, info);
-                    Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info.Title}\" with score {score}");
+                    var (code, info, score) = status.GetSortedList().First();
+                    Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info?.Title}\" with score {score}");
                     if (score < 0.5)
                         return (null, null);
+
+                    if (!string.IsNullOrEmpty(info?.Title))
+                    {
+                        BaseCommandModuleCustom.GameStatCache.TryGetValue(info.Title, out int stat);
+                        BaseCommandModuleCustom.GameStatCache.Set(info.Title, ++stat, BaseCommandModuleCustom.CacheTime);
+                    }
 
                     return (code, info);
                 }

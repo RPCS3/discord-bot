@@ -18,6 +18,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands
 {
@@ -283,11 +284,20 @@ Example usage:
                 if (returnCode.displayResults)
                 {
                     var sortedList = compatResult.GetSortedList();
+                    var searchTerm = request.search ?? @"¯\_(ツ)_/¯";
+                    var searchHits = sortedList.Where(t => t.score > 0.5
+                                                           || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
+                                                           || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
+                    foreach (var title in searchHits.Select(t => t.info?.Title).Distinct())
+                    {
+                        GameStatCache.TryGetValue(title, out int stat);
+                        GameStatCache.Set(title, ++stat, CacheTime);
+                    }
                     foreach (var resultInfo in sortedList.Take(request.amountRequested))
                     {
                         var info = resultInfo.AsString();
 #if DEBUG
-                        info = $"`{CompatApiResultUtils.GetScore(request.search, resultInfo.Value):0.000000}` {info}";
+                        info = $"`{CompatApiResultUtils.GetScore(request.search, resultInfo.info):0.000000}` {info}";
 #endif
                         result.AppendLine(info);
                     }
