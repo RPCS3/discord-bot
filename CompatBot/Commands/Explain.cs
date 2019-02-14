@@ -16,6 +16,7 @@ using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands
 {
@@ -104,6 +105,8 @@ namespace CompatBot.Commands
                     }
 
                     var explain = result.explanation;
+                    ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
+                    ExplainStatCache.Set(explain.Keyword, ++stat, CacheTime);
                     await ctx.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
                     return;
                 }

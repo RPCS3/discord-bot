@@ -4,8 +4,10 @@ using System.Globalization;
 using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatApiClient.POCOs;
+using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -76,9 +78,15 @@ namespace CompatBot.Utils.ResultFormatters
                     desc = info.AlternativeTitle + Environment.NewLine + desc;
                 if (!string.IsNullOrEmpty(info.WikiTitle))
                     desc +=  $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={info.WikiTitle})";
+                var cacheTitle = info.Title ?? gameTitle;
+                if (!string.IsNullOrEmpty(cacheTitle))
+                {
+                    BaseCommandModuleCustom.GameStatCache.TryGetValue(cacheTitle, out int stat);
+                    BaseCommandModuleCustom.GameStatCache.Set(cacheTitle, ++stat, BaseCommandModuleCustom.CacheTime);
+                }
                 return new DiscordEmbedBuilder
                     {
-                        Title = $"{productCodePart}{(gameTitle ?? info.Title).Trim(200)}",
+                        Title = $"{productCodePart}{cacheTitle.Trim(200)}",
                         Url = $"https://forums.rpcs3.net/thread-{info.Thread}.html",
                         Description = desc,
                         Color = color,
@@ -103,11 +111,18 @@ namespace CompatBot.Utils.ResultFormatters
                     gameTitle = titleName;
                 if (!string.IsNullOrEmpty(gameTitle))
                 {
+                    BaseCommandModuleCustom.GameStatCache.TryGetValue(gameTitle, out int stat);
+                    BaseCommandModuleCustom.GameStatCache.Set(gameTitle, ++stat, BaseCommandModuleCustom.CacheTime);
                     var productCodePart = string.IsNullOrEmpty(titleId) ? "" : $"[{titleId}] ";
                     result.Title = $"{productCodePart}{gameTitle.Sanitize().Trim(200)}";
                 }
                 return result;
             }
+        }
+
+        public static string AsString(this (string code, TitleInfo info, double score) resultInfo)
+        {
+            return resultInfo.info.AsString(resultInfo.code);
         }
 
         public static string AsString(this KeyValuePair<string, TitleInfo> resultInfo)

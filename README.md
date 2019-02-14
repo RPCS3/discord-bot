@@ -1,10 +1,15 @@
 RPCS3 Compatibility Bot
 =======================
 
+This is a tech support / moderation / crowd entertainment bot for the [RPCS3 discord server](https://discord.me/rpcs3) [![RPCS3 discord server](https://discordapp.com/api/guilds/272035812277878785/widget.png)](https://discord.me/rpcs3)
+
 Development Requirements
 ------------------------
 * [.NET Core 2.1 SDK](https://www.microsoft.com/net/download/windows) or newer
-* Any text editor, but Visual Studio 2017 or Visual Studio Code is recommended
+* Any text editor, but here are some recommends:
+  * [Visual Studio](https://visualstudio.microsoft.com/) (Windows and Mac only, has free Community edition)
+  * [Visual Studio Code](https://code.visualstudio.com/) (cross-platform, free)
+  * [JetBrains Rider](https://www.jetbrains.com/rider/) (cross-platform)
 
 Runtime Requirements
 --------------------

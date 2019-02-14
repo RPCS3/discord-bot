@@ -443,6 +443,7 @@ namespace CompatBot.Commands
                 .Replace("PST", "-08:00")
                 .Replace("EST", "-05:00")
                 .Replace("BST", "-03:00")
+                .Replace("JST", "+09:00")
                 .Replace("AEST", "+10:00");
         }
 
@@ -484,13 +485,13 @@ namespace CompatBot.Commands
             var days = (int)timeSpan.TotalDays;
             if (days > 0)
                 timeSpan -= TimeSpan.FromDays(days);
-            var hours = (int) timeSpan.TotalHours;
+            var hours = (int)timeSpan.TotalHours;
             if (hours > 0)
                 timeSpan -= TimeSpan.FromHours(hours);
-            var mins = (int) timeSpan.TotalMinutes;
+            var mins = (int)timeSpan.TotalMinutes;
             if (mins > 0)
                 timeSpan -= TimeSpan.FromMinutes(mins);
-            var secs = (int) timeSpan.TotalSeconds;
+            var secs = (int)timeSpan.TotalSeconds;
             if (days > 0)
                 result += $"{days} day{(days == 1 ? "" : "s")} ";
             if (hours > 0 || days > 0)
