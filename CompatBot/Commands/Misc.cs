@@ -338,20 +338,25 @@ namespace CompatBot.Commands
         [Description("Use to look at various runtime stats")]
         public async Task Stats(CommandContext ctx)
         {
-            var result = new StringBuilder("```")
-                .AppendLine($"Current uptime        : {Config.Uptime.Elapsed}")
-                .AppendLine($"Github rate limit     : {GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available, will be reset on {GithubClient.Client.RateLimitResetTime:u}")
-                .AppendLine($"Discord latency       : {ctx.Client.Ping} ms")
-                .AppendLine($".NET Runtime version  : {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}")
-                .AppendLine($".NET Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
-            AppendPiracyStats(result);
-            AppendCmdStats(ctx, result);
-            AppendExplainStats(result);
-            AppendGameLookupStats(result);
-            await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+            var embed = new DiscordEmbedBuilder
+            {
+                Title = "Some bot stats",
+                Color = DiscordColor.Purple,
+                Description = "Most stats are for the current run only, and are not persistent",
+            }
+                .AddField("Current uptime", Config.Uptime.Elapsed.ToString(@"d\d\ h\h\ m\m"), true)
+                .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
+                .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset on {GithubClient.Client.RateLimitResetTime:u}", true)
+                .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+            AppendPiracyStats(embed);
+            AppendCmdStats(ctx, embed);
+            AppendExplainStats(embed);
+            AppendGameLookupStats(embed);
+            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
+            await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
-        private static void AppendPiracyStats(StringBuilder statsBuilder)
+        private static void AppendPiracyStats(DiscordEmbedBuilder embed)
         {
             try
             {
@@ -365,11 +370,13 @@ namespace CompatBot.Commands
                     var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
                     var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
                     var lastWarn = db.Warning.LastOrDefault()?.Timestamp;
+                    var statsBuilder = new StringBuilder();
                     if (longestGapBetweenWarning.HasValue)
                         statsBuilder.AppendLine($@"Longest time between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning.Value):d\d\ h\h\ m\m}");
                     if (lastWarn.HasValue)
-                        statsBuilder.AppendLine($@"Time since last warning      : {DateTime.UtcNow - lastWarn.Value.AsUtc():d\d\ h\h\ m\m}");
-                    statsBuilder.AppendLine($"Warnings in the last day     : {warnCount}");
+                        statsBuilder.AppendLine($@"Time since last warning: {DateTime.UtcNow - lastWarn.Value.AsUtc():d\d\ h\h\ m\m}");
+                    statsBuilder.AppendLine($"Warnings in the last day: {warnCount}");
+                    embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);
                 }
             }
             catch (Exception e)
@@ -378,7 +385,7 @@ namespace CompatBot.Commands
             }
         }
 
-        private static void AppendCmdStats(CommandContext ctx, StringBuilder statsBuilder)
+        private static void AppendCmdStats(CommandContext ctx, DiscordEmbedBuilder embed)
         {
             var commandStats = ctx.CommandsNext.RegisteredCommands.Values
                 .Select(c => c.QualifiedName)
@@ -392,15 +399,16 @@ namespace CompatBot.Commands
             var top = commandStats.Take(5).ToList();
             if (top.Any())
             {
-                statsBuilder.AppendLine("Top 5 recent commands:");
+                var statsBuilder = new StringBuilder();
                 var n = 1;
                 foreach (var cmdStat in top)
-                    statsBuilder.AppendLine($"  {n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.00}%)");
-                statsBuilder.AppendLine($"    Total commands executed: {totalCalls}");
+                    statsBuilder.AppendLine($"{n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.##}%)");
+                statsBuilder.AppendLine($"Total commands executed: {totalCalls}");
+                embed.AddField($"Top {top.Count} recent commands", statsBuilder.ToString().TrimEnd(), true);
             }
         }
 
-        private static void AppendExplainStats(StringBuilder statsBuilder)
+        private static void AppendExplainStats(DiscordEmbedBuilder embed)
         {
             var terms = ExplainStatCache.GetCacheKeys<string>();
             var sortedTerms = terms
@@ -412,15 +420,16 @@ namespace CompatBot.Commands
             var top = sortedTerms.Take(5).ToList();
             if (top.Any())
             {
-                statsBuilder.AppendLine("Top 5 recent explanations:");
+                var statsBuilder = new StringBuilder();
                 var n = 1;
                 foreach (var explain in top)
-                    statsBuilder.AppendLine($"  {n++}. {explain.term} ({explain.stat} display{(explain.stat == 1 ? "" : "s")}, {explain.stat * 100.0 / totalExplains:0.00}%)");
-                statsBuilder.AppendLine($"    Total explanations shown: {totalExplains}");
+                    statsBuilder.AppendLine($"{n++}. {explain.term} ({explain.stat} display{(explain.stat == 1 ? "" : "s")}, {explain.stat * 100.0 / totalExplains:0.##}%)");
+                statsBuilder.AppendLine($"Total explanations shown: {totalExplains}");
+                embed.AddField($"Top {top.Count} recent explanations", statsBuilder.ToString().TrimEnd(), true);
             }
         }
 
-        private static void AppendGameLookupStats(StringBuilder statsBuilder)
+        private static void AppendGameLookupStats(DiscordEmbedBuilder embed)
         {
             var gameTitles = GameStatCache.GetCacheKeys<string>();
             var sortedTitles = gameTitles
@@ -432,11 +441,12 @@ namespace CompatBot.Commands
             var top = sortedTitles.Take(5).ToList();
             if (top.Any())
             {
-                statsBuilder.AppendLine("Top 5 recent game lookups:");
+                var statsBuilder = new StringBuilder();
                 var n = 1;
                 foreach (var title in top)
-                    statsBuilder.AppendLine($"  {n++}. {title.title} ({title.stat} search{(title.stat == 1 ? "" : "es")}, {title.stat * 100.0 / totalLookups:0.00}%)");
-                statsBuilder.AppendLine($"    Total game lookups: {totalLookups}");
+                    statsBuilder.AppendLine($"{n++}. {title.title.Trim(40)} ({title.stat} search{(title.stat == 1 ? "" : "es")}, {title.stat * 100.0 / totalLookups:0.##}%)");
+                statsBuilder.AppendLine($"Total game lookups: {totalLookups}");
+                embed.AddField($"Top {top.Count} recent game lookups", statsBuilder.ToString().TrimEnd(), true);
             }
         }
     }
