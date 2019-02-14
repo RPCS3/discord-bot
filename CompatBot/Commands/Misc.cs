@@ -336,7 +336,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("stats"), RequiresBotModRole]
+        [Command("stats"), Cooldown(1, 10, CooldownBucketType.Global)]
         [Description("Use to look at various runtime stats")]
         public async Task Stats(CommandContext ctx)
         {
