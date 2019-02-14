@@ -10,6 +10,7 @@ using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands
 {
@@ -336,11 +337,32 @@ namespace CompatBot.Commands
         [Description("Use to look at various runtime stats")]
         public async Task Stats(CommandContext ctx)
         {
+            var commandStats = ctx.CommandsNext.RegisteredCommands.Values
+                .Select(c => c.QualifiedName)
+                .Distinct()
+                .Select(qn => (name: qn, stat: CmdStatCache.Get(qn) as int?))
+                .Where(t => t.stat.HasValue)
+                .Distinct()
+                .OrderByDescending(t => t.stat)
+                .ToList();
+            var totalCalls = commandStats.Sum(t => t.stat);
+            var top = commandStats.Take(5);
             var result = new StringBuilder("```")
-                .AppendLine($"Current uptime   : {Config.Uptime.Elapsed}")
-                .AppendLine($"Github rate limit: {GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit}, will be reset on {GithubClient.Client.RateLimitResetTime:u}")
-                .Append("```");
-            await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
+                .AppendLine($"Current uptime        : {Config.Uptime.Elapsed}")
+                .AppendLine($"Github rate limit     : {GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available, will be reset on {GithubClient.Client.RateLimitResetTime:u}")
+                .AppendLine($"Discord latency       : {ctx.Client.Ping}ms")
+                .AppendLine($".NET Runtime version  : {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}")
+                .AppendLine($".NET Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+            if (top.Any())
+            {
+                result.AppendLine("Top 5 recent commands:");
+                var n = 1;
+                foreach (var cmdStat in top)
+                    result.AppendLine(
+                        $"  {n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.00}%)");
+            }
+
+            await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
         }
     }
 }
