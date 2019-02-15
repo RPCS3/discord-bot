@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
@@ -17,6 +18,7 @@ namespace CompatBot.Commands
 {
     internal class EventsBaseCommand: BaseCommandModuleCustom
     {
+        private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
         private static readonly Regex Duration = new Regex(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
@@ -100,7 +102,10 @@ namespace CompatBot.Commands
                     await db.SaveChangesAsync().ConfigureAwait(false);
                 }
                 await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
-                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Added a new schedule entry").ConfigureAwait(false);
+                if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Created new event schedule entry")).ConfigureAwait(false);
+                else
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Added a new schedule entry").ConfigureAwait(false);
             }
             else
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event creation aborted").ConfigureAwait(false);
@@ -155,7 +160,10 @@ namespace CompatBot.Commands
                 if (success)
                 {
                     await db.SaveChangesAsync().ConfigureAwait(false);
-                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
+                    if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Updated event schedule entry")).ConfigureAwait(false);
+                    else
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
                 }
                 else
                 {
@@ -223,7 +231,8 @@ namespace CompatBot.Commands
                     msg.Append($@" - {evt.End.AsUtc():u}");
                 msg.AppendLine($@" ({evt.End.AsUtc() - evt.Start.AsUtc():h\:mm})`: {evt.Name}");
             }
-            await ctx.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
+            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
+            await ch.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
 
         private async Task<(bool success, DiscordMessage message)> EditEventPropertiesAsync(CommandContext ctx, EventSchedule evt, string eventName = null)
@@ -248,7 +257,7 @@ namespace CompatBot.Commands
             var embed = FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} [PST]`\nBy default all times use UTC, only limited number of time zones supported");
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, lastPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -283,7 +292,7 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`");
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -317,7 +326,7 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg, 3);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event name**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, (string.IsNullOrEmpty(evt.EventName) ? null : trash), nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, (string.IsNullOrEmpty(evt.EventName) ? null : trash), nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -342,7 +351,7 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg, 4);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **schedule entry title**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -381,7 +390,7 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
