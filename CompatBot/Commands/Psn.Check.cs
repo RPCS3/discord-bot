@@ -8,6 +8,7 @@ using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Interactivity;
 using PsnClient;
 
 namespace CompatBot.Commands
@@ -24,11 +25,21 @@ namespace CompatBot.Commands
             [Description("Checks if specified product has any updates")]
             public async Task Updates(CommandContext ctx, [RemainingText, Description("Product code such as `BLUS12345`")] string productCode)
             {
+
                 var id = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault();
                 if (string.IsNullOrEmpty(id))
                 {
-                    await ctx.RespondAsync($"`{productCode.Sanitize()}` is not a valid product code (e.g. BLUS12345 or NPEB98765)").ConfigureAwait(false);
-                    return;
+                    var botMsg = await ctx.RespondAsync("Please specify a valid product code (e.g. BLUS12345 or NPEB98765)").ConfigureAwait(false);
+                    var interact = ctx.Client.GetInteractivity();
+                    var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
+                    await botMsg.DeleteAsync().ConfigureAwait(false);
+
+                    id = ProductCodeLookup.GetProductIds(msg.Message?.Content).FirstOrDefault();
+                    if (string.IsNullOrEmpty(id))
+                    {
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{(msg.Message?.Content ?? productCode).Trim(10).Sanitize()}` is not a valid product code").ConfigureAwait(false);
+                        return;
+                    }
                 }
 
                 var updateInfo = await Client.GetTitleUpdatesAsync(id, Config.Cts.Token).ConfigureAwait(false);
