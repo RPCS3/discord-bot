@@ -24,6 +24,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Client compatClient = new Client();
         private static readonly IrdClient irdClient = new IrdClient();
 
+        private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
         // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
         // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
@@ -33,11 +34,9 @@ namespace CompatBot.Utils.ResultFormatters
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
         // rpcs3-v0.0.5-7105-064d0619_linux64.AppImage
-        private static readonly Regex BuildInfoInUpdate = new Regex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-        private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        private static readonly Regex BuildInfoInUpdate = new Regex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
+        private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
+        private static readonly Regex IntelGpuModel = new Regex(@"Intel\s?(®|\(R\))? (?<gpu_model>(?<gpu_family>(\w| )+Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
 
         private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
         private static readonly Version RecommendedOpenGLVersion = new Version(4, 5);
@@ -453,6 +452,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
 
+            var supportedGpu = true;
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
                 Version.TryParse(oglVersionString, out oglVersion);
@@ -465,8 +465,36 @@ namespace CompatBot.Utils.ResultFormatters
             if (oglVersion != null)
             {
                 if (oglVersion < MinimumOpenGLVersion)
+                {
                     notes.Add($"❌ GPU only supports OpenGL {oglVersion.Major}.{oglVersion.Minor}, which is below the minimum requirement of {MinimumOpenGLVersion}");
+                    supportedGpu = false;
+                }
             }
+            if (supportedGpu
+                && items["gpu_info"] is string gpuInfo
+                && IntelGpuModel.Match(gpuInfo) is Match intelMatch
+                && intelMatch.Success)
+            {
+                var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
+                if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
+                    modelNumber = modelNumber.Substring(1);
+                int.TryParse(modelNumber, out var modelNumberInt);
+                if (modelNumberInt < 500 || modelNumberInt > 1000)
+                {
+                    notes.Add("❌ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
+                    supportedGpu = false;
+                }
+                else
+                    notes.Add("⚠ Intel iGPUs are not officially supported, visual glitches are to be expected");
+            }
+            if (!string.IsNullOrEmpty(items["shader_compile_error"]))
+            {
+                if (supportedGpu)
+                    notes.Add("❌ Shader compilation error might indicate shader cache corruption");
+                else
+                    notes.Add("❌ Shader compilation error on unsupported GPU");
+            }
+
             if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
                 notes.Add("ℹ Game-specific patches were applied");
 
