@@ -49,6 +49,12 @@ namespace CompatBot.Utils.ResultFormatters
             {"BCJS70013", "NPJA00102"},
         };
 
+        private static readonly HashSet<string> KnownBogusLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "UP0700-NPUB30932_00-NNKDLFULLGAMEPTB.rap",
+            "EP0700-NPEB01158_00-NNKDLFULLGAMEPTB.rap",
+        };
+
         private static readonly TimeSpan OldBuild = TimeSpan.FromDays(30);
         private static readonly TimeSpan VeryOldBuild = TimeSpan.FromDays(60);
         //private static readonly TimeSpan VeryVeryOldBuild = TimeSpan.FromDays(90);
@@ -357,7 +363,16 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["rap_file"] is string rap)
             {
                 var limitTo = 5;
-                var licenseNames = rap.Split(Environment.NewLine).Distinct().Select(p => $"`{Path.GetFileName(p)}`").ToList();
+                var licenseNames = rap.Split(Environment.NewLine)
+                    .Distinct()
+                    .Select(Path.GetFileName)
+                    .Distinct()
+                    .Except(KnownBogusLicenses)
+                    .Select(p => $"`{p}`")
+                    .ToList();
+                if (licenseNames.Count == 0)
+                    return;
+
                 string content;
                 if (licenseNames.Count > limitTo)
                 {
