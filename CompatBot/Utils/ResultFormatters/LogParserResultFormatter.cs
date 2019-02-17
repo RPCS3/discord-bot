@@ -340,7 +340,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
-                notes.Add($"❔ `Resolution Scale` is `{resScale}%`.");
+                notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
                 notes.Add("⚠ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == TrueMark)
@@ -500,6 +500,20 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
 
+            if (items["cpu_model"] is string cpu)
+            {
+                if (cpu.StartsWith("AMD"))
+                {
+                    if (!cpu.Contains("Ryzen"))
+                        notes.Add("⚠ AMD CPUs before Ryzen are too weak for PS3 emulation");
+                }
+                if (cpu.StartsWith("Intel"))
+                {
+                    if (cpu.Contains("Core2") || cpu.Contains("Celeron") || cpu.Contains("Atom"))
+                        notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
+                }
+            }
+
             var supportedGpu = true;
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
@@ -575,8 +589,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ PS3 firmware is missing or corrupted");
 
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
-            var buildBranch = items["build_branch"];
-            if (updateInfo != null &&  (buildBranch == "head" || buildBranch == "spu_perf"))
+            var buildBranch = items["build_branch"]?.ToLowerInvariant();
+            if (updateInfo != null && (buildBranch == "head" || buildBranch == "spu_perf"))
             {
                 string prefix = "⚠";
                 string timeDeltaStr;
