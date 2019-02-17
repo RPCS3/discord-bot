@@ -103,6 +103,9 @@ namespace CompatBot.EventHandlers
 
         public static List<string> GetProductIds(string input)
         {
+            if (string.IsNullOrEmpty(input))
+                return new List<string>(0);
+
             return ProductCode.Matches(input)
                 .Select(match => (match.Groups["letters"].Value + match.Groups["numbers"]).ToUpper())
                 .Distinct()

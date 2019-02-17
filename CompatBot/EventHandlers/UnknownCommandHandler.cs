@@ -24,7 +24,9 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(cnfe.CommandName))
                 return;
 
-            if (e.Context.Prefix != Config.CommandPrefix && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
+            if (e.Context.Prefix != Config.CommandPrefix
+                && e.Context.RawArgumentString.EndsWith("?")
+                && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
             {
                 var updatedContext = e.Context.CommandsNext.CreateContext(
                     e.Context.Message,
@@ -40,7 +42,10 @@ namespace CompatBot.EventHandlers
             if (pos < 0)
                 return;
 
-            var gameTitle = e.Context.Message.Content.Substring(pos).Trim(40);
+            var gameTitle = e.Context.Message.Content.Substring(pos).TrimEager().Trim(40);
+            if (string.IsNullOrEmpty(gameTitle) || char.IsPunctuation(gameTitle[0]))
+                return;
+
             var term = gameTitle.ToLowerInvariant();
             var lookup = await Explain.LookupTerm(term).ConfigureAwait(false);
             if (lookup.score > 0.5 && lookup.explanation != null)

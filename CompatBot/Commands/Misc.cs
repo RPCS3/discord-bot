@@ -381,7 +381,7 @@ namespace CompatBot.Commands
                         statsBuilder.AppendLine($@"Longest between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning.Value).AsShortTimespan()}");
                     if (lastWarn.HasValue)
                         statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
-                    statsBuilder.Append($"Warnings in the last day: {warnCount}");
+                    statsBuilder.Append($"Warnings in the last 24h: {warnCount}");
                     if (warnCount == 0)
                         statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
                     embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);

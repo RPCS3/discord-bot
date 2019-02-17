@@ -106,9 +106,17 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 EndTrigger = "Audio:",
             },
-            new LogSection
+            new LogSection // Audio, Input/Output, System, Net, Miscellaneous
             {
                 EndTrigger = "Log:",
+            },
+            new LogSection 
+            {
+                Extractors = new Dictionary<string, Regex>
+                {
+                    ["Log:"] = new Regex(@"Log:\s*\r?\n?\s*\{(?<log_disabled_channels>.*?)\}\r?$", DefaultOptions),
+                },
+                EndTrigger = "·",
                 OnSectionEnd = MarkAsComplete,
             },
             new LogSection

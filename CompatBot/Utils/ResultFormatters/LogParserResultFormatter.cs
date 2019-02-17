@@ -29,7 +29,9 @@ namespace CompatBot.Utils.ResultFormatters
         // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
         // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
         // RPCS3 v0.0.5-42b4ce13a Alpha | minor
-        private static readonly Regex BuildInfoInLog = new Regex(@"RPCS3 v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+) (?<stage>\w+) \| (?<branch>.*?)\r?$",
+        private static readonly Regex BuildInfoInLog = new Regex(
+            @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)) (?<stage>\w+) \| (?<branch>[^|]+)( \| Firmware version: (?<installed_fw_version>[^|\r\n]+)( \| (?<unknown>.*))?)?\r?\n" +
+            @"(?<cpu_model>[^|@]+)(@\s*(?<cpu_speed>.+)\s*GHz\s*)? \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| (?<cpu_extensions>.*?))?\r?$",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
@@ -40,6 +42,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
         private static readonly Version RecommendedOpenGLVersion = new Version(4, 5);
+        private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
 
         private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
@@ -114,6 +117,18 @@ namespace CompatBot.Utils.ResultFormatters
                     Color = Config.Colors.LogResultFailed,
                 };
             }
+            if (message != null)
+            {
+                var author = message.Author;
+                var member = client.GetMember(message.Channel?.Guild, author);
+                if (member != null)
+                    //builder.WithFooter("Log information for " + member.DisplayName.Sanitize(), member.AvatarUrl ?? member.DefaultAvatarUrl);
+                    builder.WithFooter($"Log from {member.DisplayName.Sanitize()} | {member.Id}");
+                else
+                    //builder.WithFooter("Log information for " + author.Username.Sanitize(), author.AvatarUrl ?? author.DefaultAvatarUrl);
+                    builder.WithFooter($"Log from {author.Username.Sanitize()} | {author.Id}");
+            }
+
             return builder.Build();
         }
 
@@ -193,13 +208,30 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void BuildInfoSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
-            var systemInfo = $"{items["build_and_specs"]}";
-            if (!string.IsNullOrEmpty(items["os_path"]) && !string.IsNullOrEmpty(systemInfo))
+            var systemInfo = items["build_and_specs"] ?? "";
+            var m = BuildInfoInLog.Match(systemInfo);
+            if (m.Success)
             {
-                var sysInfoParts = systemInfo.Split(new[] {'\r', '\n'}, 2, StringSplitOptions.RemoveEmptyEntries);
-                systemInfo = $"{sysInfoParts[0]} | {items["os_path"]}";
-                if (sysInfoParts.Length > 1)
-                    systemInfo += Environment.NewLine + sysInfoParts[1];
+                items["build_branch"] = m.Groups["branch"].Value.Trim();
+                items["build_commit"] = m.Groups["commit"].Value.Trim();
+                items["installed_fw_version"] = m.Groups["installed_fw_version"].Value;
+                items["cpu_model"] = m.Groups["cpu_model"].Value
+                    .Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
+                    .Replace("®", "", StringComparison.InvariantCultureIgnoreCase)
+                    .Replace("(TM)", "", StringComparison.InvariantCultureIgnoreCase)
+                    .Replace("™", "", StringComparison.InvariantCultureIgnoreCase)
+                    .Replace(" CPU", "");
+                items["thread_count"] = m.Groups["thread_count"].Value;
+                items["memory_amount"] = m.Groups["memory_amount"].Value;
+                items["cpu_extensions"] = m.Groups["cpu_extensions"].Value;
+                systemInfo = $"RPCS3 v{m.Groups["version_string"].Value} {m.Groups["stage"].Value} | {m.Groups["branch"].Value}";
+                if (!string.IsNullOrEmpty(items["installed_fw_version"]))
+                    systemInfo += " | FW " + items["installed_fw_version"];
+                if (!string.IsNullOrEmpty(items["os_path"]))
+                    systemInfo += " | " + items["os_path"];
+                systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
+                if (!string.IsNullOrEmpty(items["cpu_extensions"]))
+                    systemInfo += " | " + items["cpu_extensions"];
             }
             if (items["gpu_info"] is string gpu)
                 systemInfo += $"{Environment.NewLine}GPU: {gpu}";
@@ -302,6 +334,8 @@ namespace CompatBot.Utils.ResultFormatters
         private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
             var notes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]))
+                notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
                 notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == TrueMark)
@@ -318,7 +352,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
-                notes.Add($"❔ `Resolution Scale` is `{resScale}%`.");
+                notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
                 notes.Add("⚠ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == TrueMark)
@@ -452,6 +486,17 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
             else if (irdChecked)
                 notes.Add("✅ Checked missing files against IRD");
+            if (items["installed_fw_version"] is string fw && !string.IsNullOrEmpty(fw))
+            {
+                if (Version.TryParse(fw, out var fwv))
+                {
+                    if (fwv < MinimumFirmwareVersion)
+                        notes.Add($"⚠ Firmware version {MinimumFirmwareVersion} or later is recommended");
+                }
+                else
+                    notes.Add("⚠ Custom firmware is not supported, please use the latest official one");
+            }
+
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
@@ -465,6 +510,20 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 notes.Add("ℹ The log is empty");
                 notes.Add("ℹ Please boot the game and upload a new log");
+            }
+
+            if (items["cpu_model"] is string cpu)
+            {
+                if (cpu.StartsWith("AMD"))
+                {
+                    if (!cpu.Contains("Ryzen"))
+                        notes.Add("⚠ AMD CPUs before Ryzen are too weak for PS3 emulation");
+                }
+                if (cpu.StartsWith("Intel"))
+                {
+                    if (cpu.Contains("Core2") || cpu.Contains("Celeron") || cpu.Contains("Atom"))
+                        notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
+                }
             }
 
             var supportedGpu = true;
@@ -542,8 +601,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ PS3 firmware is missing or corrupted");
 
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
-            var buildBranch = items["build_branch"];
-            if (updateInfo != null &&  (buildBranch == "head" || buildBranch == "spu_perf"))
+            var buildBranch = items["build_branch"]?.ToLowerInvariant();
+            if (updateInfo != null && (buildBranch == "head" || buildBranch == "spu_perf"))
             {
                 string prefix = "⚠";
                 string timeDeltaStr;
@@ -596,11 +655,10 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var buildInfo = BuildInfoInLog.Match(buildAndSpecs.ToLowerInvariant());
-            items["build_branch"] = buildInfo.Groups["branch"].Value;
             if (!buildInfo.Success)
                 return null;
 
-            var currentBuildCommit = buildInfo.Groups["commit"].Value;
+            var currentBuildCommit = items["build_commit"];
             if (string.IsNullOrEmpty(currentBuildCommit))
                 currentBuildCommit = null;
             var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);

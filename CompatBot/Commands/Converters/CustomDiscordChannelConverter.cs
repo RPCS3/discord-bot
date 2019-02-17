@@ -28,7 +28,7 @@ namespace CompatBot.Commands.Converters
                     from g in guildList
                     from ch in g.Channels
                     select ch
-                ).FirstOrDefault(xc => xc.Id == cid);
+                ).FirstOrDefault(xc => xc.Id == cid && !xc.IsCategory);
                 var ret = result == null ? Optional<DiscordChannel>.FromNoValue() : Optional<DiscordChannel>.FromValue(result);
                 return ret;
             }
@@ -40,7 +40,7 @@ namespace CompatBot.Commands.Converters
                     from g in guildList
                     from ch in g.Channels
                     select ch
-                ).FirstOrDefault(xc => xc.Id == cid);
+                ).FirstOrDefault(xc => xc.Id == cid && !xc.IsCategory);
                 var ret = result != null ? Optional<DiscordChannel>.FromValue(result) : Optional<DiscordChannel>.FromNoValue();
                 return ret;
             }
@@ -52,7 +52,7 @@ namespace CompatBot.Commands.Converters
                 from g in guildList
                 from ch in g.Channels
                 select ch
-            ).FirstOrDefault(xc => xc.Name.ToLowerInvariant() == value);
+            ).FirstOrDefault(xc => xc.Name.ToLowerInvariant() == value && !xc.IsCategory);
             return chn != null ? Optional<DiscordChannel>.FromValue(chn) : Optional<DiscordChannel>.FromNoValue();
         }
     }
