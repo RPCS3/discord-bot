@@ -16,6 +16,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="logs\**" />
+    <EmbeddedResource Remove="logs\**" />
+    <None Remove="logs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="*.db" />
+    <None Remove="*.db-journal" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00570" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00570" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00570" />

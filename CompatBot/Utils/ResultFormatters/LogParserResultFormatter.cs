@@ -302,6 +302,8 @@ namespace CompatBot.Utils.ResultFormatters
         private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
             var notes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]))
+                notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
                 notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == TrueMark)
