@@ -69,6 +69,51 @@ namespace CompatBot.Commands
                 await ctx.SendAutosplitMessageAsync(new StringBuilder("Warning count per user:").Append(table)).ConfigureAwait(false);
             }
 
+            [Command("by"), RequiresBotModRole]
+            [Description("Shows warnings issued by the specified moderator")]
+            public async Task By(CommandContext ctx, ulong moderatorId, [Description("Optional number of items to show. Default is 10")] int number = 10)
+            {
+                if (number < 1)
+                    number = 10;
+                var table = new AsciiTable(
+                    new AsciiColumn("ID", alignToRight: true),
+                    new AsciiColumn("Username", maxWidth: 24),
+                    new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
+                    new AsciiColumn("On date (UTC)"),
+                    new AsciiColumn("Reason"),
+                    new AsciiColumn("Context", disabled: !ctx.Channel.IsPrivate)
+                );
+                using (var db = new BotDb())
+                {
+                    var query = from warn in db.Warning
+                        where warn.IssuerId == moderatorId
+                        orderby warn.Id descending
+                        select warn;
+                    foreach (var row in query.Take(number))
+                    {
+                        var username = await ctx.GetUserNameAsync(row.DiscordId).ConfigureAwait(false);
+                        var timestamp = row.Timestamp.HasValue ? new DateTime(row.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
+                        table.Add(row.Id.ToString(), username, row.DiscordId.ToString(), timestamp, row.Reason, row.FullReason);
+                    }
+                }
+                var modname = await ctx.GetUserNameAsync(moderatorId, defaultName: "Unknown mod").ConfigureAwait(false);
+                await ctx.SendAutosplitMessageAsync(new StringBuilder($"Recent warnings issued by {modname}:").Append(table)).ConfigureAwait(false);
+
+            }
+
+            [Command("by"), RequiresBotModRole]
+            public Task By(CommandContext ctx, DiscordUser moderator, [Description("Optional number of items to show. Default is 10")] int number = 10)
+                => By(ctx, moderator.Id, number);
+
+            [Command("by"), RequiresBotModRole]
+            public Task By(CommandContext ctx, string me, [Description("Optional number of items to show. Default is 10")] int number = 10)
+            {
+                if (me?.ToLowerInvariant() == "me")
+                    return By(ctx, ctx.User.Id, number);
+
+                return Task.CompletedTask;
+            }
+
             [Command("recent"), Aliases("last", "all"), RequiresBotModRole]
             [Description("Shows last issued warnings in chronological order")]
             public async Task Last(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
@@ -97,7 +142,7 @@ namespace CompatBot.Commands
                         table.Add(row.Id.ToString(), username, row.DiscordId.ToString(), modname, timestamp, row.Reason, row.FullReason);
                     }
                 }
-                await ctx.SendAutosplitMessageAsync(new StringBuilder("Last issued warnings:").Append(table)).ConfigureAwait(false);
+                await ctx.SendAutosplitMessageAsync(new StringBuilder("Recent warnings:").Append(table)).ConfigureAwait(false);
             }
 
             private async Task<bool> CheckListPermissionAsync(CommandContext ctx, ulong userId)
