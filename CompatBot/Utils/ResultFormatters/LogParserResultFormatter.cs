@@ -117,6 +117,18 @@ namespace CompatBot.Utils.ResultFormatters
                     Color = Config.Colors.LogResultFailed,
                 };
             }
+            if (message != null)
+            {
+                var author = message.Author;
+                var member = client.GetMember(message.Channel?.Guild, author);
+                if (member != null)
+                    //builder.WithFooter("Log information for " + member.DisplayName.Sanitize(), member.AvatarUrl ?? member.DefaultAvatarUrl);
+                    builder.WithFooter($"Log from {member.DisplayName.Sanitize()} | {member.Id}");
+                else
+                    //builder.WithFooter("Log information for " + author.Username.Sanitize(), author.AvatarUrl ?? author.DefaultAvatarUrl);
+                    builder.WithFooter($"Log from {author.Username.Sanitize()} | {author.Id}");
+            }
+
             return builder.Build();
         }
 
