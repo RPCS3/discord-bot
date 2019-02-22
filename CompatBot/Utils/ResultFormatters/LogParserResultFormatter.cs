@@ -527,6 +527,8 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
                 }
             }
+            if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
+                notes.Add($"❌ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
 
             var supportedGpu = true;
             Version oglVersion = null;
