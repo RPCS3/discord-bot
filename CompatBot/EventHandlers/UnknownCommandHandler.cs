@@ -38,6 +38,11 @@ namespace CompatBot.EventHandlers
                 return;
             }
 
+#if !DEBUG
+            if (e.Context.User.IsSmartlisted(e.Context.Client, e.Context.Guild))
+                return;
+#endif
+
             var pos = e.Context.Message.Content.IndexOf(cnfe.CommandName);
             if (pos < 0)
                 return;
