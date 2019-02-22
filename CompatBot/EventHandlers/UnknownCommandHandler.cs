@@ -25,14 +25,14 @@ namespace CompatBot.EventHandlers
                 return;
 
             if (e.Context.Prefix != Config.CommandPrefix
-                && e.Context.RawArgumentString.EndsWith("?")
+                && (e.Context.Message.Content?.EndsWith("?") ?? false)
                 && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
             {
                 var updatedContext = e.Context.CommandsNext.CreateContext(
                     e.Context.Message,
                     e.Context.Prefix,
                     cmd,
-                    e.Context.RawArgumentString
+                    e.Context.Message.Content.Substring(e.Context.Prefix.Length).Trim()
                 );
                 try { await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false); } catch { }
                 return;
