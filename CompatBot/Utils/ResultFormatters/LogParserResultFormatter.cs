@@ -528,7 +528,7 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
             if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
-                notes.Add($"❌ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
+                notes.Add($"⚠ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
 
             var supportedGpu = true;
             Version oglVersion = null;
