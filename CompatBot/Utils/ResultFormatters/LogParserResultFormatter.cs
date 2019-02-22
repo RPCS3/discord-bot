@@ -30,7 +30,7 @@ namespace CompatBot.Utils.ResultFormatters
         // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
         // RPCS3 v0.0.5-42b4ce13a Alpha | minor
         private static readonly Regex BuildInfoInLog = new Regex(
-            @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)) (?<stage>\w+) \| (?<branch>[^|]+)( \| Firmware version: (?<installed_fw_version>[^|\r\n]+)( \| (?<unknown>.*))?)?\r?\n" +
+            @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)) (?<stage>\w+) \| (?<branch>[^|]+)( \| Firmware version: (?<fw_version_installed>[^|\r\n]+)( \| (?<unknown>.*))?)?\r?\n" +
             @"(?<cpu_model>[^|@]+)(@\s*(?<cpu_speed>.+)\s*GHz\s*)? \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| (?<cpu_extensions>.*?))?\r?$",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
@@ -214,7 +214,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 items["build_branch"] = m.Groups["branch"].Value.Trim();
                 items["build_commit"] = m.Groups["commit"].Value.Trim();
-                items["installed_fw_version"] = m.Groups["installed_fw_version"].Value;
+                items["fw_version_installed"] = m.Groups["fw_version_installed"].Value;
                 items["cpu_model"] = m.Groups["cpu_model"].Value
                     .Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
                     .Replace("®", "", StringComparison.InvariantCultureIgnoreCase)
@@ -225,8 +225,8 @@ namespace CompatBot.Utils.ResultFormatters
                 items["memory_amount"] = m.Groups["memory_amount"].Value;
                 items["cpu_extensions"] = m.Groups["cpu_extensions"].Value;
                 systemInfo = $"RPCS3 v{m.Groups["version_string"].Value} {m.Groups["stage"].Value} | {m.Groups["branch"].Value}";
-                if (!string.IsNullOrEmpty(items["installed_fw_version"]))
-                    systemInfo += " | FW " + items["installed_fw_version"];
+                if (!string.IsNullOrEmpty(items["fw_version_installed"]))
+                    systemInfo += " | FW " + items["fw_version_installed"];
                 if (!string.IsNullOrEmpty(items["os_path"]))
                     systemInfo += " | " + items["os_path"];
                 systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
@@ -477,6 +477,8 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                 if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>"))
                     notes.Add("⚠ Game save data might be corrupted");
+                else if (fatalError.Contains("Could not bind OpenGL context"))
+                    notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
             }
             if (items["failed_to_decrypt"] is string _)
                 notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
@@ -486,7 +488,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
             else if (irdChecked)
                 notes.Add("✅ Checked missing files against IRD");
-            if (items["installed_fw_version"] is string fw && !string.IsNullOrEmpty(fw))
+            if (items["fw_version_installed"] is string fw && !string.IsNullOrEmpty(fw))
             {
                 if (Version.TryParse(fw, out var fwv))
                 {
@@ -525,6 +527,8 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
                 }
             }
+            if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
+                notes.Add($"❌ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
 
             var supportedGpu = true;
             Version oglVersion = null;
