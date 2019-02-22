@@ -477,6 +477,8 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                 if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>"))
                     notes.Add("⚠ Game save data might be corrupted");
+                else if (fatalError.Contains("Could not bind OpenGL context"))
+                    notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
             }
             if (items["failed_to_decrypt"] is string _)
                 notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
