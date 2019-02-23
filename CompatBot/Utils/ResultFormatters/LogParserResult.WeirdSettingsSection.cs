@@ -14,6 +14,11 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new List<string>();
             if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
+            if (items["spu_lower_thread_priority"] == EnabledMark
+                && int.TryParse(items["thread_count"], out var threadCount)
+                && threadCount > 4)
+                notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough hardware threads");
+
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
                 notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)

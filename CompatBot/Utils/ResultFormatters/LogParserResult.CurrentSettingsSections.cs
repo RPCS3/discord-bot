@@ -60,7 +60,6 @@ namespace CompatBot.Utils.ResultFormatters
                 $"SPU Decoder: {items["spu_decoder"],21}",
                 $"SPU Lower Thread Priority: {items["spu_lower_thread_priority"],7}",
                 $"SPU Loop Detection: {items["spu_loop_detection"],14}",
-                $"Thread Scheduler: {items["thread_scheduler"],16}",
                 $"SPU Threads: {items["spu_threads"],21}",
                 $"SPU Block Size: {items["spu_block_size"] ?? "N/A",18}",
                 $"Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",17}",
@@ -86,7 +85,6 @@ namespace CompatBot.Utils.ResultFormatters
                 $"Anisotropic Filter: {items["af_override"] ?? "N/A",14}",
                 $"Frame Limit: {items["frame_limit"],21}",
                 $"VSync: {items["vsync"] ?? "N/A",27}",
-                $"Disable Vertex Cache: {items["vertex_cache"],12}",
             };
             return ("GPU Settings", lines);
         }
