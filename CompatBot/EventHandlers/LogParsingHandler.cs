@@ -64,14 +64,15 @@ namespace CompatBot.EventHandlers
 
                 bool parsedLog = false;
                 var startTime = Stopwatch.StartNew();
+                DiscordMessage botMsg = null;
                 try
                 {
                     foreach (var attachment in message.Attachments.Where(a => !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
                     foreach (var handler in handlers)
                         if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
                         {
-                            await message.ReactWithAsync(client, Config.Reactions.PleaseWait).ConfigureAwait(false);
                             Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
+                            botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message)).ConfigureAwait(false);
                             parsedLog = true;
                             LogParseState result = null;
                             try
@@ -85,8 +86,20 @@ namespace CompatBot.EventHandlers
                             {
                                 Config.Log.Error(e, "Log parsing failed");
                             }
+
                             if (result == null)
-                                await channel.SendMessageAsync("Log analysis failed, most likely cause is a truncated/invalid log. Please run the game again and reupload the new copy.").ConfigureAwait(false);
+                            {
+                                botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                    embed: new DiscordEmbedBuilder
+                                        {
+                                            Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
+                                                          "Please run the game again and re-upload a new copy.",
+                                            Color = Config.Colors.LogResultFailed,
+                                        }
+                                        .AddAuthor(client, message)
+                                        .Build()
+                                ).ConfigureAwait(false);
+                            }
                             else
                             {
                                 try
@@ -95,10 +108,10 @@ namespace CompatBot.EventHandlers
                                     {
                                         if (message.Author.IsWhitelisted(client, channel.Guild))
                                         {
-                                            await Task.WhenAll(
-                                                channel.SendMessageAsync("I see wha' ye did thar ☠"),
-                                                client.ReportAsync("Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low)
-                                            ).ConfigureAwait(false);
+                                            var piracyWarning = await result.AsEmbedAsync(client, message).ConfigureAwait(false);
+                                            piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
+                                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
+                                            await client.ReportAsync("Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
                                         }
                                         else
                                         {
@@ -114,7 +127,10 @@ namespace CompatBot.EventHandlers
                                             }
                                             try
                                             {
-                                                await channel.SendMessageAsync($"{message.Author.Mention}, please read carefully:", embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)).ConfigureAwait(false);
+                                                botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                                    $"{message.Author.Mention}, please read carefully:",
+                                                    embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
+                                                ).ConfigureAwait(false);
                                             }
                                             catch (Exception e)
                                             {
@@ -127,7 +143,7 @@ namespace CompatBot.EventHandlers
                                         }
                                     }
                                     else
-                                        await channel.SendMessageAsync(
+                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                             requester == null ? null : $"Reanalyzed log from {client.GetMember(channel.Guild, message.Author).GetUsernameWithNickname()} by request from {requester.Mention}:",
                                             embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
                                         ).ConfigureAwait(false);
@@ -167,7 +183,6 @@ namespace CompatBot.EventHandlers
                 finally
                 {
                     QueueLimiter.Release();
-                    await message.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     if (parsedLog)
                         Config.Log.Debug($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
                 }
@@ -176,6 +191,15 @@ namespace CompatBot.EventHandlers
             {
                 Config.Log.Error(e, "Error parsing log");
             }
+        }
+
+        private static DiscordEmbedBuilder GetAnalyzingMsgEmbed()
+        {
+            return new DiscordEmbedBuilder
+            {
+                Description = "👀 Looking at the log, please wait... 👀",
+                Color = Config.Colors.LogUnknown,
+            };
         }
     }
 }
