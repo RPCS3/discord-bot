@@ -18,7 +18,9 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 items["build_branch"] = m.Groups["branch"].Value.Trim();
                 items["build_commit"] = m.Groups["commit"].Value.Trim();
-                items["fw_version_installed"] = m.Groups["fw_version_installed"].Value;
+                var fwVersion = m.Groups["fw_version_installed"].Value;
+                if (!string.IsNullOrEmpty(fwVersion))
+                    items["fw_version_installed"] = fwVersion;
                 items["cpu_model"] = m.Groups["cpu_model"].Value
                     .Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
                     .Replace("®", "", StringComparison.InvariantCultureIgnoreCase)
