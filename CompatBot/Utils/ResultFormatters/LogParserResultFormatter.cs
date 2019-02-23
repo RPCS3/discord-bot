@@ -74,7 +74,7 @@ namespace CompatBot.Utils.ResultFormatters
         private const string EnabledMark = "[x]";
         private const string DisabledMark = "[ ]";
 
-        public static async Task<DiscordEmbed> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message)
+        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message)
         {
             DiscordEmbedBuilder builder;
             var collection = state.CompleteCollection ?? state.WipCollection;
@@ -122,19 +122,8 @@ namespace CompatBot.Utils.ResultFormatters
                     Color = Config.Colors.LogResultFailed,
                 };
             }
-            if (message != null)
-            {
-                var author = message.Author;
-                var member = client.GetMember(message.Channel?.Guild, author);
-                if (member != null)
-                    //builder.WithFooter("Log information for " + member.DisplayName.Sanitize(), member.AvatarUrl ?? member.DefaultAvatarUrl);
-                    builder.WithFooter($"Log from {member.DisplayName.Sanitize()} | {member.Id}");
-                else
-                    //builder.WithFooter("Log information for " + author.Username.Sanitize(), author.AvatarUrl ?? author.DefaultAvatarUrl);
-                    builder.WithFooter($"Log from {author.Username.Sanitize()} | {author.Id}");
-            }
-
-            return builder.Build();
+            builder.AddAuthor(client, message);
+            return builder;
         }
 
         private static void CleanupValues(NameValueCollection items)
@@ -408,6 +397,25 @@ namespace CompatBot.Utils.ResultFormatters
                 .OrderBy(i => i.priority)
                 .Select(i => i.line)
                 .ToList();
+        }
+
+        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message)
+        {
+            if (message != null)
+            {
+                var author = message.Author;
+                var member = client.GetMember(message.Channel?.Guild, author);
+                string msg;
+                if (member == null)
+                    msg = $"Log from {author.Username.Sanitize()} | {author.Id}";
+                else
+                    msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}";
+#if DEBUG
+                msg += " | Test Bot Instance";
+#endif
+                builder.WithFooter(msg);
+            }
+            return builder;
         }
     }
 }
