@@ -43,6 +43,9 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
         private static readonly Version RecommendedOpenGLVersion = new Version(4, 5);
         private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
+        private static readonly Version NvidiaFullscreenBugMinVersion = new Version(400, 0);
+        private static readonly Version NvidiaFullscreenBugMaxVersion = new Version(499, 99);
+        private static readonly Version NvidiaRecommendedOldWindowsVersion = new Version(399, 41);
 
         private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
@@ -66,8 +69,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly char[] PrioritySeparator = {' '};
         private static readonly string[] EmojiPriority = { "😱", "💢", "‼", "❗",  "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
-        private const string TrueMark = "[x]";
-        private const string FalseMark = "[ ]";
+        private const string EnabledMark = "[x]";
+        private const string DisabledMark = "[ ]";
 
         public static async Task<DiscordEmbed> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message)
         {
@@ -199,9 +202,9 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var value = items[key];
                 if ("true".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-                    value = TrueMark;
+                    value = EnabledMark;
                 else if ("false".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-                    value = FalseMark;
+                    value = DisabledMark;
                 items[key] = value.Sanitize(false);
             }
         }
@@ -338,11 +341,11 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
                 notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
-            if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == TrueMark)
+            if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
-            if (items["host_root"] is string hostRoot && hostRoot == TrueMark)
+            if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
                 notes.Add("❔ `/host_root/` is enabled");
-            if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == TrueMark)
+            if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == EnabledMark)
                 notes.Add("⚠ `GPU Texture Scaling` is enabled, please disable");
             if (items["af_override"] is string af)
             {
@@ -353,9 +356,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) && resScaleFactor < 100)
                 notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
-            if (items["cpu_blit"] is string cpuBlit && cpuBlit == TrueMark && items["write_color_buffers"] is string wcb && wcb == FalseMark)
+            if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark && items["write_color_buffers"] is string wcb && wcb == DisabledMark)
                 notes.Add("⚠ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
-            if (items["zcull"] is string zcull && zcull == TrueMark)
+            if (items["zcull"] is string zcull && zcull == EnabledMark)
                 notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout && int.TryParse(driverRecoveryTimeout, out var drtValue) && drtValue != 1000000)
             {
@@ -366,7 +369,7 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (drtValue > 10_000_000)
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
             }
-            if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == TrueMark)
+            if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == EnabledMark)
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
@@ -549,21 +552,37 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
             if (supportedGpu
-                && items["gpu_info"] is string gpuInfo
-                && IntelGpuModel.Match(gpuInfo) is Match intelMatch
-                && intelMatch.Success)
+                && items["gpu_info"] is string gpuInfo)
             {
-                var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
-                if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
-                    modelNumber = modelNumber.Substring(1);
-                int.TryParse(modelNumber, out var modelNumberInt);
-                if (modelNumberInt < 500 || modelNumberInt > 1000)
+                if (IntelGpuModel.Match(gpuInfo) is Match intelMatch
+                    && intelMatch.Success)
                 {
-                    notes.Add("❌ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
-                    supportedGpu = false;
+                    var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
+                    if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
+                        modelNumber = modelNumber.Substring(1);
+                    int.TryParse(modelNumber, out var modelNumberInt);
+                    if (modelNumberInt < 500 || modelNumberInt > 1000)
+                    {
+                        notes.Add("❌ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
+                        supportedGpu = false;
+                    }
+                    else
+                        notes.Add("⚠ Intel iGPUs are not officially supported, visual glitches are to be expected");
                 }
-                else
-                    notes.Add("⚠ Intel iGPUs are not officially supported, visual glitches are to be expected");
+                if (items["os_path"] is string os
+                    && os != "Linux"
+                    && IsNvidia(gpuInfo)
+                    && items["driver_version_info"] is string driverVersionString
+                    && Version.TryParse(driverVersionString, out var driverVersion))
+                {
+                    if (driverVersion < NvidiaRecommendedOldWindowsVersion)
+                        notes.Add($"⚠ Please update your nVidia driver to at least {NvidiaRecommendedOldWindowsVersion}");
+                    if (driverVersion >= NvidiaFullscreenBugMinVersion
+                        && driverVersion < NvidiaFullscreenBugMaxVersion
+                        && items["renderer"] == "Vulkan"
+                        && items["vsync"] == EnabledMark)
+                        notes.Add("⚠ **400 series** nVidia drivers can cause random screen freeze when playing in **fullscreen** using **Vulkan** renderer with **vsync disabled**");
+                }
             }
             if (!string.IsNullOrEmpty(items["shader_compile_error"]))
             {
@@ -762,9 +781,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var ver = int.Parse(version);
-            if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
+            if (IsAmd(gpuInfo))
             {
                 var major = (ver >> 22) & 0x3ff;
                 var minor = (ver >> 12) & 0x3ff;
@@ -783,9 +800,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (major == 0 && gpuInfo.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
                     return $"{minor}.{patch}";
 
-                if (gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
-                    gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||
-                    gpuInfo.Contains("Quadro", StringComparison.InvariantCultureIgnoreCase))
+                if (IsNvidia(gpuInfo))
                 {
                     if (patch == 0)
                         return $"{major}.{minor}";
@@ -794,6 +809,20 @@ namespace CompatBot.Utils.ResultFormatters
 
                 return $"{major}.{minor}.{patch}";
             }
+        }
+
+        private static bool IsAmd(string gpuInfo)
+        {
+            return gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
+                   gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
+                   gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        private static bool IsNvidia(string gpuInfo)
+        {
+            return gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
+                   gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||
+                   gpuInfo.Contains("Quadro", StringComparison.InvariantCultureIgnoreCase);
         }
 
         private static string GetTimeFormat(long microseconds)
