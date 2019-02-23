@@ -58,16 +58,16 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
-            if (string.IsNullOrEmpty(items["serial"] + items["game_title"]) &&
-                items["fw_version_installed"] is string fwVersion)
-            {
-                notes.Add($"ℹ The log contains only installation of firmware {fwVersion}");
-                notes.Add("ℹ Please boot the game and upload a new log");
-            }
-
             if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
             {
                 notes.Add("ℹ The log is empty");
+                notes.Add("ℹ Please boot the game and upload a new log");
+            }
+            else if (string.IsNullOrEmpty(items["serial"] + items["game_title"])
+                     && !string.IsNullOrEmpty(items["fw_installed_message"])
+                     && items["fw_version_installed"] is string fwVersion)
+            {
+                notes.Add($"ℹ The log contains only installation of firmware {fwVersion}");
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
 

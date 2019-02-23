@@ -50,16 +50,22 @@ namespace CompatBot.EventHandlers.LogParsing
             foreach (Group group in match.Groups)
                 if (!string.IsNullOrEmpty(group.Name) && group.Name != "0" && !string.IsNullOrWhiteSpace(group.Value))
                 {
+                    var strValue = group.Value.ToUtf8();
+                    if (string.IsNullOrEmpty(strValue))
+                        continue;
+
                     Config.Log.Debug($"regex {group.Name} = {group.Value}");
                     if (MultiValueItems.Contains(group.Name))
                     {
                         var currentValue = state.WipCollection[group.Name];
                         if (!string.IsNullOrEmpty(currentValue))
                             currentValue += Environment.NewLine;
-                        state.WipCollection[group.Name] = currentValue + group.Value.ToUtf8();
+                        state.WipCollection[group.Name] = currentValue + strValue;
                     }
                     else
-                        state.WipCollection[group.Name] = group.Value.ToUtf8();
+                    {
+                        state.WipCollection[group.Name] = strValue;
+                    }
                 }
         }
 
