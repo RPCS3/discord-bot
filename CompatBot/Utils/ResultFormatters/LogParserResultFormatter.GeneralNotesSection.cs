@@ -119,8 +119,8 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
 
-            if (supportedGpu
-                && items["gpu_info"] is string gpuInfo)
+            var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
+            if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
             {
                 if (IntelGpuModel.Match(gpuInfo) is Match intelMatch
                     && intelMatch.Success)

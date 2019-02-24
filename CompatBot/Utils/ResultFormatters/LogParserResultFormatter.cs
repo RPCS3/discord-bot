@@ -153,10 +153,20 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["vulkan_compatible_device_name"] is string vulkanDevices)
             {
-                var deviceNames = vulkanDevices.Split(Environment.NewLine)
+                var devices = vulkanDevices.Split(Environment.NewLine)
                     .Distinct()
-                    .Select(n => $"{n} ({GetVulkanDriverVersion(n, items["vulkan_found_device"])})");
-                items["gpu_available_info"] = string.Join(Environment.NewLine, deviceNames);
+                    .Select(n => new {name = n, driverVersion = GetVulkanDriverVersion(n, items["vulkan_found_device"])})
+                    .Reverse()
+                    .ToList();
+                if (string.IsNullOrEmpty(items["gpu_info"]) && devices.Count > 0)
+                {
+                    var discreteGpu = devices.FirstOrDefault(d => IsNvidia(d.name))
+                                      ?? devices.FirstOrDefault(d => IsAmd(d.name))
+                                      ?? devices.First();
+                    items["discrete_gpu_info"] = $"{discreteGpu.name} ({discreteGpu.driverVersion})";
+                    items["driver_version_info"] = discreteGpu.driverVersion;
+                }
+                items["gpu_available_info"] = string.Join(Environment.NewLine, devices.Select(d => $"{d.name} ({d.driverVersion})"));
             }
 
             if (items["af_override"] is string af)
