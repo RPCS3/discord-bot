@@ -16,7 +16,7 @@ namespace CompatBot.Commands.Attributes
             if (ctx.Channel.Name.Equals("help", StringComparison.InvariantCultureIgnoreCase))
                 return true;
 
-            await ctx.RespondAsync($"`{Config.CommandPrefix}{ctx.Command.QualifiedName}` is limited to help channel and DMs").ConfigureAwait(false);
+            await ctx.RespondAsync($"`{ctx.Prefix}{ctx.Command.QualifiedName}` is limited to help channel and DMs").ConfigureAwait(false);
             return false;
         }
     }

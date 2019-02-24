@@ -30,7 +30,7 @@ namespace CompatBot.Commands.Attributes
             catch {}
 
             var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-            await ctx.RespondAsync($"`{Config.CommandPrefix}{ctx.Command.QualifiedName}` is limited to {spamChannel.Mention} and DMs").ConfigureAwait(false);
+            await ctx.RespondAsync($"`{ctx.Prefix}{ctx.Command.QualifiedName}` is limited to {spamChannel.Mention} and DMs").ConfigureAwait(false);
             return false;
         }
 

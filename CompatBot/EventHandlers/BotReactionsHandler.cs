@@ -75,6 +75,9 @@ namespace CompatBot.EventHandlers
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
+            if (args.Message.Channel.IsPrivate)
+                return;
+
 #if DEBUG
             if (args.Message.Content == "emoji test")
             {

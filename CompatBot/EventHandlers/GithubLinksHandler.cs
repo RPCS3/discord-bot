@@ -18,10 +18,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (args.Author.IsBot)
-                return;
-
-            if (string.IsNullOrEmpty(args.Message.Content) || args.Message.Content.StartsWith(Config.CommandPrefix))
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);

@@ -23,7 +23,7 @@ namespace CompatBot.Commands
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Success,
                         $"{user.Mention} was successfully added as moderator!\n" +
-                         $"Try using `{Config.CommandPrefix}help` to see new commands available to you"
+                         $"Try using `{ctx.Prefix}help` to see new commands available to you"
                     ).ConfigureAwait(false);
                 }
                 else

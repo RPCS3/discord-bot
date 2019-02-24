@@ -20,6 +20,14 @@ namespace CompatBot.Commands
 
         public override async Task BeforeExecutionAsync(CommandContext ctx)
         {
+            try
+            {
+                await ctx.Message.DeleteAsync().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to delete command message with the autodelete command prefix");
+            }
             var disabledCmds = DisabledCommandsProvider.Get();
             if (disabledCmds.Contains(ctx.Command.QualifiedName) && !disabledCmds.Contains("*"))
             {

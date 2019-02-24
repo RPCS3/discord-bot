@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using CompatBot.Utils;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -10,11 +11,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (args.Author.IsBot)
-                return;
-
-            var content = args.Message.Content;
-            if (string.IsNullOrEmpty(content) || content.StartsWith(Config.CommandPrefix))
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
             /*
@@ -33,6 +30,7 @@ namespace CompatBot.EventHandlers
              */
             try
             {
+                var content = args.Message.Content;
                 if (!(content.Contains("┻━┻") ||
                       content.Contains("┻━┻")))
                     return;

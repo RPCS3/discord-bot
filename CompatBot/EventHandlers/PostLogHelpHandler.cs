@@ -20,7 +20,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (args.Author.IsBot)
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
 #if !DEBUG
@@ -30,9 +30,6 @@ namespace CompatBot.EventHandlers
             if (DateTime.UtcNow - lastMention < ThrottlingThreshold)
                 return;
 #endif
-
-            if (string.IsNullOrEmpty(args.Message.Content) || args.Message.Content.StartsWith(Config.CommandPrefix))
-                return;
 
             if (!UploadLogMention.IsMatch(args.Message.Content))
                 return;
