@@ -15,6 +15,9 @@ namespace CompatBot.EventHandlers
     {
         public static async Task OnError(CommandErrorEventArgs e)
         {
+            if (e.Context.User.IsBot)
+                return;
+
             if (!(e.Exception is CommandNotFoundException cnfe))
             {
                 Config.Log.Error(e.Exception);
@@ -25,6 +28,7 @@ namespace CompatBot.EventHandlers
                 return;
 
             if (e.Context.Prefix != Config.CommandPrefix
+                && e.Context.Prefix != Config.AutoRemoveCommandPrefix
                 && (e.Context.Message.Content?.EndsWith("?") ?? false)
                 && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
             {

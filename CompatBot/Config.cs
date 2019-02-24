@@ -14,6 +14,7 @@ namespace CompatBot
     internal static class Config
     {
         public static readonly string CommandPrefix = "!";
+        public static readonly string AutoRemoveCommandPrefix = ".";
         public static readonly ulong BotGuildId = 272035812277878785;         // discord server where the bot is supposed to be
         public static readonly ulong BotGeneralChannelId = 272035812277878785;// #rpcs3; main or general channel where noobs come first thing
         public static readonly ulong BotChannelId = 291679908067803136;       // #compatbot; this is used for !compat/!top results and new builds announcements

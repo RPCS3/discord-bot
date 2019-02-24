@@ -14,10 +14,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (args.Author.IsBot)
-                return;
-
-            if (string.IsNullOrEmpty(args.Message.Content) || args.Message.Content.StartsWith(Config.CommandPrefix))
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
             if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))

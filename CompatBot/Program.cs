@@ -121,7 +121,7 @@ namespace CompatBot
                 {
                     var commands = client.UseCommandsNext(new CommandsNextConfiguration
                     {
-                        StringPrefixes = new[] {Config.CommandPrefix},
+                        StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
                         Services = new ServiceCollection().BuildServiceProvider(),
                     });
                     commands.RegisterConverter(new CustomDiscordChannelConverter());

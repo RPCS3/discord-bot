@@ -41,11 +41,7 @@ namespace CompatBot.EventHandlers
 
         public static Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            var message = args.Message;
-            if (message.Author.IsBot)
-                return Task.CompletedTask;
-
-            if (!string.IsNullOrEmpty(message.Content) && message.Content.StartsWith(Config.CommandPrefix))
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return Task.CompletedTask;
 
             OnNewLog(args.Client, args.Channel, args.Message);

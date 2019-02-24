@@ -123,7 +123,7 @@ namespace CompatBot.Commands
                 var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                 inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
             }
-            var msg = $"Unknown term `{term.Sanitize()}`. Use `{Config.CommandPrefix}explain list` to look at defined terms{inSpecificLocation}";
+            var msg = $"Unknown term `{term.Sanitize()}`. Use `{ctx.Prefix}explain list` to look at defined terms{inSpecificLocation}";
             await ctx.RespondAsync(msg).ConfigureAwait(false);
         }
 

@@ -30,7 +30,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (args.Author.IsBot)
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
 #if !DEBUG
@@ -41,9 +41,6 @@ namespace CompatBot.EventHandlers
 
             if (CooldownBuckets.TryGetValue(args.Channel.Id, out var lastCheck)
                 && DateTime.UtcNow - lastCheck < CooldownThreshold)
-                return;
-
-            if (string.IsNullOrEmpty(args.Message.Content) || args.Message.Content.StartsWith(Config.CommandPrefix))
                 return;
 
 #if !DEBUG
