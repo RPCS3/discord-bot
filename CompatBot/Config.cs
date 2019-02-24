@@ -153,6 +153,7 @@ namespace CompatBot
                 ConcurrentWrites = false,
                 AutoFlush = false,
                 OpenFileFlushTimeout = 1,
+                Layout = "${longdate} ${sequenceid} ${level:uppercase=true} ${message} ${onexception:\n${exception:format=tostring}}",
             };
             var asyncFileTarget = new AsyncTargetWrapper(fileTarget)
             {
