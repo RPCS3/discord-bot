@@ -1,10 +1,11 @@
 ﻿using System;
+using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Commands
@@ -83,6 +84,36 @@ namespace CompatBot.Commands
             catch (Exception e)
             {
                 Config.Log.Debug(e);
+            }
+        }
+
+        [Command("log"), RequiresDm]
+        [Description("Uploads current log file as an attachment")]
+        public async Task Log(CommandContext ctx)
+        {
+            try
+            {
+                using (var log = File.Open(Config.LogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var result = new MemoryStream((int)Math.Min(Config.AttachmentSizeLimit, log.Length)))
+                {
+                    using (var gzip = new GZipStream(result, CompressionLevel.Optimal, true))
+                    {
+                        await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
+                        await gzip.FlushAsync().ConfigureAwait(false);
+                    }
+                    if (result.Length <= Config.AttachmentSizeLimit)
+                    {
+                        result.Seek(0, SeekOrigin.Begin);
+                        await ctx.RespondWithFileAsync(Path.GetFileName(Config.LogPath) + ".gz", result).ConfigureAwait(false);
+                    }
+                    else
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask Nicba for help :(", true).ConfigureAwait(false);
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to upload current log");
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send the log", true).ConfigureAwait(false);
             }
         }
     }

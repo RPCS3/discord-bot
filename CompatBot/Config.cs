@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Threading;
 using DSharpPlus.Entities;
@@ -32,7 +33,7 @@ namespace CompatBot
         public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
 
         public static readonly string Token;
-        public static readonly string LogPath = "../../../logs/bot.log"; // paths are relative to the assembly, so this will put it in the project's root
+        public static readonly string LogPath = "logs/bot.log"; // paths are relative to the assembly, so this will put it in the project's root
         public static readonly string IrdCachePath = "./ird/";
 
         internal static readonly ILogger Log;
@@ -146,13 +147,14 @@ namespace CompatBot
         {
             var config = new NLog.Config.LoggingConfiguration();
             var fileTarget = new FileTarget("logfile") {
-                FileName = LogPath,
+                FileName = Path.Combine("../../../", LogPath),
                 ArchiveEvery = FileArchivePeriod.Day,
                 ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
                 KeepFileOpen = true,
                 ConcurrentWrites = false,
                 AutoFlush = false,
                 OpenFileFlushTimeout = 1,
+                Layout = "${longdate} ${sequenceid} ${level:uppercase=true} ${message} ${onexception:${newline}${exception:format=tostring}}",
             };
             var asyncFileTarget = new AsyncTargetWrapper(fileTarget)
             {
