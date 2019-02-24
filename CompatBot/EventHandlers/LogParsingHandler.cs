@@ -144,7 +144,7 @@ namespace CompatBot.EventHandlers
                                     }
                                     else
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                            requester == null ? null : $"Reanalyzed log from {client.GetMember(channel.Guild, message.Author).GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                            requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
                                             embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
                                         ).ConfigureAwait(false);
                                 }

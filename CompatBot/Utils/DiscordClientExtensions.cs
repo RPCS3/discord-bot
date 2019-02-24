@@ -146,7 +146,7 @@ namespace CompatBot.Utils
 
         public static string GetUsernameWithNickname(this DiscordMember member)
         {
-            return string.IsNullOrEmpty(member.Nickname) ? $"`{member.Username.Sanitize()}`" : $"`{member.Username.Sanitize()}` (shown as `{member.Nickname.Sanitize()}`)";
+            return string.IsNullOrEmpty(member?.Nickname) ? $"`{member?.Username.Sanitize()}`" : $"`{member.Username.Sanitize()}` (shown as `{member.Nickname.Sanitize()}`)";
         }
 
         public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, DiscordEmoji fallbackEmoji = null)
