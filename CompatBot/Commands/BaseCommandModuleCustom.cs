@@ -22,7 +22,8 @@ namespace CompatBot.Commands
         {
             try
             {
-                await ctx.Message.DeleteAsync().ConfigureAwait(false);
+                if (ctx.Prefix == Config.AutoRemoveCommandPrefix)
+                    await ctx.Message.DeleteAsync().ConfigureAwait(false);
             }
             catch (Exception e)
             {
