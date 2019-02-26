@@ -23,7 +23,7 @@ namespace CompatBot.Commands
             if (channel.Type != ChannelType.Text)
             {
                 Config.Log.Warn($"Resolved a {channel.Type} channel again for #{channel.Name}");
-                var channelResult = await new CustomDiscordChannelConverter().ConvertAsync(channel.Name, ctx).ConfigureAwait(false);
+                var channelResult = await new TextOnlyDiscordChannelConverter().ConvertAsync(channel.Name, ctx).ConfigureAwait(false);
                 if (channelResult.HasValue && channelResult.Value.Type == ChannelType.Text)
                     channel = channelResult.Value;
                 else
