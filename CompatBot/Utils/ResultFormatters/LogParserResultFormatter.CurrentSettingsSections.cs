@@ -21,12 +21,7 @@ namespace CompatBot.Utils.ResultFormatters
                 var fwVersion = m.Groups["fw_version_installed"].Value;
                 if (!string.IsNullOrEmpty(fwVersion))
                     items["fw_version_installed"] = fwVersion;
-                items["cpu_model"] = m.Groups["cpu_model"].Value
-                    .Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
-                    .Replace("®", "", StringComparison.InvariantCultureIgnoreCase)
-                    .Replace("(TM)", "", StringComparison.InvariantCultureIgnoreCase)
-                    .Replace("™", "", StringComparison.InvariantCultureIgnoreCase)
-                    .Replace(" CPU", "");
+                items["cpu_model"] = m.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "");
                 items["thread_count"] = m.Groups["thread_count"].Value;
                 items["memory_amount"] = m.Groups["memory_amount"].Value;
                 items["cpu_extensions"] = m.Groups["cpu_extensions"].Value;
