@@ -145,9 +145,12 @@ namespace CompatBot.Utils.ResultFormatters
             else if (items["driver_manuf"] != null)
                 items["gpu_info"] = items["driver_manuf"];
             if (!string.IsNullOrEmpty(items["gpu_info"]))
+            {
+                items["gpu_info"] = items["gpu_info"].StripMarks();
                 items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], (items["driver_version_new"] ?? items["driver_version"])) ??
                                                GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
                                                GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
+            }
             if (items["driver_version_info"] != null)
                 items["gpu_info"] += $" ({items["driver_version_info"]})";
 
@@ -155,7 +158,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var devices = vulkanDevices.Split(Environment.NewLine)
                     .Distinct()
-                    .Select(n => new {name = n, driverVersion = GetVulkanDriverVersion(n, items["vulkan_found_device"])})
+                    .Select(n => new {name = n.StripMarks(), driverVersion = GetVulkanDriverVersion(n, items["vulkan_found_device"])})
                     .Reverse()
                     .ToList();
                 if (string.IsNullOrEmpty(items["gpu_info"]) && devices.Count > 0)

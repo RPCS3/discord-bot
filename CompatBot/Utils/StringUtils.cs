@@ -34,6 +34,14 @@ namespace CompatBot.Utils
             '\u3000', '\u303f',
         };
 
+        public static string StripMarks(this string str)
+        {
+            return str.Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
+                .Replace("®", "", StringComparison.InvariantCultureIgnoreCase)
+                .Replace("(TM)", "", StringComparison.InvariantCultureIgnoreCase)
+                .Replace("™", "", StringComparison.InvariantCultureIgnoreCase);
+        }
+
         public static string StripQuotes(this string str)
         {
             if (str == null || str.Length < 2)
