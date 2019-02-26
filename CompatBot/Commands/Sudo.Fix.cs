@@ -93,7 +93,7 @@ namespace CompatBot.Commands
 
                 foreach (var channel in entries)
                 {
-                    var ch = await new CustomDiscordChannelConverter().ConvertAsync(channel, ctx).ConfigureAwait(false);
+                    var ch = await new TextOnlyDiscordChannelConverter().ConvertAsync(channel, ctx).ConfigureAwait(false);
                     if (ch.HasValue)
                         msg = msg.Replace(channel, "#" + ch.Value.Name);
                 }

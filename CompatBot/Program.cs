@@ -124,7 +124,7 @@ namespace CompatBot
                         StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
                         Services = new ServiceCollection().BuildServiceProvider(),
                     });
-                    commands.RegisterConverter(new CustomDiscordChannelConverter());
+                    commands.RegisterConverter(new TextOnlyDiscordChannelConverter());
                     commands.RegisterCommands<Misc>();
                     commands.RegisterCommands<CompatList>();
                     commands.RegisterCommands<Sudo>();
