@@ -3,7 +3,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Converters;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -18,6 +20,21 @@ namespace CompatBot.Commands
         [Description("Make bot say things, optionally in a specific channel")]
         public async Task Say(CommandContext ctx, [Description("Discord channel (can use just #name in DM)")] DiscordChannel channel, [RemainingText, Description("Message text to send")] string message)
         {
+            if (channel.Type != ChannelType.Text)
+            {
+                Config.Log.Warn($"Resolved a {channel.Type} channel again for #{channel.Name}");
+
+                await ctx.RespondAsync().ConfigureAwait(false);
+                var channelResult = await new CustomDiscordChannelConverter().ConvertAsync(channel.Name, ctx).ConfigureAwait(false);
+                if (channelResult.HasValue && channelResult.Value.Type == ChannelType.Text)
+                    channel = channelResult.Value;
+                else
+                {
+                    await ctx.RespondAsync($"Resolved a {channel.Type} channel again").ConfigureAwait(false);
+                    return;
+                }
+            }
+
             var typingTask = channel.TriggerTypingAsync();
             // simulate bot typing the message at 300 cps
             await Task.Delay(message.Length * 10 / 3).ConfigureAwait(false);
