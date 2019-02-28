@@ -6,27 +6,26 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Utils;
-using DSharpPlus.Entities;
 using SharpCompress.Archives.Rar;
 
-namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
+namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    public class RarHandler: ISourceHandler
+    public class RarHandler: IArchiveHandler
     {
         private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
 
-        public async Task<bool> CanHandleAsync(DiscordAttachment attachment)
+        public async Task<bool> CanHandleAsync(string fileName, int fileSize, string url)
         {
-            if (!attachment.FileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
+            if (!fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
                 return false;
 
-            if (attachment.FileSize > Config.AttachmentSizeLimit)
+            if (fileSize > Config.AttachmentSizeLimit)
                 return false;
 
             try
             {
                 using (var client = HttpClientFactory.Create())
-                using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
+                using (var stream = await client.GetStreamAsync(url).ConfigureAwait(false))
                 {
                     var buf = bufferPool.Rent(1024);
                     bool result;
@@ -50,20 +49,22 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             }
         }
 
-        public async Task FillPipeAsync(DiscordAttachment attachment, PipeWriter writer)
+        public async Task FillPipeAsync(string url, PipeWriter writer)
         {
             try
             {
                 using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
                 {
                     using (var client = HttpClientFactory.Create())
-                    using (var downloadStream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
+                    using (var downloadStream = await client.GetStreamAsync(url).ConfigureAwait(false))
                         await downloadStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
                     using (var rarArchive = RarArchive.Open(fileStream))
                     using (var rarReader = rarArchive.ExtractAllEntries())
                         while (rarReader.MoveToNextEntry())
-                            if (!rarReader.Entry.IsDirectory && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase))
+                            if (!rarReader.Entry.IsDirectory
+                                && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                                && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 using (var rarStream = rarReader.OpenEntryStream())
                                 {

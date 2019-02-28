@@ -360,6 +360,14 @@ namespace CompatBot.Commands
             await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
+        [Command("meme"), Aliases("memes"), Cooldown(1, 30, CooldownBucketType.Channel), Hidden]
+        [Description("No, memes are not implemented yet")]
+        public async Task Memes(CommandContext ctx, [RemainingText] string idk = null)
+        {
+            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
+            await ch.SendMessageAsync($"{ctx.User.Mention} congratulations, you're the meme").ConfigureAwait(false);
+        }
+
         private static void AppendPiracyStats(DiscordEmbedBuilder embed)
         {
             try

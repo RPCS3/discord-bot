@@ -1,24 +1,21 @@
 ﻿using System;
-using System.IO.Compression;
 using System.IO.Pipelines;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DSharpPlus.Entities;
 
-namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
+namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    public class GzipHandler: ISourceHandler
+    public class PlainTextHandler: IArchiveHandler
     {
-        public Task<bool> CanHandleAsync(DiscordAttachment attachment)
+        public Task<bool> CanHandleAsync(string fileName, int fileSize, string url)
         {
-            return Task.FromResult(attachment.FileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase));
+            return Task.FromResult(fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase));
         }
 
-        public async Task FillPipeAsync(DiscordAttachment attachment, PipeWriter writer)
+        public async Task FillPipeAsync(string url, PipeWriter writer)
         {
             using (var client = HttpClientFactory.Create())
-            using (var downloadStream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
-            using (var gzipStream = new GZipStream(downloadStream, CompressionMode.Decompress))
+            using (var stream = await client.GetStreamAsync(url).ConfigureAwait(false))
             {
                 try
                 {
@@ -27,7 +24,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     do
                     {
                         var memory = writer.GetMemory(Config.MinimumBufferSize);
-                        read = await gzipStream.ReadAsync(memory, Config.Cts.Token);
+                        read = await stream.ReadAsync(memory, Config.Cts.Token);
                         writer.Advance(read);
                         flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
                     } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));

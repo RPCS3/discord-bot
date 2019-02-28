@@ -3,13 +3,15 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
+using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers.LogParsing;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using CompatBot.EventHandlers.LogParsing.SourceHandlers;
+using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
@@ -21,7 +23,7 @@ namespace CompatBot.EventHandlers
     internal static class LogParsingHandler
     {
         private static readonly char[] linkSeparator = { ' ', '>', '\r', '\n' };
-        private static readonly ISourceHandler[] handlers =
+        private static readonly IArchiveHandler[] handlers =
         {
             new GzipHandler(),
             new PlainTextHandler(),
@@ -31,8 +33,19 @@ namespace CompatBot.EventHandlers
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
-        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null);
+        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false);
         private static event OnLog OnNewLog;
+
+        private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
+        private static readonly Regex ExternalLink = new Regex(
+            @"(https?://)?(" +
+            @"(?<mega_link>mega(.co)?.nz/#(?<mega_id>\w+))" +
+            @"|" +
+            @"(?<gdrive_link>drive.google.com/open?id=(?<gdrive_id>\w+))" +
+            @"|" +
+            @"(?<pastebin_link>pastebin.com/(raw/)(?<pastebin_id>\w+))" +
+            @")(\s|>|$)"
+        );
 
         static LogParsingHandler()
         {
@@ -50,11 +63,13 @@ namespace CompatBot.EventHandlers
                     || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
                 return Task.CompletedTask;
 
-            OnNewLog(args.Client, args.Channel, args.Message);
+            var checkExternalLinks = "help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
+                                     || LimitedToSpamChannel.IsSpamChannel(args.Channel);
+            OnNewLog(args.Client, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
             return Task.CompletedTask;
         }
 
-        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null)
+        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false)
         {
             try
             {
@@ -71,7 +86,7 @@ namespace CompatBot.EventHandlers
                 {
                     foreach (var attachment in message.Attachments.Where(a => !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
                     foreach (var handler in handlers)
-                        if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
+                        if (await handler.CanHandleAsync(attachment.FileName, attachment.FileSize, attachment.Url).ConfigureAwait(false))
                         {
                             Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
                             botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message)).ConfigureAwait(false);
@@ -80,7 +95,7 @@ namespace CompatBot.EventHandlers
                             try
                             {
                                 var pipe = new Pipe();
-                                var fillPipeTask = handler.FillPipeAsync(attachment, pipe.Writer);
+                                var fillPipeTask = handler.FillPipeAsync(attachment.Url, pipe.Writer);
                                 result = await LogParser.ReadPipeAsync(pipe.Reader).ConfigureAwait(false);
                                 await fillPipeTask.ConfigureAwait(false);
                             }
