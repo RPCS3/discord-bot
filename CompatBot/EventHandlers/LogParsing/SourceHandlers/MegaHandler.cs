@@ -13,7 +13,14 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     internal sealed class MegaHandler : BaseSourceHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
-        private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(.co)?.nz/#(?<mega_id>\S+))(\s|>|$)", DefaultOptions);
+        private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(.co)?.nz/#(?<mega_id>[^/>\s]+))", DefaultOptions);
+        private static readonly IProgress<double> doodad = new Progress<double>(_ => { });
+        private readonly IMegaApiClient client;
+
+        public MegaHandler()
+        {
+            client = new MegaApiClient();
+        }
 
         public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
@@ -24,7 +31,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             if (matches.Count == 0)
                 return null;
 
-            var client = new MegaApiClient();
             foreach (Match m in matches)
             {
                 try
@@ -33,6 +39,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         && !string.IsNullOrEmpty(lnk)
                         && Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
                     {
+                        if (!client.IsLoggedIn)
+                            await client.LoginAnonymousAsync().ConfigureAwait(false);
                         var node = await client.GetNodeFromLinkAsync(uri).ConfigureAwait(false);
                         if (node.Type == NodeType.File)
                         {
@@ -40,11 +48,11 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                             int read;
                             try
                             {
-                                using (var stream = await client.DownloadAsync(uri, null, Config.Cts.Token).ConfigureAwait(false))
+                                using (var stream = await client.DownloadAsync(uri, doodad, Config.Cts.Token).ConfigureAwait(false))
                                     read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                                 foreach (var handler in handlers)
                                     if (handler.CanHandle(node.Name, (int)node.Size, buf.AsSpan(0, read)))
-                                        return new MegaSource(uri, node, handler);
+                                        return new MegaSource(client, uri, node, handler);
                             }
                             finally
                             {
@@ -63,6 +71,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         private sealed class MegaSource : ISource
         {
+            private IMegaApiClient client;
             private Uri uri;
             private INodeInfo node;
             private IArchiveHandler handler;
@@ -70,8 +79,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public string FileName => node.Name;
             public int FileSize => (int)node.Size;
 
-            internal MegaSource(Uri uri, INodeInfo node, IArchiveHandler handler)
+            internal MegaSource(IMegaApiClient client, Uri uri, INodeInfo node, IArchiveHandler handler)
             {
+                this.client = client;
                 this.uri = uri;
                 this.node = node;
                 this.handler = handler;
@@ -79,8 +89,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public async Task FillPipeAsync(PipeWriter writer)
             {
-                var client = new MegaApiClient();
-                using (var stream = await client.DownloadAsync(uri, null, Config.Cts.Token).ConfigureAwait(false))
+                using (var stream = await client.DownloadAsync(uri, doodad, Config.Cts.Token).ConfigureAwait(false))
                     await handler.FillPipeAsync(stream, writer).ConfigureAwait(false);
             }
         }
