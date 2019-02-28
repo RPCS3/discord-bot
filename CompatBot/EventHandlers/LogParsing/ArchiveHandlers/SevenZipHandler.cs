@@ -2,13 +2,12 @@
 using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
-using System.Net.Http;
 using System.Threading.Tasks;
 using SharpCompress.Archives.SevenZip;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    public class SevenZipHandler: IArchiveHandler
+    internal sealed class SevenZipHandler: IArchiveHandler
     {
         private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
 
@@ -23,15 +22,13 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             return Task.FromResult(true);
         }
 
-        public async Task FillPipeAsync(string url, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
         {
             try
             {
                 using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
                 {
-                    using (var client = HttpClientFactory.Create())
-                    using (var downloadStream = await client.GetStreamAsync(url).ConfigureAwait(false))
-                        await downloadStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
+                    await sourceStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
                     using (var zipArchive = SevenZipArchive.Open(fileStream))
                     using (var zipReader = zipArchive.ExtractAllEntries())

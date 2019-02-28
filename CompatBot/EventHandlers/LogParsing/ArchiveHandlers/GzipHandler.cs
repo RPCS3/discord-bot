@@ -1,12 +1,12 @@
 ﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.IO.Pipelines;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    public class GzipHandler: IArchiveHandler
+    internal sealed class GzipHandler: IArchiveHandler
     {
         public Task<bool> CanHandleAsync(string fileName, int fileSize, string url)
         {
@@ -14,11 +14,9 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                                    && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase));
         }
 
-        public async Task FillPipeAsync(string url, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
         {
-            using (var client = HttpClientFactory.Create())
-            using (var downloadStream = await client.GetStreamAsync(url).ConfigureAwait(false))
-            using (var gzipStream = new GZipStream(downloadStream, CompressionMode.Decompress))
+            using (var gzipStream = new GZipStream(sourceStream, CompressionMode.Decompress))
             {
                 try
                 {

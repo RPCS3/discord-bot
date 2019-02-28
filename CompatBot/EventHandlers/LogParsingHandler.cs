@@ -17,13 +17,18 @@ using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
 namespace CompatBot.EventHandlers
 {
     internal static class LogParsingHandler
     {
         private static readonly char[] linkSeparator = { ' ', '>', '\r', '\n' };
-        private static readonly IArchiveHandler[] handlers =
+        private static readonly ISourceHandler[] sourceHandlers =
+        {
+
+        };
+        private static readonly IArchiveHandler[] archiveHandlers =
         {
             new GzipHandler(),
             new PlainTextHandler(),
@@ -44,7 +49,8 @@ namespace CompatBot.EventHandlers
             @"(?<gdrive_link>drive.google.com/open?id=(?<gdrive_id>\w+))" +
             @"|" +
             @"(?<pastebin_link>pastebin.com/(raw/)(?<pastebin_id>\w+))" +
-            @")(\s|>|$)"
+            @")(\s|>|$)",
+            DefaultOptions
         );
 
         static LogParsingHandler()
@@ -84,18 +90,17 @@ namespace CompatBot.EventHandlers
                 DiscordMessage botMsg = null;
                 try
                 {
-                    foreach (var attachment in message.Attachments.Where(a => !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
-                    foreach (var handler in handlers)
-                        if (await handler.CanHandleAsync(attachment.FileName, attachment.FileSize, attachment.Url).ConfigureAwait(false))
+                    var source = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).FirstOrDefault(h => h != null);
+                    if (source != null)
                         {
-                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
+                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from {source.GetType().Name} {source.FileName} ({source.FileSize})...");
                             botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message)).ConfigureAwait(false);
                             parsedLog = true;
                             LogParseState result = null;
                             try
                             {
                                 var pipe = new Pipe();
-                                var fillPipeTask = handler.FillPipeAsync(attachment.Url, pipe.Writer);
+                                var fillPipeTask = source.FillPipeAsync(pipe.Writer);
                                 result = await LogParser.ReadPipeAsync(pipe.Reader).ConfigureAwait(false);
                                 await fillPipeTask.ConfigureAwait(false);
                             }

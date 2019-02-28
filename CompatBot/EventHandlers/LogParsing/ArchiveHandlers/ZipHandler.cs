@@ -11,7 +11,7 @@ using CompatBot.Utils;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    public class ZipHandler: IArchiveHandler
+    internal sealed class ZipHandler: IArchiveHandler
     {
         private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
 
@@ -50,15 +50,13 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             }
         }
 
-        public async Task FillPipeAsync(string url, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
         {
             try
             {
                 using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
                 {
-                    using (var client = HttpClientFactory.Create())
-                    using (var downloadStream = await client.GetStreamAsync(url).ConfigureAwait(false))
-                        await downloadStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
+                    await sourceStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
                     using (var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                     {
