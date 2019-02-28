@@ -8,10 +8,14 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal interface ISourceHandler
     {
+        Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
+
+    }
+
+    internal interface ISource
+    {
         string FileName { get; }
         int FileSize { get; }
-
-        Task<ISourceHandler> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
         Task FillPipeAsync(PipeWriter writer);
     }
 }
