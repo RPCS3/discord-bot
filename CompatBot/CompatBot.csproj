@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <TieredCompilation>true</TieredCompilation>
     <RootNamespace>CompatBot</RootNamespace>
+    <UserSecretsId>c2e6548b-b215-4a18-a010-958ef294b310</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -27,11 +28,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00570" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00570" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00570" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00573" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00573" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00573" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.38.0.1512" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.3.3" />
+    <PackageReference Include="MegaApiClient" Version="1.7.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.2" />
@@ -39,7 +42,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.2.0" />
     <PackageReference Include="NLog" Version="4.5.11" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.1" />
-    <PackageReference Include="SharpCompress" Version="0.22.0" />
+    <PackageReference Include="SharpCompress" Version="0.23.0" />
     <PackageReference Include="System.IO.Pipelines" Version="4.5.3" />
   </ItemGroup>
 
