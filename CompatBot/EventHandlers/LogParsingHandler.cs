@@ -27,6 +27,7 @@ namespace CompatBot.EventHandlers
         private static readonly ISourceHandler[] sourceHandlers =
         {
             new DiscordAttachmentHandler(),
+            new MegaHandler(),
         };
         private static readonly IArchiveHandler[] archiveHandlers =
         {

@@ -9,12 +9,12 @@ using Google.Apis.Drive.v3;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
-    internal sealed class GoogleDriveHandler: ISourceHandler
+    internal sealed class GoogleDriveHandler: BaseSourceHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
         private static readonly Regex ExternalLink = new Regex(@"(?<gdrive_link>(https?://)?drive.google.com/open?id=(?<gdrive_id>\w+))(\s|>|$)", DefaultOptions);
 
-        public async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
                 return null;

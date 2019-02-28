@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
@@ -9,17 +8,15 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class SevenZipHandler: IArchiveHandler
     {
-        private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
-
-        public Task<bool> CanHandleAsync(string fileName, int fileSize, string url)
+        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (!fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
-                return Task.FromResult(false);
+                return false;
 
             if (fileSize > Config.AttachmentSizeLimit)
-                return Task.FromResult(false);
+                return false;
 
-            return Task.FromResult(true);
+            return true;
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)

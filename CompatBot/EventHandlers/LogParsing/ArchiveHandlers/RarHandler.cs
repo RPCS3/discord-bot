@@ -1,20 +1,15 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using CompatBot.Utils;
 using SharpCompress.Archives.Rar;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class RarHandler: IArchiveHandler
     {
-        private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
-
-        public async Task<bool> CanHandleAsync(string fileName, int fileSize, string url)
+        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (!fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
                 return false;
@@ -22,31 +17,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             if (fileSize > Config.AttachmentSizeLimit)
                 return false;
 
-            try
-            {
-                using (var client = HttpClientFactory.Create())
-                using (var stream = await client.GetStreamAsync(url).ConfigureAwait(false))
-                {
-                    var buf = bufferPool.Rent(1024);
-                    bool result;
-                    try
-                    {
-                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                        var firstEntry = Encoding.ASCII.GetString(new ReadOnlySpan<byte>(buf, 0, read));
-                        result = firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase);
-                    }
-                    finally
-                    {
-                        bufferPool.Return(buf);
-                    }
-                    return result;
-                }
-            }
-            catch (Exception e)
-            {
-                Config.Log.Error(e, "Error sniffing the rar content");
-                return false;
-            }
+            var firstEntry = Encoding.ASCII.GetString(header);
+            return firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase);
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)

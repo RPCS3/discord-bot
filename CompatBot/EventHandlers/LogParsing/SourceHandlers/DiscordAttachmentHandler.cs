@@ -1,21 +1,45 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
+using CompatBot.Utils;
 using DSharpPlus.Entities;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
-    internal sealed class DiscordAttachmentHandler : ISourceHandler
+    internal sealed class DiscordAttachmentHandler : BaseSourceHandler
     {
-        public async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             foreach (var attachment in message.Attachments)
-                foreach (var handler in handlers)
-                    if (await handler.CanHandleAsync(attachment.FileName, attachment.FileSize, attachment.Url).ConfigureAwait(false))
-                        return new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize);
+            {
+                try
+                {
+                    using (var client = HttpClientFactory.Create())
+                    using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
+                    {
+                        var buf = bufferPool.Rent(1024);
+                        try
+                        {
+                            var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                            foreach (var handler in handlers)
+                                if (handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read)))
+                                    return new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize);
+                        }
+                        finally
+                        {
+                            bufferPool.Return(buf);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, "Error sniffing the rar content");
+                }
+            }
             return null;
         }
 

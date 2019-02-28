@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal interface IArchiveHandler
     {
-        Task<bool> CanHandleAsync(string fileName, int fileSize, string url);
+        bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header);
         Task FillPipeAsync(Stream sourceStream, PipeWriter writer);
     }
 }

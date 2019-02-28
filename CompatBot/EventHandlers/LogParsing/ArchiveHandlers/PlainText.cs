@@ -7,9 +7,10 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class PlainTextHandler: IArchiveHandler
     {
-        public Task<bool> CanHandleAsync(string fileName, int fileSize, string url)
+        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
-            return Task.FromResult(fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase) && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase));
+            return fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                   && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase);
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
