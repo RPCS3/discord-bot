@@ -13,6 +13,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
     internal interface ISource
     {
+        string SourceType { get; }
         string FileName { get; }
         int FileSize { get; }
         Task FillPipeAsync(PipeWriter writer);

@@ -12,6 +12,7 @@ using CompatApiClient.Utils;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
+using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient;
@@ -74,7 +75,7 @@ namespace CompatBot.Utils.ResultFormatters
         private const string EnabledMark = "[x]";
         private const string DisabledMark = "[ ]";
 
-        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message)
+        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message, ISource source)
         {
             DiscordEmbedBuilder builder;
             var collection = state.CompleteCollection ?? state.WipCollection;
@@ -122,7 +123,7 @@ namespace CompatBot.Utils.ResultFormatters
                     Color = Config.Colors.LogResultFailed,
                 };
             }
-            builder.AddAuthor(client, message);
+            builder.AddAuthor(client, message, source);
             return builder;
         }
 
@@ -412,7 +413,7 @@ namespace CompatBot.Utils.ResultFormatters
                 .ToList();
         }
 
-        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message)
+        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source)
         {
             if (message != null)
             {
@@ -423,6 +424,8 @@ namespace CompatBot.Utils.ResultFormatters
                     msg = $"Log from {author.Username.Sanitize()} | {author.Id}";
                 else
                     msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}";
+                if (source?.SourceType is string srcType)
+                    msg += " | " + srcType;
 #if DEBUG
                 msg += " | Test Bot Instance";
 #endif

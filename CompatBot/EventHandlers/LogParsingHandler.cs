@@ -28,6 +28,8 @@ namespace CompatBot.EventHandlers
         {
             new DiscordAttachmentHandler(),
             new MegaHandler(),
+
+            new PastebinHandler(),
         };
         private static readonly IArchiveHandler[] archiveHandlers =
         {
@@ -41,18 +43,6 @@ namespace CompatBot.EventHandlers
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
         private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false);
         private static event OnLog OnNewLog;
-
-        private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
-        private static readonly Regex ExternalLink = new Regex(
-            @"(https?://)?(" +
-            @"(?<mega_link>mega(.co)?.nz/#(?<mega_id>\w+))" +
-            @"|" +
-            @"(?<gdrive_link>drive.google.com/open?id=(?<gdrive_id>\w+))" +
-            @"|" +
-            @"(?<pastebin_link>pastebin.com/(raw/)(?<pastebin_id>\w+))" +
-            @")(\s|>|$)",
-            DefaultOptions
-        );
 
         static LogParsingHandler()
         {
@@ -95,7 +85,7 @@ namespace CompatBot.EventHandlers
                     if (source != null)
                         {
                             Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.FileSize} bytes)...");
-                            botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message)).ConfigureAwait(false);
+                            botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message, source)).ConfigureAwait(false);
                             parsedLog = true;
                             LogParseState result = null;
                             try
@@ -119,7 +109,7 @@ namespace CompatBot.EventHandlers
                                                           "Please run the game again and re-upload a new copy.",
                                             Color = Config.Colors.LogResultFailed,
                                         }
-                                        .AddAuthor(client, message)
+                                        .AddAuthor(client, message, source)
                                         .Build()
                                 ).ConfigureAwait(false);
                             }
@@ -131,7 +121,7 @@ namespace CompatBot.EventHandlers
                                     {
                                         if (message.Author.IsWhitelisted(client, channel.Guild))
                                         {
-                                            var piracyWarning = await result.AsEmbedAsync(client, message).ConfigureAwait(false);
+                                            var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                             piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                             botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
                                             await client.ReportAsync("Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
@@ -152,7 +142,7 @@ namespace CompatBot.EventHandlers
                                             {
                                                 botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                                     $"{message.Author.Mention}, please read carefully:",
-                                                    embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
+                                                    embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
                                                 ).ConfigureAwait(false);
                                             }
                                             catch (Exception e)
@@ -168,7 +158,7 @@ namespace CompatBot.EventHandlers
                                     else
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                             requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
-                                            embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
+                                            embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
                                         ).ConfigureAwait(false);
                                 }
                                 catch (Exception e)

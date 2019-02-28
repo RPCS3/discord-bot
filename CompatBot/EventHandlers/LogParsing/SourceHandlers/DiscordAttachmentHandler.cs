@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Net.Http;
@@ -48,6 +47,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             private DiscordAttachment attachment;
             private IArchiveHandler handler;
 
+            public string SourceType => "Discord attachment";
             public string FileName { get; }
             public int FileSize { get; }
 

@@ -15,12 +15,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
         private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(.co)?.nz/#(?<mega_id>[^/>\s]+))", DefaultOptions);
         private static readonly IProgress<double> doodad = new Progress<double>(_ => { });
-        private readonly IMegaApiClient client;
-
-        public MegaHandler()
-        {
-            client = new MegaApiClient();
-        }
+        private readonly IMegaApiClient client = new MegaApiClient();
 
         public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
@@ -76,6 +71,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             private INodeInfo node;
             private IArchiveHandler handler;
 
+            public string SourceType => "Mega";
             public string FileName => node.Name;
             public int FileSize => (int)node.Size;
 
