@@ -26,7 +26,7 @@ namespace CompatBot.EventHandlers
         private static readonly char[] linkSeparator = { ' ', '>', '\r', '\n' };
         private static readonly ISourceHandler[] sourceHandlers =
         {
-
+            new DiscordAttachmentHandler(),
         };
         private static readonly IArchiveHandler[] archiveHandlers =
         {
@@ -93,7 +93,7 @@ namespace CompatBot.EventHandlers
                     var source = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).FirstOrDefault(h => h != null);
                     if (source != null)
                         {
-                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from {source.GetType().Name} {source.FileName} ({source.FileSize})...");
+                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.FileSize} bytes)...");
                             botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message)).ConfigureAwait(false);
                             parsedLog = true;
                             LogParseState result = null;
