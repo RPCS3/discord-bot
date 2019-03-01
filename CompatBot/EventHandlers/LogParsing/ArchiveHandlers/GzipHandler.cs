@@ -1,24 +1,22 @@
 ﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.IO.Pipelines;
-using System.Net.Http;
 using System.Threading.Tasks;
-using DSharpPlus.Entities;
 
-namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
+namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    public class GzipHandler: ISourceHandler
+    internal sealed class GzipHandler: IArchiveHandler
     {
-        public Task<bool> CanHandleAsync(DiscordAttachment attachment)
+        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
-            return Task.FromResult(attachment.FileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase));
+            return fileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase)
+                   && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase);
         }
 
-        public async Task FillPipeAsync(DiscordAttachment attachment, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
         {
-            using (var client = HttpClientFactory.Create())
-            using (var downloadStream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
-            using (var gzipStream = new GZipStream(downloadStream, CompressionMode.Decompress))
+            using (var gzipStream = new GZipStream(sourceStream, CompressionMode.Decompress))
             {
                 try
                 {

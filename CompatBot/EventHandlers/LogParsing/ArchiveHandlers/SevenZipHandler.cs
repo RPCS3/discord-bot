@@ -1,43 +1,38 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
-using System.Net.Http;
 using System.Threading.Tasks;
-using DSharpPlus.Entities;
 using SharpCompress.Archives.SevenZip;
 
-namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
+namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    public class SevenZipHandler: ISourceHandler
+    internal sealed class SevenZipHandler: IArchiveHandler
     {
-        private static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 16);
-
-        public Task<bool> CanHandleAsync(DiscordAttachment attachment)
+        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
-            if (!attachment.FileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
-                return Task.FromResult(false);
+            if (!fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
+                return false;
 
-            if (attachment.FileSize > Config.AttachmentSizeLimit)
-                return Task.FromResult(false);
+            if (fileSize > Config.AttachmentSizeLimit)
+                return false;
 
-            return Task.FromResult(true);
+            return true;
         }
 
-        public async Task FillPipeAsync(DiscordAttachment attachment, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
         {
             try
             {
                 using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
                 {
-                    using (var client = HttpClientFactory.Create())
-                    using (var downloadStream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
-                        await downloadStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
+                    await sourceStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
                     using (var zipArchive = SevenZipArchive.Open(fileStream))
                     using (var zipReader = zipArchive.ExtractAllEntries())
                         while (zipReader.MoveToNextEntry())
-                            if (!zipReader.Entry.IsDirectory && zipReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase))
+                            if (!zipReader.Entry.IsDirectory
+                                && zipReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                                && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 using (var rarStream = zipReader.OpenEntryStream())
                                 {

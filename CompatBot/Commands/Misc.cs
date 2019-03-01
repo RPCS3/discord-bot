@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,6 +9,7 @@ using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
+using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
@@ -341,23 +343,28 @@ namespace CompatBot.Commands
         public async Task Stats(CommandContext ctx)
         {
             var embed = new DiscordEmbedBuilder
-            {
-/*
-                Title = "Some bot stats",
-                Description = "Most stats are for the current run only, and are not persistent",
-*/
-                Color = DiscordColor.Purple,
-            }
-                .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
-                .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
-                .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-                .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", true);
+                        {
+                            Color = DiscordColor.Purple,
+                        }
+                        .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
+                        .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
+                        .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
+                        .AddField("Google Drive API", File.Exists(GoogleDriveHandler.CredsPath) ? "✅ Configured" : "❌ Not configured")
+                        .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);
             AppendExplainStats(embed);
             AppendGameLookupStats(embed);
             var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
+        }
+
+        [Command("meme"), Aliases("memes"), Cooldown(1, 30, CooldownBucketType.Channel), Hidden]
+        [Description("No, memes are not implemented yet")]
+        public async Task Memes(CommandContext ctx, [RemainingText] string idk = null)
+        {
+            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
+            await ch.SendMessageAsync($"{ctx.User.Mention} congratulations, you're the meme").ConfigureAwait(false);
         }
 
         private static void AppendPiracyStats(DiscordEmbedBuilder embed)

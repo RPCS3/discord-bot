@@ -3,25 +3,35 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
+using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers.LogParsing;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using CompatBot.EventHandlers.LogParsing.SourceHandlers;
+using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
 namespace CompatBot.EventHandlers
 {
     internal static class LogParsingHandler
     {
         private static readonly char[] linkSeparator = { ' ', '>', '\r', '\n' };
-        private static readonly ISourceHandler[] handlers =
+        private static readonly ISourceHandler[] sourceHandlers =
+        {
+            new DiscordAttachmentHandler(),
+            new MegaHandler(),
+            new GoogleDriveHandler(),
+            new PastebinHandler(),
+        };
+        private static readonly IArchiveHandler[] archiveHandlers =
         {
             new GzipHandler(),
             new PlainTextHandler(),
@@ -31,7 +41,7 @@ namespace CompatBot.EventHandlers
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
-        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null);
+        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false);
         private static event OnLog OnNewLog;
 
         static LogParsingHandler()
@@ -50,11 +60,13 @@ namespace CompatBot.EventHandlers
                     || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
                 return Task.CompletedTask;
 
-            OnNewLog(args.Client, args.Channel, args.Message);
+            var checkExternalLinks = "help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
+                                     || LimitedToSpamChannel.IsSpamChannel(args.Channel);
+            OnNewLog(args.Client, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
             return Task.CompletedTask;
         }
 
-        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null)
+        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false)
         {
             try
             {
@@ -69,18 +81,17 @@ namespace CompatBot.EventHandlers
                 DiscordMessage botMsg = null;
                 try
                 {
-                    foreach (var attachment in message.Attachments.Where(a => !a.FileName.EndsWith("tty.log", StringComparison.InvariantCultureIgnoreCase)))
-                    foreach (var handler in handlers)
-                        if (await handler.CanHandleAsync(attachment).ConfigureAwait(false))
+                    var source = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).FirstOrDefault(h => h != null);
+                    if (source != null)
                         {
-                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log from attachment {attachment.FileName} ({attachment.FileSize})...");
-                            botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message)).ConfigureAwait(false);
+                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.FileSize} bytes)...");
+                            botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message, source)).ConfigureAwait(false);
                             parsedLog = true;
                             LogParseState result = null;
                             try
                             {
                                 var pipe = new Pipe();
-                                var fillPipeTask = handler.FillPipeAsync(attachment, pipe.Writer);
+                                var fillPipeTask = source.FillPipeAsync(pipe.Writer);
                                 result = await LogParser.ReadPipeAsync(pipe.Reader).ConfigureAwait(false);
                                 await fillPipeTask.ConfigureAwait(false);
                             }
@@ -98,7 +109,7 @@ namespace CompatBot.EventHandlers
                                                           "Please run the game again and re-upload a new copy.",
                                             Color = Config.Colors.LogResultFailed,
                                         }
-                                        .AddAuthor(client, message)
+                                        .AddAuthor(client, message, source)
                                         .Build()
                                 ).ConfigureAwait(false);
                             }
@@ -110,7 +121,7 @@ namespace CompatBot.EventHandlers
                                     {
                                         if (message.Author.IsWhitelisted(client, channel.Guild))
                                         {
-                                            var piracyWarning = await result.AsEmbedAsync(client, message).ConfigureAwait(false);
+                                            var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                             piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                             botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
                                             await client.ReportAsync("Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
@@ -131,7 +142,7 @@ namespace CompatBot.EventHandlers
                                             {
                                                 botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                                     $"{message.Author.Mention}, please read carefully:",
-                                                    embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
+                                                    embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
                                                 ).ConfigureAwait(false);
                                             }
                                             catch (Exception e)
@@ -147,7 +158,7 @@ namespace CompatBot.EventHandlers
                                     else
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                             requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
-                                            embed: await result.AsEmbedAsync(client, message).ConfigureAwait(false)
+                                            embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
                                         ).ConfigureAwait(false);
                                 }
                                 catch (Exception e)
