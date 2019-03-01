@@ -24,6 +24,7 @@ namespace CompatBot.Database.Providers
             {
                 try
                 {
+                    Config.Log.Debug("Got stats saving lock");
                     using (var db = new BotDb())
                     {
                         db.Stats.RemoveRange(db.Stats);
@@ -45,6 +46,7 @@ namespace CompatBot.Database.Providers
                 finally
                 {
                     barrier.Release();
+                    Config.Log.Debug("Released stats saving lock");
                 }
             }
             else if (wait)
