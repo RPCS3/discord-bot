@@ -71,7 +71,7 @@ namespace CompatBot.Commands
                             if (!string.IsNullOrEmpty(stdout))
                                 await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
                         }
-                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
+                        msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id);
                     }
                     catch (Exception e)
