@@ -29,13 +29,22 @@ namespace CompatBot.Commands
             var currentTicks = current.Ticks;
             using (var db = new BotDb())
             {
-                var currentEvent = await db.EventSchedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.Start <= currentTicks && e.End >= currentTicks).ConfigureAwait(false);
+                var currentEvents = await db.EventSchedule.OrderBy(e => e.End).Where(e => e.Start <= currentTicks && e.End >= currentTicks).ToListAsync().ConfigureAwait(false);
                 var nextEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(eventName))
                 {
                     var nearestEventMsg = "";
-                    if (currentEvent != null)
-                        nearestEventMsg = $"Current event: {currentEvent.Name} (going for {FormatCountdown(current - currentEvent.Start.AsUtc())})\n";
+                    if (currentEvents.Count > 0)
+                    {
+                        if (currentEvents.Count == 1)
+                            nearestEventMsg = $"Current event: {currentEvents[0].Name} (going for {FormatCountdown(current - currentEvents[0].Start.AsUtc())})\n";
+                        else
+                        {
+                            nearestEventMsg = "Current events:\n";
+                            foreach (var e in currentEvents)
+                                nearestEventMsg += $"{e.Name} (going for {FormatCountdown(current - e.Start.AsUtc())})\n";
+                        }
+                    }
                     if (nextEvent != null)
                         nearestEventMsg += $"Next event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
                     await ctx.RespondAsync(nearestEventMsg.TrimEnd()).ConfigureAwait(false);
@@ -44,8 +53,8 @@ namespace CompatBot.Commands
 
                 eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
                 var promo = "";
-                if (currentEvent != null)
-                    promo = $"\nMeanwhile check out this {(string.IsNullOrEmpty(currentEvent.EventName) ? "" : currentEvent.EventName + " " + currentEvent.Year + " ")}event in progress: {currentEvent.Name} (going for {FormatCountdown(current - currentEvent.Start.AsUtc())})";
+                if (currentEvents.Count > 0)
+                    promo = $"\nMeanwhile check out this {(string.IsNullOrEmpty(currentEvents[0].EventName) ? "" : currentEvents[0].EventName + " " + currentEvents[0].Year + " ")}event in progress: {currentEvents[0].Name} (going for {FormatCountdown(current - currentEvents[0].Start.AsUtc())})";
                 else if (nextEvent != null)
                     promo = $"\nMeanwhile check out this upcoming {(string.IsNullOrEmpty(nextEvent.EventName) ? "" : nextEvent.EventName + " " + nextEvent.Year + " ")}event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
                 var firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year && e.EventName == eventName).ConfigureAwait(false);
