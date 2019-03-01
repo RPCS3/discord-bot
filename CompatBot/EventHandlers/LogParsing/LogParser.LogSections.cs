@@ -33,6 +33,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     ["RPCS3"] = new Regex(@"(?<build_and_specs>.*)\r?$", DefaultSingleLineOptions),
                 },
+                OnNewLineAsync = PiracyCheckAsync,
                 EndTrigger = "·",
             },
             new LogSection

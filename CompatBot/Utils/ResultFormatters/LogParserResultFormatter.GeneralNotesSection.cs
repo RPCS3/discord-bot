@@ -58,7 +58,9 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
-            if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
+            if (items["log_from_ui"] is string)
+                notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
+            else if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
             {
                 notes.Add("ℹ The log is empty");
                 notes.Add("ℹ Please boot the game and upload a new log");
