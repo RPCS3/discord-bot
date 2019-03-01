@@ -27,6 +27,7 @@ namespace CompatBot.Database.Providers
                     using (var db = new BotDb())
                     {
                         db.Stats.RemoveRange(db.Stats);
+                        await db.SaveChangesAsync().ConfigureAwait(false);
                         foreach (var cache in AllCaches)
                         {
                             var category = cache.GetType().Name;
@@ -36,6 +37,10 @@ namespace CompatBot.Database.Providers
                         }
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
+                }
+                catch(Exception e)
+                {
+                    Config.Log.Error(e, "Failed to save user stats");
                 }
                 finally
                 {
