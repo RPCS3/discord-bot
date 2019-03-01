@@ -26,7 +26,8 @@ Runtime Requirements
     * Role select **Project > Viewer**
     * Key type **JSON**
     * **Create** will generate a configuration file
-  * Save said configuration file as `CompatBot/Properties/credentials.json`
+  * Save said configuration file as `credentials.json` in [user secrets](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.2#how-the-secret-manager-tool-works)
+    * e.g on Linux this will be `~/.microsoft/usersecrets/c2e6548b-b215-4a18-a010-958ef294b310/credentials.json`
 
 How to Build
 ------------

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using NLog;
 using NLog.Filters;
 using NLog.Targets;
@@ -47,6 +48,21 @@ namespace CompatBot
         public static string Token => config.GetValue(nameof(Token), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "logs/bot.log"); // paths are relative to the assembly, so this will put it in the project's root
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
+
+        public static string GoogleApiConfigPath 
+        {
+            get
+            {
+                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
+                {
+                    var path = Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId(attribute.UserSecretsId));
+                    path = Path.Combine(path, "credentials.json");
+                    if (File.Exists(path))
+                        return path;
+                }
+                return "Properties/credentials.json";
+            }
+        }
 
         public static class Colors
         {

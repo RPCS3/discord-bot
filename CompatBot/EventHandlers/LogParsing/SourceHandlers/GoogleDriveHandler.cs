@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
@@ -12,7 +11,6 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Download;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
 using Nerdbank.Streams;
 using FileMeta = Google.Apis.Drive.v3.Data.File;
 
@@ -20,7 +18,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class GoogleDriveHandler: BaseSourceHandler
     {
-        public const string CredsPath = "Properties/credentials.json";
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
         private static readonly Regex ExternalLink = new Regex(@"(?<gdrive_link>(https?://)?drive\.google\.com/open\?id=(?<gdrive_id>[^/>\s]+))", DefaultOptions);
         private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
@@ -31,7 +28,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             if (string.IsNullOrEmpty(message.Content))
                 return null;
 
-            if (!File.Exists(CredsPath))
+            if (!File.Exists(Config.GoogleApiConfigPath))
                 return null;
 
             var matches = ExternalLink.Matches(message.Content);
@@ -39,7 +36,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 return null;
 
             var client = GetClient();
-            //var downloader = new MediaDownloader(driveClient) { ChunkSize = 1024, Range = new System.Net.Http.Headers.RangeHeaderValue(0, 1023) };
             foreach (Match m in matches)
             {
                 try
@@ -86,7 +82,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         private DriveService GetClient()
         {
-            var credential = GoogleCredential.FromFile(CredsPath).CreateScoped(Scopes);
+            var credential = GoogleCredential.FromFile(Config.GoogleApiConfigPath).CreateScoped(Scopes);
             var service = new DriveService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
