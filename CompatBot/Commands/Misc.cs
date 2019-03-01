@@ -343,18 +343,14 @@ namespace CompatBot.Commands
         public async Task Stats(CommandContext ctx)
         {
             var embed = new DiscordEmbedBuilder
-            {
-/*
-                Title = "Some bot stats",
-                Description = "Most stats are for the current run only, and are not persistent",
-*/
-                Color = DiscordColor.Purple,
-            }
-                .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
-                .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
-                .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-                .AddField("Google Drive API", File.Exists(GoogleDriveHandler.CredsPath) ? "✅ Configured" : "❌ Not configured")
-                .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", true);
+                        {
+                            Color = DiscordColor.Purple,
+                        }
+                        .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
+                        .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
+                        .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
+                        .AddField("Google Drive API", File.Exists(GoogleDriveHandler.CredsPath) ? "✅ Configured" : "❌ Not configured")
+                        .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);
             AppendExplainStats(embed);

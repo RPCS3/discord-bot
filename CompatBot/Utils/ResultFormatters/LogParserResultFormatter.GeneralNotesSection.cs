@@ -135,7 +135,7 @@ namespace CompatBot.Utils.ResultFormatters
                         supportedGpu = false;
                     }
                     else
-                        notes.Add("⚠ Intel iGPUs are not officially supported, visual glitches are to be expected");
+                        notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
                 }
 
                 if (items["os_path"] is string os
@@ -145,12 +145,12 @@ namespace CompatBot.Utils.ResultFormatters
                     && Version.TryParse(driverVersionString, out var driverVersion))
                 {
                     if (driverVersion < NvidiaRecommendedOldWindowsVersion)
-                        notes.Add($"❗ Please update your nVidia driver to at least {NvidiaRecommendedOldWindowsVersion}");
+                        notes.Add($"❗ Please update your nVidia driver to at least version {NvidiaRecommendedOldWindowsVersion}");
                     if (driverVersion >= NvidiaFullscreenBugMinVersion
                         && driverVersion < NvidiaFullscreenBugMaxVersion
                         && items["renderer"] == "Vulkan"
                         && items["vsync"] == DisabledMark)
-                        notes.Add("⚠ **400 series** nVidia drivers can cause random screen freeze when playing in **fullscreen** using **Vulkan** renderer with **vsync disabled**");
+                        notes.Add("⚠ **400 series** nVidia drivers can cause random screen freezes when playing in **fullscreen** using **Vulkan** renderer with **vsync disabled**");
                 }
             }
 
