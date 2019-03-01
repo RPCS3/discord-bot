@@ -18,13 +18,15 @@ Runtime Requirements
 * [.NET Core 2.1 Runtime](https://www.microsoft.com/net/download/windows) or newer for compiled version
 * Optionally Google API credentials to access Google Drive:
   * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
-  * Select the project and open [API & Services Credendials](https://console.developers.google.com/apis/credentials)
+  * Select the project and enable [Google Drive API](https://console.developers.google.com/apis/library/drive.googleapis.com)
+  * Open [API & Services Credendials](https://console.developers.google.com/apis/credentials)
   * Create new credentials:
     * **Service account** credentials
     * New service account
     * Role select **Project > Viewer**
     * Key type **JSON**
-    * **Create** will generate a configuration file, save it as `CompatBot/Properties/credentials.json`
+    * **Create** will generate a configuration file
+  * Save said configuration file as `CompatBot/Properties/credentials.json`
 
 How to Build
 ------------
