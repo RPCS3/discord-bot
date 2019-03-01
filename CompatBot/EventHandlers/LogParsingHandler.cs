@@ -28,7 +28,7 @@ namespace CompatBot.EventHandlers
         {
             new DiscordAttachmentHandler(),
             new MegaHandler(),
-
+            new GoogleDriveHandler(),
             new PastebinHandler(),
         };
         private static readonly IArchiveHandler[] archiveHandlers =

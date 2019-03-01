@@ -14,8 +14,17 @@ Development Requirements
 Runtime Requirements
 --------------------
 * [.NET Core 2.1 SDK](https://www.microsoft.com/net/download/windows) or newer to run from sources
-	* needs `dotnet` command available (i.e. alias for the Snap package)
+  * needs `dotnet` command available (i.e. alias for the Snap package)
 * [.NET Core 2.1 Runtime](https://www.microsoft.com/net/download/windows) or newer for compiled version
+* Optionally Google API credentials to access Google Drive:
+  * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
+  * Select the project and open [API & Services Credendials](https://console.developers.google.com/apis/credentials)
+  * Create new credentials:
+    * **Service account** credentials
+    * New service account
+    * Role select **Project > Viewer**
+    * Key type **JSON**
+    * **Create** will generate a configuration file, save it as `CompatBot/Properties/credentials.json`
 
 How to Build
 ------------

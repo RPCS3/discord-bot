@@ -13,9 +13,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     internal sealed class MegaHandler : BaseSourceHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
-        private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(.co)?.nz/#(?<mega_id>[^/>\s]+))", DefaultOptions);
+        private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(\.co)?\.nz/#(?<mega_id>[^/>\s]+))", DefaultOptions);
         private static readonly IProgress<double> doodad = new Progress<double>(_ => { });
-        private readonly IMegaApiClient client = new MegaApiClient();
 
         public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
@@ -26,6 +25,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             if (matches.Count == 0)
                 return null;
 
+            var client = new MegaApiClient();
+            await client.LoginAnonymousAsync();
             foreach (Match m in matches)
             {
                 try
@@ -34,8 +35,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         && !string.IsNullOrEmpty(lnk)
                         && Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
                     {
-                        if (!client.IsLoggedIn)
-                            await client.LoginAnonymousAsync().ConfigureAwait(false);
                         var node = await client.GetNodeFromLinkAsync(uri).ConfigureAwait(false);
                         if (node.Type == NodeType.File)
                         {

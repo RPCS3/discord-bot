@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,6 +9,7 @@ using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
+using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
@@ -351,6 +353,7 @@ namespace CompatBot.Commands
                 .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
                 .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
                 .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
+                .AddField("Google Drive API", File.Exists(GoogleDriveHandler.CredsPath) ? "✅ Configured" : "❌ Not configured")
                 .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);

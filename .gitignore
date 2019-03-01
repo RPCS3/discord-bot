@@ -265,3 +265,4 @@ launchSettings.json
 *.db-journal
 logs/
 *.ird
+credentials.json
