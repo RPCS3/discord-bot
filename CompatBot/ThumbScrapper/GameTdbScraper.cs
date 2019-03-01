@@ -101,13 +101,13 @@ namespace CompatBot.ThumbScrapper
                             {
                                 if (xmlReader.ReadToFollowing("id"))
                                 {
-                                    var productId = xmlReader.ReadElementContentAsString().ToUpperInvariant();
+                                    var productId = (await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false)).ToUpperInvariant();
                                     if (!ProductCodeLookup.ProductCode.IsMatch(productId))
                                         continue;
 
                                     string title = null;
                                     if (xmlReader.ReadToFollowing("locale") && xmlReader.ReadToFollowing("title"))
-                                        title = xmlReader.ReadElementContentAsString();
+                                        title = await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                     if (!string.IsNullOrEmpty(title))
                                     {

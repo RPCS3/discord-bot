@@ -17,7 +17,7 @@ namespace CompatBot.Database.Providers
 
         public static async Task RefreshAsync()
         {
-            if (SyncObj.Wait(0))
+            if (await SyncObj.WaitAsync(0).ConfigureAwait(false))
                 try
                 {
                     using (var httpClient = HttpClientFactory.Create(new CompressionMessageHandler()))

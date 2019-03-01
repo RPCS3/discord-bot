@@ -170,7 +170,7 @@ Example usage:
                 var updateLinks = info?.LatestBuild?.Pr?.ToString();
                 if (!string.IsNullOrEmpty(updateLinks)
                     && lastUpdateInfo != updateLinks
-                    && updateCheck.Wait(0))
+                    && await updateCheck.WaitAsync(0).ConfigureAwait(false))
                     try
                     {
                         var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);

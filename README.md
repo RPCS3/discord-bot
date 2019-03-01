@@ -42,6 +42,8 @@ How to Build
 How to Run in Production
 ------------------------
 * Change configuration if needed (probably just token)
+  * use `$ dotnet user-secrets set Token <your_token_here>`
+  * for more information 
 * Put `bot.db` in `CompatBot/`
 * `$ cd CompatBot`
 * `$ dotnet run -c Release [token]`

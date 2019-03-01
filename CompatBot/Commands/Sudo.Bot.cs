@@ -45,7 +45,7 @@ namespace CompatBot.Commands
             [Description("Restarts bot and pulls the newest commit")]
             public async Task Update(CommandContext ctx)
             {
-                if (lockObj.Wait(0))
+                if (await lockObj.WaitAsync(0).ConfigureAwait(false))
                 {
                     try
                     {

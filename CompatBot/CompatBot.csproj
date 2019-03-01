@@ -6,14 +6,8 @@
     <TieredCompilation>true</TieredCompilation>
     <RootNamespace>CompatBot</RootNamespace>
     <UserSecretsId>c2e6548b-b215-4a18-a010-958ef294b310</UserSecretsId>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <LangVersion>latest</LangVersion>
+    <NoWarn>1701;1702;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

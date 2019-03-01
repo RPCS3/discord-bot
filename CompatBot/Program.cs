@@ -72,7 +72,7 @@ namespace CompatBot
             try
             {
                 singleInstanceCheckThread.Start();
-                if (!InstanceCheck.Wait(1000))
+                if (!await InstanceCheck.WaitAsync(1000).ConfigureAwait(false))
                 {
                     Config.Log.Fatal("Another instance is already running.");
                     return;
@@ -172,8 +172,8 @@ namespace CompatBot
                                                  try
                                                  {
                                                      await Task.WhenAll(
-                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
-                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
+                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default),
+                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)
                                                      ).ConfigureAwait(false);
                                                  }
                                                  catch (Exception e)
@@ -263,7 +263,7 @@ namespace CompatBot
                     {
                         if (client.Ping > 1000)
                             await client.ReconnectAsync();
-                        await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}).ConfigureAwait(false);
+                        await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
                     }
                 }
                 await backgroundTasks.ConfigureAwait(false);

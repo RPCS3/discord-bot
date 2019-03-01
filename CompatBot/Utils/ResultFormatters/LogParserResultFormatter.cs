@@ -294,7 +294,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
                 gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
                 gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
-                return AmdDriverVersionProvider.GetFromOpenglAsync(version).GetAwaiter().GetResult();
+                return AmdDriverVersionProvider.GetFromOpenglAsync(version).ConfigureAwait(false).GetAwaiter().GetResult();
 
             return version;
         }
@@ -320,7 +320,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (gpu.Contains("RADV", StringComparison.InvariantCultureIgnoreCase))
                     return result;
 
-                return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
+                return AmdDriverVersionProvider.GetFromVulkanAsync(result).ConfigureAwait(false).GetAwaiter().GetResult();
             }
 
             if (result.EndsWith(".0.0"))
@@ -345,7 +345,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (gpuInfo.Contains("RADV", StringComparison.InvariantCultureIgnoreCase))
                     return result;
 
-                return AmdDriverVersionProvider.GetFromVulkanAsync(result).GetAwaiter().GetResult();
+                return AmdDriverVersionProvider.GetFromVulkanAsync(result).ConfigureAwait(false).GetAwaiter().GetResult();
             }
             else
             {

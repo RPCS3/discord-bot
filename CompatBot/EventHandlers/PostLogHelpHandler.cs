@@ -34,7 +34,7 @@ namespace CompatBot.EventHandlers
             if (!UploadLogMention.IsMatch(args.Message.Content))
                 return;
 
-            if (!TheDoor.Wait(0))
+            if (!await TheDoor.WaitAsync(0).ConfigureAwait(false))
                 return;
 
             try
