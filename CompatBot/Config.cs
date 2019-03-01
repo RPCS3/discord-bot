@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using DSharpPlus.Entities;
 using NLog;
+using NLog.Filters;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 
@@ -155,7 +156,9 @@ namespace CompatBot
                 ConcurrentWrites = false,
                 AutoFlush = false,
                 OpenFileFlushTimeout = 1,
-                Layout = "${longdate} ${sequenceid} ${level:uppercase=true} ${message} ${onexception:${newline}${exception:format=tostring}}",
+                Layout = "${longdate} ${sequenceid:padding=6} ${level:uppercase=true:padding=-5} ${message} ${onexception:" +
+                            "${newline}${exception:format=ToString}" +
+                            ":when=not contains('${exception:format=ShortType}','TaskCanceledException')}",
             };
             var asyncFileTarget = new AsyncTargetWrapper(fileTarget)
             {
@@ -163,13 +166,21 @@ namespace CompatBot
                 OverflowAction = AsyncTargetWrapperOverflowAction.Block,
                 BatchSize = 500,
             };
-            var logTarget = new ColoredConsoleTarget("logconsole");
+            var logTarget = new ColoredConsoleTarget("logconsole") {
+                Layout = "${longdate} ${level:uppercase=true:padding=-5} ${message} ${onexception:" +
+                            "${newline}${exception:format=Message}" +
+                            ":when=not contains('${exception:format=ShortType}','TaskCanceledException')}",
+            };
 #if DEBUG
             config.AddRule(LogLevel.Trace, LogLevel.Fatal, logTarget, "default"); // only echo messages from default logger to the console
 #else
             config.AddRule(LogLevel.Info, LogLevel.Fatal, logTarget, "default");
 #endif
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
+
+            var filter = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')", Action = FilterResult.Ignore, };
+            foreach (var rule in config.LoggingRules)
+                rule.Filters.Add(filter);
             LogManager.Configuration = config;
             return LogManager.GetLogger("default");
         }
