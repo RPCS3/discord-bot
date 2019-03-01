@@ -13,7 +13,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static void BuildInfoSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
             var systemInfo = items["build_and_specs"] ?? "";
-            var valid = systemInfo.StartsWith("RPCS3") && systemInfo.Count(c => c == '\n') == 2;
+            var valid = systemInfo.StartsWith("RPCS3") && systemInfo.Count(c => c == '\n') < 3;
             if (!valid)
             {
                 systemInfo = string.Join('\n', systemInfo.Split('\n', 3).Take(2)).Trim();
