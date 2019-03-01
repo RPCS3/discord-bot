@@ -15,6 +15,7 @@ namespace CompatBot.Database
         public DbSet<DisabledCommand> DisabledCommands { get; set; }
         public DbSet<WhitelistedInvite> WhitelistedInvites { get; set; }
         public DbSet<EventSchedule> EventSchedule { get; set; }
+        public DbSet<Stats> Stats { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -32,6 +33,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasName("disabled_command_command");
             modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasName("whitelisted_invite_guild_id");
             modelBuilder.Entity<EventSchedule>().HasIndex(e => new {e.Year, e.EventName}).HasName("event_schedule_year_event_name");
+            modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasName("stats_category_key");
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
@@ -109,5 +111,16 @@ namespace CompatBot.Database
         public long End { get; set; }
         public string Name { get; set; }
         public string EventName { get; set; }
+    }
+
+    internal class Stats
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Category { get; set; }
+        [Required]
+        public string Key { get; set; }
+        public int Value { get; set; }
+        public long ExpirationTimestamp { get; set; }
     }
 }

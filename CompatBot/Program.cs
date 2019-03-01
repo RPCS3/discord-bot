@@ -65,14 +65,13 @@ namespace CompatBot
                         Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                     }
                 }
-                catch (TaskCanceledException) {}
                 catch (Exception e) { Config.Log.Error(e); }
             }) {IsBackground = true};
 
             try
             {
                 singleInstanceCheckThread.Start();
-                if (!InstanceCheck.Wait(1000))
+                if (!await InstanceCheck.WaitAsync(1000).ConfigureAwait(false))
                 {
                     Config.Log.Fatal("Another instance is already running.");
                     return;
@@ -92,11 +91,15 @@ namespace CompatBot
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
+                await StatsStorage.RestoreAsync().ConfigureAwait(false);
+                Config.Log.Debug("Restored stats from persistent storage");
+
                 var backgroundTasks = Task.WhenAll(
                     AmdDriverVersionProvider.RefreshAsync(),
                     new PsnScraper().RunAsync(Config.Cts.Token),
                     GameTdbScraper.RunAsync(Config.Cts.Token),
-                    new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token)
+                    new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token),
+                    StatsStorage.BackgroundSaveAsync()
                 );
                 Config.Log.Debug($"Started background tasks with status {backgroundTasks.Status}");
 
@@ -140,6 +143,7 @@ namespace CompatBot
                     commands.RegisterCommands<Pr>();
                     commands.RegisterCommands<Events>();
                     commands.RegisterCommands<E3>();
+                    commands.RegisterCommands<BotStats>();
 
                     commands.CommandErrored += UnknownCommandHandler.OnError;
 
@@ -172,8 +176,8 @@ namespace CompatBot
                                                  try
                                                  {
                                                      await Task.WhenAll(
-                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}.")),
-                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."))
+                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default),
+                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)
                                                      ).ConfigureAwait(false);
                                                  }
                                                  catch (Exception e)
@@ -263,7 +267,7 @@ namespace CompatBot
                     {
                         if (client.Ping > 1000)
                             await client.ReconnectAsync();
-                        await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}).ConfigureAwait(false);
+                        await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
                     }
                 }
                 await backgroundTasks.ConfigureAwait(false);

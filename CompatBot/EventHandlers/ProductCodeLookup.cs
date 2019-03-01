@@ -80,7 +80,6 @@ namespace CompatBot.EventHandlers
 
                 // get only results with unique titles
                 formattedResults = formattedResults.GroupBy(e => e.Title).Select(g => g.First()).ToList();
-                DiscordEmoji sqvat = null;
                 foreach (var result in formattedResults)
                     try
                     {

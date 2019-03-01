@@ -8,6 +8,7 @@ using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
@@ -105,8 +106,8 @@ namespace CompatBot.Commands
                     }
 
                     var explain = result.explanation;
-                    ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
-                    ExplainStatCache.Set(explain.Keyword, ++stat, CacheTime);
+                    StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
+                    StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
                     await ctx.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
                     return;
                 }

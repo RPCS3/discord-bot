@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
+using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -45,8 +45,11 @@ namespace CompatBot.Commands
             [Description("Restarts bot and pulls the newest commit")]
             public async Task Update(CommandContext ctx)
             {
-                if (lockObj.Wait(0))
+                if (await lockObj.WaitAsync(0).ConfigureAwait(false))
                 {
+                    var msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
+                    await StatsStorage.SaveAsync(true).ConfigureAwait(false);
+                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for updates...").ConfigureAwait(false);
                     try
                     {
                         using (var git = new Process
@@ -66,12 +69,12 @@ namespace CompatBot.Commands
                             if (!string.IsNullOrEmpty(stdout))
                                 await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
                         }
-                        await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
+                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id);
                     }
                     catch (Exception e)
                     {
-                        await ctx.RespondAsync("Updating failed: " + e.Message).ConfigureAwait(false);
+                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updating failed: " + e.Message).ConfigureAwait(false);
                     }
                     finally
                     {

@@ -84,7 +84,7 @@ namespace CompatBot.ThumbScrapper
                             throw new InvalidOperationException("No zip entries that match the .xml criteria");
 
                         using (var zipStream = logEntry.Open())
-                        using (var xmlReader = XmlReader.Create(zipStream))
+                        using (var xmlReader = XmlReader.Create(zipStream, new XmlReaderSettings { Async = true }))
                         {
                             xmlReader.ReadToFollowing("PS3TDB");
                             var version = xmlReader.GetAttribute("version");
@@ -101,13 +101,13 @@ namespace CompatBot.ThumbScrapper
                             {
                                 if (xmlReader.ReadToFollowing("id"))
                                 {
-                                    var productId = xmlReader.ReadElementContentAsString().ToUpperInvariant();
+                                    var productId = (await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false)).ToUpperInvariant();
                                     if (!ProductCodeLookup.ProductCode.IsMatch(productId))
                                         continue;
 
                                     string title = null;
                                     if (xmlReader.ReadToFollowing("locale") && xmlReader.ReadToFollowing("title"))
-                                        title = xmlReader.ReadElementContentAsString();
+                                        title = await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                     if (!string.IsNullOrEmpty(title))
                                     {

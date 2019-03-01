@@ -2,7 +2,6 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
@@ -20,7 +19,9 @@ namespace CompatBot.Utils
                 var result = await new DiscordMemberConverter().ConvertAsync(word, ctx).ConfigureAwait(false);
                 return result.HasValue ? result.Value : null;
             }
+#pragma warning disable CS0168 // Variable is declared but never used
             catch (Exception e)
+#pragma warning restore CS0168 // Variable is declared but never used
             {
 #if DEBUG
                 Config.Log.Warn(e, $"Failed to resolve member {word}");

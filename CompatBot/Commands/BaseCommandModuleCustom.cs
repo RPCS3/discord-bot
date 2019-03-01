@@ -13,11 +13,6 @@ namespace CompatBot.Commands
 {
     internal class BaseCommandModuleCustom : BaseCommandModule
     {
-        internal static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
-        protected static readonly MemoryCache CmdStatCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromDays(1)});
-        internal static readonly MemoryCache ExplainStatCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromDays(1)});
-        internal static readonly MemoryCache GameStatCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromDays(1)});
-
         public override async Task BeforeExecutionAsync(CommandContext ctx)
         {
             try
@@ -45,8 +40,8 @@ namespace CompatBot.Commands
         public override async Task AfterExecutionAsync(CommandContext ctx)
         {
             var qualifiedName = ctx.Command.QualifiedName;
-            CmdStatCache.TryGetValue(qualifiedName, out int counter);
-            CmdStatCache.Set(qualifiedName, ++counter, CacheTime);
+            StatsStorage. CmdStatCache.TryGetValue(qualifiedName, out int counter);
+            StatsStorage.CmdStatCache.Set(qualifiedName, ++counter, StatsStorage.CacheTime);
 
             if (TriggersTyping(ctx))
                 await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);

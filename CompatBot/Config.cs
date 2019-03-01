@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using NLog;
+using NLog.Filters;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 
@@ -13,38 +17,52 @@ namespace CompatBot
 {
     internal static class Config
     {
-        public static readonly string CommandPrefix = "!";
-        public static readonly string AutoRemoveCommandPrefix = ".";
-        public static readonly ulong BotGuildId = 272035812277878785;         // discord server where the bot is supposed to be
-        public static readonly ulong BotGeneralChannelId = 272035812277878785;// #rpcs3; main or general channel where noobs come first thing
-        public static readonly ulong BotChannelId = 291679908067803136;       // #compatbot; this is used for !compat/!top results and new builds announcements
-        public static readonly ulong BotSpamId = 319224795785068545;          // #bot-spam; this is a dedicated channel for bot abuse
-        public static readonly ulong BotLogId = 436972161572536329;           // #bot-log; a private channel for admin mod queue
-        public static readonly ulong BotRulesChannelId = 311894275015049216;  // #rules-info; used to give links to rules
-        public static readonly ulong BotAdminId = 267367850706993152;         // discord user id for a bot admin
-        public static readonly ulong ThumbnailSpamId = 475678410098606100;    // whatever private chat where bot can upload game covers for future embedding
-
-        public static readonly int ProductCodeLookupHistoryThrottle = 7;
-
-        public static readonly int TopLimit = 15;
-        public static readonly int AttachmentSizeLimit = 8 * 1024 * 1024;
-        public static readonly int LogSizeLimit = 64 * 1024 * 1024;
-        public static readonly int MinimumBufferSize = 512;
-        public static readonly int BuildNumberDifferenceForOutdatedBuilds = 10;
-        public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
-
-        public static readonly string Token;
-        public static readonly string LogPath = "logs/bot.log"; // paths are relative to the assembly, so this will put it in the project's root
-        public static readonly string IrdCachePath = "./ird/";
-
+        private static readonly IConfigurationRoot config;
         internal static readonly ILogger Log;
+        internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new ConcurrentDictionary<string, string>();
 
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
         public static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);
         public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(15);
-
+        public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
         public static readonly Stopwatch Uptime = Stopwatch.StartNew();
+
+        // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
+        public static string CommandPrefix => config.GetValue(nameof(CommandPrefix), "!");
+        public static string AutoRemoveCommandPrefix => config.GetValue(nameof(AutoRemoveCommandPrefix), ".");
+        public static ulong BotGuildId => config.GetValue(nameof(BotGuildId), 272035812277878785ul);                  // discord server where the bot is supposed to be
+        public static ulong BotGeneralChannelId => config.GetValue(nameof(BotGeneralChannelId), 272035812277878785ul);// #rpcs3; main or general channel where noobs come first thing
+        public static ulong BotChannelId => config.GetValue(nameof(BotChannelId), 291679908067803136ul);              // #compatbot; this is used for !compat/!top results and new builds announcements
+        public static ulong BotSpamId => config.GetValue(nameof(BotSpamId), 319224795785068545ul);                    // #bot-spam; this is a dedicated channel for bot abuse
+        public static ulong BotLogId => config.GetValue(nameof(BotLogId), 436972161572536329ul);                      // #bot-log; a private channel for admin mod queue
+        public static ulong BotRulesChannelId => config.GetValue(nameof(BotRulesChannelId), 311894275015049216ul);    // #rules-info; used to give links to rules
+        public static ulong BotAdminId => config.GetValue(nameof(BotAdminId), 267367850706993152ul);                  // discord user id for a bot admin
+        public static ulong ThumbnailSpamId => config.GetValue(nameof(ThumbnailSpamId), 475678410098606100ul);        // whatever private chat where bot can upload game covers for future embedding
+        public static int ProductCodeLookupHistoryThrottle => config.GetValue(nameof(ProductCodeLookupHistoryThrottle), 7);
+        public static int TopLimit => config.GetValue(nameof(TopLimit), 15);
+        public static int AttachmentSizeLimit => config.GetValue(nameof(AttachmentSizeLimit), 8 * 1024 * 1024);
+        public static int LogSizeLimit => config.GetValue(nameof(LogSizeLimit), 64 * 1024 * 1024);
+        public static int MinimumBufferSize => config.GetValue(nameof(MinimumBufferSize), 512);
+        public static int BuildNumberDifferenceForOutdatedBuilds => config.GetValue(nameof(BuildNumberDifferenceForOutdatedBuilds), 10);
+        public static string Token => config.GetValue(nameof(Token), "");
+        public static string LogPath => config.GetValue(nameof(LogPath), "logs/bot.log"); // paths are relative to the assembly, so this will put it in the project's root
+        public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
+
+        public static string GoogleApiConfigPath 
+        {
+            get
+            {
+                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
+                {
+                    var path = Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId(attribute.UserSecretsId));
+                    path = Path.Combine(path, "credentials.json");
+                    if (File.Exists(path))
+                        return path;
+                }
+                return "Properties/credentials.json";
+            }
+        }
 
         public static class Colors
         {
@@ -117,23 +135,15 @@ namespace CompatBot
         {
             try
             {
-                var envVars = Environment.GetEnvironmentVariables();
-                foreach (var member in typeof(Config).GetFields(BindingFlags.Public | BindingFlags.Static))
-                {
-                    if (envVars.Contains(member.Name))
-                    {
-                        if (member.FieldType == typeof(ulong) && ulong.TryParse(envVars[member.Name] as string, out var ulongValue))
-                            member.SetValue(null, ulongValue);
-                        if (member.FieldType == typeof(int) && int.TryParse(envVars[member.Name] as string, out var intValue))
-                            member.SetValue(null, intValue);
-                        if (member.FieldType == typeof(string))
-                            member.SetValue(null, envVars[member.Name] as string);
-                    }
-                }
                 var args = Environment.CommandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (args.Length > 1)
-                    Token = args[1];
+                    inMemorySettings[nameof(Token)] = args[1];
 
+                config = new ConfigurationBuilder()
+                         .AddEnvironmentVariables()                   // lower priority
+                         .AddUserSecrets(Assembly.GetEntryAssembly()) 
+                         .AddInMemoryCollection(inMemorySettings)     // higher priority
+                         .Build();
                 Log = GetLog();
             }
             catch (Exception e)
@@ -155,7 +165,9 @@ namespace CompatBot
                 ConcurrentWrites = false,
                 AutoFlush = false,
                 OpenFileFlushTimeout = 1,
-                Layout = "${longdate} ${sequenceid} ${level:uppercase=true} ${message} ${onexception:${newline}${exception:format=tostring}}",
+                Layout = "${longdate} ${sequenceid:padding=6} ${level:uppercase=true:padding=-5} ${message} ${onexception:" +
+                            "${newline}${exception:format=ToString}" +
+                            ":when=not contains('${exception:format=ShortType}','TaskCanceledException')}",
             };
             var asyncFileTarget = new AsyncTargetWrapper(fileTarget)
             {
@@ -163,13 +175,21 @@ namespace CompatBot
                 OverflowAction = AsyncTargetWrapperOverflowAction.Block,
                 BatchSize = 500,
             };
-            var logTarget = new ColoredConsoleTarget("logconsole");
+            var logTarget = new ColoredConsoleTarget("logconsole") {
+                Layout = "${longdate} ${level:uppercase=true:padding=-5} ${message} ${onexception:" +
+                            "${newline}${exception:format=Message}" +
+                            ":when=not contains('${exception:format=ShortType}','TaskCanceledException')}",
+            };
 #if DEBUG
             config.AddRule(LogLevel.Trace, LogLevel.Fatal, logTarget, "default"); // only echo messages from default logger to the console
 #else
             config.AddRule(LogLevel.Info, LogLevel.Fatal, logTarget, "default");
 #endif
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
+
+            var filter = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')", Action = FilterResult.Ignore, };
+            foreach (var rule in config.LoggingRules)
+                rule.Filters.Add(filter);
             LogManager.Configuration = config;
             return LogManager.GetLogger("default");
         }

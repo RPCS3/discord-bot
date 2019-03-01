@@ -36,7 +36,7 @@ namespace CompatBot.Commands
             [Description("Dumps server member information, including usernames, nicknames, and roles")]
             public async Task Members(CommandContext ctx)
             {
-                if (!CheckLock.Wait(0))
+                if (!await CheckLock.WaitAsync(0).ConfigureAwait(false))
                 {
                     await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
                     return;
@@ -53,8 +53,8 @@ namespace CompatBot.Commands
                             using (var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true))
                             {
                                 foreach (var member in members)
-                                    writer.WriteLine($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}");
-                                writer.Flush();
+                                    await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}").ConfigureAwait(false);
+                                await writer.FlushAsync().ConfigureAwait(false);
                             }
                             memoryStream.Seek(0, SeekOrigin.Begin);
                             if (memoryStream.Length <= Config.AttachmentSizeLimit)
@@ -65,8 +65,8 @@ namespace CompatBot.Commands
 
                             using (var gzip = new GZipStream(compressedResult, CompressionLevel.Optimal, true))
                             {
-                                memoryStream.CopyTo(gzip);
-                                gzip.Flush();
+                                await memoryStream.CopyToAsync(gzip).ConfigureAwait(false);
+                                await gzip.FlushAsync().ConfigureAwait(false);
                             }
                         }
                         compressedResult.Seek(0, SeekOrigin.Begin);

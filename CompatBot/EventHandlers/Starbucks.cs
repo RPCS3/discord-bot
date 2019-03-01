@@ -72,7 +72,7 @@ namespace CompatBot.EventHandlers
                 var members = users
                     .Select(u => channel.Guild
                                 .GetMemberAsync(u.Id)
-                                .ContinueWith(ct => ct.IsCompletedSuccessfully ? ct : Task.FromResult((DiscordMember)null)))
+                                .ContinueWith(ct => ct.IsCompletedSuccessfully ? ct : Task.FromResult((DiscordMember)null), TaskScheduler.Default))
                     .ToList() //force eager task creation
                     .Select(t => t.Unwrap().ConfigureAwait(false).GetAwaiter().GetResult())
                     .Where(m => m != null)
