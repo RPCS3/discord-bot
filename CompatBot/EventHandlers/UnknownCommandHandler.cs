@@ -68,8 +68,8 @@ namespace CompatBot.EventHandlers
                     await e.Context.RespondAsync(fuzzyNotice).ConfigureAwait(false);
                 }
                 var explain = lookup.explanation;
-                BaseCommandModuleCustom.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
-                BaseCommandModuleCustom.ExplainStatCache.Set(explain.Keyword, ++stat, BaseCommandModuleCustom.CacheTime);
+                StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
+                StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
                 await e.Context.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
                 return;
             }

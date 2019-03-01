@@ -7,6 +7,7 @@ using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
+using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.Entities;
@@ -91,8 +92,8 @@ namespace CompatBot.EventHandlers
 
                     if (!string.IsNullOrEmpty(info?.Title))
                     {
-                        BaseCommandModuleCustom.GameStatCache.TryGetValue(info.Title, out int stat);
-                        BaseCommandModuleCustom.GameStatCache.Set(info.Title, ++stat, BaseCommandModuleCustom.CacheTime);
+                        StatsStorage.GameStatCache.TryGetValue(info.Title, out int stat);
+                        StatsStorage.GameStatCache.Set(info.Title, ++stat, StatsStorage.CacheTime);
                     }
 
                     return (code, info);

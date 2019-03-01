@@ -65,7 +65,6 @@ namespace CompatBot
                         Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                     }
                 }
-                catch (TaskCanceledException) {}
                 catch (Exception e) { Config.Log.Error(e); }
             }) {IsBackground = true};
 
@@ -92,11 +91,15 @@ namespace CompatBot
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
+                await StatsStorage.RestoreAsync().ConfigureAwait(false);
+                Config.Log.Debug("Restored stats from persistent storage");
+
                 var backgroundTasks = Task.WhenAll(
                     AmdDriverVersionProvider.RefreshAsync(),
                     new PsnScraper().RunAsync(Config.Cts.Token),
                     GameTdbScraper.RunAsync(Config.Cts.Token),
-                    new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token)
+                    new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token),
+                    StatsStorage.BackgroundSaveAsync()
                 );
                 Config.Log.Debug($"Started background tasks with status {backgroundTasks.Status}");
 
@@ -140,6 +143,7 @@ namespace CompatBot
                     commands.RegisterCommands<Pr>();
                     commands.RegisterCommands<Events>();
                     commands.RegisterCommands<E3>();
+                    commands.RegisterCommands<BotStats>();
 
                     commands.CommandErrored += UnknownCommandHandler.OnError;
 

@@ -9,6 +9,7 @@ using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
@@ -290,8 +291,8 @@ Example usage:
                                                            || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
                     foreach (var title in searchHits.Select(t => t.info?.Title).Distinct())
                     {
-                        GameStatCache.TryGetValue(title, out int stat);
-                        GameStatCache.Set(title, ++stat, CacheTime);
+                        StatsStorage.GameStatCache.TryGetValue(title, out int stat);
+                        StatsStorage.GameStatCache.Set(title, ++stat, StatsStorage.CacheTime);
                     }
                     foreach (var resultInfo in sortedList.Take(request.amountRequested))
                     {

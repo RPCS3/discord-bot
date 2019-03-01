@@ -4,7 +4,6 @@ using System.Globalization;
 using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatApiClient.POCOs;
-using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Caching.Memory;
@@ -81,8 +80,8 @@ namespace CompatBot.Utils.ResultFormatters
                 var cacheTitle = info.Title ?? gameTitle;
                 if (!string.IsNullOrEmpty(cacheTitle))
                 {
-                    BaseCommandModuleCustom.GameStatCache.TryGetValue(cacheTitle, out int stat);
-                    BaseCommandModuleCustom.GameStatCache.Set(cacheTitle, ++stat, BaseCommandModuleCustom.CacheTime);
+                    StatsStorage.GameStatCache.TryGetValue(cacheTitle, out int stat);
+                    StatsStorage.GameStatCache.Set(cacheTitle, ++stat, StatsStorage.CacheTime);
                 }
                 return new DiscordEmbedBuilder
                     {
@@ -111,8 +110,8 @@ namespace CompatBot.Utils.ResultFormatters
                     gameTitle = titleName;
                 if (!string.IsNullOrEmpty(gameTitle))
                 {
-                    BaseCommandModuleCustom.GameStatCache.TryGetValue(gameTitle, out int stat);
-                    BaseCommandModuleCustom.GameStatCache.Set(gameTitle, ++stat, BaseCommandModuleCustom.CacheTime);
+                    StatsStorage.GameStatCache.TryGetValue(gameTitle, out int stat);
+                    StatsStorage.GameStatCache.Set(gameTitle, ++stat, StatsStorage.CacheTime);
                     var productCodePart = string.IsNullOrEmpty(titleId) ? "" : $"[{titleId}] ";
                     result.Title = $"{productCodePart}{gameTitle.Sanitize().Trim(200)}";
                 }
