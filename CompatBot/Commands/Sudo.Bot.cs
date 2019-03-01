@@ -7,6 +7,7 @@ using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 
 namespace CompatBot.Commands
 {
@@ -47,11 +48,12 @@ namespace CompatBot.Commands
             {
                 if (await lockObj.WaitAsync(0).ConfigureAwait(false))
                 {
-                    var msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
-                    await StatsStorage.SaveAsync(true).ConfigureAwait(false);
-                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for updates...").ConfigureAwait(false);
+                    DiscordMessage msg = null;
                     try
                     {
+                        msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
+                        await StatsStorage.SaveAsync(true).ConfigureAwait(false);
+                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for updates...").ConfigureAwait(false);
                         using (var git = new Process
                         {
                             StartInfo = new ProcessStartInfo("git", "pull")
@@ -69,7 +71,7 @@ namespace CompatBot.Commands
                             if (!string.IsNullOrEmpty(stdout))
                                 await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
                         }
-                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
+                        msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id);
                     }
                     catch (Exception e)

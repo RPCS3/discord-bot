@@ -24,9 +24,11 @@ namespace CompatBot.Database.Providers
             {
                 try
                 {
+                    Config.Log.Debug("Got stats saving lock");
                     using (var db = new BotDb())
                     {
                         db.Stats.RemoveRange(db.Stats);
+                        await db.SaveChangesAsync().ConfigureAwait(false);
                         foreach (var cache in AllCaches)
                         {
                             var category = cache.GetType().Name;
@@ -37,9 +39,14 @@ namespace CompatBot.Database.Providers
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
+                catch(Exception e)
+                {
+                    Config.Log.Error(e, "Failed to save user stats");
+                }
                 finally
                 {
                     barrier.Release();
+                    Config.Log.Debug("Released stats saving lock");
                 }
             }
             else if (wait)
