@@ -23,10 +23,11 @@ Runtime Requirements
   * Create new credentials:
     * **Service account** credentials
     * New service account
-    * Role select **Project > Viewer**
+      * if you select an existing account, **new** credentials will be generated **in addition** to previous any ones
+    * Role **Project > Viewer**
     * Key type **JSON**
     * **Create** will generate a configuration file
-  * Save said configuration file as `credentials.json` in [user secrets](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.2#how-the-secret-manager-tool-works)
+  * Save said configuration file as `credentials.json` in [user secrets](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.2#how-the-secret-manager-tool-works) folder
     * e.g on Linux this will be `~/.microsoft/usersecrets/c2e6548b-b215-4a18-a010-958ef294b310/credentials.json`
 
 How to Build
@@ -42,12 +43,12 @@ How to Build
 
 How to Run in Production
 ------------------------
-* Change configuration if needed (probably just token)
+* Change configuration if needed (probably just token):
   * use `$ dotnet user-secrets set Token <your_token_here>`
-  * for more information 
-* Put `bot.db` in `CompatBot/`
+  * for available configuration variables, see [Config.cs](CompatBot/Config.cs#L31)
+* Put `bot.db` in `CompatBot/` if you have one
 * `$ cd CompatBot`
-* `$ dotnet run -c Release [token]`
+* `$ dotnet run -c Release`
 
 External resources that need manual updates
 -------------------------------------------
