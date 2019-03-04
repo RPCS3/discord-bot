@@ -141,7 +141,7 @@ namespace CompatBot
 
                 config = new ConfigurationBuilder()
                          .AddUserSecrets(Assembly.GetEntryAssembly()) // lower priority
-                         .AddEnvironmentVariables()
+                         //.AddEnvironmentVariables()
                          .AddInMemoryCollection(inMemorySettings)     // higher priority
                          .Build();
                 Log = GetLog();
