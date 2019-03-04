@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -16,7 +14,6 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient;
-using IrdLibraryClient.IrdFormat;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -148,7 +145,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["gpu_info"]))
             {
                 items["gpu_info"] = items["gpu_info"].StripMarks();
-                items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], (items["driver_version_new"] ?? items["driver_version"])) ??
+                items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
                                                GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
                                                GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
             }
@@ -195,6 +192,8 @@ namespace CompatBot.Utils.ResultFormatters
                 items["os_path"] = "Windows";
             else if (items["lin_path"] != null)
                 items["os_path"] = "Linux";
+            if (items["os_path"] == "Windows" && GetWindowsVersion((items["driver_version_new"] ?? items["driver_version"])) is string winVersion)
+                items["os_windows_version"] = winVersion;
             if (items["library_list"] is string libs)
             {
                 var libList = libs.Split('\n').Select(l => l.Trim(' ', '\t', '-', '\r', '[', ']')).Where(s => !string.IsNullOrEmpty(s)).ToList();
@@ -363,6 +362,54 @@ namespace CompatBot.Utils.ResultFormatters
                 }
 
                 return $"{major}.{minor}.{patch}";
+            }
+        }
+
+        private static string GetWindowsVersion(string driverVersionString)
+        {
+            // see https://docs.microsoft.com/en-us/windows-hardware/drivers/display/wddm-2-1-features#driver-versioning
+            if (string.IsNullOrEmpty(driverVersionString) || !Version.TryParse(driverVersionString, out var driverVer))
+                return null;
+
+            switch (driverVer.Major)
+            {
+                case 6: //XDDM
+                    return "XP";
+                case 7:
+                    return "Vista";
+                case 8:
+                    return "7";
+                case 9:
+                    return "8";
+                case 10:
+                    return "8.1";
+                case int v when v >= 20 && v < 30:
+                    var wddmMinor = v % 10;
+                    switch (wddmMinor)
+                    {
+                        // see https://en.wikipedia.org/wiki/Windows_Display_Driver_Model#WDDM_2.0
+                        case 0:
+                            return "10";
+                        case 1:
+                            return "10 1607";
+                        case 2:
+                            return "10 1703";
+                        case 3:
+                            return "10 1709";
+                        case 4:
+                            return "10 1803";
+                        case 5:
+                            return "10 1809";
+                        case 6:
+                            return "10 1903";
+                        default:
+                            Config.Log.Warn($"Invalid WDDM version 2.{wddmMinor} in driver version {driverVersionString}");
+                            return null;
+                    }
+                    break;
+                default:
+                    Config.Log.Warn("Invalid video driver version " + driverVersionString);
+                    return null;
             }
         }
 
