@@ -38,7 +38,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     systemInfo += " | " + items["os_path"];
                     if (items["os_windows_version"] is string winVer)
-                        systemInfo += " " + winVer + " or newer";
+                        systemInfo += " " + winVer;
                 }
                 systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
                 if (!string.IsNullOrEmpty(items["cpu_extensions"]))

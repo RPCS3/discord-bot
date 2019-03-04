@@ -1,15 +1,7 @@
 {
   "profiles": {
     "default": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "BotLogId": "",
-        "BotSpamId": "",
-        "BotAdminId": "",
-        "BotChannelId": "",
-        "BotRulesChannelId": "",
-        "Token": ""
-      }
+      "commandName": "Project"
     }
   }
 }
