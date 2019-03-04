@@ -406,7 +406,6 @@ namespace CompatBot.Utils.ResultFormatters
                             Config.Log.Warn($"Invalid WDDM version 2.{wddmMinor} in driver version {driverVersionString}");
                             return null;
                     }
-                    break;
                 default:
                     Config.Log.Warn("Invalid video driver version " + driverVersionString);
                     return null;
