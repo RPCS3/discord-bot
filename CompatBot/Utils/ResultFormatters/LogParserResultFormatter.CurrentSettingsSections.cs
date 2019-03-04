@@ -35,7 +35,11 @@ namespace CompatBot.Utils.ResultFormatters
                 if (!string.IsNullOrEmpty(items["fw_version_installed"]))
                     systemInfo += " | FW " + items["fw_version_installed"];
                 if (!string.IsNullOrEmpty(items["os_path"]))
+                {
                     systemInfo += " | " + items["os_path"];
+                    if (items["os_windows_version"] is string winVer)
+                        systemInfo += " " + winVer + " or newer";
+                }
                 systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
                 if (!string.IsNullOrEmpty(items["cpu_extensions"]))
                     systemInfo += " | " + items["cpu_extensions"];
