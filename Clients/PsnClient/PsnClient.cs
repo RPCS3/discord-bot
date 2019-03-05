@@ -29,7 +29,6 @@ namespace PsnClient
 
         public Client()
         {
-            
             client = HttpClientFactory.Create(new CustomTlsCertificatesHandler(), new CompressionMessageHandler());
             var dashedSettings = new JsonSerializerSettings
             {
