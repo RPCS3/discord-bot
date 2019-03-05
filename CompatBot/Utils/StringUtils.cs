@@ -177,13 +177,13 @@ namespace CompatBot.Utils
 
             var fullStars = (int)stars;
             var halfStar = Math.Round((stars.Value - fullStars)*4, MidpointRounding.ToEven);
-            var noStars = 5 - (halfStar > 0 && halfStar < 4 ? 1 : 0) - fullStars;
+            var noStars = 5 - (halfStar > 0 && halfStar <= 4 ? 1 : 0) - fullStars;
             var result = "";
             for (var i = 0; i < fullStars; i++)
                 result += "🌕";
 
             if (halfStar > 3)
-                ;
+                result += "🌕";
             else if (halfStar > 2)
                 result += "🌖";
             else if (halfStar > 1)

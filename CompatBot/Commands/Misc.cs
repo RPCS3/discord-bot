@@ -339,7 +339,7 @@ namespace CompatBot.Commands
             await ch.SendMessageAsync($"{ctx.User.Mention} congratulations, you're the meme").ConfigureAwait(false);
         }
 
-        [Command("download"), Cooldown(1, 20, CooldownBucketType.Channel)]
+        [Command("download"), Cooldown(1, 5, CooldownBucketType.Channel)]
         [Description("Find games to download")]
         public Task Download(CommandContext ctx, [RemainingText] string game)
             => Psn.SearchForGame(ctx, game);

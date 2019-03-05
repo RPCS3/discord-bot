@@ -26,7 +26,7 @@ namespace CompatBot.Commands
     internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client client = new Client();
-        private static SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
         private static string lastUpdateInfo = null;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
         private static UpdateInfo CachedUpdateInfo = null;

@@ -87,8 +87,7 @@ namespace CompatBot.Commands
             var responseEU = await psnResponseEUTask.ConfigureAwait(false);
             var responseJP = await psnResponseJPTask.ConfigureAwait(false);
             msg = await msgTask.ConfigureAwait(false);
-            await msg.DeleteAsync().ConfigureAwait(false);
-            msg = null;
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Preparing results...").ConfigureAwait(false);
             var usGame = GetBestMatch(responseUS.Included, search);
             var euGame = GetBestMatch(responseEU.Included, search);
             var jpGame = GetBestMatch(responseJP.Included, search);
@@ -99,7 +98,7 @@ namespace CompatBot.Commands
                 var score = g.Attributes.StarRating?.Score == null ? "N/A" : $"{StringUtils.GetStars(g.Attributes.StarRating?.Score)} ({g.Attributes.StarRating?.Score})";
                 var result = new DiscordEmbedBuilder
                 {
-                    Color = new DiscordColor(0x0071cd),
+                    Color = ColorGetter.Analyze(thumb.image, new DiscordColor(0x0071cd)),
                     Title = $"⏬ {g.Attributes.Name} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
                     Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                     Description = $"Rating: {score}",
@@ -108,7 +107,9 @@ namespace CompatBot.Commands
                 hasResults = true;
                 await ctx.RespondAsync(embed: result).ConfigureAwait(false);
             }
-            if (!hasResults)
+            if (hasResults)
+                await msg.DeleteAsync().ConfigureAwait(false);
+            else
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "No results").ConfigureAwait(false);
         }
 

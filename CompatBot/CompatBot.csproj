@@ -27,6 +27,7 @@
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00573" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.38.0.1512" />
+    <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.3.3" />
     <PackageReference Include="MegaApiClient" Version="1.7.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
@@ -41,6 +42,7 @@
     <PackageReference Include="NLog" Version="4.5.11" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.1" />
     <PackageReference Include="SharpCompress" Version="0.23.0" />
+    <PackageReference Include="System.Drawing.Common" Version="4.5.1" />
     <PackageReference Include="System.IO.Pipelines" Version="4.5.3" />
   </ItemGroup>
 
