@@ -10,8 +10,6 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
-using Google.Apis.Http;
-using Microsoft.EntityFrameworkCore.Migrations;
 using PsnClient;
 using PsnClient.POCOs;
 
@@ -22,6 +20,7 @@ namespace CompatBot.Commands
     internal sealed partial class Psn: BaseCommandModuleCustom
     {
         private static readonly Client Client = new Client();
+        private static readonly DiscordColor PsnBlue = new DiscordColor(0x0071cd);
 
         [Command("fix"), RequiresBotModRole]
         [Description("Reset thumbnail cache for specified product")]
@@ -78,7 +77,7 @@ namespace CompatBot.Commands
                 }
                 search = response.Message.Content;
             }
-            var msgTask = msg.UpdateOrCreateMessageAsync(ctx.Channel, "Searching...");
+            var msgTask = msg.UpdateOrCreateMessageAsync(ctx.Channel, "⏳ Searching...");
             var psnResponseUSTask = Client.SearchAsync("en-US", search, Config.Cts.Token);
             var psnResponseEUTask = Client.SearchAsync("en-GB", search, Config.Cts.Token);
             var psnResponseJPTask = Client.SearchAsync("ja-JP", search, Config.Cts.Token);
@@ -87,7 +86,7 @@ namespace CompatBot.Commands
             var responseEU = await psnResponseEUTask.ConfigureAwait(false);
             var responseJP = await psnResponseJPTask.ConfigureAwait(false);
             msg = await msgTask.ConfigureAwait(false);
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Preparing results...").ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "⌛ Preparing results...").ConfigureAwait(false);
             var usGame = GetBestMatch(responseUS.Included, search);
             var euGame = GetBestMatch(responseEU.Included, search);
             var jpGame = GetBestMatch(responseJP.Included, search);
@@ -96,9 +95,10 @@ namespace CompatBot.Commands
             {
                 var thumb = await ThumbnailProvider.GetEmbeddableUrlAsync(ctx.Client, g.Id, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
                 var score = g.Attributes.StarRating?.Score == null ? "N/A" : $"{StringUtils.GetStars(g.Attributes.StarRating?.Score)} ({g.Attributes.StarRating?.Score})";
+                var embedColor = ColorGetter.Analyze(thumb.image, PsnBlue);
                 var result = new DiscordEmbedBuilder
                 {
-                    Color = ColorGetter.Analyze(thumb.image, new DiscordColor(0x0071cd)),
+                    Color = embedColor,
                     Title = $"⏬ {g.Attributes.Name} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
                     Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                     Description = $"Rating: {score}",

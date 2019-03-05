@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using ColorThiefDotNet;
 using DSharpPlus.Entities;
 
@@ -13,18 +14,15 @@ namespace CompatBot.Utils
         {
             try
             {
+                // when running dotnet from the snap, it will segfault on attempt to create a Bitmap
+                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SNAP")))
+                    return defaultColor;
+
                 var analyzer = new ColorThief();
                 using (var stream = new MemoryStream(jpg))
                 {
-                    //var img = Bitmap.FromStream(stream, false, true);
                     var bmp = new Bitmap(stream, false);
                     var palette = analyzer.GetPalette(bmp, ignoreWhite: false);
-                    /*
-                    var bright = palette.FirstOrDefault(p => !p.IsDark);
-                    if (bright != null)
-                        return new DiscordColor(bright.Color.R, bright.Color.G, bright.Color.B);
-                    */
-
                     var colors = palette
                         .Select(p => new {c = p.Color, hsl = p.Color.ToHsl()})
                         .OrderBy(p => Math.Abs(0.5 - p.hsl.L))
