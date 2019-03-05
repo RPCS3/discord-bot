@@ -170,6 +170,32 @@ namespace CompatBot.Utils
             return s.PadRight(totalWidth, padding);
         }
 
+        public static string GetStars(decimal? stars)
+        {
+            if (!stars.HasValue)
+                return null;
+
+            var fullStars = (int)stars;
+            var halfStar = Math.Round((stars.Value - fullStars)*4, MidpointRounding.ToEven);
+            var noStars = 5 - (halfStar > 0 && halfStar < 4 ? 1 : 0) - fullStars;
+            var result = "";
+            for (var i = 0; i < fullStars; i++)
+                result += "🌕";
+
+            if (halfStar > 3)
+                ;
+            else if (halfStar > 2)
+                result += "🌖";
+            else if (halfStar > 1)
+                result += "🌗";
+            else if (halfStar > 0)
+                result += "🌘";
+
+            for (var i = 0; i < noStars; i++)
+                result += "🌑";
+            return result;
+        }
+
         private static bool IsFormat(char c) => SpaceCharacters.Contains(c);
 
         private static string CreateTrimmedString(string str, int start, int end)

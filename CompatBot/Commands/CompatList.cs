@@ -138,7 +138,7 @@ Example usage:
             await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
-        [Group("latest"), Aliases("download"), TriggersTyping]
+        [Group("latest"), TriggersTyping]
         [Description("Provides links to the latest RPCS3 build")]
         [Cooldown(1, 30, CooldownBucketType.Channel)]
         public sealed class UpdatesCheck: BaseCommandModuleCustom

@@ -125,5 +125,34 @@ namespace CompatBot.Database.Providers
                 return title;
             }
         }
+
+        public static async Task<(string url, byte[] image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
+        {
+            try
+            {
+                using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
+                using (var memStream = new MemoryStream())
+                {
+                    await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
+                    // minimum jpg size is 119 bytes, png is 67 bytes
+                    if (memStream.Length < 64)
+                        return (null, null);
+
+                    memStream.Seek(0, SeekOrigin.Begin);
+                    var spam = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(Path.GetExtension(url)))
+                    {
+                        var message = await spam.SendFileAsync(contentId + ".jpg", memStream, contentId).ConfigureAwait(false);
+                        url = message.Attachments.First().Url;
+                    }
+                    return (url, memStream.ToArray());
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
+            return (null, null);
+        }
     }
 }

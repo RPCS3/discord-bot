@@ -11,14 +11,11 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
-using PsnClient;
 
 namespace CompatBot.Commands
 {
     internal sealed partial class Psn
     {
-        private static readonly Client Client = new Client();
-
         [Group("check")]
         [Description("Commands to check for various stuff on PSN")]
         public sealed class Check: BaseCommandModuleCustom

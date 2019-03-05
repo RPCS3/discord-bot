@@ -22,7 +22,10 @@ namespace PsnClient.POCOs
         public bool? NsxPsPlusUpsell;
         public int? TemplateId;
         public string ThumbnailUrlBase;
+        public int? Start;
+        public int? Size;
         public int TotalResults;
+        public string Query;
         public ContainerBanner[] Banners;
         public ContainerFacet[] Facets;
         public ContainerPromoBackground[] PromoBackgrounds;
