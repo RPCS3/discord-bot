@@ -81,7 +81,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("top")]
+        [Command("top"), Hidden]
         [Description(@"
 Gets the x (default is 10 new) top games by specified criteria; order is flexible
 Example usage:
@@ -126,7 +126,7 @@ Example usage:
             await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
         }
 
-        [Command("filters")]
+        [Command("filters"), Hidden]
         [Description("Provides information about available filters for the !top command")]
         public async Task Filters(CommandContext ctx)
         {
