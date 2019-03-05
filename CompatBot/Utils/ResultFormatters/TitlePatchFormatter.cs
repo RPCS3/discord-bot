@@ -44,7 +44,7 @@ namespace CompatBot.Utils.ResultFormatters
                         result.Add(embedBuilder);
                         embedBuilder = new DiscordEmbedBuilder
                         {
-                            Title = $"{title} [Part {i/EmbedPager.MaxFields+1} of {pages}]".Trim(EmbedPager.MaxFieldTitleLength),
+                            Title = $"{title} [Part {i / EmbedPager.MaxFields + 1} of {pages}]".Trim(EmbedPager.MaxFieldTitleLength),
                             Color = Config.Colors.DownloadLinks,
                             ThumbnailUrl = thumbnailUrl,
                         };
@@ -56,8 +56,10 @@ namespace CompatBot.Utils.ResultFormatters
                 embedBuilder.Title = $"{title} update v{pkgs[0].Version} ({pkgs[0].Size.AsStorageUnit()})";
                 embedBuilder.Description = $"⏬ [{Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
             }
-            else
+            else if (patch != null)
                 embedBuilder.Description = "No updates were found";
+            else
+                embedBuilder.Description = "Unknown product code";
             if (!result.Any() || embedBuilder.Fields.Any())
                 result.Add(embedBuilder);
             return result;

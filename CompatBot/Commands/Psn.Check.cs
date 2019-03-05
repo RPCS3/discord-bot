@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -8,6 +9,7 @@ using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using PsnClient;
 
@@ -42,8 +44,26 @@ namespace CompatBot.Commands
                     }
                 }
 
-                var updateInfo = await Client.GetTitleUpdatesAsync(id, Config.Cts.Token).ConfigureAwait(false);
-                var embeds = await updateInfo.AsEmbedAsync(ctx.Client, id).ConfigureAwait(false);
+                List<DiscordEmbedBuilder> embeds;
+                try
+                {
+                    var updateInfo = await Client.GetTitleUpdatesAsync(id, Config.Cts.Token).ConfigureAwait(false);
+                    embeds = await updateInfo.AsEmbedAsync(ctx.Client, id).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to get title update info");
+                    embeds = new List<DiscordEmbedBuilder>
+                    {
+                        new DiscordEmbedBuilder
+                        {
+                            Color = Config.Colors.Maintenance,
+                            Title = "Service is unavailable",
+                            Description = "There was an error communicating with the service. Try again in a few minutes.",
+                        }
+                    };
+                }
+
                 if (!ctx.Channel.IsPrivate
                     && ctx.Message.Author.Id == 197163728867688448
                     && (

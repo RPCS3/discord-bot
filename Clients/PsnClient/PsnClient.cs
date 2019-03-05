@@ -249,31 +249,23 @@ namespace PsnClient
             if (ResponseCache.TryGetValue(productId, out TitlePatch patchInfo))
                 return patchInfo;
 
-            try
-            {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml"))
-                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                    try
-                    {
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                            return null;
-
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
-                        ResponseCache.Set(productId, patchInfo);
-                        return patchInfo;
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
+            using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml"))
+            using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                try
+                {
+                    if (response.StatusCode == HttpStatusCode.NotFound)
                         return null;
-                    }
-            }
-            catch (Exception e)
-            {
-                ApiConfig.Log.Error(e);
-                return null;
-            }
+
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                    ResponseCache.Set(productId, patchInfo);
+                    return patchInfo ?? new TitlePatch { Tag = new TitlePatchTag { Packages = new TitlePatchPackage[0], },  };
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    throw e;
+                }
         }
 
         public async Task<TitleMeta> GetTitleMetaAsync(string productId, CancellationToken cancellationToken)
