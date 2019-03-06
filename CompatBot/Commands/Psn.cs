@@ -99,7 +99,7 @@ namespace CompatBot.Commands
                 var result = new DiscordEmbedBuilder
                 {
                     Color = thumb.color,
-                    Title = $"⏬ {g.Attributes.Name} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
+                    Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
                     Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                     Description = $"Rating: {score}\n" +
                                   $"[Instructions](https://rpcs3.net/quickstart#software_distribution)",

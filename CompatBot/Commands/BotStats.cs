@@ -29,8 +29,9 @@ namespace CompatBot.Commands
             }
                         .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
                         .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
+                        .AddField("Memory Usage", $"{GC.GetTotalMemory(false).AsStorageUnit()}", true)
+                        .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured", true)
                         .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-                        .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured")
                         .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n" +
                                                    $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
                                                    //$"SIMD Acceleration:{(Vector.IsHardwareAccelerated ? "✅ Supported" : "❌ Not supported")}\n" +
