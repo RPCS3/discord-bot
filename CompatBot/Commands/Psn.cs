@@ -132,14 +132,16 @@ namespace CompatBot.Commands
             if (included == null)
                 return null;
 
-            return (
-                from i in included
+            var games = (from i in included
                 where (i.Type == "game" || i.Type == "legacy-sku") && (i.Attributes.TopCategory != "demo" && i.Attributes.GameContentType != "Demo")
-                let m = new {score = search.GetFuzzyCoefficientCached(i.Attributes.Name), item = i}
-                where m.score > 0.3 || (i.Attributes.Name?.StartsWith(search, StringComparison.InvariantCultureIgnoreCase) ?? false)
-                orderby m.score descending
-                select m.item
-            ).FirstOrDefault();
+                select i).ToList();
+            return (from i in games
+                       let m = new {score = search.GetFuzzyCoefficientCached(i.Attributes.Name), item = i}
+                       where m.score > 0.3 || (i.Attributes.Name?.StartsWith(search, StringComparison.InvariantCultureIgnoreCase) ?? false)
+                       orderby m.score descending
+                       select m.item
+                   ).FirstOrDefault() ??
+                   games.FirstOrDefault();
         }
 
         private static async Task TryDeleteThumbnailCache(CommandContext ctx, List<(string contentId, string link)> linksToRemove)
