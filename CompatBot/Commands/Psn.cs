@@ -62,12 +62,13 @@ namespace CompatBot.Commands
         
         public static async Task SearchForGame(CommandContext ctx, [RemainingText] string search)
         {
+            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             DiscordMessage msg = null;
             if (string.IsNullOrEmpty(search))
             {
                 var interact = ctx.Client.GetInteractivity();
-                msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "What game are you looking for?").ConfigureAwait(false);
-                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User).ConfigureAwait(false);
+                msg = await msg.UpdateOrCreateMessageAsync(ch, "What game are you looking for?").ConfigureAwait(false);
+                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ch).ConfigureAwait(false);
                 await msg.DeleteAsync().ConfigureAwait(false);
                 msg = null;
                 if (string.IsNullOrEmpty(response?.Message?.Content))
@@ -77,7 +78,7 @@ namespace CompatBot.Commands
                 }
                 search = response.Message.Content;
             }
-            var msgTask = msg.UpdateOrCreateMessageAsync(ctx.Channel, "⏳ Searching...");
+            var msgTask = msg.UpdateOrCreateMessageAsync(ch, "⏳ Searching...");
             var psnResponseUSTask = Client.SearchAsync("en-US", search, Config.Cts.Token);
             var psnResponseEUTask = Client.SearchAsync("en-GB", search, Config.Cts.Token);
             var psnResponseJPTask = Client.SearchAsync("ja-JP", search, Config.Cts.Token);
@@ -86,7 +87,7 @@ namespace CompatBot.Commands
             var responseEU = await psnResponseEUTask.ConfigureAwait(false);
             var responseJP = await psnResponseJPTask.ConfigureAwait(false);
             msg = await msgTask.ConfigureAwait(false);
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "⌛ Preparing results...").ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ch, "⌛ Preparing results...").ConfigureAwait(false);
             var usGame = GetBestMatch(responseUS.Included, search);
             var euGame = GetBestMatch(responseEU.Included, search);
             var jpGame = GetBestMatch(responseJP.Included, search);
@@ -107,12 +108,12 @@ namespace CompatBot.Commands
                 result.WithFooter("Test instance");
 #endif
                 hasResults = true;
-                await ctx.RespondAsync(embed: result).ConfigureAwait(false);
+                await ch.SendMessageAsync(embed: result).ConfigureAwait(false);
             }
             if (hasResults)
                 await msg.DeleteAsync().ConfigureAwait(false);
             else
-                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "No results").ConfigureAwait(false);
+                await msg.UpdateOrCreateMessageAsync(ch, "No results").ConfigureAwait(false);
         }
 
         private static ContainerIncluded GetBestMatch(ContainerIncluded[] included, string search)
