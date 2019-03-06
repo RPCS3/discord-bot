@@ -33,7 +33,7 @@ namespace CompatBot.Commands
                         .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured")
                         .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n" +
                                                    $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
-                                                   $"SIMD Acceleration:{(Vector.IsHardwareAccelerated ? "✅ Supported" : "❌ Not supported")}\n" +
+                                                   //$"SIMD Acceleration:{(Vector.IsHardwareAccelerated ? "✅ Supported" : "❌ Not supported")}\n" +
                                                    $"Confinement: {SandboxDetector.Detect() ?? "None"}", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);

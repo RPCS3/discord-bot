@@ -40,34 +40,6 @@ namespace CompatBot
                                                 }
                                         }
                                     });
-            var rpcs3UpdateCheckThread = new Thread(client =>
-            {
-                var lastCheck = DateTime.UtcNow.AddDays(-1);
-                var resetThreshold = TimeSpan.FromMinutes(5);
-                try
-                {
-                    while (!Config.Cts.IsCancellationRequested)
-                    {
-                        try
-                        {
-                            if (DateTime.UtcNow - lastCheck > NewBuildsMonitor.CheckInterval)
-                            {
-                                CompatList.UpdatesCheck
-                                    .CheckForRpcs3Updates((DiscordClient) client, null)
-                                    .ConfigureAwait(false)
-                                    .GetAwaiter()
-                                    .GetResult();
-                                lastCheck = DateTime.UtcNow;
-                                if (DateTime.UtcNow - resetThreshold > NewBuildsMonitor.RapidStart)
-                                    NewBuildsMonitor.Reset();
-                            }
-                        } catch {}
-                        Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
-                    }
-                }
-                catch (Exception e) { Config.Log.Error(e); }
-            }) {IsBackground = true};
-
             try
             {
                 singleInstanceCheckThread.Start();
@@ -101,7 +73,6 @@ namespace CompatBot
                     new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token),
                     StatsStorage.BackgroundSaveAsync()
                 );
-                Config.Log.Debug($"Started background tasks with status {backgroundTasks.Status}");
 
                 try
                 {
@@ -261,7 +232,7 @@ namespace CompatBot
                     }
 
                     Config.Log.Debug("Running RPC3 update check thread");
-                    rpcs3UpdateCheckThread.Start(client);
+                    backgroundTasks = Task.WhenAll(backgroundTasks, NewBuildsMonitor.MonitorAsync(client));
 
                     while (!Config.Cts.IsCancellationRequested)
                     {
@@ -283,8 +254,6 @@ namespace CompatBot
                 ShutdownCheck.Release();
                 if (singleInstanceCheckThread.IsAlive)
                     singleInstanceCheckThread.Join(100);
-                if (rpcs3UpdateCheckThread.IsAlive)
-                    rpcs3UpdateCheckThread.Join(100);
                 Config.Log.Info("Exiting");
             }
         }
