@@ -176,23 +176,33 @@ namespace CompatBot.Utils
                 return null;
 
             var fullStars = (int)stars;
-            var halfStar = Math.Round((stars.Value - fullStars)*4, MidpointRounding.ToEven);
+            var halfStar = (int)Math.Round((stars.Value - fullStars)*4, MidpointRounding.ToEven);
             var noStars = 5 - (halfStar > 0 && halfStar <= 4 ? 1 : 0) - fullStars;
             var result = "";
             for (var i = 0; i < fullStars; i++)
                 result += "🌕";
 
-            if (halfStar > 3)
-                result += "🌕";
-            else if (halfStar > 2)
+            if (halfStar == 4)
+            {
+                if (new Random().Next(100) == 69)
+                    result += "🌝";
+                else
+                    result += "🌕";
+            }
+            else if (halfStar == 3)
                 result += "🌖";
-            else if (halfStar > 1)
+            else if (halfStar == 2)
                 result += "🌗";
-            else if (halfStar > 0)
+            else if (halfStar == 1)
                 result += "🌘";
 
             for (var i = 0; i < noStars; i++)
-                result += "🌑";
+            {
+                if (i == 0 && halfStar == 0 && new Random().Next(100) == 69)
+                    result += "🌚";
+                else
+                    result += "🌑";
+            }
             return result;
         }
 

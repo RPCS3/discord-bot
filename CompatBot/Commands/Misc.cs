@@ -342,6 +342,10 @@ namespace CompatBot.Commands
         [Command("download"), Cooldown(1, 10, CooldownBucketType.Channel)]
         [Description("Find games to download")]
         public Task Download(CommandContext ctx, [RemainingText] string game)
-            => Psn.SearchForGame(ctx, game);
+        {
+            if (game?.ToUpperInvariant() == "RPCS3")
+                return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
+            return Psn.SearchForGame(ctx, game);
+        }
     }
 }
