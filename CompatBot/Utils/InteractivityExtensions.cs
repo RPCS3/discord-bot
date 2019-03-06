@@ -28,7 +28,7 @@ namespace CompatBot.Utils
             reactions = reactions.Where(r => r != null).ToArray();
             foreach (var emoji in reactions)
                 await message.ReactWithAsync(interactivity.Client, emoji).ConfigureAwait(false);
-            var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && !string.IsNullOrEmpty(m.Content), timeout);
+            var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && m.Channel == message.Channel && !string.IsNullOrEmpty(m.Content), timeout);
             var waitReactionResponse = interactivity.WaitForMessageReactionAsync(reactions.Contains, message, user, timeout);
             await Task.WhenAny(
                 waitTextResponseTask,

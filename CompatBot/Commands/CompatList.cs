@@ -46,7 +46,7 @@ namespace CompatBot.Commands
             {
                 var prompt = await ctx.RespondAsync($"{ctx.Message.Author.Mention} what game do you want to check?").ConfigureAwait(false);
                 var interact = ctx.Client.GetInteractivity();
-                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.Message.Author).ConfigureAwait(false);
+                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.Message.Author && m.Channel == ctx.Channel).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(response?.Message?.Content))
                 {
                     await prompt.ModifyAsync("You should specify what you're looking for").ConfigureAwait(false);

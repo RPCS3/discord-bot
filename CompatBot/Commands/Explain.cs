@@ -48,7 +48,7 @@ namespace CompatBot.Commands
                 if (showList)
                     await List(ctx).ConfigureAwait(false);
                 var interact = ctx.Client.GetInteractivity();
-                var newMessage = await interact.WaitForMessageAsync(m => m.Author == ctx.User && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
+                var newMessage = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
                 await botMsg.DeleteAsync().ConfigureAwait(false);
                 if (string.IsNullOrEmpty(newMessage?.Message?.Content))
                 {

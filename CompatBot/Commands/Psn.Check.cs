@@ -30,7 +30,7 @@ namespace CompatBot.Commands
                 {
                     var botMsg = await ctx.RespondAsync("Please specify a valid product code (e.g. BLUS12345 or NPEB98765)").ConfigureAwait(false);
                     var interact = ctx.Client.GetInteractivity();
-                    var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
+                    var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
                     await botMsg.DeleteAsync().ConfigureAwait(false);
 
                     id = ProductCodeLookup.GetProductIds(msg.Message?.Content).FirstOrDefault();
