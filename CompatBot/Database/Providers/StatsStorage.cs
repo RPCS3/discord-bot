@@ -17,7 +17,12 @@ namespace CompatBot.Database.Providers
         internal static readonly MemoryCache GameStatCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
         private static readonly SemaphoreSlim barrier = new SemaphoreSlim(1, 1);
-        private static readonly MemoryCache[] AllCaches = { CmdStatCache, ExplainStatCache, GameStatCache };
+        private static readonly (string name, MemoryCache cache)[] AllCaches =
+        {
+            (nameof(CmdStatCache), CmdStatCache),
+            (nameof(ExplainStatCache), ExplainStatCache),
+            (nameof(GameStatCache), GameStatCache),
+        };
 
         public static async Task SaveAsync(bool wait = false)
         {
@@ -32,8 +37,8 @@ namespace CompatBot.Database.Providers
                         await db.SaveChangesAsync().ConfigureAwait(false);
                         foreach (var cache in AllCaches)
                         {
-                            var category = cache.GetType().Name;
-                            var entries = cache.GetCacheEntries<string>();
+                            var category = cache.name;
+                            var entries = cache.cache.GetCacheEntries<string>();
                             var savedKeys = new HashSet<string>();
                             foreach (var entry in entries)
                                 if (savedKeys.Add(entry.Key))
@@ -73,13 +78,13 @@ namespace CompatBot.Database.Providers
             using (var db = new BotDb())
                 foreach (var cache in AllCaches)
                 {
-                    var category = cache.GetType().Name;
+                    var category = cache.name;
                     var entries = await db.Stats.Where(e => e.Category == category).ToListAsync().ConfigureAwait(false);
                     foreach (var entry in entries)
                     {
                         var time = entry.ExpirationTimestamp.AsUtc();
                         if (time > now)
-                            cache.Set(entry.Key, entry.Value, time);
+                            cache.cache.Set(entry.Key, entry.Value, time);
                     }
                 }
         }
