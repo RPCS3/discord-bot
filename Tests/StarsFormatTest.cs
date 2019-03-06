@@ -23,7 +23,7 @@ namespace Tests
         [TestCase(1.0, "🌕🌑🌑🌑🌑")]
         public void FormatTest(decimal score, string expectedValue)
         {
-            Assert.That(StringUtils.GetStars(score), Is.EqualTo(expectedValue), "Failed for " + score);
+            Assert.That(StringUtils.GetMoons(score), Is.EqualTo(expectedValue), "Failed for " + score);
         }
     }
 }

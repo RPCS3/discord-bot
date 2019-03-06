@@ -88,18 +88,28 @@ namespace CompatBot.Commands
             var responseJP = await psnResponseJPTask.ConfigureAwait(false);
             msg = await msgTask.ConfigureAwait(false);
             msg = await msg.UpdateOrCreateMessageAsync(ch, "⌛ Preparing results...").ConfigureAwait(false);
-            var usGame = GetBestMatch(responseUS.Included, search);
-            var euGame = GetBestMatch(responseEU.Included, search);
-            var jpGame = GetBestMatch(responseJP.Included, search);
+            var usGame = GetBestMatch(responseUS?.Included, search);
+            var euGame = GetBestMatch(responseEU?.Included, search);
+            var jpGame = GetBestMatch(responseJP?.Included, search);
             var hasResults = false;
             foreach (var (g, region, locale) in new[]{(usGame, "US", "en-US"), (euGame, "EU", "en-GB"), (jpGame, "JP", "ja-JP")}.Where(i => i.Item1 != null))
             {
                 var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
-                var score = g.Attributes.StarRating?.Score == null ? "N/A" : $"{StringUtils.GetStars(g.Attributes.StarRating?.Score)} ({g.Attributes.StarRating?.Score} / {g.Attributes.StarRating.Total} people)";
+                string score;
+                if (g.Attributes.StarRating?.Score == null)
+                    score = "N/A";
+                else
+                {
+                    if (ctx.User.Id == 247291873511604224ul)
+                        score = StringUtils.GetStars(g.Attributes.StarRating?.Score);
+                    else
+                        score = StringUtils.GetMoons(g.Attributes.StarRating?.Score);
+                    score = $"{score} ({g.Attributes.StarRating?.Score} by {g.Attributes.StarRating.Total} people)";
+                }
                 var result = new DiscordEmbedBuilder
                 {
                     Color = thumb.color,
-                    Title = $"⏬ {g.Attributes.Name} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
+                    Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
                     Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                     Description = $"Rating: {score}\n" +
                                   $"[Instructions](https://rpcs3.net/quickstart#software_distribution)",
@@ -119,6 +129,9 @@ namespace CompatBot.Commands
 
         private static ContainerIncluded GetBestMatch(ContainerIncluded[] included, string search)
         {
+            if (included == null)
+                return null;
+
             return (
                 from i in included
                 where (i.Type == "game" || i.Type == "legacy-sku") && (i.Attributes.TopCategory != "demo" && i.Attributes.GameContentType != "Demo")
