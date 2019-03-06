@@ -170,7 +170,7 @@ namespace CompatBot.Utils
             return s.PadRight(totalWidth, padding);
         }
 
-        public static string GetStars(decimal? stars)
+        public static string GetMoons(decimal? stars)
         {
             if (!stars.HasValue)
                 return null;
@@ -193,6 +193,21 @@ namespace CompatBot.Utils
 
             for (var i = 0; i < noStars; i++)
                 result += "🌑";
+            return result;
+        }
+
+        public static string GetStars(decimal? stars)
+        {
+            if (!stars.HasValue)
+                return null;
+
+            var fullStars = (int)Math.Round(stars.Value, MidpointRounding.ToEven);
+            var noStars = 5 - fullStars;
+            var result = "";
+            for (var i = 0; i < fullStars; i++)
+                result += "★";
+            for (var i = 0; i < noStars; i++)
+                result += "☆";
             return result;
         }
 

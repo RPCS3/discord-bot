@@ -95,7 +95,17 @@ namespace CompatBot.Commands
             foreach (var (g, region, locale) in new[]{(usGame, "US", "en-US"), (euGame, "EU", "en-GB"), (jpGame, "JP", "ja-JP")}.Where(i => i.Item1 != null))
             {
                 var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
-                var score = g.Attributes.StarRating?.Score == null ? "N/A" : $"{StringUtils.GetStars(g.Attributes.StarRating?.Score)} ({g.Attributes.StarRating?.Score} / {g.Attributes.StarRating.Total} people)";
+                string score;
+                if (g.Attributes.StarRating?.Score == null)
+                    score = "N/A";
+                else
+                {
+                    if (ctx.User.Id == 247291873511604224ul)
+                        score = StringUtils.GetStars(g.Attributes.StarRating?.Score);
+                    else
+                        score = StringUtils.GetMoons(g.Attributes.StarRating?.Score);
+                    score = $"{score} ({g.Attributes.StarRating?.Score} by {g.Attributes.StarRating.Total} people)";
+                }
                 var result = new DiscordEmbedBuilder
                 {
                     Color = thumb.color,
