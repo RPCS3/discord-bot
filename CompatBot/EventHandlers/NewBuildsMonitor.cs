@@ -41,18 +41,14 @@ namespace CompatBot.EventHandlers
                     {
                         if (DateTime.UtcNow - lastCheck > CheckInterval)
                         {
-                            CompatList.UpdatesCheck
-                                .CheckForRpcs3Updates(client, null)
-                                .ConfigureAwait(false)
-                                .GetAwaiter()
-                                .GetResult();
+                            await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
                             lastCheck = DateTime.UtcNow;
                             if (DateTime.UtcNow - resetThreshold > RapidStart)
                                 Reset();
                         }
                     }
                     catch { }
-                    Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
+                    await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
                 }
             }
             catch (Exception e) { Config.Log.Error(e); }
