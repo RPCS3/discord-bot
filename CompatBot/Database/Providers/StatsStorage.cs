@@ -29,13 +29,14 @@ namespace CompatBot.Database.Providers
                     using (var db = new BotDb())
                     {
                         db.Stats.RemoveRange(db.Stats);
-                        var savedKeys = new HashSet<string>();
+                        await db.SaveChangesAsync().ConfigureAwait(false);
                         foreach (var cache in AllCaches)
                         {
                             var category = cache.GetType().Name;
                             var entries = cache.GetCacheEntries<string>();
+                            var savedKeys = new HashSet<string>();
                             foreach (var entry in entries)
-                                if (savedKeys.Add(category + entry.Key))
+                                if (savedKeys.Add(entry.Key))
                                     await db.Stats.AddAsync(new Stats
                                     {
                                         Category = category,
