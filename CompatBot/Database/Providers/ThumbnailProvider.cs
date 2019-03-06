@@ -24,7 +24,7 @@ namespace CompatBot.Database.Providers
 
             using (var db = new ThumbnailDb())
             {
-                var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode.ToUpperInvariant()).ConfigureAwait(false);
+                var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
                 //todo: add search task if not found
                 if (thumb?.EmbeddableUrl is string embeddableUrl && !string.IsNullOrEmpty(embeddableUrl))
                     return embeddableUrl;
@@ -48,35 +48,14 @@ namespace CompatBot.Database.Providers
 
                 if (thumb?.Url is string url && !string.IsNullOrEmpty(url))
                 {
-                    if (!string.IsNullOrEmpty(Path.GetExtension(url)))
-                    {
-                        thumb.EmbeddableUrl = url;
-                        await db.SaveChangesAsync().ConfigureAwait(false);
-                        return url;
-                    }
+                    var contentName = (thumb.ContentId ?? thumb.ProductCode);
+                    var embed = await GetEmbeddableUrlAsync(client, contentName, url).ConfigureAwait(false);
 
-                    try
+                    if (embed.url != null)
                     {
-                        using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
-                        using (var memStream = new MemoryStream())
-                        {
-                            await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
-                            // minimum jpg size is 119 bytes, png is 67 bytes
-                            if (memStream.Length < 64)
-                                return null;
-                            memStream.Seek(0, SeekOrigin.Begin);
-                            var spam = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                            //var message = await spam.SendFileAsync(memStream, (thumb.ContentId ?? thumb.ProductCode) + ".jpg").ConfigureAwait(false);
-                            var contentName = (thumb.ContentId ?? thumb.ProductCode);
-                            var message = await spam.SendFileAsync(contentName + ".jpg", memStream, contentName).ConfigureAwait(false);
-                            thumb.EmbeddableUrl = message.Attachments.First().Url;
-                            await db.SaveChangesAsync().ConfigureAwait(false);
-                            return thumb.EmbeddableUrl;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Config.Log.Warn(e);
+                        thumb.EmbeddableUrl = embed.url;
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        return embed.url;
                     }
                 }
             }
@@ -130,6 +109,9 @@ namespace CompatBot.Database.Providers
         {
             try
             {
+                if (!string.IsNullOrEmpty(Path.GetExtension(url)))
+                    return (url, null);
+
                 using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
                 using (var memStream = new MemoryStream())
                 {
@@ -140,11 +122,8 @@ namespace CompatBot.Database.Providers
 
                     memStream.Seek(0, SeekOrigin.Begin);
                     var spam = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                    if (string.IsNullOrEmpty(Path.GetExtension(url)))
-                    {
-                        var message = await spam.SendFileAsync(contentId + ".jpg", memStream, contentId).ConfigureAwait(false);
-                        url = message.Attachments.First().Url;
-                    }
+                    var message = await spam.SendFileAsync(contentId + ".jpg", memStream, contentId).ConfigureAwait(false);
+                    url = message.Attachments.First().Url;
                     return (url, memStream.ToArray());
                 }
             }

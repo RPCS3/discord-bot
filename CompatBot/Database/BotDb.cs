@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,8 @@ namespace CompatBot.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Data Source=bot.db");
+            var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
+            optionsBuilder.UseSqlite($"Data Source=\"{dbPath}\"");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

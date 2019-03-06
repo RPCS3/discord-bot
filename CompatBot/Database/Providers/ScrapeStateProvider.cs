@@ -31,7 +31,6 @@ namespace CompatBot.Database.Providers
             return false;
         }
 
-
         public static bool IsFresh(string locale, DateTime dataTimestamp)
         {
             using (var db = new ThumbnailDb())
@@ -42,7 +41,6 @@ namespace CompatBot.Database.Providers
             }
             return false;
         }
-
 
         public static async Task SetLastRunTimestampAsync(string locale, string containerId = null)
         {

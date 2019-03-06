@@ -104,6 +104,9 @@ namespace CompatBot.Commands
                     Description = $"Rating: {score}",
                     ThumbnailUrl = thumb.url,
                 };
+#if DEBUG
+                result.WithFooter("Test instance");
+#endif
                 hasResults = true;
                 await ctx.RespondAsync(embed: result).ConfigureAwait(false);
             }
