@@ -7,7 +7,7 @@ namespace CompatBot.Database.Providers
 {
     internal static class ScrapeStateProvider
     {
-        private static readonly TimeSpan CheckInterval = TimeSpan.FromDays(15);
+        private static readonly TimeSpan CheckInterval = TimeSpan.FromDays(365);
 
         public static bool IsFresh(long timestamp)
         {
