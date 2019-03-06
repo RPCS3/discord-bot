@@ -26,7 +26,7 @@ namespace CompatBot.Commands
     internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client client = new Client();
-        private static SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
         private static string lastUpdateInfo = null;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
         private static UpdateInfo CachedUpdateInfo = null;
@@ -46,7 +46,7 @@ namespace CompatBot.Commands
             {
                 var prompt = await ctx.RespondAsync($"{ctx.Message.Author.Mention} what game do you want to check?").ConfigureAwait(false);
                 var interact = ctx.Client.GetInteractivity();
-                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.Message.Author).ConfigureAwait(false);
+                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.Message.Author && m.Channel == ctx.Channel).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(response?.Message?.Content))
                 {
                     await prompt.ModifyAsync("You should specify what you're looking for").ConfigureAwait(false);
@@ -138,7 +138,7 @@ Example usage:
             await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
-        [Group("latest"), Aliases("download"), TriggersTyping]
+        [Group("latest"), TriggersTyping]
         [Description("Provides links to the latest RPCS3 build")]
         [Cooldown(1, 30, CooldownBucketType.Channel)]
         public sealed class UpdatesCheck: BaseCommandModuleCustom
@@ -232,7 +232,7 @@ Example usage:
             }
             catch
             {
-                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                await ctx.RespondAsync(embed: CompatApiClient.POCOs.TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
                 return;
             }
 

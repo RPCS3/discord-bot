@@ -5,19 +5,19 @@
     // api endpoints, oauth, oauth authorize, telemetry, localization options, billing template, locales, country names, topup settings, paypal sandbox settings, gct, apm, sofort, ...
 
     // this is item #6 in App array
-    public class AppLocales
+    public sealed class AppLocales
     {
         public string[] EnabledLocales; // "ar-AE",...
         public AppLocaleOverride[] Overrides;
     }
 
-    public class AppLocaleOverride
+    public sealed class AppLocaleOverride
     {
         public AppLocaleOverrideCriteria Criteria;
         public string GensenLocale; // "ar-AE"
     }
 
-    public class AppLocaleOverrideCriteria
+    public sealed class AppLocaleOverrideCriteria
     {
         public string Language; // "ar"
         public string Country; // "AE|BH|KW|LB|OM|QA|SA"

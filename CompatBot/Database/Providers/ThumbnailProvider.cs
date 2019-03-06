@@ -5,7 +5,9 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.ThumbScrapper;
+using CompatBot.Utils;
 using DSharpPlus;
+using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers
@@ -24,7 +26,7 @@ namespace CompatBot.Database.Providers
 
             using (var db = new ThumbnailDb())
             {
-                var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode.ToUpperInvariant()).ConfigureAwait(false);
+                var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
                 //todo: add search task if not found
                 if (thumb?.EmbeddableUrl is string embeddableUrl && !string.IsNullOrEmpty(embeddableUrl))
                     return embeddableUrl;
@@ -48,35 +50,14 @@ namespace CompatBot.Database.Providers
 
                 if (thumb?.Url is string url && !string.IsNullOrEmpty(url))
                 {
-                    if (!string.IsNullOrEmpty(Path.GetExtension(url)))
-                    {
-                        thumb.EmbeddableUrl = url;
-                        await db.SaveChangesAsync().ConfigureAwait(false);
-                        return url;
-                    }
+                    var contentName = (thumb.ContentId ?? thumb.ProductCode);
+                    var embed = await GetEmbeddableUrlAsync(client, contentName, url).ConfigureAwait(false);
 
-                    try
+                    if (embed.url != null)
                     {
-                        using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
-                        using (var memStream = new MemoryStream())
-                        {
-                            await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
-                            // minimum jpg size is 119 bytes, png is 67 bytes
-                            if (memStream.Length < 64)
-                                return null;
-                            memStream.Seek(0, SeekOrigin.Begin);
-                            var spam = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                            //var message = await spam.SendFileAsync(memStream, (thumb.ContentId ?? thumb.ProductCode) + ".jpg").ConfigureAwait(false);
-                            var contentName = (thumb.ContentId ?? thumb.ProductCode);
-                            var message = await spam.SendFileAsync(contentName + ".jpg", memStream, contentName).ConfigureAwait(false);
-                            thumb.EmbeddableUrl = message.Attachments.First().Url;
-                            await db.SaveChangesAsync().ConfigureAwait(false);
-                            return thumb.EmbeddableUrl;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Config.Log.Warn(e);
+                        thumb.EmbeddableUrl = embed.url;
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        return embed.url;
                     }
                 }
             }
@@ -124,6 +105,107 @@ namespace CompatBot.Database.Providers
 
                 return title;
             }
+        }
+
+        public static async Task<(string url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string url = null)
+        {
+            if (string.IsNullOrEmpty(contentId))
+                throw new ArgumentException("ContentID can't be empty", nameof(contentId));
+
+            contentId = contentId.ToUpperInvariant();
+            using (var db = new ThumbnailDb())
+            {
+                var info = await db.TitleInfo.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
+                if (info == null)
+                {
+                    info = new TitleInfo {ContentId = contentId, ThumbnailUrl = url, Timestamp = DateTime.UtcNow.Ticks};
+                    var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ContentId == contentId).ConfigureAwait(false);
+                    if (thumb?.EmbeddableUrl is string eUrl
+                        && thumb.Url is string thumbUrl
+                        && thumbUrl == url)
+                        info.ThumbnailEmbeddableUrl = eUrl;
+                    info = db.TitleInfo.Add(info).Entity;
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                }
+                if (string.IsNullOrEmpty(info.ThumbnailEmbeddableUrl))
+                {
+                    var em = await GetEmbeddableUrlAsync(client, contentId, info.ThumbnailUrl).ConfigureAwait(false);
+                    if (em.url is string eUrl)
+                    {
+                        info.ThumbnailEmbeddableUrl = eUrl;
+                        if (em.image is byte[] jpg)
+                            info.EmbedColor = ColorGetter.Analyze(jpg, defaultColor).Value;
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    }
+                }
+                if (!info.EmbedColor.HasValue)
+                {
+                    var c = await GetImageColorAsync(info.ThumbnailEmbeddableUrl, defaultColor).ConfigureAwait(false);
+                    if (c.HasValue)
+                    {
+                        info.EmbedColor = c.Value.Value;
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    }
+                }
+                var color = info.EmbedColor.HasValue ? new DiscordColor(info.EmbedColor.Value) : defaultColor;
+                return (info.ThumbnailEmbeddableUrl, color);
+            }
+        }
+
+        public static async Task<(string url, byte[] image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(Path.GetExtension(url)))
+                    return (url, null);
+
+                using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
+                using (var memStream = new MemoryStream())
+                {
+                    await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
+                    // minimum jpg size is 119 bytes, png is 67 bytes
+                    if (memStream.Length < 64)
+                        return (null, null);
+
+                    memStream.Seek(0, SeekOrigin.Begin);
+                    var spam = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                    var message = await spam.SendFileAsync(contentId + ".jpg", memStream, contentId).ConfigureAwait(false);
+                    url = message.Attachments.First().Url;
+                    return (url, memStream.ToArray());
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
+            return (null, null);
+        }
+
+        private static async Task<DiscordColor?> GetImageColorAsync(string url, DiscordColor defaultColor)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    return null;
+
+                using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
+                using (var memStream = new MemoryStream())
+                {
+                    await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
+                    // minimum jpg size is 119 bytes, png is 67 bytes
+                    if (memStream.Length < 64)
+                        return null;
+
+                    memStream.Seek(0, SeekOrigin.Begin);
+
+                    return ColorGetter.Analyze(memStream.ToArray(), defaultColor);
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
+            return null;
         }
     }
 }

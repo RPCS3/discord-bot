@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Database.Migrations;
@@ -105,6 +106,49 @@ namespace CompatBot.Database
                     throw e;
                 }
             }
+        }
+
+        internal static string GetDbPath(string dbName, Environment.SpecialFolder desiredFolder)
+        {
+            var settingsFolder = Path.Combine(Environment.GetFolderPath(desiredFolder), "compat-bot");
+            try
+            {
+                if (!Directory.Exists(settingsFolder))
+                    Directory.CreateDirectory(settingsFolder);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, "Failed to create settings folder " + settingsFolder);
+                settingsFolder = "";
+            }
+
+            var dbPath = Path.Combine(settingsFolder, dbName);
+            if (settingsFolder != "")
+                try
+                {
+                    if (File.Exists(dbName))
+                    {
+                        Config.Log.Info($"Found local {dbName}, moving...");
+                        if (File.Exists(dbPath))
+                        {
+                            Config.Log.Error($"{dbPath} already exists, please reslove the conflict manually");
+                            throw new InvalidOperationException($"Failed to move local {dbName} to {dbPath}");
+                        }
+                        else
+                        {
+                            var dbFiles = Directory.GetFiles(".", Path.GetFileNameWithoutExtension(dbName) + ".*");
+                            foreach (var file in dbFiles)
+                                File.Move(file, Path.Combine(settingsFolder, Path.GetFileName(file)));
+                            Config.Log.Info($"Using {dbPath}");
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, $"Failed to move local {dbName} to {dbPath}");
+                    throw e;
+                }
+            return dbPath;
         }
     }
 }

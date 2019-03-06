@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Commands;
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -25,6 +27,31 @@ namespace CompatBot.EventHandlers
                 Activate();
             }
             return Task.CompletedTask;
+        }
+
+        public static async Task MonitorAsync(DiscordClient client)
+        {
+            var lastCheck = DateTime.UtcNow.AddDays(-1);
+            var resetThreshold = TimeSpan.FromMinutes(5);
+            try
+            {
+                while (!Config.Cts.IsCancellationRequested)
+                {
+                    try
+                    {
+                        if (DateTime.UtcNow - lastCheck > CheckInterval)
+                        {
+                            await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
+                            lastCheck = DateTime.UtcNow;
+                            if (DateTime.UtcNow - resetThreshold > RapidStart)
+                                Reset();
+                        }
+                    }
+                    catch { }
+                    await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
+                }
+            }
+            catch (Exception e) { Config.Log.Error(e); }
         }
 
         public static void Reset()

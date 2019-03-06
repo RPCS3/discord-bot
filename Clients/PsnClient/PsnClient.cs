@@ -302,6 +302,37 @@ namespace PsnClient
             }
         }
 
+        public async Task<Container> SearchAsync(string locale, string search, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var loc = locale.AsLocaleData();
+                var searchId = Uri.EscapeUriString(search);
+                var queryId = Uri.EscapeDataString(searchId);
+                var uri = new Uri($"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/faceted-search/{searchId}?query={queryId}&game_content_type=games&size=30&bucket=games&platform=ps3&start=0");
+                using (var message = new HttpRequestMessage(HttpMethod.Get, uri))
+                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                    try
+                    {
+                        if (response.StatusCode == HttpStatusCode.NotFound)
+                            return null;
+
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response);
+                        return null;
+                    }
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+                return null;
+            }
+        }
+
         private async Task<string> GetSessionCookies(string locale, CancellationToken cancellationToken)
         {
             var loc = locale.AsLocaleData();

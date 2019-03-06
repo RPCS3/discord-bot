@@ -7,7 +7,7 @@ namespace CompatBot.Database.Providers
 {
     internal static class ScrapeStateProvider
     {
-        private static readonly TimeSpan CheckInterval = TimeSpan.FromDays(15);
+        private static readonly TimeSpan CheckInterval = TimeSpan.FromDays(365);
 
         public static bool IsFresh(long timestamp)
         {
@@ -31,7 +31,6 @@ namespace CompatBot.Database.Providers
             return false;
         }
 
-
         public static bool IsFresh(string locale, DateTime dataTimestamp)
         {
             using (var db = new ThumbnailDb())
@@ -42,7 +41,6 @@ namespace CompatBot.Database.Providers
             }
             return false;
         }
-
 
         public static async Task SetLastRunTimestampAsync(string locale, string containerId = null)
         {
