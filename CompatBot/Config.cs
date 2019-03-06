@@ -140,7 +140,7 @@ namespace CompatBot
                     inMemorySettings[nameof(Token)] = args[1];
 
                 config = new ConfigurationBuilder()
-                         .AddUserSecrets(Assembly.GetEntryAssembly()) // lower priority
+                         .AddUserSecrets(Assembly.GetExecutingAssembly()) // lower priority
                          //.AddEnvironmentVariables()
                          .AddInMemoryCollection(inMemorySettings)     // higher priority
                          .Build();

@@ -232,7 +232,7 @@ Example usage:
             }
             catch
             {
-                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                await ctx.RespondAsync(embed: CompatApiClient.POCOs.TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
                 return;
             }
 

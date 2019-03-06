@@ -5,7 +5,9 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.ThumbScrapper;
+using CompatBot.Utils;
 using DSharpPlus;
+using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers
@@ -105,6 +107,51 @@ namespace CompatBot.Database.Providers
             }
         }
 
+        public static async Task<(string url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string url = null)
+        {
+            if (string.IsNullOrEmpty(contentId))
+                throw new ArgumentException("ContentID can't be empty", nameof(contentId));
+
+            contentId = contentId.ToUpperInvariant();
+            using (var db = new ThumbnailDb())
+            {
+                var info = await db.TitleInfo.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
+                if (info == null)
+                {
+                    info = new TitleInfo {ContentId = contentId, ThumbnailUrl = url, Timestamp = DateTime.UtcNow.Ticks};
+                    var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ContentId == contentId).ConfigureAwait(false);
+                    if (thumb?.EmbeddableUrl is string eUrl
+                        && thumb.Url is string thumbUrl
+                        && thumbUrl == url)
+                        info.ThumbnailEmbeddableUrl = eUrl;
+                    info = db.TitleInfo.Add(info).Entity;
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                }
+                if (string.IsNullOrEmpty(info.ThumbnailEmbeddableUrl))
+                {
+                    var em = await GetEmbeddableUrlAsync(client, contentId, info.ThumbnailUrl).ConfigureAwait(false);
+                    if (em.url is string eUrl)
+                    {
+                        info.ThumbnailEmbeddableUrl = eUrl;
+                        if (em.image is byte[] jpg)
+                            info.EmbedColor = ColorGetter.Analyze(jpg, defaultColor).Value;
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    }
+                }
+                if (!info.EmbedColor.HasValue)
+                {
+                    var c = await GetImageColorAsync(info.ThumbnailEmbeddableUrl, defaultColor).ConfigureAwait(false);
+                    if (c.HasValue)
+                    {
+                        info.EmbedColor = c.Value.Value;
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    }
+                }
+                var color = info.EmbedColor.HasValue ? new DiscordColor(info.EmbedColor.Value) : defaultColor;
+                return (info.ThumbnailEmbeddableUrl, color);
+            }
+        }
+
         public static async Task<(string url, byte[] image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
         {
             try
@@ -132,6 +179,33 @@ namespace CompatBot.Database.Providers
                 Config.Log.Warn(e);
             }
             return (null, null);
+        }
+
+        private static async Task<DiscordColor?> GetImageColorAsync(string url, DiscordColor defaultColor)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    return null;
+
+                using (var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false))
+                using (var memStream = new MemoryStream())
+                {
+                    await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
+                    // minimum jpg size is 119 bytes, png is 67 bytes
+                    if (memStream.Length < 64)
+                        return null;
+
+                    memStream.Seek(0, SeekOrigin.Begin);
+
+                    return ColorGetter.Analyze(memStream.ToArray(), defaultColor);
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
+            return null;
         }
     }
 }

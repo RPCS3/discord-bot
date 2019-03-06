@@ -93,12 +93,11 @@ namespace CompatBot.Commands
             var hasResults = false;
             foreach (var (g, region, locale) in new[]{(usGame, "US", "en-US"), (euGame, "EU", "en-GB"), (jpGame, "JP", "ja-JP")}.Where(i => i.Item1 != null))
             {
-                var thumb = await ThumbnailProvider.GetEmbeddableUrlAsync(ctx.Client, g.Id, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
+                var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
                 var score = g.Attributes.StarRating?.Score == null ? "N/A" : $"{StringUtils.GetStars(g.Attributes.StarRating?.Score)} ({g.Attributes.StarRating?.Score})";
-                var embedColor = ColorGetter.Analyze(thumb.image, PsnBlue);
                 var result = new DiscordEmbedBuilder
                 {
-                    Color = embedColor,
+                    Color = thumb.color,
                     Title = $"⏬ {g.Attributes.Name} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
                     Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                     Description = $"Rating: {score}",
