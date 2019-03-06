@@ -92,8 +92,11 @@ namespace CompatBot.Commands
             var euGame = GetBestMatch(responseEU?.Included, search);
             var jpGame = GetBestMatch(responseJP?.Included, search);
             var hasResults = false;
-            foreach (var (g, region, locale) in new[]{(usGame, "US", "en-US"), (euGame, "EU", "en-GB"), (jpGame, "JP", "ja-JP")}.Where(i => i.Item1 != null))
+            foreach (var (g, region, locale) in new[]{(usGame, "US", "en-US"), (euGame, "EU", "en-GB"), (jpGame, "JP", "ja-JP")})
             {
+                if (g == null)
+                    continue;
+
                 var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
                 string score;
                 if (g.Attributes.StarRating?.Score == null)
@@ -132,15 +135,23 @@ namespace CompatBot.Commands
             if (included == null)
                 return null;
 
-            var games = (from i in included
-                where (i.Type == "game" || i.Type == "legacy-sku") && (i.Attributes.TopCategory != "demo" && i.Attributes.GameContentType != "Demo")
-                select i).ToList();
-            return (from i in games
+            var games = (
+                from i in included
+                where (i.Type == "game" || i.Type == "legacy-sku")
+                      && i.Attributes.TopCategory != "demo"
+                      && i.Attributes.GameContentType != "Demo"
+                      && i.Attributes.Name != null
+                      && i.Attributes.FileSize != null
+                select i
+            ).ToList();
+            return (
+                       from i in games
                        let m = new {score = search.GetFuzzyCoefficientCached(i.Attributes.Name), item = i}
                        where m.score > 0.3 || (i.Attributes.Name?.StartsWith(search, StringComparison.InvariantCultureIgnoreCase) ?? false)
                        orderby m.score descending
                        select m.item
                    ).FirstOrDefault() ??
+                   games.FirstOrDefault(i => i.Type == "game") ??
                    games.FirstOrDefault();
         }
 
