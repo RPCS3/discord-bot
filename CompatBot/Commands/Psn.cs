@@ -88,9 +88,9 @@ namespace CompatBot.Commands
             var responseJP = await psnResponseJPTask.ConfigureAwait(false);
             msg = await msgTask.ConfigureAwait(false);
             msg = await msg.UpdateOrCreateMessageAsync(ch, "⌛ Preparing results...").ConfigureAwait(false);
-            var usGame = GetBestMatch(responseUS.Included, search);
-            var euGame = GetBestMatch(responseEU.Included, search);
-            var jpGame = GetBestMatch(responseJP.Included, search);
+            var usGame = GetBestMatch(responseUS?.Included, search);
+            var euGame = GetBestMatch(responseEU?.Included, search);
+            var jpGame = GetBestMatch(responseJP?.Included, search);
             var hasResults = false;
             foreach (var (g, region, locale) in new[]{(usGame, "US", "en-US"), (euGame, "EU", "en-GB"), (jpGame, "JP", "ja-JP")}.Where(i => i.Item1 != null))
             {
@@ -119,6 +119,9 @@ namespace CompatBot.Commands
 
         private static ContainerIncluded GetBestMatch(ContainerIncluded[] included, string search)
         {
+            if (included == null)
+                return null;
+
             return (
                 from i in included
                 where (i.Type == "game" || i.Type == "legacy-sku") && (i.Attributes.TopCategory != "demo" && i.Attributes.GameContentType != "Demo")
