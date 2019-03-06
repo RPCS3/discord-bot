@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,13 +29,16 @@ namespace CompatBot.Database.Providers
                     using (var db = new BotDb())
                     {
                         db.Stats.RemoveRange(db.Stats);
-                        await db.SaveChangesAsync().ConfigureAwait(false);
                         foreach (var cache in AllCaches)
                         {
                             var category = cache.GetType().Name;
                             var entries = cache.GetCacheEntries<string>();
+                            var savedKeys = new HashSet<string>();
                             foreach (var entry in entries)
-                                await db.Stats.AddAsync(new Stats { Category = category, Key = entry.Key, Value = ((int?)entry.Value.Value) ?? 0, ExpirationTimestamp = entry.Value.AbsoluteExpiration.Value.ToUniversalTime().Ticks }).ConfigureAwait(false);
+                                if (savedKeys.Add(entry.Key))
+                                    await db.Stats.AddAsync(new Stats { Category = category, Key = entry.Key, Value = ((int?)entry.Value.Value) ?? 0, ExpirationTimestamp = entry.Value.AbsoluteExpiration.Value.ToUniversalTime().Ticks }).ConfigureAwait(false);
+                                else
+                                    Config.Log.Warn($"Somehow there's another '{entry.Key}' in the {category} cache");
                         }
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
