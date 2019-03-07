@@ -39,6 +39,12 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
             if (items["failed_to_boot"] is string _)
                 notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
+            if (items["failed_to_verify"] is string verifyFails)
+            {
+                var types = verifyFails.Split(Environment.NewLine).Distinct().ToList();
+                if (types.Contains("sce"))
+                    notes.Add("❌ Failed to decrypt executables from DLC, PPU recompilers may fail");
+            }
             if (brokenDump)
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
             else if (irdChecked)

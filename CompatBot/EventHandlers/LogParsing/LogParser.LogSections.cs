@@ -133,6 +133,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path>.*?)\r?$", DefaultOptions),
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
+                    ["sceNp: npDrmIsAvailable(): Failed to verify"] = new Regex(@"Failed to verify (?<failed_to_verify>(sce|npd)) file.*\r?$", DefaultOptions),
                     ["RSX:"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
                                          @"RSX: [^\n]+\r?\n[^\n]*?" +
                                          @"RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?" +
@@ -176,6 +177,7 @@ namespace CompatBot.EventHandlers.LogParsing
             "broken_filename",
             "broken_directory",
             "edat_block_offset",
+            "failed_to_verify",
         };
 
         private static async Task PiracyCheckAsync(string line, LogParseState state)
