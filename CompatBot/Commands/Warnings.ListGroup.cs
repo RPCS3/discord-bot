@@ -9,6 +9,7 @@ using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Commands
@@ -45,25 +46,27 @@ namespace CompatBot.Commands
             [Description("List users with warnings, sorted from most warned to least")]
             public async Task Users(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {
+                var isMod = ctx.User.IsWhitelisted(ctx.Client, ctx.Guild);
                 if (number < 1)
                     number = 10;
                 var table = new AsciiTable(
                     new AsciiColumn("Username", maxWidth: 24),
                     new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
-                    new AsciiColumn("Count", alignToRight: true)
+                    new AsciiColumn("Count", alignToRight: true),
+                    new AsciiColumn("Including removed", disabled: !ctx.Channel.IsPrivate || !isMod, alignToRight: true)
                     );
                 using (var db = new BotDb())
                 {
                     var query = from warn in db.Warning
                         group warn by warn.DiscordId
                         into userGroup
-                        let row = new {discordId = userGroup.Key, count = userGroup.Count()}
+                        let row = new {discordId = userGroup.Key, count = userGroup.Count(w => !w.Retracted), total = userGroup.Count()}
                         orderby row.count descending
                         select row;
                     foreach (var row in query.Take(number))
                     {
                         var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
-                        table.Add(username, row.discordId.ToString(), row.count.ToString());
+                        table.Add(username, row.discordId.ToString(), row.count.ToString(), row.total.ToString());
                     }
                 }
                 await ctx.SendAutosplitMessageAsync(new StringBuilder("Warning count per user:").Append(table)).ConfigureAwait(false);
@@ -101,18 +104,23 @@ namespace CompatBot.Commands
 
             }
 
-            [Command("by"), RequiresBotModRole]
-            public Task By(CommandContext ctx, DiscordUser moderator, [Description("Optional number of items to show. Default is 10")] int number = 10)
-                => By(ctx, moderator.Id, number);
-
-            [Command("by"), RequiresBotModRole]
-            public Task By(CommandContext ctx, string me, [Description("Optional number of items to show. Default is 10")] int number = 10)
+            [Command("by"), Priority(1), RequiresBotModRole]
+            public async Task By(CommandContext ctx, string me, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {
                 if (me?.ToLowerInvariant() == "me")
-                    return By(ctx, ctx.User.Id, number);
+                {
+                    await By(ctx, ctx.User.Id, number).ConfigureAwait(false);
+                    return;
+                }
 
-                return Task.CompletedTask;
+                var user = await new DiscordUserConverter().ConvertAsync(me, ctx).ConfigureAwait(false);
+                if (user.HasValue)
+                    await By(ctx, user.Value, number).ConfigureAwait(false);
             }
+
+            [Command("by"), Priority(10), RequiresBotModRole]
+            public Task By(CommandContext ctx, DiscordUser moderator, [Description("Optional number of items to show. Default is 10")] int number = 10)
+                => By(ctx, moderator.Id, number);
 
             [Command("recent"), Aliases("last", "all"), RequiresBotModRole]
             [Description("Shows last issued warnings in chronological order")]

@@ -76,6 +76,10 @@ namespace CompatBot.Database
         [Required]
         public string FullReason { get; set; }
         public long? Timestamp { get; set; }
+        public bool Retracted { get; set; }
+        public ulong? RetractedBy { get; set; }
+        public string RetractionReason { get; set; }
+        public long? RetractionTimestamp { get; set; }
     }
 
     internal class Explanation
