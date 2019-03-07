@@ -10,6 +10,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -48,11 +49,26 @@ namespace CompatBot.Commands
         [Description("Removes specified warnings")]
         public async Task Remove(CommandContext ctx, [Description("Warning IDs to remove separated with space")] params int[] ids)
         {
+            var interact = ctx.Client.GetInteractivity();
+            var msg = await ctx.RespondAsync("What is the reason for removal?").ConfigureAwait(false);
+            var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(response?.Message?.Content))
+            {
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Can't remove warnings without a reason").ConfigureAwait(false);
+                return;
+            }
+
             int removedCount;
             using (var db = new BotDb())
             {
                 var warningsToRemove = await db.Warning.Where(w => ids.Contains(w.Id)).ToListAsync().ConfigureAwait(false);
-                db.Warning.RemoveRange(warningsToRemove);
+                foreach (var w in warningsToRemove)
+                {
+                    w.Retracted = true;
+                    w.RetractedBy = ctx.User.Id;
+                    w.RetractionReason = response.Message.Content;
+                    w.RetractionTimestamp = DateTime.UtcNow.Ticks;
+                }
                 removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             }
             if (removedCount == ids.Length)
@@ -71,14 +87,28 @@ namespace CompatBot.Commands
         [Command("clear"), RequiresBotModRole]
         public async Task Clear(CommandContext ctx, [Description("User ID to clear warnings for")] ulong userId)
         {
+            var interact = ctx.Client.GetInteractivity();
+            var msg = await ctx.RespondAsync("What is the reason for removing all the warnings?").ConfigureAwait(false);
+            var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(response?.Message?.Content))
+            {
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Can't remove warnings without a reason").ConfigureAwait(false);
+                return;
+            }
+
             try
             {
-                //var removed = await BotDb.Instance.Database.ExecuteSqlCommandAsync($"DELETE FROM `warning` WHERE `discord_id`={userId}").ConfigureAwait(false);
                 int removed;
                 using (var db = new BotDb())
                 {
                     var warningsToRemove = await db.Warning.Where(w => w.DiscordId == userId).ToListAsync().ConfigureAwait(false);
-                    db.Warning.RemoveRange(warningsToRemove);
+                    foreach (var w in warningsToRemove)
+                    {
+                        w.Retracted = true;
+                        w.RetractedBy = ctx.User.Id;
+                        w.RetractionReason = response.Message.Content;
+                        w.RetractionTimestamp = DateTime.UtcNow.Ticks;
+                    }
                     removed = await db.SaveChangesAsync().ConfigureAwait(false);
                 }
                 await ctx.RespondAsync($"{removed} warning{StringUtils.GetSuffix(removed)} successfully removed!").ConfigureAwait(false);
@@ -86,6 +116,27 @@ namespace CompatBot.Commands
             catch (Exception e)
             {
                 Config.Log.Error(e);
+            }
+        }
+
+        [Command("revert"), RequiresBotModRole]
+        [Description("Changes the state of the warning status")]
+        public async Task Revert(CommandContext ctx, [Description("Warning ID to change")] int id)
+        {
+            using (var db = new BotDb())
+            {
+                var warn = await db.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
+                if (warn.Retracted)
+                {
+                    warn.Retracted = false;
+                    warn.RetractedBy = null;
+                    warn.RetractionReason = null;
+                    warn.RetractionTimestamp = null;
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Success, "Reissued the warning", true).ConfigureAwait(false);
+                }
+                else
+                    await Remove(ctx, id).ConfigureAwait(false);
             }
         }
 
@@ -137,13 +188,27 @@ namespace CompatBot.Commands
         {
             try
             {
+                var isWhitelisted = client.GetMember(message.Author)?.IsWhitelisted() ?? false;
+                if (message.Author.Id != userId && !isWhitelisted)
+                {
+                    Config.Log.Error($"Somehow {message.Author.Username} ({message.Author.Id}) triggered warning list for {userId}");
+                    return;
+                }
+
                 var channel = message.Channel;
-                int count;
+                var isPrivate = channel.IsPrivate;
+                int count, removed;
                 using (var db = new BotDb())
-                    count = await db.Warning.CountAsync(w => w.DiscordId == userId).ConfigureAwait(false);
+                {
+                    count = await db.Warning.CountAsync(w => w.DiscordId == userId && !w.Retracted).ConfigureAwait(false);
+                    removed = await db.Warning.CountAsync(w => w.DiscordId == userId && w.Retracted).ConfigureAwait(false);
+                }
                 if (count == 0)
                 {
-                    await message.RespondAsync(userName + " has no warnings, is a standup citizen, and a pillar of this community").ConfigureAwait(false);
+                    if (removed == 0)
+                        await message.RespondAsync(userName + " has no warnings, is a standup citizen, and a pillar of this community").ConfigureAwait(false);
+                    else
+                        await message.RespondAsync(userName + " has no warnings" + (isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")})" : "")).ConfigureAwait(false);
                     return;
                 }
 
@@ -151,15 +216,13 @@ namespace CompatBot.Commands
                     return;
 
                 const int maxWarningsInPublicChannel = 3;
-                var isPrivate = channel.IsPrivate;
-                var isWhitelisted = client.GetMember(message.Author)?.IsWhitelisted() ?? false;
                 using (var db = new BotDb())
                 {
-                    var totalWarningCount = db.Warning.Count(w => w.DiscordId == userId);
-                    var showCount = Math.Min(maxWarningsInPublicChannel, totalWarningCount);
+                    var showCount = Math.Min(maxWarningsInPublicChannel, count);
                     var table = new AsciiTable(
                         new AsciiColumn("ID", alignToRight: true),
-                        new AsciiColumn("Issued by", maxWidth: 15),
+                        new AsciiColumn("±", disabled: !isPrivate || !isWhitelisted),
+                        new AsciiColumn("By", maxWidth: 15),
                         new AsciiColumn("On date (UTC)"),
                         new AsciiColumn("Reason"),
                         new AsciiColumn("Context", disabled: !isPrivate)
@@ -169,17 +232,41 @@ namespace CompatBot.Commands
                         query = query.Take(maxWarningsInPublicChannel);
                     foreach (var warning in await query.ToListAsync().ConfigureAwait(false))
                     {
-                        var issuerName = warning.IssuerId == 0
-                            ? ""
-                            : await client.GetUserNameAsync(channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
-                        var timestamp = warning.Timestamp.HasValue
-                            ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u")
-                            : null;
-                        table.Add(warning.Id.ToString(), issuerName, timestamp, warning.Reason, warning.FullReason);
+                        if (warning.Retracted)
+                        {
+                            if (isWhitelisted && isPrivate)
+                            {
+                                var retractedByName = !warning.RetractedBy.HasValue
+                                    ? ""
+                                    : await client.GetUserNameAsync(channel, warning.RetractedBy.Value, isPrivate, "unknown mod").ConfigureAwait(false);
+                                var retractionTimestamp = warning.RetractionTimestamp.HasValue
+                                    ? new DateTime(warning.RetractionTimestamp.Value, DateTimeKind.Utc).ToString("u")
+                                    : null;
+                                table.Add(warning.Id.ToString(), "-", retractedByName, retractionTimestamp, warning.RetractionReason, "");
+
+                                var issuerName = warning.IssuerId == 0
+                                    ? ""
+                                    : await client.GetUserNameAsync(channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
+                                var timestamp = warning.Timestamp.HasValue
+                                    ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u")
+                                    : null;
+                                table.Add(warning.Id.ToString().StrikeThrough(), "+", issuerName.StrikeThrough(), timestamp.StrikeThrough(), warning.Reason.StrikeThrough(), warning.FullReason.StrikeThrough());
+                            }
+                        }
+                        else
+                        {
+                            var issuerName = warning.IssuerId == 0
+                                ? ""
+                                : await client.GetUserNameAsync(channel, warning.IssuerId, isPrivate, "unknown mod").ConfigureAwait(false);
+                            var timestamp = warning.Timestamp.HasValue
+                                ? new DateTime(warning.Timestamp.Value, DateTimeKind.Utc).ToString("u")
+                                : null;
+                            table.Add(warning.Id.ToString(), "+", issuerName, timestamp, warning.Reason, warning.FullReason);
+                        }
                     }
                     var result = new StringBuilder("Warning list for ").Append(userName);
-                    if (!isPrivate && !isWhitelisted && totalWarningCount > maxWarningsInPublicChannel)
-                        result.Append($" (last {showCount} of {totalWarningCount}, full list in DMs)");
+                    if (!isPrivate && !isWhitelisted && count > maxWarningsInPublicChannel)
+                        result.Append($" (last {showCount} of {count}, full list in DMs)");
                     result.AppendLine(":").Append(table);
                     await channel.SendAutosplitMessageAsync(result).ConfigureAwait(false);
                 }

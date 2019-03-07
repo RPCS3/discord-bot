@@ -66,7 +66,10 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["SPU delay penalty:"] = new Regex("SPU delay penalty: (?<spu_delay_penalty>.*?)\r?$", DefaultOptions),
                     ["SPU loop detection:"] = new Regex("SPU loop detection: (?<spu_loop_detection>.*?)\r?$", DefaultOptions),
                     ["SPU Block Size:"] = new Regex("SPU Block Size: (?<spu_block_size>.*?)\r?$", DefaultOptions),
+                    ["Enable TSX:"] = new Regex("Enable TSX: (?<enable_tsx>.*?)\r?$", DefaultOptions),
                     ["Accurate xfloat:"] = new Regex("Accurate xfloat: (?<accurate_xfloat>.*?)\r?$", DefaultOptions),
+                    ["Approximate xfloat:"] = new Regex("Approximate xfloat: (?<approximate_xfloat>.*?)\r?$", DefaultOptions),
+                    ["Debug Console Mode:"] = new Regex("Debug Console Mode: (?<debug_console_mode>.*?)\r?$", DefaultOptions),
                     ["Lib Loader:"] = new Regex("[Ll]oader: (?<lib_loader>.*?)\r?$", DefaultOptions),
                     ["Hook static functions:"] = new Regex("Hook static functions: (?<hook_static_functions>.*?)\r?$", DefaultOptions),
                     ["Load libraries:"] = new Regex(@"libraries:\r?\n(?<library_list>(.*?(- .*?|\[\])\r?\n)+)", DefaultOptions),
@@ -130,6 +133,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path>.*?)\r?$", DefaultOptions),
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
+                    ["sceNp: npDrmIsAvailable(): Failed to verify"] = new Regex(@"Failed to verify (?<failed_to_verify>(sce|npd)) file.*\r?$", DefaultOptions),
                     ["RSX:"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
                                          @"RSX: [^\n]+\r?\n[^\n]*?" +
                                          @"RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?" +
@@ -173,6 +177,7 @@ namespace CompatBot.EventHandlers.LogParsing
             "broken_filename",
             "broken_directory",
             "edat_block_offset",
+            "failed_to_verify",
         };
 
         private static async Task PiracyCheckAsync(string line, LogParseState state)

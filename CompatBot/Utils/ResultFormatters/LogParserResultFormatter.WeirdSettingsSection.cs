@@ -14,13 +14,20 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new List<string>();
             if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
+            if (items["enable_tsx"] == "Disabled")
+                notes.Add("⚠ TSX support is disabled; performance may suffer");
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && int.TryParse(items["thread_count"], out var threadCount)
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
 
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
+            {
                 notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
+                var dimensions = items["resolution"].Split("x");
+                if (dimensions.Length > 1 && int.TryParse(dimensions[1], out var height) && height < 720)
+                    notes.Add("⚠ `Resolution` below 720p will not improve performance");
+            }
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)

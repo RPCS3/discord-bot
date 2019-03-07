@@ -18,6 +18,7 @@ namespace CompatBot.Utils
                                                              ?? Encoding.ASCII;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
         private static readonly MemoryCache FuzzyPairCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
+        private const char StrikeThroughChar = '\u0336'; // 0x0335 = short dash, 0x0336 = long dash, 0x0337 = short slash, 0x0338 = long slash
 
         private static readonly HashSet<char> SpaceCharacters = new HashSet<char>
         {
@@ -118,7 +119,7 @@ namespace CompatBot.Utils
             while (e.MoveNext())
             {
                 var strEl = e.GetTextElement();
-                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format)
+                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format || strEl[0] == StrikeThroughChar)
                     continue;
 
                 c++;
@@ -144,7 +145,7 @@ namespace CompatBot.Utils
             {
                 var strEl = e.GetTextElement();
                 result.Append(strEl);
-                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format)
+                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format || strEl[0] == StrikeThroughChar)
                     continue;
 
                 c++;
@@ -168,6 +169,22 @@ namespace CompatBot.Utils
             var diff = s.Length - valueWidth;
             totalWidth += diff;
             return s.PadRight(totalWidth, padding);
+        }
+
+        public static string StrikeThrough(this string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return str;
+
+            var result = new StringBuilder(str.Length*2);
+            result.Append(StrikeThroughChar);
+            foreach (var c in str)
+            {
+                result.Append(c);
+                if (char.IsLetterOrDigit(c) || char.IsLowSurrogate(c))
+                    result.Append(StrikeThroughChar);
+            }
+            return result.ToString(0, result.Length-1);
         }
 
         public static string GetMoons(decimal? stars)
