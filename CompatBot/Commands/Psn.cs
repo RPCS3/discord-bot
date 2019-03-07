@@ -99,7 +99,7 @@ namespace CompatBot.Commands
 
                 var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
                 string score;
-                if (g.Attributes.StarRating?.Score == null)
+                if ((g.Attributes.StarRating?.Score ?? 0m) == 0m || (g.Attributes.StarRating?.Total ?? 0) == 0)
                     score = "N/A";
                 else
                 {
@@ -109,10 +109,22 @@ namespace CompatBot.Commands
                         score = StringUtils.GetMoons(g.Attributes.StarRating?.Score);
                     score = $"{score} ({g.Attributes.StarRating?.Score} by {g.Attributes.StarRating.Total} people)";
                 }
+                string fileSize = null;
+                if (g.Attributes.FileSize?.Value.HasValue ?? false)
+                {
+                    fileSize = g.Attributes.FileSize.Value.ToString();
+                    if (g.Attributes.FileSize?.Unit is string unit && !string.IsNullOrEmpty(unit))
+                        fileSize += " " + unit;
+                    else
+                        fileSize += " GB";
+                    fileSize = $" ({fileSize})";
+                }
+
+                //var instructions = g.Attributes.TopCategory == "disc_based_game" ? "dumping_procedure" : "software_distribution";
                 var result = new DiscordEmbedBuilder
                 {
                     Color = thumb.color,
-                    Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}] ({g.Attributes.FileSize?.Value} {g.Attributes.FileSize?.Unit})",
+                    Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}]{fileSize}",
                     Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                     Description = $"Rating: {score}\n" +
                                   $"[Instructions](https://rpcs3.net/quickstart#software_distribution)",
@@ -137,11 +149,14 @@ namespace CompatBot.Commands
 
             var games = (
                 from i in included
-                where (i.Type == "game" || i.Type == "legacy-sku")
+                where (i.Type == "game"
+                       || i.Type == "legacy-sku"
+                       || (i.Type == "game-related" && i.Attributes.TopCategory == "disc_based_game")
+                       )
                       && i.Attributes.TopCategory != "demo"
                       && i.Attributes.GameContentType != "Demo"
                       && i.Attributes.Name != null
-                      && i.Attributes.FileSize != null
+                      && i.Attributes.ThumbnailUrlBase != null
                 select i
             ).ToList();
             return (
