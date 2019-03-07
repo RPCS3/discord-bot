@@ -119,6 +119,27 @@ namespace CompatBot.Commands
             }
         }
 
+        [Command("revert"), RequiresBotModRole]
+        [Description("Changes the state of the warning status")]
+        public async Task Revert(CommandContext ctx, [Description("Warning ID to change")] int id)
+        {
+            using (var db = new BotDb())
+            {
+                var warn = await db.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
+                if (warn.Retracted)
+                {
+                    warn.Retracted = false;
+                    warn.RetractedBy = null;
+                    warn.RetractionReason = null;
+                    warn.RetractionTimestamp = null;
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Success, "Reissued the warning", true).ConfigureAwait(false);
+                }
+                else
+                    await Remove(ctx, id).ConfigureAwait(false);
+            }
+        }
+
         internal static async Task<bool> AddAsync(CommandContext ctx, ulong userId, string userName, DiscordUser issuer, string reason, string fullReason = null)
         {
             reason = await Sudo.Fix.FixChannelMentionAsync(ctx, reason).ConfigureAwait(false);
