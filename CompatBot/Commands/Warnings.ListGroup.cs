@@ -53,7 +53,7 @@ namespace CompatBot.Commands
                     new AsciiColumn("Username", maxWidth: 24),
                     new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
                     new AsciiColumn("Count", alignToRight: true),
-                    new AsciiColumn("Including removed", disabled: !ctx.Channel.IsPrivate || !isMod, alignToRight: true)
+                    new AsciiColumn("All time", disabled: !ctx.Channel.IsPrivate || !isMod, alignToRight: true)
                     );
                 using (var db = new BotDb())
                 {
@@ -89,7 +89,7 @@ namespace CompatBot.Commands
                 using (var db = new BotDb())
                 {
                     var query = from warn in db.Warning
-                        where warn.IssuerId == moderatorId
+                        where warn.IssuerId == moderatorId && !warn.Retracted
                         orderby warn.Id descending
                         select warn;
                     foreach (var row in query.Take(number))
@@ -126,10 +126,13 @@ namespace CompatBot.Commands
             [Description("Shows last issued warnings in chronological order")]
             public async Task Last(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {
+                var isMod = ctx.User.IsWhitelisted(ctx.Client, ctx.Guild);
+                var showRetractions = ctx.Channel.IsPrivate && isMod;
                 if (number < 1)
                     number = 10;
                 var table = new AsciiTable(
                     new AsciiColumn("ID", alignToRight: true),
+                    new AsciiColumn("±", disabled: !showRetractions),
                     new AsciiColumn("Username", maxWidth: 24),
                     new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
                     new AsciiColumn("Issued by", maxWidth: 15),
@@ -139,15 +142,30 @@ namespace CompatBot.Commands
                 );
                 using (var db = new BotDb())
                 {
-                    var query = from warn in db.Warning
-                        orderby warn.Id descending
-                        select warn;
+                    IOrderedQueryable<Warning> query;
+                    if (showRetractions)
+                        query = from warn in db.Warning
+                            orderby warn.Id descending
+                            select warn;
+                    else
+                        query = from warn in db.Warning
+                            where !warn.Retracted
+                            orderby warn.Id descending
+                            select warn;
                     foreach (var row in query.Take(number))
                     {
                         var username = await ctx.GetUserNameAsync(row.DiscordId).ConfigureAwait(false);
                         var modname = await ctx.GetUserNameAsync(row.IssuerId, defaultName: "Unknown mod").ConfigureAwait(false);
                         var timestamp = row.Timestamp.HasValue ? new DateTime(row.Timestamp.Value, DateTimeKind.Utc).ToString("u") : null;
-                        table.Add(row.Id.ToString(), username, row.DiscordId.ToString(), modname, timestamp, row.Reason, row.FullReason);
+                        if (row.Retracted)
+                        {
+                            var modnameRetracted = row.RetractedBy.HasValue ? await ctx.GetUserNameAsync(row.RetractedBy.Value, defaultName: "Unknown mod").ConfigureAwait(false) : "";
+                            var timestampRetracted = row.RetractionTimestamp.HasValue ? new DateTime(row.RetractionTimestamp.Value, DateTimeKind.Utc).ToString("u") : null;
+                            table.Add(row.Id.ToString(), "-", username, row.DiscordId.ToString(), modnameRetracted, timestampRetracted, row.RetractionReason, "");
+                            table.Add(row.Id.ToString(), "+", username.StrikeThrough(), row.DiscordId.ToString().StrikeThrough(), modname.StrikeThrough(), timestamp.StrikeThrough(), row.Reason.StrikeThrough(), row.FullReason.StrikeThrough());
+                        }
+                        else
+                            table.Add(row.Id.ToString(), "+", username, row.DiscordId.ToString(), modname, timestamp, row.Reason, row.FullReason);
                     }
                 }
                 await ctx.SendAutosplitMessageAsync(new StringBuilder("Recent warnings:").Append(table)).ConfigureAwait(false);
