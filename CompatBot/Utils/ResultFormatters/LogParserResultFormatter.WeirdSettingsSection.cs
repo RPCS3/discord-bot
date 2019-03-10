@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using CompatApiClient.Utils;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.ResultFormatters
@@ -20,6 +21,8 @@ namespace CompatBot.Utils.ResultFormatters
                 && int.TryParse(items["thread_count"], out var threadCount)
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
+            if (items["llvm_arch"] is string llvmArch)
+                notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize()}`");
 
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
             {
