@@ -58,6 +58,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     ["PPU Decoder:"] = new Regex("PPU Decoder: (?<ppu_decoder>.*?)\r?$", DefaultOptions),
                     ["PPU Threads:"] = new Regex("Threads: (?<ppu_threads>.*?)\r?$", DefaultOptions),
+                    ["Use LLVM CPU:"] = new Regex("Use LLVM CPU: \\\"?(?<llvm_arch>.*?)\\\"?\r?$", DefaultOptions),
                     ["thread scheduler:"] = new Regex("scheduler: (?<thread_scheduler>.*?)\r?$", DefaultOptions),
                     ["SPU Decoder:"] = new Regex("SPU Decoder: (?<spu_decoder>.*?)\r?$", DefaultOptions),
                     ["secondary cores:"] = new Regex("secondary cores: (?<spu_secondary_cores>.*?)\r?$", DefaultOptions),

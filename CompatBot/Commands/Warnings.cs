@@ -58,6 +58,7 @@ namespace CompatBot.Commands
                 return;
             }
 
+            await msg.DeleteAsync().ConfigureAwait(false);
             int removedCount;
             using (var db = new BotDb())
             {
@@ -96,6 +97,7 @@ namespace CompatBot.Commands
                 return;
             }
 
+            await msg.DeleteAsync().ConfigureAwait(false);
             try
             {
                 int removed;
@@ -150,8 +152,16 @@ namespace CompatBot.Commands
         {
             if (string.IsNullOrEmpty(reason))
             {
-                await message.RespondAsync("A reason needs to be provided").ConfigureAwait(false);
-                return false;
+                var interact = client.GetInteractivity();
+                var msg = await message.Channel.SendMessageAsync("What is the reason for this warning?").ConfigureAwait(false);
+                var response = await interact.WaitForMessageAsync(m => m.Author == message.Author && m.Channel == message.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(response?.Message.Content))
+                {
+                    await msg.UpdateOrCreateMessageAsync(message.Channel, "A reason needs to be provided").ConfigureAwait(false);
+                    return false;
+                }
+                await msg.DeleteAsync().ConfigureAwait(false);
+                reason = response.Message.Content;
             }
             try
             {

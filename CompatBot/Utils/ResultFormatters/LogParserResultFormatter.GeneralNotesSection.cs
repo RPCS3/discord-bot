@@ -311,13 +311,26 @@ namespace CompatBot.Utils.ResultFormatters
             if (knownFiles.Count == 0)
                 return (false, false);
 
-            var broken = missingFiles.Any(knownFiles.Contains);
-            if (broken)
+            var broken = missingFiles.Where(knownFiles.Contains).ToList();
+            if (broken.Count > 0)
+            {
+                Config.Log.Debug("List of broken files according to IRD:");
+                foreach (var f in broken)
+                    Config.Log.Debug(f);
                 return (true, true);
+            }
 
             var knownDirs = new HashSet<string>(knownFiles.Select(f => Path.GetDirectoryName(f).Replace('\\', '/')),
                 StringComparer.InvariantCultureIgnoreCase);
-            return (true, missingDirs.Any(knownDirs.Contains));
+            var brokenDirs = missingDirs.Where(knownDirs.Contains).ToList();
+            if (brokenDirs.Count > 0)
+            {
+                Config.Log.Debug("List of broken directories according to IRD:");
+                foreach (var d in broken)
+                    Config.Log.Debug(d);
+                return (true, true);
+            }
+            return (true, false);
         }
     }
 }
