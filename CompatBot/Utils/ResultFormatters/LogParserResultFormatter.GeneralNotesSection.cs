@@ -183,13 +183,10 @@ namespace CompatBot.Utils.ResultFormatters
             bool discInsideGame = false;
             bool discAsPkg = false;
             var pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
-            var thonkEmoji = discordClient.GetEmoji(":thonkang:", DiscordEmoji.FromUnicode("🤔"));
+            //var thonkEmoji = discordClient.GetEmoji(":thonkang:", DiscordEmoji.FromUnicode("🤔"));
             if (items["game_category"] == "GD")
-            {
-                notes.Add($"{thonkEmoji} Invalid game category");
-                items["game_category"] = "DG";
-            }
-            if (items["game_category"] == "DG")
+                notes.Add($"❔ Game was booted through the Game Data");
+            if (items["game_category"] == "DG" || items["game_category"] == "GD") // only disc games should install game data
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
                 discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;

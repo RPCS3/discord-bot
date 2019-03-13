@@ -185,9 +185,14 @@ namespace CompatBot
                     client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
 
                     client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
+                    client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
+
                     client.GuildMemberAdded += Greeter.OnMemberAdded;
                     client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
+                    client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
+
                     client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
+                    client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
 
                     client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
                     {

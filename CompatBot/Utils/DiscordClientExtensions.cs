@@ -127,14 +127,16 @@ namespace CompatBot.Utils
             return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
         }
 
-        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, IEnumerable<DiscordMember> potentialVictims, ReportSeverity severity)
+        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember> potentialVictims, ReportSeverity severity)
         {
             var result = new DiscordEmbedBuilder
             {
                 Title = infraction,
                 Color = GetColor(severity),
                 Description = description.Trim(EmbedPager.MaxDescriptionLength),
-            }.AddField("Potential Targets", string.Join(Environment.NewLine, potentialVictims.Select(GetMentionWithNickname)).Trim(EmbedPager.MaxFieldLength));
+            };
+            if (potentialVictims?.Count > 0)
+                result.AddField("Potential Targets", string.Join(Environment.NewLine, potentialVictims.Select(GetMentionWithNickname)).Trim(EmbedPager.MaxFieldLength));
             var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
             return await logChannel.SendMessageAsync(embed: result.Build()).ConfigureAwait(false);
         }
