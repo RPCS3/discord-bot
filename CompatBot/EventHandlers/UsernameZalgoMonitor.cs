@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
+﻿using System.Globalization;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using HomoglyphConverter;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
-    internal static class UsernameZalgoMonitor
+    public static class UsernameZalgoMonitor
     {
         public static async Task OnUserUpdated(UserUpdateEventArgs args)
         {
@@ -48,7 +40,7 @@ namespace CompatBot.EventHandlers
                     ReportSeverity.Medium);
         }
 
-        private static bool NeedsRename(string displayName)
+        public static bool NeedsRename(string displayName)
         {
             displayName = displayName?.Normalize().TrimEager();
             if (string.IsNullOrEmpty(displayName))
@@ -59,10 +51,10 @@ namespace CompatBot.EventHandlers
             {
                 switch (char.GetUnicodeCategory(c))
                 {
-                    case UnicodeCategory.ModifierLetter:
+                    //case UnicodeCategory.ModifierLetter:
                     case UnicodeCategory.ModifierSymbol:
                     case UnicodeCategory.NonSpacingMark:
-                        if (++consecutiveCombiningCharacters > 1)
+                        if (++consecutiveCombiningCharacters > 2)
                             return true;
                         break;
 
