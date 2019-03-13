@@ -36,8 +36,12 @@ namespace Tests
         [TestCase("GodPan กับยูนิตแขนที่หายไป", false)]
         [TestCase("⛧Bζ͜͡annerBomb⛧", false)]
         [TestCase("(_A_Y_A_Z_)  (͡๏̯͡๏)", false)]
+        [TestCase("🥛🥛", false)]
         [TestCase("🎮P̷͙͋a̵̛̳k̶̫̀o̸̿͜ỏ̸̝🎮", true)]
         [TestCase("Cindellด้้้", true)]
+        [TestCase("󠂪󠂪󠂪󠂪 󠂪󠂪󠂪󠂪󠂪󠂪󠂪󠂪 󠂪󠂪󠂪", true)]
+        [TestCase("󠀀󠀀", true)]
+        [TestCase("", true)]
         public void ZalgoDetectionTest(string name, bool isBad)
         {
             Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad));

@@ -88,6 +88,42 @@ namespace CompatBot.Commands
                 }
             }
 
+            [Command("zalgo"), Aliases("diacritics")]
+            [Description("Checks every member's display name for discord and rule #7 requirements")]
+            public async Task Zalgo(CommandContext ctx)
+            {
+                if (!await CheckLock.WaitAsync(0).ConfigureAwait(false))
+                {
+                    await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
+                    return;
+                }
+
+                try
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                    var result = new StringBuilder("List of users who do not meet Rule #7 requirements:");
+                    var headerLength = result.Length;
+                    var members = GetMembers(ctx.Client);
+                    foreach (var member in members)
+                        if (UsernameZalgoMonitor.NeedsRename(member.DisplayName))
+                            result.AppendLine($"{member.Mention} please change your nickname according to Rule #7");
+                    if (result.Length == headerLength)
+                        result.AppendLine("No naughty users 🎉");
+                    await ctx.SendAutosplitMessageAsync(result, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    var msg = "Failed to check display names for zalgo for all guild members";
+                    Config.Log.Warn(e, msg);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, msg).ConfigureAwait(false);
+                }
+                finally
+                {
+                    CheckLock.Release(1);
+                    await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                }
+            }
+
             /*
             [Command("locales"), Aliases("locale", "languages", "language", "lang", "loc")]
             public async Task UserLocales(CommandContext ctx)
