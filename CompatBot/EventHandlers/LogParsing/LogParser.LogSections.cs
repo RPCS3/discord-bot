@@ -128,9 +128,9 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["LDR: Game:"] = new Regex(@"Game: .*(?<ldr_game>/dev_hdd0/game/(?<ldr_game_serial>[^/]+).*?)\r?$", DefaultOptions),
-                    ["LDR: Disc"]  = new Regex(@"Disc( path)?: .*(?<ldr_disc>/dev_hdd0/game/(?<ldr_disc_serial>[^/]+).*?)\r?$", DefaultOptions),
-                    ["LDR: Path:"] = new Regex(@"Path: .*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/]+).*?)\r?$", DefaultOptions),
+                    ["LDR: Game:"] = new Regex(@"Game: .*(?<ldr_game>/dev_hdd0/game/(?<ldr_game_serial>[^/\r\n]+).*?)\r?$", DefaultOptions),
+                    ["LDR: Disc"]  = new Regex(@"Disc( path)?: .*(?<ldr_disc>/dev_hdd0/game/(?<ldr_disc_serial>[^/\r\n]+).*?)\r?$", DefaultOptions),
+                    ["LDR: Path:"] = new Regex(@"Path: .*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+).*?)\r?$", DefaultOptions),
                     ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path>.*?)\r?$", DefaultOptions),
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
@@ -161,6 +161,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["PS3 firmware is not installed"] = new Regex(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
                     ["do you have the PS3 firmware installed"] = new Regex(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
                 },
+                OnNewLineAsync = PiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
             }
