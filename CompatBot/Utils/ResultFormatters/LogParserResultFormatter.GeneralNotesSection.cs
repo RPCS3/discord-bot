@@ -182,6 +182,13 @@ namespace CompatBot.Utils.ResultFormatters
 
             bool discInsideGame = false;
             bool discAsPkg = false;
+            var pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
+            var thonkEmoji = discordClient.GetEmoji(":thonkang:", DiscordEmoji.FromUnicode("🤔"));
+            if (items["game_category"] == "GD")
+            {
+                notes.Add($"{thonkEmoji} Invalid game category");
+                items["game_category"] = "DG";
+            }
             if (items["game_category"] == "DG")
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
@@ -192,12 +199,8 @@ namespace CompatBot.Utils.ResultFormatters
             discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
                 notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
-            DiscordEmoji pirateEmoji = null;
             if (discAsPkg)
-            {
-                pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
                 notes.Add($"{pirateEmoji} Disc game installed as a PKG ");
-            }
 
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
                 notes.Add("⚠ Pad initialization problem detected; try disabling `Native UI`");
