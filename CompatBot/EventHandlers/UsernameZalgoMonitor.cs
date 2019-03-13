@@ -60,6 +60,7 @@ namespace CompatBot.EventHandlers
 
                     case UnicodeCategory.Control:
                     case UnicodeCategory.Format:
+                    case UnicodeCategory.OtherNotAssigned when c >= 0xdb40:
                         break;
 
                     default:

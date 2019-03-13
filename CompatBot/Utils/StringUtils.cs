@@ -60,12 +60,40 @@ namespace CompatBot.Utils
 
             int start, end;
             for (start = 0; start < str.Length; start++)
-                if (!char.IsWhiteSpace(str[start]) && !IsFormat(str[start]))
-                    break;
+            {
+                if (char.IsWhiteSpace(str, start) || IsFormat(str[start]))
+                    continue;
+
+                if (char.IsHighSurrogate(str, start)
+                    && char.GetUnicodeCategory(str, start) == UnicodeCategory.OtherNotAssigned
+                    && str[start] >= 0xdb40) // this will check if the surrogate pair is >= E0000 (see https://en.wikipedia.org/wiki/UTF-16#U+010000_to_U+10FFFF)
+                    continue;
+
+                if (char.IsLowSurrogate(str, start))
+                    continue;
+
+                break;
+            }
 
             for (end = str.Length - 1; end >= start; end--)
-                if (!char.IsWhiteSpace(str[end]) && !IsFormat(str[end]))
-                    break;
+            {
+                if (char.IsWhiteSpace(str, end) || IsFormat(str[end]))
+                    continue;
+
+                if (char.IsLowSurrogate(str, end)
+                    && end > start
+                    && char.IsHighSurrogate(str, end - 1)
+                    && char.GetUnicodeCategory(str, end - 1) == UnicodeCategory.OtherNotAssigned
+                    && str[end-1] >= 0xdb40)
+                    continue;
+
+                if (char.IsHighSurrogate(str, end)
+                    && char.GetUnicodeCategory(str, end) == UnicodeCategory.OtherNotAssigned
+                    && str[end] >= 0xdb40)
+                    continue;
+
+                break;
+            }
 
             return CreateTrimmedString(str, start, end);
         }
