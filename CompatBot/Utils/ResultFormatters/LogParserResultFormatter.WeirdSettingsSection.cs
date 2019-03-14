@@ -24,6 +24,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["llvm_arch"] is string llvmArch)
                 notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize()}`");
 
+            if (items["renderer"] == "D3D12")
+                notes.Add("💢 Do **not** use DX12 renderer");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
             {
                 notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");

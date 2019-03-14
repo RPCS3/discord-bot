@@ -32,6 +32,32 @@ namespace Tests
                 }
         }
 
+        [Test, Explicit("Requires external data")]
+        public async Task RoleSortTest()
+        {
+            var samplePath = @"C:/Users/13xforever/Downloads/names.txt";
+            var resultPath = Path.Combine(Path.GetDirectoryName(samplePath), "role_count.txt");
+
+            var stats = new int[10];
+            var names = await File.ReadAllLinesAsync(samplePath, Encoding.UTF8);
+            using (var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            using (var w = new StreamWriter(r, new UTF8Encoding(false)))
+                foreach (var line in names)
+                {
+                    var user = UserInfo.Parse(line);
+                    var roleCount = user.Roles?.Length ?? 0;
+                    stats[roleCount]++;
+                    w.Write(roleCount);
+                    w.Write('\t');
+                    w.WriteLine(user.DisplayName);
+                }
+
+            for (var i = 0; i < stats.Length && stats[i] > 0; i++)
+            {
+                Console.WriteLine($"{i:#0} roles: {stats[i]} members");
+            }
+        }
+
         [TestCase("ᵇᶦᵒˢʰᵒᶜᵏ96", false)]
         [TestCase("GodPan กับยูนิตแขนที่หายไป", false)]
         [TestCase("⛧Bζ͜͡annerBomb⛧", false)]
@@ -41,6 +67,7 @@ namespace Tests
         [TestCase("Cindellด้้้", true)]
         [TestCase("󠂪󠂪󠂪󠂪 󠂪󠂪󠂪󠂪󠂪󠂪󠂪󠂪 󠂪󠂪󠂪", true)]
         [TestCase("󠀀󠀀", true)]
+        [TestCase("꧁꧂🥴🥴🥴HOJU🥴🥴🥴╲⎝⧹", true)]
         [TestCase("", true)]
         public void ZalgoDetectionTest(string name, bool isBad)
         {
@@ -68,7 +95,7 @@ namespace Tests
                 Username = parts[0],
                 Nickname = parts[1],
                 JoinDate = DateTime.Parse(parts[2], CultureInfo.InvariantCulture),
-                Roles = parts[3]?.Split(',') ?? new string[0],
+                Roles = parts[3]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? new string[0],
             };
         }
     }
