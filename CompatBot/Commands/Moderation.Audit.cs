@@ -101,7 +101,7 @@ namespace CompatBot.Commands
                 try
                 {
                     await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
-                    var result = new StringBuilder("List of users who do not meet Rule #7 requirements:");
+                    var result = new StringBuilder("List of users who do not meet Rule #7 requirements:").AppendLine();
                     var headerLength = result.Length;
                     var members = GetMembers(ctx.Client);
                     foreach (var member in members)
