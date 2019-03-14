@@ -22,7 +22,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMemberUpdated(GuildMemberUpdateEventArgs args)
         {
-            if (NeedsRename(args.NicknameAfter))
+            if (NeedsRename(args.Member.DisplayName))
                 await args.Client.ReportAsync("Potential display name issue",
                     $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ from " +
                     $"**{(args.NicknameBefore ?? args.Member.Username).Sanitize()}** to " +
