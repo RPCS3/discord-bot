@@ -64,18 +64,19 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         {
             private Uri uri;
             private readonly IArchiveHandler handler;
+            public long LogFileSize => handler.LogSize;
 
             public PastebinSource(Uri uri, string filename, int filesize, IArchiveHandler handler)
             {
                 this.uri = uri;
                 FileName = filename;
-                FileSize = filesize;
+                SourceFileSize = filesize;
                 this.handler = handler;
             }
 
             public string SourceType => "Pastebin";
             public string FileName { get; }
-            public int FileSize { get; }
+            public long SourceFileSize { get; }
 
             public async Task FillPipeAsync(PipeWriter writer)
             {

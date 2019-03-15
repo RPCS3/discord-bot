@@ -7,8 +7,11 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class PlainTextHandler: IArchiveHandler
     {
+        public long LogSize { get; private set; }
+
         public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
+            LogSize = fileSize;
             return fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                    && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase);
         }

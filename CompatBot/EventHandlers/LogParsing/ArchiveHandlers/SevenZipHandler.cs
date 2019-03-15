@@ -8,6 +8,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class SevenZipHandler: IArchiveHandler
     {
+        public long LogSize { get; private set; }
+
         public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (!fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
@@ -34,14 +36,15 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                                 && zipReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                                 && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                using (var rarStream = zipReader.OpenEntryStream())
+                                LogSize = zipReader.Entry.Size;
+                                using (var entryStream = zipReader.OpenEntryStream())
                                 {
                                     int read;
                                     FlushResult flushed;
                                     do
                                     {
                                         var memory = writer.GetMemory(Config.MinimumBufferSize);
-                                        read = await rarStream.ReadAsync(memory, Config.Cts.Token);
+                                        read = await entryStream.ReadAsync(memory, Config.Cts.Token);
                                         writer.Advance(read);
                                         flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
                                     } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));

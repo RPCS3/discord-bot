@@ -49,14 +49,15 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public string SourceType => "Discord attachment";
             public string FileName { get; }
-            public int FileSize { get; }
+            public long SourceFileSize { get; }
+            public long LogFileSize => handler.LogSize;
 
             internal DiscordAttachmentSource(DiscordAttachment attachment, IArchiveHandler handler, string fileName, int fileSize)
             {
                 this.attachment = attachment;
                 this.handler = handler;
                 FileName = fileName;
-                FileSize = fileSize;
+                SourceFileSize = fileSize;
             }
 
             public async Task FillPipeAsync(PipeWriter writer)

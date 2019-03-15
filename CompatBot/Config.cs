@@ -24,7 +24,7 @@ namespace CompatBot
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
         public static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);
         public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
-        public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(15);
+        public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
         public static readonly Stopwatch Uptime = Stopwatch.StartNew();
 

@@ -10,6 +10,8 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
         public ErrorCode Error = ErrorCode.None;
         public string PiracyTrigger;
         public string PiracyContext;
+        public long ReadBytes;
+        public long TotalBytes;
 
         public enum ErrorCode
         {
