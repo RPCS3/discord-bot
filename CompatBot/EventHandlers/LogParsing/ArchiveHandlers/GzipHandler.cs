@@ -8,6 +8,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class GzipHandler: IArchiveHandler
     {
+        public long LogSize { get; private set; }
+
         public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             return fileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase)
@@ -20,6 +22,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             {
                 try
                 {
+                    LogSize = -1;
                     int read;
                     FlushResult flushed;
                     do

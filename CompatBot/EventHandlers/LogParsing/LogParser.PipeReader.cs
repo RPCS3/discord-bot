@@ -67,14 +67,8 @@ namespace CompatBot.EventHandlers.LogParsing
                 var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;
                 totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
                 reader.AdvanceTo(sectionStart.Start);
-/*
-                if (totalReadBytes >= Config.LogSizeLimit)
-                {
-                    state.Error = LogParseState.ErrorCode.SizeLimit;
-                    break;
-                }
-*/
             } while (!(result.IsCompleted || result.IsCanceled || Config.Cts.IsCancellationRequested || timeout.IsCancellationRequested));
+            state.ReadBytes = totalReadBytes;
             reader.Complete();
             return state;
         }

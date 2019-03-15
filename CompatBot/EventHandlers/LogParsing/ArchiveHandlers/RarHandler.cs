@@ -9,6 +9,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class RarHandler: IArchiveHandler
     {
+        public long LogSize { get; private set; }
+
         public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (!fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
@@ -36,6 +38,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                                 && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                                 && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                             {
+                                LogSize = rarReader.Entry.Size;
                                 using (var rarStream = rarReader.OpenEntryStream())
                                 {
                                     int read;

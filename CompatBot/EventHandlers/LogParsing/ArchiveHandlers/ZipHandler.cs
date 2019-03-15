@@ -10,6 +10,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class ZipHandler: IArchiveHandler
     {
+        public long LogSize { get; private set; }
 
         public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
@@ -37,6 +38,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                         if (logEntry == null)
                             throw new InvalidOperationException("No zip entries that match the log criteria");
 
+                        LogSize = logEntry.Length;
                         using (var zipStream = logEntry.Open())
                         {
                             int read;

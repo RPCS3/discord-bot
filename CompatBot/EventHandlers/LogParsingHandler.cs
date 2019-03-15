@@ -84,7 +84,7 @@ namespace CompatBot.EventHandlers
                     var source = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).FirstOrDefault(h => h != null);
                     if (source != null)
                         {
-                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.FileSize} bytes)...");
+                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
                             botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message, source)).ConfigureAwait(false);
                             parsedLog = true;
                             LogParseState result = null;
@@ -93,6 +93,7 @@ namespace CompatBot.EventHandlers
                                 var pipe = new Pipe();
                                 var fillPipeTask = source.FillPipeAsync(pipe.Writer);
                                 result = await LogParser.ReadPipeAsync(pipe.Reader).ConfigureAwait(false);
+                                result.TotalBytes = source.LogFileSize;
                                 await fillPipeTask.ConfigureAwait(false);
                             }
                             catch (Exception e)

@@ -120,7 +120,7 @@ namespace CompatBot.Utils.ResultFormatters
                     Color = Config.Colors.LogResultFailed,
                 };
             }
-            builder.AddAuthor(client, message, source);
+            builder.AddAuthor(client, message, source, state);
             return builder;
         }
 
@@ -459,7 +459,7 @@ namespace CompatBot.Utils.ResultFormatters
                 .ToList();
         }
 
-        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source)
+        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source, LogParseState state = null)
         {
             if (message != null)
             {
@@ -467,11 +467,16 @@ namespace CompatBot.Utils.ResultFormatters
                 var member = client.GetMember(message.Channel?.Guild, author);
                 string msg;
                 if (member == null)
-                    msg = $"Log from {author.Username.Sanitize()} | {author.Id}";
+                    msg = $"Log from {author.Username.Sanitize()} | {author.Id}\n";
                 else
-                    msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}";
-                if (source?.SourceType is string srcType)
-                    msg += " | " + srcType;
+                    msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
+                msg += " | " + (source?.SourceType ?? "Unknown source");
+                if (state?.ReadBytes > 0 && source.LogFileSize > 0)
+                    msg += $" | Parsed {state.ReadBytes} of {source.LogFileSize} bytes ({state.ReadBytes * 100.0 / source.LogFileSize:0.#}%)";
+                else if (state?.ReadBytes > 0)
+                    msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
+                else if (source.LogFileSize > 0)
+                    msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
 #if DEBUG
                 msg += " | Test Bot Instance";
 #endif
