@@ -12,7 +12,7 @@ namespace CompatBot.EventHandlers
     {
         private static readonly HashSet<char> OversizedChars = new HashSet<char>
         {
-            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸',
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞',
         };
 
         public static async Task OnUserUpdated(UserUpdateEventArgs args)
