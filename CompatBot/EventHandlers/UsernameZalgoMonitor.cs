@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
@@ -8,34 +10,37 @@ namespace CompatBot.EventHandlers
 {
     public static class UsernameZalgoMonitor
     {
+        private static readonly HashSet<char> OversizedChars = new HashSet<char>
+        {
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸',
+        };
+
         public static async Task OnUserUpdated(UserUpdateEventArgs args)
         {
             var m = args.Client.GetMember(args.UserAfter);
             if (NeedsRename(m.DisplayName))
                 await args.Client.ReportAsync("Potential display name issue",
-                    $"User {m.GetMentionWithNickname()} has changed their __username__ from " +
-                    $"**{args.UserBefore.Username.Sanitize()}#{args.UserBefore.Discriminator}** to " +
-                    $"**{args.UserAfter.Username.Sanitize()}#{args.UserAfter.Discriminator}**",
+                    $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nSuggestion to rename: **{StripZalgo(m.DisplayName).Sanitize()}**",
                     null,
                     ReportSeverity.Medium);
         }
 
         public static async Task OnMemberUpdated(GuildMemberUpdateEventArgs args)
         {
-            if (NeedsRename(args.Member.DisplayName))
+            var name = args.Member.DisplayName;
+            if (NeedsRename(name))
                 await args.Client.ReportAsync("Potential display name issue",
-                    $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ from " +
-                    $"**{(args.NicknameBefore ?? args.Member.Username).Sanitize()}** to " +
-                    $"**{args.Member.DisplayName.Sanitize()}**",
+                    $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
                     null,
                     ReportSeverity.Medium);
         }
 
         public static async Task OnMemberAdded(GuildMemberAddEventArgs args)
         {
-            if (NeedsRename(args.Member.DisplayName))
+            var name = args.Member.DisplayName;
+            if (NeedsRename(name))
                 await args.Client.ReportAsync("Potential display name issue",
-                    $"New member joined the server: {args.Member.GetMentionWithNickname()}",
+                    $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
                     null,
                     ReportSeverity.Medium);
         }
@@ -43,32 +48,53 @@ namespace CompatBot.EventHandlers
         public static bool NeedsRename(string displayName)
         {
             displayName = displayName?.Normalize().TrimEager();
-            if (string.IsNullOrEmpty(displayName))
-                return true;
+            return displayName != StripZalgo(displayName);
+        }
 
-            var consecutiveCombiningCharacters = 0;
+        public static string StripZalgo(string displayName)
+        {
+            displayName = displayName?.Normalize().TrimEager();
+            if (string.IsNullOrEmpty(displayName))
+                return "Mr Invisible Wannabe";
+
+            var builder = new StringBuilder();
+            bool skipLowSurrogate = false;
+            int consecutive = 0;
             foreach (var c in displayName)
             {
                 switch (char.GetUnicodeCategory(c))
                 {
-                    //case UnicodeCategory.ModifierLetter:
                     case UnicodeCategory.ModifierSymbol:
                     case UnicodeCategory.NonSpacingMark:
-                        if (++consecutiveCombiningCharacters > 2)
-                            return true;
+                        if (++consecutive < 3)
+                            builder.Append(c);
                         break;
 
                     case UnicodeCategory.Control:
                     case UnicodeCategory.Format:
+                        break;
+
                     case UnicodeCategory.OtherNotAssigned when c >= 0xdb40:
+                        skipLowSurrogate = true;
                         break;
 
                     default:
-                        consecutiveCombiningCharacters = 0;
+                        if (char.IsLowSurrogate(c) && skipLowSurrogate)
+                            skipLowSurrogate = false;
+                        else
+                        {
+                            if (!OversizedChars.Contains(c))
+                                builder.Append(c);
+                            consecutive = 0;
+                        }
                         break;
                 }
             }
-            return false;
+            var result = builder.ToString().TrimEager();
+            if (string.IsNullOrEmpty(result))
+                return "Mr Fancy Unicode Pants";
+
+            return result;
         }
     }
 }

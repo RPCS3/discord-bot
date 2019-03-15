@@ -26,9 +26,8 @@ namespace Tests
                 {
                     var user = UserInfo.Parse(line);
                     var isZalgo = UsernameZalgoMonitor.NeedsRename(user.DisplayName);
-                    w.Write(isZalgo ? 1 : 0);
-                    w.Write('\t');
-                    w.WriteLine(user.DisplayName);
+                    if (isZalgo)
+                        w.WriteLine(user.DisplayName);
                 }
         }
 
