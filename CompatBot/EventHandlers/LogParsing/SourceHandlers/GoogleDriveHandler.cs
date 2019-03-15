@@ -111,17 +111,27 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public async Task FillPipeAsync(PipeWriter writer)
             {
-                var pipe = new Pipe();
-                using (var pushStream = pipe.Writer.AsStream())
+                try
                 {
-                    var progressTask = fileInfoRequest.DownloadAsync(pushStream, Config.Cts.Token);
-                    using (var pullStream = pipe.Reader.AsStream())
+                    var pipe = new Pipe();
+                    using (var pushStream = pipe.Writer.AsStream())
                     {
-                        var pipingTask = handler.FillPipeAsync(pullStream, writer);
-                        await progressTask.ConfigureAwait(false);
-                        pipe.Writer.Complete();
-                        await pipingTask.ConfigureAwait(false);
-                    }                    
+                        var progressTask = fileInfoRequest.DownloadAsync(pushStream, Config.Cts.Token);
+                        using (var pullStream = pipe.Reader.AsStream())
+                        {
+                            var pipingTask = handler.FillPipeAsync(pullStream, writer);
+                            var result = await progressTask.ConfigureAwait(false);
+                            if (result.Status != DownloadStatus.Completed)
+                                Config.Log.Error(result.Exception, "Failed to download file from Google Drive: " + result.Status);
+                            await pipe.Writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
+                            pipe.Writer.Complete();
+                            await pipingTask.ConfigureAwait(false);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, "Failed to download file from Google Drive");
                 }
             }
         }
