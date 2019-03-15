@@ -472,7 +472,7 @@ namespace CompatBot.Utils.ResultFormatters
                     msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
                 msg += " | " + (source?.SourceType ?? "Unknown source");
                 if (state?.ReadBytes > 0 && source.LogFileSize > 0)
-                    msg += $" | Parsed {state.ReadBytes} of {source.LogFileSize} bytes ({state.ReadBytes * 100.0 / source.LogFileSize:0.#}%)";
+                    msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
                 else if (state?.ReadBytes > 0)
                     msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
                 else if (source.LogFileSize > 0)
