@@ -94,6 +94,7 @@ namespace CompatBot.EventHandlers
                                 var fillPipeTask = source.FillPipeAsync(pipe.Writer);
                                 result = await LogParser.ReadPipeAsync(pipe.Reader).ConfigureAwait(false);
                                 result.TotalBytes = source.LogFileSize;
+                                result.ParsingTime = startTime.Elapsed;
                                 await fillPipeTask.ConfigureAwait(false);
                             }
                             catch (Exception e)

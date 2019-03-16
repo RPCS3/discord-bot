@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Collections.Specialized;
 
 namespace CompatBot.EventHandlers.LogParsing.POCOs
 {
@@ -12,6 +13,7 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
         public string PiracyContext;
         public long ReadBytes;
         public long TotalBytes;
+        public TimeSpan ParsingTime;
 
         public enum ErrorCode
         {

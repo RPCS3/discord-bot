@@ -46,6 +46,9 @@ namespace CompatBot.EventHandlers.LogParsing
         private static void OnExtractorHit(string buffer, Regex extractor, LogParseState state)
         {
             var matches = extractor.Matches(buffer);
+            if (matches.Count == 0)
+                return;
+
             foreach (Match match in matches)
             foreach (Group group in match.Groups)
                 if (!string.IsNullOrEmpty(group.Name) && group.Name != "0" && !string.IsNullOrWhiteSpace(group.Value))
@@ -55,17 +58,16 @@ namespace CompatBot.EventHandlers.LogParsing
                         continue;
 
                     Config.Log.Debug($"regex {group.Name} = {group.Value}");
-                    if (MultiValueItems.Contains(group.Name))
-                    {
-                        var currentValue = state.WipCollection[group.Name];
-                        if (!string.IsNullOrEmpty(currentValue))
-                            currentValue += Environment.NewLine;
-                        state.WipCollection[group.Name] = currentValue + strValue;
-                    }
-                    else
-                    {
-                        state.WipCollection[group.Name] = strValue;
-                    }
+                    lock(state)
+                        if (MultiValueItems.Contains(group.Name))
+                        {
+                            var currentValue = state.WipCollection[group.Name];
+                            if (!string.IsNullOrEmpty(currentValue))
+                                currentValue += Environment.NewLine;
+                            state.WipCollection[group.Name] = currentValue + strValue;
+                        }
+                        else
+                            state.WipCollection[group.Name] = strValue;
                 }
         }
 
