@@ -86,14 +86,22 @@ namespace CompatBot.EventHandlers
                     if (source != null)
                         {
                             Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
-                            botMsg = await channel.SendMessageAsync(embed: GetAnalyzingMsgEmbed().AddAuthor(client, message, source)).ConfigureAwait(false);
+                            var analyzingProgressEmbed = GetAnalyzingMsgEmbed();
+                            botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
                             parsedLog = true;
                             LogParseState result = null;
                             try
                             {
                                 var pipe = new Pipe();
                                 var fillPipeTask = source.FillPipeAsync(pipe.Writer);
-                                result = await LogParser.ReadPipeAsync(pipe.Reader).ConfigureAwait(false);
+                                var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader);
+                                do
+                                {
+                                    await Task.WhenAny(readPipeTask, Task.Delay(5000)).ConfigureAwait(false);
+                                    if (!readPipeTask.IsCompleted)
+                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
+                                } while (!readPipeTask.IsCompleted);
+                                result = await readPipeTask.ConfigureAwait(false);
                                 await fillPipeTask.ConfigureAwait(false);
                                 result.TotalBytes = source.LogFileSize;
                                 result.ParsingTime = startTime.Elapsed;
