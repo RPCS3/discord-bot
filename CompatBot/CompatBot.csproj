@@ -22,22 +22,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00573" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00573" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00573" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00576" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00576" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00576" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.38.0.1512" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.38.0.1530" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.3.3" />
     <PackageReference Include="MegaApiClient" Version="1.7.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.2.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.2.3" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="2.2.0" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.0.214" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.0.225" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="NLog" Version="4.5.11" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.1" />

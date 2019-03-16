@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,32 +18,51 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnUserUpdated(UserUpdateEventArgs args)
         {
-            var m = args.Client.GetMember(args.UserAfter);
-            if (NeedsRename(m.DisplayName))
-                await args.Client.ReportAsync("Potential display name issue",
-                    $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nSuggestion to rename: **{StripZalgo(m.DisplayName).Sanitize()}**",
-                    null,
-                    ReportSeverity.Medium);
+            try
+            {
+                var m = args.Client.GetMember(args.UserAfter);
+                if (NeedsRename(m.DisplayName))
+                    await args.Client.ReportAsync("Potential display name issue",
+                        $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nSuggestion to rename: **{StripZalgo(m.DisplayName).Sanitize()}**",
+                        null,
+                        ReportSeverity.Medium);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e);
+            }
         }
 
         public static async Task OnMemberUpdated(GuildMemberUpdateEventArgs args)
         {
+            try { 
             var name = args.Member.DisplayName;
             if (NeedsRename(name))
                 await args.Client.ReportAsync("Potential display name issue",
                     $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
                     null,
                     ReportSeverity.Medium);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e);
+            }
         }
 
         public static async Task OnMemberAdded(GuildMemberAddEventArgs args)
         {
+            try { 
             var name = args.Member.DisplayName;
             if (NeedsRename(name))
                 await args.Client.ReportAsync("Potential display name issue",
                     $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
                     null,
                     ReportSeverity.Medium);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e);
+            }
         }
 
         public static bool NeedsRename(string displayName)
