@@ -98,7 +98,7 @@ namespace CompatBot.Commands
                     {
                         msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
                         await StatsStorage.SaveAsync(true).ConfigureAwait(false);
-                        msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
+                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id);
                     }
                     catch (Exception e)
