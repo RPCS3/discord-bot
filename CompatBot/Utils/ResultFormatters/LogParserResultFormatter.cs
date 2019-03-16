@@ -473,7 +473,7 @@ namespace CompatBot.Utils.ResultFormatters
                 msg += " | " + (source?.SourceType ?? "Unknown source");
                 if (state?.ReadBytes > 0 && source?.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024)
                     msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
-                else if (source?.SourceFilePosition > 0 && source.SourceFileSize > 0)
+                else if (source?.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
                     msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
                 else if (state?.ReadBytes > 0)
                     msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
