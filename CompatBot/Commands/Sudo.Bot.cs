@@ -42,8 +42,8 @@ namespace CompatBot.Commands
                 }
             }
 
-            [Command("update"), Aliases("upgrade", "restart", "reboot", "pull")]
-            [Description("Restarts bot and pulls the newest commit")]
+            [Command("update"), Aliases("upgrade", "pull")]
+            [Description("Updates the bot, and then restarts it")]
             public async Task Update(CommandContext ctx)
             {
                 if (await lockObj.WaitAsync(0).ConfigureAwait(false))
@@ -85,6 +85,33 @@ namespace CompatBot.Commands
                 }
                 else
                     await ctx.RespondAsync("Update is already in progress").ConfigureAwait(false);
+            }
+
+            [Command("restart"), Aliases("reboot")]
+            [Description("Restarts the bot")]
+            public async Task Restart(CommandContext ctx)
+            {
+                if (await lockObj.WaitAsync(0).ConfigureAwait(false))
+                {
+                    DiscordMessage msg = null;
+                    try
+                    {
+                        msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
+                        await StatsStorage.SaveAsync(true).ConfigureAwait(false);
+                        msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
+                        Restart(ctx.Channel.Id);
+                    }
+                    catch (Exception e)
+                    {
+                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting failed: " + e.Message).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        lockObj.Release();
+                    }
+                }
+                else
+                    await ctx.RespondAsync("Update is in progress").ConfigureAwait(false);
             }
 
             [Command("stop"), Aliases("exit", "shutdown", "terminate")]
