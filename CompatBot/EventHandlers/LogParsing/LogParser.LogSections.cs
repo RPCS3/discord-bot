@@ -135,7 +135,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
                     ["sceNp: npDrmIsAvailable(): Failed to verify"] = new Regex(@"Failed to verify (?<failed_to_verify>(sce|npd)) file.*\r?$", DefaultOptions),
-                    ["RSX:"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
+                    ["{rsx::thread} RSX: 4"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
                                          @"RSX: [^\n]+\r?\n[^\n]*?" +
                                          @"RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?" +
                                          @"RSX: Supported texel buffer size", DefaultOptions),

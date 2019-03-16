@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 
 namespace CompatBot.EventHandlers.LogParsing.POCOs
@@ -14,6 +15,9 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
         public long ReadBytes;
         public long TotalBytes;
         public TimeSpan ParsingTime;
+#if DEBUG
+        public Dictionary<string, int> ExtractorHitStats = new Dictionary<string, int>();
+#endif
 
         public enum ErrorCode
         {

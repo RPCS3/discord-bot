@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
@@ -93,11 +94,26 @@ namespace CompatBot.EventHandlers
                                 var pipe = new Pipe();
                                 var fillPipeTask = source.FillPipeAsync(pipe.Writer);
                                 result = await LogParser.ReadPipeAsync(pipe.Reader).ConfigureAwait(false);
+                                await fillPipeTask.ConfigureAwait(false);
                                 result.TotalBytes = source.LogFileSize;
                                 result.ParsingTime = startTime.Elapsed;
-                                await fillPipeTask.ConfigureAwait(false);
-                            }
-                            catch (Exception e)
+#if DEBUG
+                                Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
+                                Config.Log.Debug("Extractor hit stats:");
+                                foreach (var stat in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value))
+                                    if (stat.Value > 100000)
+                                        Config.Log.Fatal($"{stat.Value}: {stat.Key}");
+                                    else if (stat.Value > 10000)
+                                        Config.Log.Error($"{stat.Value}: {stat.Key}");
+                                    else if (stat.Value > 1000)
+                                        Config.Log.Warn($"{stat.Value}: {stat.Key}");
+                                    else if (stat.Value > 100)
+                                        Config.Log.Info($"{stat.Value}: {stat.Key}");
+                                    else
+                                        Config.Log.Debug($"{stat.Value}: {stat.Key}");
+#endif
+                        }
+                        catch (Exception e)
                             {
                                 Config.Log.Error(e, "Log parsing failed");
                             }
