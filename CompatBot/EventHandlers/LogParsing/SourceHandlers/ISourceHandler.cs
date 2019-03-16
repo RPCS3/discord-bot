@@ -16,6 +16,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         string SourceType { get; }
         string FileName { get; }
         long SourceFileSize { get; }
+        long SourceFilePosition { get; }
         long LogFileSize { get; }
         Task FillPipeAsync(PipeWriter writer);
     }

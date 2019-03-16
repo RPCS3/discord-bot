@@ -50,6 +50,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public string SourceType => "Discord attachment";
             public string FileName { get; }
             public long SourceFileSize { get; }
+            public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
             internal DiscordAttachmentSource(DiscordAttachment attachment, IArchiveHandler handler, string fileName, int fileSize)

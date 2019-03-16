@@ -95,7 +95,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         {
             public string SourceType => "Google Drive";
             public string FileName => fileMeta.Name;
-            public long SourceFileSize => (int)fileMeta.Size;
+            public long SourceFileSize => fileMeta.Size ?? 0;
+            public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
             private FilesResource.GetRequest fileInfoRequest;

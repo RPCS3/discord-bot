@@ -72,7 +72,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public string SourceType => "Mega";
             public string FileName => node.Name;
-            public long SourceFileSize => (int)node.Size;
+            public long SourceFileSize => node.Size;
+            public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
             internal MegaSource(IMegaApiClient client, Uri uri, INodeInfo node, IArchiveHandler handler)

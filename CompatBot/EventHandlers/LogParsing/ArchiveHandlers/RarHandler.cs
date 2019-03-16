@@ -10,6 +10,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
     internal sealed class RarHandler: IArchiveHandler
     {
         public long LogSize { get; private set; }
+        public long SourcePosition { get; private set; }
 
         public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {

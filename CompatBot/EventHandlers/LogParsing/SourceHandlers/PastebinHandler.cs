@@ -64,6 +64,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         {
             private Uri uri;
             private readonly IArchiveHandler handler;
+            public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
             public PastebinSource(Uri uri, string filename, int filesize, IArchiveHandler handler)

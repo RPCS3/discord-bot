@@ -10,5 +10,6 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header);
         Task FillPipeAsync(Stream sourceStream, PipeWriter writer);
         long LogSize { get; }
+        long SourcePosition { get; }
     }
 }
