@@ -471,11 +471,13 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
                 msg += " | " + (source?.SourceType ?? "Unknown source");
-                if (state?.ReadBytes > 0 && source.LogFileSize > 0)
+                if (state?.ReadBytes > 0 && source?.LogFileSize > 0)
                     msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
+                else if (source?.SourceFilePosition > 0 && source.SourceFileSize > 0)
+                    msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
                 else if (state?.ReadBytes > 0)
                     msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
-                else if (source.LogFileSize > 0)
+                else if (source?.LogFileSize > 0)
                     msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
 #if DEBUG
                 msg += " | Test Bot Instance";

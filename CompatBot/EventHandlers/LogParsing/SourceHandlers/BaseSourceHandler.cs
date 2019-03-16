@@ -8,7 +8,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal abstract class BaseSourceHandler: ISourceHandler
     {
-        protected static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 64);
+        internal static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 64);
 
         public abstract Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
     }
