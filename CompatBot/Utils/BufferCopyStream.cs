@@ -15,6 +15,12 @@ namespace CompatBot.Utils
 
         public BufferCopyStream(Stream baseStream, int bufferSize = 4096)
         {
+            if (baseStream == null)
+                throw new ArgumentNullException(nameof(baseStream));
+
+            if (bufferSize < 1)
+                throw new ArgumentException("Buffer size cannot be non-positive", nameof(bufferSize));
+
             this.baseStream = baseStream;
             bufSize = bufferSize;
             buf = new byte[bufSize];
