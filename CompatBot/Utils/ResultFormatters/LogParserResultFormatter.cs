@@ -480,6 +480,8 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (source?.LogFileSize > 0)
                     msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
 #if DEBUG
+                if (state?.ParsingTime.TotalMilliseconds > 0)
+                    msg += $" | {state.ParsingTime.TotalSeconds:0.###}s";
                 msg += " | Test Bot Instance";
 #endif
                 builder.WithFooter(msg);

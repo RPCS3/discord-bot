@@ -14,6 +14,8 @@ namespace CompatBot.EventHandlers.LogParsing
     {
         private static readonly byte[] Bom = {0xEF, 0xBB, 0xBF};
 
+        private static readonly PoorMansTaskScheduler<LogParseState> TaskScheduler = new PoorMansTaskScheduler<LogParseState>();
+
         public static async Task<LogParseState> ReadPipeAsync(PipeReader reader)
         {
             var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
@@ -68,6 +70,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
                 reader.AdvanceTo(sectionStart.Start);
             } while (!(result.IsCompleted || result.IsCanceled || Config.Cts.IsCancellationRequested || timeout.IsCancellationRequested));
+            await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
             state.ReadBytes = totalReadBytes;
             reader.Complete();
             return state;
@@ -103,7 +106,8 @@ namespace CompatBot.EventHandlers.LogParsing
                 return;
 
             var section = buffer.Slice(sectionLines.First.Value.Start, sectionLines.Last.Value.End).AsString();
-            currentProcessor.OnExtract?.Invoke(firstSectionLine, section, state);
+            if (currentProcessor.OnExtract != null)
+                await TaskScheduler.AddAsync(state, Task.Run(() => currentProcessor.OnExtract(firstSectionLine, section, state)));
             sectionLines.RemoveFirst();
 
         }

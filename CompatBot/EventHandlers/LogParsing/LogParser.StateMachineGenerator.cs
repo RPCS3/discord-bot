@@ -33,8 +33,14 @@ namespace CompatBot.EventHandlers.LogParsing
                     var act = new AhoCorasickDoubleArrayTrie<Action<string, LogParseState>>(sectionDescription.Extractors.Select(extractorPair =>
                         new SectionAction(
                             extractorPair.Key.ToLatin8BitEncoding(),
-                            (buffer, state) => OnExtractorHit(buffer, extractorPair.Value, state)
-                        )
+                            (buffer, state) =>
+                            {
+#if DEBUG
+                                state.ExtractorHitStats.TryGetValue(extractorPair.Key, out var stat);
+                                state.ExtractorHitStats[extractorPair.Key] = stat + 1;
+#endif
+                                OnExtractorHit(buffer, extractorPair.Value, state);
+                            })
                     ), true);
                     parser.OnExtract = (line, buffer, state) => { act.ParseText(line, h => { h.Value(buffer, state); }); };
                 }
@@ -46,26 +52,28 @@ namespace CompatBot.EventHandlers.LogParsing
         private static void OnExtractorHit(string buffer, Regex extractor, LogParseState state)
         {
             var matches = extractor.Matches(buffer);
+            if (matches.Count == 0)
+                return;
+
             foreach (Match match in matches)
             foreach (Group group in match.Groups)
                 if (!string.IsNullOrEmpty(group.Name) && group.Name != "0" && !string.IsNullOrWhiteSpace(group.Value))
                 {
-                    var strValue = group.Value.ToUtf8();
-                    if (string.IsNullOrEmpty(strValue))
+                    if (string.IsNullOrEmpty(group.Value))
                         continue;
 
+                    var strValue = group.Value.ToUtf8();
                     Config.Log.Debug($"regex {group.Name} = {group.Value}");
-                    if (MultiValueItems.Contains(group.Name))
-                    {
-                        var currentValue = state.WipCollection[group.Name];
-                        if (!string.IsNullOrEmpty(currentValue))
-                            currentValue += Environment.NewLine;
-                        state.WipCollection[group.Name] = currentValue + strValue;
-                    }
-                    else
-                    {
-                        state.WipCollection[group.Name] = strValue;
-                    }
+                    lock(state)
+                        if (MultiValueItems.Contains(group.Name))
+                        {
+                            var currentValue = state.WipCollection[group.Name];
+                            if (!string.IsNullOrEmpty(currentValue))
+                                currentValue += Environment.NewLine;
+                            state.WipCollection[group.Name] = currentValue + strValue;
+                        }
+                        else
+                            state.WipCollection[group.Name] = strValue;
                 }
         }
 
