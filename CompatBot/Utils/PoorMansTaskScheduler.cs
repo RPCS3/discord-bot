@@ -48,6 +48,9 @@ namespace CompatBot.Utils
         public async Task WaitForClearTagAsync(T tag)
         {
             var tasksToWait = taskQueue.Where(kvp => tag.Equals(kvp.Value)).Select(kvp => kvp.Key).ToList();
+            if (tasksToWait.Count == 0)
+                return;
+
             await Task.WhenAll(tasksToWait).ConfigureAwait(false);
             foreach (var t in tasksToWait)
                 taskQueue.TryRemove(t, out _);
