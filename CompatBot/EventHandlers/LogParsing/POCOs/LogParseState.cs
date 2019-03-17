@@ -14,6 +14,7 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
         public string PiracyContext;
         public long ReadBytes;
         public long TotalBytes;
+        public int LinesAfterConfig;
         public TimeSpan ParsingTime;
 #if DEBUG
         public Dictionary<string, int> ExtractorHitStats = new Dictionary<string, int>();
