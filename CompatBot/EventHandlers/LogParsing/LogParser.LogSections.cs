@@ -161,7 +161,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["PS3 firmware is not installed"] = new Regex(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
                     ["do you have the PS3 firmware installed"] = new Regex(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
                 },
-                OnNewLineAsync = PiracyCheckAsync,
+                OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = "All threads stopped...",
             }
@@ -191,6 +191,16 @@ namespace CompatBot.EventHandlers.LogParsing
                 state.Error = LogParseState.ErrorCode.PiracyDetected;
             }
         }
+
+        private static Task LimitedPiracyCheckAsync(string line, LogParseState state)
+        {
+            if (state.LinesAfterConfig > 10)
+                return Task.CompletedTask;
+
+            state.LinesAfterConfig++;
+            return PiracyCheckAsync(line, state);
+        }
+
 
         private static void ClearResults(LogParseState state)
         {

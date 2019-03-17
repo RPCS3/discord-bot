@@ -35,13 +35,14 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMemberUpdated(GuildMemberUpdateEventArgs args)
         {
-            try { 
-            var name = args.Member.DisplayName;
-            if (NeedsRename(name))
-                await args.Client.ReportAsync("Potential display name issue",
-                    $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
-                    null,
-                    ReportSeverity.Medium);
+            try
+            {
+                var name = args.Member.DisplayName;
+                if (NeedsRename(name))
+                    await args.Client.ReportAsync("Potential display name issue",
+                        $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
+                        null,
+                        ReportSeverity.Medium);
             }
             catch (Exception e)
             {
@@ -51,13 +52,14 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMemberAdded(GuildMemberAddEventArgs args)
         {
-            try { 
-            var name = args.Member.DisplayName;
-            if (NeedsRename(name))
-                await args.Client.ReportAsync("Potential display name issue",
-                    $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
-                    null,
-                    ReportSeverity.Medium);
+            try
+            {
+                var name = args.Member.DisplayName;
+                if (NeedsRename(name))
+                    await args.Client.ReportAsync("Potential display name issue",
+                        $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
+                        null,
+                        ReportSeverity.Medium);
             }
             catch (Exception e)
             {
