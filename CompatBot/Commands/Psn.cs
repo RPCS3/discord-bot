@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using Microsoft.EntityFrameworkCore;
 using PsnClient;
 using PsnClient.POCOs;
 
@@ -76,12 +79,36 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                     return;
                 }
+
                 search = response.Message.Content;
             }
+
+            string titleId = null;
+            var productIds = ProductCodeLookup.GetProductIds(search);
+            if (productIds.Count > 0)
+            {
+                using (var db = new ThumbnailDb())
+                {
+                    var contentId = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productIds[0].ToUpperInvariant()).ConfigureAwait(false);
+                    if (contentId?.ContentId != null)
+                        titleId = contentId.ContentId;
+                    if (contentId?.Name != null)
+                        search = contentId.Name;
+                }
+            }
+
+            var alteredSearch = search.Trim();
+            if (alteredSearch.EndsWith("demo", StringComparison.InvariantCultureIgnoreCase))
+                alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 4).TrimEnd();
+            if (alteredSearch.EndsWith("trial", StringComparison.InvariantCultureIgnoreCase))
+                alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 5).TrimEnd();
+            if (alteredSearch.EndsWith("体験版"))
+                alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 3).TrimEnd();
+
             var msgTask = msg.UpdateOrCreateMessageAsync(ch, "⏳ Searching...");
-            var psnResponseUSTask = Client.SearchAsync("en-US", search, Config.Cts.Token);
-            var psnResponseEUTask = Client.SearchAsync("en-GB", search, Config.Cts.Token);
-            var psnResponseJPTask = Client.SearchAsync("ja-JP", search, Config.Cts.Token);
+            var psnResponseUSTask = titleId == null ? Client.SearchAsync("en-US", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-US", titleId, 1, Config.Cts.Token);
+            var psnResponseEUTask = titleId == null ? Client.SearchAsync("en-GB", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-GB", titleId, 1, Config.Cts.Token);
+            var psnResponseJPTask = titleId == null ? Client.SearchAsync("ja-JP", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("ja-JP", titleId, 1, Config.Cts.Token);
             await Task.WhenAll(msgTask, psnResponseUSTask, psnResponseEUTask, psnResponseJPTask).ConfigureAwait(false);
             var responseUS = await psnResponseUSTask.ConfigureAwait(false);
             var responseEU = await psnResponseEUTask.ConfigureAwait(false);
@@ -147,14 +174,17 @@ namespace CompatBot.Commands
             if (included == null)
                 return null;
 
+            var includeDemos = search.Contains("demo", StringComparison.InvariantCultureIgnoreCase)
+                               || search.Contains("trial", StringComparison.InvariantCultureIgnoreCase)
+                               || search.Contains("体験版");
+
             var games = (
                 from i in included
                 where (i.Type == "game"
                        || i.Type == "legacy-sku"
                        || (i.Type == "game-related" && i.Attributes.TopCategory == "disc_based_game")
                        )
-                      && i.Attributes.TopCategory != "demo"
-                      && i.Attributes.GameContentType != "Demo"
+                      && (includeDemos || (i.Attributes.TopCategory != "demo" && i.Attributes.GameContentType != "Demo") )
                       && i.Attributes.Name != null
                       && i.Attributes.ThumbnailUrlBase != null
                 select i
