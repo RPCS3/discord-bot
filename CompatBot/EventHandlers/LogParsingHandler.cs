@@ -143,12 +143,13 @@ namespace CompatBot.EventHandlers
                                 {
                                     if (result.Error == LogParseState.ErrorCode.PiracyDetected)
                                     {
+                                        var yarr = client.GetEmoji(":piratethink:", "☠");
                                         if (message.Author.IsWhitelisted(client, channel.Guild))
                                         {
                                             var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                             piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                             botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
-                                            await client.ReportAsync("Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
+                                            await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
                                         }
                                         else
                                         {
@@ -174,7 +175,7 @@ namespace CompatBot.EventHandlers
                                                 Config.Log.Error(e, "Failed to send piracy warning");
                                             }
                                             await Task.WhenAll(
-                                                client.ReportAsync("Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity),
+                                                client.ReportAsync(yarr + " Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity),
                                                 Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.PiracyTrigger} - {result.PiracyContext.Sanitize()}")
                                             );
                                         }

@@ -33,7 +33,7 @@ namespace CompatBot.EventHandlers
                 return;
 
             var m = args.Client.GetMember(args.UserAfter);
-            await args.Client.ReportAsync("Potential user impersonation",
+            await args.Client.ReportAsync("🕵️ Potential user impersonation",
                 $"User {m.GetMentionWithNickname()} has changed their __username__ from " +
                 $"**{args.UserBefore.Username.Sanitize()}#{args.UserBefore.Discriminator}** to " +
                 $"**{args.UserAfter.Username.Sanitize()}#{args.UserAfter.Discriminator}**",
@@ -53,7 +53,7 @@ namespace CompatBot.EventHandlers
             if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
                 return;
 
-            await args.Client.ReportAsync("Potential user impersonation",
+            await args.Client.ReportAsync("🕵️ Potential user impersonation",
                 $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ from " +
                 $"**{(args.NicknameBefore ?? args.Member.Username).Sanitize()}** to " +
                 $"**{args.Member.DisplayName.Sanitize()}**",
@@ -70,7 +70,7 @@ namespace CompatBot.EventHandlers
             if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
                 return;
 
-            await args.Client.ReportAsync("Potential user impersonation",
+            await args.Client.ReportAsync("🕵️ Potential user impersonation",
                 $"New member joined the server: {args.Member.GetMentionWithNickname()}",
                 potentialTargets,
                 ReportSeverity.Medium);
