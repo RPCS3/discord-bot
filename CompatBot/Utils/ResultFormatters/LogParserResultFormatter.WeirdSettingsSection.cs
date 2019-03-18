@@ -139,6 +139,11 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Write Color Buffers` is not required, please disable");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
                 notes.Add("⚠ `Force CPU Blit` is not required, please disable");
+            if (string.IsNullOrEmpty(items["ppu_hash_patch"])
+                && items["resolution_scale"] is string resScale
+                && int.TryParse(resScale, out var scale)
+                && scale > 100)
+                notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
         }
     }
 }
