@@ -37,7 +37,7 @@ namespace CompatBot.EventHandlers
                     else
                         brokenDump = false;
                 }
-                var logUploadExplain = await PostLogHelpHandler.GetLogUploadExplanationAsync().ConfigureAwait(false);
+                var logUploadExplain = await PostLogHelpHandler.GetExplanationAsync("log").ConfigureAwait(false);
                 if (brokenDump)
                     msg += "Please follow the quickstart guide to get a proper dump of a digital title.\n" +
                            "Also please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant.\n" +
