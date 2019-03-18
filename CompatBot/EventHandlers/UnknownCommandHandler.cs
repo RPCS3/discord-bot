@@ -42,6 +42,9 @@ namespace CompatBot.EventHandlers
                 return;
             }
 
+            if (cnfe.CommandName.Length < 3)
+                return;
+
 #if !DEBUG
             if (e.Context.User.IsSmartlisted(e.Context.Client, e.Context.Guild))
                 return;
