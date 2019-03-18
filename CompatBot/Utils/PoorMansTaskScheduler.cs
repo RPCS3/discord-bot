@@ -41,7 +41,8 @@ namespace CompatBot.Utils
                 return;
             }
 
-            await Task.WhenAny(taskQueue.Keys).ConfigureAwait(false);
+            var result = await Task.WhenAny(taskQueue.Keys).ConfigureAwait(false);
+            taskQueue.TryRemove(result, out _);
             taskQueue.TryAdd(task, tag);
         }
 
