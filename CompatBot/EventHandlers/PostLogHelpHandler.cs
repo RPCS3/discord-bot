@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,10 +13,14 @@ namespace CompatBot.EventHandlers
     internal static class PostLogHelpHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex UploadLogMention = new Regex(@"\b(post|upload|send)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full)\s+)*\blogs?\b", DefaultOptions);
+        private static readonly Regex UploadLogMention = new Regex(@"\b((?<vulkan>(vul[ck][ae]n(-?1)?))|(?<help>(post|upload|send)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full)\s+)*\blogs?))\b", DefaultOptions);
         private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
         private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
-        private static readonly Explanation DefaultLogUploadExplanation = new Explanation{ Text = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon."};
+        private static readonly Dictionary<string, Explanation> DefaultExplanation = new Dictionary<string, Explanation>
+        {
+            ["log"] = new Explanation { Text = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon." },
+            ["vulkan-1"] = new Explanation { Text = "Please remove all the traces of video drivers using DDU, and then reinstall the latest driver version for your GPU." },
+        };
         private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
@@ -31,7 +36,8 @@ namespace CompatBot.EventHandlers
                 return;
 #endif
 
-            if (!UploadLogMention.IsMatch(args.Message.Content))
+            var match = UploadLogMention.Match(args.Message.Content);
+            if (!match.Success || string.IsNullOrEmpty(match.Groups["help"].Value))
                 return;
 
             if (!await TheDoor.WaitAsync(0).ConfigureAwait(false))
@@ -39,7 +45,7 @@ namespace CompatBot.EventHandlers
 
             try
             {
-                var explanation = await GetLogUploadExplanationAsync().ConfigureAwait(false);
+                var explanation = await GetExplanationAsync(string.IsNullOrEmpty(match.Groups["vulkan"].Value) ? "log" : "vulkan-1").ConfigureAwait(false);
                 var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 10).ConfigureAwait(false);
                 foreach (var msg in lastBotMessages)
                     if (BotReactionsHandler.NeedToSilence(msg).needToChill
@@ -55,12 +61,12 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task<Explanation> GetLogUploadExplanationAsync()
+        public static async Task<Explanation> GetExplanationAsync(string term)
         {
             Explanation result;
             using (var db = new BotDb())
-                result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == "log").ConfigureAwait(false);
-            return result ?? DefaultLogUploadExplanation;
+                result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+            return result ?? DefaultExplanation[term];
         }
     }
 }

@@ -33,6 +33,12 @@ namespace CompatBot.Utils.ResultFormatters
                 if (dimensions.Length > 1 && int.TryParse(dimensions[1], out var height) && height < 720)
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
+            var serial = items["serial"];
+            if (items["frame_limit"] is string frameLimit
+                && (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
+                && frameLimit != "30")
+                notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+            CheckP5Settings(items, notes);
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
@@ -52,8 +58,12 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
             if (items["async_shaders"] == EnabledMark)
                 notes.Add("❔ `Async Shader Compiler` is disabled");
+            if (items["write_color_buffers"] == DisabledMark
+                && !string.IsNullOrEmpty(serial)
+                && KnownWriteColorBuffersIds.Contains(serial))
+                notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
             if (items["vertex_cache"] == EnabledMark
-                && items["serial"] is string serial
+                && !string.IsNullOrEmpty(serial)
                 && !KnownDisableVertexCacheIds.Contains(serial))
                 notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark &&
@@ -97,6 +107,43 @@ namespace CompatBot.Utils.ResultFormatters
             foreach (var line in SortLines(notes))
                 notesContent.AppendLine(line);
             PageSection(builder, notesContent.ToString().Trim(), "Important Settings to Review");
+        }
+
+        private static readonly HashSet<string> P5Ids = new HashSet<string>
+        {
+            "BLES02247", "BLUS31604", "BLJM61346",
+            "NPEB02436", "NPUB31848", "NPJB00769",
+        };
+
+        private static void CheckP5Settings(NameValueCollection items, List<string> notes)
+        {
+            if (!(items["serial"] is string serial) || !P5Ids.Contains(serial))
+                return;
+
+            if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
+                notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
+            if (items["spu_decoder"] is string spuDecoder)
+            {
+                if (spuDecoder.Contains("Interpreter"))
+                    notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
+                else if (spuDecoder.Contains("ASMJIT"))
+                    notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
+            }
+            if (items["spu_threads"] is string spuThreads && spuThreads != "2")
+                notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+            if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
+                notes.Add("ℹ `Accurate xFloat` is not required, please disable");
+            if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+                notes.Add("⚠ `Frame Limiter` is not required, please disable");
+            if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
+                notes.Add("⚠ `Write Color Buffers` is not required, please disable");
+            if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
+                notes.Add("⚠ `Force CPU Blit` is not required, please disable");
+            if (string.IsNullOrEmpty(items["ppu_hash_patch"])
+                && items["resolution_scale"] is string resScale
+                && int.TryParse(resScale, out var scale)
+                && scale > 100)
+                notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
         }
     }
 }

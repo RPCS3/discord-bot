@@ -53,7 +53,17 @@ namespace CompatBot.Utils.ResultFormatters
             {"BCJS70013", "NPJA00102"},
         };
 
-        private static readonly string[] KnownDisableVertexCacheIds = { "NPEB00258", "NPUB30162", "NPJB00068" };
+        private static readonly string[] KnownDisableVertexCacheIds =
+        {
+            "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
+        };
+
+        private static readonly string[] KnownWriteColorBuffersIds =
+        {
+            "BLES00932", "BLUS30443", "BCJS70013", "BCJS30022", // DeS
+            "BLUS30481", "BLES00826", "BLJM60223", // Nier
+            "BCES00510", "BCUS98111", "BCJS37001", "NPUA70080", // God of War 3 / Demo
+        };
 
         private static readonly HashSet<string> KnownBogusLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
