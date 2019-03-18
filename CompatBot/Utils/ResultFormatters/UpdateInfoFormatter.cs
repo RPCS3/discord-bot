@@ -74,8 +74,8 @@ namespace CompatBot.Utils.ResultFormatters
                     builder.AddField($"{buildTimestampKind} timestamp", timestampInfo);
             }
             return builder
-                .AddField("Windows   ".FixSpaces(), GetLinkMessage(latestBuild?.Windows?.Download, true), true)
-                .AddField("Linux   ".FixSpaces(), GetLinkMessage(latestBuild?.Linux?.Download, true), true);
+                .AddField("Windows download", GetLinkMessage(latestBuild?.Windows?.Download, true), true)
+                .AddField("Linux download", GetLinkMessage(latestBuild?.Linux?.Download, true), true);
         }
 
         private static string GetLinkMessage(string link, bool simpleName)
