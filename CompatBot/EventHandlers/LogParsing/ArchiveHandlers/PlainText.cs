@@ -16,8 +16,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             LogSize = fileSize;
             return fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                    && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase)
-                   && header.Length > 5
-                   && Encoding.UTF8.GetString(header.Slice(0, 5)) == "RPCS3";
+                   && header.Length > 8
+                   && Encoding.UTF8.GetString(header.Slice(0, 8)).Contains("RPCS3");
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
