@@ -144,6 +144,7 @@ namespace CompatBot.EventHandlers
                                     if (result.Error == LogParseState.ErrorCode.PiracyDetected)
                                     {
                                         var yarr = client.GetEmoji(":piratethink:", "☠");
+                                        result.ReadBytes = 0;
                                         if (message.Author.IsWhitelisted(client, channel.Guild))
                                         {
                                             var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
