@@ -40,7 +40,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                             {
                                 var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                                 var filename = pid + ".log";
-                                var filesize = stream.CanSeek ? (int)stream.Length : read;
+                                var filesize = stream.CanSeek ? (int)stream.Length : 0;
                                 foreach (var handler in handlers)
                                     if (handler.CanHandle(filename, filesize, buf.AsSpan(0, read)))
                                         return new PastebinSource(uri, filename, filesize, handler);

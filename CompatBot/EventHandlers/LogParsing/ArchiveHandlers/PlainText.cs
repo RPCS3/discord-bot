@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipelines;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
@@ -14,7 +15,9 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         {
             LogSize = fileSize;
             return fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
-                   && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase);
+                   && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase)
+                   && header.Length > 5
+                   && Encoding.UTF8.GetString(header.Slice(0, 5)) == "RPCS3";
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
