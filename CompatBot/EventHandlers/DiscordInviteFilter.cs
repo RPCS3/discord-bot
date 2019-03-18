@@ -82,13 +82,13 @@ namespace CompatBot.EventHandlers
                 try
                 {
                     await message.DeleteAsync("Not a white-listed discord invite link").ConfigureAwait(false);
-                    await client.ReportAsync("An unapproved discord invite", message, "In invalid or expired invite", null, ReportSeverity.Low).ConfigureAwait(false);
+                    await client.ReportAsync("🛃 An unapproved discord invite", message, "In invalid or expired invite", null, ReportSeverity.Low).ConfigureAwait(false);
                     await message.Channel.SendMessageAsync($"{message.Author.Mention} please refrain from posting invites that were not approved by a moderator, especially expired or invalid.").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
                     Config.Log.Warn(e);
-                    await client.ReportAsync("An unapproved discord invite", message, "In invalid or expired invite", null, ReportSeverity.Medium).ConfigureAwait(false);
+                    await client.ReportAsync("🛃 An unapproved discord invite", message, "In invalid or expired invite", null, ReportSeverity.Medium).ConfigureAwait(false);
                     await message.ReactWithAsync(
                         client,
                         Config.Reactions.Moderated,
@@ -134,7 +134,7 @@ namespace CompatBot.EventHandlers
                         else
                             userMsg += "Please remove it and refrain from posting it again until you have received an approval from a moderator.";
                     }
-                    await client.ReportAsync("An unapproved discord invite", message, reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
+                    await client.ReportAsync("🛃 An unapproved discord invite", message, reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
                     await message.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
                     if (circumventionAttempt)
                         await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Attempted to circumvent discord invite filter", codeResolveMsg);
