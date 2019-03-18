@@ -60,7 +60,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❔ `Async Shader Compiler` is disabled");
             if (items["write_color_buffers"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
-                && !KnownWriteColorBuffersIds.Contains(serial))
+                && KnownWriteColorBuffersIds.Contains(serial))
                 notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
             if (items["vertex_cache"] == EnabledMark
                 && !string.IsNullOrEmpty(serial)
