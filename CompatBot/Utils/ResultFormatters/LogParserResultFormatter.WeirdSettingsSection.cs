@@ -58,6 +58,10 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
             if (items["async_shaders"] == EnabledMark)
                 notes.Add("❔ `Async Shader Compiler` is disabled");
+            if (items["write_color_buffers"] == DisabledMark
+                && !string.IsNullOrEmpty(serial)
+                && !KnownWriteColorBuffersIds.Contains(serial))
+                notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
             if (items["vertex_cache"] == EnabledMark
                 && !string.IsNullOrEmpty(serial)
                 && !KnownDisableVertexCacheIds.Contains(serial))
