@@ -57,7 +57,7 @@ namespace CompatBot.EventHandlers
                 .Concat(matches.Select(m => m.Groups["game_title_2"].Value))
                 .Concat(matches.Select(m => m.Groups["game_title_3"].Value))
                 .FirstOrDefault(t => !string.IsNullOrEmpty(t));
-            if (string.IsNullOrEmpty(gameTitle))
+            if (string.IsNullOrEmpty(gameTitle) || gameTitle.Length < 2)
                 return;
 
             gameTitle = CompatList.FixGameTitleSearch(gameTitle);
