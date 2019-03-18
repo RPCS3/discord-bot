@@ -33,6 +33,12 @@ namespace CompatBot.Utils.ResultFormatters
                 if (dimensions.Length > 1 && int.TryParse(dimensions[1], out var height) && height < 720)
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
+            var serial = items["serial"];
+            if (items["frame_limit"] is string frameLimit
+                && (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
+                && frameLimit != "30")
+                notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
@@ -53,7 +59,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["async_shaders"] == EnabledMark)
                 notes.Add("❔ `Async Shader Compiler` is disabled");
             if (items["vertex_cache"] == EnabledMark
-                && items["serial"] is string serial
+                && !string.IsNullOrEmpty(serial)
                 && !KnownDisableVertexCacheIds.Contains(serial))
                 notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark &&
