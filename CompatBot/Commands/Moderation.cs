@@ -61,7 +61,7 @@ namespace CompatBot.Commands
         }
 
         [Command("reanalyze")]
-        public async Task Reanalyze(CommandContext ctx, [Description("Full message link")]string messageLink)
+        public async Task Reanalyze(CommandContext ctx, [Description("Full message link")] string messageLink)
         {
             try
             {
@@ -71,8 +71,9 @@ namespace CompatBot.Commands
                 else
                     LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, msg, ctx.Member, true);
             }
-            catch
+            catch (Exception e)
             {
+                Config.Log.Warn(e);
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
             }
         }
