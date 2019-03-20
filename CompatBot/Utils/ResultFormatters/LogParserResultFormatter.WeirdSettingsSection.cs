@@ -41,7 +41,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             CheckP5Settings(items, notes);
             CheckAsurasWrathSettings(items, notes);
-            //todo: add jojo checks
+            CheckJojoSettings(items, notes);
 
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
@@ -165,6 +165,25 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["af_override"] is string af && af != "Auto")
                     notes.Add("⚠ Please use `Auto` for `Anisotropic Filter Override`");
             }
+        }
+
+        private static readonly HashSet<string> AllStarBattleIds = new HashSet<string>
+        {
+            "BLES01986", "BLUS31405", "BLJS10217",
+            "NPEB01922", "NPUB31391", "NPJB00331",
+        };
+
+        private static void CheckJojoSettings(NameValueCollection items, List<string> notes)
+        {
+            if (!(items["serial"] is string serial))
+                return;
+
+            if (AllStarBattleIds.Contains(serial))
+                notes.Add("ℹ Missing health bars are random");
+
+            if ((AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
+                && items["audio_buffering"] == EnabledMark)
+                notes.Add("ℹ If you experience audio issues, disable `Audio Buffering` or Pause/Unpause emulation");
         }
     }
 }
