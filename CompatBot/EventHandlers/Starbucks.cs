@@ -12,14 +12,75 @@ namespace CompatBot.EventHandlers
 {
     internal static class Starbucks
     {
-        private static readonly DiscordEmoji M = DiscordEmoji.FromUnicode("Ⓜ");
-        private static readonly DiscordEmoji RidM = DiscordEmoji.FromUnicode("🇲"); // that's :regional_indicator_m:, and not a regular M
-        private static readonly DiscordEmoji RidG = DiscordEmoji.FromUnicode("🇬");
-        private static readonly DiscordEmoji RidS = DiscordEmoji.FromUnicode("🇸");
-        private static readonly DiscordEmoji[] MsgVar1 = {RidM, RidG, RidS};
-        private static readonly DiscordEmoji[] MsgVar2 = {M, RidG, RidS};
-        private static readonly DiscordEmoji RidN = DiscordEmoji.FromUnicode("🇳");
-        private static readonly DiscordEmoji RidO = DiscordEmoji.FromUnicode("🇴");
+        private static readonly Dictionary<DiscordEmoji, string> TextMap = new Dictionary<DiscordEmoji, string>
+        {
+            [DiscordEmoji.FromUnicode("Ⓜ")] = "M",
+            [DiscordEmoji.FromUnicode("🅰")] = "A",
+            [DiscordEmoji.FromUnicode("🅱")] = "B",
+            [DiscordEmoji.FromUnicode("🆎")] = "AB",
+            [DiscordEmoji.FromUnicode("🅾")] = "O",
+
+            [DiscordEmoji.FromUnicode("🇦")] = "A",
+            [DiscordEmoji.FromUnicode("🇧")] = "B",
+            [DiscordEmoji.FromUnicode("🇨")] = "C",
+            [DiscordEmoji.FromUnicode("🇩")] = "D",
+            [DiscordEmoji.FromUnicode("🇪")] = "E",
+            [DiscordEmoji.FromUnicode("🇫")] = "F",
+            [DiscordEmoji.FromUnicode("🇬")] = "G",
+            [DiscordEmoji.FromUnicode("🇭")] = "H",
+            [DiscordEmoji.FromUnicode("🇮")] = "I",
+            [DiscordEmoji.FromUnicode("🇯")] = "G",
+            [DiscordEmoji.FromUnicode("🇰")] = "K",
+            [DiscordEmoji.FromUnicode("🇱")] = "L",
+            [DiscordEmoji.FromUnicode("🇲")] = "M",
+            [DiscordEmoji.FromUnicode("🇳")] = "N",
+            [DiscordEmoji.FromUnicode("🇴")] = "O",
+            [DiscordEmoji.FromUnicode("🇵")] = "P",
+            [DiscordEmoji.FromUnicode("🇶")] = "Q",
+            [DiscordEmoji.FromUnicode("🇷")] = "R",
+            [DiscordEmoji.FromUnicode("🇸")] = "S",
+            [DiscordEmoji.FromUnicode("🇹")] = "T",
+            [DiscordEmoji.FromUnicode("🇺")] = "U",
+            [DiscordEmoji.FromUnicode("🇻")] = "V",
+            [DiscordEmoji.FromUnicode("🇼")] = "W",
+            [DiscordEmoji.FromUnicode("🇽")] = "X",
+            [DiscordEmoji.FromUnicode("🇾")] = "Y",
+            [DiscordEmoji.FromUnicode("🇿")] = "Z",
+
+            [DiscordEmoji.FromUnicode("0⃣️")] = "0",
+            [DiscordEmoji.FromUnicode("1️⃣")] = "1",
+            [DiscordEmoji.FromUnicode("2️⃣")] = "2",
+            [DiscordEmoji.FromUnicode("3️⃣")] = "3",
+            [DiscordEmoji.FromUnicode("4️⃣")] = "4",
+            [DiscordEmoji.FromUnicode("5️⃣")] = "5",
+            [DiscordEmoji.FromUnicode("6️⃣")] = "6",
+            [DiscordEmoji.FromUnicode("7️⃣")] = "7",
+            [DiscordEmoji.FromUnicode("8️⃣")] = "8",
+            [DiscordEmoji.FromUnicode("9️⃣")] = "9",
+            [DiscordEmoji.FromUnicode("🔟")] = "10",
+
+            [DiscordEmoji.FromUnicode("🆑")] = "CL",
+            [DiscordEmoji.FromUnicode("🆐")] = "DJ",
+            [DiscordEmoji.FromUnicode("🆒")] = "COOL",
+            [DiscordEmoji.FromUnicode("🆓")] = "FREE",
+            [DiscordEmoji.FromUnicode("🆔")] = "ID",
+            [DiscordEmoji.FromUnicode("🆕")] = "NEW",
+            [DiscordEmoji.FromUnicode("🆖")] = "NG",
+            [DiscordEmoji.FromUnicode("🆗")] = "OK",
+            [DiscordEmoji.FromUnicode("🆘")] = "SOS",
+            [DiscordEmoji.FromUnicode("🆙")] = "UP",
+            [DiscordEmoji.FromUnicode("🆚")] = "VS",
+            [DiscordEmoji.FromUnicode("⭕")] = "O",
+            [DiscordEmoji.FromUnicode("🔄")] = "O",
+            [DiscordEmoji.FromUnicode("✝")] = "T",
+            [DiscordEmoji.FromUnicode("❌")] = "X",
+            [DiscordEmoji.FromUnicode("✖")] = "X",
+            [DiscordEmoji.FromUnicode("❎")] = "X",
+            [DiscordEmoji.FromUnicode("🅿")] = "P",
+            [DiscordEmoji.FromUnicode("🚾")] = "WC",
+            [DiscordEmoji.FromUnicode("ℹ")] = "i",
+            [DiscordEmoji.FromUnicode("〰")] = "W",
+        };
 
         public static Task Handler(MessageReactionAddEventArgs args)
         {
@@ -65,8 +126,7 @@ namespace CompatBot.EventHandlers
                 if (emoji == Config.Reactions.Starbucks)
                     await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
 
-                if (message.Reactions.Any(r => r.Emoji == RidS))
-                    await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
+                await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -114,32 +174,29 @@ namespace CompatBot.EventHandlers
             await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
         }
 
-
         private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
         {
+            var bot = client.GetMember(channel.Guild, client.CurrentUser);
+            if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
+            {
+                Config.Log.Debug($"No permissions to react in #{channel.Name}");
+                return;
+            }
+
             var mood = client.GetEmoji(":sqvat:", "😒");
-            if (message.Reactions.Any(r => r.Emoji == RidN && r.IsMe))
+            if (message.Reactions.Any(r => r.Emoji == mood && r.IsMe))
                 return;
 
-            var reactionMsg = message
-                .Reactions
-                .SkipWhile(r => r.Emoji != RidM && r.Emoji != M)
-                .Select(r => r.Emoji)
-                .ToList();
-            var hit = false;
-            for (var i = 0; i < reactionMsg.Count - 2; i++)
-                if ((reactionMsg[i] == RidM || reactionMsg[i] == M)
-                    && reactionMsg[i + 1] == RidG
-                    && reactionMsg[i + 2] == RidS)
-                {
-                    hit = true;
-                    break;
-                }
-            if (hit)
+            var reactionMsg = string.Concat(message.Reactions.Select(r => TextMap.TryGetValue(r.Emoji, out var txt) ? txt : " ")).Trim();
+            if (string.IsNullOrEmpty(reactionMsg))
+                return;
+
+            Config.Log.Debug("Emoji text: " + reactionMsg);
+            if (reactionMsg.ToUpperInvariant().Contains("MGS"))
             {
                 await message.ReactWithAsync(client, mood).ConfigureAwait(false);
-                await message.ReactWithAsync(client, RidN).ConfigureAwait(false);
-                await message.ReactWithAsync(client, RidO).ConfigureAwait(false);
+                await message.ReactWithAsync(client, DiscordEmoji.FromUnicode("🇳")).ConfigureAwait(false);
+                await message.ReactWithAsync(client, DiscordEmoji.FromUnicode("🇴")).ConfigureAwait(false);
             }
         }
     }
