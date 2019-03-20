@@ -86,6 +86,12 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
             }
 
+            if (!string.IsNullOrEmpty(serial)
+                && KnownMotionControlsIds.Contains(serial)
+                && items["pad_handler"] is string padHandler
+                && !padHandler.StartsWith("DualShock"))
+                notes.Add("❗ This game requires motion controls, please use DS3 or DS4 gamepad");
+
             if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == EnabledMark)
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
