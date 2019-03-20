@@ -58,11 +58,19 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
         };
 
-        private static readonly string[] KnownWriteColorBuffersIds =
+        private static readonly HashSet<string> KnownWriteColorBuffersIds = new HashSet<string>
         {
             "BLES00932", "BLUS30443", "BCJS70013", "BCJS30022", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
             "BCES00510", "BCUS98111", "BCJS37001", "NPUA70080", // God of War 3 / Demo
+        };
+
+        private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
+        {
+            "BCES00797", "BCES00802", "BCUS98164", "BCJS30040", "NPEA90053", "NPEA90076", "NPUA70088", "NPUA70112", // heavy rain
+            "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
+            "NPEA00094", "NPEA00250", "NPJA00039", "NPUA80083", // flower
+            "NPEA00036", "NPUA80069", "NPJA00004", // locoroco
         };
 
         private static readonly HashSet<string> KnownBogusLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)

@@ -113,6 +113,15 @@ namespace CompatBot.EventHandlers.LogParsing
             },
             new LogSection // Audio, Input/Output, System, Net, Miscellaneous
             {
+                Extractors = new Dictionary<string, Regex>
+                {
+                    ["Renderer:"] = new Regex("Renderer: (?<audio_backend>.*?)\r?$", DefaultOptions),
+                    ["Downmix to Stereo:"] = new Regex("Downmix to Stereo: (?<audio_stereo>.*?)\r?$", DefaultOptions),
+                    ["Enable Buffering:"] = new Regex("Enable Buffering: (?<audio_buffering>.*?)\r?$", DefaultOptions),
+                    ["Enable Time Stretching:"] = new Regex("Enable Time Stretching: (?<audio_stretching>.*?)\r?$", DefaultOptions),
+
+                    ["Pad:"] = new Regex("Pad: (?<pad_handler>.*?)\r?$", DefaultOptions),
+                },
                 EndTrigger = "Log:",
             },
             new LogSection 

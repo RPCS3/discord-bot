@@ -38,7 +38,11 @@ namespace CompatBot.Utils.ResultFormatters
                 && (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
                 && frameLimit != "30")
                 notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+
             CheckP5Settings(items, notes);
+            CheckAsurasWrathSettings(items, notes);
+            CheckJojoSettings(items, notes);
+
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
@@ -82,6 +86,12 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
             }
 
+            if (!string.IsNullOrEmpty(serial)
+                && KnownMotionControlsIds.Contains(serial)
+                && items["pad_handler"] is string padHandler
+                && !padHandler.StartsWith("DualShock"))
+                notes.Add("❗ This game requires motion controls, please use DS3 or DS4 gamepad");
+
             if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == EnabledMark)
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
@@ -117,33 +127,69 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckP5Settings(NameValueCollection items, List<string> notes)
         {
-            if (!(items["serial"] is string serial) || !P5Ids.Contains(serial))
+            if (items["serial"] is string serial && P5Ids.Contains(serial))
+            {
+                if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
+                    notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
+                if (items["spu_decoder"] is string spuDecoder)
+                {
+                    if (spuDecoder.Contains("Interpreter"))
+                        notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
+                    else if (spuDecoder.Contains("ASMJIT"))
+                        notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
+                }
+                if (items["spu_threads"] is string spuThreads && spuThreads != "2")
+                    notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
+                    notes.Add("ℹ `Accurate xFloat` is not required, please disable");
+                if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+                    notes.Add("⚠ `Frame Limiter` is not required, please disable");
+                if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
+                    notes.Add("⚠ `Write Color Buffers` is not required, please disable");
+                if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
+                    notes.Add("⚠ `Force CPU Blit` is not required, please disable");
+                if (string.IsNullOrEmpty(items["ppu_hash_patch"])
+                    && items["resolution_scale"] is string resScale
+                    && int.TryParse(resScale, out var scale)
+                    && scale > 100)
+                    notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+            }
+        }
+
+        private static void CheckAsurasWrathSettings(NameValueCollection items, List<string> notes)
+        {
+            if (items["serial"] is string serial && (serial == "BLES01227" || serial == "BLUS30721"))
+            {
+                if (items["resolution_scale"] is string resScale
+                    && int.TryParse(resScale, out var scale)
+                    && scale > 100
+                    && items["texture_scale_threshold"] is string thresholdStr
+                    && int.TryParse(thresholdStr, out var threshold)
+                    && threshold < 500)
+                    notes.Add("⚠ `Resolution Scale` over 100% requires `Resolution Scale Threshold` set to `512x512`");
+
+                if (items["af_override"] is string af && af != "Auto")
+                    notes.Add("⚠ Please use `Auto` for `Anisotropic Filter Override`");
+            }
+        }
+
+        private static readonly HashSet<string> AllStarBattleIds = new HashSet<string>
+        {
+            "BLES01986", "BLUS31405", "BLJS10217",
+            "NPEB01922", "NPUB31391", "NPJB00331",
+        };
+
+        private static void CheckJojoSettings(NameValueCollection items, List<string> notes)
+        {
+            if (!(items["serial"] is string serial))
                 return;
 
-            if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
-                notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
-            if (items["spu_decoder"] is string spuDecoder)
-            {
-                if (spuDecoder.Contains("Interpreter"))
-                    notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
-                else if (spuDecoder.Contains("ASMJIT"))
-                    notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
-            }
-            if (items["spu_threads"] is string spuThreads && spuThreads != "2")
-                notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
-            if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
-                notes.Add("ℹ `Accurate xFloat` is not required, please disable");
-            if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
-                notes.Add("⚠ `Frame Limiter` is not required, please disable");
-            if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
-                notes.Add("⚠ `Write Color Buffers` is not required, please disable");
-            if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
-                notes.Add("⚠ `Force CPU Blit` is not required, please disable");
-            if (string.IsNullOrEmpty(items["ppu_hash_patch"])
-                && items["resolution_scale"] is string resScale
-                && int.TryParse(resScale, out var scale)
-                && scale > 100)
-                notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+            if (AllStarBattleIds.Contains(serial))
+                notes.Add("ℹ Missing health bars are random");
+
+            if ((AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
+                && items["audio_buffering"] == EnabledMark)
+                notes.Add("ℹ If you experience audio issues, disable `Audio Buffering` or Pause/Unpause emulation");
         }
     }
 }
