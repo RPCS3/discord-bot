@@ -34,7 +34,7 @@ namespace CompatBot.Commands
             var sourceTerm = term;
             if (string.IsNullOrEmpty(term))
             {
-                var botMsg = await ctx.RespondAsync("Please specify term to explain").ConfigureAwait(false);
+                var botMsg = await ctx.RespondAsync("Please tell what term to explain:").ConfigureAwait(false);
                 var lastBotMessages = await ctx.Channel.GetMessagesBeforeAsync(ctx.Message.Id, 10).ConfigureAwait(false);
                 var showList = true;
                 foreach (var pastMsg in lastBotMessages)
@@ -50,7 +50,7 @@ namespace CompatBot.Commands
                 var interact = ctx.Client.GetInteractivity();
                 var newMessage = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
                 await botMsg.DeleteAsync().ConfigureAwait(false);
-                if (string.IsNullOrEmpty(newMessage?.Message?.Content))
+                if (string.IsNullOrEmpty(newMessage?.Message?.Content) || newMessage.Message.Content.StartsWith(Config.CommandPrefix))
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                     return;
