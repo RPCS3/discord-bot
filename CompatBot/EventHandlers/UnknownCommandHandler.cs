@@ -4,6 +4,7 @@ using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
@@ -15,7 +16,7 @@ namespace CompatBot.EventHandlers
     {
         public static async Task OnError(CommandErrorEventArgs e)
         {
-            if (e.Context.User.IsBot)
+            if (e.Context.User.IsBotSafeCheck())
                 return;
 
             if (!(e.Exception is CommandNotFoundException cnfe))

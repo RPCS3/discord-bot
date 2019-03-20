@@ -17,6 +17,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
+using CompatBot.Utils.Extensions;
 
 namespace CompatBot.EventHandlers
 {
@@ -51,7 +52,7 @@ namespace CompatBot.EventHandlers
         public static Task OnMessageCreated(MessageCreateEventArgs args)
         {
             var message = args.Message;
-            if (message.Author.IsBot)
+            if (message.Author.IsBotSafeCheck())
                 return Task.CompletedTask;
 
             if (!string.IsNullOrEmpty(message.Content)

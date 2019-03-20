@@ -9,6 +9,7 @@ using CompatApiClient.Compression;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -62,7 +63,7 @@ namespace CompatBot.EventHandlers
             if (message.Channel.IsPrivate)
                 return true;
 
-            if (message.Author.IsBot)
+            if (message.Author.IsBotSafeCheck())
                 return true;
 
 #if !DEBUG

@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 
@@ -17,7 +18,7 @@ namespace CompatBot.EventHandlers
 
         public static Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (args.Author.IsBot
+            if (args.Author.IsBotSafeCheck()
                 && !args.Author.IsCurrent
                 && "github".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
                 && !string.IsNullOrEmpty(args.Message.Content)
