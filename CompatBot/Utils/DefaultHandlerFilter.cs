@@ -1,4 +1,5 @@
-﻿using DSharpPlus.Entities;
+﻿using CompatBot.Utils.Extensions;
+using DSharpPlus.Entities;
 
 namespace CompatBot.Utils
 {
@@ -6,7 +7,7 @@ namespace CompatBot.Utils
     {
         internal static bool IsFluff(DiscordMessage message)
         {
-            if (message.Author.IsBot)
+            if (message.Author.IsBotSafeCheck())
                 return true;
 
             if (string.IsNullOrEmpty(message.Content)

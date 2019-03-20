@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -57,7 +57,7 @@ namespace CompatBot.EventHandlers
         {
             try
             {
-                if (user.IsBot || channel.IsPrivate)
+                if (user.IsBotSafeCheck() || channel.IsPrivate)
                     return;
 
                 // in case it's not in cache and doesn't contain any info, including Author
@@ -127,7 +127,7 @@ namespace CompatBot.EventHandlers
                 .Select(r => r.Emoji)
                 .ToList();
             var hit = false;
-            for (var i =0; i< reactionMsg.Count - 2; i++)
+            for (var i = 0; i < reactionMsg.Count - 2; i++)
                 if ((reactionMsg[i] == RidM || reactionMsg[i] == M)
                     && reactionMsg[i + 1] == RidG
                     && reactionMsg[i + 2] == RidS)
@@ -142,6 +142,5 @@ namespace CompatBot.EventHandlers
                 await message.ReactWithAsync(client, RidO).ConfigureAwait(false);
             }
         }
-
     }
 }

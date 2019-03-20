@@ -4,6 +4,7 @@ using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -24,7 +25,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnReaction(MessageReactionAddEventArgs e)
         {
-            if (e.User.IsBot)
+            if (e.User.IsBotSafeCheck())
                 return;
 
             var emoji = e.Client.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
@@ -40,7 +41,7 @@ namespace CompatBot.EventHandlers
             if (message.Channel.IsPrivate)
                 return true;
 
-            if (message.Author.IsBot)
+            if (message.Author.IsBotSafeCheck())
                 return true;
 
 #if !DEBUG
