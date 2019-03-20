@@ -117,33 +117,50 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckP5Settings(NameValueCollection items, List<string> notes)
         {
-            if (!(items["serial"] is string serial) || !P5Ids.Contains(serial))
-                return;
-
-            if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
-                notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
-            if (items["spu_decoder"] is string spuDecoder)
+            if (items["serial"] is string serial && P5Ids.Contains(serial))
             {
-                if (spuDecoder.Contains("Interpreter"))
-                    notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
-                else if (spuDecoder.Contains("ASMJIT"))
-                    notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
+                if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
+                    notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
+                if (items["spu_decoder"] is string spuDecoder)
+                {
+                    if (spuDecoder.Contains("Interpreter"))
+                        notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
+                    else if (spuDecoder.Contains("ASMJIT"))
+                        notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
+                }
+                if (items["spu_threads"] is string spuThreads && spuThreads != "2")
+                    notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
+                    notes.Add("ℹ `Accurate xFloat` is not required, please disable");
+                if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+                    notes.Add("⚠ `Frame Limiter` is not required, please disable");
+                if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
+                    notes.Add("⚠ `Write Color Buffers` is not required, please disable");
+                if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
+                    notes.Add("⚠ `Force CPU Blit` is not required, please disable");
+                if (string.IsNullOrEmpty(items["ppu_hash_patch"])
+                    && items["resolution_scale"] is string resScale
+                    && int.TryParse(resScale, out var scale)
+                    && scale > 100)
+                    notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
             }
-            if (items["spu_threads"] is string spuThreads && spuThreads != "2")
-                notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
-            if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
-                notes.Add("ℹ `Accurate xFloat` is not required, please disable");
-            if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
-                notes.Add("⚠ `Frame Limiter` is not required, please disable");
-            if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
-                notes.Add("⚠ `Write Color Buffers` is not required, please disable");
-            if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
-                notes.Add("⚠ `Force CPU Blit` is not required, please disable");
-            if (string.IsNullOrEmpty(items["ppu_hash_patch"])
-                && items["resolution_scale"] is string resScale
-                && int.TryParse(resScale, out var scale)
-                && scale > 100)
-                notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+        }
+
+        private static void CheckAsurasWrathSettings(NameValueCollection items, List<string> notes)
+        {
+            if (items["serial"] is string serial && (serial == "BLES01227" || serial == "BLUS30721"))
+            {
+                if (items["resolution_scale"] is string resScale
+                    && int.TryParse(resScale, out var scale)
+                    && scale > 100
+                    && items["texture_scale_threshold"] is string thresholdStr
+                    && int.TryParse(thresholdStr, out var threshold)
+                    && threshold < 500)
+                    notes.Add("⚠ `Resolution Scale` over 100% requires `Resolution Scale Threshold` set to `512x512`");
+
+                if (items["af_override"] is string af && af != "Auto")
+                    notes.Add("⚠ Please use `Auto` for `Anisotropic Filter Override`");
+            }
         }
     }
 }
