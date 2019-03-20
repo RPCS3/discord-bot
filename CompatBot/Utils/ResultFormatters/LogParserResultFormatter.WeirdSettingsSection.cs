@@ -38,7 +38,11 @@ namespace CompatBot.Utils.ResultFormatters
                 && (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
                 && frameLimit != "30")
                 notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+
             CheckP5Settings(items, notes);
+            CheckAsurasWrathSettings(items, notes);
+            //todo: add jojo checks
+
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
