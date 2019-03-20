@@ -479,6 +479,9 @@ namespace CompatBot.Utils.ResultFormatters
 
         internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source, LogParseState state = null)
         {
+            if (state?.Error == LogParseState.ErrorCode.PiracyDetected)
+                return builder;
+
             if (message != null)
             {
                 var author = message.Author;
