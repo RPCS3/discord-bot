@@ -10,8 +10,8 @@ namespace CompatBot.EventHandlers
     internal static class NewBuildsMonitor
     {
         private static readonly Regex BuildResult = new Regex("build (succeed|pass)ed", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromHours(1);
-        private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromMinutes(20);
+        private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(20);
         public static TimeSpan CheckInterval { get; private set; } = PassiveCheckInterval;
         public static DateTime? RapidStart { get; private set; }
 
