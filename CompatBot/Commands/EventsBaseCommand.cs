@@ -61,6 +61,13 @@ namespace CompatBot.Commands
                 if (firstNamedEvent == null)
                 {
                     var noEventMsg = $"No information about the upcoming {eventName.Sanitize()} at the moment";
+                    if (eventName.Length > 10)
+                        noEventMsg = "No information about such event at the moment";
+                    else if (ctx.User.Id == 259997001880436737ul)
+                    {
+                        noEventMsg = "Haha, very funny, <@259997001880436737>. So original. Never saw this joke before.";
+                        promo = null;
+                    }
                     if (!string.IsNullOrEmpty(promo))
                         noEventMsg += promo;
                     await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
