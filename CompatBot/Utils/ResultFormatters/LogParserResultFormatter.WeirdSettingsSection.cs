@@ -34,14 +34,15 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
             var serial = items["serial"];
-            if (items["frame_limit"] is string frameLimit
-                && (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
-                && frameLimit != "30")
-                notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
 
-            CheckP5Settings(items, notes);
-            CheckAsurasWrathSettings(items, notes);
-            CheckJojoSettings(items, notes);
+            if (!string.IsNullOrEmpty(serial))
+            {
+                CheckP5Settings(serial, items, notes);
+                CheckAsurasWrathSettings(serial, items, notes);
+                CheckJojoSettings(serial, items, notes);
+                CheckSimpsonsSettings(serial, items, notes);
+                CheckNierSettings(serial, items, notes);
+            }
 
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
@@ -96,12 +97,11 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
-/*
-                if (spuBlockSize == "Giga")
-                    notes.AppendLine("`Giga` mode for `SPU Block Size` is strongly not recommended to use");
-*/
-                if (spuBlockSize != "Safe")
+                if ((string.IsNullOrEmpty(serial) || !KnownMegaSpuBlockSizeIds.Contains(serial))
+                    && spuBlockSize != "Safe")
+                {
                     notes.Add($"⚠ Please use `Safe` mode for `SPU Block Size`. `{spuBlockSize}` is currently unstable.");
+                }
             }
 
             if (items["lib_loader"] is string libLoader
@@ -125,9 +125,9 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB02436", "NPUB31848", "NPJB00769",
         };
 
-        private static void CheckP5Settings(NameValueCollection items, List<string> notes)
+        private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes)
         {
-            if (items["serial"] is string serial && P5Ids.Contains(serial))
+            if (P5Ids.Contains(serial))
             {
                 if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
                     notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
@@ -156,9 +156,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static void CheckAsurasWrathSettings(NameValueCollection items, List<string> notes)
+        private static void CheckAsurasWrathSettings(string serial, NameValueCollection items, List<string> notes)
         {
-            if (items["serial"] is string serial && (serial == "BLES01227" || serial == "BLUS30721"))
+            if (serial == "BLES01227" || serial == "BLUS30721")
             {
                 if (items["resolution_scale"] is string resScale
                     && int.TryParse(resScale, out var scale)
@@ -179,17 +179,40 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB01922", "NPUB31391", "NPJB00331",
         };
 
-        private static void CheckJojoSettings(NameValueCollection items, List<string> notes)
+        private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes)
         {
-            if (!(items["serial"] is string serial))
-                return;
-
             if (AllStarBattleIds.Contains(serial))
                 notes.Add("ℹ Missing health bars are random");
 
             if ((AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
                 && items["audio_buffering"] == EnabledMark)
                 notes.Add("ℹ If you experience audio issues, disable `Audio Buffering` or Pause/Unpause emulation");
+        }
+
+        private static void CheckSimpsonsSettings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (serial == "BLES00142" || serial == "BLUS30065")
+            {
+                notes.Add("ℹ This game has a controller initialization bug. Simply unplug and replug it until it works.");
+            }
+        }
+
+        private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
+            {
+                if (items["spu_decoder"] is string spuDecoder
+                    && spuDecoder.Contains("LLVM")
+                    && items["spu_block_size"] is string spuBlockSize
+                    && spuBlockSize != "Mega")
+                {
+                    notes.Add("⚠ This game needs `SPU Block Size` set to `Mega` when using `SPU Decoder` `Recompiler (LLVM)`");
+                }
+
+                if (items["frame_limit"] is string frameLimit
+                    && frameLimit != "30")
+                    notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+            }
         }
     }
 }
