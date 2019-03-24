@@ -12,7 +12,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class MegaHandler : BaseSourceHandler
     {
-        private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
         private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(\.co)?\.nz/#(?<mega_id>[^/>\s]+))", DefaultOptions);
         private static readonly IProgress<double> doodad = new Progress<double>(_ => { });
 
