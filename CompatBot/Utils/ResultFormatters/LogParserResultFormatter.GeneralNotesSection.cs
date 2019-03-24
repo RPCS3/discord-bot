@@ -157,7 +157,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (driverVersion >= NvidiaFullscreenBugMinVersion
                         && driverVersion < NvidiaFullscreenBugMaxVersion
                         && items["renderer"] == "Vulkan")
-                        notes.Add("⚠ **400 series** nVidia drivers can cause random screen freezes when playing in **fullscreen** using **Vulkan** renderer on **first monitor**");
+                        notes.Add("ℹ **400 series** nVidia drivers can cause random screen freezes when playing in **fullscreen** using **Vulkan** renderer on the **first monitor**");
                 }
             }
 
