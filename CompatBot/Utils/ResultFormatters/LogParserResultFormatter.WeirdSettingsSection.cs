@@ -212,6 +212,9 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["frame_limit"] is string frameLimit
                     && frameLimit != "30")
                     notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+
+                if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
+                    notes.Add("ℹ To enter the character name, disable `Native UI` and use Japanese text");
             }
         }
     }
