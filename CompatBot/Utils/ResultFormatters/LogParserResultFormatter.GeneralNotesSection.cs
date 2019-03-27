@@ -190,7 +190,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (patches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
                     notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
                 if (patches.Values.Any(n => n == 12 || n == 12+27))
-                    notes.Add("⚠ An old version of the 60 fps patch is used, please update or disable");
+                    notes.Add("⚠ An old version of the 60 fps patch is used");
             }
 
             if (KnownDisableVertexCacheIds.Contains(serial))
