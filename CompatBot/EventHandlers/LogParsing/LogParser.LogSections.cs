@@ -121,6 +121,8 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Enable Time Stretching:"] = new Regex("Enable Time Stretching: (?<audio_stretching>.*?)\r?$", DefaultOptions),
 
                     ["Pad:"] = new Regex("Pad: (?<pad_handler>.*?)\r?$", DefaultOptions),
+
+                    ["Use native user interface:"] = new Regex("Use native user interface: (?<native_ui>.*?)\r?$", DefaultOptions),
                 },
                 EndTrigger = "Log:",
             },

@@ -169,11 +169,31 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("❌ Shader compilation error on unsupported GPU");
             }
 
+            var serial = items["serial"] ?? "";
             if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
                 notes.Add("ℹ Game-specific patches were applied");
+            if (P5Ids.Contains(serial))
+            {
+                /*
+                 * mod support = 27
+                 * log access  = 39
+                 * intro skip  = 1
+                 * 60 fps v1   = 12
+                 * 60 fps v2   = 268
+                 * disable hud = 10
+                 * random music= 19
+                 * disable blur= 8
+                 * distortion  = 8
+                 * 100% dist   = 8
+                 */
+                var patches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+                if (patches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
+                    notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
+                if (patches.Values.Any(n => n == 12 || n == 12+27))
+                    notes.Add("⚠ An old version of the 60 fps patch is used");
+            }
 
-            if (items["serial"] is string serial
-                && KnownDisableVertexCacheIds.Contains(serial))
+            if (KnownDisableVertexCacheIds.Contains(serial))
             {
                 if (items["vertex_cache"] == DisabledMark)
                     notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
