@@ -153,6 +153,11 @@ namespace CompatBot.Utils.ResultFormatters
                     && int.TryParse(resScale, out var scale)
                     && scale > 100)
                     notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+                var patches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+                /*
+                 * mod support = 27
+                 *
+                 */
             }
         }
 
