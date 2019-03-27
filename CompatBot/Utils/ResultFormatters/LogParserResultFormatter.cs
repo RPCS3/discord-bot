@@ -482,6 +482,28 @@ namespace CompatBot.Utils.ResultFormatters
                 .ToList();
         }
 
+        private static Dictionary<string, int> GetPatches(string hashList, string patchesList)
+        {
+            if (string.IsNullOrEmpty(hashList) || string.IsNullOrEmpty(patchesList))
+                return new Dictionary<string, int>(0);
+
+            var hashes = hashList.Split(Environment.NewLine);
+            var patches = patchesList.Split(Environment.NewLine);
+            if (hashes.Length != patches.Length)
+            {
+                Config.Log.Warn($"Hashes count: {hashes.Length}, Patches count: {patches.Length}");
+                return new Dictionary<string, int>(0);
+            }
+
+            var result = new Dictionary<string, int>();
+            for (var i = 0; i < hashes.Length; i++)
+            {
+                int.TryParse(patches[i], out var pCount);
+                result[hashes[i]] = pCount;
+            }
+            return result;
+        }
+
         internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source, LogParseState state = null)
         {
             if (state?.Error == LogParseState.ErrorCode.PiracyDetected)

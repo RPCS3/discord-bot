@@ -153,6 +153,23 @@ namespace CompatBot.Utils.ResultFormatters
                     && int.TryParse(resScale, out var scale)
                     && scale > 100)
                     notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+                /*
+                 * mod support = 27
+                 * log access  = 39
+                 * intro skip  = 1
+                 * 60 fps v1   = 12
+                 * 60 fps v2   = 268
+                 * disable hud = 10
+                 * random music= 19
+                 * disable blur= 8
+                 * distortion  = 8
+                 * 100% dist   = 8
+                 */
+                var patches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+                if (patches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
+                    notes.Add("ℹ 60 fps patch enabled; please disable if you have any strange issues");
+                if (patches.Values.Any(n => n == 12 || n == 12+27))
+                    notes.Add("⚠ An old version of the 60 fps patch is used, please update or disable");
             }
         }
 

@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers.LogParsing
          *
          * Parser scans the log from section to section with a sliding window of up to 50 lines of text
          * Triggers are scanned for in the first line of said sliding window
-         * If trigger is matched, then the associated reges will be run on THE WHOLE sliding window
+         * If trigger is matched, then the associated regex will be run on THE WHOLE sliding window
          * If any data was captured, it will be stored in the current collection of items with the key of the explicit capture group of regex
          *
          * Due to limitations, REGEX can't contain anything other than ASCII (including triggers)
