@@ -95,10 +95,16 @@ namespace CompatBot.Utils.ResultFormatters
 
                 if (cpu.StartsWith("Intel"))
                 {
-                    if (cpu.Contains("Core2")
-                        || cpu.Contains("Celeron")
-                        || cpu.Contains("Atom")
-                        || cpu.Contains("Pentium"))
+                    if (!items["cpu_extensions"].Contains("TSX")
+                        && (cpu.Contains("Core2")
+                            || cpu.Contains("Celeron")
+                            || cpu.Contains("Atom")
+                            || cpu.Contains("Pentium")
+                            || cpu.EndsWith('U')
+                            || cpu.EndsWith('H')
+                            || cpu.EndsWith('M')
+                            || cpu.Contains('Y')
+                            || cpu.EndsWith("HQ")))
                         notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
                 }
             }
