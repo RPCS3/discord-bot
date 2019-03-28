@@ -31,7 +31,9 @@ namespace CompatBot.Utils.ResultFormatters
                 items["thread_count"] = m.Groups["thread_count"].Value;
                 items["memory_amount"] = m.Groups["memory_amount"].Value;
                 items["cpu_extensions"] = m.Groups["cpu_extensions"].Value;
-                systemInfo = $"RPCS3 v{m.Groups["version_string"].Value} {m.Groups["stage"].Value} | {m.Groups["branch"].Value}";
+                systemInfo = $"RPCS3 v{m.Groups["version_string"].Value} {m.Groups["stage"].Value}";
+                if (!string.IsNullOrEmpty(m.Groups["branch"].Value))
+                    systemInfo += " | " + m.Groups["branch"].Value;
                 if (!string.IsNullOrEmpty(items["fw_version_installed"]))
                     systemInfo += " | FW " + items["fw_version_installed"];
                 if (!string.IsNullOrEmpty(items["os_path"]))

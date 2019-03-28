@@ -229,7 +229,10 @@ namespace CompatBot.Utils.ResultFormatters
 
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             var buildBranch = items["build_branch"]?.ToLowerInvariant();
-            if (updateInfo != null && (buildBranch == "head" || buildBranch == "spu_perf"))
+            if (updateInfo != null
+                && (buildBranch == "head"
+                    || buildBranch == "spu_perf"
+                    || string.IsNullOrEmpty(buildBranch) && updateInfo.CurrentBuild != null))
             {
                 string prefix = "⚠";
                 string timeDeltaStr;
