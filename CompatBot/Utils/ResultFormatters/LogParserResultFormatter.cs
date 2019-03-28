@@ -43,7 +43,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
         private static readonly Version NvidiaFullscreenBugMinVersion = new Version(400, 0);
         private static readonly Version NvidiaFullscreenBugMaxVersion = new Version(499, 99);
-        private static readonly Version NvidiaRecommendedOldWindowsVersion = new Version(399, 41);
+        private static readonly Version NvidiaRecommendedOldWindowsVersion = new Version(399, 24);
 
         private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
