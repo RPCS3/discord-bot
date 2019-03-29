@@ -3,6 +3,8 @@ RPCS3 Compatibility Bot
 
 This is a tech support / moderation / crowd entertainment bot for the [RPCS3 discord server](https://discord.me/rpcs3) [![RPCS3 discord server](https://discordapp.com/api/guilds/272035812277878785/widget.png)](https://discord.me/rpcs3)
 
+You can read the design and implementation notes by visiting the folders in the web interface, or from the [architecture overview notes](architecture.md).
+
 Development Requirements
 ------------------------
 * [.NET Core 2.1 SDK](https://www.microsoft.com/net/download/windows) or newer
@@ -19,7 +21,7 @@ Runtime Requirements
 * Optionally Google API credentials to access Google Drive:
   * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
   * Select the project and enable [Google Drive API](https://console.developers.google.com/apis/library/drive.googleapis.com)
-  * Open [API & Services Credendials](https://console.developers.google.com/apis/credentials)
+  * Open [API & Services Credentials](https://console.developers.google.com/apis/credentials)
   * Create new credentials:
     * **Service account** credentials
     * New service account
@@ -53,3 +55,4 @@ How to Run in Production
 External resources that need manual updates
 -------------------------------------------
 * [Unicode confusables](http://www.unicode.org/Public/security/latest/confusables.txt) gzipped, for Homoglyph checks
+* Optionally [Redump disc key database](http://redump.org/downloads/) in text format (requires membership)
