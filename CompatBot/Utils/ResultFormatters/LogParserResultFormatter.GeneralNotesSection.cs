@@ -79,6 +79,9 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
 
+            if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
+                notes.Add($"⚠ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
+
             if (items["cpu_model"] is string cpu)
             {
                 if (cpu.StartsWith("AMD"))
@@ -101,16 +104,13 @@ namespace CompatBot.Utils.ResultFormatters
                             || cpu.Contains("Atom")
                             || cpu.Contains("Pentium")
                             || cpu.EndsWith('U')
-                            || cpu.EndsWith('H')
                             || cpu.EndsWith('M')
                             || cpu.Contains('Y')
-                            || cpu.EndsWith("HQ")))
+                            || ((cpu.EndsWith("HQ") || cpu.EndsWith('H'))
+                                && threadCount < 8)))
                         notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
                 }
             }
-
-            if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
-                notes.Add($"⚠ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
 
             var supportedGpu = true;
             Version oglVersion = null;
