@@ -162,7 +162,7 @@ namespace CompatBot.EventHandlers
 
         internal static (bool needToChill, bool needToThank) NeedToSilence(DiscordMessage msg)
         {
-            if (string.IsNullOrEmpty(msg.Content))
+            if (string.IsNullOrEmpty(msg?.Content))
                 return (false, false);
 
             var needToChill = false;
@@ -175,7 +175,7 @@ namespace CompatBot.EventHandlers
                                                   else
                                                       needToThank = true;
                                               });
-            var mentionsBot = msgContent.Contains("bot") || (msg.MentionedUsers?.Any(u => u.IsCurrent) ?? false);
+            var mentionsBot = msgContent.Contains("bot") || (msg.MentionedUsers?.Any(u => { try { return u.IsCurrent; } catch { return false; }}) ?? false);
             return (needToChill && mentionsBot, needToThank && mentionsBot);
         }
 
