@@ -10,7 +10,7 @@ using DSharpPlus.CommandsNext.Attributes;
 
 namespace CompatBot.Commands
 {
-    [Group("commands"), Aliases("command"), RequiresBotModRole]
+    [Group("commands"), Aliases("command"), RequiresBotSudoerRole]
     [Description("Used to enabe and disable bot commands at runtime")]
     public sealed class CommandsManagement : BaseCommandModule
     {
