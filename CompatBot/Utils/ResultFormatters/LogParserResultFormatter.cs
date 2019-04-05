@@ -47,10 +47,14 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
+			// Demon's Souls
             {"BLES00932", "NPEB01202"},
             {"BLUS30443", "NPUB30910"},
             //{"BCJS30022", "NPJA00102"},
             {"BCJS70013", "NPJA00102"},
+
+			// White Knight Chronicles II
+			{ "BCJS30042", "NPJA00104" }
         };
 
         private static readonly string[] KnownDisableVertexCacheIds =
