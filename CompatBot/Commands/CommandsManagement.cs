@@ -11,7 +11,7 @@ using DSharpPlus.CommandsNext.Attributes;
 namespace CompatBot.Commands
 {
     [Group("commands"), Aliases("command"), RequiresBotModRole]
-    [Description("Used to enabe and disable bot commands at runtime")]
+    [Description("Used to enable and disable bot commands at runtime")]
     public sealed class CommandsManagement : BaseCommandModule
     {
         [Command("list"), Aliases("show")]

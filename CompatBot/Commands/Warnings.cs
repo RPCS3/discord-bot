@@ -79,7 +79,7 @@ namespace CompatBot.Commands
         }
 
         [Command("clear"), RequiresBotModRole]
-        [Description("Removes **all** warings for a user")]
+        [Description("Removes **all** warnings for a user")]
         public Task Clear(CommandContext ctx, [Description("User to clear warnings for")] DiscordUser user)
         {
             return Clear(ctx, user.Id);
