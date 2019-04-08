@@ -150,7 +150,7 @@ Example usage:
             }
 
             [Command("since")]
-            [Description("Show additinal info about changes since specified update")]
+            [Description("Show additional info about changes since specified update")]
             public Task Since(CommandContext ctx, [Description("Commit hash of the update, such as `46abe0f31`")] string commit)
             {
                 return CheckForRpcs3Updates(ctx.Client, ctx.Channel, commit);

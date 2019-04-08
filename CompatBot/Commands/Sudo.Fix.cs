@@ -48,7 +48,7 @@ namespace CompatBot.Commands
                 }
                 catch (Exception e)
                 {
-                    Config.Log.Warn(e, "Couln't fix warning timestamps");
+                    Config.Log.Warn(e, "Couldn't fix warning timestamps");
                     await ctx.RespondAsync("Failed to fix warning timestamps").ConfigureAwait(false);
                 }
             }
@@ -77,7 +77,7 @@ namespace CompatBot.Commands
                 }
                 catch (Exception e)
                 {
-                    Config.Log.Warn(e, "Couln't fix channel mentions");
+                    Config.Log.Warn(e, "Couldn't fix channel mentions");
                     await ctx.RespondAsync("Failed to fix warning timestamps").ConfigureAwait(false);
                 }
             }

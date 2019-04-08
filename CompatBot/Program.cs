@@ -251,7 +251,7 @@ namespace CompatBot
             catch (TaskCanceledException) { }
             catch(Exception e)
             {
-                Config.Log.Fatal(e, "Experienced catastrofic failure, attempting to restart...");
+                Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
                 Sudo.Bot.Restart(InvalidChannelId);
             }
             finally
