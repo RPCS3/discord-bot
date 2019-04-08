@@ -17,13 +17,25 @@ namespace CompatBot.Commands
         {
             try
             {
-                if (ctx.Prefix == Config.AutoRemoveCommandPrefix)
+                if (ctx.Prefix == Config.AutoRemoveCommandPrefix && ModProvider.IsMod(ctx.User.Id))
                     await ctx.Message.DeleteAsync().ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to delete command message with the autodelete command prefix");
             }
+
+			if (ctx.Channel.Name == "media" && ctx.Command.QualifiedName != "warn" && ctx.Command.QualifiedName != "report")
+			{
+				Config.Log.Info($"Ignoring command from {ctx.User.Username} (<@{ctx.User.Id}>) in #media: {ctx.Message.Content}");
+				if (ctx.Member is DiscordMember member)
+				{
+					var dm = await member.CreateDmChannelAsync().ConfigureAwait(false);
+					await dm.SendMessageAsync($"Only `{Config.CommandPrefix}warn` and `{Config.CommandPrefix}report` are allowed in {ctx.Channel.Mention}").ConfigureAwait(false);
+				}
+				throw new DSharpPlus.CommandsNext.Exceptions.ChecksFailedException(ctx.Command, ctx, new CheckBaseAttribute[] { new RequiresNotMedia() });
+			}
+
             var disabledCmds = DisabledCommandsProvider.Get();
             if (disabledCmds.Contains(ctx.Command.QualifiedName) && !disabledCmds.Contains("*"))
             {
