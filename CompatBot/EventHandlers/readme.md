@@ -138,7 +138,7 @@ To reduce spam and false positives, we only redirect the calls to the appropriat
 
 If everything else fails, we show the help message that explains how to properly use the bot. And to reduce the spam further, we DM the instructions most of the time, to keep public channels clean.
 
-There's also a fun part where you can mention the bot and ask the question (denoted by the question mark at the end of the message), in whih case we redirect the query tothe [8ball](../Commands/) command.
+There's also a fun part where you can mention the bot and ask the question (denoted by the question mark at the end of the message), in which case we redirect the query to the [8ball](../Commands/) command.
 
 Username Spoof Monitor
 ----------------------
