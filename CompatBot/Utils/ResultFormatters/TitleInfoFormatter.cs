@@ -11,15 +11,15 @@ using Microsoft.Extensions.Caching.Memory;
 namespace CompatBot.Utils.ResultFormatters
 {
     internal static class TitleInfoFormatter
-    {
-        private static readonly Dictionary<string, DiscordColor> StatusColors = new Dictionary<string, DiscordColor>(StringComparer.InvariantCultureIgnoreCase)
-        {
-            {"Nothing", Config.Colors.CompatStatusNothing},
-            {"Loadable", Config.Colors.CompatStatusLoadable},
-            {"Intro", Config.Colors.CompatStatusIntro},
-            {"Ingame", Config.Colors.CompatStatusIngame},
-            {"Playable", Config.Colors.CompatStatusPlayable},
-        };
+	{
+		private static readonly Dictionary<string, DiscordColor> StatusColors = new Dictionary<string, DiscordColor>(StringComparer.InvariantCultureIgnoreCase)
+		{
+			{"Nothing", Config.Colors.CompatStatusNothing},
+			{"Loadable", Config.Colors.CompatStatusLoadable},
+			{"Intro", Config.Colors.CompatStatusIntro},
+			{"Ingame", Config.Colors.CompatStatusIngame},
+			{"Playable", Config.Colors.CompatStatusPlayable},
+		};
 
         public static string ToUpdated(this TitleInfo info)
         {
@@ -56,22 +56,15 @@ namespace CompatBot.Utils.ResultFormatters
 
         public static DiscordEmbedBuilder AsEmbed(this TitleInfo info, string titleId, string gameTitle = null, bool forLog = false, string thumbnailUrl = null)
         {
-            if (info.Status == TitleInfo.Maintenance.Status)
-                return new DiscordEmbedBuilder{Description = "API is undergoing maintenance, please try again later.", Color = Config.Colors.Maintenance};
-
-            if (info.Status == TitleInfo.CommunicationError.Status)
-                return new DiscordEmbedBuilder{Description = "Error communicating with compatibility API, please try again later.", Color = Config.Colors.Maintenance};
-
             if (string.IsNullOrWhiteSpace(gameTitle))
                 gameTitle = null;
-
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
                 var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
                 var pr = info.ToPrString(null, true);
-                var desc = $"{info.Status} since {info.ToUpdated()}";
-                if (pr is string _)
+				var desc = $"{info.Status} since {info.ToUpdated()}";
+				if (pr is string _)
                     desc += $" (PR {pr})";
                 if (!forLog && !string.IsNullOrEmpty(info.AlternativeTitle))
                     desc = info.AlternativeTitle + Environment.NewLine + desc;
@@ -95,15 +88,22 @@ namespace CompatBot.Utils.ResultFormatters
             else
             {
                 var desc = "";
-                if (!string.IsNullOrEmpty(titleId))
-                    desc = $"Product code {titleId} was not found in compatibility database";
-                var result = new DiscordEmbedBuilder
+				var embedColor = Config.Colors.Maintenance;
+				if (info.Status == TitleInfo.Maintenance.Status)
+					desc = "API is undergoing maintenance, please try again later.";
+				else if (info.Status == TitleInfo.CommunicationError.Status)
+					desc = "Error communicating with compatibility API, please try again later.";
+				else if (!string.IsNullOrEmpty(titleId))
+				{
+					desc = $"Product code {titleId} was not found in compatibility database";
+					embedColor = Config.Colors.CompatStatusUnknown;
+				}
+				var result = new DiscordEmbedBuilder
                 {
                     Description = desc,
-                    Color = Config.Colors.CompatStatusUnknown,
+                    Color = embedColor,
                     ThumbnailUrl = thumbnailUrl,
                 };
-
                 if (gameTitle == null
                     && ThumbnailProvider.GetTitleNameAsync(titleId, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult() is string titleName
                     && !string.IsNullOrEmpty(titleName))
