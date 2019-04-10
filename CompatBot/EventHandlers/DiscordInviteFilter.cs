@@ -93,7 +93,7 @@ namespace CompatBot.EventHandlers
                     await message.ReactWithAsync(
                         client,
                         Config.Reactions.Moderated,
-                        $"{message.Author.Mention} please remove this expired or invalid invite, and refrain from posting it again until you have recieved an approval from a moderator.",
+                        $"{message.Author.Mention} please remove this expired or invalid invite, and refrain from posting it again until you have received an approval from a moderator.",
                         true
                     ).ConfigureAwait(false);
                 }

@@ -37,7 +37,7 @@ Next we open the databases and run [migrations](https://docs.microsoft.com/en-us
 * BotDb is used to store all the settings and custom data for the bot.
 * ThumbsDb is used to store PSN metadata and game thumbnail links.
 
-When databases are ready, we immediately restore bot [runtime statistics](Databese/Providers/).
+When databases are ready, we immediately restore bot [runtime statistics](Database/Providers/).
 
 Next we start all the background tasks that will run periodically while the bot is up and running. This includes [thumbnail scraping](ThumbScraper/), AppVeyor build history scraper, AMD Driver version updater, etc.
 
