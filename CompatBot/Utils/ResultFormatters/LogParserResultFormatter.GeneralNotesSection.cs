@@ -27,12 +27,22 @@ namespace CompatBot.Utils.ResultFormatters
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var notes = new List<string>();
             if (items["fatal_error"] is string fatalError)
-            {
-                builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
-                if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>"))
+			{
+				var context = items["fatal_error_context"] ?? "";
+				builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
+                if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>") || context.Contains("SaveData"))
                     notes.Add("⚠ Game save data might be corrupted");
                 else if (fatalError.Contains("Could not bind OpenGL context"))
                     notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
+				else if (fatalError.Contains("file is null"))
+				{
+					if (context.StartsWith("RSX", StringComparison.InvariantCultureIgnoreCase) || fatalError.StartsWith("RSX:"))
+						notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
+					if (context.StartsWith("SPU", StringComparison.InvariantCultureIgnoreCase))
+						notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
+					if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
+						notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
+				}
             }
 
             if (items["failed_to_decrypt"] is string _)
