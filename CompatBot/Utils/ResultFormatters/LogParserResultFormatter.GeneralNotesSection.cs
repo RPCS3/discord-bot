@@ -219,8 +219,11 @@ namespace CompatBot.Utils.ResultFormatters
             bool discAsPkg = false;
             var pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
             //var thonkEmoji = discordClient.GetEmoji(":thonkang:", DiscordEmoji.FromUnicode("🤔"));
+			// this is a common scenario now that Mega did the version merge from param.sfo
+/*
             if (items["game_category"] == "GD")
                 notes.Add($"❔ Game was booted through the Game Data");
+*/
             if (items["game_category"] == "DG" || items["game_category"] == "GD") // only disc games should install game data
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
