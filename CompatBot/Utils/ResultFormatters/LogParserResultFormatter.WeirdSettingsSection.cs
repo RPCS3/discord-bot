@@ -13,7 +13,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
             var notes = new List<string>();
-            if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]))
+            if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]) || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             if (items["enable_tsx"] == "Disabled")
                 notes.Add("⚠ TSX support is disabled; performance may suffer");

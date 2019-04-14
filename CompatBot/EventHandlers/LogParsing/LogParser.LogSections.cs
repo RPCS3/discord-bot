@@ -130,7 +130,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["Log:"] = new Regex(@"Log:\s*\r?\n?\s*\{(?<log_disabled_channels>.*?)\}\r?$", DefaultOptions),
+                    ["Log:"] = new Regex(@"Log:\s*\r?\n?\s*(\{(?<log_disabled_channels>.*?)\}|(?<log_disabled_channels_multiline>(\s+\w+\:\s*\w+\r?\n)+))\r?$", DefaultOptions),
                 },
                 EndTrigger = "·",
                 OnSectionEnd = MarkAsComplete,
