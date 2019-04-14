@@ -98,6 +98,8 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     if (cpu.Contains("Ryzen"))
                     {
+                        if (threadCount < 12)
+                            notes.Add("⚠ Six cores or more is recommended for Ryzen CPUs");
                         if (items["os_path"] != "Linux"
                             && items["thread_scheduler"] == DisabledMark)
                             notes.Add("⚠ Please enable `Thread scheduler` option in the CPU Settings");
