@@ -27,12 +27,22 @@ namespace CompatBot.Utils.ResultFormatters
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var notes = new List<string>();
             if (items["fatal_error"] is string fatalError)
-            {
-                builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
-                if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>"))
+			{
+				var context = items["fatal_error_context"] ?? "";
+				builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
+                if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>") || context.Contains("SaveData"))
                     notes.Add("⚠ Game save data might be corrupted");
                 else if (fatalError.Contains("Could not bind OpenGL context"))
                     notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
+				else if (fatalError.Contains("file is null"))
+				{
+					if (context.StartsWith("RSX", StringComparison.InvariantCultureIgnoreCase) || fatalError.StartsWith("RSX:"))
+						notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
+					if (context.StartsWith("SPU", StringComparison.InvariantCultureIgnoreCase))
+						notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
+					if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
+						notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
+				}
             }
 
             if (items["failed_to_decrypt"] is string _)
@@ -176,8 +186,10 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var serial = items["serial"] ?? "";
-            if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
-                notes.Add("ℹ Game-specific patches were applied");
+            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+            var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
+            if (ppuPatches.Any() || spuPatches.Any())
+                notes.Add($"ℹ Game-specific patches were applied (PPU: {ppuPatches.Count}, SPU: {spuPatches.Count})");
             if (P5Ids.Contains(serial))
             {
                 /*
@@ -192,10 +204,9 @@ namespace CompatBot.Utils.ResultFormatters
                  * distortion  = 8
                  * 100% dist   = 8
                  */
-                var patches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
-                if (patches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
+                if (ppuPatches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
                     notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
-                if (patches.Values.Any(n => n == 12 || n == 12+27))
+                if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
                     notes.Add("⚠ An old version of the 60 fps patch is used");
             }
 
@@ -209,8 +220,11 @@ namespace CompatBot.Utils.ResultFormatters
             bool discAsPkg = false;
             var pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
             //var thonkEmoji = discordClient.GetEmoji(":thonkang:", DiscordEmoji.FromUnicode("🤔"));
+			// this is a common scenario now that Mega did the version merge from param.sfo
+/*
             if (items["game_category"] == "GD")
                 notes.Add($"❔ Game was booted through the Game Data");
+*/
             if (items["game_category"] == "DG" || items["game_category"] == "GD") // only disc games should install game data
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
