@@ -186,8 +186,10 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var serial = items["serial"] ?? "";
-            if (!string.IsNullOrEmpty(items["ppu_hash_patch"]) || !string.IsNullOrEmpty(items["spu_hash_patch"]))
-                notes.Add("ℹ Game-specific patches were applied");
+            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+            var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
+            if (ppuPatches.Any() || spuPatches.Any())
+                notes.Add($"ℹ Game-specific patches were applied (PPU: {ppuPatches.Count}, SPU: {spuPatches.Count})");
             if (P5Ids.Contains(serial))
             {
                 /*
@@ -202,10 +204,9 @@ namespace CompatBot.Utils.ResultFormatters
                  * distortion  = 8
                  * 100% dist   = 8
                  */
-                var patches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
-                if (patches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
+                if (ppuPatches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
                     notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
-                if (patches.Values.Any(n => n == 12 || n == 12+27))
+                if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
                     notes.Add("⚠ An old version of the 60 fps patch is used");
             }
 
