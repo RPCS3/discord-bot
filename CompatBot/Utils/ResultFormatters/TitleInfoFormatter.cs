@@ -93,11 +93,12 @@ namespace CompatBot.Utils.ResultFormatters
 					desc = "API is undergoing maintenance, please try again later.";
 				else if (info.Status == TitleInfo.CommunicationError.Status)
 					desc = "Error communicating with compatibility API, please try again later.";
-				else if (!string.IsNullOrEmpty(titleId))
-				{
-					desc = $"Product code {titleId} was not found in compatibility database";
-					embedColor = Config.Colors.CompatStatusUnknown;
-				}
+				else
+                {
+                    embedColor = Config.Colors.CompatStatusUnknown;
+                    if (!string.IsNullOrEmpty(titleId))
+                        desc = $"Product code {titleId} was not found in compatibility database";
+                }
 				var result = new DiscordEmbedBuilder
                 {
                     Description = desc,
