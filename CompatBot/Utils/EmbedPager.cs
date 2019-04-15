@@ -107,7 +107,7 @@ namespace CompatBot.Utils
                 if (first[i] == last[i])
                     commonPrefix += first[i];
                 else
-                    return $"{commonPrefix}{first[i]}-{commonPrefix}{last[i]}";
+                    return $"{(commonPrefix + first[i]).TrimEnd()}-{(commonPrefix + last[i]).TrimEnd()}";
             }
             return commonPrefix;
         }
