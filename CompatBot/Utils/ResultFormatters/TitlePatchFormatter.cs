@@ -57,9 +57,9 @@ namespace CompatBot.Utils.ResultFormatters
                 embedBuilder.Description = $"⏬ [{Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
             }
             else if (patch != null)
-                embedBuilder.Description = "No updates were found";
+                embedBuilder.Description = "No updates available";
             else
-                embedBuilder.Description = "Unknown product code";
+                embedBuilder.Description = "No update information available";
             if (!result.Any() || embedBuilder.Fields.Any())
                 result.Add(embedBuilder);
             return result;
