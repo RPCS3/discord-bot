@@ -35,6 +35,13 @@ namespace CompatBot.Utils.ResultFormatters
             }
             var serial = items["serial"];
 
+/*
+            if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
+                notes.Add("⚠ Interpreter as `PPU Decoder` is not required; please use recompiler for better performance");
+            if (items["spu_decoder"] is string spuDecoder && spuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
+                notes.Add("⚠ Interpreter as `SPU Decoder` is not required; please use recompiler for better performance");
+*/
+
             if (!string.IsNullOrEmpty(serial))
             {
                 CheckP5Settings(serial, items, notes);
