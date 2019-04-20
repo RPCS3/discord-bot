@@ -29,8 +29,8 @@ namespace CompatBot.Commands.Converters
                     from g in guildList
                     from ch in g.Channels
                     select ch
-                ).FirstOrDefault(xc => xc.Id == cid && xc.Type == ChannelType.Text);
-                var ret = result == null ? Optional<DiscordChannel>.FromNoValue() : Optional<DiscordChannel>.FromValue(result);
+                ).FirstOrDefault(xc => xc.Key == cid && xc.Value?.Type == ChannelType.Text);
+                var ret = result.Value == null ? Optional.FromNoValue<DiscordChannel>() : Optional.FromValue(result.Value);
                 return ret;
             }
 
@@ -41,8 +41,8 @@ namespace CompatBot.Commands.Converters
                     from g in guildList
                     from ch in g.Channels
                     select ch
-                ).FirstOrDefault(xc => xc.Id == cid && xc.Type == ChannelType.Text);
-                var ret = result != null ? Optional<DiscordChannel>.FromValue(result) : Optional<DiscordChannel>.FromNoValue();
+                ).FirstOrDefault(xc => xc.Key == cid && xc.Value?.Type == ChannelType.Text);
+                var ret = result.Value == null ? Optional.FromNoValue<DiscordChannel>() : Optional.FromValue(result.Value);
                 return ret;
             }
 
@@ -53,8 +53,8 @@ namespace CompatBot.Commands.Converters
                 from g in guildList
                 from ch in g.Channels
                 select ch
-            ).FirstOrDefault(xc => xc.Name.ToLowerInvariant() == value && xc.Type == ChannelType.Text);
-            return chn != null ? Optional<DiscordChannel>.FromValue(chn) : Optional<DiscordChannel>.FromNoValue();
+            ).FirstOrDefault(xc => xc.Value?.Name.ToLowerInvariant() == value && xc.Value?.Type == ChannelType.Text);
+            return chn.Value == null ? Optional.FromNoValue<DiscordChannel>() : Optional.FromValue(chn.Value);
         }
     }
 }

@@ -73,13 +73,13 @@ namespace CompatBot.Commands
                 var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ch).ConfigureAwait(false);
                 await msg.DeleteAsync().ConfigureAwait(false);
                 msg = null;
-                if (string.IsNullOrEmpty(response?.Message?.Content))
+                if (string.IsNullOrEmpty(response.Result?.Content))
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                     return;
                 }
 
-                search = response.Message.Content;
+                search = response.Result.Content;
             }
 
             string titleId = null;

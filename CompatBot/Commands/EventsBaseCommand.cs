@@ -11,6 +11,7 @@ using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 
@@ -265,8 +266,8 @@ namespace CompatBot.Commands
             var skipEventNameStep = !string.IsNullOrEmpty(eventName);
             DiscordMessage msg = null;
             string errorMsg = null;
-            MessageContext txt;
-            ReactionContext emoji;
+            DiscordMessage txt;
+            MessageReactionAddEventArgs emoji;
 
         step1:
             // step 1: get the new start date
@@ -287,7 +288,7 @@ namespace CompatBot.Commands
             }
             else if (txt != null)
             {
-                var newStartTime = FixTimeString(txt.Message.Content);
+                var newStartTime = FixTimeString(txt.Content);
                 if (!DateTime.TryParse(newStartTime, out var newTime))
                 {
                     errorMsg = $"Couldn't parse `{newStartTime}` as a start date and time";
@@ -325,10 +326,10 @@ namespace CompatBot.Commands
             }
             else if (txt != null)
             {
-                var newLength = await TryParseTimeSpanAsync(ctx, txt.Message.Content, false).ConfigureAwait(false);
+                var newLength = await TryParseTimeSpanAsync(ctx, txt.Content, false).ConfigureAwait(false);
                 if (!newLength.HasValue)
                 {
-                    errorMsg = $"Couldn't parse `{txt.Message.Content}` as a duration";
+                    errorMsg = $"Couldn't parse `{txt.Content}` as a duration";
                     goto step2;
                 }
 
@@ -358,7 +359,7 @@ namespace CompatBot.Commands
                     evt.EventName = null;
             }
             else if (txt != null)
-                evt.EventName = string.IsNullOrWhiteSpace(txt.Message.Content) || txt.Message.Content == "-" ? null : txt.Message.Content;
+                evt.EventName = string.IsNullOrWhiteSpace(txt.Content) || txt.Content == "-" ? null : txt.Content;
             else
                 return (false, msg);
 
@@ -388,13 +389,13 @@ namespace CompatBot.Commands
             }
             else if (txt != null)
             {
-                if (string.IsNullOrEmpty(txt.Message.Content))
+                if (string.IsNullOrEmpty(txt.Content))
                 {
                     errorMsg = "Entry title cannot be empty";
                     goto step4;
                 }
 
-                evt.Name = txt.Message.Content;
+                evt.Name = txt.Content;
             }
             else
                 return (false, msg);
@@ -421,12 +422,12 @@ namespace CompatBot.Commands
                 if (emoji.Emoji == firstPage)
                     goto step1;
             }
-            else if (!string.IsNullOrEmpty(txt?.Message.Content))
+            else if (!string.IsNullOrEmpty(txt?.Content))
             {
                 if (!evt.IsComplete())
                     goto step5;
 
-                switch (txt.Message.Content.ToLowerInvariant())
+                switch (txt.Content.ToLowerInvariant())
                 {
                     case "yes":
                     case "y":

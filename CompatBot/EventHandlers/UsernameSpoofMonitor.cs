@@ -79,7 +79,7 @@ namespace CompatBot.EventHandlers
         internal static List<DiscordMember> GetPotentialVictims(DiscordClient client, DiscordMember newMember, bool checkUsername, bool checkNickname, List<DiscordMember> listToCheckAgainst = null)
         {
             var membersWithRoles = listToCheckAgainst ??
-                                   client.Guilds.SelectMany(guild => guild.Value.Members)
+                                   client.Guilds.SelectMany(guild => guild.Value.Members.Values)
                                        .Where(m => m.Roles.Any())
                                        .OrderByDescending(m => m.Hierarchy)
                                        .ThenByDescending(m => m.JoinedAt)

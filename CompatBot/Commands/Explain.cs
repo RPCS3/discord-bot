@@ -50,13 +50,13 @@ namespace CompatBot.Commands
                 var interact = ctx.Client.GetInteractivity();
                 var newMessage = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
                 await botMsg.DeleteAsync().ConfigureAwait(false);
-                if (string.IsNullOrEmpty(newMessage?.Message?.Content) || newMessage.Message.Content.StartsWith(Config.CommandPrefix))
+                if (string.IsNullOrEmpty(newMessage.Result?.Content) || newMessage.Result.Content.StartsWith(Config.CommandPrefix))
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                     return;
                 }
 
-                sourceTerm = term = newMessage.Message.Content;
+                sourceTerm = term = newMessage.Result.Content;
             }
 
             if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
