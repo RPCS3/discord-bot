@@ -2,20 +2,21 @@
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 
 namespace CompatBot.Utils
 {
     public static class InteractivityExtensions
     {
-        public static Task<(DiscordMessage message, MessageContext text, ReactionContext reaction)> WaitForMessageOrReactionAsync(
+        public static Task<(DiscordMessage message, DiscordMessage text, MessageReactionAddEventArgs reaction)> WaitForMessageOrReactionAsync(
             this InteractivityExtension interactivity,
             DiscordMessage message,
             DiscordUser user,
             params DiscordEmoji[] reactions)
             => WaitForMessageOrReactionAsync(interactivity, message, user, null, reactions);
 
-        public static async Task<(DiscordMessage message, MessageContext text, ReactionContext reaction)> WaitForMessageOrReactionAsync(
+        public static async Task<(DiscordMessage message, DiscordMessage text, MessageReactionAddEventArgs reaction)> WaitForMessageOrReactionAsync(
             this InteractivityExtension interactivity,
             DiscordMessage message,
             DiscordUser user,
@@ -29,7 +30,7 @@ namespace CompatBot.Utils
             foreach (var emoji in reactions)
                 await message.ReactWithAsync(interactivity.Client, emoji).ConfigureAwait(false);
             var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && m.Channel == message.Channel && !string.IsNullOrEmpty(m.Content), timeout);
-            var waitReactionResponse = interactivity.WaitForMessageReactionAsync(reactions.Contains, message, user, timeout);
+            var waitReactionResponse = interactivity.WaitForReactionAsync(arg => reactions.Contains(arg.Emoji), message, user, timeout);
             await Task.WhenAny(
                 waitTextResponseTask,
                 waitReactionResponse
@@ -43,14 +44,14 @@ namespace CompatBot.Utils
                 await message.DeleteAsync().ConfigureAwait(false);
                 message = null;
             }
-            MessageContext text = null;
-            ReactionContext reaction = null;
+            DiscordMessage text = null;
+            MessageReactionAddEventArgs reaction = null;
             if (waitTextResponseTask.IsCompletedSuccessfully)
-                text = await waitTextResponseTask;
+                text = (await waitTextResponseTask).Result;
             if (waitReactionResponse.IsCompletedSuccessfully)
-                reaction = await waitReactionResponse;
+                reaction = (await waitReactionResponse).Result;
             if (text != null)
-                try { await text.Message.DeleteAsync().ConfigureAwait(false); } catch { }
+                try { await text.DeleteAsync().ConfigureAwait(false); } catch { }
             return (message, text, reaction);
         }
     }

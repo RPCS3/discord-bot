@@ -176,10 +176,16 @@ namespace CompatBot.EventHandlers
                                             {
                                                 Config.Log.Error(e, "Failed to send piracy warning");
                                             }
-                                            await Task.WhenAll(
-                                                client.ReportAsync(yarr + " Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity),
-                                                Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.PiracyTrigger} - {result.PiracyContext.Sanitize()}")
-                                            );
+                                            try
+                                            {
+                                                await client.ReportAsync(yarr + " Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity).ConfigureAwait(false);
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                Config.Log.Error(e, "Failed to send piracy report");
+                                            }
+                                            if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
+                                                await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.PiracyTrigger} - {result.PiracyContext.Sanitize()}");
                                         }
                                     }
                                     else

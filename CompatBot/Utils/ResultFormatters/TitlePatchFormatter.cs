@@ -38,7 +38,7 @@ namespace CompatBot.Utils.ResultFormatters
                 do
                 {
                     var pkg = pkgs[i++];
-                    embedBuilder.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"⏬ [{GetLinkName(pkg.Url)}]({pkg.Url})");
+                    embedBuilder.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"[⏬ {GetLinkName(pkg.Url)}]({pkg.Url})");
                     if (i % EmbedPager.MaxFields == 0)
                     {
                         result.Add(embedBuilder);
@@ -54,7 +54,7 @@ namespace CompatBot.Utils.ResultFormatters
             else if (pkgs?.Length == 1)
             {
                 embedBuilder.Title = $"{title} update v{pkgs[0].Version} ({pkgs[0].Size.AsStorageUnit()})";
-                embedBuilder.Description = $"⏬ [{Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
+                embedBuilder.Description = $"[⏬ {Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
             }
             else if (patch != null)
                 embedBuilder.Description = "No updates available";

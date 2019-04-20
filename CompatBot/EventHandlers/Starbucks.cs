@@ -93,7 +93,7 @@ namespace CompatBot.EventHandlers
             {
                 var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
                 var checkTasks = new List<Task>();
-                foreach (var channel in guild.Channels.Where(ch => Config.Moderation.Channels.Contains(ch.Id)))
+                foreach (var channel in guild.Channels.Values.Where(ch => Config.Moderation.Channels.Contains(ch.Id)))
                 {
                     var messages = await channel.GetMessagesAsync().ConfigureAwait(false);
                     var messagesToCheck = from msg in messages

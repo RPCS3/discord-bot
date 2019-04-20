@@ -33,10 +33,10 @@ namespace CompatBot.Commands
                     var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
                     await botMsg.DeleteAsync().ConfigureAwait(false);
 
-                    id = ProductCodeLookup.GetProductIds(msg.Message?.Content).FirstOrDefault();
+                    id = ProductCodeLookup.GetProductIds(msg.Result?.Content).FirstOrDefault();
                     if (string.IsNullOrEmpty(id))
                     {
-                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{(msg.Message?.Content ?? productCode).Trim(10).Sanitize()}` is not a valid product code").ConfigureAwait(false);
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{(msg.Result?.Content ?? productCode).Trim(10).Sanitize()}` is not a valid product code").ConfigureAwait(false);
                         return;
                     }
                 }

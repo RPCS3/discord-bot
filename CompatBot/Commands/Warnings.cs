@@ -52,7 +52,7 @@ namespace CompatBot.Commands
             var interact = ctx.Client.GetInteractivity();
             var msg = await ctx.RespondAsync("What is the reason for removal?").ConfigureAwait(false);
             var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(response?.Message?.Content))
+            if (string.IsNullOrEmpty(response.Result?.Content))
             {
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Can't remove warnings without a reason").ConfigureAwait(false);
                 return;
@@ -67,7 +67,7 @@ namespace CompatBot.Commands
                 {
                     w.Retracted = true;
                     w.RetractedBy = ctx.User.Id;
-                    w.RetractionReason = response.Message.Content;
+                    w.RetractionReason = response.Result.Content;
                     w.RetractionTimestamp = DateTime.UtcNow.Ticks;
                 }
                 removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
@@ -91,7 +91,7 @@ namespace CompatBot.Commands
             var interact = ctx.Client.GetInteractivity();
             var msg = await ctx.RespondAsync("What is the reason for removing all the warnings?").ConfigureAwait(false);
             var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(response?.Message?.Content))
+            if (string.IsNullOrEmpty(response.Result?.Content))
             {
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Can't remove warnings without a reason").ConfigureAwait(false);
                 return;
@@ -108,7 +108,7 @@ namespace CompatBot.Commands
                     {
                         w.Retracted = true;
                         w.RetractedBy = ctx.User.Id;
-                        w.RetractionReason = response.Message.Content;
+                        w.RetractionReason = response.Result.Content;
                         w.RetractionTimestamp = DateTime.UtcNow.Ticks;
                     }
                     removed = await db.SaveChangesAsync().ConfigureAwait(false);
@@ -155,13 +155,13 @@ namespace CompatBot.Commands
                 var interact = client.GetInteractivity();
                 var msg = await message.Channel.SendMessageAsync("What is the reason for this warning?").ConfigureAwait(false);
                 var response = await interact.WaitForMessageAsync(m => m.Author == message.Author && m.Channel == message.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
-                if (string.IsNullOrEmpty(response?.Message.Content))
+                if (string.IsNullOrEmpty(response.Result.Content))
                 {
                     await msg.UpdateOrCreateMessageAsync(message.Channel, "A reason needs to be provided").ConfigureAwait(false);
                     return false;
                 }
                 await msg.DeleteAsync().ConfigureAwait(false);
-                reason = response.Message.Content;
+                reason = response.Result.Content;
             }
             try
             {

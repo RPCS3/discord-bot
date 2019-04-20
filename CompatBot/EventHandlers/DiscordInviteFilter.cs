@@ -42,7 +42,7 @@ namespace CompatBot.EventHandlers
             try
             {
                 var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
-                foreach (var channel in guild.Channels.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
+                foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
                 {
                     var messages = await channel.GetMessagesAsync(500).ConfigureAwait(false);
                     var messagesToCheck = from msg in messages
