@@ -26,23 +26,24 @@ namespace CompatBot.Utils.ResultFormatters
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var notes = new List<string>();
+            var serial = items["serial"] ?? "";
             if (items["fatal_error"] is string fatalError)
-			{
-				var context = items["fatal_error_context"] ?? "";
-				builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
+            {
+                var context = items["fatal_error_context"] ?? "";
+                builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                 if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>") || context.Contains("SaveData"))
                     notes.Add("⚠ Game save data might be corrupted");
                 else if (fatalError.Contains("Could not bind OpenGL context"))
                     notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
-				else if (fatalError.Contains("file is null"))
-				{
-					if (context.StartsWith("RSX", StringComparison.InvariantCultureIgnoreCase) || fatalError.StartsWith("RSX:"))
-						notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
-					if (context.StartsWith("SPU", StringComparison.InvariantCultureIgnoreCase))
-						notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
-					if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
-						notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
-				}
+                else if (fatalError.Contains("file is null"))
+                {
+                    if (context.StartsWith("RSX", StringComparison.InvariantCultureIgnoreCase) || fatalError.StartsWith("RSX:"))
+                        notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
+                    if (context.StartsWith("SPU", StringComparison.InvariantCultureIgnoreCase))
+                        notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
+                    if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
+                        notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
+                }
             }
 
             if (items["failed_to_decrypt"] is string _)
@@ -72,9 +73,11 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
+            if (serial.StartsWith("NP") && items["ldr_game_serial"] != serial && items["ldr_path_serial"] != serial)
+                notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
-            if (items["log_from_ui"] is string)
+            if (items["log_from_ui"] is string _)
                 notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
             else if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
             {
@@ -187,7 +190,6 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("❌ Shader compilation error on unsupported GPU");
             }
 
-            var serial = items["serial"] ?? "";
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
             var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
             if (ppuPatches.Any() || spuPatches.Any())
