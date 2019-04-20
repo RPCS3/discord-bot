@@ -157,7 +157,7 @@ namespace CompatBot.Utils.ResultFormatters
                     int.TryParse(modelNumber, out var modelNumberInt);
                     if (modelNumberInt < 500 || modelNumberInt > 1000)
                     {
-                        notes.Add("❌ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
+                        notes.Add("⚠ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
                         supportedGpu = false;
                     }
                     else
