@@ -147,8 +147,19 @@ namespace CompatBot.Utils.ResultFormatters
                     else if (spuDecoder.Contains("ASMJIT"))
                         notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
                 }
+
                 if (items["spu_threads"] is string spuThreads && spuThreads != "2")
-                    notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                {
+                    if (int.TryParse(items["thread_count"], out var threadCount))
+                    {
+                        if (threadCount > 4)
+                            notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                        else if (spuThreads != "1")
+                            notes.Add("ℹ `SPU Thread Count` is best to set to `2` or `1`");
+                    }
+                    else
+                        notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                }
                 if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
                     notes.Add("ℹ `Accurate xFloat` is not required, please disable");
                 if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
@@ -157,6 +168,8 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Write Color Buffers` is not required, please disable");
                 if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
                     notes.Add("⚠ `Force CPU Blit` is not required, please disable");
+                if (items["strict_rendering_mode"] is string srm && srm == EnabledMark)
+                    notes.Add("⚠ `Strict Rendering Mode` is not required, please disable");
                 if (string.IsNullOrEmpty(items["ppu_hash_patch"])
                     && items["resolution_scale"] is string resScale
                     && int.TryParse(resScale, out var scale)
