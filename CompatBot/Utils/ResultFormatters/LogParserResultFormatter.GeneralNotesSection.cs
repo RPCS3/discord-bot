@@ -73,7 +73,10 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
-            if (serial.StartsWith("NP") && items["ldr_game_serial"] != serial && items["ldr_path_serial"] != serial)
+            if (serial.StartsWith("NP")
+                && items["ldr_game_serial"] != serial
+                && items["ldr_path_serial"] != serial
+                && items["ldr_boot_path_serial"] != serial)
                 notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
