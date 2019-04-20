@@ -193,7 +193,11 @@ namespace CompatBot.Utils.ResultFormatters
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
             var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
             if (ppuPatches.Any() || spuPatches.Any())
-                notes.Add($"ℹ Game-specific patches were applied (PPU: {ppuPatches.Count}, SPU: {spuPatches.Count})");
+            {
+                var ppuCount = ppuPatches.Count == 0 ? "-" : string.Join('/', ppuPatches.Values);
+                var spuCount = spuPatches.Count == 0 ? "-" : string.Join('/', spuPatches.Values);
+                notes.Add($"ℹ Game-specific patches were applied (PPU: {ppuCount}, SPU: {spuCount})");
+            }
             if (P5Ids.Contains(serial))
             {
                 /*
