@@ -196,7 +196,7 @@ namespace CompatBot
 
                     client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
                     {
-                        Action<string> logLevel = Config.Log.Info;
+                        Action<Exception, string> logLevel = Config.Log.Info;
                         if (eventArgs.Level == LogLevel.Debug)
                             logLevel = Config.Log.Debug;
                         //else if (eventArgs.Level == LogLevel.Info)
@@ -207,7 +207,7 @@ namespace CompatBot
                             logLevel = Config.Log.Error;
                         else if (eventArgs.Level == LogLevel.Critical)
                             logLevel = Config.Log.Fatal;
-                        logLevel(eventArgs.Message);
+                        logLevel(eventArgs.Exception, eventArgs.Message);
                     };
 
                     try
