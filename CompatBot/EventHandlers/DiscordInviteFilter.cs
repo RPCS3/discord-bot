@@ -147,6 +147,9 @@ namespace CompatBot.EventHandlers
 
         public static async Task<(bool hasInvalidInvite, bool attemptToWorkaround, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, DiscordUser author = null, bool tryMessageAsACode = false)
         {
+            if (string.IsNullOrEmpty(message))
+                return (false, false, new List<DiscordInvite>(0));
+
             var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"]?.Value).Where(s => !string.IsNullOrEmpty(s)));
             var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
             var attemptedWorkaround = false;
@@ -214,6 +217,5 @@ namespace CompatBot.EventHandlers
                 }
             return (hasInvalidInvites, attemptedWorkaround, result);
         }
-
     }
 }
