@@ -53,7 +53,7 @@ namespace CompatBot.Commands
                     new AsciiColumn("Username", maxWidth: 24),
                     new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
                     new AsciiColumn("Count", alignToRight: true),
-                    new AsciiColumn("All time", disabled: !ctx.Channel.IsPrivate || !isMod, alignToRight: true)
+                    new AsciiColumn("All time", alignToRight: true)
                     );
                 using (var db = new BotDb())
                 {
