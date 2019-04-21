@@ -212,7 +212,7 @@ namespace CompatBot
                         else if (eventArgs.Level == LogLevel.Critical)
                         {
                             logLevel = Config.Log.Fatal;
-                            if (eventArgs.Message?.Contains("Socket connection terminated (1000, '')") ?? false)
+                            if (eventArgs.Message?.Contains("Socket connection terminated") ?? false)
                                 Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
                         }
                         logLevel(eventArgs.Exception, eventArgs.Message);
