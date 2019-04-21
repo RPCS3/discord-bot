@@ -106,7 +106,7 @@ namespace CompatBot.Commands
                     if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                     {
                         if (artifactInfo.Artifact.Created is DateTime buildTime)
-                            downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                            downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime).AsTimeDeltaDescription()} ago)";
                         downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
                     }
                     else
