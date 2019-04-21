@@ -41,15 +41,29 @@ namespace CompatBot.EventHandlers
         {
             try
             {
+                var botMember = client.GetMember(guild, client.CurrentUser);
                 var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
                 foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
                 {
-                    var messages = await channel.GetMessagesAsync(500).ConfigureAwait(false);
-                    var messagesToCheck = from msg in messages
-                        where msg.CreationTimestamp > after
-                        select msg;
-                    foreach (var message in messagesToCheck)
-                        await CheckMessageForInvitesAsync(client, message).ConfigureAwait(false);
+                    if (!channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
+                    {
+                        Config.Log.Warn($"No permissions to read message history in #{channel.Name}");
+                        continue;
+                    }
+
+                    try
+                    {
+                        var messages = await channel.GetMessagesAsync(500).ConfigureAwait(false);
+                        var messagesToCheck = from msg in messages
+                            where msg.CreationTimestamp > after
+                            select msg;
+                        foreach (var message in messagesToCheck)
+                            await CheckMessageForInvitesAsync(client, message).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e);
+                    }
                 }
             }
             catch (Exception e)
