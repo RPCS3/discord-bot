@@ -23,7 +23,7 @@ namespace CompatBot
 
                 try
                 {
-                    var ch = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                    var ch = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
                     await client.SendMessageAsync(ch, "Potential socket deadlock detected, restarting...").ConfigureAwait(false);
                     Sudo.Bot.Restart(Program.InvalidChannelId);
                 }
