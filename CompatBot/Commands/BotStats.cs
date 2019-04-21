@@ -55,7 +55,7 @@ namespace CompatBot.Commands
                 using (var db = new BotDb())
                 {
                     var timestamps = db.Warning
-                        .Where(w => w.Timestamp.HasValue)
+                        .Where(w => w.Timestamp.HasValue && !w.Retracted)
                         .OrderBy(w => w.Timestamp)
                         .Select(w => w.Timestamp.Value)
                         .ToList();
