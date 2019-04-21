@@ -54,7 +54,7 @@ namespace CompatBot.Commands
                     new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
                     new AsciiColumn("Count", alignToRight: true),
                     new AsciiColumn("All time", alignToRight: true)
-                    );
+                );
                 using (var db = new BotDb())
                 {
                     var query = from warn in db.Warning
