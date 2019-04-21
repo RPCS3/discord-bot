@@ -20,7 +20,7 @@ namespace CompatBot
     {
         private static readonly SemaphoreSlim InstanceCheck = new SemaphoreSlim(0, 1);
         private static readonly SemaphoreSlim ShutdownCheck = new SemaphoreSlim(0, 1);
-        private const ulong InvalidChannelId = 13;
+        internal const ulong InvalidChannelId = 13;
 
         internal static async Task Main(string[] args)
         {
