@@ -199,14 +199,22 @@ namespace CompatBot
                         Action<Exception, string> logLevel = Config.Log.Info;
                         if (eventArgs.Level == LogLevel.Debug)
                             logLevel = Config.Log.Debug;
-                        //else if (eventArgs.Level == LogLevel.Info)
-                        //    logLevel = botLog.Info;
+                        else if (eventArgs.Level == LogLevel.Info)
+                        {
+                            //logLevel = Config.Log.Info;
+                            if (eventArgs.Message?.Contains("Session resumed") ?? false)
+                                Watchdog.DisconnectTimestamps.Clear();
+                        }
                         else if (eventArgs.Level == LogLevel.Warning)
                             logLevel = Config.Log.Warn;
                         else if (eventArgs.Level == LogLevel.Error)
                             logLevel = Config.Log.Error;
                         else if (eventArgs.Level == LogLevel.Critical)
+                        {
                             logLevel = Config.Log.Fatal;
+                            if (eventArgs.Message?.Contains("Socket connection terminated (1000, '')") ?? false)
+                                Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
+                        }
                         logLevel(eventArgs.Exception, eventArgs.Message);
                     };
 
@@ -237,7 +245,11 @@ namespace CompatBot
                     }
 
                     Config.Log.Debug("Running RPC3 update check thread");
-                    backgroundTasks = Task.WhenAll(backgroundTasks, NewBuildsMonitor.MonitorAsync(client));
+                    backgroundTasks = Task.WhenAll(
+                        backgroundTasks,
+                        NewBuildsMonitor.MonitorAsync(client),
+                        Watchdog.Watch(client)
+                    );
 
                     while (!Config.Cts.IsCancellationRequested)
                     {
