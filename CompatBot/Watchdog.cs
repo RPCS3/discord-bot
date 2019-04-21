@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using CompatBot.Commands;
 using DSharpPlus;
 
 namespace CompatBot
@@ -24,7 +25,7 @@ namespace CompatBot
                 {
                     var ch = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                     await client.SendMessageAsync(ch, "Potential socket deadlock detected, restarting...").ConfigureAwait(false);
-                    Config.Cts.Cancel(false);
+                    Sudo.Bot.Restart(Program.InvalidChannelId);
                 }
                 catch (Exception e)
                 {
