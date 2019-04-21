@@ -41,15 +41,29 @@ namespace CompatBot.EventHandlers
         {
             try
             {
+                var botMember = client.GetMember(guild, client.CurrentUser);
                 var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
                 foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
                 {
-                    var messages = await channel.GetMessagesAsync(500).ConfigureAwait(false);
-                    var messagesToCheck = from msg in messages
-                        where msg.CreationTimestamp > after
-                        select msg;
-                    foreach (var message in messagesToCheck)
-                        await CheckMessageForInvitesAsync(client, message).ConfigureAwait(false);
+                    if (!channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
+                    {
+                        Config.Log.Warn($"No permissions to read message history in #{channel.Name}");
+                        continue;
+                    }
+
+                    try
+                    {
+                        var messages = await channel.GetMessagesAsync(500).ConfigureAwait(false);
+                        var messagesToCheck = from msg in messages
+                            where msg.CreationTimestamp > after
+                            select msg;
+                        foreach (var message in messagesToCheck)
+                            await CheckMessageForInvitesAsync(client, message).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e);
+                    }
                 }
             }
             catch (Exception e)
@@ -147,6 +161,9 @@ namespace CompatBot.EventHandlers
 
         public static async Task<(bool hasInvalidInvite, bool attemptToWorkaround, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, DiscordUser author = null, bool tryMessageAsACode = false)
         {
+            if (string.IsNullOrEmpty(message))
+                return (false, false, new List<DiscordInvite>(0));
+
             var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"]?.Value).Where(s => !string.IsNullOrEmpty(s)));
             var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
             var attemptedWorkaround = false;
@@ -214,6 +231,5 @@ namespace CompatBot.EventHandlers
                 }
             return (hasInvalidInvites, attemptedWorkaround, result);
         }
-
     }
 }
