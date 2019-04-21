@@ -45,9 +45,16 @@ namespace CompatBot.EventHandlers
                 var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
                 foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
                 {
-                    if (!channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
+                    var permissions = channel.PermissionsFor(botMember);
+                    if (!permissions.HasPermission(Permissions.ReadMessageHistory))
                     {
                         Config.Log.Warn($"No permissions to read message history in #{channel.Name}");
+                        continue;
+                    }
+
+                    if (!permissions.HasPermission(Permissions.AccessChannels))
+                    {
+                        Config.Log.Warn($"No permissions to access #{channel.Name}");
                         continue;
                     }
 
