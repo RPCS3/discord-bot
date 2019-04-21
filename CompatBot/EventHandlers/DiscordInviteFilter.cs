@@ -62,7 +62,7 @@ namespace CompatBot.EventHandlers
                     }
                     catch (Exception e)
                     {
-                        Config.Log.Warn(e);
+                        Config.Log.Warn($"Some missing permissions in #{channel.Name}: {e.Message}");
                     }
                 }
             }
