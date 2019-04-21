@@ -96,12 +96,12 @@ namespace CompatBot.Commands
                     // most warnings per 24h
                     var statsBuilder = new StringBuilder();
                     if (longestGapBetweenWarning > 0)
-                        statsBuilder.AppendLine($@"Longest between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()} on {longestGapStart.AsUtc():yyyy-MM-dd}");
+                        statsBuilder.AppendLine($@"Longest between warnings: **{TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()}** between {longestGapStart.AsUtc():yyyy-MM-dd} and {longestGapEnd.AsUtc():yyyy-MM-dd}");
                     if (mostWarnings > 0)
-                        statsBuilder.AppendLine($"Most warnings in 24h: {mostWarnings} on {mostWarningsEnd.AsUtc():yyyy-MM-dd}");
+                        statsBuilder.AppendLine($"Most warnings in 24h: **{mostWarnings}** on {mostWarningsEnd.AsUtc():yyyy-MM-dd}");
                     if (lastWarn.HasValue)
                         statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
-                    statsBuilder.Append($"Warnings in the last 24h: {warnCount}");
+                    statsBuilder.Append($"Warnings in the last 24h: **{warnCount}**");
                     if (warnCount == 0)
                         statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
                     embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);
