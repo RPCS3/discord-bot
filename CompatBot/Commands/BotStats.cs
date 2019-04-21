@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -53,19 +54,51 @@ namespace CompatBot.Commands
             {
                 using (var db = new BotDb())
                 {
-                    var longestGapBetweenWarning = db.Warning
+                    var timestamps = db.Warning
                         .Where(w => w.Timestamp.HasValue)
                         .OrderBy(w => w.Timestamp)
-                        .Pairwise((l, r) => r.Timestamp - l.Timestamp)
-                        .Max();
+                        .Select(w => w.Timestamp.Value)
+                        .ToList();
+                    var previousTimestamp = timestamps.FirstOrDefault();
+                    var longestGapBetweenWarning = 0L;
+                    long longestGapStart = 0L, longestGapEnd = 0L;
+                    var span24h = TimeSpan.FromHours(24).Ticks;
+                    var currentSpan = new Queue<long>();
+                    long mostWarningsStart = 0L, mostWarningsEnd = 0L;
+                    var mostWarnings = 0;
+                    for (var i = 0; i < timestamps.Count; i++)
+                    {
+                        var currentTimestamp = timestamps[i];
+                        var newGap = currentTimestamp - previousTimestamp;
+                        if (newGap > longestGapBetweenWarning)
+                        {
+                            longestGapBetweenWarning = newGap;
+                            longestGapStart = previousTimestamp;
+                            longestGapEnd = currentTimestamp;
+                        }
+                        previousTimestamp = currentTimestamp;
+
+                        currentSpan.Enqueue(currentTimestamp);
+                        while (currentSpan.Count > 0 && currentTimestamp - currentSpan.Peek() > span24h)
+                            currentSpan.Dequeue();
+                        if (currentSpan.Count > mostWarnings)
+                        {
+                            mostWarnings = currentSpan.Count;
+                            mostWarningsStart = currentSpan.Peek();
+                            mostWarningsEnd = currentTimestamp;
+                        }
+                    }
                     var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
                     var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
                     var lastWarn = db.Warning.LastOrDefault()?.Timestamp;
-                    if (lastWarn.HasValue && longestGapBetweenWarning.HasValue)
-                        longestGapBetweenWarning = Math.Max(longestGapBetweenWarning.Value, DateTime.UtcNow.Ticks - lastWarn.Value);
+                    if (lastWarn.HasValue)
+                        longestGapBetweenWarning = Math.Max(longestGapBetweenWarning, DateTime.UtcNow.Ticks - lastWarn.Value);
+                    // most warnings per 24h
                     var statsBuilder = new StringBuilder();
-                    if (longestGapBetweenWarning.HasValue)
-                        statsBuilder.AppendLine($@"Longest between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning.Value).AsShortTimespan()}");
+                    if (longestGapBetweenWarning > 0)
+                        statsBuilder.AppendLine($@"Longest between warnings: {TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()} on {longestGapStart.AsUtc():yyyy-MM-dd}");
+                    if (mostWarnings > 0)
+                        statsBuilder.AppendLine($"Most warnings in 24h: {mostWarnings} on {mostWarningsEnd.AsUtc():yyyy-MM-dd}");
                     if (lastWarn.HasValue)
                         statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
                     statsBuilder.Append($"Warnings in the last 24h: {warnCount}");
