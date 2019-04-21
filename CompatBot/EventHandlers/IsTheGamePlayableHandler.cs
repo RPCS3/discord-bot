@@ -61,14 +61,14 @@ namespace CompatBot.EventHandlers
                 return;
 
             gameTitle = CompatList.FixGameTitleSearch(gameTitle);
-            if (ProductCodeLookup.ProductCode.IsMatch(args.Message.Content))
+            if (!string.IsNullOrEmpty(args.Message.Content) && ProductCodeLookup.ProductCode.IsMatch(args.Message.Content))
                 return;
 
             var (_, info) = await LookupGameAsync(args.Channel, args.Message, gameTitle).ConfigureAwait(false);
             var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-            gameTitle = info.Title.StripMarks();
-            var msg = $"{args.Message.Author.Mention} {gameTitle} is {info.Status.ToLowerInvariant()} since {info.ToUpdated()}\n" +
-                      $"for more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
+            gameTitle = info?.Title?.StripMarks();
+            var msg = $"{args.Message.Author.Mention} {gameTitle} is {info?.Status?.ToLowerInvariant()} since {info?.ToUpdated()}\n" +
+                      $"for more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle?.Sanitize()}`)";
             await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
             CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
         }
