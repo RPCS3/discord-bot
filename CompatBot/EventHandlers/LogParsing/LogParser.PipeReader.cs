@@ -82,6 +82,7 @@ namespace CompatBot.EventHandlers.LogParsing
             if (line.AsString().Contains(currentProcessor.EndTrigger, StringComparison.InvariantCultureIgnoreCase))
             {
                 await FlushAllLinesAsync(buffer, sectionLines, state).ConfigureAwait(false);
+                await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
                 SectionParsers[state.Id].OnSectionEnd?.Invoke(state);
                 state.Id++;
                 currentProcessor = SectionParsers[state.Id];
