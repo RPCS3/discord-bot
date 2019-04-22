@@ -128,9 +128,11 @@ namespace CompatBot
                                         Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
                                         Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
                                         Config.Log.Info("");
+                                        Watchdog.DisconnectTimestamps.Clear();
                                     };
                     client.GuildAvailable += async gaArgs =>
                                              {
+                                                 Watchdog.DisconnectTimestamps.Clear();
                                                  if (gaArgs.Guild.Id != Config.BotGuildId)
                                                  {
 #if DEBUG
