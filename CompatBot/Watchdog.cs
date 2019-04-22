@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Commands;
 using DSharpPlus;
@@ -24,7 +22,19 @@ namespace CompatBot
                 try
                 {
                     var ch = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                    await client.SendMessageAsync(ch, "Potential socket deadlock detected, restarting...").ConfigureAwait(false);
+                    await client.SendMessageAsync(ch, "Potential socket deadlock detected, reconnecting...").ConfigureAwait(false);
+                    await client.ReconnectAsync(false).ConfigureAwait(false);
+                    await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
+                    if (DisconnectTimestamps.IsEmpty)
+                        continue;
+
+                    await client.SendMessageAsync(ch, "Soft reconnect failed, reconnecting...").ConfigureAwait(false);
+                    await client.ReconnectAsync(true).ConfigureAwait(false);
+                    await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
+                    if (DisconnectTimestamps.IsEmpty)
+                        continue;
+
+                    await client.SendMessageAsync(ch, "Hard reconnect failed, restarting...").ConfigureAwait(false);
                     Sudo.Bot.Restart(Program.InvalidChannelId);
                 }
                 catch (Exception e)
