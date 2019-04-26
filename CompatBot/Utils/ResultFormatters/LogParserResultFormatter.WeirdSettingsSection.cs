@@ -13,6 +13,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
             var notes = new List<string>();
+            var serial = items["serial"] ?? "";
             if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]) || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             if (items["enable_tsx"] == "Disabled")
@@ -28,12 +29,12 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("💢 Do **not** use DX12 renderer");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
             {
-                notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
+                if (items["resolution"] != "1920x1080" || !Known1080pIds.Contains(serial))
+                    notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
                 var dimensions = items["resolution"].Split("x");
                 if (dimensions.Length > 1 && int.TryParse(dimensions[1], out var height) && height < 720)
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
-            var serial = items["serial"];
 
 /*
             if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
@@ -49,6 +50,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckJojoSettings(serial, items, notes);
                 CheckSimpsonsSettings(serial, items, notes);
                 CheckNierSettings(serial, items, notes);
+                CheckScottPilgrimSettings(serial, items, notes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes);
@@ -237,6 +239,15 @@ namespace CompatBot.Utils.ResultFormatters
 
                 if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
                     notes.Add("ℹ To enter the character name, disable `Native UI` and use Japanese text");
+            }
+        }
+
+        private static void CheckScottPilgrimSettings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (serial == "NPEB00258" || serial == "NPUB30162" || serial == "NPJB00068")
+            {
+                if (items["resolution"] is string res && res != "1920x1080")
+                    notes.Add("⚠ For perfect sprite scaling without borders set `Resolution` to `1920x1080`");
             }
         }
 
