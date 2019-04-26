@@ -82,7 +82,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark &&
                 items["write_color_buffers"] is string wcb && wcb == DisabledMark)
-                notes.Add("⚠ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
+                notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == EnabledMark)
                 notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout &&
