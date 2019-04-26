@@ -33,7 +33,25 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (cpuInfo.Success)
             {
-                items["cpu_model"] = cpuInfo.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "").Trim();
+                var cpuModel = cpuInfo.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "").Trim();
+                if (cpuModel.StartsWith("DG1", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    switch (cpuModel[3])
+                    {
+                        case '0': // DG1000FGF84HT
+                        case '1': // DG1101SKF84HV
+                            cpuModel = "AMD APU for PlayStation 4";
+                            break;
+                        case '2': // DG1201SLF87HW
+                        case '3': // DG1301SML87HY
+                            cpuModel = "AMD APU for PlayStation 4 Pro";
+                            break;
+                        default:
+                            cpuModel = "AMD APU for PlayStation?";
+                            break;
+                    }
+                }
+                items["cpu_model"] = cpuModel;
                 items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
                 items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
                 items["cpu_extensions"] = cpuInfo.Groups["cpu_extensions"].Value;

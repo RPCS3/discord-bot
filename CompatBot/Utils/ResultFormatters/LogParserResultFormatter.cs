@@ -23,7 +23,6 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly IrdClient irdClient = new IrdClient();
 
         private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
-        private static readonly RegexOptions DefaultMultiLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline;
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
         // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
         // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
@@ -47,7 +46,6 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Regex IntelGpuModel = new Regex(@"Intel\s?(®|\(R\))? (?<gpu_model>(?<gpu_family>(\w| )+Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
 
         private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
-        private static readonly Version RecommendedOpenGLVersion = new Version(4, 5);
         private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
         private static readonly Version NvidiaFullscreenBugMinVersion = new Version(400, 0);
         private static readonly Version NvidiaFullscreenBugMaxVersion = new Version(499, 99);
