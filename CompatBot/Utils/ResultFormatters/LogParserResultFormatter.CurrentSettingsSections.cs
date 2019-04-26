@@ -46,8 +46,8 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         items["os_type"] = "Windows";
                         items["os_version"] = $"{osInfo.Groups["os_version_major"].Value}.{osInfo.Groups["os_version_minor"].Value}.{osInfo.Groups["os_version_build"].Value}";
-                        if (Version.TryParse(items["os_version"], out var winVersion))
-                            items["os_windows_version"] = GetWindowsVersion(winVersion);
+                        if (Version.TryParse(items["os_version"], out var winVersion) && GetWindowsVersion(winVersion) is string winVer)
+                            items["os_windows_version"] = winVer;
                         break;
                     }
                     case "posix":
