@@ -23,14 +23,22 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly IrdClient irdClient = new IrdClient();
 
         private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
+        private static readonly RegexOptions DefaultMultiLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline;
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
         // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
         // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
         // RPCS3 v0.0.5-42b4ce13a Alpha | minor
         private static readonly Regex BuildInfoInLog = new Regex(
-            @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)) (?<stage>\w+)( \| (?<branch>[^|]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+)( \| (?<unknown>.*))?)?\r?\n" +
+            @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)) (?<stage>\w+)( \| (?<branch>[^|]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+)( \| (?<unknown>.*))?)?\r?$",
+            DefaultSingleLine);
+        private static readonly Regex CpuInfoInLog = new Regex(
             @"(?<cpu_model>[^|@]+)(@\s*(?<cpu_speed>.+)\s*GHz\s*)? \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| (?<cpu_extensions>.*?))?\r?$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            DefaultSingleLine);
+        private static readonly Regex OsInfoInLog = new Regex(
+            @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^,\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+))\r?$",
+            DefaultSingleLine);
+        private static readonly Regex LinuxKernelVersion = new Regex(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
+        private static readonly char[] NewLineChars = {'\r', '\n'};
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
         // rpcs3-v0.0.5-7105-064d0619_linux64.AppImage
@@ -47,14 +55,19 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
-			// Demon's Souls
+            // Demon's Souls
             {"BLES00932", "NPEB01202"},
             {"BLUS30443", "NPUB30910"},
             //{"BCJS30022", "NPJA00102"},
             {"BCJS70013", "NPJA00102"},
 
-			// White Knight Chronicles II
-			{ "BCJS30042", "NPJA00104" }
+            // White Knight Chronicles II
+            {"BCJS30042", "NPJA00104"}
+        };
+
+        private static readonly string[] Known1080pIds =
+        {
+            "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
         };
 
         private static readonly string[] KnownDisableVertexCacheIds =
@@ -216,10 +229,10 @@ namespace CompatBot.Utils.ResultFormatters
                     items["lib_loader"] = "Manual selection";
             }
             if (items["win_path"] != null)
-                items["os_path"] = "Windows";
+                items["os_type"] = "Windows";
             else if (items["lin_path"] != null)
-                items["os_path"] = "Linux";
-            if (items["os_path"] == "Windows" && GetWindowsVersion((items["driver_version_new"] ?? items["driver_version"])) is string winVersion)
+                items["os_type"] = "Linux";
+            if (items["os_type"] == "Windows" && GetWindowsVersion((items["driver_version_new"] ?? items["driver_version"])) is string winVersion)
                 items["os_windows_version"] = winVersion;
             if (items["library_list"] is string libs)
             {
@@ -437,6 +450,119 @@ namespace CompatBot.Utils.ResultFormatters
                     Config.Log.Warn("Invalid video driver version " + driverVersionString);
                     return null;
             }
+        }
+
+        private static string GetWindowsVersion(Version windowsVersion)
+        {
+            switch (windowsVersion.Major)
+            {
+                case 5:
+                {
+                    switch (windowsVersion.Minor)
+                    {
+                        case 0:
+                            return "2000";
+                        case 1:
+                            return "XP";
+                        case 2:
+                            return "XP x64";
+                        default:
+                            Config.Log.Warn("Invalid Windows version " + windowsVersion);
+                            return null;
+                    }
+                }
+                case 6:
+                {
+                    switch (windowsVersion.Minor)
+                    {
+                        case 0:
+                            return "Vista";
+                        case 1:
+                            return "7";
+                        case 2:
+                            return "8";
+                        case 3:
+                            return "8.1";
+                        default:
+                            Config.Log.Warn("Invalid Windows version " + windowsVersion);
+                            return null;
+                    }
+                }
+                case 10:
+                {
+                    switch (windowsVersion.Build)
+                    {
+                        case int v when v < 10240:
+                            return "10 TH1 Insider Build " + v;
+                        case 10240:
+                            return "10 1507";
+                        case int v when v < 10586:
+                            return "10 TH2 Insider Build " + v;
+                        case 10586:
+                            return "10 1511";
+                        case int v when v < 14393:
+                            return "10 RS1 Insider Build " + v;
+                        case 14393:
+                            return "10 1607";
+                        case int v when v < 15063:
+                            return "10 RS2 Insider Build " + v;
+                        case 15063:
+                            return "10 1703";
+                        case int v when v < 16299:
+                            return "10 RS3 Insider Build " + v;
+                        case 16299:
+                            return "10 1709";
+                        case int v when v < 17134:
+                            return "10 RS4 Insider Build " + v;
+                        case 17134:
+                            return "10 1803";
+                        case int v when v < 17763:
+                            return "10 RS5 Insider Build " + v;
+                        case 17763:
+                            return "10 1809";
+                        case int v when v < 18362:
+                            return "10 19H1 Insider Build " + v;
+                        case 18362:
+                            return "10 1903";
+                        case int v when v < 18836:
+                            return "10 19H2 Insider Build " + v;
+                        case int v when v < 20000:
+                            return "10 20H1 Insider Build " + v;
+                        default:
+                            Config.Log.Warn("Invalid Windows version " + windowsVersion);
+                            return "10 ??? Insider Build " + windowsVersion.Build;
+                    }
+                }
+                default:
+                    Config.Log.Warn("Invalid Windows version " + windowsVersion);
+                    return null;
+            }
+        }
+
+        private static string GetLinuxVersion(string release, string version)
+        {
+            var kernelVersion = release;
+            if (LinuxKernelVersion.Match(release) is Match m && m.Success)
+                kernelVersion = m.Groups["version"].Value;
+            if (version.Contains("Ubuntu", StringComparison.InvariantCultureIgnoreCase))
+                return "Ubuntu " + kernelVersion;
+
+            if (version.Contains("Debian", StringComparison.InvariantCultureIgnoreCase))
+                return "Debian " + kernelVersion;
+
+            if (release.Contains("-MANJARO", StringComparison.InvariantCultureIgnoreCase))
+                return "Manjaro " + kernelVersion;
+
+            if (release.Contains("-ARCH", StringComparison.InvariantCultureIgnoreCase))
+                return "Arch " + kernelVersion;
+
+            if (release.Contains(".fc"))
+            {
+                var ver = release.Split('.').FirstOrDefault(p => p.StartsWith("fc"))?.Substring(2);
+                return "Fedora " + ver;
+            }
+
+            return "Linux " + kernelVersion;
         }
 
         private static bool IsAmd(string gpuInfo)

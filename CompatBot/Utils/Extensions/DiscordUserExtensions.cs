@@ -10,7 +10,7 @@ namespace CompatBot.Utils.Extensions
         {
             try
             {
-                return user.IsBot;
+                return user?.IsBot ?? false;
             }
             catch (KeyNotFoundException)
             {
