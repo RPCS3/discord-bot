@@ -493,44 +493,44 @@ namespace CompatBot.Utils.ResultFormatters
                     switch (windowsVersion.Build)
                     {
                         case int v when v < 10240:
-                            return "10 TH1 Insider Build " + v;
+                            return "10 TH1 Build " + v;
                         case 10240:
                             return "10 1507";
                         case int v when v < 10586:
-                            return "10 TH2 Insider Build " + v;
+                            return "10 TH2 Build " + v;
                         case 10586:
                             return "10 1511";
                         case int v when v < 14393:
-                            return "10 RS1 Insider Build " + v;
+                            return "10 RS1 Build " + v;
                         case 14393:
                             return "10 1607";
                         case int v when v < 15063:
-                            return "10 RS2 Insider Build " + v;
+                            return "10 RS2 Build " + v;
                         case 15063:
                             return "10 1703";
                         case int v when v < 16299:
-                            return "10 RS3 Insider Build " + v;
+                            return "10 RS3 Build " + v;
                         case 16299:
                             return "10 1709";
                         case int v when v < 17134:
-                            return "10 RS4 Insider Build " + v;
+                            return "10 RS4 Build " + v;
                         case 17134:
                             return "10 1803";
                         case int v when v < 17763:
-                            return "10 RS5 Insider Build " + v;
+                            return "10 RS5 Build " + v;
                         case 17763:
                             return "10 1809";
                         case int v when v < 18362:
-                            return "10 19H1 Insider Build " + v;
+                            return "10 19H1 Build " + v;
                         case 18362:
                             return "10 1903";
                         case int v when v < 18836:
-                            return "10 19H2 Insider Build " + v;
+                            return "10 19H2 Build " + v;
                         case int v when v < 20000:
-                            return "10 20H1 Insider Build " + v;
+                            return "10 20H1 Build " + v;
                         default:
                             Config.Log.Warn("Invalid Windows version " + windowsVersion);
-                            return "10 ??? Insider Build " + windowsVersion.Build;
+                            return "10 ??? Build " + windowsVersion.Build;
                     }
                 }
                 default:
