@@ -106,7 +106,7 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         if (threadCount < 12)
                             notes.Add("⚠ Six cores or more is recommended for Ryzen CPUs");
-                        if (items["os_path"] != "Linux"
+                        if (items["os_type"] != "Linux"
                             && items["thread_scheduler"] == DisabledMark)
                             notes.Add("⚠ Please enable `Thread scheduler` option in the CPU Settings");
                     }
@@ -170,7 +170,7 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
                 }
 
-                if (items["os_path"] is string os
+                if (items["os_type"] is string os
                     && os != "Linux"
                     && IsNvidia(gpuInfo)
                     && items["driver_version_info"] is string driverVersionString

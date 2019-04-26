@@ -16,36 +16,71 @@ namespace CompatBot.Utils.ResultFormatters
             var valid = systemInfo.StartsWith("RPCS3") && systemInfo.Count(c => c == '\n') < 3;
             if (!valid)
             {
-                systemInfo = string.Join('\n', systemInfo.Split('\n', 3).Take(2)).Trim();
+                systemInfo = string.Join('\n', systemInfo.Split('\n', 4).Take(3)).Trim();
                 items["log_from_ui"] = EnabledMark;
             }
-            var m = BuildInfoInLog.Match(systemInfo);
-            if (m.Success)
+            var sysInfoParts = systemInfo.Split(NewLineChars, StringSplitOptions.RemoveEmptyEntries);
+            var buildInfo = sysInfoParts.Length > 0 ? BuildInfoInLog.Match(sysInfoParts[0]) : BuildInfoInLog.Match(systemInfo);
+            var cpuInfo = sysInfoParts.Length > 1 ? CpuInfoInLog.Match(sysInfoParts[1]) : CpuInfoInLog.Match(systemInfo);
+            var osInfo = sysInfoParts.Length > 2 ? OsInfoInLog.Match(sysInfoParts[2]) : OsInfoInLog.Match(systemInfo);
+            if (buildInfo.Success)
             {
-                items["build_branch"] = m.Groups["branch"].Value.Trim();
-                items["build_commit"] = m.Groups["commit"].Value.Trim();
-                var fwVersion = m.Groups["fw_version_installed"].Value;
+                items["build_branch"] = buildInfo.Groups["branch"].Value.Trim();
+                items["build_commit"] = buildInfo.Groups["commit"].Value.Trim();
+                var fwVersion = buildInfo.Groups["fw_version_installed"].Value;
                 if (!string.IsNullOrEmpty(fwVersion))
                     items["fw_version_installed"] = fwVersion;
-                items["cpu_model"] = m.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "").Trim();
-                items["thread_count"] = m.Groups["thread_count"].Value;
-                items["memory_amount"] = m.Groups["memory_amount"].Value;
-                items["cpu_extensions"] = m.Groups["cpu_extensions"].Value;
-                systemInfo = $"RPCS3 v{m.Groups["version_string"].Value} {m.Groups["stage"].Value}";
-                if (!string.IsNullOrEmpty(m.Groups["branch"].Value))
-                    systemInfo += " | " + m.Groups["branch"].Value;
-                if (!string.IsNullOrEmpty(items["fw_version_installed"]))
-                    systemInfo += " | FW " + items["fw_version_installed"];
-                if (!string.IsNullOrEmpty(items["os_path"]))
-                {
-                    systemInfo += " | " + items["os_path"];
-                    if (items["os_windows_version"] is string winVer)
-                        systemInfo += " " + winVer;
-                }
-                systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
-                if (!string.IsNullOrEmpty(items["cpu_extensions"]))
-                    systemInfo += " | " + items["cpu_extensions"];
             }
+            if (cpuInfo.Success)
+            {
+                items["cpu_model"] = cpuInfo.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "").Trim();
+                items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
+                items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
+                items["cpu_extensions"] = cpuInfo.Groups["cpu_extensions"].Value;
+            }
+            if (osInfo.Success)
+            {
+                switch (osInfo.Groups["os_type"].Value.ToLowerInvariant())
+                {
+                    case "windows":
+                    {
+                        items["os_type"] = "Windows";
+                        items["os_version"] = $"{osInfo.Groups["os_version_major"].Value}.{osInfo.Groups["os_version_minor"].Value}.{osInfo.Groups["os_version_build"].Value}";
+                        if (Version.TryParse(items["os_version"], out var winVersion))
+                            items["os_windows_version"] = GetWindowsVersion(winVersion);
+                        break;
+                    }
+                    case "posix":
+                    {
+                        items["os_type"] = osInfo.Groups["posix_name"].Value;
+                        items["os_version"] = osInfo.Groups["posix_release"].Value;
+                        items["os_linux_version"] = GetLinuxVersion(items["os_version"], osInfo.Groups["posix_version"].Value);
+                        break;
+                    }
+                }
+            }
+            systemInfo = $"RPCS3 v{buildInfo.Groups["version_string"].Value} {buildInfo.Groups["stage"].Value}";
+            if (!string.IsNullOrEmpty(buildInfo.Groups["branch"].Value))
+                systemInfo += " | " + buildInfo.Groups["branch"].Value;
+            if (!string.IsNullOrEmpty(items["fw_version_installed"]))
+                systemInfo += " | FW " + items["fw_version_installed"];
+            if (!string.IsNullOrEmpty(items["os_type"]))
+            {
+                systemInfo += " | ";
+                if (items["os_windows_version"] is string winVer)
+                    systemInfo += "Windows " + winVer;
+                else if (items["os_linux_version"] is string linVer)
+                    systemInfo += linVer;
+                else
+                {
+                    systemInfo += items["os_type"];
+                    if (!string.IsNullOrEmpty(items["os_version"]))
+                        systemInfo += " " + items["os_version"];
+                }
+            }
+            systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
+            if (!string.IsNullOrEmpty(items["cpu_extensions"]))
+                systemInfo += " | " + items["cpu_extensions"];
 
             if (items["gpu_info"] is string gpu)
                 systemInfo += $"{Environment.NewLine}GPU: {gpu}";
