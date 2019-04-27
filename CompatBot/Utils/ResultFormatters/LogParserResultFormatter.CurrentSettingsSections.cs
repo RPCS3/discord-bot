@@ -25,8 +25,10 @@ namespace CompatBot.Utils.ResultFormatters
             var osInfo = sysInfoParts.Length > 2 ? OsInfoInLog.Match(sysInfoParts[2]) : OsInfoInLog.Match(systemInfo);
             if (buildInfo.Success)
             {
-                items["build_branch"] = buildInfo.Groups["branch"].Value.Trim();
+                items["build_version"] = buildInfo.Groups["version"].Value.Trim();
+                items["build_number"] = buildInfo.Groups["build"].Value.Trim();
                 items["build_commit"] = buildInfo.Groups["commit"].Value.Trim();
+                items["build_branch"] = buildInfo.Groups["branch"].Value.Trim();
                 var fwVersion = buildInfo.Groups["fw_version_installed"].Value;
                 if (!string.IsNullOrEmpty(fwVersion))
                     items["fw_version_installed"] = fwVersion;

@@ -269,10 +269,6 @@ namespace CompatBot.Utils.ResultFormatters
             if (!(items["build_and_specs"] is string buildAndSpecs))
                 return null;
 
-            var buildInfo = BuildInfoInLog.Match(buildAndSpecs.ToLowerInvariant());
-            if (!buildInfo.Success)
-                return null;
-
             var currentBuildCommit = items["build_commit"];
             if (string.IsNullOrEmpty(currentBuildCommit))
                 currentBuildCommit = null;
@@ -284,31 +280,31 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
 
             var latestBuildInfo = BuildInfoInUpdate.Match(link.ToLowerInvariant());
-            if (latestBuildInfo.Success && VersionIsTooOld(buildInfo, latestBuildInfo, updateInfo))
+            if (latestBuildInfo.Success && VersionIsTooOld(items, latestBuildInfo, updateInfo))
                 return updateInfo;
 
             return null;
 
         }
 
-        private static bool VersionIsTooOld(Match log, Match update, UpdateInfo updateInfo)
+        private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo updateInfo)
         {
             if ((updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta) && (updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuilds))
                 return false;
 
-            if (Version.TryParse(log.Groups["version"].Value, out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
+            if (Version.TryParse(items["build_version"], out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
             {
                 if (logVersion < updateVersion)
                     return true;
 
-                if (int.TryParse(log.Groups["build"].Value, out var logBuild) && int.TryParse(update.Groups["build"].Value, out var updateBuild))
+                if (int.TryParse(items["build_number"], out var logBuild) && int.TryParse(update.Groups["build"].Value, out var updateBuild))
                 {
                     if (logBuild + Config.BuildNumberDifferenceForOutdatedBuilds < updateBuild)
                         return true;
                 }
                 return false;
             }
-            return !SameCommits(log.Groups["commit"].Value, update.Groups["commit"].Value);
+            return !SameCommits(items["build_commit"], update.Groups["commit"].Value);
         }
 
         private static bool SameCommits(string commitA, string commitB)
