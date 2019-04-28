@@ -183,6 +183,8 @@ namespace CompatBot.Utils
         private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity)
         {
             var content = message.Content;
+            if (message.Channel.IsPrivate)
+                severity = ReportSeverity.Low;
             var needsAttention = severity > ReportSeverity.Low;
             if (message.Embeds?.Any() ?? false)
             {
@@ -217,10 +219,10 @@ namespace CompatBot.Utils
                     Title = infraction,
                     Color = GetColor(severity),
                 }.AddField("Violator", author == null ? message.Author.Mention : GetMentionWithNickname(author), true)
-                .AddField("Channel", message.Channel.Mention, true)
+                .AddField("Channel",  message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true)
                 .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content);
-            if (needsAttention)
+            if (needsAttention && !message.Channel.IsPrivate)
                 result.AddField("Link to the message", message.JumpLink.ToString());
             return result;
         }
