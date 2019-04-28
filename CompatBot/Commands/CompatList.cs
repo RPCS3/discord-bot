@@ -240,8 +240,11 @@ Example usage:
             await Task.Delay(5_000).ConfigureAwait(false);
 #endif
             var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-            foreach (var msg in FormatSearchResults(ctx, result))
-                await channel.SendAutosplitMessageAsync(msg, blockStart:"", blockEnd:"").ConfigureAwait(false);
+            if (result.Results.Count == 1)
+                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, new List<string>(result.Results.Keys)).ConfigureAwait(false);
+            else
+                foreach (var msg in FormatSearchResults(ctx, result))
+                    await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
 
         private IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
