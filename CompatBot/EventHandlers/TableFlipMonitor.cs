@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Utils;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -40,6 +42,9 @@ namespace CompatBot.EventHandlers
                     tableIdx = content.IndexOf("┻━┻");
                 var faceIdx = content.Substring(0, tableIdx).LastIndexOfAny(OpenParen);
                 var face = content.Substring(faceIdx, tableIdx - faceIdx);
+                if (face.Length > 20)
+                    return;
+
                 var reverseFace = face
                     .Replace("(╯", "╯(").Replace("(ﾉ", "ﾉ(").Replace("(ノ", "ノ(").Replace("(/¯", @"\_/(")
                     .Replace(")╯", "╯)").Replace(")ﾉ", "ﾉ)").Replace(")ノ", "ノ)").Replace(")/¯", @"\_/)")
@@ -54,7 +59,10 @@ namespace CompatBot.EventHandlers
                 if (reverseFace == face)
                     return;
 
-                await args.Channel.SendMessageAsync("┬─┬﻿ " + reverseFace).ConfigureAwait(false);
+                var faceLength = reverseFace.Length;
+                if (faceLength > 5+4)
+                    reverseFace = $"{reverseFace.Substring(0, 2)}ಠ益ಠ{reverseFace.Substring(faceLength - 2, 2)}";
+                await args.Channel.SendMessageAsync("┬─┬﻿ " + reverseFace.Sanitize()).ConfigureAwait(false);
             }
             catch (Exception e)
             {
