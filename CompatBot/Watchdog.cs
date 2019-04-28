@@ -22,16 +22,15 @@ namespace CompatBot
                 try
                 {
                     var ch = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                    await client.SendMessageAsync(ch, "Potential socket deadlock detected, reconnecting...").ConfigureAwait(false);
+                    Config.Log.Warn("Potential socket deadlock detected, reconnecting...");
                     await client.ReconnectAsync(true).ConfigureAwait(false);
                     await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
                     if (DisconnectTimestamps.IsEmpty)
                     {
-                        await client.SendMessageAsync(ch, "Looks like we're back in business").ConfigureAwait(false);
+                        Config.Log.Info("Looks like we're back in business");
                         continue;
                     }
-
-                    await client.SendMessageAsync(ch, "Hard reconnect failed, restarting...").ConfigureAwait(false);
+                    Config.Log.Error("Hard reconnect failed, restarting...");
                     Sudo.Bot.Restart(Program.InvalidChannelId);
                 }
                 catch (Exception e)
