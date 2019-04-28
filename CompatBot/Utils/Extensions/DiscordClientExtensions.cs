@@ -160,6 +160,10 @@ namespace CompatBot.Utils
         {
             try
             {
+                if (!emojiName.StartsWith(":"))
+                    emojiName = ":" + emojiName;
+                if (!emojiName.EndsWith(":"))
+                    emojiName = emojiName + ":";
                 return DiscordEmoji.FromName(client, emojiName);
             }
             catch
