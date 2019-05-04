@@ -219,17 +219,7 @@ namespace CompatBot
                         }
                         logLevel(eventArgs.Exception, eventArgs.Message);
                     };
-
-                    try
-                    {
-                        await client.ConnectAsync();
-                    }
-                    catch (Exception e)
-                    {
-                        Config.Log.Fatal(e, "Terminating");
-                        return;
-                    }
-
+                    await client.ConnectAsync();
                     if (args.Length > 1 && ulong.TryParse(args[1], out var channelId))
                     {
                         Config.Log.Info($"Found channelId: {args[1]}");
@@ -262,8 +252,11 @@ namespace CompatBot
                 }
                 await backgroundTasks.ConfigureAwait(false);
             }
-            catch (TaskCanceledException) { }
-            catch(Exception e)
+            catch (TaskCanceledException)
+            {
+                Config.Log.Info("Exiting");
+            }
+            catch (Exception e)
             {
                 Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
                 Sudo.Bot.Restart(InvalidChannelId);
@@ -273,7 +266,6 @@ namespace CompatBot
                 ShutdownCheck.Release();
                 if (singleInstanceCheckThread.IsAlive)
                     singleInstanceCheckThread.Join(100);
-                Config.Log.Info("Exiting");
             }
         }
     }

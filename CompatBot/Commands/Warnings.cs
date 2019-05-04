@@ -238,6 +238,8 @@ namespace CompatBot.Commands
                         new AsciiColumn("Context", disabled: !isPrivate)
                         );
                     IQueryable<Warning> query = db.Warning.Where(w => w.DiscordId == userId).OrderByDescending(w => w.Id);
+                    if (!isPrivate || !isWhitelisted)
+                        query = query.Where(w => !w.Retracted);
                     if (!isPrivate && !isWhitelisted)
                         query = query.Take(maxWarningsInPublicChannel);
                     foreach (var warning in await query.ToListAsync().ConfigureAwait(false))
