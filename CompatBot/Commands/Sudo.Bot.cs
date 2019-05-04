@@ -128,6 +128,7 @@ namespace CompatBot.Commands
 
             internal static void Restart(ulong channelId)
             {
+                Config.Log.Info("Restarting...");
                 using (var self = new Process
                 {
 #if DEBUG
