@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
@@ -7,12 +8,14 @@ using DSharpPlus.Entities;
 using CompatBot.Utils;
 using System.IO.Pipelines;
 using System.Net.Http;
+using CompatApiClient;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
-    internal sealed class PastebinHandler : BaseSourceHandler
+    internal sealed class DropboxHandler : BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions);
+        //https://www.dropbox.com/s/62ls9lw5i52fuib/RPCS3.log.gz?dl=0
+        private static readonly Regex ExternalLink = new Regex(@"(?<dropbox_link>(https?://)?(www\.)?dropbox\.com/s/(?<dropbox_id>[^/\s]+)/(?<filename>[^/\?\s])(/dl=[01])?)", DefaultOptions);
 
         public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
@@ -26,23 +29,35 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             using (var client = HttpClientFactory.Create())
                 foreach (Match m in matches)
                 {
-                    try
+                    if (m.Groups["dropbox_link"].Value is string lnk
+                        && !string.IsNullOrEmpty(lnk)
+                        && Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
                     {
-                        if (m.Groups["pastebin_id"].Value is string pid
-                            && !string.IsNullOrEmpty(pid))
+                        try
                         {
-                            var uri = new Uri("https://pastebin.com/raw/" + pid);
+                            uri = uri.SetQueryParameter("dl", "1");
+                            var filename = Path.GetFileName(lnk);
+                            var filesize = -1;
+
+                            using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
+                            using (var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Config.Cts.Token))
+                            {
+                                if (response?.Content?.Headers?.ContentLength > 0)
+                                    filesize = (int)response.Content.Headers.ContentLength.Value;
+                                if (response?.Content?.Headers?.ContentDisposition?.FileNameStar is string fname && !string.IsNullOrEmpty(fname))
+                                    filename = fname;
+                                uri = response.RequestMessage.RequestUri;
+                            }
+
                             using (var stream = await client.GetStreamAsync(uri).ConfigureAwait(false))
                             {
                                 var buf = bufferPool.Rent(1024);
                                 try
                                 {
                                     var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                                    var filename = pid + ".log";
-                                    var filesize = stream.CanSeek ? (int)stream.Length : 0;
                                     foreach (var handler in handlers)
                                         if (handler.CanHandle(filename, filesize, buf.AsSpan(0, read)))
-                                            return new PastebinSource(uri, filename, filesize, handler);
+                                            return new DropboxSource(uri, handler, filename, filesize);
                                 }
                                 finally
                                 {
@@ -50,33 +65,34 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                                 }
                             }
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        Config.Log.Warn(e, $"Error sniffing {m.Groups["mega_link"].Value}");
+
+                        catch (Exception e)
+                        {
+                            Config.Log.Warn(e, $"Error sniffing {m.Groups["mega_link"].Value}");
+                        }
                     }
                 }
             return null;
         }
 
-        private sealed class PastebinSource : ISource
+        private sealed class DropboxSource : ISource
         {
             private Uri uri;
-            private readonly IArchiveHandler handler;
+            private IArchiveHandler handler;
+
+            public string SourceType => "Dropbox";
+            public string FileName { get; }
+            public long SourceFileSize { get; }
             public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
-            public PastebinSource(Uri uri, string filename, int filesize, IArchiveHandler handler)
+            internal DropboxSource(Uri uri, IArchiveHandler handler, string fileName, int fileSize)
             {
                 this.uri = uri;
-                FileName = filename;
-                SourceFileSize = filesize;
                 this.handler = handler;
+                FileName = fileName;
+                SourceFileSize = fileSize;
             }
-
-            public string SourceType => "Pastebin";
-            public string FileName { get; }
-            public long SourceFileSize { get; }
 
             public async Task FillPipeAsync(PipeWriter writer)
             {
