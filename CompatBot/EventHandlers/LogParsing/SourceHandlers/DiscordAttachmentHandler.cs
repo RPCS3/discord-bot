@@ -13,32 +13,32 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     {
         public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
-            foreach (var attachment in message.Attachments)
-            {
-                try
+            using (var client = HttpClientFactory.Create())
+                foreach (var attachment in message.Attachments)
                 {
-                    using (var client = HttpClientFactory.Create())
-                    using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
+                    try
                     {
-                        var buf = bufferPool.Rent(1024);
-                        try
+                        using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
                         {
-                            var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                            foreach (var handler in handlers)
-                                if (handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read)))
-                                    return new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize);
-                        }
-                        finally
-                        {
-                            bufferPool.Return(buf);
+                            var buf = bufferPool.Rent(1024);
+                            try
+                            {
+                                var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                                foreach (var handler in handlers)
+                                    if (handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read)))
+                                        return new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize);
+                            }
+                            finally
+                            {
+                                bufferPool.Return(buf);
+                            }
                         }
                     }
+                    catch (Exception e)
+                    {
+                        Config.Log.Error(e, "Error sniffing the rar content");
+                    }
                 }
-                catch (Exception e)
-                {
-                    Config.Log.Error(e, "Error sniffing the rar content");
-                }
-            }
             return null;
         }
 

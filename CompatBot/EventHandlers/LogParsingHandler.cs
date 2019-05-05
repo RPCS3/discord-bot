@@ -29,6 +29,7 @@ namespace CompatBot.EventHandlers
             new DiscordAttachmentHandler(),
             new MegaHandler(),
             new GoogleDriveHandler(),
+            new DropboxHandler(), 
             new PastebinHandler(),
         };
         private static readonly IArchiveHandler[] archiveHandlers =
@@ -83,124 +84,124 @@ namespace CompatBot.EventHandlers
                 {
                     var source = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).FirstOrDefault(h => h != null);
                     if (source != null)
+                    {
+                        Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
+                        var analyzingProgressEmbed = GetAnalyzingMsgEmbed();
+                        botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
+                        parsedLog = true;
+                        LogParseState result = null;
+                        try
                         {
-                            Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
-                            var analyzingProgressEmbed = GetAnalyzingMsgEmbed();
-                            botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
-                            parsedLog = true;
-                            LogParseState result = null;
-                            try
+                            var pipe = new Pipe();
+                            var fillPipeTask = source.FillPipeAsync(pipe.Writer);
+                            var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader);
+                            do
                             {
-                                var pipe = new Pipe();
-                                var fillPipeTask = source.FillPipeAsync(pipe.Writer);
-                                var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader);
-                                do
-                                {
-                                    await Task.WhenAny(readPipeTask, Task.Delay(5000)).ConfigureAwait(false);
-                                    if (!readPipeTask.IsCompleted)
-                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
-                                } while (!readPipeTask.IsCompleted);
-                                result = await readPipeTask.ConfigureAwait(false);
-                                await fillPipeTask.ConfigureAwait(false);
-                                result.TotalBytes = source.LogFileSize;
-                                result.ParsingTime = startTime.Elapsed;
+                                await Task.WhenAny(readPipeTask, Task.Delay(5000)).ConfigureAwait(false);
+                                if (!readPipeTask.IsCompleted)
+                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
+                            } while (!readPipeTask.IsCompleted);
+                            result = await readPipeTask.ConfigureAwait(false);
+                            await fillPipeTask.ConfigureAwait(false);
+                            result.TotalBytes = source.LogFileSize;
+                            result.ParsingTime = startTime.Elapsed;
 #if DEBUG
-                                Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
-                                Config.Log.Debug("Extractor hit stats:");
-                                foreach (var stat in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value))
-                                    if (stat.Value > 100000)
-                                        Config.Log.Fatal($"{stat.Value}: {stat.Key}");
-                                    else if (stat.Value > 10000)
-                                        Config.Log.Error($"{stat.Value}: {stat.Key}");
-                                    else if (stat.Value > 1000)
-                                        Config.Log.Warn($"{stat.Value}: {stat.Key}");
-                                    else if (stat.Value > 100)
-                                        Config.Log.Info($"{stat.Value}: {stat.Key}");
-                                    else
-                                        Config.Log.Debug($"{stat.Value}: {stat.Key}");
+                            Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
+                            Config.Log.Debug("Extractor hit stats:");
+                            foreach (var stat in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value))
+                                if (stat.Value > 100000)
+                                    Config.Log.Fatal($"{stat.Value}: {stat.Key}");
+                                else if (stat.Value > 10000)
+                                    Config.Log.Error($"{stat.Value}: {stat.Key}");
+                                else if (stat.Value > 1000)
+                                    Config.Log.Warn($"{stat.Value}: {stat.Key}");
+                                else if (stat.Value > 100)
+                                    Config.Log.Info($"{stat.Value}: {stat.Key}");
+                                else
+                                    Config.Log.Debug($"{stat.Value}: {stat.Key}");
 #endif
                         }
                         catch (Exception e)
-                            {
-                                Config.Log.Error(e, "Log parsing failed");
-                            }
+                        {
+                            Config.Log.Error(e, "Log parsing failed");
+                        }
 
-                            if (result == null)
-                            {
-                                botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                    embed: new DiscordEmbedBuilder
-                                        {
-                                            Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
-                                                          "Please run the game again and re-upload a new copy.",
-                                            Color = Config.Colors.LogResultFailed,
-                                        }
-                                        .AddAuthor(client, message, source)
-                                        .Build()
-                                ).ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    if (result.Error == LogParseState.ErrorCode.PiracyDetected)
+                        if (result == null)
+                        {
+                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                embed: new DiscordEmbedBuilder
                                     {
-                                        var yarr = client.GetEmoji(":piratethink:", "☠");
-                                        result.ReadBytes = 0;
-                                        if (message.Author.IsWhitelisted(client, channel.Guild))
-                                        {
-                                            var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
-                                            piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
-                                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
-                                            await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
-                                        }
-                                        else
-                                        {
-                                            var severity = ReportSeverity.Low;
-                                            try
-                                            {
-                                                await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                severity = ReportSeverity.High;
-                                                Config.Log.Warn(e, $"Unable to delete message in {channel.Name}");
-                                            }
-                                            try
-                                            {
-                                                botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                                    $"{message.Author.Mention}, please read carefully:",
-                                                    embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
-                                                ).ConfigureAwait(false);
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Config.Log.Error(e, "Failed to send piracy warning");
-                                            }
-                                            try
-                                            {
-                                                await client.ReportAsync(yarr + " Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity).ConfigureAwait(false);
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Config.Log.Error(e, "Failed to send piracy report");
-                                            }
-                                            if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
-                                                await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.PiracyTrigger} - {result.PiracyContext.Sanitize()}");
-                                        }
+                                        Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
+                                                      "Please run the game again and re-upload a new copy.",
+                                        Color = Config.Colors.LogResultFailed,
+                                    }
+                                    .AddAuthor(client, message, source)
+                                    .Build()
+                            ).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                if (result.Error == LogParseState.ErrorCode.PiracyDetected)
+                                {
+                                    var yarr = client.GetEmoji(":piratethink:", "☠");
+                                    result.ReadBytes = 0;
+                                    if (message.Author.IsWhitelisted(client, channel.Guild))
+                                    {
+                                        var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
+                                        piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
+                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
+                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
                                     }
                                     else
-                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                            requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
-                                            embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
-                                        ).ConfigureAwait(false);
+                                    {
+                                        var severity = ReportSeverity.Low;
+                                        try
+                                        {
+                                            await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            severity = ReportSeverity.High;
+                                            Config.Log.Warn(e, $"Unable to delete message in {channel.Name}");
+                                        }
+                                        try
+                                        {
+                                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                                $"{message.Author.Mention}, please read carefully:",
+                                                embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
+                                            ).ConfigureAwait(false);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Config.Log.Error(e, "Failed to send piracy warning");
+                                        }
+                                        try
+                                        {
+                                            await client.ReportAsync(yarr + " Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity).ConfigureAwait(false);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Config.Log.Error(e, "Failed to send piracy report");
+                                        }
+                                        if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
+                                            await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.PiracyTrigger} - {result.PiracyContext.Sanitize()}");
+                                    }
                                 }
-                                catch (Exception e)
-                                {
-                                    Config.Log.Error(e, "Sending log results failed");
-                                }
+                                else
+                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                        requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                        embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
+                                    ).ConfigureAwait(false);
                             }
-                            return;
+                            catch (Exception e)
+                            {
+                                Config.Log.Error(e, "Sending log results failed");
+                            }
                         }
+                        return;
+                    }
 
                     if (!"help".Equals(channel.Name, StringComparison.InvariantCultureIgnoreCase))
                         return;
