@@ -79,29 +79,31 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
             }
-            systemInfo = $"RPCS3 v{buildInfo.Groups["version_string"].Value} {buildInfo.Groups["stage"].Value}";
-            if (!string.IsNullOrEmpty(buildInfo.Groups["branch"].Value))
-                systemInfo += " | " + buildInfo.Groups["branch"].Value;
-            if (!string.IsNullOrEmpty(items["fw_version_installed"]))
-                systemInfo += " | FW " + items["fw_version_installed"];
-            if (!string.IsNullOrEmpty(items["os_type"]))
+            if (buildInfo.Success)
             {
-                systemInfo += " | ";
-                if (items["os_windows_version"] is string winVer)
-                    systemInfo += "Windows " + winVer;
-                else if (items["os_linux_version"] is string linVer)
-                    systemInfo += linVer;
-                else
+                systemInfo = $"RPCS3 v{buildInfo.Groups["version_string"].Value} {buildInfo.Groups["stage"].Value}";
+                if (!string.IsNullOrEmpty(buildInfo.Groups["branch"].Value))
+                    systemInfo += " | " + buildInfo.Groups["branch"].Value;
+                if (!string.IsNullOrEmpty(items["fw_version_installed"]))
+                    systemInfo += " | FW " + items["fw_version_installed"];
+                if (!string.IsNullOrEmpty(items["os_type"]))
                 {
-                    systemInfo += items["os_type"];
-                    if (!string.IsNullOrEmpty(items["os_version"]))
-                        systemInfo += " " + items["os_version"];
+                    systemInfo += " | ";
+                    if (items["os_windows_version"] is string winVer)
+                        systemInfo += "Windows " + winVer;
+                    else if (items["os_linux_version"] is string linVer)
+                        systemInfo += linVer;
+                    else
+                    {
+                        systemInfo += items["os_type"];
+                        if (!string.IsNullOrEmpty(items["os_version"]))
+                            systemInfo += " " + items["os_version"];
+                    }
                 }
+                systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
+                if (!string.IsNullOrEmpty(items["cpu_extensions"]))
+                    systemInfo += " | " + items["cpu_extensions"];
             }
-            systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
-            if (!string.IsNullOrEmpty(items["cpu_extensions"]))
-                systemInfo += " | " + items["cpu_extensions"];
-
             if (items["gpu_info"] is string gpu)
                 systemInfo += $"{Environment.NewLine}GPU: {gpu}";
             else if (items["gpu_available_info"] is string availableGpus)
@@ -109,7 +111,6 @@ namespace CompatBot.Utils.ResultFormatters
                 var multiple = availableGpus.Contains(Environment.NewLine);
                 systemInfo += $"{Environment.NewLine}GPU{(multiple ? "s" : "")}:{(multiple ? Environment.NewLine : " ")}{availableGpus}";
             }
-
             builder.AddField("Build Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
         }
 
