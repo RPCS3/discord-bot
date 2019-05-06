@@ -36,12 +36,21 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
 
-/*
-            if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
-                notes.Add("⚠ Interpreter as `PPU Decoder` is not required; please use recompiler for better performance");
+            if (items["ppu_decoder"] is string ppuDecoder)
+            {
+                if (KnownGamesThatRequireInterpreter.Contains(serial))
+                {
+                    if (ppuDecoder.Contains("Recompiler", StringComparison.InvariantCultureIgnoreCase))
+                        notes.Add("⚠ This game requires `PPU Decoder` to use `Interpreter (fast)`");
+                }
+                else
+                {
+                    if (ppuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
+                        notes.Add("⚠ Please set `PPU Decoder` to use recompiler for better performance");
+                }
+            }
             if (items["spu_decoder"] is string spuDecoder && spuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
-                notes.Add("⚠ Interpreter as `SPU Decoder` is not required; please use recompiler for better performance");
-*/
+                notes.Add("⚠ Please set `SPU Decoder` to use recompiler for better performance");
 
             if (!string.IsNullOrEmpty(serial))
             {
