@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -51,6 +50,10 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
                     else
                         notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
+                }
+                else if (fatalError.Contains("Unknown primitive type"))
+                {
+                    notes.Add("⚠ RSX desync detected, it's probably random");
                 }
             }
 
