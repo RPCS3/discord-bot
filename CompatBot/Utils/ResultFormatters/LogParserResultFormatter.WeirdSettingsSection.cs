@@ -48,7 +48,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckP5Settings(serial, items, notes);
                 CheckAsurasWrathSettings(serial, items, notes);
                 CheckJojoSettings(serial, items, notes);
-                CheckSimpsonsSettings(serial, items, notes);
+                CheckSimpsonsSettings(serial, notes);
                 CheckNierSettings(serial, items, notes);
                 CheckScottPilgrimSettings(serial, items, notes);
             }
@@ -213,7 +213,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ If you experience audio issues, disable `Audio Buffering` or Pause/Unpause emulation");
         }
 
-        private static void CheckSimpsonsSettings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckSimpsonsSettings(string serial, List<string> notes)
         {
             if (serial == "BLES00142" || serial == "BLUS30065")
             {

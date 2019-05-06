@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -14,7 +13,7 @@ namespace Tests
     public class ZalgoTests
     {
         [Test, Explicit("Requires external data")]
-        public async Task ZalgoAuditTest()
+        public async Task ZalgoAuditTestAsync()
         {
             var samplePath = @"C:/Users/13xforever/Downloads/names.txt";
             var resultPath = Path.Combine(Path.GetDirectoryName(samplePath), "zalgo.txt");
@@ -27,12 +26,12 @@ namespace Tests
                     var user = UserInfo.Parse(line);
                     var isZalgo = UsernameZalgoMonitor.NeedsRename(user.DisplayName);
                     if (isZalgo)
-                        w.WriteLine(user.DisplayName);
+                        await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
                 }
         }
 
         [Test, Explicit("Requires external data")]
-        public async Task RoleSortTest()
+        public async Task RoleSortTestAsync()
         {
             var samplePath = @"C:/Users/13xforever/Downloads/names.txt";
             var resultPath = Path.Combine(Path.GetDirectoryName(samplePath), "role_count.txt");
@@ -47,8 +46,8 @@ namespace Tests
                     var roleCount = user.Roles?.Length ?? 0;
                     stats[roleCount]++;
                     w.Write(roleCount);
-                    w.Write('\t');
-                    w.WriteLine(user.DisplayName);
+                    await w.WriteAsync('\t').ConfigureAwait(false);
+                    await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
                 }
 
             for (var i = 0; i < stats.Length && stats[i] > 0; i++)
