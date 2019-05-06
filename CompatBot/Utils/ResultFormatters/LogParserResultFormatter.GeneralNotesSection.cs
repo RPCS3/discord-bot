@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -44,8 +45,17 @@ namespace CompatBot.Utils.ResultFormatters
                     if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
                         notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
                 }
+                else if (fatalError.Contains("syscall_9"))
+                {
+                    if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
+                        notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
+                    else
+                        notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
+                }
             }
 
+            if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
+                notes.Add("❌ This game doesn't work on the emulator yet");
             if (items["failed_to_decrypt"] is string _)
                 notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
             if (items["failed_to_boot"] is string _)
@@ -196,12 +206,18 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+            var ovlPatches = GetPatches(items["ovl_hash"], items["ovl_hash_patch"]);
             var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
-            if (ppuPatches.Any() || spuPatches.Any())
+            if (ppuPatches.Any() || spuPatches.Any() || ovlPatches.Any())
             {
-                var ppuCount = ppuPatches.Count == 0 ? "-" : string.Join('/', ppuPatches.Values);
-                var spuCount = spuPatches.Count == 0 ? "-" : string.Join('/', spuPatches.Values);
-                notes.Add($"ℹ Game-specific patches were applied (PPU: {ppuCount}, SPU: {spuCount})");
+                var patchCount = "";
+                if (ppuPatches.Count != 0)
+                    patchCount += "PPU: " + string.Join('/', ppuPatches.Values) + ", ";
+                if (ovlPatches.Count != 0)
+                    patchCount += "OVL: " + string.Join('/', ovlPatches.Values) + ", ";
+                if (spuPatches.Count != 0)
+                    patchCount += "SPU: " + string.Join('/', spuPatches.Values);
+                notes.Add($"ℹ Game-specific patches were applied ({patchCount.TrimEnd(',', ' ')})");
             }
             if (P5Ids.Contains(serial))
             {

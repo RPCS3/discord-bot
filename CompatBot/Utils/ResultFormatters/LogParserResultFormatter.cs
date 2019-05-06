@@ -266,7 +266,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static async Task<UpdateInfo> CheckForUpdateAsync(NameValueCollection items)
         {
-            if (!(items["build_and_specs"] is string buildAndSpecs))
+            if (string.IsNullOrEmpty(items["build_and_specs"]))
                 return null;
 
             var currentBuildCommit = items["build_commit"];

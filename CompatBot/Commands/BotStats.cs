@@ -59,12 +59,13 @@ namespace CompatBot.Commands
                         .OrderBy(w => w.Timestamp)
                         .Select(w => w.Timestamp.Value)
                         .ToList();
-                    var previousTimestamp = timestamps.FirstOrDefault();
+                    var firstWarnTimestamp = timestamps.FirstOrDefault();
+                    var previousTimestamp = firstWarnTimestamp;
                     var longestGapBetweenWarning = 0L;
                     long longestGapStart = 0L, longestGapEnd = 0L;
                     var span24h = TimeSpan.FromHours(24).Ticks;
                     var currentSpan = new Queue<long>();
-                    long mostWarningsStart = 0L, mostWarningsEnd = 0L;
+                    long mostWarningsStart = 0L, mostWarningsEnd = 0L, daysWithoutWarnings = 0L;
                     var mostWarnings = 0;
                     for (var i = 0; i < timestamps.Count; i++)
                     {
@@ -76,6 +77,8 @@ namespace CompatBot.Commands
                             longestGapStart = previousTimestamp;
                             longestGapEnd = currentTimestamp;
                         }
+                        if (newGap > span24h)
+                            daysWithoutWarnings += newGap / span24h;
                         previousTimestamp = currentTimestamp;
 
                         currentSpan.Enqueue(currentTimestamp);
@@ -99,11 +102,16 @@ namespace CompatBot.Commands
                         statsBuilder.AppendLine($@"Longest between warnings: **{TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()}** between {longestGapStart.AsUtc():yyyy-MM-dd} and {longestGapEnd.AsUtc():yyyy-MM-dd}");
                     if (mostWarnings > 0)
                         statsBuilder.AppendLine($"Most warnings in 24h: **{mostWarnings}** on {mostWarningsEnd.AsUtc():yyyy-MM-dd}");
+                    if (daysWithoutWarnings > 0 && firstWarnTimestamp > 0)
+                        statsBuilder.AppendLine($"Full days without warnings: **{daysWithoutWarnings}** out of {(DateTime.UtcNow - firstWarnTimestamp.AsUtc()).TotalDays:0}");
+                    {
+                        statsBuilder.Append($"Warnings in the last 24h: **{warnCount}**");
+                        if (warnCount == 0)
+                            statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
+                        statsBuilder.AppendLine();
+                    }
                     if (lastWarn.HasValue)
                         statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
-                    statsBuilder.Append($"Warnings in the last 24h: **{warnCount}**");
-                    if (warnCount == 0)
-                        statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
                     embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);
                 }
             }
