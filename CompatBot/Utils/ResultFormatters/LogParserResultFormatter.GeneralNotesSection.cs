@@ -206,12 +206,18 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+            var ovlPatches = GetPatches(items["ovl_hash"], items["ovl_hash_patch"]);
             var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
-            if (ppuPatches.Any() || spuPatches.Any())
+            if (ppuPatches.Any() || spuPatches.Any() || ovlPatches.Any())
             {
-                var ppuCount = ppuPatches.Count == 0 ? "-" : string.Join('/', ppuPatches.Values);
-                var spuCount = spuPatches.Count == 0 ? "-" : string.Join('/', spuPatches.Values);
-                notes.Add($"ℹ Game-specific patches were applied (PPU: {ppuCount}, SPU: {spuCount})");
+                var patchCount = "";
+                if (ppuPatches.Count != 0)
+                    patchCount += "PPU: " + string.Join('/', ppuPatches.Values) + ", ";
+                if (ovlPatches.Count != 0)
+                    patchCount += "OVL: " + string.Join('/', ovlPatches.Values) + ", ";
+                if (spuPatches.Count != 0)
+                    patchCount += "SPU: " + string.Join('/', spuPatches.Values);
+                notes.Add($"ℹ Game-specific patches were applied ({patchCount.TrimEnd(',', ' ')})");
             }
             if (P5Ids.Contains(serial))
             {
