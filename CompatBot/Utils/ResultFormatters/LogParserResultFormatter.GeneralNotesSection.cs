@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -43,6 +44,13 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
                     if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
                         notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
+                }
+                else if (fatalError.Contains("syscall_9"))
+                {
+                    if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
+                        notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
+                    else
+                        notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
                 }
             }
 

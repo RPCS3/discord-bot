@@ -172,6 +172,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["LDR: EDAT: "] = new Regex(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
                     ["PS3 firmware is not installed"] = new Regex(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
                     ["do you have the PS3 firmware installed"] = new Regex(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
+                    ["Unimplemented syscall"] = new Regex(@"U \d+:\d+:\d+\.\d+ ({(?<fatal_error_context>.+?)} )?.*(?<fatal_error>Unimplemented syscall .*)\r?$", DefaultOptions),
                 },
                 OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
