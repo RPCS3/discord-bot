@@ -65,6 +65,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     var strValue = group.Value.ToUtf8();
                     Config.Log.Debug($"regex {group.Name} = {group.Value}");
                     lock(state)
+                    {
                         if (MultiValueItems.Contains(group.Name))
                         {
                             var currentValue = state.WipCollection[group.Name];
@@ -74,6 +75,12 @@ namespace CompatBot.EventHandlers.LogParsing
                         }
                         else
                             state.WipCollection[group.Name] = strValue;
+                        if (CountValueItems.Contains(group.Name))
+                        {
+                            state.ValueHitStats.TryGetValue(group.Name, out var hits);
+                            state.ValueHitStats[group.Name] = ++hits;
+                        }
+                    }
                 }
         }
 
