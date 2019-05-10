@@ -106,7 +106,7 @@ namespace CompatBot.Commands
                     if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                     {
                         if (artifactInfo.Artifact.Created is DateTime buildTime)
-                            downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime).AsTimeDeltaDescription()} ago)";
+                            downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
                         downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
                     }
                     else
@@ -119,7 +119,7 @@ namespace CompatBot.Commands
                 else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                 {
                     if (artifactInfo.Artifact.Created is DateTime buildTime)
-                        downloadHeader = $"{downloadHeader} ({buildTime:u})";
+                        downloadHeader = $"{downloadHeader} ({buildTime.ToUniversalTime():u})";
                     downloadText = $"[⏬ {artifactInfo.Artifact.FileName}]({artifactInfo.DownloadUrl})";
                 }
                 if (!string.IsNullOrEmpty(downloadText))
