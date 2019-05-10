@@ -117,6 +117,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     ["Renderer:"] = new Regex("Renderer: (?<audio_backend>.*?)\r?$", DefaultOptions),
                     ["Downmix to Stereo:"] = new Regex("Downmix to Stereo: (?<audio_stereo>.*?)\r?$", DefaultOptions),
+                    ["Master Volume:"] = new Regex("Master Volume: (?<audio_volume>.*?)\r?$", DefaultOptions),
                     ["Enable Buffering:"] = new Regex("Enable Buffering: (?<audio_buffering>.*?)\r?$", DefaultOptions),
                     ["Enable Time Stretching:"] = new Regex("Enable Time Stretching: (?<audio_stretching>.*?)\r?$", DefaultOptions),
 

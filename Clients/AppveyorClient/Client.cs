@@ -89,7 +89,7 @@ namespace AppveyorClient
             try
             {
                 var build = await FindBuildAsync(
-                    historyPage => historyPage.Builds.Last(b => b.Started.HasValue).Started > dateTimeLimit,
+                    historyPage => historyPage.Builds.Last(b => b.Started.HasValue).Started?.ToUniversalTime() > dateTimeLimit,
                     b => b.PullRequestId == prNumber && b.Status == "success",
                     cancellationToken
                 ).ConfigureAwait(false);
@@ -176,7 +176,7 @@ namespace AppveyorClient
             {
                 var oldestBuildDate = DateTime.UtcNow - JobIdSearchThreshold;
                 return await FindBuildAsync(
-                    h => h.Builds.Last().Created > oldestBuildDate,
+                    h => h.Builds.Last().Created?.ToUniversalTime() > oldestBuildDate,
                     b =>
                     {
                         var buildInfo = GetBuildInfoAsync(b.BuildId, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -246,7 +246,7 @@ namespace AppveyorClient
             {
                 mergeDate = mergeDate ?? (DateTime.UtcNow - JobIdSearchThreshold);
                 result = await FindBuildAsync(
-                    h => h.Builds.Last().Created > mergeDate,
+                    h => h.Builds.Last().Created?.ToUniversalTime() > mergeDate,
                     b => b.CommitId.StartsWith(commit, StringComparison.InvariantCultureIgnoreCase) && b.Status == "success",
                     cancellationToken
                 );

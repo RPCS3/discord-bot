@@ -113,6 +113,19 @@ namespace CompatBot.Utils.ResultFormatters
                 && !padHandler.StartsWith("DualShock"))
                 notes.Add("❗ This game requires motion controls, please use DS3 or DS4 gamepad");
 
+            if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
+            {
+                if (items["os_type"] == "Windows" && !audioBackend.Equals("XAudio2", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("⚠ Please use `XAudio2` as the audio backend on Windows");
+                else if (items["os_type"] == "Linux" && !audioBackend.Equals("OpenAL", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("ℹ `OpenAL` is the recommended audio backend on Linux");
+                if (audioBackend.Equals("null", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("⚠ `Audio backend` is set to `null`");
+            }
+
+            if (int.TryParse(items["audio_volume"], out var audioVolume) && audioVolume < 10)
+                notes.Add($"⚠ Audio volume is set to {audioVolume}%");
+
             if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == EnabledMark)
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
