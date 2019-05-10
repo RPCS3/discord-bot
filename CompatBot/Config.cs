@@ -26,6 +26,7 @@ namespace CompatBot
         public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
+        public static readonly TimeSpan ShutupTimeLimit = TimeSpan.FromMinutes(5);
         public static readonly Stopwatch Uptime = Stopwatch.StartNew();
 
         // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
@@ -99,6 +100,7 @@ namespace CompatBot
             public static readonly DiscordEmoji No = DiscordEmoji.FromUnicode("😐");
             public static readonly DiscordEmoji PleaseWait = DiscordEmoji.FromUnicode("👀");
             public static readonly DiscordEmoji PiracyCheck = DiscordEmoji.FromUnicode("🔨");
+            public static readonly DiscordEmoji Shutup = DiscordEmoji.FromUnicode("🔇");
         }
 
         public static class Moderation

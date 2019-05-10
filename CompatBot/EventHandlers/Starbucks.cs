@@ -126,6 +126,8 @@ namespace CompatBot.EventHandlers
                 message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
                 if (emoji == Config.Reactions.Starbucks)
                     await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
+                if (emoji == Config.Reactions.Shutup)
+                    await ShutupAsync(client, user, message).ConfigureAwait(false);
 
                 await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
             }
@@ -174,6 +176,22 @@ namespace CompatBot.EventHandlers
             await message.ReactWithAsync(client, emoji).ConfigureAwait(false);
             await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
         }
+
+
+        private static Task ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)
+        {
+            if (!message.Author.IsCurrent)
+                return Task.CompletedTask;
+
+            if (message.CreationTimestamp.Add(Config.ShutupTimeLimit) < DateTime.UtcNow)
+                return Task.CompletedTask;
+
+            if (!user.IsWhitelisted(client, message.Channel.Guild))
+                return Task.CompletedTask;
+
+            return message.DeleteAsync();
+        }
+
 
         private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
         {

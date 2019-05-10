@@ -149,7 +149,7 @@ namespace CompatBot.EventHandlers
                     var botMember = args.Guild?.CurrentMember ?? args.Client.GetMember(args.Client.CurrentUser);
                     if (args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
                     {
-                        var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddMinutes(-5)).ConfigureAwait(false);
+                        var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.Add(-Config.ShutupTimeLimit)).ConfigureAwait(false);
                         if (lastBotMessages.OrderByDescending(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)
                             await msg.DeleteAsync("asked to shut up").ConfigureAwait(false);
                     }
