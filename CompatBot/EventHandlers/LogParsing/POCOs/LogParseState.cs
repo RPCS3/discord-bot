@@ -8,6 +8,7 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
     {
         public NameValueCollection CompleteCollection = null;
         public NameValueCollection WipCollection = new NameValueCollection();
+        public Dictionary<string, int> ValueHitStats = new Dictionary<string, int>();
         public int Id = 0;
         public ErrorCode Error = ErrorCode.None;
         public string PiracyTrigger;

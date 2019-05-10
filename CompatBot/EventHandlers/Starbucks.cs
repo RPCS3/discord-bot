@@ -47,17 +47,18 @@ namespace CompatBot.EventHandlers
             [DiscordEmoji.FromUnicode("🇾")] = "Y",
             [DiscordEmoji.FromUnicode("🇿")] = "Z",
 
-            [DiscordEmoji.FromUnicode("0⃣️")] = "0",
-            [DiscordEmoji.FromUnicode("1️⃣")] = "1",
-            [DiscordEmoji.FromUnicode("2️⃣")] = "2",
-            [DiscordEmoji.FromUnicode("3️⃣")] = "3",
-            [DiscordEmoji.FromUnicode("4️⃣")] = "4",
-            [DiscordEmoji.FromUnicode("5️⃣")] = "5",
-            [DiscordEmoji.FromUnicode("6️⃣")] = "6",
-            [DiscordEmoji.FromUnicode("7️⃣")] = "7",
-            [DiscordEmoji.FromUnicode("8️⃣")] = "8",
-            [DiscordEmoji.FromUnicode("9️⃣")] = "9",
+            [DiscordEmoji.FromUnicode("0\u20E3")] = "0",
+            [DiscordEmoji.FromUnicode("1\u20E3")] = "1",
+            [DiscordEmoji.FromUnicode("2\u20E3")] = "2",
+            [DiscordEmoji.FromUnicode("3\u20E3")] = "3",
+            [DiscordEmoji.FromUnicode("4\u20E3")] = "4",
+            [DiscordEmoji.FromUnicode("5\u20E3")] = "5",
+            [DiscordEmoji.FromUnicode("6\u20E3")] = "6",
+            [DiscordEmoji.FromUnicode("7\u20E3")] = "7",
+            [DiscordEmoji.FromUnicode("8\u20E3")] = "8",
+            [DiscordEmoji.FromUnicode("9\u20E3")] = "9",
             [DiscordEmoji.FromUnicode("🔟")] = "10",
+            [DiscordEmoji.FromUnicode("💯")] = "100",
 
             [DiscordEmoji.FromUnicode("🆑")] = "CL",
             [DiscordEmoji.FromUnicode("🆐")] = "DJ",
@@ -125,6 +126,8 @@ namespace CompatBot.EventHandlers
                 message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
                 if (emoji == Config.Reactions.Starbucks)
                     await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
+                if (emoji == Config.Reactions.Shutup)
+                    await ShutupAsync(client, user, message).ConfigureAwait(false);
 
                 await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
             }
@@ -173,6 +176,22 @@ namespace CompatBot.EventHandlers
             await message.ReactWithAsync(client, emoji).ConfigureAwait(false);
             await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
         }
+
+
+        private static Task ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)
+        {
+            if (!message.Author.IsCurrent)
+                return Task.CompletedTask;
+
+            if (message.CreationTimestamp.Add(Config.ShutupTimeLimit) < DateTime.UtcNow)
+                return Task.CompletedTask;
+
+            if (!user.IsWhitelisted(client, message.Channel.Guild))
+                return Task.CompletedTask;
+
+            return message.DeleteAsync();
+        }
+
 
         private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
         {

@@ -208,6 +208,16 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("❌ Shader compilation error on unsupported GPU");
             }
 
+            if (!string.IsNullOrEmpty(items["enqueue_buffer_error"])
+                && state.ValueHitStats.TryGetValue("enqueue_buffer_error", out var enqueueBufferErrorCount)
+                && enqueueBufferErrorCount > 100)
+            {
+                if (items["os_type"] == "Windows")
+                    notes.Add("⚠ Audio backend issues detected; it could be caused by a bad driver or 3rd party software");
+                else
+                    notes.Add("⚠ Audio backend issues detected; check for high audio driver/sink latency");
+            }
+
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
             var ovlPatches = GetPatches(items["ovl_hash"], items["ovl_hash_patch"]);
             var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
