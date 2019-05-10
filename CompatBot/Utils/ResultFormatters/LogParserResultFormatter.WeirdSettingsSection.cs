@@ -123,8 +123,13 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Audio backend` is set to `null`");
             }
 
-            if (int.TryParse(items["audio_volume"], out var audioVolume) && audioVolume < 10)
-                notes.Add($"⚠ Audio volume is set to {audioVolume}%");
+            if (int.TryParse(items["audio_volume"], out var audioVolume))
+            {
+                if (audioVolume < 10)
+                    notes.Add($"⚠ Audio volume is set to {audioVolume}%");
+                else if (audioVolume > 100)
+                    notes.Add($"⚠ Audio volume is set to {audioVolume}%; audio clipping is to be expected");
+            }
 
             if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == EnabledMark)
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
