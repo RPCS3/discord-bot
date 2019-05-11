@@ -135,7 +135,7 @@ namespace CompatBot.Utils
 
         public static string GetSuffix(long num) => num == 1 ? "" : "s";
 
-        public static string FixSpaces(this string text) => text?.Replace(" ", " \u200d");
+        public static string FixSpaces(this string text) => text?.Replace(" ", "\u202f").Replace(Environment.NewLine, "\n");
 
         public static int GetVisibleLength(this string s)
         {
