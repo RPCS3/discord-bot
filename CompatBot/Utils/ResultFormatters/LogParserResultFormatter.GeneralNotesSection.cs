@@ -86,8 +86,8 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
-            var pathSerial = items["ldr_game_serial"] ?? items["ldr_path_serial"] ?? items["ldr_boot_path_serial"];
-            if (!string.IsNullOrEmpty(pathSerial)
+            var path = items["ldr_game"] ?? items["ldr_path"] ?? items["ldr_boot_path"] ?? items["elf_boot_path"];
+            if (!string.IsNullOrEmpty(path)
                 && serial.StartsWith("NP")
                 && items["ldr_game_serial"] != serial
                 && items["ldr_path_serial"] != serial

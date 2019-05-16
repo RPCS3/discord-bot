@@ -69,7 +69,11 @@ namespace CompatBot.Commands
                             var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
                             git.WaitForExit();
                             if (!string.IsNullOrEmpty(stdout))
+                            {
                                 await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
+                                if (stdout.Contains("Already up to date", StringComparison.InvariantCultureIgnoreCase))
+                                    return;
+                            }
                         }
                         msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id);
