@@ -126,6 +126,7 @@ namespace CompatBot.Commands
                     ? $"Shutting down bot instance on {Environment.MachineName}..."
                     : "Shutting down the bot..."
                 ).ConfigureAwait(false);
+                Config.Log.Info($"Shutting down by request from {ctx.User.Username}#{ctx.User.Discriminator}");
                 Config.inMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
             }
