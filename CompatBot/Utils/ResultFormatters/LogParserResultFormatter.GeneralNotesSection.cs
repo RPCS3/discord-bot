@@ -44,16 +44,21 @@ namespace CompatBot.Utils.ResultFormatters
                     if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
                         notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
                 }
-                else if (fatalError.Contains("syscall_9"))
+                else if (fatalError.Contains("Unknown primitive type"))
                 {
+                    notes.Add("⚠ RSX desync detected, it's probably random");
+                }
+            }
+            else if (items["unimplemented_syscall"] is string unimplementedSyscall)
+            {
+                if (unimplementedSyscall.Contains("syscall_988"))
+                {
+                    fatalError = "Unimplemented syscall " + unimplementedSyscall;
+                    builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                     if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
                         notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
                     else
                         notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
-                }
-                else if (fatalError.Contains("Unknown primitive type"))
-                {
-                    notes.Add("⚠ RSX desync detected, it's probably random");
                 }
             }
 
