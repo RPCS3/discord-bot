@@ -126,9 +126,9 @@ namespace CompatBot.Commands
                     ? $"Shutting down bot instance on {Environment.MachineName}..."
                     : "Shutting down the bot..."
                 ).ConfigureAwait(false);
+                Config.inMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
             }
-
 
             internal static void Restart(ulong channelId)
             {
