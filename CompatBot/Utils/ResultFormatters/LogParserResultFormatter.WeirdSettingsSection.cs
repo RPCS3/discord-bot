@@ -71,6 +71,16 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
                 notes.Add("❔ `/host_root/` is enabled");
+            if (items["spurs_threads"] is string spursSetting
+                && int.TryParse(spursSetting, out var spursThreads)
+                && spursThreads != 6)
+            {
+                if (spursThreads > 6 || spursThreads < 1)
+                    notes.Add($"⚠ `Max SPURS Threads` is set to `{spursThreads}`; please change it back to `6`");
+                else
+                    notes.Add($"ℹ `Max SPURS Threads` is set to `{spursThreads}`; may result in game crash");
+            }
+
             if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == EnabledMark)
                 notes.Add("⚠ `GPU Texture Scaling` is enabled, please disable");
             if (items["af_override"] is string af)
