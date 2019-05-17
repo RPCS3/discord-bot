@@ -252,14 +252,9 @@ namespace CompatBot
                 }
                 await backgroundTasks.ConfigureAwait(false);
             }
-            catch (TaskCanceledException)
-            {
-                Config.Log.Info("Exiting");
-            }
             catch (Exception e)
             {
                 Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
-                Sudo.Bot.Restart(InvalidChannelId);
             }
             finally
             {
@@ -267,6 +262,8 @@ namespace CompatBot
                 if (singleInstanceCheckThread.IsAlive)
                     singleInstanceCheckThread.Join(100);
             }
+            if (!Config.inMemorySettings.ContainsKey("shutdown"))
+                Sudo.Bot.Restart(InvalidChannelId);
         }
     }
 }
