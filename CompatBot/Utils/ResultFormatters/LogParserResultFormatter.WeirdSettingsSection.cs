@@ -52,6 +52,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_decoder"] is string spuDecoder && spuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
                 notes.Add("⚠ Please set `SPU Decoder` to use recompiler for better performance");
 
+            if (items["approximate_xfloat"] is string approximateXfloat && approximateXfloat == DisabledMark)
+                notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
+
             if (!string.IsNullOrEmpty(serial))
             {
                 CheckP5Settings(serial, items, notes);
