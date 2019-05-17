@@ -138,11 +138,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
-                if ((string.IsNullOrEmpty(serial) || !KnownMegaSpuBlockSizeIds.Contains(serial))
-                    && spuBlockSize != "Safe")
-                {
-                    notes.Add($"⚠ Please use `Safe` mode for `SPU Block Size`. `{spuBlockSize}` is currently unstable.");
-                }
+                if (spuBlockSize == "Giga")
+                    notes.Add($"⚠ Please change `SPU Block Size`, `{spuBlockSize}` is currently unstable.");
             }
 
             if (items["lib_loader"] is string libLoader
@@ -255,13 +252,14 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
             {
-                if (items["spu_decoder"] is string spuDecoder
+/*                if (items["spu_decoder"] is string spuDecoder
                     && spuDecoder.Contains("LLVM")
                     && items["spu_block_size"] is string spuBlockSize
                     && spuBlockSize != "Mega")
                 {
                     notes.Add("⚠ This game needs `SPU Block Size` set to `Mega` when using `SPU Decoder` `Recompiler (LLVM)`");
                 }
+*/
 
                 if (items["frame_limit"] is string frameLimit
                     && frameLimit != "30")
