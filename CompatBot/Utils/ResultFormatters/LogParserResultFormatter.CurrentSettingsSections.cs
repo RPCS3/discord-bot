@@ -123,6 +123,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 $"PPU Decoder: {items["ppu_decoder"],21}",
                 $"SPU Decoder: {items["spu_decoder"],21}",
+                $"SPU Lower Thread Priority: {items["spu_lower_thread_priority"],7}",
                 $"SPU Loop Detection: {items["spu_loop_detection"],14}",
                 $"Thread Scheduler: {items["thread_scheduler"],16}",
                 $"SPU Threads: {items["spu_threads"],21}",
@@ -150,6 +151,7 @@ namespace CompatBot.Utils.ResultFormatters
                 $"Anisotropic Filter: {items["af_override"] ?? "N/A",14}",
                 $"Frame Limit: {items["frame_limit"],21}",
                 $"VSync: {items["vsync"] ?? "N/A",27}",
+                $"Native UI: {items["native_ui"] ?? "N/A",23}"
             };
             return ("GPU Settings", lines);
         }
