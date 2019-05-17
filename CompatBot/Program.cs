@@ -128,7 +128,6 @@ namespace CompatBot
                                         Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
                                         Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
                                         Config.Log.Info("");
-                                        Watchdog.DisconnectTimestamps.Clear();
                                     };
                     client.GuildAvailable += async gaArgs =>
                                              {
@@ -219,6 +218,7 @@ namespace CompatBot
                         }
                         logLevel(eventArgs.Exception, eventArgs.Message);
                     };
+                    Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
                     await client.ConnectAsync();
                     if (args.Length > 1 && ulong.TryParse(args[1], out var channelId))
                     {
