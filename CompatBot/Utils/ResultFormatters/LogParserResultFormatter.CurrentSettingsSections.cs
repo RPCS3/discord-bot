@@ -123,8 +123,8 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 $"PPU Decoder: {items["ppu_decoder"],21}",
                 $"SPU Decoder: {items["spu_decoder"],21}",
-                $"SPU Lower Thread Priority: {items["spu_lower_thread_priority"],7}",
                 $"SPU Loop Detection: {items["spu_loop_detection"],14}",
+                $"Thread Scheduler: {items["thread_scheduler"],16}",
                 $"SPU Threads: {items["spu_threads"],21}",
                 $"SPU Block Size: {items["spu_block_size"] ?? "N/A",18}",
                 $"Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",17}",
