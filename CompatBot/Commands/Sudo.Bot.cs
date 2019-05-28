@@ -144,6 +144,7 @@ namespace CompatBot.Commands
                 })
                 {
                     self.Start();
+                    Config.inMemorySettings["shutdown"] = "true";
                     Config.Cts.Cancel();
                     return;
                 }
