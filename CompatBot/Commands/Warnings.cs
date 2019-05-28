@@ -172,14 +172,14 @@ namespace CompatBot.Commands
                     await db.SaveChangesAsync().ConfigureAwait(false);
 
                     var threshold = DateTime.UtcNow.AddMinutes(-15).Ticks;
-                    var recentCount = db.Warning.Count(w => w.DiscordId == userId && w.Timestamp > threshold);
+                    var recentCount = db.Warning.Count(w => w.DiscordId == userId && !w.Retracted && w.Timestamp > threshold);
                     if (recentCount > 3)
                     {
                         Config.Log.Debug("Suicide behavior detected, not spamming with warning responses");
                         return true;
                     }
 
-                    totalCount = db.Warning.Count(w => w.DiscordId == userId);
+                    totalCount = db.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
                 }
                 await message.RespondAsync($"User warning saved! User currently has {totalCount} warning{StringUtils.GetSuffix(totalCount)}!").ConfigureAwait(false);
                 if (totalCount > 1)
