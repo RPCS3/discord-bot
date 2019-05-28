@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -71,6 +73,31 @@ namespace CompatBot.Database.Providers
                 db.WhitelistedInvites.Remove(dbItem);
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 return true;
+            }
+        }
+
+        public static async Task CleanupAsync(DiscordClient client)
+        {
+            while (!Config.Cts.IsCancellationRequested)
+            {
+                using (var db = new BotDb())
+                {
+                    foreach (var invite in db.WhitelistedInvites.Where(i => i.InviteCode != null))
+                    {
+                        try
+                        {
+                            var result = await client.GetInviteByCodeAsync(invite.InviteCode).ConfigureAwait(false);
+                            if (result?.IsRevoked == false)
+                                invite.InviteCode = null;
+                        }
+                        catch (Exception e)
+                        {
+                            Config.Log.Debug(e);
+                        }
+                    }
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                }
+                await Task.Delay(TimeSpan.FromHours(1), Config.Cts.Token).ConfigureAwait(false);
             }
         }
     }

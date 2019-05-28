@@ -240,7 +240,8 @@ namespace CompatBot
                     backgroundTasks = Task.WhenAll(
                         backgroundTasks,
                         NewBuildsMonitor.MonitorAsync(client),
-                        Watchdog.Watch(client)
+                        Watchdog.Watch(client),
+                        InviteWhitelistProvider.CleanupAsync(client)
                     );
 
                     while (!Config.Cts.IsCancellationRequested)
