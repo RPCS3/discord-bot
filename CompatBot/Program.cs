@@ -255,7 +255,8 @@ namespace CompatBot
             }
             catch (Exception e)
             {
-                Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
+                if (!Config.inMemorySettings.ContainsKey("shutdown"))
+                    Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
             }
             finally
             {

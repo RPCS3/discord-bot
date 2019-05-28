@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers
@@ -89,6 +90,10 @@ namespace CompatBot.Database.Providers
                             var result = await client.GetInviteByCodeAsync(invite.InviteCode).ConfigureAwait(false);
                             if (result?.IsRevoked == false)
                                 invite.InviteCode = null;
+                        }
+                        catch (NotFoundException)
+                        {
+                            invite.InviteCode = null;
                         }
                         catch (Exception e)
                         {
