@@ -66,7 +66,7 @@ namespace CompatBot.Commands
                         noEventMsg = "No information about such event at the moment";
                     else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
                     {
-                        noEventMsg = "Haha, very funny, <@259997001880436737>. So original. Never saw this joke before.";
+                        noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
                         promo = null;
                     }
                     if (!string.IsNullOrEmpty(promo))
