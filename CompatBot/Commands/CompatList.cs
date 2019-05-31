@@ -260,10 +260,10 @@ Example usage:
                 var result = new StringBuilder();
                 if (string.IsNullOrEmpty(request.customHeader))
                 {
-                    result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize()}***");
+                    result.AppendLine($"{authorMention} searched for: ***{request.search.Replace('`', '\'').Sanitize()}***");
                     if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase)
                         || request.search.Contains("p5", StringComparison.InvariantCultureIgnoreCase))
-                        result.AppendLine("Did you try searching for ***Unnamed*** instead?");
+                        result.AppendLine("Did you try searching for **__Unnamed__** instead?");
                     else if (!ctx.Channel.IsPrivate
                              && ctx.Message.Author.Id == 197163728867688448
                              && (compatResult.Results.Values.Any(i =>
