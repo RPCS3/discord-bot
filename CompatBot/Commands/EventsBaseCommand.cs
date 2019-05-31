@@ -61,10 +61,10 @@ namespace CompatBot.Commands
                 var firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year && e.EventName == eventName).ConfigureAwait(false);
                 if (firstNamedEvent == null)
                 {
-                    var noEventMsg = $"No information about the upcoming {eventName.Sanitize()} at the moment";
+                    var noEventMsg = $"No information about the upcoming {eventName.Replace('`', '\'').Sanitize()} at the moment";
                     if (eventName.Length > 10)
                         noEventMsg = "No information about such event at the moment";
-                    else if (ctx.User.Id == 259997001880436737ul)
+                    else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
                     {
                         noEventMsg = "Haha, very funny, <@259997001880436737>. So original. Never saw this joke before.";
                         promo = null;
