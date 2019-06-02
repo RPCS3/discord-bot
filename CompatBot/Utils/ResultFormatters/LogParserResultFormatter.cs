@@ -133,6 +133,7 @@ namespace CompatBot.Utils.ResultFormatters
                 }
                 var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true).ConfigureAwait(false);
                 builder = new DiscordEmbedBuilder(gameInfo) {ThumbnailUrl = null}; // or this will fuck up all formatting
+                collection["embed_title"] = builder.Title ?? "";
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {
                     state.PiracyContext = state.PiracyContext.Sanitize();
