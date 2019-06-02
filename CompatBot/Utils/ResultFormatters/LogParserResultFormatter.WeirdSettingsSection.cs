@@ -63,6 +63,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckSimpsonsSettings(serial, notes);
                 CheckNierSettings(serial, items, notes);
                 CheckScottPilgrimSettings(serial, items, notes);
+                CheckGoWSettings(serial, items, notes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes);
@@ -262,15 +263,6 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
             {
-/*                if (items["spu_decoder"] is string spuDecoder
-                    && spuDecoder.Contains("LLVM")
-                    && items["spu_block_size"] is string spuBlockSize
-                    && spuBlockSize != "Mega")
-                {
-                    notes.Add("⚠ This game needs `SPU Block Size` set to `Mega` when using `SPU Decoder` `Recompiler (LLVM)`");
-                }
-*/
-
                 if (items["frame_limit"] is string frameLimit
                     && frameLimit != "30")
                     notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
@@ -286,6 +278,27 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 if (items["resolution"] is string res && res != "1920x1080")
                     notes.Add("⚠ For perfect sprite scaling without borders set `Resolution` to `1920x1080`");
+            }
+        }
+
+        private static void CheckGoWSettings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (serial == "NPUA70080") // GoW3 Demo
+                return;
+
+            if (serial == "BCES00510" || serial == "BCUS98111" || serial == "BCJS75001" || serial == "BCJS37001") // GoW3
+            {
+                notes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
+                if (items["spu_decoder"] is string spuDecoder
+                    && spuDecoder.Contains("LLVM")
+                    && items["spu_block_size"] is string blockSize
+                    && blockSize != "Safe")
+                    notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
+            }
+            else if (items["embed_title"].Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (items["renderer"] is string renderer && renderer != "OpenGL")
+                    notes.Add("⚠ `OpenGL` is recommended for classic God of War games");
             }
         }
 

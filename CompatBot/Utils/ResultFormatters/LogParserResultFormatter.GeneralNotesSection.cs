@@ -325,6 +325,9 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"ℹ `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
             }
 
+            if (items["custom_config"] != null)
+                notes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
+
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
 
