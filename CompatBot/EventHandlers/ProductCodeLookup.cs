@@ -6,14 +6,12 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
-using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {

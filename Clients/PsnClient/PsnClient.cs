@@ -26,6 +26,13 @@ namespace PsnClient
         private readonly MediaTypeFormatterCollection xmlFormatters;
         private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
         private static readonly Regex ContainerIdLink = new Regex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
+        private static readonly string[] KnownStoreLocales =
+        {
+            "en-US", "en-GB", "en-AE", "en-AR", "en-AU", "en-BG", "en-BH", "en-BR", "en-CA", "en-CL", "en-CO", "en-CY", "en-CZ", "en-DK", "en-FI", "en-GR", "en-HK", "en-HR", "en-HU", "en-ID",
+            "en-IE", "en-IL", "en-IN", "en-IS", "en-KW", "en-LB", "en-MT", "en-MX", "en-MY", "en-NO", "en-NZ", "en-OM", "en-PE", "en-PL", "en-QA", "en-RO", "en-SA", "en-SE", "en-SG", "en-SI",
+            "en-SK", "en-TH", "en-TR", "en-TW", "en-ZA", "ja-JP", "de-AT", "de-CH", "de-DE", "de-LU", "es-BO", "es-CR", "es-EC", "es-ES", "es-GT", "es-HN", "es-NI", "es-PA", "es-PY", "es-SV",
+            "es-UY", "fr-BE", "fr-FR", "it-IT", "ko-KR", "nl-NL", "pt-PT", "ru-RU", "ru-UA", "zh-Hans-CN"
+        };
 
         public Client()
         {
@@ -46,29 +53,10 @@ namespace PsnClient
             xmlFormatters = new MediaTypeFormatterCollection(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
         }
 
-        public async Task<AppLocales> GetLocales(CancellationToken cancellationToken)
+        public string[] GetLocales()
         {
-            try
-            {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, "https://transact.playstation.com/assets/app.json"))
-                using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    try
-                    {
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        var items = await response.Content.ReadAsAsync<AppLocales[]>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
-                        return items.FirstOrDefault(i => i?.EnabledLocales != null);
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
-                        return null;
-                    }
-            }
-            catch (Exception e)
-            {
-                ApiConfig.Log.Error(e);
-                return null;
-            }
+            // Sony removed the ability to get the full store list, now relying on geolocation service instead
+            return KnownStoreLocales;
         }
 
         public async Task<Stores> GetStoresAsync(string locale, CancellationToken cancellationToken)

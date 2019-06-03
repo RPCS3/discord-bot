@@ -99,9 +99,7 @@ namespace CompatBot.ThumbScrapper
                 if (ScrapeStateProvider.IsFresh(StoreRefreshTimestamp))
                     return;
 
-                var knownLocales = await Client.GetLocales(cancellationToken).ConfigureAwait(false);
-                var enabledLocales = knownLocales.EnabledLocales ?? new string[0];
-                var result = GetLocalesInPreferredOrder(enabledLocales);
+                var result = GetLocalesInPreferredOrder(Client.GetLocales());
                 await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
