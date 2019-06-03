@@ -68,7 +68,7 @@ namespace CompatBot
 
                 var backgroundTasks = Task.WhenAll(
                     AmdDriverVersionProvider.RefreshAsync(),
-                    //new PsnScraper().RunAsync(Config.Cts.Token),
+                    new PsnScraper().RunAsync(Config.Cts.Token),
                     GameTdbScraper.RunAsync(Config.Cts.Token),
                     new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token),
                     StatsStorage.BackgroundSaveAsync()
@@ -88,8 +88,6 @@ namespace CompatBot
                 {
                     Token = Config.Token,
                     TokenType = TokenType.Bot,
-                    //UseInternalLogHandler = true,
-                    //LogLevel = LogLevel.Debug,
                 };
                 using (var client = new DiscordClient(config))
                 {
