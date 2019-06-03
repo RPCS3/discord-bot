@@ -44,6 +44,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Regex BuildInfoInUpdate = new Regex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
         private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
         private static readonly Regex IntelGpuModel = new Regex(@"Intel\s?(®|\(R\))? (?<gpu_model>(?<gpu_family>(\w| )+Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
+        private static readonly Regex InstallPath = new Regex(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine);
 
         private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
         private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
