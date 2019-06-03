@@ -60,6 +60,12 @@ namespace CompatBot.Database.Providers
             return true;
         }
 
+        public static async Task<string> GetTriggerAsync(int id)
+        {
+            var dbItem = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id).ConfigureAwait(false);
+            return dbItem?.String;
+        }
+
         public static Task<string> FindTriggerAsync(string str)
         {
             string result = null;
