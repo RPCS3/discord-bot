@@ -60,7 +60,21 @@ namespace CompatBot.Commands
         [Command("search")]
         [Description("Provides game information from PSN")]
         public Task Search(CommandContext ctx, [Description("Maximum results to return across all regions")] int maxResults, [RemainingText] string search)
-            => SearchForGame(ctx, search, maxResults > 0 ? maxResults : 10);
+        {
+            if (maxResults < 1)
+                maxResults = 1;
+            if (ctx.Channel.IsPrivate)
+            {
+                if (maxResults > 50)
+                    maxResults = 50;
+            }
+            else
+            {
+                if (maxResults > 15)
+                    maxResults = 15;
+            }
+            return SearchForGame(ctx, search, maxResults);
+        }
 
         [Command("search")]
         public Task Search(CommandContext ctx, [RemainingText] string search)
