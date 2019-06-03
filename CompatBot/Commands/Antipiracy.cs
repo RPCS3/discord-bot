@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
@@ -34,7 +35,11 @@ namespace CompatBot.Commands
         {
             var wasSuccessful = await PiracyStringProvider.AddAsync(trigger).ConfigureAwait(false);
             if (wasSuccessful)
+            {
                 await ctx.ReactWithAsync(Config.Reactions.Success, "New trigger successfully saved!").ConfigureAwait(false);
+                var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+                await ctx.Client.ReportAsync("🤬 Piracy filter added", $"{member.GetMentionWithNickname()} added a new piracy filter:\n```{trigger.Sanitize()}```", null, ReportSeverity.Low).ConfigureAwait(false);
+            }
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Trigger already defined.").ConfigureAwait(false);
             if (wasSuccessful)
@@ -46,13 +51,25 @@ namespace CompatBot.Commands
         public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
         {
             var failedIds = new List<int>();
+            var removedFilters = new List<string>();
             foreach (var id in ids)
-                if (!await PiracyStringProvider.RemoveAsync(id).ConfigureAwait(false))
+            {
+                var trigger = await PiracyStringProvider.GetTriggerAsync(id).ConfigureAwait(false);
+                if (await PiracyStringProvider.RemoveAsync(id).ConfigureAwait(false))
+                    removedFilters.Add(trigger.Sanitize());
+                else
                     failedIds.Add(id);
+            }
+
             if (failedIds.Count > 0)
                 await ctx.RespondAsync("Some ids couldn't be removed: " + string.Join(", ", failedIds)).ConfigureAwait(false);
             else
+            {
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
+                var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+                var s = removedFilters.Count == 1 ? "" : "s";
+                await ctx.Client.ReportAsync($"🤬 Piracy filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters.Count} piracy filter{s}:\n```\n{string.Join('\n', removedFilters)}\n```", null, ReportSeverity.Medium).ConfigureAwait(false);
+            }
             await List(ctx).ConfigureAwait(false);
         }
     }
