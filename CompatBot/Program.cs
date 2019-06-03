@@ -234,7 +234,7 @@ namespace CompatBot
                         }
                     }
 
-                    Config.Log.Debug("Running RPC3 update check thread");
+                    Config.Log.Debug("Running RPCS3 update check thread");
                     backgroundTasks = Task.WhenAll(
                         backgroundTasks,
                         NewBuildsMonitor.MonitorAsync(client),
