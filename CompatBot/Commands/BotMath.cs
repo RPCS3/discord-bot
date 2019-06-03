@@ -32,6 +32,8 @@ namespace CompatBot.Commands
         [Description("General math expression help, or description of specific math word")]
         public Task Help(CommandContext ctx, string word = null)
         {
+            return ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at <https://mathparser.org/mxparser-math-collection/>");
+/*
             var help = string.IsNullOrEmpty(word) ? mXparser.getHelp() : mXparser.getHelp(word);
             var hasR = help.Contains('\r');
             var hasN = help.Contains('\n');
@@ -52,6 +54,7 @@ namespace CompatBot.Commands
                     help = help.Replace("\r", Environment.NewLine);
             }
             return ctx.SendAutosplitMessageAsync($"```{help}```");
+*/
         }
     }
 }
