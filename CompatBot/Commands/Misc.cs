@@ -345,7 +345,7 @@ namespace CompatBot.Commands
         {
             if (game?.ToUpperInvariant() == "RPCS3")
                 return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
-            return Psn.SearchForGame(ctx, game);
+            return Psn.SearchForGame(ctx, game, 3);
         }
     }
 }

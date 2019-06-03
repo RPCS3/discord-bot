@@ -59,10 +59,14 @@ namespace CompatBot.Commands
 
         [Command("search")]
         [Description("Provides game information from PSN")]
+        public Task Search(CommandContext ctx, [Description("Maximum results to return across all regions")] int maxResults, [RemainingText] string search)
+            => SearchForGame(ctx, search, maxResults > 0 ? maxResults : 10);
+
+        [Command("search")]
         public Task Search(CommandContext ctx, [RemainingText] string search)
-            => SearchForGame(ctx, search);
-        
-        public static async Task SearchForGame(CommandContext ctx, [RemainingText] string search)
+            => SearchForGame(ctx, search, 10);
+
+        public static async Task SearchForGame(CommandContext ctx, string search, int maxResults)
         {
             var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             DiscordMessage msg = null;
@@ -114,11 +118,16 @@ namespace CompatBot.Commands
             var responseJP = await psnResponseJPTask.ConfigureAwait(false);
             msg = await msgTask.ConfigureAwait(false);
             msg = await msg.UpdateOrCreateMessageAsync(ch, "⌛ Preparing results...").ConfigureAwait(false);
-            var usGame = GetBestMatch(responseUS?.Included, search);
-            var euGame = GetBestMatch(responseEU?.Included, search);
-            var jpGame = GetBestMatch(responseJP?.Included, search);
+            var usGames = GetBestMatch(responseUS?.Included, search, maxResults);
+            var euGames = GetBestMatch(responseEU?.Included, search, maxResults);
+            var jpGames = GetBestMatch(responseJP?.Included, search, maxResults);
+            var combinedList = usGames.Select(g => (g, "US", "en-US"))
+                .Concat(euGames.Select(g => (g, "EU", "en-GB")))
+                .Concat(jpGames.Select(g => (g, "JP", "ja-JP")))
+                .ToList();
+            combinedList = GetSortedList(combinedList, search, maxResults);
             var hasResults = false;
-            foreach (var (g, region, locale) in new[]{(usGame, "US", "en-US"), (euGame, "EU", "en-GB"), (jpGame, "JP", "ja-JP")})
+            foreach (var (g, region, locale) in combinedList)
             {
                 if (g == null)
                     continue;
@@ -168,7 +177,23 @@ namespace CompatBot.Commands
                 await msg.UpdateOrCreateMessageAsync(ch, "No results").ConfigureAwait(false);
         }
 
-        private static ContainerIncluded GetBestMatch(ContainerIncluded[] included, string search)
+        private static List<(ContainerIncluded g, string, string)> GetSortedList(List<(ContainerIncluded g, string, string)> games, string search, int maxResults)
+        {
+            var result = (
+                from i in games
+                let m = new { score = search.GetFuzzyCoefficientCached(i.g.Attributes.Name), item = i }
+                where m.score > 0.3 || (i.g.Attributes.Name?.StartsWith(search, StringComparison.InvariantCultureIgnoreCase) ?? false)
+                orderby m.score descending
+                select m.item
+            ).Take(maxResults).ToList();
+            if (result.Any())
+                return result;
+
+            result = games.Where(i => i.g.Type == "game").Take(maxResults).ToList();
+            return result.Any() ? result : games.Take(maxResults).ToList();
+        }
+
+        private static List<ContainerIncluded> GetBestMatch(ContainerIncluded[] included, string search, int maxResults)
         {
             if (included == null)
                 return null;
@@ -177,7 +202,7 @@ namespace CompatBot.Commands
                                || search.Contains("trial", StringComparison.InvariantCultureIgnoreCase)
                                || search.Contains("体験版");
 
-            var games = (
+            return (
                 from i in included
                 where (i.Type == "game"
                        || i.Type == "legacy-sku"
@@ -188,15 +213,6 @@ namespace CompatBot.Commands
                       && i.Attributes.ThumbnailUrlBase != null
                 select i
             ).ToList();
-            return (
-                       from i in games
-                       let m = new {score = search.GetFuzzyCoefficientCached(i.Attributes.Name), item = i}
-                       where m.score > 0.3 || (i.Attributes.Name?.StartsWith(search, StringComparison.InvariantCultureIgnoreCase) ?? false)
-                       orderby m.score descending
-                       select m.item
-                   ).FirstOrDefault() ??
-                   games.FirstOrDefault(i => i.Type == "game") ??
-                   games.FirstOrDefault();
         }
 
         private static async Task TryDeleteThumbnailCache(CommandContext ctx, List<(string contentId, string link)> linksToRemove)
