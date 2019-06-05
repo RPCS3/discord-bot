@@ -51,7 +51,7 @@ namespace CompatBot.EventHandlers
                 return;
 #endif
 
-            var pos = e.Context.Message.Content.IndexOf(cnfe.CommandName);
+            var pos = e.Context.Message?.Content?.IndexOf(cnfe.CommandName) ?? -1;
             if (pos < 0)
                 return;
 
@@ -60,21 +60,20 @@ namespace CompatBot.EventHandlers
                 return;
 
             var term = gameTitle.ToLowerInvariant();
-            var lookup = await Explain.LookupTerm(term).ConfigureAwait(false);
-            if (lookup.score > 0.5 && lookup.explanation != null)
+            var (explanation, fuzzyMatch, score) = await Explain.LookupTerm(term).ConfigureAwait(false);
+            if (score > 0.5 && explanation != null)
             {
-                if (!string.IsNullOrEmpty(lookup.fuzzyMatch))
+                if (!string.IsNullOrEmpty(fuzzyMatch))
                 {
-                    var fuzzyNotice = $"Showing explanation for `{lookup.fuzzyMatch}`:";
+                    var fuzzyNotice = $"Showing explanation for `{fuzzyMatch}`:";
 #if DEBUG
-                    fuzzyNotice = $"Showing explanation for `{lookup.fuzzyMatch}` ({lookup.score:0.######}):";
+                    fuzzyNotice = $"Showing explanation for `{fuzzyMatch}` ({score:0.######}):";
 #endif
                     await e.Context.RespondAsync(fuzzyNotice).ConfigureAwait(false);
                 }
-                var explain = lookup.explanation;
-                StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
-                StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
-                await e.Context.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
+                StatsStorage.ExplainStatCache.TryGetValue(explanation.Keyword, out int stat);
+                StatsStorage.ExplainStatCache.Set(explanation.Keyword, ++stat, StatsStorage.CacheTime);
+                await e.Context.Channel.SendMessageAsync(explanation.Text, explanation.Attachment, explanation.AttachmentFilename).ConfigureAwait(false);
                 return;
             }
 

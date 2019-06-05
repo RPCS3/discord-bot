@@ -146,7 +146,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["LDR: Disc"]  = new Regex(@"Disc( path)?: .*(?<ldr_disc>/dev_hdd0/game/(?<ldr_disc_serial>[^/\r\n]+).*?)\r?$", DefaultOptions),
                     ["LDR: Path:"] = new Regex(@"Path: .*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+).*?)\r?$", DefaultOptions),
                     ["LDR: Boot path:"] = new Regex(@"Boot path: .*(?<ldr_boot_path>/dev_hdd0/game/(?<ldr_boot_path_serial>[^/\r\n]+).*?)\r?$", DefaultOptions),
-                    ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path>.*?)\r?$", DefaultOptions),
+                    ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path>/dev_hdd0/game/(?<elf_boot_path_serial>[^/\r\n]+)/USRDIR/EBOOT\.BIN|.*?)\r?$", DefaultOptions),
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
                     ["sceNp: npDrmIsAvailable(): Failed to verify"] = new Regex(@"Failed to verify (?<failed_to_verify>(sce|npd)) file.*\r?$", DefaultOptions),
