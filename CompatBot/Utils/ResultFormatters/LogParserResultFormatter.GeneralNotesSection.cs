@@ -97,7 +97,8 @@ namespace CompatBot.Utils.ResultFormatters
                 && serial.StartsWith("NP")
                 && items["ldr_game_serial"] != serial
                 && items["ldr_path_serial"] != serial
-                && items["ldr_boot_path_serial"] != serial)
+                && items["ldr_boot_path_serial"] != serial
+                && items ["elf_boot_path_serial"] != serial)
                 notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
             if (!string.IsNullOrEmpty(items["serial"]) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
