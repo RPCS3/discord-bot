@@ -129,6 +129,7 @@ namespace CompatBot
                                     };
                     client.GuildAvailable += async gaArgs =>
                                              {
+                                                 await client.UpdateStatusAsync(new DiscordActivity("over server, helping you\nUse `!help` for command list", ActivityType.Watching), UserStatus.Online).ConfigureAwait(false);
                                                  Watchdog.DisconnectTimestamps.Clear();
                                                  if (gaArgs.Guild.Id != Config.BotGuildId)
                                                  {
@@ -217,7 +218,9 @@ namespace CompatBot
                         logLevel(eventArgs.Exception, eventArgs.Message);
                     };
                     Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
-                    await client.ConnectAsync();
+
+                    await client.ConnectAsync().ConfigureAwait(false);
+
                     if (args.Length > 1 && ulong.TryParse(args[1], out var channelId))
                     {
                         Config.Log.Info($"Found channelId: {args[1]}");
