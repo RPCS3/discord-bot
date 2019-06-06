@@ -295,7 +295,7 @@ namespace CompatBot.Utils.ResultFormatters
                     && blockSize != "Safe")
                     notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
             }
-            else if (items["embed_title"].Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
+            else if (serial == "BCAS25016" || items["embed_title"].Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
             {
                 if (items["renderer"] is string renderer && renderer != "OpenGL")
                     notes.Add("⚠ `OpenGL` is recommended for classic God of War games");
