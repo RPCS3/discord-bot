@@ -30,11 +30,13 @@ namespace CompatApiClient.Utils
             return str.Substring(0, maxLength);
         }
 
-        public static string Sanitize(this string str, bool breakLinks = true)
+        public static string Sanitize(this string str, bool breakLinks = true, bool replaceBackTicks = false)
         {
             var result = str?.Replace("`", "`\u200d").Replace("@", "@\u200d");
+            if (replaceBackTicks)
+                result = result?.Replace('`', '\'');
             if (breakLinks)
-                result = result.Replace(".", ".\u200d").Replace(":", ":\u200d");
+                result = result?.Replace(".", ".\u200d").Replace(":", ":\u200d");
             return result;
         }
 

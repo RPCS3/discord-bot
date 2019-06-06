@@ -260,7 +260,7 @@ Example usage:
                 var result = new StringBuilder();
                 if (string.IsNullOrEmpty(request.customHeader))
                 {
-                    result.AppendLine($"{authorMention} searched for: ***{request.search.Replace('`', '\'').Sanitize()}***");
+                    result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize(replaceBackTicks: true)}***");
                     if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase)
                         || request.search.Contains("p5", StringComparison.InvariantCultureIgnoreCase))
                         result.AppendLine("Did you try searching for **__Unnamed__** instead?");

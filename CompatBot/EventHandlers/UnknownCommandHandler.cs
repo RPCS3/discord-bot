@@ -98,7 +98,7 @@ namespace CompatBot.EventHandlers
             var ch = await e.Context.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync(
                 $"I am not sure what you wanted me to do, please use one of the following commands:\n" +
-                $"`{Config.CommandPrefix}c {term.Replace('`', '\'').Sanitize()}` to check the game status\n" +
+                $"`{Config.CommandPrefix}c {term.Sanitize(replaceBackTicks: true)}` to check the game status\n" +
                 $"`{Config.CommandPrefix}explain list` to look at the list of available explanations\n" +
                 $"`{Config.CommandPrefix}help` to look at available bot commands\n"
             ).ConfigureAwait(false);

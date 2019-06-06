@@ -42,7 +42,7 @@ namespace CompatBot.Commands
                     id = ProductCodeLookup.GetProductIds(msg.Result.Content).FirstOrDefault();
                     if (string.IsNullOrEmpty(id))
                     {
-                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{msg.Result.Content.Trim(10).Sanitize()}` is not a valid product code").ConfigureAwait(false);
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{msg.Result.Content.Trim(10).Sanitize(replaceBackTicks: true)}` is not a valid product code").ConfigureAwait(false);
                         return;
                     }
                 }
