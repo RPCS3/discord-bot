@@ -23,7 +23,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
             if (items["llvm_arch"] is string llvmArch)
-                notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize()}`");
+                notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
 
             if (items["renderer"] == "D3D12")
                 notes.Add("💢 Do **not** use DX12 renderer");

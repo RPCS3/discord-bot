@@ -178,6 +178,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["do you have the PS3 firmware installed"] = new Regex(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
                     ["Unimplemented syscall"] = new Regex(@"U \d+:\d+:\d+\.\d+ ({(?<unimplemented_syscall_context>.+?)} )?.*Unimplemented syscall (?<unimplemented_syscall>.*)\r?$", DefaultOptions),
                     ["Could not enqueue"] = new Regex(@"cellAudio: Could not enqueue buffer onto audio backend(?<enqueue_buffer_error>.).*\r?$", DefaultOptions),
+                    ["Failed to bind device"] = new Regex(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
                 },
                 OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
