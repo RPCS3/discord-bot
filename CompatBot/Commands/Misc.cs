@@ -202,6 +202,7 @@ namespace CompatBot.Commands
                 var choices = RateAnswers;
                 var choiceFlags = new HashSet<char>();
                 whatever = whatever.ToLowerInvariant();
+                var originalWhatever = whatever;
                 var matches = Instead.Matches(whatever);
                 if (matches.Any())
                 {
@@ -213,10 +214,10 @@ namespace CompatBot.Commands
                     whatever += $" {attachment.FileSize}";
 
                 var nekoUser = await ctx.Client.GetUserAsync(272032356922032139ul).ConfigureAwait(false);
-                var nekoMember = ctx.Client.GetMember(ctx.Guild, nekoUser);
+                var nekoMember = ctx.Client.GetMember(nekoUser);
                 var nekoMatch = new HashSet<string>(new[] {nekoUser.Id.ToString(), nekoUser.Username, nekoMember?.DisplayName ?? "neko", "neko", "nekotekina",});
                 var kdUser = await ctx.Client.GetUserAsync(272631898877198337ul).ConfigureAwait(false);
-                var kdMember = ctx.Client.GetMember(ctx.Guild, kdUser);
+                var kdMember = ctx.Client.GetMember(kdUser);
                 var kdMatch = new HashSet<string>(new[] {kdUser.Id.ToString(), kdUser.Username, kdMember?.DisplayName ?? "kd-11", "kd", "kd-11", "kd11", });
                 var botMember = ctx.Client.GetMember(ctx.Client.CurrentUser);
                 var botMatch = new HashSet<string>(new[] {botMember.Id.ToString(), botMember.Username, botMember.DisplayName, "yourself", "urself", "yoself",});
@@ -246,15 +247,15 @@ namespace CompatBot.Commands
                         word = word.Substring(0, word.Length - 2);
                     }
 
-                    void MakeCustomRoleRating(DiscordMember m)
+                    void MakeCustomRoleRating(DiscordMember mem)
                     {
-                        if (m != null && !choiceFlags.Contains('f'))
+                        if (mem != null && !choiceFlags.Contains('f'))
                         {
-                            var roleList = m.Roles.ToList();
+                            var roleList = mem.Roles.ToList();
                             if (roleList.Any())
                             {
 
-                                var role = roleList[new Random((prefix + m.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
+                                var role = roleList[new Random((prefix + mem.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
                                 if (!string.IsNullOrEmpty(role))
                                 {
                                     if (role.EndsWith('s'))
@@ -267,41 +268,69 @@ namespace CompatBot.Commands
                         }
                     }
 
+                    var appended = false;
+                    DiscordMember member = null;
                     if (Me.Contains(word))
-                        result.Append(ctx.Message.Author.Mention);
+                    {
+                        member = ctx.Member;
+                        word = ctx.Message.Author.Id.ToString();
+                        result.Append(word);
+                        appended = true;
+                    }
                     else if (word == "my")
-                        result.Append(ctx.Message.Author.Mention).Append("'s");
+                    {
+                        result.Append(ctx.Message.Author.Id).Append("'s");
+                        appended = true;
+                    }
                     else if (botMatch.Contains(word))
-                        result.Append(ctx.Client.CurrentUser.Mention);
+                    {
+                        word = ctx.Client.CurrentUser.Id.ToString();
+                        result.Append(word);
+                        appended = true;
+                    }
                     else if (Your.Contains(word))
-                        result.Append(ctx.Client.CurrentUser.Mention).Append("'s");
+                    {
+                        result.Append(ctx.Client.CurrentUser.Id).Append("'s");
+                        appended = true;
+                    }
                     else if (word.StartsWith("actually") || word.StartsWith("nevermind") || word.StartsWith("nvm"))
+                    {
                         result.Clear();
-                    else if (i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
+                        appended = true;
+                    }
+                    if (member == null && i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
+                        member = m;
+                    if (member != null)
                     {
                         if (suffix.Length == 0)
-                            MakeCustomRoleRating(m);
-                        result.Append(m.Mention);
+                            MakeCustomRoleRating(member);
+                        if (!appended)
+                        {
+                            result.Append(member.Id);
+                            appended = true;
+                        }
                     }
-                    else if (nekoMatch.Contains(word))
+                    if (nekoMatch.Contains(word))
                     {
                         if (i == 0 && suffix.Length == 0)
                         {
                             choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3)).ToList();
                             MakeCustomRoleRating(nekoMember);
                         }
-                        result.Append(nekoUser.Mention);
+                        result.Append(nekoUser.Id);
+                        appended = true;
                     }
-                    else if (kdMatch.Contains(word))
+                    if (kdMatch.Contains(word))
                     {
                         if (i == 0 && suffix.Length == 0)
                         {
                             choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3)).ToList();
                             MakeCustomRoleRating(kdMember);
                         }
-                        result.Append(kdUser.Mention);
+                        result.Append(kdUser.Id);
+                        appended = true;
                     }
-                    else
+                    if (!appended)
                         result.Append(word);
                     result.Append(suffix).Append(" ");
                 }
@@ -312,7 +341,7 @@ namespace CompatBot.Commands
                 whatever = whatever.Replace("'s's", "'s").TrimStart(EveryTimable).Trim();
                 if (whatever.StartsWith("rate "))
                     whatever = whatever.Substring("rate ".Length);
-                if (whatever == "sonic" || whatever.Contains("sonic the"))
+                if (originalWhatever == "sonic" || originalWhatever.Contains("sonic the"))
                     choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count)).Concat(new[] {"Sonic out of 🦔", "Sonic out of 10"}).ToList();
 
                 if (string.IsNullOrEmpty(whatever))
