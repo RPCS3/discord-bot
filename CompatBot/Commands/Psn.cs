@@ -125,6 +125,8 @@ namespace CompatBot.Commands
                 if (alteredSearch.EndsWith("体験版"))
                     alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 3).TrimEnd();
 
+                if (string.IsNullOrEmpty(alteredSearch))
+                    alteredSearch = search;
                 var msgTask = msg.UpdateOrCreateMessageAsync(ch, "⏳ Searching...");
                 var psnResponseUSTask = titleId == null ? Client.SearchAsync("en-US", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-US", titleId, 1, Config.Cts.Token);
                 var psnResponseEUTask = titleId == null ? Client.SearchAsync("en-GB", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-GB", titleId, 1, Config.Cts.Token);
