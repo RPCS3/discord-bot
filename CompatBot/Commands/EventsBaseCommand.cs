@@ -78,7 +78,7 @@ namespace CompatBot.Commands
                 if (firstNamedEvent.Start >= currentTicks)
                 {
                     var upcomingNamedEventMsg = $"__{FormatCountdown(firstNamedEvent.Start.AsUtc() - current)} until {eventName} {current.Year}!__";
-                    if (string.IsNullOrEmpty(promo))
+                    if (string.IsNullOrEmpty(promo) || nextEvent?.Id == firstNamedEvent.Id)
                         upcomingNamedEventMsg += $"\nFirst event: {firstNamedEvent.Name}";
                     else
                         upcomingNamedEventMsg += promo;

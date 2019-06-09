@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -84,112 +85,124 @@ namespace CompatBot.Commands
         {
             var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             DiscordMessage msg = null;
-            if (string.IsNullOrEmpty(search))
+            try
             {
-                var interact = ctx.Client.GetInteractivity();
-                msg = await msg.UpdateOrCreateMessageAsync(ch, "What game are you looking for?").ConfigureAwait(false);
-                var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ch).ConfigureAwait(false);
-                await msg.DeleteAsync().ConfigureAwait(false);
-                msg = null;
-                if (string.IsNullOrEmpty(response.Result?.Content))
+                if (string.IsNullOrEmpty(search))
                 {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
-                    return;
+                    var interact = ctx.Client.GetInteractivity();
+                    msg = await msg.UpdateOrCreateMessageAsync(ch, "What game are you looking for?").ConfigureAwait(false);
+                    var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ch).ConfigureAwait(false);
+                    await msg.DeleteAsync().ConfigureAwait(false);
+                    msg = null;
+                    if (string.IsNullOrEmpty(response.Result?.Content))
+                    {
+                        await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                        return;
+                    }
+
+                    search = response.Result.Content;
                 }
 
-                search = response.Result.Content;
-            }
-
-            string titleId = null;
-            var productIds = ProductCodeLookup.GetProductIds(search);
-            if (productIds.Count > 0)
-            {
-                using (var db = new ThumbnailDb())
+                string titleId = null;
+                var productIds = ProductCodeLookup.GetProductIds(search);
+                if (productIds.Count > 0)
                 {
-                    var contentId = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productIds[0].ToUpperInvariant()).ConfigureAwait(false);
-                    if (contentId?.ContentId != null)
-                        titleId = contentId.ContentId;
-                    if (contentId?.Name != null)
-                        search = contentId.Name;
+                    using (var db = new ThumbnailDb())
+                    {
+                        var contentId = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productIds[0].ToUpperInvariant()).ConfigureAwait(false);
+                        if (contentId?.ContentId != null)
+                            titleId = contentId.ContentId;
+                        if (contentId?.Name != null)
+                            search = contentId.Name;
+                    }
                 }
-            }
 
-            var alteredSearch = search.Trim();
-            if (alteredSearch.EndsWith("demo", StringComparison.InvariantCultureIgnoreCase))
-                alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 4).TrimEnd();
-            if (alteredSearch.EndsWith("trial", StringComparison.InvariantCultureIgnoreCase))
-                alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 5).TrimEnd();
-            if (alteredSearch.EndsWith("体験版"))
-                alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 3).TrimEnd();
+                var alteredSearch = search.Trim();
+                if (alteredSearch.EndsWith("demo", StringComparison.InvariantCultureIgnoreCase))
+                    alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 4).TrimEnd();
+                if (alteredSearch.EndsWith("trial", StringComparison.InvariantCultureIgnoreCase))
+                    alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 5).TrimEnd();
+                if (alteredSearch.EndsWith("体験版"))
+                    alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 3).TrimEnd();
 
-            var msgTask = msg.UpdateOrCreateMessageAsync(ch, "⏳ Searching...");
-            var psnResponseUSTask = titleId == null ? Client.SearchAsync("en-US", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-US", titleId, 1, Config.Cts.Token);
-            var psnResponseEUTask = titleId == null ? Client.SearchAsync("en-GB", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-GB", titleId, 1, Config.Cts.Token);
-            var psnResponseJPTask = titleId == null ? Client.SearchAsync("ja-JP", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("ja-JP", titleId, 1, Config.Cts.Token);
-            await Task.WhenAll(msgTask, psnResponseUSTask, psnResponseEUTask, psnResponseJPTask).ConfigureAwait(false);
-            var responseUS = await psnResponseUSTask.ConfigureAwait(false);
-            var responseEU = await psnResponseEUTask.ConfigureAwait(false);
-            var responseJP = await psnResponseJPTask.ConfigureAwait(false);
-            msg = await msgTask.ConfigureAwait(false);
-            msg = await msg.UpdateOrCreateMessageAsync(ch, "⌛ Preparing results...").ConfigureAwait(false);
-            var usGames = GetBestMatch(responseUS?.Included, search, maxResults);
-            var euGames = GetBestMatch(responseEU?.Included, search, maxResults);
-            var jpGames = GetBestMatch(responseJP?.Included, search, maxResults);
-            var combinedList = usGames.Select(g => (g, "US", "en-US"))
-                .Concat(euGames.Select(g => (g, "EU", "en-GB")))
-                .Concat(jpGames.Select(g => (g, "JP", "ja-JP")))
-                .ToList();
-            combinedList = GetSortedList(combinedList, search, maxResults);
-            var hasResults = false;
-            foreach (var (g, region, locale) in combinedList)
-            {
-                if (g == null)
-                    continue;
-
-                var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
-                string score;
-                if ((g.Attributes.StarRating?.Score ?? 0m) == 0m || (g.Attributes.StarRating?.Total ?? 0) == 0)
-                    score = "N/A";
-                else
+                if (string.IsNullOrEmpty(alteredSearch))
+                    alteredSearch = search;
+                var msgTask = msg.UpdateOrCreateMessageAsync(ch, "⏳ Searching...");
+                var psnResponseUSTask = titleId == null ? Client.SearchAsync("en-US", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-US", titleId, 1, Config.Cts.Token);
+                var psnResponseEUTask = titleId == null ? Client.SearchAsync("en-GB", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-GB", titleId, 1, Config.Cts.Token);
+                var psnResponseJPTask = titleId == null ? Client.SearchAsync("ja-JP", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("ja-JP", titleId, 1, Config.Cts.Token);
+                await Task.WhenAll(msgTask, psnResponseUSTask, psnResponseEUTask, psnResponseJPTask).ConfigureAwait(false);
+                var responseUS = await psnResponseUSTask.ConfigureAwait(false);
+                var responseEU = await psnResponseEUTask.ConfigureAwait(false);
+                var responseJP = await psnResponseJPTask.ConfigureAwait(false);
+                msg = await msgTask.ConfigureAwait(false);
+                msg = await msg.UpdateOrCreateMessageAsync(ch, "⌛ Preparing results...").ConfigureAwait(false);
+                var usGames = GetBestMatch(responseUS?.Included, search, maxResults) ?? EmptyMatch;
+                var euGames = GetBestMatch(responseEU?.Included, search, maxResults) ?? EmptyMatch;
+                var jpGames = GetBestMatch(responseJP?.Included, search, maxResults) ?? EmptyMatch;
+                var combinedList = usGames.Select(g => (g, "US", "en-US"))
+                    .Concat(euGames.Select(g => (g, "EU", "en-GB")))
+                    .Concat(jpGames.Select(g => (g, "JP", "ja-JP")))
+                    .ToList();
+                combinedList = GetSortedList(combinedList, search, maxResults);
+                var hasResults = false;
+                foreach (var (g, region, locale) in combinedList)
                 {
-                    if (ctx.User.Id == 247291873511604224ul)
-                        score = StringUtils.GetStars(g.Attributes.StarRating?.Score);
+                    if (g == null)
+                        continue;
+
+                    var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
+                    string score;
+                    if ((g.Attributes.StarRating?.Score ?? 0m) == 0m || (g.Attributes.StarRating?.Total ?? 0) == 0)
+                        score = "N/A";
                     else
+                    {
+                        if (ctx.User.Id == 247291873511604224ul)
+                            score = StringUtils.GetStars(g.Attributes.StarRating?.Score);
+                        else
                         score = StringUtils.GetMoons(g.Attributes.StarRating?.Score);
                     score = $"{score} ({g.Attributes.StarRating?.Score} by {g.Attributes.StarRating.Total} people)";
                 }
                 string fileSize = null;
                 if (g.Attributes.FileSize?.Value.HasValue ?? false)
-                {
-                    fileSize = g.Attributes.FileSize.Value.ToString();
-                    if (g.Attributes.FileSize?.Unit is string unit && !string.IsNullOrEmpty(unit))
-                        fileSize += " " + unit;
-                    else
-                        fileSize += " GB";
-                    fileSize = $" ({fileSize})";
-                }
+                    {
+                        fileSize = g.Attributes.FileSize.Value.ToString();
+                        if (g.Attributes.FileSize?.Unit is string unit && !string.IsNullOrEmpty(unit))
+                            fileSize += " " + unit;
+                        else
+                            fileSize += " GB";
+                        fileSize = $" ({fileSize})";
+                    }
 
-                //var instructions = g.Attributes.TopCategory == "disc_based_game" ? "dumping_procedure" : "software_distribution";
-                var result = new DiscordEmbedBuilder
-                {
-                    Color = thumb.color,
-                    Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}]{fileSize}",
-                    Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
-                    Description = $"Rating: {score}\n" +
-                                  $"[Instructions](https://rpcs3.net/quickstart#software_distribution)",
-                    ThumbnailUrl = thumb.url,
-                };
+                    //var instructions = g.Attributes.TopCategory == "disc_based_game" ? "dumping_procedure" : "software_distribution";
+                    var result = new DiscordEmbedBuilder
+                    {
+                        Color = thumb.color,
+                        Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}]{fileSize}",
+                        Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
+                        Description = $"Rating: {score}\n" +
+                                      $"[Instructions](https://rpcs3.net/quickstart#software_distribution)",
+                        ThumbnailUrl = thumb.url,
+                    };
 #if DEBUG
-                result.WithFooter("Test instance");
+                    result.WithFooter("Test instance");
 #endif
-                hasResults = true;
-                await ch.SendMessageAsync(embed: result).ConfigureAwait(false);
+                    hasResults = true;
+                    await ch.SendMessageAsync(embed: result).ConfigureAwait(false);
             }
-            if (hasResults)
-                await msg.DeleteAsync().ConfigureAwait(false);
-            else
-                await msg.UpdateOrCreateMessageAsync(ch, "No results").ConfigureAwait(false);
+                if (hasResults)
+                    await msg.DeleteAsync().ConfigureAwait(false);
+                else
+                    await msg.UpdateOrCreateMessageAsync(ch, "No results").ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e);
+                await msg.UpdateOrCreateMessageAsync(ch, "Something has gone wrong 😩").ConfigureAwait(false);
+            }
         }
+
+        private static List<ContainerIncluded> EmptyMatch { get; } = new List<ContainerIncluded>(0);
 
         private static List<(ContainerIncluded g, string, string)> GetSortedList(List<(ContainerIncluded g, string, string)> games, string search, int maxResults)
         {
