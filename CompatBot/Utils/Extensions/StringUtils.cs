@@ -291,6 +291,7 @@ namespace CompatBot.Utils
                     result += c;
                 previousWasLetter = isLetter;
             }
+
             return result;
         }
 
@@ -314,10 +315,9 @@ namespace CompatBot.Utils
 
         private static double GetScoreWithAcronym(this string strA, string strB)
         {
-            return Math.Max(
-                strA.DiceCoefficient(strB),
-                strA.DiceCoefficient(strB.GetAcronym().ToLowerInvariant())
-            );
+            var fullMatch = strA.DiceCoefficient(strB);
+            var acronymMatch = strA.DiceCoefficient(strB.GetAcronym().ToLowerInvariant());
+            return Math.Max(fullMatch, acronymMatch);
         }
 
         private static (long, int) GetFuzzyCacheKey(string strA, string strB)

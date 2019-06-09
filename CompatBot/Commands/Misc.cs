@@ -376,5 +376,13 @@ namespace CompatBot.Commands
                 return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
             return Psn.SearchForGame(ctx, game, 3);
         }
+
+        [Command("compare"), Hidden]
+        [Description("Calculates the similarity metric of two phrases from 0 (completely different) to 1 (identical)")]
+        public Task Compare(CommandContext ctx, string strA, string strB)
+        {
+            var result = strA.GetFuzzyCoefficientCached(strB);
+            return ctx.RespondAsync($"Similarity score is {result:0.######}");
+        }
     }
 }
