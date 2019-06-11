@@ -89,7 +89,7 @@ namespace CompatBot.Commands
                 var lastNamedEvent = await db.EventSchedule.OrderByDescending(e => e.End).FirstOrDefaultAsync(e => e.Year == current.Year && e.EventName == eventName).ConfigureAwait(false);
                 if (lastNamedEvent.End <= currentTicks)
                 {
-                    var e3EndedMsg = $"__{eventName} {current.Year} has ended. See you next year!__";
+                    var e3EndedMsg = $"__{eventName} {current.Year} has concluded. See you next year!__";
                     if (!string.IsNullOrEmpty(promo))
                         e3EndedMsg += promo;
                     await ctx.RespondAsync(e3EndedMsg).ConfigureAwait(false);
