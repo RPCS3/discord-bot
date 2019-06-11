@@ -216,14 +216,21 @@ namespace CompatBot.Utils.ResultFormatters
                     && os != "Linux"
                     && IsNvidia(gpuInfo)
                     && items["driver_version_info"] is string driverVersionString
-                    && Version.TryParse(driverVersionString, out var driverVersion))
+                    && Version.TryParse(driverVersionString, out var driverVersion)
+                    && Version.TryParse(items["build_version"], out var buildVersion)
+                    && int.TryParse(items["build_number"], out var buildNumber)
+                    && buildVersion < NvidiaFullscreenBugFixed)
                 {
-                    if (driverVersion < NvidiaRecommendedOldWindowsVersion)
-                        notes.Add($"❗ Please update your nVidia driver to at least version {NvidiaRecommendedOldWindowsVersion}");
-                    if (driverVersion >= NvidiaFullscreenBugMinVersion
-                        && driverVersion < NvidiaFullscreenBugMaxVersion
-                        && items["renderer"] == "Vulkan")
-                        notes.Add("ℹ **400 series** nVidia drivers can cause random screen freezes when playing in **fullscreen** using **Vulkan** renderer on the **first monitor**");
+                    buildVersion = new Version(buildVersion.Major, buildVersion.Minor, buildVersion.Build, buildNumber);
+                    if (buildVersion < NvidiaFullscreenBugFixed)
+                    {
+                        if (driverVersion < NvidiaRecommendedOldWindowsVersion)
+                            notes.Add($"❗ Please update your nVidia driver to at least version {NvidiaRecommendedOldWindowsVersion}");
+                        if (driverVersion >= NvidiaFullscreenBugMinVersion
+                            && driverVersion < NvidiaFullscreenBugMaxVersion
+                            && items["renderer"] == "Vulkan")
+                            notes.Add("ℹ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
+                    }
                 }
             }
 
@@ -350,7 +357,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["failed_pad"] is string failedPad)
                 notes.Add($"❌ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
 
-            if (items["custom_config"] != null)
+            if (items["custom_config"] != null
+                && (notes.Any() || items["weird_settings_notes"] is string _))
                 notes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
