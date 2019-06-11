@@ -162,6 +162,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
             }
 
+            if (notes.Any())
+                items["weird_settings_notes"] = "true";
             var notesContent = new StringBuilder();
             foreach (var line in SortLines(notes))
                 notesContent.AppendLine(line);

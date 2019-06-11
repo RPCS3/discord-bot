@@ -357,7 +357,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["failed_pad"] is string failedPad)
                 notes.Add($"❌ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
 
-            if (items["custom_config"] != null)
+            if (items["custom_config"] != null
+                && (notes.Any() || items["weird_settings_notes"] is string _))
                 notes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
