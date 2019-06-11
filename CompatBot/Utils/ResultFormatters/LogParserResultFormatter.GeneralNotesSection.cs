@@ -229,7 +229,7 @@ namespace CompatBot.Utils.ResultFormatters
                         if (driverVersion >= NvidiaFullscreenBugMinVersion
                             && driverVersion < NvidiaFullscreenBugMaxVersion
                             && items["renderer"] == "Vulkan")
-                            notes.Add("ℹ 400 series nVidia drivers can cause random screen freezes, please update RPCS3");
+                            notes.Add("ℹ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
                     }
                 }
             }
