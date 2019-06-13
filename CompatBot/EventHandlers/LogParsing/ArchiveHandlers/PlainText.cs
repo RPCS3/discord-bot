@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Pipelines;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
@@ -20,7 +21,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                    && Encoding.UTF8.GetString(header.Slice(0, 8)).Contains("RPCS3");
         }
 
-        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
         {
             try
             {
@@ -29,10 +30,10 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                 do
                 {
                     var memory = writer.GetMemory(Config.MinimumBufferSize);
-                    read = await sourceStream.ReadAsync(memory, Config.Cts.Token);
+                    read = await sourceStream.ReadAsync(memory, cancellationToken);
                     writer.Advance(read);
-                    flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
-                } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
+                    flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
             }
             catch (Exception e)
             {

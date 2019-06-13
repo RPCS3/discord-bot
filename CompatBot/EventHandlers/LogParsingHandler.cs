@@ -92,9 +92,12 @@ namespace CompatBot.EventHandlers
                         LogParseState result = null;
                         try
                         {
+                            var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
+                            var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
+
                             var pipe = new Pipe();
-                            var fillPipeTask = source.FillPipeAsync(pipe.Writer);
-                            var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader);
+                            var fillPipeTask = source.FillPipeAsync(pipe.Writer, combinedTokenSource.Token);
+                            var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, combinedTokenSource.Token);
                             do
                             {
                                 await Task.WhenAny(readPipeTask, Task.Delay(5000)).ConfigureAwait(false);

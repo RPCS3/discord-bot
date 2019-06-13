@@ -16,9 +16,8 @@ namespace CompatBot.EventHandlers.LogParsing
 
         private static readonly PoorMansTaskScheduler<LogParseState> TaskScheduler = new PoorMansTaskScheduler<LogParseState>();
 
-        public static async Task<LogParseState> ReadPipeAsync(PipeReader reader)
+        public static async Task<LogParseState> ReadPipeAsync(PipeReader reader, CancellationToken cancellationToken)
         {
-            var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
             var currentSectionLines = new LinkedList<ReadOnlySequence<byte>>();
             var state = new LogParseState();
             bool skippedBom = false;
@@ -26,7 +25,7 @@ namespace CompatBot.EventHandlers.LogParsing
             ReadResult result;
             do
             {
-                result = await reader.ReadAsync(Config.Cts.Token).ConfigureAwait(false);
+                result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                 var buffer = result.Buffer;
                 if (!skippedBom)
                 {
@@ -62,14 +61,14 @@ namespace CompatBot.EventHandlers.LogParsing
                     }
                 } while (lineEnd != null);
 
-                if (result.IsCanceled || Config.Cts.IsCancellationRequested || timeout.IsCancellationRequested)
+                if (result.IsCanceled || cancellationToken.IsCancellationRequested)
                     state.Error = LogParseState.ErrorCode.SizeLimit;
                 else if (result.IsCompleted)
                     await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                 var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;
                 totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
                 reader.AdvanceTo(sectionStart.Start);
-            } while (!(result.IsCompleted || result.IsCanceled || Config.Cts.IsCancellationRequested || timeout.IsCancellationRequested));
+            } while (!(result.IsCompleted || result.IsCanceled || cancellationToken.IsCancellationRequested));
             await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
             state.ReadBytes = totalReadBytes;
             reader.Complete();

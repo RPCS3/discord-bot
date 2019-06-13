@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using DSharpPlus.Entities;
@@ -109,21 +110,21 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 this.handler = handler;
             }
 
-            public async Task FillPipeAsync(PipeWriter writer)
+            public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 try
                 {
                     var pipe = new Pipe();
                     using (var pushStream = pipe.Writer.AsStream())
                     {
-                        var progressTask = fileInfoRequest.DownloadAsync(pushStream, Config.Cts.Token);
+                        var progressTask = fileInfoRequest.DownloadAsync(pushStream, cancellationToken);
                         using (var pullStream = pipe.Reader.AsStream())
                         {
-                            var pipingTask = handler.FillPipeAsync(pullStream, writer);
+                            var pipingTask = handler.FillPipeAsync(pullStream, writer, cancellationToken);
                             var result = await progressTask.ConfigureAwait(false);
                             if (result.Status != DownloadStatus.Completed)
                                 Config.Log.Error(result.Exception, "Failed to download file from Google Drive: " + result.Status);
-                            await pipe.Writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
+                            await pipe.Writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                             pipe.Writer.Complete();
                             await pipingTask.ConfigureAwait(false);
                         }

@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.IO.Pipelines;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Utils;
 
@@ -18,7 +19,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                    && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase);
         }
 
-        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
         {
             using (var statsStream = new BufferCopyStream(sourceStream) )
             using (var gzipStream = new GZipStream(statsStream, CompressionMode.Decompress))
@@ -30,12 +31,12 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                     do
                     {
                         var memory = writer.GetMemory(Config.MinimumBufferSize);
-                        read = await gzipStream.ReadAsync(memory, Config.Cts.Token);
+                        read = await gzipStream.ReadAsync(memory, cancellationToken);
                         writer.Advance(read);
                         SourcePosition = statsStream.Position;
-                        flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
+                        flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                         SourcePosition = statsStream.Position;
-                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
+                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
 
                     var buf = statsStream.GetBufferedBytes();
                     if (buf.Length > 3)
