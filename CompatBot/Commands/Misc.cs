@@ -18,12 +18,13 @@ namespace CompatBot.Commands
 
         private static readonly List<string> EightBallAnswers = new List<string>
         {
-            // 24
+            // 29
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
             "Sure", "Yeah, why not", "Most likely", "Sim", "Oui",
             "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", "<:cell_ok_hand:324618647857397760>",
             "Don't be an idiot. YES.", "Mhm!", "Many Yes", "Yiss", "Sir, yes, Sir!", 
-            "Yah!", "Ja", "Umu!", "Make it so", 
+            "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
+            "Certainly", "Of course", "Definitely", "Indeed",
 
             // 20
             "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
@@ -31,16 +32,17 @@ namespace CompatBot.Commands
             "Don't ask me that again", "You should think twice before asking", "You what now?", "Ask Neko", "Ask Ani",
             "Bloody hell, answering that ain't so easy", "I'm pretty sure that's illegal!", "What do *you* think?", "Only on Wednesdays", "Look in the mirror, you know the answer already",
 
-            // 18
+            // 24
             "Nah mate", "Nope", "Njet", "Of course not", "Seriously no",
             "Noooooooooo", "Most likely not", "Não", "Non", "Hell no",
             "Absolutely not", "Nuh-uh!", "Nyet!", "Negatory!", "Heck no",
-            "Nein!", "I think not", "I'm afraid not",
+            "Nein!", "I think not", "I'm afraid not", "Nay", "Yesn't",
+            "No way", "Certainly not", "I must say no", "Nah",
         };
 
         private static readonly List<string> RateAnswers = new List<string>
         {
-            // 44
+            // 51
             "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
             "Glorious!", "Very good", "Excellent...", "Magnificent", "Rate bot says he likes, so you like too",
             "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "Belissimo!",
@@ -49,21 +51,24 @@ namespace CompatBot.Commands
             "Not perfect, but ok", "So good!", "A lucky find!", "💯 approved", "I don't see any downsides",
             "Here's my seal of approval 💮", "As good as it gets", "A benchmark to pursue", "Should make you warm and fuzzy inside", "Fabulous",
             "Cool like a cup of good wine 🍷", "Magical ✨", "Wondrous like a unicorn 🦄", "Soothing sight for these tired eyes", "Lovely",
-            "So cute!", "It's so nice, I think about it every day!", "😊 Never expected to be this pretty!", "It's overflowing with charm!",
-
+            "So cute!", "It's so nice, I think about it every day!", "😊 Never expected to be this pretty!", "It's overflowing with charm!", "Filled with passion!", 
+			"A love magnet", "Pretty Fancy", "Admirable", "Sweet as a candy", "Delightful",
+			"Enchanting as the Sunset", 
+			
             // 20
             "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect", "🆗",
             "You already know, my boi", "Unexpected like a bouquet of sunflowers 🌻", "Hard to measure precisely...", "Requires more data to analyze", "Passable",
             "Quite unique 🤔", "Less like an orange, and more like an apple", "I don't know, man...", "It is so tiring to grade everything...", "...",
             "Bland like porridge", "🤔", "Ok-ish?", "Not _bad_, but also not _good_", "Why would you want to _rate_ this?",
 
-            // 26
+            // 35
             "Bad", "Very bad", "Pretty bad", "Horrible", "Ugly",
             "Disgusting", "Literally the worst", "Not interesting", "Simply ugh", "I don't like it! You shouldn't either!",
             "Just like you, 💩", "Not approved", "Big Mistake", "The opposite of good", "Could be better",
             "🤮", "😐",  "So-so", "Not worth it", "Mediocre at best",
             "Useless", "I think you misspelled `poop` there", "Nothing special", "😔", "Real shame",
-            "Boooooooo!",
+            "Boooooooo!", "Poopy", "Smelly", "Feeling-breaker", "Annoying",
+			"Boring", "Easily forgettable", "An Abomination", "A Monstrosity", "Truly horrific"
         };
 
         private static readonly char[] Separators = { ' ', '　', '\r', '\n' };
