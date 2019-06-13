@@ -7,6 +7,7 @@ using DSharpPlus.Entities;
 using CompatBot.Utils;
 using System.IO.Pipelines;
 using System.Net.Http;
+using System.Threading;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
@@ -78,11 +79,11 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public string FileName { get; }
             public long SourceFileSize { get; }
 
-            public async Task FillPipeAsync(PipeWriter writer)
+            public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 using (var client = HttpClientFactory.Create())
                 using (var stream = await client.GetStreamAsync(uri).ConfigureAwait(false))
-                    await handler.FillPipeAsync(stream, writer).ConfigureAwait(false);
+                    await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }
     }

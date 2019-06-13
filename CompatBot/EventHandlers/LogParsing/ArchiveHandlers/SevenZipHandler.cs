@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipelines;
+using System.Threading;
 using System.Threading.Tasks;
 using SharpCompress.Archives.SevenZip;
 
@@ -22,13 +23,13 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             return true;
         }
 
-        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer)
+        public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
         {
             try
             {
                 using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
                 {
-                    await sourceStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
+                    await sourceStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
                     using (var zipArchive = SevenZipArchive.Open(fileStream))
                     using (var zipReader = zipArchive.ExtractAllEntries())
@@ -45,10 +46,10 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                                     do
                                     {
                                         var memory = writer.GetMemory(Config.MinimumBufferSize);
-                                        read = await entryStream.ReadAsync(memory, Config.Cts.Token);
+                                        read = await entryStream.ReadAsync(memory, cancellationToken);
                                         writer.Advance(read);
-                                        flushed = await writer.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
-                                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || Config.Cts.IsCancellationRequested));
+                                        flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
                                 }
                                 writer.Complete();
                                 return;

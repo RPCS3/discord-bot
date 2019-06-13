@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using CompatBot.Utils;
@@ -61,11 +62,11 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 SourceFileSize = fileSize;
             }
 
-            public async Task FillPipeAsync(PipeWriter writer)
+            public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 using (var client = HttpClientFactory.Create())
                 using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
-                    await handler.FillPipeAsync(stream, writer).ConfigureAwait(false);
+                    await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }
     }

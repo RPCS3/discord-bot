@@ -7,6 +7,7 @@ using DSharpPlus.Entities;
 using CG.Web.MegaApiClient;
 using CompatBot.Utils;
 using System.IO.Pipelines;
+using System.Threading;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
@@ -83,10 +84,10 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 this.handler = handler;
             }
 
-            public async Task FillPipeAsync(PipeWriter writer)
+            public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
-                using (var stream = await client.DownloadAsync(uri, doodad, Config.Cts.Token).ConfigureAwait(false))
-                    await handler.FillPipeAsync(stream, writer).ConfigureAwait(false);
+                using (var stream = await client.DownloadAsync(uri, doodad, cancellationToken).ConfigureAwait(false))
+                    await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }
     }
