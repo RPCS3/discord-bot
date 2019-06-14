@@ -3,11 +3,13 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
@@ -129,6 +131,44 @@ namespace CompatBot.Commands
                 Config.Log.Info($"Shutting down by request from {ctx.User.Username}#{ctx.User.Discriminator}");
                 Config.inMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
+            }
+
+            [Command("status")]
+            [Description("Sets bot status with specified activity and message")]
+            public async Task Status(CommandContext ctx, [Description("One of: None, Playing, Watching or ListeningTo")] string activity, [RemainingText] string message)
+            {
+                try
+                {
+                    using (var db = new BotDb())
+                    {
+                        var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
+                        var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
+                        if (Enum.TryParse(activity, true, out ActivityType activityType)
+                            && !string.IsNullOrEmpty(message))
+                        {
+                            if (status == null)
+                                await db.BotState.AddAsync(new BotState {Key = "bot-status-activity", Value = activity}).ConfigureAwait(false);
+                            else
+                                status.Value = activity;
+                            if (txt == null)
+                                await db.BotState.AddAsync(new BotState {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
+                            else
+                                txt.Value = message;
+                            await ctx.Client.UpdateStatusAsync(new DiscordActivity(message, activityType), UserStatus.Online).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            if (status != null)
+                                db.BotState.Remove(status);
+                            await ctx.Client.UpdateStatusAsync(new DiscordActivity()).ConfigureAwait(false);
+                        }
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e);
+                }
             }
 
             internal static void Restart(ulong channelId)
