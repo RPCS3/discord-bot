@@ -23,6 +23,9 @@ namespace CompatBot.Utils
             TimeSpan? timeout,
             params DiscordEmoji[] reactions)
         {
+            if (message == null)
+                throw new ArgumentNullException(nameof(message));
+
             if (reactions.Length == 0)
                 throw new ArgumentException("At least one reaction must be specified", nameof(reactions));
 

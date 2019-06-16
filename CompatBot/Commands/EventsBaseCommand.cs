@@ -25,7 +25,7 @@ namespace CompatBot.Commands
 
         protected async Task NearestEvent(CommandContext ctx, string eventName = null)
         {
-            eventName = eventName.Trim(40);
+            var originalEventName = eventName = eventName.Trim(40);
             var current = DateTime.UtcNow;
             var currentTicks = current.Ticks;
             using (var db = new BotDb())
@@ -61,6 +61,22 @@ namespace CompatBot.Commands
                 var firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year && e.EventName == eventName).ConfigureAwait(false);
                 if (firstNamedEvent == null)
                 {
+                    var scheduleEntry = await FuzzyMatchEntryName(db, originalEventName).ConfigureAwait(false);
+                    var events = await db.EventSchedule.OrderBy(e => e.Start).Where(e => e.End > current.Ticks && e.Name == scheduleEntry).ToListAsync().ConfigureAwait(false);
+                    if (events.Any())
+                    {
+                        var eventListMsg = new StringBuilder();
+                        foreach (var eventEntry in events)
+                        {
+                            if (eventEntry.Start < current.Ticks)
+                                eventListMsg.AppendLine($"{eventEntry.Name} ends in {FormatCountdown(eventEntry.End.AsUtc() - current)}");
+                            else
+                                eventListMsg.AppendLine($"{eventEntry.Name} starts in {FormatCountdown(eventEntry.Start.AsUtc() - current)}");
+                        }
+                        await ctx.SendAutosplitMessageAsync(eventListMsg.ToString(), blockStart: "", blockEnd: "").ConfigureAwait(false);
+                        return;
+                    }
+
                     var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
                     if (eventName.Length > 10)
                         noEventMsg = "No information about such event at the moment";
@@ -461,6 +477,14 @@ namespace CompatBot.Commands
             var knownEventNames = await db.EventSchedule.Select(e => e.EventName).Distinct().ToListAsync().ConfigureAwait(false);
             var (score, name) = knownEventNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
             return score > 0.8 ? name : eventName;
+        }
+
+        private static async Task<string> FuzzyMatchEntryName(BotDb db, string eventName)
+        {
+            var now = DateTime.UtcNow.Ticks;
+            var knownNames = await db.EventSchedule.Where(e => e.End > now).Select(e => e.Name).ToListAsync().ConfigureAwait(false);
+            var (score, name) = knownNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
+            return score > 0.5 ? name : eventName;
         }
 
         private static string FixTimeString(string dateTime)
