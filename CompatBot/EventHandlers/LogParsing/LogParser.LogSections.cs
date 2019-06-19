@@ -102,6 +102,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Strict Rendering Mode:"] = new Regex("Strict Rendering Mode: (?<strict_rendering_mode>.*?)\r?$", DefaultOptions),
                     ["Occlusion Queries:"] = new Regex("Occlusion Queries: (?<zcull>.*?)\r?$", DefaultOptions),
                     ["Vertex Cache:"] = new Regex("Disable Vertex Cache: (?<vertex_cache>.*?)\r?$", DefaultOptions),
+                    ["Frame Skip:"] = new Regex("Enable Frame Skip: (?<frame_skip>.*?)\r?$", DefaultOptions),
                     ["Blit:"] = new Regex("Blit: (?<cpu_blit>.*?)\r?$", DefaultOptions),
                     ["Asynchronous Shader Compiler:"] = new Regex("Asynchronous Shader Compiler: (?<async_shaders>.*?)\r?$", DefaultOptions),
                     ["Resolution Scale:"] = new Regex("Resolution Scale: (?<resolution_scale>.*?)\r?$", DefaultOptions),

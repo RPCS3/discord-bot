@@ -105,6 +105,8 @@ namespace CompatBot.Utils.ResultFormatters
                 && !string.IsNullOrEmpty(serial)
                 && !KnownDisableVertexCacheIds.Contains(serial))
                 notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
+            if (items["frame_skip"] == EnabledMark)
+                notes.Add("⚠ `Frame Skip` is enabled, please disable");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark &&
                 items["write_color_buffers"] is string wcb && wcb == DisabledMark)
                 notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
