@@ -31,7 +31,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["RPCS3"] = new Regex(@"(?<build_and_specs>.*)\r?$", DefaultSingleLineOptions),
+                    ["RPCS3"] = new Regex(@"^\s*(?<build_and_specs>RPCS3.*)\r?$", DefaultSingleLineOptions),
                 },
                 OnNewLineAsync = PiracyCheckAsync,
                 EndTrigger = "·",
