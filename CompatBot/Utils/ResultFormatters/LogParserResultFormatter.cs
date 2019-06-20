@@ -583,7 +583,8 @@ namespace CompatBot.Utils.ResultFormatters
         {
             return gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
                    gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||
-                   gpuInfo.Contains("Quadro", StringComparison.InvariantCultureIgnoreCase);
+                   gpuInfo.Contains("Quadro", StringComparison.InvariantCultureIgnoreCase) ||
+                   gpuInfo.Contains("GTX", StringComparison.InvariantCultureIgnoreCase);
         }
 
         private static string GetTimeFormat(long microseconds)
