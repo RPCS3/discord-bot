@@ -16,8 +16,14 @@ namespace CompatBot.Utils.ResultFormatters
             var serial = items["serial"] ?? "";
             if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]) || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
-            if (items["enable_tsx"] == "Disabled")
+            var hasTsx = items["cpu_extensions"]?.Contains("TSX") ?? false;
+            var hasTsxFa = items["cpu_extensions"]?.Contains("TSX-FA") ?? false;
+            items["has_tsx"] = hasTsx ? EnabledMark : DisabledMark;
+            items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
+            if (items["enable_tsx"] == "Disabled" && hasTsx && !hasTsxFa)
                 notes.Add("⚠ TSX support is disabled; performance may suffer");
+            else if (items["enable_tsx"] == "Enabled" && hasTsxFa)
+                notes.Add("⚠ Disable TSX support if you experience performance issues");
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && int.TryParse(items["thread_count"], out var threadCount)
                 && threadCount > 4)
@@ -192,17 +198,25 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
                 }
 
-                if (items["spu_threads"] is string spuThreads && spuThreads != "2")
+                if (items["spu_threads"] is string spuThreads)
                 {
-                    if (int.TryParse(items["thread_count"], out var threadCount))
+                    if (items["has_tsx"] == EnabledMark)
                     {
-                        if (threadCount > 4)
-                            notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
-                        else if (spuThreads != "1")
-                            notes.Add("ℹ `SPU Thread Count` is best to set to `2` or `1`");
+                        if (spuThreads != "0")
+                            notes.Add("ℹ `SPU Thread Count` is best to set to `Auto`");
                     }
-                    else
-                        notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                    else if (spuThreads != "2")
+                    {
+                        if (int.TryParse(items["thread_count"], out var threadCount))
+                        {
+                            if (threadCount > 4)
+                                notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                            else if (spuThreads != "1")
+                                notes.Add("ℹ `SPU Thread Count` is best to set to `2` or `1`");
+                        }
+                        else
+                            notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                    }
                 }
                 if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
                     notes.Add("ℹ `Accurate xFloat` is not required, please disable");
