@@ -148,10 +148,10 @@ namespace CompatBot.Utils.ResultFormatters
                 $"Resolution Scale: {items["resolution_scale"] ?? "N/A",16}",
                 $"Resolution Scale Threshold: {items["texture_scale_threshold"] ?? "N/A",6}",
                 $"Write Color Buffers: {items["write_color_buffers"],13}",
+                $"Anti-Aliasing: {items["msaa"] ?? "N/A",19}",
                 $"Anisotropic Filter: {items["af_override"] ?? "N/A",14}",
                 $"Frame Limit: {items["frame_limit"],21}",
                 $"VSync: {items["vsync"] ?? "N/A",27}",
-                $"Native UI: {items["native_ui"] ?? "N/A",23}"
             };
             return ("GPU Settings", lines);
         }
