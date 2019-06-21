@@ -96,6 +96,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Resolution:"] = new Regex("Resolution: (?<resolution>.*?)\r?$", DefaultOptions),
                     ["Aspect ratio:"] = new Regex("Aspect ratio: (?<aspect_ratio>.*?)\r?$", DefaultOptions),
                     ["Frame limit:"] = new Regex("Frame limit: (?<frame_limit>.*?)\r?$", DefaultOptions),
+                    ["MSAA:"] = new Regex("MSAA: (?<msaa>.*?)\r?$", DefaultOptions),
                     ["Write Color Buffers:"] = new Regex("Write Color Buffers: (?<write_color_buffers>.*?)\r?$", DefaultOptions),
                     ["VSync:"] = new Regex("VSync: (?<vsync>.*?)\r?$", DefaultOptions),
                     ["GPU texture scaling:"] = new Regex("Use GPU texture scaling: (?<gpu_texture_scaling>.*?)\r?$", DefaultOptions),

@@ -297,7 +297,6 @@ namespace CompatBot.Utils.ResultFormatters
                 return updateInfo;
 
             return null;
-
         }
 
         private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo updateInfo)
