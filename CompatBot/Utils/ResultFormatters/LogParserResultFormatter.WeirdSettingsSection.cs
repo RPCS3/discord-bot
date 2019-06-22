@@ -202,7 +202,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     if (items["has_tsx"] == EnabledMark)
                     {
-                        if (spuThreads != "0")
+                        if (spuThreads != "Auto")
                             notes.Add("ℹ `SPU Thread Count` is best to set to `Auto`");
                     }
                     else if (spuThreads != "2")

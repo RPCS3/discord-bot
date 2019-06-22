@@ -212,24 +212,37 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
                 }
 
-                if (items["os_type"] is string os
-                    && os != "Linux"
-                    && IsNvidia(gpuInfo)
-                    && items["driver_version_info"] is string driverVersionString
-                    && Version.TryParse(driverVersionString, out var driverVersion)
-                    && Version.TryParse(items["build_version"], out var buildVersion)
-                    && int.TryParse(items["build_number"], out var buildNumber)
-                    && buildVersion < NvidiaFullscreenBugFixed)
+                if (items["driver_version_info"] is string driverVersionString)
                 {
-                    buildVersion = new Version(buildVersion.Major, buildVersion.Minor, buildVersion.Build, buildNumber);
-                    if (buildVersion < NvidiaFullscreenBugFixed)
+                    if (Version.TryParse(driverVersionString, out var driverVersion)
+                        && Version.TryParse(items["build_version"], out var buildVersion)
+                        && int.TryParse(items["build_number"], out var buildNumber))
                     {
-                        if (driverVersion < NvidiaRecommendedOldWindowsVersion)
-                            notes.Add($"❗ Please update your nVidia driver to at least version {NvidiaRecommendedOldWindowsVersion}");
-                        if (driverVersion >= NvidiaFullscreenBugMinVersion
-                            && driverVersion < NvidiaFullscreenBugMaxVersion
-                            && items["renderer"] == "Vulkan")
-                            notes.Add("ℹ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
+                        buildVersion = new Version(buildVersion.Major, buildVersion.Minor, buildVersion.Build, buildNumber);
+                        if (IsNvidia(gpuInfo))
+                        {
+                            if (driverVersion < NvidiaRecommendedOldWindowsVersion)
+                                notes.Add($"❗ Please update your nVidia GPU driver to at least version {NvidiaRecommendedOldWindowsVersion}");
+                            if (items["os_type"] is string os
+                                && os != "Linux"
+                                && buildVersion < NvidiaFullscreenBugFixed)
+                            {
+                                if (driverVersion >= NvidiaFullscreenBugMinVersion
+                                    && driverVersion < NvidiaFullscreenBugMaxVersion
+                                    && items["renderer"] == "Vulkan")
+                                    notes.Add("ℹ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
+                            }
+                        }
+                        else if (IsAmd(gpuInfo))
+                        {
+                            if (driverVersion < AmdRecommendedOldWindowsVersion)
+                                notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
+                        }
+                    }
+                    else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (IsAmd(gpuInfo))
+                            notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
                     }
                 }
             }
