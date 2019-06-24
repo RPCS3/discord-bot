@@ -130,23 +130,8 @@ namespace CompatBot
                                         Config.Log.Info("");
                                     };
                     client.GuildAvailable += async gaArgs =>
-                                             {
-                                                 try
-                                                 {
-                                                     using (var db = new BotDb())
-                                                     {
-                                                         var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
-                                                         var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
-                                                         var msg = txt?.Value;
-                                                         if (Enum.TryParse(status?.Value ?? "Watching", out ActivityType activity)
-                                                             && !string.IsNullOrEmpty(msg))
-                                                             await client.UpdateStatusAsync(new DiscordActivity(msg, activity), UserStatus.Online).ConfigureAwait(false);
-                                                     }
-                                                 }
-                                                 catch (Exception e)
-                                                 {
-                                                     Config.Log.Error(e);
-                                                 }
+                    {
+                                                 await BotStatusMonitor.RefreshAsync(gaArgs.Client).ConfigureAwait(false);
                                                  Watchdog.DisconnectTimestamps.Clear();
                                                  if (gaArgs.Guild.Id != Config.BotGuildId)
                                                  {
@@ -223,7 +208,11 @@ namespace CompatBot
                                 Watchdog.DisconnectTimestamps.Clear();
                         }
                         else if (eventArgs.Level == LogLevel.Warning)
+                        {
                             logLevel = Config.Log.Warn;
+                            if (eventArgs.Message?.Contains("Dispatch:PRESENCES_REPLACE") ?? false)
+                                BotStatusMonitor.RefreshAsync(client).ConfigureAwait(false).GetAwaiter().GetResult();
+                        }
                         else if (eventArgs.Level == LogLevel.Error)
                             logLevel = Config.Log.Error;
                         else if (eventArgs.Level == LogLevel.Critical)
