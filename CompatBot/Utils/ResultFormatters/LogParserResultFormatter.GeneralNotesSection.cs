@@ -117,10 +117,24 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add($"ℹ The log contains only installation of firmware {fwVersion}");
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
-            if (serial.StartsWith('U') && ProductCodeLookup.ProductCode.IsMatch(serial))
+
+            var category = items["game_category"];
+            if (category == "PE"
+                || category == "PP"
+                || serial.StartsWith('U') && ProductCodeLookup.ProductCode.IsMatch(serial))
             {
                 builder.Color = Config.Colors.CompatStatusNothing;
                 notes.Add("❌ PSP software is not supported");
+            }
+            else if (category == "MN")
+            {
+                builder.Color = Config.Colors.CompatStatusNothing;
+                notes.Add("❌ Minis are not supported");
+            }
+            if (category == "2G" || category == "2P" || category == "2D")
+            {
+                builder.Color = Config.Colors.CompatStatusNothing;
+                notes.Add("❌ PS2 software is not supported");
             }
 
             if (items["compat_database_path"] is string compatDbPath
@@ -320,14 +334,14 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["game_category"] == "GD")
                 notes.Add($"❔ Game was booted through the Game Data");
 */
-            if (items["game_category"] == "DG" || items["game_category"] == "GD") // only disc games should install game data
+            if (category == "DG" || category == "GD") // only disc games should install game data
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
                 discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
                 discAsPkg |= items["ldr_game_serial"] is string ldrGameSerial && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase);
             }
 
-            discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
+            discAsPkg |= category == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
                 notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
             if (discAsPkg)
