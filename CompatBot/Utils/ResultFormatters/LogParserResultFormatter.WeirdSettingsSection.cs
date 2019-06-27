@@ -304,7 +304,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (serial == "NPUA70080") // GoW3 Demo
                 return;
 
-            if (serial == "BCES00510" || serial == "BCUS98111" || serial == "BCJS75001" || serial == "BCJS37001") // GoW3
+            if (serial == "BCES00510" || serial == "BCUS98111" || serial == "BCJS75001" || serial == "BCJS37001" || serial == "BCKS15003") // GoW3
             {
                 notes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
                 if (items["spu_decoder"] is string spuDecoder
