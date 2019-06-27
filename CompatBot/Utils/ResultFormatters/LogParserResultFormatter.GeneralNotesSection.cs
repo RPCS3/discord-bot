@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -100,7 +101,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && items["ldr_boot_path_serial"] != serial
                 && items ["elf_boot_path_serial"] != serial)
                 notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
-            if (!string.IsNullOrEmpty(items["serial"]) && isElf)
+            if (!string.IsNullOrEmpty(serial) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
             if (items["log_from_ui"] is string _)
                 notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
@@ -109,12 +110,17 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ The log is empty");
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
-            else if (string.IsNullOrEmpty(items["serial"] + items["game_title"])
+            else if (string.IsNullOrEmpty(serial + items["game_title"])
                      && !string.IsNullOrEmpty(items["fw_installed_message"])
                      && items["fw_version_installed"] is string fwVersion)
             {
                 notes.Add($"ℹ The log contains only installation of firmware {fwVersion}");
                 notes.Add("ℹ Please boot the game and upload a new log");
+            }
+            if (serial.StartsWith('U') && ProductCodeLookup.ProductCode.IsMatch(serial))
+            {
+                builder.Color = Config.Colors.CompatStatusNothing;
+                notes.Add("❌ PSP software is not supported");
             }
 
             if (items["compat_database_path"] is string compatDbPath
