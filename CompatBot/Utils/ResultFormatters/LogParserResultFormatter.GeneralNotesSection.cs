@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -100,7 +101,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && items["ldr_boot_path_serial"] != serial
                 && items ["elf_boot_path_serial"] != serial)
                 notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
-            if (!string.IsNullOrEmpty(items["serial"]) && isElf)
+            if (!string.IsNullOrEmpty(serial) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
             if (items["log_from_ui"] is string _)
                 notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
@@ -109,12 +110,31 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ The log is empty");
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
-            else if (string.IsNullOrEmpty(items["serial"] + items["game_title"])
+            else if (string.IsNullOrEmpty(serial + items["game_title"])
                      && !string.IsNullOrEmpty(items["fw_installed_message"])
                      && items["fw_version_installed"] is string fwVersion)
             {
                 notes.Add($"ℹ The log contains only installation of firmware {fwVersion}");
                 notes.Add("ℹ Please boot the game and upload a new log");
+            }
+
+            var category = items["game_category"];
+            if (category == "PE"
+                || category == "PP"
+                || serial.StartsWith('U') && ProductCodeLookup.ProductCode.IsMatch(serial))
+            {
+                builder.Color = Config.Colors.CompatStatusNothing;
+                notes.Add("❌ PSP software is not supported");
+            }
+            else if (category == "MN")
+            {
+                builder.Color = Config.Colors.CompatStatusNothing;
+                notes.Add("❌ Minis are not supported");
+            }
+            if (category == "2G" || category == "2P" || category == "2D")
+            {
+                builder.Color = Config.Colors.CompatStatusNothing;
+                notes.Add("❌ PS2 software is not supported");
             }
 
             if (items["compat_database_path"] is string compatDbPath
@@ -314,14 +334,14 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["game_category"] == "GD")
                 notes.Add($"❔ Game was booted through the Game Data");
 */
-            if (items["game_category"] == "DG" || items["game_category"] == "GD") // only disc games should install game data
+            if (category == "DG" || category == "GD") // only disc games should install game data
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
                 discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
                 discAsPkg |= items["ldr_game_serial"] is string ldrGameSerial && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase);
             }
 
-            discAsPkg |= items["game_category"] == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
+            discAsPkg |= category == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
             if (discInsideGame)
                 notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
             if (discAsPkg)
