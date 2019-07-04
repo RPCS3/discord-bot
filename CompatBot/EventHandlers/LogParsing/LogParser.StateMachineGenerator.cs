@@ -25,7 +25,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     OnLineCheckAsync = sectionDescription.OnNewLineAsync ?? ((l, s) => Task.CompletedTask),
                     OnSectionEnd = sectionDescription.OnSectionEnd,
-                    EndTrigger = sectionDescription.EndTrigger.ToLatin8BitEncoding(),
+                    EndTrigger = sectionDescription.EndTrigger.Select(s => s.ToLatin8BitEncoding()).ToArray(),
                 };
                 // the idea here is to construct Aho-Corasick parser that will look for any data marker and run the associated regex to extract the data into state
                 if (sectionDescription.Extractors?.Count > 0)
@@ -91,7 +91,7 @@ namespace CompatBot.EventHandlers.LogParsing
             public OnNewLineDelegate OnExtract;
             public Func<string, LogParseState, Task> OnLineCheckAsync;
             public Action<LogParseState> OnSectionEnd;
-            public string EndTrigger;
+            public string[] EndTrigger;
         }
     }
 }

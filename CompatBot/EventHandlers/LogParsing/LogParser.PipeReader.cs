@@ -78,13 +78,13 @@ namespace CompatBot.EventHandlers.LogParsing
         private static async Task OnNewLineAsync(ReadOnlySequence<byte> line, ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
         {
             var currentProcessor = SectionParsers[state.Id];
-            if (line.AsString().Contains(currentProcessor.EndTrigger, StringComparison.InvariantCultureIgnoreCase))
+            var strLine = line.AsString();
+            if (currentProcessor.EndTrigger.Any(et => strLine.Contains(et, StringComparison.InvariantCultureIgnoreCase)))
             {
                 await FlushAllLinesAsync(buffer, sectionLines, state).ConfigureAwait(false);
                 await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
                 SectionParsers[state.Id].OnSectionEnd?.Invoke(state);
                 state.Id++;
-                currentProcessor = SectionParsers[state.Id];
             }
             if (sectionLines.Count == 50)
                 await ProcessFirstLineInBufferAsync(buffer, sectionLines, state).ConfigureAwait(false);
