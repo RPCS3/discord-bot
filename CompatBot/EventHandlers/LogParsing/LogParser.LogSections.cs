@@ -34,7 +34,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["RPCS3"] = new Regex(@"^\s*(?<build_and_specs>RPCS3.*)\r?$", DefaultSingleLineOptions),
                 },
                 OnNewLineAsync = PiracyCheckAsync,
-                EndTrigger = "·",
+                EndTrigger = new[] {"·"},
             },
             new LogSection
             {
@@ -51,7 +51,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["custom config:"] = new Regex(@"custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
                 },
                 OnNewLineAsync = PiracyCheckAsync,
-                EndTrigger = "Core:",
+                EndTrigger = new[] {"Core:"},
             },
             new LogSection
             {
@@ -78,7 +78,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Load libraries:"] = new Regex(@"libraries:\r?\n(?<library_list>(.*?(- .*?|\[\])\r?\n)+)", DefaultOptions),
                     ["HLE lwmutex:"] = new Regex(@"HLE lwmutex: (?<hle_lwmutex>.*?)\r?$", DefaultOptions),
                 },
-                EndTrigger = "VFS:",
+                EndTrigger = new[] {"VFS:"},
             },
             new LogSection
             {
@@ -86,7 +86,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     ["Enable /host_root/:"] = new Regex(@"Enable /host_root/: (?<host_root>.*?)\r?$", DefaultOptions),
                 },
-                EndTrigger = "Video:",
+                EndTrigger = new[] {"Video:"},
             },
             new LogSection
             {
@@ -113,7 +113,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["12:"] = new Regex(@"(D3D12|DirectX 12):\s*\r?\n\s*Adapter: (?<d3d_gpu>.*?)\r?$", DefaultOptions),
                     ["Vulkan:"] = new Regex(@"Vulkan:\s*\r?\n\s*Adapter: (?<vulkan_gpu>.*?)\r?$", DefaultOptions),
                 },
-                EndTrigger = "Audio:",
+                EndTrigger = new[] {"Audio:"},
             },
             new LogSection // Audio, Input/Output, System, Net, Miscellaneous
             {
@@ -129,7 +129,7 @@ namespace CompatBot.EventHandlers.LogParsing
 
                     ["Use native user interface:"] = new Regex("Use native user interface: (?<native_ui>.*?)\r?$", DefaultOptions),
                 },
-                EndTrigger = "Log:",
+                EndTrigger = new[] {"Log:"},
             },
             new LogSection 
             {
@@ -137,7 +137,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     ["Log:"] = new Regex(@"Log:\s*\r?\n?\s*(\{(?<log_disabled_channels>.*?)\}|(?<log_disabled_channels_multiline>(\s+\w+\:\s*\w+\r?\n)+))\r?$", DefaultOptions),
                 },
-                EndTrigger = "·",
+                EndTrigger = new[] {"·"},
                 OnSectionEnd = MarkAsComplete,
             },
             new LogSection
@@ -184,7 +184,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
-                EndTrigger = "All threads stopped...",
+                EndTrigger = new[] {"All threads stopped...", "LDR: Booting from"},
             }
         };
 
