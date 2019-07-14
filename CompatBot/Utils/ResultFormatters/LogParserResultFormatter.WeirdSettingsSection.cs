@@ -283,9 +283,20 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
             {
-                if (items["frame_limit"] is string frameLimit
-                    && frameLimit != "30")
-                    notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+                var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+                var frameLimit = items["frame_limit"];
+                if (ppuPatches.Any())
+                {
+                    if (frameLimit != "59.95"
+                        && frameLimit != "60"
+                        && items["vsync"] != EnabledMark)
+                        notes.Add("⚠ Please set `Framerate Limiter` to 60 fps or enable V-Sync");
+                }
+                else
+                {
+                    if (frameLimit != "30")
+                        notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+                }
 
                 if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
                     notes.Add("ℹ To enter the character name, disable `Native UI` and use Japanese text");
