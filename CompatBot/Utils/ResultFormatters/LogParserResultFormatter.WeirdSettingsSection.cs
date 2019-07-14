@@ -115,13 +115,15 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
             if (items["frame_skip"] == EnabledMark)
                 notes.Add("⚠ `Frame Skip` is enabled, please disable");
-            if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark &&
-                items["write_color_buffers"] is string wcb && wcb == DisabledMark)
+            if (items["cpu_blit"] is string cpuBlit
+                && cpuBlit == EnabledMark
+                && items["write_color_buffers"] is string wcb
+                && wcb == DisabledMark)
                 notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == EnabledMark)
                 notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
-            if (items["driver_recovery_timeout"] is string driverRecoveryTimeout &&
-                int.TryParse(driverRecoveryTimeout, out var drtValue) && drtValue != 1000000)
+            if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
+                && int.TryParse(driverRecoveryTimeout, out var drtValue) && drtValue != 1000000)
             {
                 if (drtValue == 0)
                     notes.Add("⚠ `Driver Recovery Timeout` is set to 0 (infinite), please use default value of 1000000");
@@ -129,6 +131,12 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too low: {GetTimeFormat(drtValue)} (1 frame @ {(1_000_000.0 / drtValue):0.##} fps)");
                 else if (drtValue > 10_000_000)
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
+            }
+            if (items["vblank_rate"] is string vblank
+                && int.TryParse(vblank, out var vblankRate)
+                && vblankRate != 60)
+            {
+                notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz");
             }
 
             if (!string.IsNullOrEmpty(serial)
