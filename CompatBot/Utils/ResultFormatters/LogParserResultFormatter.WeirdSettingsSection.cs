@@ -285,12 +285,28 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
                 var frameLimit = items["frame_limit"];
+                var vsync = items["vsync"] == EnabledMark;
                 if (ppuPatches.Any())
                 {
-                    if (frameLimit != "59.95"
-                        && frameLimit != "60"
-                        && items["vsync"] != EnabledMark)
-                        notes.Add("⚠ Please set `Framerate Limiter` to 60 fps or enable V-Sync");
+                    if (frameLimit == "Off")
+                    {
+                        if (!vsync)
+                            notes.Add("⚠ Please set `Framerate Limiter` to `Auto` or enable V-Sync");
+                    }
+                    else if (frameLimit != "59.95"
+                             && frameLimit != "60"
+                             && frameLimit != "Auto")
+                    {
+                        if (vsync)
+                            notes.Add("⚠ Please set `Framerate Limiter` to `Off`");
+                        else
+                            notes.Add("⚠ Please set `Framerate Limiter` to `Auto` or enable V-Sync");
+                    }
+                    else
+                    {
+                        if (vsync)
+                            notes.Add("⚠ Please set `Framerate Limiter` to `Off`");
+                    }
                 }
                 else
                 {
