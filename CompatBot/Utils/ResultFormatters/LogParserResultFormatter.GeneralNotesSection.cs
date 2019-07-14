@@ -74,7 +74,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var types = verifyFails.Split(Environment.NewLine).Distinct().ToList();
                 if (types.Contains("sce"))
-                    notes.Add("❌ Failed to decrypt executables from DLC, PPU recompilers may fail");
+                    notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
             }
             if (brokenDump)
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
