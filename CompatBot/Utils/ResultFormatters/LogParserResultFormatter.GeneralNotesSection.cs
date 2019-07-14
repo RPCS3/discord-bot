@@ -74,7 +74,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var types = verifyFails.Split(Environment.NewLine).Distinct().ToList();
                 if (types.Contains("sce"))
-                    notes.Add("❌ Failed to decrypt executables from DLC, PPU recompilers may fail");
+                    notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
             }
             if (brokenDump)
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
@@ -245,7 +245,8 @@ namespace CompatBot.Utils.ResultFormatters
                                 notes.Add($"❗ Please update your nVidia GPU driver to at least version {NvidiaRecommendedOldWindowsVersion}");
                             if (items["os_type"] is string os
                                 && os != "Linux"
-                                && buildVersion < NvidiaFullscreenBugFixed)
+                                && buildVersion < NvidiaFullscreenBugFixed
+                                && items["build_branch"] == "HEAD")
                             {
                                 if (driverVersion >= NvidiaFullscreenBugMinVersion
                                     && driverVersion < NvidiaFullscreenBugMaxVersion
