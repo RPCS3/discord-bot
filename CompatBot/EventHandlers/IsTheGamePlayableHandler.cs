@@ -97,7 +97,7 @@ namespace CompatBot.EventHandlers
                 {
                     var (code, info, score) = status.GetSortedList().First();
                     Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info?.Title}\" with score {score}");
-                    if (score < 0.5)
+                    if (score < 0.51)
                         return (null, null);
 
                     if (!string.IsNullOrEmpty(info?.Title))
