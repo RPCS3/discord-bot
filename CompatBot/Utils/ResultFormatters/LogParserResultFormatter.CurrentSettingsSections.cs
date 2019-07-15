@@ -56,7 +56,8 @@ namespace CompatBot.Utils.ResultFormatters
                 items["cpu_model"] = cpuModel;
                 items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
                 items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
-                items["cpu_extensions"] = cpuInfo.Groups["cpu_extensions"].Value;
+                items["cpu_tsc"] = cpuInfo.Groups["tsc"]?.Value;
+                items["cpu_extensions"] = cpuInfo.Groups["cpu_extensions"]?.Value;
             }
             if (osInfo.Success)
             {
@@ -101,6 +102,8 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
                 systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
+                if (!string.IsNullOrEmpty(items["cpu_tsc"]))
+                    systemInfo += " | TSC: " + items["cpu_tsc"];
                 if (!string.IsNullOrEmpty(items["cpu_extensions"]))
                     systemInfo += " | " + items["cpu_extensions"];
             }
