@@ -12,7 +12,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot
@@ -218,7 +217,8 @@ namespace CompatBot
                         else if (eventArgs.Level == LogLevel.Critical)
                         {
                             logLevel = Config.Log.Fatal;
-                            if (eventArgs.Message?.Contains("Socket connection terminated") ?? false)
+                            if ((eventArgs.Message?.Contains("Socket connection terminated") ?? false)
+                                || (eventArgs.Message?.Contains("heartbeats were skipped. Issuing reconnect.") ?? false))
                                 Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
                         }
                         logLevel(eventArgs.Exception, eventArgs.Message);
