@@ -22,9 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00618" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00618" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00618" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00621" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00621" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00621" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.40.2.1649" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
@@ -37,9 +37,9 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="2.2.0" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.2.38" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.2.42" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="NLog" Version="4.6.5" />
+    <PackageReference Include="NLog" Version="4.6.6" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.2" />
     <PackageReference Include="SharpCompress" Version="0.23.0" />
     <PackageReference Include="System.Drawing.Common" Version="4.5.1" />
