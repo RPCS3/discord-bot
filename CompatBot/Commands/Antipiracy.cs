@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
-using CompatBot.Database.Providers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Microsoft.EntityFrameworkCore;
@@ -22,12 +23,26 @@ namespace CompatBot.Commands
         {
             var table = new AsciiTable(
                 new AsciiColumn("ID", alignToRight: true),
-                new AsciiColumn("Trigger")
+                new AsciiColumn("Trigger"),
+                new AsciiColumn("Validation"),
+                new AsciiColumn("Context"),
+                new AsciiColumn("Actions"),
+                new AsciiColumn("Custom message")
             );
             using (var db = new BotDb())
-                foreach (var item in await db.Piracystring.ToListAsync().ConfigureAwait(false))
-                    table.Add(item.Id.ToString(), item.String);
+                foreach (var item in await db.Piracystring.OrderBy(ps => ps.String).ToListAsync().ConfigureAwait(false))
+                {
+                    table.Add(
+                        item.Id.ToString(),
+                        item.String.Sanitize(),
+                        item.ValidatingRegex,
+                        item.Context.ToString(),
+                        item.Actions.ToFlagsString(),
+                        string.IsNullOrEmpty(item.CustomMessage) ? "" : "✅"
+                    );
+                }
             await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
+            await ctx.RespondAsync(FilterActionExtensions.GetLegend()).ConfigureAwait(false);
         }
 
         [Command("add")]
