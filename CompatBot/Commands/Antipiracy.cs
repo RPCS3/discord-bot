@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
@@ -33,7 +34,9 @@ namespace CompatBot.Commands
         [Description("Adds a new piracy filter trigger")]
         public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string trigger)
         {
-            var wasSuccessful = await PiracyStringProvider.AddAsync(trigger).ConfigureAwait(false);
+            throw new NotImplementedException();
+
+            var wasSuccessful = false;
             if (wasSuccessful)
             {
                 await ctx.ReactWithAsync(Config.Reactions.Success, "New trigger successfully saved!").ConfigureAwait(false);
@@ -50,15 +53,17 @@ namespace CompatBot.Commands
         [Description("Removes a piracy filter trigger")]
         public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
         {
+            throw new NotImplementedException();
             var failedIds = new List<int>();
             var removedFilters = new List<string>();
             foreach (var id in ids)
             {
-                var trigger = await PiracyStringProvider.GetTriggerAsync(id).ConfigureAwait(false);
-                if (await PiracyStringProvider.RemoveAsync(id).ConfigureAwait(false))
+                /*
+                if (await ContentFilterProvider.RemoveAsync(id).ConfigureAwait(false))
                     removedFilters.Add(trigger.Sanitize());
                 else
                     failedIds.Add(id);
+            */
             }
 
             if (failedIds.Count > 0)

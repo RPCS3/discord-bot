@@ -60,7 +60,7 @@ namespace CompatBot.Commands
             if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
                 return;
 
-            if (!await AntipiracyMonitor.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
+            if (!await ContentFilter.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
                 return;
 
             var productCodes = ProductCodeLookup.GetProductIds(ctx.Message.Content);
