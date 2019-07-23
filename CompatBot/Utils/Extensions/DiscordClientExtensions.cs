@@ -226,6 +226,9 @@ namespace CompatBot.Utils
                 result.AddField("Filter Actions", actionList);
             if (needsAttention && !message.Channel.IsPrivate)
                 result.AddField("Link to the message", message.JumpLink.ToString());
+#if DEBUG
+            result.WithFooter("Test bot instance");
+#endif
             return result;
         }
 
