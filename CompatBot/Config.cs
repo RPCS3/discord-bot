@@ -8,10 +8,14 @@ using System.Threading;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.Extensions.Logging;
 using NLog;
+using NLog.Extensions.Logging;
 using NLog.Filters;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
+using ILogger = NLog.ILogger;
+using LogLevel = NLog.LogLevel;
 
 namespace CompatBot
 {
@@ -19,6 +23,7 @@ namespace CompatBot
     {
         private static readonly IConfigurationRoot config;
         internal static readonly ILogger Log;
+        internal static readonly ILoggerFactory LoggerFactory;
         internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new ConcurrentDictionary<string, string>();
 
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
@@ -147,6 +152,7 @@ namespace CompatBot
                          .AddInMemoryCollection(inMemorySettings)     // higher priority
                          .Build();
                 Log = GetLog();
+                LoggerFactory = new NLogLoggerFactory();
             }
             catch (Exception e)
             {

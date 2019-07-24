@@ -9,6 +9,7 @@ using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 
 namespace CompatBot.Database.Providers
@@ -52,7 +53,7 @@ namespace CompatBot.Database.Providers
             using (var db = new BotDb())
                 foreach (FilterContext ctx in Enum.GetValues(typeof(FilterContext)))
                 {
-                    var f = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).ToList();
+                    var f = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking().ToList();
                     newFilters[ctx] = f.Count == 0 ? null : new AhoCorasickDoubleArrayTrie<Piracystring>(f.ToDictionary(s => s.String, s => s), true);
                 }
             filters = newFilters;

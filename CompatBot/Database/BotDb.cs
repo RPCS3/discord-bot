@@ -21,6 +21,9 @@ namespace CompatBot.Database
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
+#if DEBUG
+            optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
+#endif
             optionsBuilder.UseSqlite($"Data Source=\"{dbPath}\"");
         }
 
