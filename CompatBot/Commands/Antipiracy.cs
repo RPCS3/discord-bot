@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -13,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("piracy"), RequiresBotSudoerRole, RequiresDm]
+    [Group("filters"), Aliases("piracy", "filter"), RequiresBotSudoerRole, RequiresDm]
     [Description("Used to manage piracy filters **in DM**")]
     internal sealed class Antipiracy: BaseCommandModuleCustom
     {
@@ -30,7 +29,7 @@ namespace CompatBot.Commands
                 new AsciiColumn("Custom message")
             );
             using (var db = new BotDb())
-                foreach (var item in await db.Piracystring.OrderBy(ps => ps.String).ToListAsync().ConfigureAwait(false))
+                foreach (var item in await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String).ToListAsync().ConfigureAwait(false))
                 {
                     table.Add(
                         item.Id.ToString(),
@@ -68,27 +67,22 @@ namespace CompatBot.Commands
         [Description("Removes a piracy filter trigger")]
         public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
         {
-            throw new NotImplementedException();
-            var failedIds = new List<int>();
-            var removedFilters = new List<string>();
-            foreach (var id in ids)
+            var removedFilters = 0;
+            using (var db = new BotDb())
             {
-                /*
-                if (await ContentFilterProvider.RemoveAsync(id).ConfigureAwait(false))
-                    removedFilters.Add(trigger.Sanitize());
-                else
-                    failedIds.Add(id);
-            */
+                foreach (var f in db.Piracystring.Where(ps => ids.Contains(ps.Id)))
+                    f.Disabled = true;
+                removedFilters = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
 
-            if (failedIds.Count > 0)
-                await ctx.RespondAsync("Some ids couldn't be removed: " + string.Join(", ", failedIds)).ConfigureAwait(false);
+            if (removedFilters < ids.Length)
+                await ctx.RespondAsync("Some ids couldn't be removed.").ConfigureAwait(false);
             else
             {
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                var s = removedFilters.Count == 1 ? "" : "s";
-                await ctx.Client.ReportAsync($"🤬 Piracy filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters.Count} piracy filter{s}:\n```\n{string.Join('\n', removedFilters)}\n```", null, ReportSeverity.Medium).ConfigureAwait(false);
+                var s = removedFilters == 1 ? "" : "s";
+                await ctx.Client.ReportAsync($"🤬 Piracy filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters} piracy filter{s}.", null, ReportSeverity.Medium).ConfigureAwait(false);
             }
             await List(ctx).ConfigureAwait(false);
         }
