@@ -89,7 +89,7 @@ Example usage:
     !top 10 playable
     !top 10 new ingame
     !top 10 old loadable bluray")]
-        public async Task Top(CommandContext ctx, [Description("To see all filters do !filters")] params string[] filters)
+        public async Task Top(CommandContext ctx, [Description("You can use game status or media (psn/blu-ray)")] params string[] filters)
         {
             var requestBuilder = RequestBuilder.Start();
             var age = "new";
@@ -124,18 +124,6 @@ Example usage:
                 requestBuilder.SetHeader("{0} requested top {1} newest {2} {3} updated games");
             }
             await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
-        }
-
-        [Command("filters"), Hidden]
-        [Description("Provides information about available filters for the !top command")]
-        public async Task Filters(CommandContext ctx)
-        {
-            var embed = new DiscordEmbedBuilder {Description = "List of recognized tokens in each filter category", Color = Config.Colors.Help}
-                .AddField("Statuses", DicToDesc(ApiConfig.Statuses))
-                .AddField("Release types", DicToDesc(ApiConfig.ReleaseTypes))
-                .Build();
-            var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-            await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
         [Group("latest"), TriggersTyping]
