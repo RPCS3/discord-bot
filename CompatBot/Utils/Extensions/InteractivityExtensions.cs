@@ -35,14 +35,7 @@ namespace CompatBot.Utils
                 foreach (var emoji in reactions)
                     await message.ReactWithAsync(interactivity.Client, emoji).ConfigureAwait(false);
                 var expectedChannel = message.Channel;
-                var waitTextResponseTask = interactivity.WaitForMessageAsync(
-                    m =>
-                    {
-                        Config.Log.Trace($"{nameof(m)}={m}, {m.Author}, {m.Channel}, {m.Content}");
-                        return m.Author == user
-                               && m.Channel == expectedChannel
-                               && !string.IsNullOrEmpty(m.Content);
-                    }, timeout);
+                var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && m.Channel == expectedChannel && !string.IsNullOrEmpty(m.Content), timeout);
                 var waitReactionResponse = interactivity.WaitForReactionAsync(arg => reactions.Contains(arg.Emoji), message, user, timeout);
                 await Task.WhenAny(
                     waitTextResponseTask,
@@ -68,9 +61,7 @@ namespace CompatBot.Utils
                     {
                         await text.DeleteAsync().ConfigureAwait(false);
                     }
-                    catch
-                    {
-                    }
+                    catch {}
                 return (message, text, reaction);
             }
             catch (Exception e)

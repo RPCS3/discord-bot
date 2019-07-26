@@ -24,14 +24,14 @@ namespace CompatBot.Database.Providers
             RebuildMatcher();
         }
 
-        public static async Task<Piracystring> FindTriggerAsync(FilterContext ctx, string str)
+        public static Task<Piracystring> FindTriggerAsync(FilterContext ctx, string str)
         {
             if (string.IsNullOrEmpty(str))
-                return null;
+                return Task.FromResult((Piracystring)null);
 
 
             if (!filters.TryGetValue(ctx, out var matcher))
-                return null;
+                return Task.FromResult((Piracystring)null);
 
             Piracystring result = null;
             matcher?.ParseText(str, h =>
@@ -44,7 +44,7 @@ namespace CompatBot.Database.Providers
                 return true;
             });
 
-            return result;
+            return Task.FromResult(result);
         }
 
         private static void RebuildMatcher()
@@ -89,9 +89,8 @@ namespace CompatBot.Database.Providers
                     await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
                     completedActions.Add(FilterAction.RemoveMessage);
                 }
-                catch (Exception e)
+                catch
                 {
-                    //Config.Log.Warn(e, $"Couldn't delete message in {message.Channel.Name}");
                     severity = ReportSeverity.High;
                 }
             }
