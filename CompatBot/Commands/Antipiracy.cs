@@ -89,7 +89,10 @@ namespace CompatBot.Commands
                     await db.SaveChangesAsync().ConfigureAwait(false);
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Created a new content filter")).ConfigureAwait(false);
                     var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                    await ctx.Client.ReportAsync("🆕 Content filter created", $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`", null, ReportSeverity.Low).ConfigureAwait(false);
+                    var reportMsg = $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
+                    if (!string.IsNullOrEmpty(filter.ValidatingRegex))
+                        reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
+                    await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
                     ContentFilter.RebuildMatcher();
                 }
                 else
@@ -197,7 +200,10 @@ namespace CompatBot.Commands
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Updated content filter")).ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                await ctx.Client.ReportAsync("🆙 Content filter updated", $"{member.GetMentionWithNickname()} changed content filter: `{filter.String.Sanitize()}`", null, ReportSeverity.Low).ConfigureAwait(false);
+                var reportMsg = $"{member.GetMentionWithNickname()} changed content filter: `{filter.String.Sanitize()}`";
+                if (!string.IsNullOrEmpty(filter.ValidatingRegex))
+                    reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
+                await ctx.Client.ReportAsync("🆙 Content filter updated", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
                 ContentFilter.RebuildMatcher();
             }
             else
