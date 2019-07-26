@@ -685,6 +685,9 @@ namespace CompatBot.Commands
                 var validExplainTerm = string.IsNullOrEmpty(filter.ExplainTerm) ? "⚠ " : "";
                 result.AddFieldEx(validExplainTerm + "Explain", filter.ExplainTerm, highlight == field, true);
             }
+#if DEBUG
+            result.WithFooter("Test bot instance");
+#endif
             return result;
         }
     }
