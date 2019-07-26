@@ -10,7 +10,7 @@ namespace CompatBot.Utils.Extensions
     {
         private static readonly Dictionary<FilterAction, char> ActionFlags = new Dictionary<FilterAction, char>
         {
-            [FilterAction.RemoveMessage] = 'r',
+            [FilterAction.RemoveContent] = 'r',
             [FilterAction.IssueWarning] = 'w',
             [FilterAction.SendMessage] = 'm',
             [FilterAction.ShowExplain] = 'e',

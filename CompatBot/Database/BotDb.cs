@@ -34,7 +34,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasName("moderator_discord_id");
             modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).IsUnique().HasName("piracystring_string");
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Context).HasDefaultValue(FilterContext.Chat | FilterContext.Log);
-            modelBuilder.Entity<Piracystring>().Property(ps => ps.Actions).HasDefaultValue(FilterAction.RemoveMessage | FilterAction.IssueWarning | FilterAction.SendMessage);
+            modelBuilder.Entity<Piracystring>().Property(ps => ps.Actions).HasDefaultValue(FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage);
             modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasName("warning_discord_id");
             modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasName("explanation_keyword");
             modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasName("disabled_command_command");
@@ -87,7 +87,7 @@ namespace CompatBot.Database
     [Flags]
     internal enum FilterAction
     {
-        RemoveMessage = 0b_0000_0001,
+        RemoveContent = 0b_0000_0001,
         IssueWarning  = 0b_0000_0010,
         ShowExplain   = 0b_0000_0100,
         SendMessage   = 0b_0000_1000,

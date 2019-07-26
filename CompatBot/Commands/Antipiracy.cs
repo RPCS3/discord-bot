@@ -75,7 +75,7 @@ namespace CompatBot.Commands
                 if (isNewFilter)
                 {
                     filter.Context = FilterContext.Chat | FilterContext.Log;
-                    filter.Actions = FilterAction.RemoveMessage | FilterAction.IssueWarning | FilterAction.SendMessage;
+                    filter.Actions = FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage;
                 }
 
                 var (success, msg) = await EditFilterPropertiesAsync(ctx, db, filter).ConfigureAwait(false);
@@ -351,7 +351,7 @@ namespace CompatBot.Commands
             embed = FormatFilter(filter, errorMsg, 3)
                 .WithDescription(
                     "Actions that will be executed on positive match.\n" +
-                    $"**`R`** = **`{FilterAction.RemoveMessage}`** will remove the message / log.\n" +
+                    $"**`R`** = **`{FilterAction.RemoveContent}`** will remove the message / log.\n" +
                     $"**`W`** = **`{FilterAction.IssueWarning}`** will issue a warning to the user.\n" +
                     $"**`M`** = **`{FilterAction.SendMessage}`** send _a_ message with an explanation of why it was removed.\n" +
                     $"**`E`** = **`{FilterAction.ShowExplain}`** show `explain` for the specified term (**not implemented**).\n" +
@@ -373,7 +373,7 @@ namespace CompatBot.Commands
 
                 if (emoji.Emoji == letterR)
                 {
-                    filter.Actions ^= FilterAction.RemoveMessage;
+                    filter.Actions ^= FilterAction.RemoveContent;
                     goto step3;
                 }
 
@@ -409,7 +409,7 @@ namespace CompatBot.Commands
                         case "R":
                         case "REMOVE":
                         case "REMOVEMESSAGE":
-                            newActions |= FilterAction.RemoveMessage;
+                            newActions |= FilterAction.RemoveContent;
                             break;
                         case "W":
                         case "WARN":
@@ -457,7 +457,7 @@ namespace CompatBot.Commands
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
             var next = (filter.Actions & (FilterAction.SendMessage | FilterAction.ShowExplain)) == 0 ? firstPage : nextPage;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, trash, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (string.IsNullOrEmpty(filter.ValidatingRegex) ? null : trash), (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
