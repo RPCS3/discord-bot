@@ -47,7 +47,7 @@ namespace CompatBot.Database.Providers
             return Task.FromResult(result);
         }
 
-        private static void RebuildMatcher()
+        public static void RebuildMatcher()
         {
             var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>>();
             using (var db = new BotDb())
@@ -136,11 +136,11 @@ namespace CompatBot.Database.Providers
 
             try
             {
-                await client.ReportAsync("🤬 Content filter", message, trigger.String, message.Content, severity, actionList).ConfigureAwait(false);
+                await client.ReportAsync("🤬 Removed content", message, trigger.String, message.Content, severity, actionList).ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                Config.Log.Error(e, "Failed to report content filter");
+                Config.Log.Error(e, "Failed to report content removal");
             }
             return false;
         }
