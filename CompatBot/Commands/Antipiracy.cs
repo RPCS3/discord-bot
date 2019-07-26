@@ -9,7 +9,6 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DiscUtils.Streams;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -40,7 +39,7 @@ namespace CompatBot.Commands
                 new AsciiColumn("Custom message")
             );
             using (var db = new BotDb())
-                foreach (var item in await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String, StringComparer.InvariantCultureIgnoreCase).ToListAsync().ConfigureAwait(false))
+                foreach (var item in await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String.ToUpperInvariant()).ToListAsync().ConfigureAwait(false))
                 {
                     table.Add(
                         item.Id.ToString(),
