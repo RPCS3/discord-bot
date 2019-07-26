@@ -47,7 +47,7 @@ namespace CompatBot.Database.Providers
             return Task.FromResult(result);
         }
 
-        private static void RebuildMatcher()
+        public static void RebuildMatcher()
         {
             var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>>();
             using (var db = new BotDb())

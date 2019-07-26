@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DiscUtils.Streams;
@@ -87,6 +88,7 @@ namespace CompatBot.Commands
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Created a new content filter")).ConfigureAwait(false);
                     var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
                     await ctx.Client.ReportAsync("🆕 Content filter created", $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`", null, ReportSeverity.Low).ConfigureAwait(false);
+                    ContentFilter.RebuildMatcher();
                 }
                 else
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Content filter creation aborted").ConfigureAwait(false);
@@ -154,6 +156,7 @@ namespace CompatBot.Commands
                     filterList = filterList.TrimStart();
                 await ctx.Client.ReportAsync($"📴 Piracy filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters} piracy filter{s}: {filterList}".Trim(EmbedPager.MaxDescriptionLength), null, ReportSeverity.Medium).ConfigureAwait(false);
             }
+            ContentFilter.RebuildMatcher();
         }
 
         [Command("remove")]
@@ -181,6 +184,7 @@ namespace CompatBot.Commands
             await ctx.ReactWithAsync(Config.Reactions.Success, "Trigger was removed").ConfigureAwait(false);
             var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
             await ctx.Client.ReportAsync("📴 Piracy filter removed", $"{member.GetMentionWithNickname()} removed 1 piracy filter: `{trigger.Sanitize()}`", null, ReportSeverity.Medium).ConfigureAwait(false);
+            ContentFilter.RebuildMatcher();
         }
 
         private async Task EditFilterCmd(CommandContext ctx, BotDb db, Piracystring filter)
@@ -191,8 +195,8 @@ namespace CompatBot.Commands
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Updated content filter")).ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                await ctx.Client.ReportAsync("🆙 Content filter updated", $"{member.GetMentionWithNickname()} changed content filter: `{filter.String.Sanitize()}`", null, ReportSeverity.Low)
-                    .ConfigureAwait(false);
+                await ctx.Client.ReportAsync("🆙 Content filter updated", $"{member.GetMentionWithNickname()} changed content filter: `{filter.String.Sanitize()}`", null, ReportSeverity.Low).ConfigureAwait(false);
+                ContentFilter.RebuildMatcher();
             }
             else
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Content filter update aborted").ConfigureAwait(false);
