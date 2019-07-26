@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -7,6 +8,7 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
+using DiscUtils.Streams;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -129,10 +131,14 @@ namespace CompatBot.Commands
         public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
         {
             int removedFilters;
+            var removedTriggers = new StringBuilder();
             using (var db = new BotDb())
             {
                 foreach (var f in db.Piracystring.Where(ps => ids.Contains(ps.Id)))
+                {
                     f.Disabled = true;
+                    removedTriggers.Append($"\n`{f.String.Sanitize()}`");
+                }
                 removedFilters = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
 
@@ -143,7 +149,10 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
                 var s = removedFilters == 1 ? "" : "s";
-                await ctx.Client.ReportAsync($"📴 Piracy filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters} piracy filter{s}.", null, ReportSeverity.Medium).ConfigureAwait(false);
+                var filterList = removedTriggers.ToString();
+                if (removedFilters == 1)
+                    filterList = filterList.TrimStart();
+                await ctx.Client.ReportAsync($"📴 Piracy filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters} piracy filter{s}: {filterList}".Trim(EmbedPager.MaxDescriptionLength), null, ReportSeverity.Medium).ConfigureAwait(false);
             }
         }
 
@@ -170,6 +179,8 @@ namespace CompatBot.Commands
             }
 
             await ctx.ReactWithAsync(Config.Reactions.Success, "Trigger was removed").ConfigureAwait(false);
+            var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+            await ctx.Client.ReportAsync("📴 Piracy filter removed", $"{member.GetMentionWithNickname()} removed 1 piracy filter: `{trigger.Sanitize()}`", null, ReportSeverity.Medium).ConfigureAwait(false);
         }
 
         private async Task EditFilterCmd(CommandContext ctx, BotDb db, Piracystring filter)
