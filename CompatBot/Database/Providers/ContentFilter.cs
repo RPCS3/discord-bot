@@ -39,7 +39,7 @@ namespace CompatBot.Database.Providers
                 if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
                 {
                     result = h.Value;
-                    return h.Value.Actions.HasFlag(FilterAction.RemoveMessage);
+                    return h.Value.Actions.HasFlag(FilterAction.RemoveContent);
                 }
                 return true;
             });
@@ -82,12 +82,12 @@ namespace CompatBot.Database.Providers
             if (trigger == null)
                 return true;
 
-            if (trigger.Actions.HasFlag(FilterAction.RemoveMessage))
+            if (trigger.Actions.HasFlag(FilterAction.RemoveContent))
             {
                 try
                 {
                     await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
-                    completedActions.Add(FilterAction.RemoveMessage);
+                    completedActions.Add(FilterAction.RemoveContent);
                 }
                 catch
                 {

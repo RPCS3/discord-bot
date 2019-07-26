@@ -220,7 +220,7 @@ namespace CompatBot.Utils
                     Color = GetColor(severity),
                 }.AddField("Violator", author == null ? message.Author.Mention : GetMentionWithNickname(author), true)
                 .AddField("Channel",  message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true)
-                .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
+                //.AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content);
             if (!string.IsNullOrEmpty(actionList))
                 result.AddField("Filter Actions", actionList, true);

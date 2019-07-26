@@ -212,7 +212,7 @@ namespace CompatBot.EventHandlers.LogParsing
         private static async Task PiracyCheckAsync(string line, LogParseState state)
         {
             if (await ContentFilter.FindTriggerAsync(FilterContext.Log, line).ConfigureAwait(false) is Piracystring match
-                && match.Actions.HasFlag(FilterAction.RemoveMessage))
+                && match.Actions.HasFlag(FilterAction.RemoveContent))
             {
                 state.PiracyTrigger = match.String;
                 state.PiracyContext = line.ToUtf8();

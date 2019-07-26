@@ -39,7 +39,9 @@ namespace CompatBot.Commands
                 new AsciiColumn("Custom message")
             );
             using (var db = new BotDb())
-                foreach (var item in await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String.ToUpperInvariant()).ToListAsync().ConfigureAwait(false))
+            {
+                var filterList = await db.Piracystring.Where(ps => !ps.Disabled).ToListAsync().ConfigureAwait(false);
+                foreach (var item in filterList.OrderBy(ps => ps.String, StringComparer.InvariantCultureIgnoreCase))
                 {
                     table.Add(
                         item.Id.ToString(),
@@ -50,6 +52,7 @@ namespace CompatBot.Commands
                         string.IsNullOrEmpty(item.CustomMessage) ? "" : "✅"
                     );
                 }
+            }
             await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
             await ctx.RespondAsync(FilterActionExtensions.GetLegend()).ConfigureAwait(false);
         }
@@ -75,7 +78,7 @@ namespace CompatBot.Commands
                 if (isNewFilter)
                 {
                     filter.Context = FilterContext.Chat | FilterContext.Log;
-                    filter.Actions = FilterAction.RemoveMessage | FilterAction.IssueWarning | FilterAction.SendMessage;
+                    filter.Actions = FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage;
                 }
 
                 var (success, msg) = await EditFilterPropertiesAsync(ctx, db, filter).ConfigureAwait(false);
@@ -86,7 +89,10 @@ namespace CompatBot.Commands
                     await db.SaveChangesAsync().ConfigureAwait(false);
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Created a new content filter")).ConfigureAwait(false);
                     var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                    await ctx.Client.ReportAsync("🆕 Content filter created", $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`", null, ReportSeverity.Low).ConfigureAwait(false);
+                    var reportMsg = $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
+                    if (!string.IsNullOrEmpty(filter.ValidatingRegex))
+                        reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
+                    await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
                     ContentFilter.RebuildMatcher();
                 }
                 else
@@ -194,7 +200,10 @@ namespace CompatBot.Commands
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Updated content filter")).ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                await ctx.Client.ReportAsync("🆙 Content filter updated", $"{member.GetMentionWithNickname()} changed content filter: `{filter.String.Sanitize()}`", null, ReportSeverity.Low).ConfigureAwait(false);
+                var reportMsg = $"{member.GetMentionWithNickname()} changed content filter: `{filter.String.Sanitize()}`";
+                if (!string.IsNullOrEmpty(filter.ValidatingRegex))
+                    reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
+                await ctx.Client.ReportAsync("🆙 Content filter updated", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
                 ContentFilter.RebuildMatcher();
             }
             else
@@ -351,7 +360,7 @@ namespace CompatBot.Commands
             embed = FormatFilter(filter, errorMsg, 3)
                 .WithDescription(
                     "Actions that will be executed on positive match.\n" +
-                    $"**`R`** = **`{FilterAction.RemoveMessage}`** will remove the message / log.\n" +
+                    $"**`R`** = **`{FilterAction.RemoveContent}`** will remove the message / log.\n" +
                     $"**`W`** = **`{FilterAction.IssueWarning}`** will issue a warning to the user.\n" +
                     $"**`M`** = **`{FilterAction.SendMessage}`** send _a_ message with an explanation of why it was removed.\n" +
                     $"**`E`** = **`{FilterAction.ShowExplain}`** show `explain` for the specified term (**not implemented**).\n" +
@@ -373,7 +382,7 @@ namespace CompatBot.Commands
 
                 if (emoji.Emoji == letterR)
                 {
-                    filter.Actions ^= FilterAction.RemoveMessage;
+                    filter.Actions ^= FilterAction.RemoveContent;
                     goto step3;
                 }
 
@@ -409,7 +418,7 @@ namespace CompatBot.Commands
                         case "R":
                         case "REMOVE":
                         case "REMOVEMESSAGE":
-                            newActions |= FilterAction.RemoveMessage;
+                            newActions |= FilterAction.RemoveContent;
                             break;
                         case "W":
                         case "WARN":
@@ -457,7 +466,7 @@ namespace CompatBot.Commands
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
             var next = (filter.Actions & (FilterAction.SendMessage | FilterAction.ShowExplain)) == 0 ? firstPage : nextPage;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, trash, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (string.IsNullOrEmpty(filter.ValidatingRegex) ? null : trash), (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -685,6 +694,9 @@ namespace CompatBot.Commands
                 var validExplainTerm = string.IsNullOrEmpty(filter.ExplainTerm) ? "⚠ " : "";
                 result.AddFieldEx(validExplainTerm + "Explain", filter.ExplainTerm, highlight == field, true);
             }
+#if DEBUG
+            result.WithFooter("Test bot instance");
+#endif
             return result;
         }
     }
