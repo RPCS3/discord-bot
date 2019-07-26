@@ -223,7 +223,7 @@ namespace CompatBot.Utils
                 .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content);
             if (!string.IsNullOrEmpty(actionList))
-                result.AddField("Filter Actions", actionList);
+                result.AddField("Filter Actions", actionList, true);
             if (needsAttention && !message.Channel.IsPrivate)
                 result.AddField("Link to the message", message.JumpLink.ToString());
 #if DEBUG

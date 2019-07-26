@@ -131,7 +131,7 @@ namespace CompatBot.Database.Providers
             foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
             {
                 if (trigger.Actions.HasFlag(fa))
-                    actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + '\n';
+                    actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + ' ';
             }
 
             try
