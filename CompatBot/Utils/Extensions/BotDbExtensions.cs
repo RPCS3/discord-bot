@@ -15,7 +15,7 @@ namespace CompatBot.Utils
         public static bool IsComplete(this Piracystring filter)
         {
             var result = !string.IsNullOrEmpty(filter.String)
-                         && filter.String.Length > 4
+                         && filter.String.Length >= Config.MinimumPiracyTriggerLength
                          && filter.Actions != 0;
             if (result && filter.Actions.HasFlag(FilterAction.ShowExplain))
                 result = !string.IsNullOrEmpty(filter.ExplainTerm);

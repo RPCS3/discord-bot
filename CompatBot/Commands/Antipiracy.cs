@@ -39,7 +39,7 @@ namespace CompatBot.Commands
                 new AsciiColumn("Custom message")
             );
             using (var db = new BotDb())
-                foreach (var item in await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String).ToListAsync().ConfigureAwait(false))
+                foreach (var item in await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String, StringComparer.InvariantCultureIgnoreCase).ToListAsync().ConfigureAwait(false))
                 {
                     table.Add(
                         item.Id.ToString(),
@@ -67,7 +67,7 @@ namespace CompatBot.Commands
                 {
                     filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger).ConfigureAwait(false);
                     if (filter == null)
-                        filter = new Piracystring();
+                        filter = new Piracystring {String = trigger};
                     else
                         filter.Disabled = false;
                 }
@@ -669,7 +669,8 @@ namespace CompatBot.Commands
             if (!string.IsNullOrEmpty(error))
                 result.AddField("Entry error", error);
 
-            result.AddFieldEx((string.IsNullOrEmpty(filter.String) ? "⚠ " : "") + "Trigger", filter.String, highlight == field++, true)
+            var validTrigger = string.IsNullOrEmpty(filter.String) || filter.String.Length < Config.MinimumPiracyTriggerLength ? "⚠ " : "";
+            result.AddFieldEx(validTrigger + "Trigger", filter.String, highlight == field++, true)
                 .AddFieldEx("Context", filter.Context.ToString(), highlight == field++, true)
                 .AddFieldEx("Actions", filter.Actions.ToFlagsString(), highlight == field++, true)
                 .AddFieldEx("Validation", filter.ValidatingRegex, highlight == field++, true);
@@ -677,7 +678,10 @@ namespace CompatBot.Commands
                 result.AddFieldEx("Message", filter.CustomMessage, highlight == field, true);
             field++;
             if (filter.Actions.HasFlag(FilterAction.ShowExplain))
-                result.AddFieldEx((string.IsNullOrEmpty(filter.ExplainTerm) ? "⚠ " : "") + "Explain", filter.ExplainTerm, highlight == field, true);
+            {
+                var validExplainTerm = string.IsNullOrEmpty(filter.ExplainTerm) ? "⚠ " : "";
+                result.AddFieldEx(validExplainTerm + "Explain", filter.ExplainTerm, highlight == field, true);
+            }
             return result;
         }
     }
