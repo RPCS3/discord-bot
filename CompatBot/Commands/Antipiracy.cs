@@ -39,7 +39,9 @@ namespace CompatBot.Commands
                 new AsciiColumn("Custom message")
             );
             using (var db = new BotDb())
-                foreach (var item in await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String.ToUpperInvariant()).ToListAsync().ConfigureAwait(false))
+            {
+                var filterList = await db.Piracystring.Where(ps => !ps.Disabled).ToListAsync().ConfigureAwait(false);
+                foreach (var item in filterList.OrderBy(ps => ps.String, StringComparer.InvariantCultureIgnoreCase))
                 {
                     table.Add(
                         item.Id.ToString(),
@@ -50,6 +52,7 @@ namespace CompatBot.Commands
                         string.IsNullOrEmpty(item.CustomMessage) ? "" : "✅"
                     );
                 }
+            }
             await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
             await ctx.RespondAsync(FilterActionExtensions.GetLegend()).ConfigureAwait(false);
         }
