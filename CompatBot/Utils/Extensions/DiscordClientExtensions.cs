@@ -103,10 +103,10 @@ namespace CompatBot.Utils
             return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
         }
 
-        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, ReportSeverity severity)
+        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, ReportSeverity severity, string actionList = null)
         {
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-            var embedBuilder = MakeReportTemplate(client, infraction, message, severity);
+            var embedBuilder = MakeReportTemplate(client, infraction, message, severity, actionList);
             var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
@@ -180,7 +180,7 @@ namespace CompatBot.Utils
                 return channel.SendMessageAsync(message);
         }
 
-        private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity)
+        private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity, string actionList = null)
         {
             var content = message.Content;
             if (message.Channel.IsPrivate)
@@ -222,8 +222,13 @@ namespace CompatBot.Utils
                 .AddField("Channel",  message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true)
                 .AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content);
+            if (!string.IsNullOrEmpty(actionList))
+                result.AddField("Filter Actions", actionList, true);
             if (needsAttention && !message.Channel.IsPrivate)
                 result.AddField("Link to the message", message.JumpLink.ToString());
+#if DEBUG
+            result.WithFooter("Test bot instance");
+#endif
             return result;
         }
 

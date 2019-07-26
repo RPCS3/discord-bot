@@ -11,5 +11,15 @@ namespace CompatBot.Utils
                    && evt.Year > 0
                    && !string.IsNullOrEmpty(evt.Name);
         }
+
+        public static bool IsComplete(this Piracystring filter)
+        {
+            var result = !string.IsNullOrEmpty(filter.String)
+                         && filter.String.Length > 4
+                         && filter.Actions != 0;
+            if (result && filter.Actions.HasFlag(FilterAction.ShowExplain))
+                result = !string.IsNullOrEmpty(filter.ExplainTerm);
+            return result;
+        }
     }
 }

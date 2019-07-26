@@ -21,6 +21,9 @@ namespace CompatBot.Database
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
+#if DEBUG
+            optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
+#endif
             optionsBuilder.UseSqlite($"Data Source=\"{dbPath}\"");
         }
 
@@ -30,6 +33,8 @@ namespace CompatBot.Database
             modelBuilder.Entity<BotState>().HasIndex(m => m.Key).IsUnique().HasName("bot_state_key");
             modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasName("moderator_discord_id");
             modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).IsUnique().HasName("piracystring_string");
+            modelBuilder.Entity<Piracystring>().Property(ps => ps.Context).HasDefaultValue(FilterContext.Chat | FilterContext.Log);
+            modelBuilder.Entity<Piracystring>().Property(ps => ps.Actions).HasDefaultValue(FilterAction.RemoveMessage | FilterAction.IssueWarning | FilterAction.SendMessage);
             modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasName("warning_discord_id");
             modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasName("explanation_keyword");
             modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasName("disabled_command_command");
@@ -64,6 +69,28 @@ namespace CompatBot.Database
         public int Id { get; set; }
         [Required, Column(TypeName = "varchar(255)")]
         public string String { get; set; }
+        public string ValidatingRegex { get; set; }
+        public FilterContext Context { get; set; }
+        public FilterAction Actions { get; set; }
+        public string ExplainTerm { get; set; }
+        public string CustomMessage { get; set; }
+        public bool Disabled { get; set; }
+    }
+
+    [Flags]
+    internal enum FilterContext: byte
+    {
+        Chat = 0b_0000_0001,
+        Log  = 0b_0000_0010,
+    }
+
+    [Flags]
+    internal enum FilterAction
+    {
+        RemoveMessage = 0b_0000_0001,
+        IssueWarning  = 0b_0000_0010,
+        ShowExplain   = 0b_0000_0100,
+        SendMessage   = 0b_0000_1000,
     }
 
     internal class Warning

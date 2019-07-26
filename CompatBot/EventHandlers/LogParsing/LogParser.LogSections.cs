@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.Utils;
@@ -210,9 +211,10 @@ namespace CompatBot.EventHandlers.LogParsing
 
         private static async Task PiracyCheckAsync(string line, LogParseState state)
         {
-            if (await PiracyStringProvider.FindTriggerAsync(line).ConfigureAwait(false) is string match)
+            if (await ContentFilter.FindTriggerAsync(FilterContext.Log, line).ConfigureAwait(false) is Piracystring match
+                && match.Actions.HasFlag(FilterAction.RemoveMessage))
             {
-                state.PiracyTrigger = match;
+                state.PiracyTrigger = match.String;
                 state.PiracyContext = line.ToUtf8();
                 state.Error = LogParseState.ErrorCode.PiracyDetected;
             }
