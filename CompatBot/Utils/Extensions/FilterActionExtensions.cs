@@ -29,7 +29,7 @@ namespace CompatBot.Utils.Extensions
         {
             var result = new StringBuilder("Actions flag legend:");
             foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
-                result.Append($"\n{ActionFlags[fa]} = {fa}");
+                result.Append($"\n`{ActionFlags[fa]}` = {fa}");
             return result.ToString();
         }
     }

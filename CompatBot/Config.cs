@@ -51,6 +51,8 @@ namespace CompatBot
         public static int LogSizeLimit => config.GetValue(nameof(LogSizeLimit), 64 * 1024 * 1024);
         public static int MinimumBufferSize => config.GetValue(nameof(MinimumBufferSize), 512);
         public static int BuildNumberDifferenceForOutdatedBuilds => config.GetValue(nameof(BuildNumberDifferenceForOutdatedBuilds), 10);
+        public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
+
         public static string Token => config.GetValue(nameof(Token), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "logs/bot.log"); // paths are relative to the assembly, so this will put it in the project's root
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
