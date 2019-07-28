@@ -23,17 +23,17 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
         private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
 
-        public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
-                return null;
+                return (null, null);
 
             if (!File.Exists(Config.GoogleApiConfigPath))
-                return null;
+                return (null, null);
 
             var matches = ExternalLink.Matches(message.Content);
             if (matches.Count == 0)
-                return null;
+                return (null, null);
 
             var client = GetClient();
             foreach (Match m in matches)
@@ -49,9 +49,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         if (fileMeta.Kind == "drive#file")
                         {
                             var buf = bufferPool.Rent(1024);
-                            int read;
                             try
                             {
+                                int read;
                                 using (var stream = new MemoryStream(buf, true))
                                 {
                                     var limit = Math.Min(1024, (int)fileMeta.Size) - 1;
@@ -62,8 +62,13 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                                     read = (int)progress.BytesDownloaded;
                                 }
                                 foreach (var handler in handlers)
-                                    if (handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read)))
-                                        return new GoogleDriveSource(fileInfoRequest, fileMeta, handler);
+                                {
+                                    var (canHandle, reason) = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
+                                    if (canHandle)
+                                        return (new GoogleDriveSource(fileInfoRequest, fileMeta, handler), null);
+                                    else if (!string.IsNullOrEmpty(reason))
+                                        return(null, reason);
+                                }
                             }
                             finally
                             {
@@ -77,7 +82,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     Config.Log.Warn(e, $"Error sniffing {m.Groups["gdrive_link"].Value}");
                 }
             }
-            return null;
+            return (null, null);
         }
 
         private DriveService GetClient()

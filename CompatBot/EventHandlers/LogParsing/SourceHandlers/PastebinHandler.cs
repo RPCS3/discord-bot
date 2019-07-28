@@ -15,14 +15,14 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     {
         private static readonly Regex ExternalLink = new Regex(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions);
 
-        public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
-                return null;
+                return (null, null);
 
             var matches = ExternalLink.Matches(message.Content);
             if (matches.Count == 0)
-                return null;
+                return (null, null);
 
             using (var client = HttpClientFactory.Create())
                 foreach (Match m in matches)
@@ -42,8 +42,13 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                                     var filename = pid + ".log";
                                     var filesize = stream.CanSeek ? (int)stream.Length : 0;
                                     foreach (var handler in handlers)
-                                        if (handler.CanHandle(filename, filesize, buf.AsSpan(0, read)))
-                                            return new PastebinSource(uri, filename, filesize, handler);
+                                    {
+                                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                                        if (canHandle)
+                                            return (new PastebinSource(uri, filename, filesize, handler), null);
+                                        else if (!string.IsNullOrEmpty(reason))
+                                            return (null, reason);
+                                    }
                                 }
                                 finally
                                 {
@@ -57,7 +62,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         Config.Log.Warn(e, $"Error sniffing {m.Groups["mega_link"].Value}");
                     }
                 }
-            return null;
+            return (null, null);
         }
 
         private sealed class PastebinSource : ISource

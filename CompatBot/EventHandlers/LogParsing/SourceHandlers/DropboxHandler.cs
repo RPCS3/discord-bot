@@ -18,14 +18,14 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         //https://www.dropbox.com/s/62ls9lw5i52fuib/RPCS3.log.gz?dl=0
         private static readonly Regex ExternalLink = new Regex(@"(?<dropbox_link>(https?://)?(www\.)?dropbox\.com/s/(?<dropbox_id>[^/\s]+)/(?<filename>[^/\?\s])(/dl=[01])?)", DefaultOptions);
 
-        public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
-                return null;
+                return (null, null);
 
             var matches = ExternalLink.Matches(message.Content);
             if (matches.Count == 0)
-                return null;
+                return (null, null);
 
             using (var client = HttpClientFactory.Create())
                 foreach (Match m in matches)
@@ -57,8 +57,13 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                                 {
                                     var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                                     foreach (var handler in handlers)
-                                        if (handler.CanHandle(filename, filesize, buf.AsSpan(0, read)))
-                                            return new DropboxSource(uri, handler, filename, filesize);
+                                    {
+                                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                                        if (canHandle)
+                                            return (new DropboxSource(uri, handler, filename, filesize), null);
+                                        else if (!string.IsNullOrEmpty(reason))
+                                            return (null, reason);
+                                    }
                                 }
                                 finally
                                 {
@@ -73,7 +78,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         }
                     }
                 }
-            return null;
+            return (null, null);
         }
 
         private sealed class DropboxSource : ISource

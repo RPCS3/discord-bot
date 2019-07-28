@@ -27,18 +27,18 @@ namespace CompatBot.EventHandlers
         private static readonly ISourceHandler[] sourceHandlers =
         {
             new DiscordAttachmentHandler(),
-            new MegaHandler(),
             new GoogleDriveHandler(),
-            new DropboxHandler(), 
+            new DropboxHandler(),
+            new MegaHandler(),
             new PastebinHandler(),
         };
         private static readonly IArchiveHandler[] archiveHandlers =
         {
             new GzipHandler(),
-            new PlainTextHandler(),
             new ZipHandler(),
             new RarHandler(),
             new SevenZipHandler(),
+            new PlainTextHandler(),
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
@@ -82,7 +82,9 @@ namespace CompatBot.EventHandlers
                 DiscordMessage botMsg = null;
                 try
                 {
-                    var source = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).FirstOrDefault(h => h != null);
+                    var possibleHandlers = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
+                    var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
+                    var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
                     if (source != null)
                     {
                         Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
@@ -100,10 +102,10 @@ namespace CompatBot.EventHandlers
                             var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, combinedTokenSource.Token);
                             do
                             {
-                                await Task.WhenAny(readPipeTask, Task.Delay(5000)).ConfigureAwait(false);
+                                await Task.WhenAny(readPipeTask, Task.Delay(5000, combinedTokenSource.Token)).ConfigureAwait(false);
                                 if (!readPipeTask.IsCompleted)
                                     botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
-                            } while (!readPipeTask.IsCompleted);
+                            } while (!readPipeTask.IsCompleted && !combinedTokenSource.IsCancellationRequested);
                             result = await readPipeTask.ConfigureAwait(false);
                             await fillPipeTask.ConfigureAwait(false);
                             result.TotalBytes = source.LogFileSize;
@@ -203,6 +205,12 @@ namespace CompatBot.EventHandlers
                                 Config.Log.Error(e, "Sending log results failed");
                             }
                         }
+                        return;
+                    }
+                    else if (!string.IsNullOrEmpty(fail)
+                             && ("help".Equals(channel.Name, StringComparison.InvariantCultureIgnoreCase) || LimitedToSpamChannel.IsSpamChannel(channel)))
+                    {
+                        await channel.SendMessageAsync($"{message.Author.Mention} {fail}").ConfigureAwait(false);
                         return;
                     }
 

@@ -12,7 +12,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class DiscordAttachmentHandler : BaseSourceHandler
     {
-        public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             using (var client = HttpClientFactory.Create())
                 foreach (var attachment in message.Attachments)
@@ -26,8 +26,13 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                             {
                                 var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                                 foreach (var handler in handlers)
-                                    if (handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read)))
-                                        return new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize);
+                                {
+                                    var (canHandle, reason) = handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read));
+                                    if (canHandle)
+                                        return (new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize), null);
+                                    else if (!string.IsNullOrEmpty(reason))
+                                        return (null, reason);
+                                }
                             }
                             finally
                             {
@@ -40,7 +45,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         Config.Log.Error(e, "Error sniffing the rar content");
                     }
                 }
-            return null;
+            return (null, null);
         }
 
         private sealed class DiscordAttachmentSource : ISource
