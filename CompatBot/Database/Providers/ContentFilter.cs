@@ -54,7 +54,30 @@ namespace CompatBot.Database.Providers
                 foreach (FilterContext ctx in Enum.GetValues(typeof(FilterContext)))
                 {
                     var f = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking().ToList();
-                    newFilters[ctx] = f.Count == 0 ? null : new AhoCorasickDoubleArrayTrie<Piracystring>(f.ToDictionary(s => s.String, s => s), true);
+                    if (f.Count == 0)
+                        newFilters[ctx] = null;
+                    else
+                    {
+                        try
+                        {
+                            newFilters[ctx] = new AhoCorasickDoubleArrayTrie<Piracystring>(f.ToDictionary(s => s.String, s => s), true);
+                        }
+                        catch (ArgumentException)
+                        {
+                            var duplicate = (
+                                from ps in f
+                                group ps by ps.String
+                                into g
+                                where g.Count() > 1
+                                select g.Key
+                            ).ToList();
+                            Config.Log.Error($"Duplicate triggers defined for Context {ctx}: {string.Join(", ", duplicate)}");
+                            var triggerDictionary = new Dictionary<string, Piracystring>();
+                            foreach (var ps in f)
+                                triggerDictionary[ps.String] = ps;
+                            newFilters[ctx] = new AhoCorasickDoubleArrayTrie<Piracystring>(triggerDictionary, true);
+                        }
+                    }
                 }
             filters = newFilters;
         }

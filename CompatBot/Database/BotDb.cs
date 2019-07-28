@@ -32,7 +32,7 @@ namespace CompatBot.Database
             //configure indices
             modelBuilder.Entity<BotState>().HasIndex(m => m.Key).IsUnique().HasName("bot_state_key");
             modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasName("moderator_discord_id");
-            modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).IsUnique().HasName("piracystring_string");
+            modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).HasName("piracystring_string");
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Context).HasDefaultValue(FilterContext.Chat | FilterContext.Log);
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Actions).HasDefaultValue(FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage);
             modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasName("warning_discord_id");
