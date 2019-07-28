@@ -348,6 +348,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (serial == "NPUA70080") // GoW3 Demo
                 return;
 
+            var title = items["embed_title"];
             if (serial == "BCES00510" || serial == "BCUS98111" || serial == "BCJS75001" || serial == "BCJS37001" || serial == "BCKS15003") // GoW3
             {
                 notes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
@@ -357,9 +358,11 @@ namespace CompatBot.Utils.ResultFormatters
                     && blockSize != "Safe")
                     notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
             }
-            else if (serial == "BCAS25016" || items["embed_title"].Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
+            else if (serial == "BCAS25016" || title.Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (items["renderer"] is string renderer && renderer != "OpenGL")
+                if (title.Contains("Ascension", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("ℹ This game is known to be very unstable");
+                else if (items["renderer"] is string renderer && renderer != "OpenGL")
                     notes.Add("⚠ `OpenGL` is recommended for classic God of War games");
             }
         }
