@@ -109,6 +109,9 @@ namespace CompatBot.Database.Providers
 
         public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger)
         {
+            if (trigger == null)
+                return;
+
             var severity = ReportSeverity.Low;
             var completedActions = new List<FilterAction>();
             if (trigger.Actions.HasFlag(FilterAction.RemoveContent))

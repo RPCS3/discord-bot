@@ -209,7 +209,8 @@ namespace CompatBot.EventHandlers
                                 }
                                 else
                                 {
-                                    await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter).ConfigureAwait(false);
+                                    if (result.SelectedFilter != null)
+                                        await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter).ConfigureAwait(false);
                                     if (result.SelectedFilter == null || !result.SelectedFilter.Actions.HasFlag(FilterAction.RemoveContent))
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                             requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
