@@ -6,24 +6,34 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class ZipHandler: IArchiveHandler
     {
+        private static readonly byte[] Header = { 0x50, 0x4B, 0x03, 0x04 };
+
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
-            if (!fileName.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
-                return false;
 
-            if (fileSize > Config.LogSizeLimit)
-                return false;
+            if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
+                || fileName.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (fileSize > Config.AttachmentSizeLimit)
+                    return (false, $"Log size is too large: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
 
-            var firstEntry = Encoding.ASCII.GetString(header);
-            return firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase);
+                var firstEntry = Encoding.ASCII.GetString(header);
+                if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
+                    return (false, "Archive doesn't contain any logs.");
+
+                return (true, null);
+            }
+
+            return (false, null);
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -40,14 +41,41 @@ namespace CompatBot.Commands
             );
             using (var db = new BotDb())
             {
-                var filterList = await db.Piracystring.Where(ps => !ps.Disabled).ToListAsync().ConfigureAwait(false);
-                foreach (var item in filterList.OrderBy(ps => ps.String, StringComparer.InvariantCultureIgnoreCase))
+                var duplicates = new Dictionary<string, FilterContext>(StringComparer.InvariantCultureIgnoreCase);
+                var filters = await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String.ToUpperInvariant()).AsNoTracking().ToListAsync().ConfigureAwait(false);
+                var nonUniqueTriggers = (
+                    from f in filters
+                    group f by f.String.ToUpperInvariant()
+                    into g
+                    where g.Count() > 1
+                    select g.Key
+                ).ToList();
+                foreach (var t in nonUniqueTriggers)
                 {
+                    var duplicateFilters = filters.Where(ps => ps.String.Equals(t, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                    foreach (FilterContext fctx in Enum.GetValues(typeof(FilterContext)))
+                    {
+                        if (duplicateFilters.Count(f => (f.Context & fctx) == fctx) > 1)
+                        {
+                            if (duplicates.TryGetValue(t, out var fctxs))
+                                duplicates[t] = fctxs | fctx;
+                            else
+                                duplicates[t] = fctx;
+                        }
+                    }
+                }
+                foreach (var item in filters)
+                {
+                    var ctxl = item.Context.ToString();
+                    if (duplicates.Count > 0
+                        && duplicates.TryGetValue(item.String, out var fctx)
+                        && (item.Context & fctx) != 0)
+                        ctxl = "❗ " + ctxl;
                     table.Add(
                         item.Id.ToString(),
                         item.String.Sanitize(),
                         item.ValidatingRegex,
-                        item.Context.ToString(),
+                        ctxl,
                         item.Actions.ToFlagsString(),
                         string.IsNullOrEmpty(item.CustomMessage) ? "" : "✅"
                     );
@@ -68,7 +96,7 @@ namespace CompatBot.Commands
                     filter = new Piracystring();
                 else
                 {
-                    filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger).ConfigureAwait(false);
+                    filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled).ConfigureAwait(false);
                     if (filter == null)
                         filter = new Piracystring {String = trigger};
                     else
@@ -141,7 +169,7 @@ namespace CompatBot.Commands
             var removedTriggers = new StringBuilder();
             using (var db = new BotDb())
             {
-                foreach (var f in db.Piracystring.Where(ps => ids.Contains(ps.Id)))
+                foreach (var f in db.Piracystring.Where(ps => ids.Contains(ps.Id) && !ps.Disabled))
                 {
                     f.Disabled = true;
                     removedTriggers.Append($"\n`{f.String.Sanitize()}`");
@@ -264,18 +292,6 @@ namespace CompatBot.Commands
             }
             else if (txt?.Content != null)
             {
-                var existing = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(txt.Content, StringComparison.InvariantCultureIgnoreCase)).ConfigureAwait(false);
-                if (existing != null)
-                {
-                    if (existing.Disabled)
-                        db.Piracystring.Remove(existing);
-                    else
-                    {
-                        errorMsg = $"Trigger `{txt.Content.Sanitize()}` already exists";
-                        goto step1;
-                    }
-                }
-
                 if (txt.Content.Length < Config.MinimumPiracyTriggerLength)
                 {
                     errorMsg = "Trigger is too short";

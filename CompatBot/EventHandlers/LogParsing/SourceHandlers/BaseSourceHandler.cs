@@ -12,6 +12,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         protected const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
         internal static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 64);
 
-        public abstract Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
+        public abstract Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
     }
 }

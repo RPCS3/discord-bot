@@ -254,7 +254,7 @@ namespace CompatBot
                     while (!Config.Cts.IsCancellationRequested)
                     {
                         if (client.Ping > 1000)
-                            await client.ReconnectAsync();
+                            Config.Log.Warn($"High ping detected: {client.Ping}");
                         await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
                     }
                 }

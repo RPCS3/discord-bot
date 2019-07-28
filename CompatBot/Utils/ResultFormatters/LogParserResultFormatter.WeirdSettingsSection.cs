@@ -59,7 +59,12 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ Please set `SPU Decoder` to use recompiler for better performance");
 
             if (items["approximate_xfloat"] is string approximateXfloat && approximateXfloat == DisabledMark)
-                notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
+            {
+                if (KnownNoApproximateXFloatIds.Contains(serial))
+                    notes.Add("ℹ `Approximate xfloat` is disabled");
+                else
+                    notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
+            }
 
             if (!string.IsNullOrEmpty(serial))
             {
@@ -228,8 +233,10 @@ namespace CompatBot.Utils.ResultFormatters
                             notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
                     }
                 }
+                if (items["spu_loop_detection"] == EnabledMark)
+                    notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
                 if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
-                    notes.Add("ℹ `Accurate xFloat` is not required, please disable");
+                    notes.Add("ℹ `Accurate xfloat` is not required, please disable");
                 if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                     notes.Add("⚠ `Frame Limiter` is not required, please disable");
                 if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
@@ -341,6 +348,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (serial == "NPUA70080") // GoW3 Demo
                 return;
 
+            var title = items["embed_title"];
             if (serial == "BCES00510" || serial == "BCUS98111" || serial == "BCJS75001" || serial == "BCJS37001" || serial == "BCKS15003") // GoW3
             {
                 notes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
@@ -350,9 +358,11 @@ namespace CompatBot.Utils.ResultFormatters
                     && blockSize != "Safe")
                     notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
             }
-            else if (serial == "BCAS25016" || items["embed_title"].Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
+            else if (serial == "BCAS25016" || title.Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (items["renderer"] is string renderer && renderer != "OpenGL")
+                if (title.Contains("Ascension", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("ℹ This game is known to be very unstable");
+                else if (items["renderer"] is string renderer && renderer != "OpenGL")
                     notes.Add("⚠ `OpenGL` is recommended for classic God of War games");
             }
         }

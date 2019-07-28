@@ -16,14 +16,14 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(\.co)?\.nz/#(?<mega_id>[^/>\s]+))", DefaultOptions);
         private static readonly IProgress<double> doodad = new Progress<double>(_ => { });
 
-        public override async Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
-                return null;
+                return (null, null);
 
             var matches = ExternalLink.Matches(message.Content);
             if (matches.Count == 0)
-                return null;
+                return (null, null);
 
             var client = new MegaApiClient();
             await client.LoginAnonymousAsync();
@@ -39,14 +39,19 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         if (node.Type == NodeType.File)
                         {
                             var buf = bufferPool.Rent(1024);
-                            int read;
                             try
                             {
+                                int read;
                                 using (var stream = await client.DownloadAsync(uri, doodad, Config.Cts.Token).ConfigureAwait(false))
                                     read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                                 foreach (var handler in handlers)
-                                    if (handler.CanHandle(node.Name, (int)node.Size, buf.AsSpan(0, read)))
-                                        return new MegaSource(client, uri, node, handler);
+                                {
+                                    var (canHandle, reason) = handler.CanHandle(node.Name, (int)node.Size, buf.AsSpan(0, read));
+                                    if (canHandle)
+                                        return (new MegaSource(client, uri, node, handler), null);
+                                    else if (!string.IsNullOrEmpty(reason))
+                                        return (null, reason);
+                                }
                             }
                             finally
                             {
@@ -60,7 +65,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     Config.Log.Warn(e, $"Error sniffing {m.Groups["mega_link"].Value}");
                 }
             }
-            return null;
+            return (null, null);
         }
 
         private sealed class MegaSource : ISource

@@ -45,6 +45,9 @@ namespace CompatApiClient.Utils
             return Math.Min(high, Math.Max(amount, low));
         }
 
+        public static string AsStorageUnit(this int bytes)
+            => AsStorageUnit((long)bytes);
+
         public static string AsStorageUnit(this long bytes)
         {
             if (bytes < UnderKB)

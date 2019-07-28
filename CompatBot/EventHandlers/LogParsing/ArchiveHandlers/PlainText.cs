@@ -12,13 +12,14 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             LogSize = fileSize;
-            return fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
-                   && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase)
-                   && header.Length > 8
-                   && Encoding.UTF8.GetString(header.Slice(0, 8)).Contains("RPCS3");
+            var result = fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                         && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase)
+                         && header.Length > 8
+                         && Encoding.UTF8.GetString(header.Slice(0, 8)).Contains("RPCS3");
+            return (result, null);
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)

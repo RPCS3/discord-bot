@@ -3,24 +3,30 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using SharpCompress.Archives.SevenZip;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class SevenZipHandler: IArchiveHandler
     {
+        private static readonly byte[] Header = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
+
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
-            if (!fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
-                return false;
+            if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
+                || fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (fileSize > Config.AttachmentSizeLimit)
+                    return (false, $"Log size is too large: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
 
-            if (fileSize > Config.AttachmentSizeLimit)
-                return false;
+                return (true, null);
+            }
 
-            return true;
+            return (false, null);
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)

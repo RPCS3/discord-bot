@@ -4,25 +4,34 @@ using System.IO.Pipelines;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using SharpCompress.Archives.Rar;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
     internal sealed class RarHandler: IArchiveHandler
     {
+        private static readonly byte[] Header = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07};
+
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public bool CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
-            if (!fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
-                return false;
+            if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
+                || fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (fileSize > Config.AttachmentSizeLimit)
+                    return (false, $"Log size is too large: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
 
-            if (fileSize > Config.AttachmentSizeLimit)
-                return false;
+                var firstEntry = Encoding.ASCII.GetString(header);
+                if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
+                    return (false, "Archive doesn't contain any logs.");
 
-            var firstEntry = Encoding.ASCII.GetString(header);
-            return firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase);
+                return (true, null);
+            }
+
+            return (false, null);
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)

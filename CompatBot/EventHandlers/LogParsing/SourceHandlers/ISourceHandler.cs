@@ -9,7 +9,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal interface ISourceHandler
     {
-        Task<ISource> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
+        Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
     }
 
     internal interface ISource
