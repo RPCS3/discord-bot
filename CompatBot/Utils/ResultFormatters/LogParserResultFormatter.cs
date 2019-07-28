@@ -81,6 +81,11 @@ namespace CompatBot.Utils.ResultFormatters
             "BLUS30481", "BLES00826", "BLJM60223", // nier
         };
 
+        private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
+        {
+            "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
+        };
+
         private static readonly HashSet<string> KnownWriteColorBuffersIds = new HashSet<string>
         {
             "BLES00932", "BLUS30443", "BCJS70013", "BCJS30022", // DeS
@@ -90,6 +95,8 @@ namespace CompatBot.Utils.ResultFormatters
             "BCES00484", "BCUS98242", "NPEA00315", "NPUA80661", // Motorstorm Apocalypse
             "BCES00129", "BCUS98155", // Motorstorm Pacific Rift
             "NPEA90090", "NPUA70140", "NPEA90033", // Motorstorm demos
+            "BLJM60528", "NPJB00235", "NPHB00522", "NPJB90534", //E.X. Troopers / demo
+            "BLES01987", "BLUS30964", "BLJS10160", // The Witch and the Hundred Knight
         };
 
         private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>

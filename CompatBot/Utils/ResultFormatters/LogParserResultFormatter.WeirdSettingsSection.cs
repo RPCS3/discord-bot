@@ -59,7 +59,12 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ Please set `SPU Decoder` to use recompiler for better performance");
 
             if (items["approximate_xfloat"] is string approximateXfloat && approximateXfloat == DisabledMark)
-                notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
+            {
+                if (KnownNoApproximateXFloatIds.Contains(serial))
+                    notes.Add("ℹ `Approximate xfloat` is disabled");
+                else
+                    notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
+            }
 
             if (!string.IsNullOrEmpty(serial))
             {
@@ -231,7 +236,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["spu_loop_detection"] == EnabledMark)
                     notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
                 if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
-                    notes.Add("ℹ `Accurate xFloat` is not required, please disable");
+                    notes.Add("ℹ `Accurate xfloat` is not required, please disable");
                 if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                     notes.Add("⚠ `Frame Limiter` is not required, please disable");
                 if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
