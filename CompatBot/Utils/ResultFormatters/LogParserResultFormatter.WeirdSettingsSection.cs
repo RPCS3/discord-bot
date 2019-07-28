@@ -228,6 +228,8 @@ namespace CompatBot.Utils.ResultFormatters
                             notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
                     }
                 }
+                if (items["spu_loop_detection"] == EnabledMark)
+                    notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
                 if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
                     notes.Add("ℹ `Accurate xFloat` is not required, please disable");
                 if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
