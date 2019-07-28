@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Commands.Attributes;
+using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers.LogParsing;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
@@ -110,6 +112,17 @@ namespace CompatBot.EventHandlers
                             await fillPipeTask.ConfigureAwait(false);
                             result.TotalBytes = source.LogFileSize;
                             result.ParsingTime = startTime.Elapsed;
+
+                            if (result.FilterTriggers.Any())
+                            {
+                                var (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.IssueWarning));
+                                if (f == null)
+                                    (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.RemoveContent));
+                                if (f == null)
+                                    (f, c) = result.FilterTriggers.Values.FirstOrDefault();
+                                result.SelectedFilter = f;
+                                result.SelectedFilterContext = c;
+                            }
 #if DEBUG
                             Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
                             Config.Log.Debug("Extractor hit stats:");
@@ -157,7 +170,7 @@ namespace CompatBot.EventHandlers
                                         var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                         piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
-                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.PiracyTrigger, result.PiracyContext, ReportSeverity.Low).ConfigureAwait(false);
+                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter?.String, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
                                     }
                                     else
                                     {
@@ -184,21 +197,25 @@ namespace CompatBot.EventHandlers
                                         }
                                         try
                                         {
-                                            await client.ReportAsync(yarr + " Pirated Release", message, result.PiracyTrigger, result.PiracyContext, severity).ConfigureAwait(false);
+                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter?.String, result.SelectedFilterContext, severity).ConfigureAwait(false);
                                         }
                                         catch (Exception e)
                                         {
                                             Config.Log.Error(e, "Failed to send piracy report");
                                         }
                                         if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
-                                            await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.PiracyTrigger} - {result.PiracyContext.Sanitize()}");
+                                            await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.SelectedFilter?.String} - {result.SelectedFilterContext?.Sanitize()}");
                                     }
                                 }
                                 else
-                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                        requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
-                                        embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
-                                    ).ConfigureAwait(false);
+                                {
+                                    await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter).ConfigureAwait(false);
+                                    if (result.SelectedFilter == null || !result.SelectedFilter.Actions.HasFlag(FilterAction.RemoveContent))
+                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                            requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                            embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
+                                        ).ConfigureAwait(false);
+                                }
                             }
                             catch (Exception e)
                             {

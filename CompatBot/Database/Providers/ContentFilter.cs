@@ -99,12 +99,18 @@ namespace CompatBot.Database.Providers
             if (string.IsNullOrEmpty(message.Content))
                 return true;
 
-            var severity = ReportSeverity.Low;
-            var completedActions = new List<FilterAction>();
             var trigger = await FindTriggerAsync(FilterContext.Chat, message.Content).ConfigureAwait(false);
             if (trigger == null)
                 return true;
 
+            await PerformFilterActions(client, message, trigger).ConfigureAwait(false);
+            return false;
+        }
+
+        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger)
+        {
+            var severity = ReportSeverity.Low;
+            var completedActions = new List<FilterAction>();
             if (trigger.Actions.HasFlag(FilterAction.RemoveContent))
             {
                 try
@@ -165,7 +171,6 @@ namespace CompatBot.Database.Providers
             {
                 Config.Log.Error(e, "Failed to report content removal");
             }
-            return false;
         }
     }
 }

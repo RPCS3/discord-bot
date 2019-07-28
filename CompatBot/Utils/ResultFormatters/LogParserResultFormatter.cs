@@ -143,7 +143,6 @@ namespace CompatBot.Utils.ResultFormatters
                 collection["embed_title"] = builder.Title ?? "";
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {
-                    state.PiracyContext = state.PiracyContext.Sanitize();
                     var msg = "__You are being denied further support until you legally dump the game__.\n" +
                               "Please note that the RPCS3 community and its developers do not support piracy.\n" +
                               "Most of the issues with pirated dumps occur due to them having been tampered with in some way " +
