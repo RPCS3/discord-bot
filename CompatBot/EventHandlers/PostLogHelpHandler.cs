@@ -13,7 +13,7 @@ namespace CompatBot.EventHandlers
     internal static class PostLogHelpHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex UploadLogMention = new Regex(@"\b((?<vulkan>(vul[ck][ae]n(-?1)?))|(?<help>(post|upload|send)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full)\s+)*\blogs?))\b", DefaultOptions);
+        private static readonly Regex UploadLogMention = new Regex(@"\b((?<vulkan>(vul[ck][ae]n(-?1)?))|(?<help>(post|upload|send|give)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full)\s+)*\blogs?))\b", DefaultOptions);
         private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
         private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
         private static readonly Dictionary<string, Explanation> DefaultExplanation = new Dictionary<string, Explanation>
