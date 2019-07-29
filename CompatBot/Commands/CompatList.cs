@@ -144,6 +144,14 @@ Example usage:
                 return CheckForRpcs3Updates(ctx.Client, ctx.Channel, commit);
             }
 
+            [Command("clear"), RequiresBotModRole]
+            [Description("Clears update info cache that is used to post new build announcements")]
+            public Task Clear(CommandContext ctx)
+            {
+                lastUpdateInfo = null;
+                return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
+            }
+
             public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null)
             {
                 var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
