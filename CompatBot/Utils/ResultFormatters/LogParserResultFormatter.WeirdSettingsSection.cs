@@ -182,7 +182,8 @@ namespace CompatBot.Utils.ResultFormatters
                     || (libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase) &&
                         string.IsNullOrEmpty(items["library_list"]))))
             {
-                notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
+                if (items["game_title"] != "vsh.self")
+                    notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
             }
 
             if (notes.Any())
