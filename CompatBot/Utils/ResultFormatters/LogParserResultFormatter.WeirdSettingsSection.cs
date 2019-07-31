@@ -140,9 +140,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["vblank_rate"] is string vblank
                 && int.TryParse(vblank, out var vblankRate)
                 && vblankRate != 60)
-            {
                 notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz");
-            }
+
+            if (items["clock_scale"] is string clockScaleStr
+                && int.TryParse(clockScaleStr, out var clockScale)
+                && clockScale != 100)
+                notes.Add($"⚠ `Clock Scale` is set to {clockScale}%");
 
             if (!string.IsNullOrEmpty(serial)
                 && KnownMotionControlsIds.Contains(serial)
@@ -332,6 +335,10 @@ namespace CompatBot.Utils.ResultFormatters
 
                 if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
                     notes.Add("ℹ To enter the character name, disable `Native UI` and use Japanese text");
+
+                if (items["sleep_timer"] is string sleepTimer
+                    && sleepTimer != "Usleep")
+                    notes.Add("⚠ Please set `Sleep timers accuracy` to `Usleep` in config file");
             }
         }
 
