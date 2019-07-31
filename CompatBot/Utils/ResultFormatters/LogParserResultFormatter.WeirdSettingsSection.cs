@@ -338,7 +338,7 @@ namespace CompatBot.Utils.ResultFormatters
 
                 if (items["sleep_timer"] is string sleepTimer
                     && sleepTimer != "Usleep")
-                    notes.Add("⚠ Please set `Sleep timers accuracy` to `Usleep` in config file");
+                    notes.Add("⚠ Please set `Sleep Timers Accuracy` setting to `Usleep`");
             }
         }
 
