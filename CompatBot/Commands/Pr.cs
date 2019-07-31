@@ -145,5 +145,20 @@ namespace CompatBot.Commands
             }
             await message.RespondAsync(embed: embed).ConfigureAwait(false);
         }
+
+        public static async Task LinkIssue(DiscordClient client, DiscordMessage message, int issue)
+        {
+            var issueInfo = await githubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
+            if (issueInfo.Number == 0)
+                return;
+
+            if (issueInfo.PullRequest != null)
+            {
+                await LinkPrBuild(client, message, issue).ConfigureAwait(false);
+                return;
+            }
+
+            await message.RespondAsync(embed: issueInfo.AsEmbed()).ConfigureAwait(false);
+        }
     }
 }

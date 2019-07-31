@@ -63,7 +63,7 @@ namespace CompatBot.EventHandlers.LogParsing
                         continue;
 
                     var strValue = group.Value.ToUtf8();
-                    Config.Log.Debug($"regex {group.Name} = {group.Value}");
+                    Config.Log.Trace($"regex {group.Name} = {group.Value}");
                     lock(state)
                     {
                         if (MultiValueItems.Contains(group.Name))

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Commands;
 using CompatBot.Utils;
 using DSharpPlus.EventArgs;
 
@@ -53,10 +54,18 @@ namespace CompatBot.EventHandlers
             var suffix = issuesToLookup.Count == 1 ? "" : "s";
             try
             {
-                var result = new StringBuilder($"Link{suffix} to the mentioned issue{suffix}:");
-                foreach (var issueId in issuesToLookup)
-                    result.AppendLine().Append("https://github.com/RPCS3/rpcs3/issues/" + issueId);
-                await args.Channel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+                if (GithubClient.Client.RateLimitRemaining - issuesToLookup.Count >= 10)
+                {
+                    foreach (var issueId in issuesToLookup)
+                        await Pr.LinkIssue(args.Client, args.Message, issueId).ConfigureAwait(false);
+                }
+                else
+                {
+                    var result = new StringBuilder($"Link{suffix} to the mentioned issue{suffix}:");
+                    foreach (var issueId in issuesToLookup)
+                        result.AppendLine().Append("https://github.com/RPCS3/rpcs3/issues/" + issueId);
+                    await args.Channel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+                }
             }
             finally
             {
