@@ -23,7 +23,9 @@ namespace GithubClient
 
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan IssueStatusCacheTime = TimeSpan.FromMinutes(30);
         private static readonly MemoryCache StatusesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
+        private static readonly MemoryCache IssuesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(30) });
 
         public static int RateLimit { get; private set; }
         public static int RateLimitRemaining { get; private set; }
@@ -80,6 +82,49 @@ namespace GithubClient
 
             StatusesCache.Set(pr, result, PrStatusCacheTime);
             ApiConfig.Log.Debug($"Cached {nameof(PrInfo)} for {pr} for {PrStatusCacheTime}");
+            return result;
+        }
+
+        public async Task<IssueInfo> GetIssueInfoAsync(int issue, CancellationToken cancellationToken)
+        {
+            if (IssuesCache.TryGetValue(issue, out IssueInfo result))
+            {
+                ApiConfig.Log.Debug($"Returned {nameof(IssueInfo)} for {issue} from cache");
+                return result;
+            }
+
+            try
+            {
+                using (var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/issues/" + issue))
+                {
+                    message.Headers.UserAgent.Add(ProductInfoHeader);
+                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                    {
+                        try
+                        {
+                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                            UpdateRateLimitStats(response.Headers);
+                            result = await response.Content.ReadAsAsync<IssueInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception e)
+                        {
+                            ConsoleLogger.PrintError(e, response);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+            }
+            if (result == null)
+            {
+                ApiConfig.Log.Debug($"Failed to get {nameof(IssueInfo)}, returning empty result");
+                return new IssueInfo { Number = issue };
+            }
+
+            IssuesCache.Set(issue, result, IssueStatusCacheTime);
+            ApiConfig.Log.Debug($"Cached {nameof(IssueInfo)} for {issue} for {IssueStatusCacheTime}");
             return result;
         }
 
