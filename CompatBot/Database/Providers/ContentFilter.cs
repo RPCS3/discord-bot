@@ -107,7 +107,7 @@ namespace CompatBot.Database.Providers
             return false;
         }
 
-        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger)
+        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, string triggerContext = null)
         {
             if (trigger == null)
                 return;
@@ -168,7 +168,7 @@ namespace CompatBot.Database.Providers
 
             try
             {
-                await client.ReportAsync("🤬 Removed content", message, trigger.String, message.Content, severity, actionList).ConfigureAwait(false);
+                await client.ReportAsync("🤬 Removed content", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
             }
             catch (Exception e)
             {
