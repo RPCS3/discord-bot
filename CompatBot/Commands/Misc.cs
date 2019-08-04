@@ -40,6 +40,11 @@ namespace CompatBot.Commands
             "No way", "Certainly not", "I must say no", "Nah",
         };
 
+        private static readonly List<string> EightBallTimeUnits = new List<string>
+        {
+            "week", "month", "year", "decade", "century", "millennium"
+        };
+
         private static readonly List<string> RateAnswers = new List<string>
         {
             // 51
@@ -192,10 +197,28 @@ namespace CompatBot.Commands
         [Description("Provides a ~~random~~ objectively best answer to your question")]
         public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
         {
-            string answer;
-            lock (rng)
-                answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
-            await ctx.RespondAsync(answer).ConfigureAwait(false);
+            question = question?.ToLowerInvariant() ?? "";
+            if (question.StartsWith("when "))
+            {
+                var crng = new Random(question.GetHashCode());
+                var number = crng.Next(100);
+                var unit = EightBallTimeUnits[crng.Next(EightBallTimeUnits.Count)];
+                if (number > 1)
+                {
+                    if (unit.EndsWith('y'))
+                        unit = unit.Substring(0, unit.Length - 1) + "ie";
+                    unit += "s";
+                }
+                var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
+                await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
+            }
+            else
+            {
+                string answer;
+                lock (rng)
+                    answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
+                await ctx.RespondAsync(answer).ConfigureAwait(false);
+            }
         }
 
         [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]
