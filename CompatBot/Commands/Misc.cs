@@ -200,7 +200,8 @@ namespace CompatBot.Commands
             question = question?.ToLowerInvariant() ?? "";
             if (question.StartsWith("when "))
             {
-                var crng = new Random(question.GetHashCode());
+                var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
+                var crng = new Random((prefix + question).GetHashCode());
                 var number = crng.Next(100);
                 var unit = EightBallTimeUnits[crng.Next(EightBallTimeUnits.Count)];
                 if (number > 1)
@@ -208,6 +209,8 @@ namespace CompatBot.Commands
                     if (unit.EndsWith('y'))
                         unit = unit.Substring(0, unit.Length - 1) + "ie";
                     unit += "s";
+                    if (unit == "millenniums")
+                        unit = "millennia";
                 }
                 var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
                 await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
