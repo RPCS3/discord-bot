@@ -365,6 +365,9 @@ namespace CompatBot.Utils.ResultFormatters
                     && items["spu_block_size"] is string blockSize
                     && blockSize != "Safe")
                     notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
+                if (items["spu_block_size"] is string spuBlockSize
+                    && spuBlockSize != "Mega")
+                    notes.Add("ℹ `SPU Block Size` is recommended to set to `Mega`");
             }
             else if (serial == "BCAS25016" || title.Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
             {

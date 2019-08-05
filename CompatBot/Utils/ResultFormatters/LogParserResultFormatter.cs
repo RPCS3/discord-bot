@@ -76,11 +76,6 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
         };
 
-        private static readonly string[] KnownMegaSpuBlockSizeIds =
-        {
-            "BLUS30481", "BLES00826", "BLJM60223", // nier
-        };
-
         private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
         {
             "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
