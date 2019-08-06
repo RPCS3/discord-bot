@@ -5,7 +5,7 @@ using CompatBot.Database;
 
 namespace CompatBot.EventHandlers.LogParsing.POCOs
 {
-    internal class LogParseState
+    public class LogParseState
     {
         public NameValueCollection CompleteCollection = null;
         public NameValueCollection WipCollection = new NameValueCollection();

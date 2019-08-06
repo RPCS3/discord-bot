@@ -23,7 +23,7 @@ using CompatBot.Utils.Extensions;
 
 namespace CompatBot.EventHandlers
 {
-    internal static class LogParsingHandler
+    public static class LogParsingHandler
     {
         private static readonly char[] linkSeparator = { ' ', '>', '\r', '\n' };
         private static readonly ISourceHandler[] sourceHandlers =
@@ -93,56 +93,8 @@ namespace CompatBot.EventHandlers
                         var analyzingProgressEmbed = GetAnalyzingMsgEmbed();
                         botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
                         parsedLog = true;
-                        LogParseState result = null;
-                        try
-                        {
-                            var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
-                            var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
 
-                            var pipe = new Pipe();
-                            var fillPipeTask = source.FillPipeAsync(pipe.Writer, combinedTokenSource.Token);
-                            var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, combinedTokenSource.Token);
-                            do
-                            {
-                                await Task.WhenAny(readPipeTask, Task.Delay(5000, combinedTokenSource.Token)).ConfigureAwait(false);
-                                if (!readPipeTask.IsCompleted)
-                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
-                            } while (!readPipeTask.IsCompleted && !combinedTokenSource.IsCancellationRequested);
-                            result = await readPipeTask.ConfigureAwait(false);
-                            await fillPipeTask.ConfigureAwait(false);
-                            result.TotalBytes = source.LogFileSize;
-                            result.ParsingTime = startTime.Elapsed;
-
-                            if (result.FilterTriggers.Any())
-                            {
-                                var (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.IssueWarning));
-                                if (f == null)
-                                    (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.RemoveContent));
-                                if (f == null)
-                                    (f, c) = result.FilterTriggers.Values.FirstOrDefault();
-                                result.SelectedFilter = f;
-                                result.SelectedFilterContext = c;
-                            }
-#if DEBUG
-                            Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
-                            Config.Log.Debug("Extractor hit stats:");
-                            foreach (var stat in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value))
-                                if (stat.Value > 100000)
-                                    Config.Log.Fatal($"{stat.Value}: {stat.Key}");
-                                else if (stat.Value > 10000)
-                                    Config.Log.Error($"{stat.Value}: {stat.Key}");
-                                else if (stat.Value > 1000)
-                                    Config.Log.Warn($"{stat.Value}: {stat.Key}");
-                                else if (stat.Value > 100)
-                                    Config.Log.Info($"{stat.Value}: {stat.Key}");
-                                else
-                                    Config.Log.Debug($"{stat.Value}: {stat.Key}");
-#endif
-                        }
-                        catch (Exception e)
-                        {
-                            Config.Log.Error(e, "Log parsing failed");
-                        }
+                        var result = await ParseLogAsync(source, async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false)).ConfigureAwait(false);
 
                         if (result == null)
                         {
@@ -159,6 +111,7 @@ namespace CompatBot.EventHandlers
                         }
                         else
                         {
+                            result.ParsingTime = startTime.Elapsed;
                             try
                             {
                                 if (result.Error == LogParseState.ErrorCode.PiracyDetected)
@@ -267,6 +220,60 @@ namespace CompatBot.EventHandlers
             {
                 Config.Log.Error(e, "Error parsing log");
             }
+        }
+
+        public static async Task<LogParseState> ParseLogAsync(ISource source, Func<Task> onProgressAsync)
+        {
+            LogParseState result = null;
+            try
+            {
+                var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
+                var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
+
+                var pipe = new Pipe();
+                var fillPipeTask = source.FillPipeAsync(pipe.Writer, combinedTokenSource.Token);
+                var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, combinedTokenSource.Token);
+                do
+                {
+                    await Task.WhenAny(readPipeTask, Task.Delay(5000, combinedTokenSource.Token)).ConfigureAwait(false);
+                    if (!readPipeTask.IsCompleted)
+                        await onProgressAsync().ConfigureAwait(false);
+                } while (!readPipeTask.IsCompleted && !combinedTokenSource.IsCancellationRequested);
+                result = await readPipeTask.ConfigureAwait(false);
+                await fillPipeTask.ConfigureAwait(false);
+                result.TotalBytes = source.LogFileSize;
+
+                if (result.FilterTriggers.Any())
+                {
+                    var (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.IssueWarning));
+                    if (f == null)
+                        (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.RemoveContent));
+                    if (f == null)
+                        (f, c) = result.FilterTriggers.Values.FirstOrDefault();
+                    result.SelectedFilter = f;
+                    result.SelectedFilterContext = c;
+                }
+#if DEBUG
+                Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
+                Config.Log.Debug("Extractor hit stats:");
+                foreach (var stat in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value))
+                    if (stat.Value > 100000)
+                        Config.Log.Fatal($"{stat.Value}: {stat.Key}");
+                    else if (stat.Value > 10000)
+                        Config.Log.Error($"{stat.Value}: {stat.Key}");
+                    else if (stat.Value > 1000)
+                        Config.Log.Warn($"{stat.Value}: {stat.Key}");
+                    else if (stat.Value > 100)
+                        Config.Log.Info($"{stat.Value}: {stat.Key}");
+                    else
+                        Config.Log.Debug($"{stat.Value}: {stat.Key}");
+#endif
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, "Log parsing failed");
+            }
+            return result;
         }
 
         private static DiscordEmbedBuilder GetAnalyzingMsgEmbed()
