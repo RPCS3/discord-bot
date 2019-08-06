@@ -267,6 +267,19 @@ namespace CompatBot.EventHandlers
                         Config.Log.Info($"{stat.Value}: {stat.Key}");
                     else
                         Config.Log.Debug($"{stat.Value}: {stat.Key}");
+
+                Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
+                Config.Log.Debug("Syscall stats:");
+                int serialCount = result.Syscalls.Count, moduleCount = 0, functionCount = 0;
+                foreach (var moduleStats in result.Syscalls.Values)
+                {
+                    moduleCount += moduleStats.Count;
+                    foreach (var funcStats in moduleStats.Values)
+                        functionCount += funcStats.Count;
+                }
+                Config.Log.Debug("Product keys: " + serialCount);
+                Config.Log.Debug("Modules: " + moduleCount);
+                Config.Log.Debug("Functions: " + functionCount);
 #endif
             }
             catch (Exception e)
