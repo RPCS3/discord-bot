@@ -50,26 +50,18 @@ namespace CompatBot.EventHandlers
             if (issuesToLookup.Count == 0)
                 return;
 
-            await args.Message.ReactWithAsync(args.Client, Config.Reactions.PleaseWait).ConfigureAwait(false);
             var suffix = issuesToLookup.Count == 1 ? "" : "s";
-            try
+            if (GithubClient.Client.RateLimitRemaining - issuesToLookup.Count >= 10)
             {
-                if (GithubClient.Client.RateLimitRemaining - issuesToLookup.Count >= 10)
-                {
-                    foreach (var issueId in issuesToLookup)
-                        await Pr.LinkIssue(args.Client, args.Message, issueId).ConfigureAwait(false);
-                }
-                else
-                {
-                    var result = new StringBuilder($"Link{suffix} to the mentioned issue{suffix}:");
-                    foreach (var issueId in issuesToLookup)
-                        result.AppendLine().Append("https://github.com/RPCS3/rpcs3/issues/" + issueId);
-                    await args.Channel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
-                }
+                foreach (var issueId in issuesToLookup)
+                    await Pr.LinkIssue(args.Client, args.Message, issueId).ConfigureAwait(false);
             }
-            finally
+            else
             {
-                await args.Message.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                var result = new StringBuilder($"Link{suffix} to the mentioned issue{suffix}:");
+                foreach (var issueId in issuesToLookup)
+                    result.AppendLine().Append("https://github.com/RPCS3/rpcs3/issues/" + issueId);
+                await args.Channel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
             }
         }
 
