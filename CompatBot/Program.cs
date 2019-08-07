@@ -114,6 +114,7 @@ namespace CompatBot
                     commands.RegisterCommands<E3>();
                     commands.RegisterCommands<Cyberpunk2077>();
                     commands.RegisterCommands<BotStats>();
+                    commands.RegisterCommands<Syscall>();
 
                     commands.CommandErrored += UnknownCommandHandler.OnError;
 
