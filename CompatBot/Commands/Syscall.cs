@@ -43,10 +43,10 @@ namespace CompatBot.Commands
                     .ConfigureAwait(false);
                 if (productInfoList.Any())
                 {
-                    var result = new StringBuilder($"List of games using `{search}`:");
+                    var result = new StringBuilder($"List of games using `{search}`:```").AppendLine();
                     foreach (var gi in productInfoList)
-                        result.Append($"\n`[{gi.ProductCode}] {gi.Name.Trim(40)}`");
-                    await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+                        result.AppendLine($"[{gi.ProductCode}] {gi.Name.Trim(40)}");
+                    await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
                 }
                 else
                     await ctx.RespondAsync($"No games found that use `{search}`").ConfigureAwait(false);
@@ -71,10 +71,10 @@ namespace CompatBot.Commands
                     .ConfigureAwait(false);
                 if (sysInfoList.Any())
                 {
-                    var result = new StringBuilder($"List of syscalls used by `{title}`:");
+                    var result = new StringBuilder($"List of syscalls used by `{title}`:```").AppendLine();
                     foreach (var sci in sysInfoList)
-                        result.Append($"\n`{sci.Module}: {sci.Function}`");
-                    await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+                        result.AppendLine($"{sci.Module}: {sci.Function}");
+                    await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
                 }
                 else
                     await ctx.RespondAsync($"No information available for `{title}`").ConfigureAwait(false);
