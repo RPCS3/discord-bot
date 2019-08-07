@@ -77,7 +77,7 @@ namespace CompatBot.Commands
                     bool hasMention = false;
                     try
                     {
-                        var lookup = await new DiscordUserConverter().ConvertAsync(potentialUserId, ctx).ConfigureAwait(false);
+                        var lookup = await ((IArgumentConverter<DiscordUser>)new DiscordUserConverter()).ConvertAsync(potentialUserId, ctx).ConfigureAwait(false);
                         hasMention = lookup.HasValue;
                     }
                     catch {}
