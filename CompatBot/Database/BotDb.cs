@@ -64,7 +64,7 @@ namespace CompatBot.Database
         public bool Sudoer { get; set; }
     }
 
-    internal class Piracystring
+    public class Piracystring
     {
         public int Id { get; set; }
         [Required, Column(TypeName = "varchar(255)")]
@@ -78,14 +78,14 @@ namespace CompatBot.Database
     }
 
     [Flags]
-    internal enum FilterContext: byte
+    public enum FilterContext: byte
     {
         Chat = 0b_0000_0001,
         Log  = 0b_0000_0010,
     }
 
     [Flags]
-    internal enum FilterAction
+    public enum FilterAction
     {
         RemoveContent = 0b_0000_0001,
         IssueWarning  = 0b_0000_0010,

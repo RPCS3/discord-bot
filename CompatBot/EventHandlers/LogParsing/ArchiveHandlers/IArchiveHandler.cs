@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 {
-    internal interface IArchiveHandler
+    public interface IArchiveHandler
     {
         (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header);
         Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken);

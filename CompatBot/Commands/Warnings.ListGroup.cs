@@ -113,7 +113,7 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                var user = await new DiscordUserConverter().ConvertAsync(me, ctx).ConfigureAwait(false);
+                var user = await ((IArgumentConverter<DiscordUser>)new DiscordUserConverter()).ConvertAsync(me, ctx).ConfigureAwait(false);
                 if (user.HasValue)
                     await By(ctx, user.Value, number).ConfigureAwait(false);
             }

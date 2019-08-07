@@ -76,11 +76,6 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
         };
 
-        private static readonly string[] KnownMegaSpuBlockSizeIds =
-        {
-            "BLUS30481", "BLES00826", "BLJM60223", // nier
-        };
-
         private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
         {
             "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
@@ -237,14 +232,23 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["lib_loader"] is string libLoader)
             {
+                var liblv2 = libLoader.Contains("liblv2", StringComparison.InvariantCultureIgnoreCase);
                 var auto = libLoader.Contains("auto", StringComparison.InvariantCultureIgnoreCase);
                 var manual = libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase);
+                var strict = libLoader.Contains("strict", StringComparison.InvariantCultureIgnoreCase);
                 if (auto && manual)
                     items["lib_loader"] = "Auto & manual select";
+                else if (liblv2 && manual)
+                    items["lib_loader"] = "Liblv2 & manual select";
+                else if (liblv2 && strict)
+                    items["lib_loader"] = "Liblv2 & strict select";
                 else if (auto)
                     items["lib_loader"] = "Auto";
                 else if (manual)
                     items["lib_loader"] = "Manual selection";
+                else
+                    items["lib_loader"] = "Load liblv2.sprx only";
+
             }
             if (items["win_path"] != null)
                 items["os_type"] = "Windows";

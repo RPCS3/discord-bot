@@ -185,6 +185,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Unimplemented syscall"] = new Regex(@"U \d+:\d+:\d+\.\d+ ({(?<unimplemented_syscall_context>.+?)} )?.*Unimplemented syscall (?<unimplemented_syscall>.*)\r?$", DefaultOptions),
                     ["Could not enqueue"] = new Regex(@"cellAudio: Could not enqueue buffer onto audio backend(?<enqueue_buffer_error>.).*\r?$", DefaultOptions),
                     ["Failed to bind device"] = new Regex(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
+                    ["{PPU["] = new Regex(@"{PPU\[.+\]} (?<syscall_module>[^ :]+)( TODO)?: (?<syscall_name>[^ :]+)\(.*\r?$", DefaultOptions),
                 },
                 OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
@@ -237,6 +238,11 @@ namespace CompatBot.EventHandlers.LogParsing
 
             state.LinesAfterConfig++;
             return PiracyCheckAsync(line, state);
+        }
+
+        private static async Task CollectFunctionStatsAsync(string line, LogParseState state)
+        {
+
         }
 
 

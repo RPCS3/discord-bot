@@ -568,9 +568,11 @@ namespace CompatBot.Commands
                 result.WithFooter($"Starts in {FormatCountdown(evt.Start.AsUtc() - currentTime)}");
             else if (evt.End > currentTime.Ticks)
                 result.WithFooter($"Ends in {FormatCountdown(evt.End.AsUtc() - currentTime)}");
+            var eventDuration = evt.End.AsUtc() - start;
+            var durationFormat = eventDuration.TotalDays > 0 ? @"d\d\ h\h\ m\m" : @"h\h\ m\m";
             result
                 .AddFieldEx("Start time", evt.Start == 0 ? "-" : start.ToString("u"), highlight == field++, true)
-                .AddFieldEx("Duration", evt.Start == evt.End ? "-" : (evt.End.AsUtc() - start).ToString(@"d\d\ h\h\ m\m"), highlight == field++, true)
+                .AddFieldEx("Duration", evt.Start == evt.End ? "-" : eventDuration.ToString(durationFormat), highlight == field++, true)
                 .AddFieldEx("Event name", string.IsNullOrEmpty(evt.EventName) ? "-" : evt.EventName, highlight == field++, true)
                 .AddFieldEx("Schedule entry title", string.IsNullOrEmpty(evt.Name) ? "-" : evt.Name, highlight == field++, true);
 #if DEBUG

@@ -7,12 +7,12 @@ using DSharpPlus.Entities;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
-    internal interface ISourceHandler
+    public interface ISourceHandler
     {
         Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
     }
 
-    internal interface ISource
+    public interface ISource
     {
         string SourceType { get; }
         string FileName { get; }

@@ -39,7 +39,7 @@ namespace CompatBot.EventHandlers.LogParsing
                                 state.ExtractorHitStats.TryGetValue(extractorPair.Key, out var stat);
                                 state.ExtractorHitStats[extractorPair.Key] = stat + 1;
 #endif
-                                OnExtractorHit(buffer, extractorPair.Value, state);
+                                OnExtractorHit(buffer, extractorPair.Key, extractorPair.Value, state);
                             })
                     ), true);
                     parser.OnExtract = (line, buffer, state) => { act.ParseText(line, h => { h.Value(buffer, state); }); };
@@ -49,39 +49,62 @@ namespace CompatBot.EventHandlers.LogParsing
             SectionParsers = parsers.AsReadOnly();
         }
 
-        private static void OnExtractorHit(string buffer, Regex extractor, LogParseState state)
+        private static void OnExtractorHit(string buffer, string trigger, Regex extractor, LogParseState state)
         {
-            var matches = extractor.Matches(buffer);
-            if (matches.Count == 0)
-                return;
-
-            foreach (Match match in matches)
-            foreach (Group group in match.Groups)
-                if (!string.IsNullOrEmpty(group.Name) && group.Name != "0" && !string.IsNullOrWhiteSpace(group.Value))
+            if (trigger == "{PPU[")
+            {
+                if (state.WipCollection["serial"] is string serial)
                 {
-                    if (string.IsNullOrEmpty(group.Value))
-                        continue;
-
-                    var strValue = group.Value.ToUtf8();
-                    Config.Log.Trace($"regex {group.Name} = {group.Value}");
-                    lock(state)
+                    var match = extractor.Match(buffer);
+                    if (match.Success
+                        && match.Groups["syscall_module"]?.Value.ToUtf8() is string syscallModule
+                        && match.Groups["syscall_name"]?.Value.ToUtf8() is string syscallName)
                     {
-                        if (MultiValueItems.Contains(group.Name))
+                        lock (state)
                         {
-                            var currentValue = state.WipCollection[group.Name];
-                            if (!string.IsNullOrEmpty(currentValue))
-                                currentValue += Environment.NewLine;
-                            state.WipCollection[group.Name] = currentValue + strValue;
-                        }
-                        else
-                            state.WipCollection[group.Name] = strValue;
-                        if (CountValueItems.Contains(group.Name))
-                        {
-                            state.ValueHitStats.TryGetValue(group.Name, out var hits);
-                            state.ValueHitStats[group.Name] = ++hits;
+                            if (!state.Syscalls.TryGetValue(serial, out var serialSyscallStats))
+                                state.Syscalls[serial] = serialSyscallStats = new Dictionary<string, HashSet<string>>();
+                            if (!serialSyscallStats.TryGetValue(syscallModule, out var moduleStats))
+                                serialSyscallStats[syscallModule] = moduleStats = new HashSet<string>();
+                            moduleStats.Add(syscallName);
                         }
                     }
                 }
+            }
+            else
+            {
+                var matches = extractor.Matches(buffer);
+                if (matches.Count == 0)
+                    return;
+
+                foreach (Match match in matches)
+                foreach (Group group in match.Groups)
+                    if (!string.IsNullOrEmpty(group.Name) && group.Name != "0" && !string.IsNullOrWhiteSpace(group.Value))
+                    {
+                        if (string.IsNullOrEmpty(group.Value))
+                            continue;
+
+                        var strValue = group.Value.ToUtf8();
+                        Config.Log.Trace($"regex {group.Name} = {group.Value}");
+                        lock (state)
+                        {
+                            if (MultiValueItems.Contains(group.Name))
+                            {
+                                var currentValue = state.WipCollection[group.Name];
+                                if (!string.IsNullOrEmpty(currentValue))
+                                    currentValue += Environment.NewLine;
+                                state.WipCollection[group.Name] = currentValue + strValue;
+                            }
+                            else
+                                state.WipCollection[group.Name] = strValue;
+                            if (CountValueItems.Contains(group.Name))
+                            {
+                                state.ValueHitStats.TryGetValue(group.Name, out var hits);
+                                state.ValueHitStats[group.Name] = ++hits;
+                            }
+                        }
+                    }
+            }
         }
 
         private delegate void OnNewLineDelegate(string line, string buffer, LogParseState state);

@@ -16,7 +16,7 @@ namespace CompatBot.Utils
         {
             try
             {
-                var result = await new DiscordMemberConverter().ConvertAsync(word, ctx).ConfigureAwait(false);
+                var result = await ((IArgumentConverter<DiscordMember>)new DiscordMemberConverter()).ConvertAsync(word, ctx).ConfigureAwait(false);
                 return result.HasValue ? result.Value : null;
             }
 #pragma warning disable CS0168 // Variable is declared but never used

@@ -5,11 +5,12 @@ using CompatBot.Database;
 
 namespace CompatBot.EventHandlers.LogParsing.POCOs
 {
-    internal class LogParseState
+    public class LogParseState
     {
         public NameValueCollection CompleteCollection = null;
         public NameValueCollection WipCollection = new NameValueCollection();
         public readonly Dictionary<string, int> ValueHitStats = new Dictionary<string, int>();
+        public readonly Dictionary<string, Dictionary<string, HashSet<string>>> Syscalls = new Dictionary<string, Dictionary<string, HashSet<string>>>();
         public int Id = 0;
         public ErrorCode Error = ErrorCode.None;
         public readonly Dictionary<int, (Piracystring filter, string context)> FilterTriggers = new Dictionary<int, (Piracystring filter, string context)>();

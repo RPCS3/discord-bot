@@ -42,7 +42,8 @@ namespace CompatBot.Commands
 
         private static readonly List<string> EightBallTimeUnits = new List<string>
         {
-            "week", "month", "year", "decade", "century", "millennium"
+            "second", "minute", "hour", "day", "week", "month", "year", "decade", "century", "millennium",
+            "night", "moon cycle", "solar eclipse", "blood moon", "complete emulator rewrite",
         };
 
         private static readonly List<string> RateAnswers = new List<string>
@@ -199,19 +200,7 @@ namespace CompatBot.Commands
         {
             question = question?.ToLowerInvariant() ?? "";
             if (question.StartsWith("when "))
-            {
-                var crng = new Random(question.GetHashCode());
-                var number = crng.Next(100);
-                var unit = EightBallTimeUnits[crng.Next(EightBallTimeUnits.Count)];
-                if (number > 1)
-                {
-                    if (unit.EndsWith('y'))
-                        unit = unit.Substring(0, unit.Length - 1) + "ie";
-                    unit += "s";
-                }
-                var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
-                await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
-            }
+                await When(ctx, question.Substring(5)).ConfigureAwait(false);
             else
             {
                 string answer;
@@ -219,6 +208,27 @@ namespace CompatBot.Commands
                     answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
                 await ctx.RespondAsync(answer).ConfigureAwait(false);
             }
+        }
+
+        [Command("when"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
+        [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
+        public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string whatever = "")
+        {
+            var question = whatever?.Trim().TrimEnd('?').ToLowerInvariant() ?? "";
+            var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
+            var crng = new Random((prefix + question).GetHashCode());
+            var number = crng.Next(100) + 1;
+            var unit = EightBallTimeUnits[crng.Next(EightBallTimeUnits.Count)];
+            if (number > 1)
+            {
+                if (unit.EndsWith('y'))
+                    unit = unit.Substring(0, unit.Length - 1) + "ie";
+                unit += "s";
+                if (unit == "millenniums")
+                    unit = "millennia";
+            }
+            var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
+            await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
         }
 
         [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]
