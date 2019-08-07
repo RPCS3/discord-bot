@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
@@ -14,7 +15,7 @@ namespace CompatBot.Commands
 {
     internal sealed class Syscall: BaseCommandModuleCustom
     {
-        [Command("syscall"), Aliases("cell")]
+        [Command("syscall"), Aliases("cell"), LimitedToSpamChannel]
         [Description("Provides information about syscalls used by games")]
         public async Task Search(CommandContext ctx,[RemainingText, Description("Product ID, module, or function name. **Case sensitive**")] string search)
         {
