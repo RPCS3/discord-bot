@@ -94,19 +94,29 @@ namespace CompatBot.EventHandlers
                         botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
                         parsedLog = true;
 
-                        var result = await ParseLogAsync(source, async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false)).ConfigureAwait(false);
-
+                        var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
+                        var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
+                        var tries = 0;
+                        LogParseState result = null;
+                        do
+                        {
+                                result = await ParseLogAsync(
+                                    source,
+                                    async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
+                                    combinedTokenSource.Token
+                                ).ConfigureAwait(false);
+                                tries++;
+                        } while (result == null && !combinedTokenSource.IsCancellationRequested && tries < 3);
                         if (result == null)
                         {
-                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                embed: new DiscordEmbedBuilder
-                                    {
-                                        Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
-                                                      "Please run the game again and re-upload a new copy.",
-                                        Color = Config.Colors.LogResultFailed,
-                                    }
-                                    .AddAuthor(client, message, source)
-                                    .Build()
+                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: new DiscordEmbedBuilder
+                                {
+                                    Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
+                                                  "Please run the game again and re-upload a new copy.",
+                                    Color = Config.Colors.LogResultFailed,
+                                }
+                                .AddAuthor(client, message, source)
+                                .Build()
                             ).ConfigureAwait(false);
                         }
                         else
@@ -222,23 +232,20 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task<LogParseState> ParseLogAsync(ISource source, Func<Task> onProgressAsync)
+        public static async Task<LogParseState> ParseLogAsync(ISource source, Func<Task> onProgressAsync, CancellationToken cancellationToken)
         {
             LogParseState result = null;
             try
             {
-                var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
-                var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
-
                 var pipe = new Pipe();
-                var fillPipeTask = source.FillPipeAsync(pipe.Writer, combinedTokenSource.Token);
-                var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, combinedTokenSource.Token);
+                var fillPipeTask = source.FillPipeAsync(pipe.Writer, cancellationToken);
+                var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, cancellationToken);
                 do
                 {
-                    await Task.WhenAny(readPipeTask, Task.Delay(5000, combinedTokenSource.Token)).ConfigureAwait(false);
+                    await Task.WhenAny(readPipeTask, Task.Delay(5000, cancellationToken)).ConfigureAwait(false);
                     if (!readPipeTask.IsCompleted)
                         await onProgressAsync().ConfigureAwait(false);
-                } while (!readPipeTask.IsCompleted && !combinedTokenSource.IsCancellationRequested);
+                } while (!readPipeTask.IsCompleted && !cancellationToken.IsCancellationRequested);
                 result = await readPipeTask.ConfigureAwait(false);
                 await fillPipeTask.ConfigureAwait(false);
                 result.TotalBytes = source.LogFileSize;
@@ -280,6 +287,12 @@ namespace CompatBot.EventHandlers
                 Config.Log.Debug("Product keys: " + serialCount);
                 Config.Log.Debug("Modules: " + moduleCount);
                 Config.Log.Debug("Functions: " + functionCount);
+                Config.Log.Debug("Saving syscall information...");
+                var sw = Stopwatch.StartNew();
+#endif
+                await SyscallInfoProvider.SaveAsync(result.Syscalls).ConfigureAwait(false);
+#if DEBUG
+                Config.Log.Debug("Saving syscall information took " + sw.Elapsed);
 #endif
             }
             catch (Exception e)
