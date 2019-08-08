@@ -64,7 +64,7 @@ namespace CompatBot.Commands
                 else
                 {
                     var result = new StringBuilder("Unknown entity name");
-                    var modules = await db.SyscallInfo.Select(sci => sci.Function).Distinct().ToListAsync().ConfigureAwait(false);
+                    var modules = await db.SyscallInfo.Select(sci => sci.Module).Distinct().ToListAsync().ConfigureAwait(false);
                     var substrModules = modules.Where(m => m.Contains(search, StringComparison.CurrentCultureIgnoreCase));
                     var fuzzyModules = modules
                         .Select(m => (name: m, score: search.GetFuzzyCoefficientCached(m)))
