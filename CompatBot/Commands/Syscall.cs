@@ -32,6 +32,12 @@ namespace CompatBot.Commands
                 return;
             }
 
+            if (ctx.User.Id == 216724245957312512UL && !search.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase))
+            {
+                await ctx.RespondAsync($"This is not a _syscall_, {ctx.User.Mention}").ConfigureAwait(false);
+                return;
+            }
+
             using (var db = new ThumbnailDb())
             {
                 var productInfoList = await db.SyscallToProductMap.AsNoTracking()
@@ -70,6 +76,8 @@ namespace CompatBot.Commands
                     .ThenBy(sci => sci.Function)
                     .ToList()
                     .ConfigureAwait(false);
+                if (ctx.User.Id == 216724245957312512UL)
+                    sysInfoList = sysInfoList.Where(i => i.Function.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase)).ToList();
                 if (sysInfoList.Any())
                 {
                     var result = new StringBuilder($"List of syscalls used by `{title}`:```").AppendLine();
