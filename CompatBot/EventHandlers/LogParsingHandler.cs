@@ -174,11 +174,10 @@ namespace CompatBot.EventHandlers
                                 {
                                     if (result.SelectedFilter != null)
                                         await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, result.SelectedFilterContext).ConfigureAwait(false);
-                                    if (result.SelectedFilter == null || !result.SelectedFilter.Actions.HasFlag(FilterAction.RemoveContent))
-                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                            requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
-                                            embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
-                                        ).ConfigureAwait(false);
+                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                        requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                        embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
+                                    ).ConfigureAwait(false);
                                 }
                             }
                             catch (Exception e)

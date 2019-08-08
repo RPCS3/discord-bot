@@ -15,7 +15,7 @@ namespace CompatBot.Commands
 {
     internal sealed class Syscall: BaseCommandModuleCustom
     {
-        [Command("syscall"), Aliases("cell"), LimitedToSpamChannel]
+        [Command("syscall"), Aliases("syscalls", "cell", "sce", "scecall", "scecalls"), LimitedToSpamChannel]
         [Description("Provides information about syscalls used by games")]
         public async Task Search(CommandContext ctx,[RemainingText, Description("Product ID, module, or function name. **Case sensitive**")] string search)
         {
