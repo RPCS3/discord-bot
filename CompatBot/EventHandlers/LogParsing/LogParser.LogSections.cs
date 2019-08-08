@@ -186,6 +186,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Could not enqueue"] = new Regex(@"cellAudio: Could not enqueue buffer onto audio backend(?<enqueue_buffer_error>.).*\r?$", DefaultOptions),
                     ["Failed to bind device"] = new Regex(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
                     ["{PPU["] = new Regex(@"{PPU\[.+\]} (?<syscall_module>[^ :]+)( TODO)?: (?<syscall_name>[^ :]+)\(.*\r?$", DefaultOptions),
+                    ["undub"] =  new Regex(@"(\b|_)(?<game_mod>undub)(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
                 },
                 OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,

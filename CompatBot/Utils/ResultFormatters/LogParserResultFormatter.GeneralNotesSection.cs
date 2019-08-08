@@ -393,6 +393,9 @@ namespace CompatBot.Utils.ResultFormatters
                 || !string.IsNullOrEmpty(items["fw_missing_something"]))
                 notes.Add("❌ PS3 firmware is missing or corrupted");
 
+            if (items["game_mod"] is string mod)
+                notes.Add($"ℹ Game files modification present: `{mod.Trim(10)}`");
+
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             var buildBranch = items["build_branch"]?.ToLowerInvariant();
             if (updateInfo != null
