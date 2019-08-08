@@ -40,24 +40,70 @@ namespace CompatBot.Commands
 
             using (var db = new ThumbnailDb())
             {
-                var productInfoList = await db.SyscallToProductMap.AsNoTracking()
-                    .Where(m => m.SyscallInfo.Module == search || m.SyscallInfo.Function == search)
-                    .Select(m => new {m.Product.ProductCode, m.Product.Name})
-                    .Distinct()
-                    .ToAsyncEnumerable()
-                    .OrderBy(i => i.Name, StringComparer.InvariantCultureIgnoreCase)
-                    .ThenBy(i => i.ProductCode)
-                    .ToList()
-                    .ConfigureAwait(false);
-                if (productInfoList.Any())
+                if (db.SyscallInfo.Any(sci => sci.Module == search || sci.Function == search))
                 {
-                    var result = new StringBuilder($"List of games using `{search}`:```").AppendLine();
-                    foreach (var gi in productInfoList)
-                        result.AppendLine($"[{gi.ProductCode}] {gi.Name.Trim(40)}");
-                    await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                    var productInfoList = await db.SyscallToProductMap.AsNoTracking()
+                        .Where(m => m.SyscallInfo.Module == search || m.SyscallInfo.Function == search)
+                        .Select(m => new {m.Product.ProductCode, m.Product.Name})
+                        .Distinct()
+                        .ToAsyncEnumerable()
+                        .OrderBy(i => i.Name, StringComparer.InvariantCultureIgnoreCase)
+                        .ThenBy(i => i.ProductCode)
+                        .ToList()
+                        .ConfigureAwait(false);
+                    if (productInfoList.Any())
+                    {
+                        var result = new StringBuilder($"List of games using `{search}`:```").AppendLine();
+                        foreach (var gi in productInfoList)
+                            result.AppendLine($"[{gi.ProductCode}] {gi.Name.Trim(40)}");
+                        await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                    }
+                    else
+                        await ctx.RespondAsync($"No games found that use `{search}`").ConfigureAwait(false);
                 }
                 else
-                    await ctx.RespondAsync($"No games found that use `{search}`").ConfigureAwait(false);
+                {
+                    var result = new StringBuilder("Unknown entity name");
+                    var modules = await db.SyscallInfo.Select(sci => sci.Function).Distinct().ToListAsync().ConfigureAwait(false);
+                    var substrModules = modules.Where(m => m.Contains(search, StringComparison.CurrentCultureIgnoreCase));
+                    var fuzzyModules = modules
+                        .Select(m => (name: m, score: search.GetFuzzyCoefficientCached(m)))
+                        .Where(i => i.score > 0.6)
+                        .OrderByDescending(i => i.score)
+                        .Select(i => i.name)
+                        .ToList();
+                    modules = substrModules.Concat(fuzzyModules).Distinct().ToList();
+                    var modulesFound = modules.Any();
+                    if (modulesFound)
+                    {
+                        result.AppendLine(", possible modules:```");
+                        foreach (var m in modules)
+                            result.AppendLine(m);
+                        result.AppendLine("```");
+                    }
+
+                    var functions = await db.SyscallInfo.Select(sci => sci.Function).Distinct().ToListAsync().ConfigureAwait(false);
+                    var substrFuncs = functions.Where(f => f.Contains(search, StringComparison.InvariantCultureIgnoreCase));
+                    var fuzzyFuncs = functions
+                        .Select(f => (name: f, score: search.GetFuzzyCoefficientCached(f)))
+                        .Where(i => i.score > 0.6)
+                        .OrderByDescending(i => i.score)
+                        .Select(i => i.name)
+                        .ToList();
+                    functions = substrFuncs.Concat(fuzzyFuncs).Distinct().ToList();
+                    var functionsFound = functions.Any();
+                    if (functionsFound)
+                    {
+                        if (modulesFound)
+                            result.AppendLine("Possible functions:```");
+                        else
+                            result.AppendLine(", possible functions:```");
+                        foreach (var f in functions)
+                            result.AppendLine(f);
+                        result.AppendLine("```");
+                    }
+                    await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
+                }
             }
         }
 
