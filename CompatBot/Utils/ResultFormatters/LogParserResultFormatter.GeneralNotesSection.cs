@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -22,7 +21,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             BuildWeirdSettingsSection(builder, items);
             BuildMissingLicensesSection(builder, items);
-            var (irdChecked, brokenDump) = await HasBrokenFilesAsync(items).ConfigureAwait(false);
+            var (irdChecked, brokenDump, longestPath) = await HasBrokenFilesAsync(items).ConfigureAwait(false);
             brokenDump |= !string.IsNullOrEmpty(items["edat_block_offset"]);
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
@@ -89,6 +88,43 @@ namespace CompatBot.Utils.ResultFormatters
                 }
                 else
                     notes.Add("⚠ Custom firmware is not supported, please use the latest official one");
+            }
+
+            if (items["os_type"] == "Windows")
+            {
+                var knownPaths = new[]
+                {
+                    items["win_path"],
+                    items["ldr_game_full"],
+                    items["ldr_disc_full"],
+                    items["ldr_path_full"],
+                    items["ldr_boot_path_full"],
+                    items["elf_boot_path_full"]
+                }.Where(s => !string.IsNullOrEmpty(s));
+                const int maxPath = 260;
+                const int maxFolderPath = 260 - 1 - 8 - 3;
+                foreach (var p in knownPaths)
+                {
+                    if (p.Length > maxPath)
+                    {
+                        notes.Add($"⚠ Some file paths are longer than {maxPath} characters");
+                        break;
+                    }
+                    else
+                    {
+                        var baseDir = Path.GetDirectoryName(p) ?? p;
+                        if (baseDir.Length > maxFolderPath)
+                        {
+                            notes.Add($"⚠ Some folder paths are longer than {maxFolderPath} characters");
+                            break;
+                        }
+                        else if (baseDir.Length + longestPath > maxPath)
+                        {
+                            notes.Add($"⚠ Some file paths are potentially longer than {maxPath} characters");
+                            break;
+                        }
+                    }
+                }
             }
 
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
@@ -433,27 +469,19 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static async Task<(bool irdChecked, bool broken)> HasBrokenFilesAsync(NameValueCollection items)
+        private static async Task<(bool irdChecked, bool broken, int longestPath)> HasBrokenFilesAsync(NameValueCollection items)
         {
+            var defaultLongestPath = "/PS3_GAME/USRDIR/".Length + (1+8+3)*2; // usually there's at least one more level for data files
             if (!(items["serial"] is string productCode))
-                return (false, false);
+                return (false, false, defaultLongestPath);
 
             if (!productCode.StartsWith("B") && !productCode.StartsWith("M"))
-                return (false, false);
+                return (false, false, defaultLongestPath);
 
-            if (string.IsNullOrEmpty(items["broken_directory"])
-                && string.IsNullOrEmpty(items["broken_filename"]))
-                return (false, false);
-
-            var getIrdTask = irdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token);
-            var missingDirs = items["broken_directory"]?.Split(Environment.NewLine).Distinct().ToList() ??
-                              new List<string>(0);
-            var missingFiles = items["broken_filename"]?.Split(Environment.NewLine).Distinct().ToList() ??
-                               new List<string>(0);
             HashSet<string> knownFiles;
             try
             {
-                var irdFiles = await getIrdTask.ConfigureAwait(false);
+                var irdFiles = await irdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token).ConfigureAwait(false);
                 knownFiles = new HashSet<string>(
                     from ird in irdFiles
                     from name in ird.GetFilenames()
@@ -464,11 +492,20 @@ namespace CompatBot.Utils.ResultFormatters
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to get IRD files for " + productCode);
-                return (false, false);
+                return (false, false, defaultLongestPath);
             }
-
             if (knownFiles.Count == 0)
-                return (false, false);
+                return (false, false, defaultLongestPath);
+
+            var longestPath = knownFiles.Max(p => p.TrimEnd('.').Length);
+            if (string.IsNullOrEmpty(items["broken_directory"])
+                && string.IsNullOrEmpty(items["broken_filename"]))
+                return (false, false, longestPath);
+
+            var missingDirs = items["broken_directory"]?.Split(Environment.NewLine).Distinct().ToList() ??
+                              new List<string>(0);
+            var missingFiles = items["broken_filename"]?.Split(Environment.NewLine).Distinct().ToList() ??
+                               new List<string>(0);
 
             var broken = missingFiles.Where(knownFiles.Contains).ToList();
             if (broken.Count > 0)
@@ -476,7 +513,7 @@ namespace CompatBot.Utils.ResultFormatters
                 Config.Log.Debug("List of broken files according to IRD:");
                 foreach (var f in broken)
                     Config.Log.Debug(f);
-                return (true, true);
+                return (true, true, longestPath);
             }
 
             var knownDirs = new HashSet<string>(knownFiles.Select(f => Path.GetDirectoryName(f).Replace('\\', '/')),
@@ -487,9 +524,9 @@ namespace CompatBot.Utils.ResultFormatters
                 Config.Log.Debug("List of broken directories according to IRD:");
                 foreach (var d in broken)
                     Config.Log.Debug(d);
-                return (true, true);
+                return (true, true, longestPath);
             }
-            return (true, false);
+            return (true, false, longestPath);
         }
     }
 }
