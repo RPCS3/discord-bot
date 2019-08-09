@@ -17,12 +17,13 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 
         public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
-            if (header.Length >= Header.Length
-                && header.Slice(0, Header.Length).SequenceEqual(Header))
-                return (true, null);
-
-            if (fileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase)
-                && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
+            if (header.Length >= Header.Length)
+            {
+                if (header.Slice(0, Header.Length).SequenceEqual(Header))
+                    return (true, null);
+            }
+            else if (fileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase)
+                     && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                 return (true, null);
 
             return (false, null);

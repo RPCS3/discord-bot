@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace CompatApiClient
 {
-    public class Client
+    public class Client: IDisposable
     {
         private readonly HttpClient client;
         private readonly MediaTypeFormatterCollection formatters;
@@ -87,6 +87,11 @@ namespace CompatApiClient
                 tries++;
             } while (tries < 3);
             return null;
+        }
+
+        public void Dispose()
+        {
+            client?.Dispose();
         }
     }
 }

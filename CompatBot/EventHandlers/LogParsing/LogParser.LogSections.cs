@@ -241,12 +241,6 @@ namespace CompatBot.EventHandlers.LogParsing
             return PiracyCheckAsync(line, state);
         }
 
-        private static async Task CollectFunctionStatsAsync(string line, LogParseState state)
-        {
-
-        }
-
-
         private static void ClearResults(LogParseState state)
         {
             void Copy(params string[] keys)
