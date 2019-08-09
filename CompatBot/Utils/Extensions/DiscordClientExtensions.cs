@@ -184,7 +184,7 @@ namespace CompatBot.Utils
         {
             var content = message.Content;
             if (message.Channel.IsPrivate)
-                severity = ReportSeverity.Low;
+                severity = ReportSeverity.None;
             var needsAttention = severity > ReportSeverity.Low;
             if (message.Embeds?.Any() ?? false)
             {

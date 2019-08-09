@@ -2,6 +2,7 @@
 {
     public enum ReportSeverity
     {
+        None,
         Low,
         Medium,
         High,

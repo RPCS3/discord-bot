@@ -168,11 +168,11 @@ namespace CompatBot.Database.Providers
 
             try
             {
-                await client.ReportAsync("🤬 Removed content", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
+                await client.ReportAsync("🤬 Content filter hit", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                Config.Log.Error(e, "Failed to report content removal");
+                Config.Log.Error(e, "Failed to report content filter hit");
             }
         }
     }

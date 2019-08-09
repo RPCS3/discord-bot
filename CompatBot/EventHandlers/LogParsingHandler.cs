@@ -100,12 +100,12 @@ namespace CompatBot.EventHandlers
                         LogParseState result = null;
                         do
                         {
-                                result = await ParseLogAsync(
-                                    source,
-                                    async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
-                                    combinedTokenSource.Token
-                                ).ConfigureAwait(false);
-                                tries++;
+                            result = await ParseLogAsync(
+                                source,
+                                async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
+                                combinedTokenSource.Token
+                            ).ConfigureAwait(false);
+                            tries++;
                         } while (result == null && !combinedTokenSource.IsCancellationRequested && tries < 3);
                         if (result == null)
                         {
