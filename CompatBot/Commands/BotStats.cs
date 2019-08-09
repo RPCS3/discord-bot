@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -41,6 +40,7 @@ namespace CompatBot.Commands
             AppendCmdStats(ctx, embed);
             AppendExplainStats(embed);
             AppendGameLookupStats(embed);
+            AppendSyscallsStats(embed);
 #if DEBUG
             embed.WithFooter("Test Instance");
 #endif
@@ -181,6 +181,25 @@ namespace CompatBot.Commands
                     statsBuilder.AppendLine($"{n++}. {title.title.Trim(40)} ({title.stat} search{(title.stat == 1 ? "" : "es")}, {title.stat * 100.0 / totalLookups:0.##}%)");
                 statsBuilder.AppendLine($"Total game lookups: {totalLookups}");
                 embed.AddField($"Top {top.Count} recent game lookups", statsBuilder.ToString().TrimEnd(), true);
+            }
+        }
+
+        private void AppendSyscallsStats(DiscordEmbedBuilder embed)
+        {
+            using (var db = new ThumbnailDb())
+            {
+                var syscallCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Distinct().Count();
+                var syscallModuleCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Select(sci => sci.Module).Distinct().Count();
+                var totalFuncCount = db.SyscallInfo.Count();
+                var totalModuleCount = db.SyscallInfo.Select(sci => sci.Module).Distinct().Count();
+                var fwCallCount = totalFuncCount - syscallCount;
+                var fwModuleCount = totalModuleCount - syscallModuleCount;
+                var gameCount = db.SyscallToProductMap.Select(m => m.ProductId).Distinct().Count();
+                embed.AddField("SceCall Stats",
+                    $"Tracked game IDs: {gameCount}\n" +
+                    $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")} in {syscallModuleCount} module{(syscallModuleCount == 1 ? "" : "s")}\n" +
+                    $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")} in {fwModuleCount} module{(fwModuleCount == 1 ? "" : "s")}\n",
+                    true);
             }
         }
     }
