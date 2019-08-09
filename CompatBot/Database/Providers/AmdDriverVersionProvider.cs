@@ -79,6 +79,20 @@ namespace CompatBot.Database.Providers
 
                     return $"newer than {newest.vv} ({openglVersion})";
                 }
+
+                var approximate = glVersions.FirstOrDefault(v => v.v.Minor == glVersion.Minor && v.v.Build == glVersion.Build);
+                if (!string.IsNullOrEmpty(approximate.vv))
+                    return $"{approximate.vv} rev {glVersion.Revision}";
+
+                if (string.IsNullOrEmpty(approximate.vv))
+                    for (var i = 0; i < glVersions.Count - 1; i++)
+                        if (glVersion > glVersions[i].v && glVersion < glVersions[i + 1].v)
+                        {
+                            approximate = glVersions[i];
+                            break;
+                        }
+                if (!string.IsNullOrEmpty(approximate.vv))
+                    return $"probably {approximate.vv}";
             }
 
             return openglVersion;
