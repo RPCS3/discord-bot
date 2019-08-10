@@ -307,7 +307,7 @@ namespace CompatBot.Utils
                 {
                     StrA = strA,
                     StrB = strB,
-                    Coefficient = Normalizer.ToCanonicalForm(strA).GetScoreWithAcronym(Normalizer.ToCanonicalForm(strB)),
+                    Coefficient = strA.ToCanonicalForm().GetScoreWithAcronym(strB.ToCanonicalForm()),
                 };
             FuzzyPairCache.Set(cacheKey, match);
             return match.Coefficient;
