@@ -37,7 +37,7 @@ namespace CompatBot.Utils
 
         public static string StripMarks(this string str)
         {
-            return str.Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
+            return str?.Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
                 .Replace("®", "", StringComparison.InvariantCultureIgnoreCase)
                 .Replace("(TM)", "", StringComparison.InvariantCultureIgnoreCase)
                 .Replace("™", "", StringComparison.InvariantCultureIgnoreCase);
@@ -307,7 +307,7 @@ namespace CompatBot.Utils
                 {
                     StrA = strA,
                     StrB = strB,
-                    Coefficient = Normalizer.ToCanonicalForm(strA).GetScoreWithAcronym(Normalizer.ToCanonicalForm(strB)),
+                    Coefficient = strA.ToCanonicalForm().GetScoreWithAcronym(strB.ToCanonicalForm()),
                 };
             FuzzyPairCache.Set(cacheKey, match);
             return match.Coefficient;

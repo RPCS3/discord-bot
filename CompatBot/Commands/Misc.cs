@@ -221,8 +221,8 @@ namespace CompatBot.Commands
             var unit = EightBallTimeUnits[crng.Next(EightBallTimeUnits.Count)];
             if (number > 1)
             {
-                if (unit.EndsWith('y'))
-                    unit = unit.Substring(0, unit.Length - 1) + "ie";
+                if (unit.EndsWith("ry"))
+                    unit = unit.Substring(0, unit.Length - 1) + "rie";
                 unit += "s";
                 if (unit == "millenniums")
                     unit = "millennia";

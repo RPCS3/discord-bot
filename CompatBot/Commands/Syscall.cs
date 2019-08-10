@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -11,7 +10,6 @@ using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Microsoft.EntityFrameworkCore;
-using TitleInfo = CompatApiClient.POCOs.TitleInfo;
 
 namespace CompatBot.Commands
 {
@@ -46,21 +44,11 @@ namespace CompatBot.Commands
                 {
                     var productInfoList = await db.SyscallToProductMap.AsNoTracking()
                         .Where(m => m.SyscallInfo.Module == search || m.SyscallInfo.Function == search)
-                        .Select(m => new {m.Product.ProductCode, Name =(m.Product.Name ?? "???")})
+                        .Select(m => new {m.Product.ProductCode, Name = m.Product.Name.StripMarks() ?? "???"})
                         .Distinct()
                         .ToAsyncEnumerable()
                         .ToList()
                         .ConfigureAwait(false);
-/*
-                    if (productInfoList.Any(pi => string.IsNullOrEmpty(pi.Name)))
-                        using (var client = new CompatApiClient.Client())
-                            foreach (var pi in productInfoList)
-                            {
-                                var compatResult = await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(pi.ProductCode), Config.Cts.Token).ConfigureAwait(false);
-                                TitleInfo ti = null;
-                                pi.Name = (compatResult?.Results?.TryGetValue(pi.ProductCode, out ti) ?? false) && ti?.Title is string pName ? pName : "???";
-                            }
-*/
                     var groupedList = productInfoList
                         .GroupBy(m => m.Name, m => m.ProductCode)
                         .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
