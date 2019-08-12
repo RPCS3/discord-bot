@@ -31,7 +31,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["fatal_error"] is string fatalError)
             {
                 var context = items["fatal_error_context"] ?? "";
-                builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
+                builder.AddField("Fatal Error", $"```\n{fatalError.Trim(1020)}\n```");
                 if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>") || context.Contains("SaveData"))
                     notes.Add("❌ Game save data is corrupted");
                 else if (fatalError.Contains("Could not bind OpenGL context"))
