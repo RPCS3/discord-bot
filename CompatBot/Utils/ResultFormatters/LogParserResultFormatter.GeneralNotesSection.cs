@@ -430,6 +430,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["failed_pad"] is string failedPad)
                 notes.Add($"❌ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
 
+
+            if (AllStarBattleIds.Contains(serial))
+                notes.Add("ℹ Missing health bars are random");
+            if (DesIds.Contains(serial))
+                notes.Add("ℹ If you experience infinite load screen, clear `/dev_hdd1/` folder");
+
             if (items["custom_config"] != null
                 && (notes.Any() || items["weird_settings_notes"] is string _))
                 notes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
