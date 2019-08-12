@@ -419,7 +419,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
                         notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0.}%), but `Clock Scale` is set to {clockScale}%");
                     else
-                        notes.Add($"✅ Settings are set for {vblankRate/2} FPS patch");
+                        notes.Add($"✅ Settings are set for the {vblankRate/2} FPS patch");
                 }
                 else
                 {
