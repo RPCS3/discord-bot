@@ -386,8 +386,19 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
+        private static HashSet<string> DesIds = new HashSet<string>
+        {
+            "BLES00932", "BLUS30443", "BCJS30022", "BCJS70013",
+            "NPEB01202", "NPUB30910", "NPJA00102",
+        };
+
         private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
         {
+            if (!DesIds.Contains(serial))
+                return;
+
+            notes.Add("ℹ If you experience infinite load screen, clear `/dev_hdd1/` folder");
+
             if (serial != "BLES00932" && serial != "BLUS30443")
                 return;
 
@@ -404,6 +415,8 @@ namespace CompatBot.Utils.ResultFormatters
                     var clkRatio = clockScale / 100.0;
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
                         notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0.}%), but `Clock Scale` is set to {clockScale}%");
+                    else
+                        notes.Add($"ℹ Settings are set for {vblankRate/2} FPS patch");
                 }
                 else
                 {
