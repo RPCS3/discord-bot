@@ -391,6 +391,12 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
         {
+            if (!DesIds.Contains(serial))
+                return;
+
+            if (items["frame_limit"] is string frameLimit && frameLimit != "Disabled")
+                notes.Add("⚠ `Frame Limiter` should be `Disabled`");
+
             if (serial != "BLES00932" && serial != "BLUS30443")
                 return;
 
