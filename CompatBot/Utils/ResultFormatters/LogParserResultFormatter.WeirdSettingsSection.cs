@@ -291,9 +291,6 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes)
         {
-            if (AllStarBattleIds.Contains(serial))
-                notes.Add("ℹ Missing health bars are random");
-
             if ((AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
                 && items["audio_buffering"] == EnabledMark)
                 notes.Add("ℹ If you experience audio issues, disable `Audio Buffering` or Pause/Unpause emulation");
@@ -411,7 +408,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
                         notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0.}%), but `Clock Scale` is set to {clockScale}%");
                     else
-                        notes.Add($"ℹ Settings are set for {vblankRate/2} FPS patch");
+                        notes.Add($"✅ Settings are set for {vblankRate/2} FPS patch");
                 }
                 else
                 {
