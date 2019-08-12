@@ -109,6 +109,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Frame Skip:"] = new Regex("Enable Frame Skip: (?<frame_skip>.*?)\r?$", DefaultOptions),
                     ["Blit:"] = new Regex("Blit: (?<cpu_blit>.*?)\r?$", DefaultOptions),
                     ["Asynchronous Shader Compiler:"] = new Regex("Asynchronous Shader Compiler: (?<async_shaders>.*?)\r?$", DefaultOptions),
+                    ["Multithreaded RSX:"] = new Regex("Multithreaded RSX: (?<mtrsx>.*?)\r?$", DefaultOptions),
                     ["Resolution Scale:"] = new Regex("Resolution Scale: (?<resolution_scale>.*?)\r?$", DefaultOptions),
                     ["Anisotropic Filter"] = new Regex("Anisotropic Filter Override: (?<af_override>.*?)\r?$", DefaultOptions),
                     ["Scalable Dimension:"] = new Regex("Minimum Scalable Dimension: (?<texture_scale_threshold>.*?)\r?$", DefaultOptions),

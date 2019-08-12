@@ -9,14 +9,12 @@ using CompatBot.Utils;
 using System.IO.Pipelines;
 using System.Net.Http;
 using System.Threading;
-using CompatApiClient;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
-    internal sealed class DropboxHandler : BaseSourceHandler
+    internal sealed class GenericLinkHandler : BaseSourceHandler
     {
-        //https://www.dropbox.com/s/62ls9lw5i52fuib/RPCS3.log.gz?dl=0
-        private static readonly Regex ExternalLink = new Regex(@"(?<dropbox_link>(https?://)?(www\.)?dropbox\.com/s/(?<dropbox_id>[^/\s]+)/(?<filename>[^/\?\s])(/dl=[01])?)", DefaultOptions);
+        private static readonly Regex ExternalLink = new Regex(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z)))", DefaultOptions);
 
         public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
@@ -30,13 +28,13 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             using (var client = HttpClientFactory.Create())
                 foreach (Match m in matches)
                 {
-                    if (m.Groups["dropbox_link"].Value is string lnk
+                    if (m.Groups["link"].Value is string lnk
                         && !string.IsNullOrEmpty(lnk)
                         && Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
                     {
                         try
                         {
-                            uri = uri.SetQueryParameter("dl", "1");
+                            var host = uri.Host;
                             var filename = Path.GetFileName(lnk);
                             var filesize = -1;
 
@@ -60,7 +58,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                                     {
                                         var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
                                         if (canHandle)
-                                            return (new DropboxSource(uri, handler, filename, filesize), null);
+                                            return (new GenericSource(uri, handler, host, filename, filesize), null);
                                         else if (!string.IsNullOrEmpty(reason))
                                             return (null, reason);
                                     }
@@ -74,28 +72,30 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
                         catch (Exception e)
                         {
-                            Config.Log.Warn(e, $"Error sniffing {m.Groups["dropbox_link"].Value}");
+                            Config.Log.Warn(e, $"Error sniffing {m.Groups["link"].Value}");
                         }
                     }
                 }
             return (null, null);
         }
 
-        private sealed class DropboxSource : ISource
+        private sealed class GenericSource : ISource
         {
             private Uri uri;
             private IArchiveHandler handler;
 
-            public string SourceType => "Dropbox";
+            public string SourceType => "Generic link";
             public string FileName { get; }
+            public string Host { get; }
             public long SourceFileSize { get; }
             public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
-            internal DropboxSource(Uri uri, IArchiveHandler handler, string fileName, int fileSize)
+            internal GenericSource(Uri uri, IArchiveHandler handler, string host, string fileName, int fileSize)
             {
                 this.uri = uri;
                 this.handler = handler;
+                Host = host;
                 FileName = fileName;
                 SourceFileSize = fileSize;
             }
