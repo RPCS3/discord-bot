@@ -115,7 +115,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["write_color_buffers"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
                 && KnownWriteColorBuffersIds.Contains(serial))
-                notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
+            {
+                if (DesIds.Contains(serial) && ppuPatches.Any())
+                    notes.Add("ℹ `Write Color Buffers` is disabled");
+                else
+                    notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
+            }
             if (items["vertex_cache"] == EnabledMark
                 && !string.IsNullOrEmpty(serial)
                 && !KnownDisableVertexCacheIds.Contains(serial))
@@ -394,8 +399,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (!DesIds.Contains(serial))
                 return;
 
-            if (items["frame_limit"] is string frameLimit && frameLimit != "Disabled")
-                notes.Add("⚠ `Frame Limiter` should be `Disabled`");
+            if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+                notes.Add("⚠ `Frame Limiter` should be `Off`");
 
             if (serial != "BLES00932" && serial != "BLUS30443")
                 return;
