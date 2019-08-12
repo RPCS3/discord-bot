@@ -66,15 +66,17 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
             }
 
+            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
             if (!string.IsNullOrEmpty(serial))
             {
                 CheckP5Settings(serial, items, notes);
                 CheckAsurasWrathSettings(serial, items, notes);
                 CheckJojoSettings(serial, items, notes);
                 CheckSimpsonsSettings(serial, notes);
-                CheckNierSettings(serial, items, notes);
+                CheckNierSettings(serial, items, notes, ppuPatches);
                 CheckScottPilgrimSettings(serial, items, notes);
                 CheckGoWSettings(serial, items, notes);
+                CheckDesSettings(serial, items, notes, ppuPatches);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes);
@@ -137,15 +139,19 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (drtValue > 10_000_000)
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
             }
-            if (items["vblank_rate"] is string vblank
-                && int.TryParse(vblank, out var vblankRate)
-                && vblankRate != 60)
-                notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz");
 
-            if (items["clock_scale"] is string clockScaleStr
-                && int.TryParse(clockScaleStr, out var clockScale)
-                && clockScale != 100)
-                notes.Add($"⚠ `Clock Scale` is set to {clockScale}%");
+            if (!KnownFpsUnlockPatchIds.Contains(serial) || !ppuPatches.Any())
+            {
+                if (items["vblank_rate"] is string vblank
+                    && int.TryParse(vblank, out var vblankRate)
+                    && vblankRate != 60)
+                    notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz");
+
+                if (items["clock_scale"] is string clockScaleStr
+                    && int.TryParse(clockScaleStr, out var clockScale)
+                    && clockScale != 100)
+                    notes.Add($"ℹ `Clock Scale` is set to {clockScale}%");
+            }
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
                 notes.Add("ℹ `Multithreaded RSX` is enabled");
@@ -301,11 +307,10 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
         {
             if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
             {
-                var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
                 var frameLimit = items["frame_limit"];
                 var vsync = items["vsync"] == EnabledMark;
                 if (ppuPatches.Any())
@@ -378,6 +383,32 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("ℹ This game is known to be very unstable");
                 else if (items["renderer"] is string renderer && renderer != "OpenGL")
                     notes.Add("⚠ `OpenGL` is recommended for classic God of War games");
+            }
+        }
+
+        private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
+        {
+            if (serial != "BLES00932" && serial != "BLUS30443")
+                return;
+
+            if (ppuPatches.Any())
+            {
+                if (items["vblank_rate"] is string vbrStr
+                    && items["clock_scale"] is string clkStr
+                    && int.TryParse(vbrStr, out var vblankRate)
+                    && int.TryParse(clkStr, out var clockScale))
+                {
+                    if (vblankRate == 60)
+                        notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
+                    var vbrRatio = vblankRate / 60.0;
+                    var clkRatio = clockScale / 100.0;
+                    if (Math.Abs(vbrRatio - clkRatio) > 0.05)
+                        notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0.}%), but `Clock Scale` is set to {clockScale}%");
+                }
+                else
+                {
+                    notes.Add("ℹ `VBlank Rate` or `Clock Scale` is not set");
+                }
             }
         }
 

@@ -14,7 +14,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class GenericLinkHandler : BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z)))", DefaultOptions);
+        private static readonly Regex ExternalLink = new Regex(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z|log)))", DefaultOptions);
 
         public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
@@ -30,7 +30,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 {
                     if (m.Groups["link"].Value is string lnk
                         && !string.IsNullOrEmpty(lnk)
-                        && Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
+                        && Uri.TryCreate(lnk, UriKind.Absolute, out var uri)
+                        && !"tty.log".Equals(m.Groups["filename"].Value, StringComparison.InvariantCultureIgnoreCase))
                     {
                         try
                         {
