@@ -394,11 +394,6 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
         {
-            if (!DesIds.Contains(serial))
-                return;
-
-            notes.Add("ℹ If you experience infinite load screen, clear `/dev_hdd1/` folder");
-
             if (serial != "BLES00932" && serial != "BLUS30443")
                 return;
 
