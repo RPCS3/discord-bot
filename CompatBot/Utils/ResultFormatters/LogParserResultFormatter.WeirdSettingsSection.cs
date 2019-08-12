@@ -147,6 +147,9 @@ namespace CompatBot.Utils.ResultFormatters
                 && clockScale != 100)
                 notes.Add($"⚠ `Clock Scale` is set to {clockScale}%");
 
+            if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
+                notes.Add("ℹ `Multithreaded RSX` is enabled");
+
             if (!string.IsNullOrEmpty(serial)
                 && KnownMotionControlsIds.Contains(serial)
                 && items["pad_handler"] is string padHandler
