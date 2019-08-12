@@ -32,6 +32,7 @@ namespace CompatBot.EventHandlers
             new GoogleDriveHandler(),
             new DropboxHandler(),
             new MegaHandler(),
+            new GenericLinkHandler(),
             new PastebinHandler(),
         };
         private static readonly IArchiveHandler[] archiveHandlers =
