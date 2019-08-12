@@ -79,6 +79,13 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
         {
             "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
+            "BLES00932", "BLUS30443", // DeS
+        };
+
+        private static readonly HashSet<string> KnownFpsUnlockPatchIds = new HashSet<string>
+        {
+            "BLES00932", "BLUS30443", // DeS
+            "BLUS30481", "BLES00826", "BLJM60223", // Nier
         };
 
         private static readonly HashSet<string> KnownWriteColorBuffersIds = new HashSet<string>
