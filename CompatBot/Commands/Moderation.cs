@@ -42,7 +42,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("reanalyze"), Aliases("analyze", "parse")]
+        [Command("analyze"), Aliases("reanalyze", "parse", "a")]
         [Description("Make bot to look at the attached log again")]
         public async Task Reanalyze(CommandContext ctx, [Description("Message ID from the same channel")]ulong messageId)
         {
@@ -60,7 +60,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("reanalyze")]
+        [Command("analyze")]
         public async Task Reanalyze(CommandContext ctx, [Description("Full message link")] string messageLink)
         {
             try
