@@ -205,8 +205,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["gpu_info"]))
             {
                 items["gpu_info"] = items["gpu_info"].StripMarks();
-                items["driver_version_info"] = GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
-                                               GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
+                items["driver_version_info"] = GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
+                                               GetVulkanDriverVersion(items["gpu_info"], items["vulkan_found_device"]) ??
+                                                GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ?? 
                                                GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
             }
             if (items["driver_version_info"] != null)
