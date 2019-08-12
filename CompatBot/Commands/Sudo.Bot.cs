@@ -17,7 +17,7 @@ namespace CompatBot.Commands
     {
         private static readonly SemaphoreSlim lockObj = new SemaphoreSlim(1, 1);
 
-        [Group("bot")]
+        [Group("bot"), Aliases("kot")]
         [Description("Commands to manage the bot instance")]
         public sealed partial class Bot: BaseCommandModuleCustom
         {
