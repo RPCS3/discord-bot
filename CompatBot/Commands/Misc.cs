@@ -222,7 +222,7 @@ namespace CompatBot.Commands
             if (number > 1)
             {
                 if (unit.EndsWith("ry"))
-                    unit = unit.Substring(0, unit.Length - 1) + "rie";
+                    unit = unit.Substring(0, unit.Length - 1) + "ie";
                 unit += "s";
                 if (unit == "millenniums")
                     unit = "millennia";
