@@ -402,6 +402,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
 
+            if (items["spu_loop_detection"] == EnabledMark)
+                notes.Add("⚠ `SPU Loop Detection` is `Enabled`, can cause visual artifacts");
+
+            if (items["spu_threads"] is string spuThreads && spuThreads != "Auto")
+                notes.Add("⚠ Please set `SPU Thread Count` to `Auto` for best performance");
+
             if (serial != "BLES00932" && serial != "BLUS30443")
                 return;
 
@@ -418,6 +424,8 @@ namespace CompatBot.Utils.ResultFormatters
                     var clkRatio = clockScale / 100.0;
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
                         notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0.}%), but `Clock Scale` is set to {clockScale}%");
+                    else if (vblankRate == 60)
+                        notes.Add("ℹ Settings are not set for the FPS patch");
                     else
                         notes.Add($"✅ Settings are set for the {vblankRate/2} FPS patch");
                 }
