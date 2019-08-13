@@ -211,12 +211,6 @@ namespace CompatBot.EventHandlers
                 return;
 
             Config.Log.Debug("Emoji text: " + reactionMsg);
-            if (reactionMsg.ToUpperInvariant().Contains("MGS"))
-            {
-                await message.ReactWithAsync(client, mood).ConfigureAwait(false);
-                await message.ReactWithAsync(client, DiscordEmoji.FromUnicode("🇳")).ConfigureAwait(false);
-                await message.ReactWithAsync(client, DiscordEmoji.FromUnicode("🇴")).ConfigureAwait(false);
-            }
         }
     }
 }
