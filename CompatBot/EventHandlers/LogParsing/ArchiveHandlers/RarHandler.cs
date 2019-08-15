@@ -39,6 +39,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                 using (var statsStream = new BufferCopyStream(sourceStream))
                 using (var rarReader = RarReader.Open(statsStream))
                     while (rarReader.MoveToNextEntry())
+                    {
                         if (!rarReader.Entry.IsDirectory
                             && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                             && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
@@ -61,6 +62,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                             writer.Complete();
                             return;
                         }
+                        SourcePosition = statsStream.Position;
+                    }
                 Config.Log.Warn("No rar entries that match the log criteria");
             }
             catch (Exception e)
