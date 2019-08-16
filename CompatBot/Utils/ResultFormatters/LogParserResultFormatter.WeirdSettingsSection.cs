@@ -388,7 +388,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static HashSet<string> DesIds = new HashSet<string>
+        private static readonly HashSet<string> DesIds = new HashSet<string>
         {
             "BLES00932", "BLUS30443", "BCJS30022", "BCJS70013",
             "NPEB01202", "NPUB30910", "NPJA00102",

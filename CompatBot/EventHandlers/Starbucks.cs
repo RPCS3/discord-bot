@@ -193,24 +193,25 @@ namespace CompatBot.EventHandlers
         }
 
 
-        private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
+        private static Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
         {
             var bot = client.GetMember(channel.Guild, client.CurrentUser);
             if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
             {
                 Config.Log.Debug($"No permissions to react in #{channel.Name}");
-                return;
+                return Task.CompletedTask;
             }
 
             var mood = client.GetEmoji(":sqvat:", "😒");
             if (message.Reactions.Any(r => r.Emoji == mood && r.IsMe))
-                return;
+                return Task.CompletedTask;
 
             var reactionMsg = string.Concat(message.Reactions.Select(r => TextMap.TryGetValue(r.Emoji, out var txt) ? txt : " ")).Trim();
             if (string.IsNullOrEmpty(reactionMsg))
-                return;
+                return Task.CompletedTask;
 
             Config.Log.Debug("Emoji text: " + reactionMsg);
+            return Task.CompletedTask;
         }
     }
 }
