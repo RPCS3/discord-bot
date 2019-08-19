@@ -111,9 +111,7 @@ namespace CompatBot.EventHandlers
                 {
                     Config.Log.Warn(e);
                     await client.ReportAsync("🛃 An unapproved discord invite", message, "In invalid or expired invite", null, ReportSeverity.Medium).ConfigureAwait(false);
-                    await message.ReactWithAsync(
-                        client,
-                        Config.Reactions.Moderated,
+                    await message.ReactWithAsync(Config.Reactions.Moderated,
                         $"{message.Author.Mention} please remove this expired or invalid invite, and refrain from posting it again until you have received an approval from a moderator.",
                         true
                     ).ConfigureAwait(false);

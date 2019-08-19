@@ -173,7 +173,7 @@ namespace CompatBot.EventHandlers
             if (reporters.Count < Config.Moderation.StarbucksThreshold)
                 return;
 
-            await message.ReactWithAsync(client, emoji).ConfigureAwait(false);
+            await message.ReactWithAsync(emoji).ConfigureAwait(false);
             await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
         }
 
@@ -193,24 +193,26 @@ namespace CompatBot.EventHandlers
         }
 
 
-        private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
+        private static Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
         {
             var bot = client.GetMember(channel.Guild, client.CurrentUser);
+            var ch = channel.IsPrivate ? channel.Users.FirstOrDefault(u => u.Id != client.CurrentUser.Id)?.Username + "'s DM" : "#" + channel.Name;
             if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
             {
-                Config.Log.Debug($"No permissions to react in #{channel.Name}");
-                return;
+                Config.Log.Debug($"No permissions to react in {ch}");
+                return Task.CompletedTask;
             }
 
             var mood = client.GetEmoji(":sqvat:", "😒");
             if (message.Reactions.Any(r => r.Emoji == mood && r.IsMe))
-                return;
+                return Task.CompletedTask;
 
             var reactionMsg = string.Concat(message.Reactions.Select(r => TextMap.TryGetValue(r.Emoji, out var txt) ? txt : " ")).Trim();
             if (string.IsNullOrEmpty(reactionMsg))
-                return;
+                return Task.CompletedTask;
 
-            Config.Log.Debug("Emoji text: " + reactionMsg);
+            Config.Log.Debug($"Emoji text: {reactionMsg} (in {ch})");
+            return Task.CompletedTask;
         }
     }
 }

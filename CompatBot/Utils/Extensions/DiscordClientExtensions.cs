@@ -66,7 +66,7 @@ namespace CompatBot.Utils
             }
         }
 
-        public static async Task ReactWithAsync(this DiscordMessage message, DiscordClient client, DiscordEmoji emoji, string fallbackMessage = null, bool? showBoth = null)
+        public static async Task ReactWithAsync(this DiscordMessage message, DiscordEmoji emoji, string fallbackMessage = null, bool? showBoth = null)
         {
             try
             {
@@ -90,7 +90,7 @@ namespace CompatBot.Utils
 
         public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string fallbackMessage = null, bool? showBoth = null)
         {
-            return ReactWithAsync(ctx.Message, ctx.Client, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
+            return ReactWithAsync(ctx.Message, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
         }
 
         public static async Task<IReadOnlyCollection<DiscordMessage>> GetMessagesBeforeAsync(this DiscordChannel channel, ulong beforeMessageId, int limit = 100, DateTime? timeLimit = null)

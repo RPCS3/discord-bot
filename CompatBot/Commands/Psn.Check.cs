@@ -85,7 +85,7 @@ namespace CompatBot.Commands
                             embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
                     }
                     var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
-                    await ctx.Message.ReactWithAsync(ctx.Client, sqvat).ConfigureAwait(false);
+                    await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
                 }
                 if (embeds.Count > 1 || embeds[0].Fields?.Count > 0)
                     embeds[embeds.Count - 1] = embeds.Last().WithFooter("Note that you need to install all listed updates one by one");
