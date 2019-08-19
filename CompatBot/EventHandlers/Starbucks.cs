@@ -196,9 +196,10 @@ namespace CompatBot.EventHandlers
         private static Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
         {
             var bot = client.GetMember(channel.Guild, client.CurrentUser);
+            var ch = channel.IsPrivate ? channel.Users.FirstOrDefault(u => u.Id != client.CurrentUser.Id)?.Username + "'s DM" : "#" + channel.Name;
             if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
             {
-                Config.Log.Debug($"No permissions to react in #{channel.Name}");
+                Config.Log.Debug($"No permissions to react in {ch}");
                 return Task.CompletedTask;
             }
 
@@ -210,7 +211,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(reactionMsg))
                 return Task.CompletedTask;
 
-            Config.Log.Debug("Emoji text: " + reactionMsg);
+            Config.Log.Debug($"Emoji text: {reactionMsg} (in {ch})");
             return Task.CompletedTask;
         }
     }

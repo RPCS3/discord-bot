@@ -1,7 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CompatBot.Utils;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -24,7 +22,7 @@ namespace CompatBot.Commands.Attributes
         public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
         {
             var result = await IsAllowed(ctx, help);
-            Config.Log.Debug($"Check for {GetType().Name} resulted in {result}");
+            Config.Log.Debug($"Check for {GetType().Name} and user {ctx.User.Username}#{ctx.User.Discriminator} ({ctx.User.Id}) resulted in {result}");
             if (result)
             {
                 if (ReactOnSuccess != null && !help)
