@@ -59,7 +59,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task LookupAndPostProductCodeEmbedAsync(DiscordClient client, DiscordMessage message, List<string> codesToLookup)
         {
-            await message.ReactWithAsync(client, Config.Reactions.PleaseWait).ConfigureAwait(false);
+            await message.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
             try
             {
                 var results = new List<(string code, Task<DiscordEmbedBuilder> task)>(codesToLookup.Count);
@@ -149,7 +149,7 @@ namespace CompatBot.EventHandlers
                 titleInfoEmbed.Title = "How about no (๑•ิཬ•ั๑)";
                 if (!string.IsNullOrEmpty(titleInfoEmbed.ThumbnailUrl))
                     titleInfoEmbed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
-                await message.ReactWithAsync(client, sqvat).ConfigureAwait(false);
+                await message.ReactWithAsync(sqvat).ConfigureAwait(false);
             }
         }
     }

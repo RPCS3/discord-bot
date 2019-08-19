@@ -91,7 +91,7 @@ namespace CompatBot.Commands
             var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
             if (prInfo.Number == 0)
             {
-                await message.ReactWithAsync(client, Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
+                await message.ReactWithAsync(Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
                 return;
             }
 

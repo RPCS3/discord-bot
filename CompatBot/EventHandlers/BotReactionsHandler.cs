@@ -131,7 +131,7 @@ namespace CompatBot.EventHandlers
                     emoji = ThankYouReactions[rng.Next(ThankYouReactions.Length)];
                     thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel) ? ThankYouMessages[rng.Next(ThankYouMessages.Length)] : null;
                 }
-                await args.Message.ReactWithAsync(args.Client, emoji, thankYouMessage).ConfigureAwait(false);
+                await args.Message.ReactWithAsync(emoji, thankYouMessage).ConfigureAwait(false);
             }
             if (needToSilence)
             {
@@ -142,7 +142,7 @@ namespace CompatBot.EventHandlers
                     emoji = SadReactions[rng.Next(SadReactions.Length)];
                     sadMessage = SadMessages[rng.Next(SadMessages.Length)];
                 }
-                await args.Message.ReactWithAsync(args.Client, emoji, sadMessage).ConfigureAwait(false);
+                await args.Message.ReactWithAsync(emoji, sadMessage).ConfigureAwait(false);
 
                 if (args.Author.IsSmartlisted(args.Client, args.Message.Channel.Guild))
                 {
@@ -154,7 +154,7 @@ namespace CompatBot.EventHandlers
                             await msg.DeleteAsync("asked to shut up").ConfigureAwait(false);
                     }
                     else
-                        await args.Message.ReactWithAsync(args.Client, DiscordEmoji.FromUnicode("🙅"), @"No can do, boss ¯\\_(ツ)\_/¯").ConfigureAwait(false);
+                        await args.Message.ReactWithAsync(DiscordEmoji.FromUnicode("🙅"), @"No can do, boss ¯\\_(ツ)\_/¯").ConfigureAwait(false);
                 }
             }
         }

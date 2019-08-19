@@ -28,7 +28,7 @@ namespace CompatBot.EventHandlers
             if (matches.Count == 0)
                 return;
 
-            await args.Message.ReactWithAsync(args.Client, Config.Reactions.PleaseWait).ConfigureAwait(false);
+            await args.Message.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
 
             try
             {

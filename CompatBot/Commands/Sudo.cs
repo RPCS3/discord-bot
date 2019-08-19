@@ -88,7 +88,7 @@ namespace CompatBot.Commands
                             else
                                 de = DiscordEmoji.FromUnicode(emoji + c);
                             emoji = "";
-                            await message.ReactWithAsync(ctx.Client, de).ConfigureAwait(false);
+                            await message.ReactWithAsync(de).ConfigureAwait(false);
                         }
                     }
                     catch

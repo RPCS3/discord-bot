@@ -33,7 +33,7 @@ namespace CompatBot.Utils
             {
                 reactions = reactions.Where(r => r != null).ToArray();
                 foreach (var emoji in reactions)
-                    await message.ReactWithAsync(interactivity.Client, emoji).ConfigureAwait(false);
+                    await message.ReactWithAsync(emoji).ConfigureAwait(false);
                 var expectedChannel = message.Channel;
                 var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && m.Channel == expectedChannel && !string.IsNullOrEmpty(m.Content), timeout);
                 var waitReactionResponse = interactivity.WaitForReactionAsync(arg => reactions.Contains(arg.Emoji), message, user, timeout);

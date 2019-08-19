@@ -173,7 +173,7 @@ namespace CompatBot.EventHandlers
             if (reporters.Count < Config.Moderation.StarbucksThreshold)
                 return;
 
-            await message.ReactWithAsync(client, emoji).ConfigureAwait(false);
+            await message.ReactWithAsync(emoji).ConfigureAwait(false);
             await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
         }
 
