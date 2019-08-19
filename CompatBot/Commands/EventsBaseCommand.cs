@@ -304,15 +304,13 @@ namespace CompatBot.Commands
             }
             else if (txt != null)
             {
-                var newStartTime = FixTimeString(txt.Content);
-                if (!DateTime.TryParse(newStartTime, out var newTime))
+                if (!TimeParser.TryParse(txt.Content, out var newTime))
                 {
-                    errorMsg = $"Couldn't parse `{newStartTime}` as a start date and time";
+                    errorMsg = $"Couldn't parse `{txt.Content}` as a start date and time";
                     goto step1;
                 }
 
                 var duration = evt.End - evt.Start;
-                newTime = Normalize(newTime);
                 evt.Start = newTime.Ticks;
                 evt.End = evt.Start + duration;
                 evt.Year = newTime.Year;
@@ -485,25 +483,6 @@ namespace CompatBot.Commands
             var knownNames = await db.EventSchedule.Where(e => e.End > now).Select(e => e.Name).ToListAsync().ConfigureAwait(false);
             var (score, name) = knownNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
             return score > 0.5 ? name : eventName;
-        }
-
-        private static string FixTimeString(string dateTime)
-        {
-            return dateTime.ToUpperInvariant()
-                .Replace("PST", "-08:00")
-                .Replace("EST", "-05:00")
-                .Replace("BST", "-03:00")
-                .Replace("JST", "+09:00")
-                .Replace("AEST", "+10:00");
-        }
-
-        private static DateTime Normalize(DateTime date)
-        {
-            if (date.Kind == DateTimeKind.Utc)
-                return date;
-            if (date.Kind == DateTimeKind.Local)
-                return date.ToUniversalTime();
-            return date.AsUtc();
         }
 
         private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration, bool react = true)
