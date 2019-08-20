@@ -257,7 +257,8 @@ namespace CompatBot.EventHandlers.LogParsing
                 "driver_version", "driver_manuf",
                 "driver_manuf_new", "driver_version_new",
                 "vulkan_found_device", "vulkan_compatible_device_name",
-                "vulkan_gpu", "vulkan_driver_version_raw"
+                "vulkan_gpu", "vulkan_driver_version_raw",
+                "compat_database_path"
             );
 #if DEBUG
             Console.WriteLine("===== cleared");
