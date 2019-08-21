@@ -76,7 +76,7 @@ namespace CompatBot.Commands
             "Useless", "I think you misspelled `poop` there", "Nothing special", "😔", "Real shame",
             "Boooooooo!", "Poopy", "Smelly", "Feeling-breaker", "Annoying",
 	    "Boring", "Easily forgettable", "An Abomination", "A Monstrosity", "Truly horrific",
-	    "Fulfilled with despair!", "Eroded by despair", "Hopeless...", "It's pretty foolish to want to rate this", "Crused with misfortune",
+	    "Filled with despair!", "Eroded by despair", "Hopeless…", "It's pretty foolish to want to rate this", "Cursed with misfortune",
 	    "Nothing but terror"
         };
 
