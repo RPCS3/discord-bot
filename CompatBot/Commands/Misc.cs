@@ -77,7 +77,7 @@ namespace CompatBot.Commands
             "Boooooooo!", "Poopy", "Smelly", "Feeling-breaker", "Annoying",
 	    "Boring", "Easily forgettable", "An Abomination", "A Monstrosity", "Truly horrific",
 	    "Fulfilled with despair!", "Eroded by despair", "Hopeless...", "It's pretty foolish to want to rate this", "Crused with misfortune",
-	    "Nothing but terror",
+	    "Nothing but terror"
         };
 
         private static readonly char[] Separators = { ' ', '　', '\r', '\n' };
