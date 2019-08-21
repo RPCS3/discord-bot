@@ -59,7 +59,7 @@ namespace CompatBot.Commands
             "Cool like a cup of good wine 🍷", "Magical ✨", "Wondrous like a unicorn 🦄", "Soothing sight for these tired eyes", "Lovely",
             "So cute!", "It's so nice, I think about it every day!", "😊 Never expected to be this pretty!", "It's overflowing with charm!", "Filled with passion!", 
 	    "A love magnet", "Pretty Fancy", "Admirable", "Sweet as a candy", "Delightful",
-	    "Enchanting as the Sunset", "A symbol of hope!", "Fulfilled with hope!", "Shining hope!", "Absolute Hope!",
+	    "Enchanting as the Sunset", "A beacon of hope!", "Filled with hope!", "Shiny!", "Absolute Hope!",
 	    "The meaning of hope", "Inspiring!"
 			
             // 20
