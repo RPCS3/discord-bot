@@ -10,8 +10,14 @@ namespace CompatBot.Utils
     {
         public static bool IsWhitelisted(this DiscordUser user, DiscordClient client, DiscordGuild guild = null)
         {
+            if (user == null)
+                return false;
+
             if (ModProvider.IsMod(user.Id))
                 return true;
+
+            if (client == null)
+                return false;
 
             var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
             return member?.Roles.IsWhitelisted() ?? false;
@@ -19,8 +25,14 @@ namespace CompatBot.Utils
 
         public static bool IsSmartlisted(this DiscordUser user, DiscordClient client, DiscordGuild guild = null)
         {
+            if (user == null)
+                return false;
+
             if (ModProvider.IsMod(user.Id))
                 return true;
+
+            if (client == null)
+                return false;
 
             var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
             return member?.Roles.IsSmartlisted() ?? false;
