@@ -78,6 +78,60 @@ namespace CompatBot.Commands
             }
         }
 
+        [Command("badupdate"), Aliases("bad", "recall"), RequiresBotModRole]
+        [Description("Toggles new update announcement as being bad")]
+        public async Task BadUpdate(CommandContext ctx, [Description("Link to the update announcement")] string updateMessageLink)
+        {
+            var msg = await ctx.GetMessageAsync(updateMessageLink).ConfigureAwait(false);
+            var embed = msg?.Embeds?.FirstOrDefault();
+            if (embed == null)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid update announcement link").ConfigureAwait(false);
+                return;
+            }
+
+            await ToggleBadUpdateAnnouncementAsync(msg).ConfigureAwait(false);
+            await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
+        }
+
+        public static async Task ToggleBadUpdateAnnouncementAsync(DiscordMessage message)
+        {
+            var embed = message?.Embeds?.FirstOrDefault();
+            if (embed == null)
+                return;
+
+            var result = new DiscordEmbedBuilder(embed);
+            const string warningTitle = "Warning!";
+            if (embed.Color.Value.Value == Config.Colors.DownloadLinks.Value)
+            {
+                result = result.WithColor(Config.Colors.UpdateStatusBad);
+                result.ClearFields();
+                var warned = false;
+                foreach (var f in embed.Fields)
+                {
+                    if (!warned && f.Name.EndsWith("download"))
+                    {
+                        result.AddField(warningTitle, "This build is known to have severe problems, please avoid downloading.");
+                        warned = true;
+                    }
+                    result.AddField(f.Name, f.Value, f.Inline);
+                }
+            }
+            else
+            {
+                result = result.WithColor(Config.Colors.DownloadLinks);
+                result.ClearFields();
+                foreach (var f in embed.Fields)
+                {
+                    if (f.Name == warningTitle)
+                        continue;
+
+                    result.AddField(f.Name, f.Value, f.Inline);
+                }
+            }
+            await message.UpdateOrCreateMessageAsync(message.Channel, embed: result).ConfigureAwait(false);
+        }
+
         private static async Task ReportMessage(CommandContext ctx, string comment, DiscordMessage msg)
         {
             if (msg.Reactions.Any(r => r.IsMe && r.Emoji == Config.Reactions.Moderated))

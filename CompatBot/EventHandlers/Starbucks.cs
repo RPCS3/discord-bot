@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatBot.Commands;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus;
@@ -85,7 +86,7 @@ namespace CompatBot.EventHandlers
 
         public static Task Handler(MessageReactionAddEventArgs args)
         {
-            return CheckMessageAsync(args.Client, args.Channel, args.User, args.Message, args.Emoji);
+            return CheckMessageAsync(args.Client, args.Channel, args.User, args.Message, args.Emoji, false);
         }
 
         public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
@@ -104,7 +105,7 @@ namespace CompatBot.EventHandlers
                     {
                         var reactionUsers = await message.GetReactionsAsync(Config.Reactions.Starbucks).ConfigureAwait(false);
                         if (reactionUsers.Count > 0)
-                            checkTasks.Add(CheckMessageAsync(client, channel, reactionUsers[0], message, Config.Reactions.Starbucks));
+                            checkTasks.Add(CheckMessageAsync(client, channel, reactionUsers[0], message, Config.Reactions.Starbucks, true));
                     }
                 }
                 await Task.WhenAll(checkTasks).ConfigureAwait(false);
@@ -115,7 +116,7 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        private static async Task CheckMessageAsync(DiscordClient client, DiscordChannel channel, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
+        private static async Task CheckMessageAsync(DiscordClient client, DiscordChannel channel, DiscordUser user, DiscordMessage message, DiscordEmoji emoji, bool isBacklog)
         {
             try
             {
@@ -126,8 +127,10 @@ namespace CompatBot.EventHandlers
                 message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
                 if (emoji == Config.Reactions.Starbucks)
                     await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
-                if (emoji == Config.Reactions.Shutup)
+                if (emoji == Config.Reactions.Shutup && !isBacklog)
                     await ShutupAsync(client, user, message).ConfigureAwait(false);
+                if (emoji == Config.Reactions.BadUpdate && !isBacklog)
+                    await BadUpdateAsync(client, user, message, emoji).ConfigureAwait(false);
 
                 await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
             }
@@ -190,6 +193,18 @@ namespace CompatBot.EventHandlers
                 return Task.CompletedTask;
 
             return message.DeleteAsync();
+        }
+
+        private static async Task BadUpdateAsync(DiscordClient client, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
+        {
+            if (message?.Channel.Id != Config.BotChannelId)
+                return;
+
+            if (!user.IsSmartlisted(client, message.Channel.Guild))
+                return;
+
+            await Moderation.ToggleBadUpdateAnnouncementAsync(message).ConfigureAwait(false);
+            await message.DeleteReactionAsync(emoji, user).ConfigureAwait(false);
         }
 
 
