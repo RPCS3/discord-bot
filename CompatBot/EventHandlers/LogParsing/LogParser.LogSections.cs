@@ -49,6 +49,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Title:"] = new Regex(@"Title: (?<game_title>.*)?\r?$", DefaultOptions),
                     ["Category:"] = new Regex(@"Category: (?<game_category>.*)?\r?$", DefaultOptions),
                     ["LDR:"] = new Regex(@"(Path|Cache): ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
+                    ["LDR: Path:"] = new Regex(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
                     ["custom config:"] = new Regex(@"custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
                 },
                 OnNewLineAsync = PiracyCheckAsync,
