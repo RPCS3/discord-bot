@@ -95,6 +95,9 @@ namespace CompatBot
             public static readonly DiscordColor PrOpen = new DiscordColor(0x2cbe4e);
             public static readonly DiscordColor PrMerged = new DiscordColor(0x6f42c1);
             public static readonly DiscordColor PrClosed = new DiscordColor(0xcb2431);
+
+            public static readonly DiscordColor UpdateStatusGood = DiscordColor.Green;
+            public static readonly DiscordColor UpdateStatusBad = DiscordColor.Yellow;
         }
 
         public static class Reactions
@@ -108,6 +111,7 @@ namespace CompatBot
             public static readonly DiscordEmoji PleaseWait = DiscordEmoji.FromUnicode("👀");
             public static readonly DiscordEmoji PiracyCheck = DiscordEmoji.FromUnicode("🔨");
             public static readonly DiscordEmoji Shutup = DiscordEmoji.FromUnicode("🔇");
+            public static readonly DiscordEmoji BadUpdate = DiscordEmoji.FromUnicode("⚠");
         }
 
         public static class Moderation

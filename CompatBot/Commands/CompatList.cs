@@ -205,19 +205,6 @@ Example usage:
             }
         }
 
-        private static string DicToDesc(Dictionary<char, string[]> dictionary)
-        {
-            var result = new StringBuilder();
-            foreach (var lst in dictionary.Values)
-                result.AppendLine(string.Join(", ", lst.Reverse()));
-            return result.ToString();
-        }
-
-        private static string DicToDesc(Dictionary<string, int> dictionary)
-        {
-            return string.Join(", ", dictionary.Keys);
-        }
-
         private async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
         {
             Config.Log.Info(requestBuilder.Build());
