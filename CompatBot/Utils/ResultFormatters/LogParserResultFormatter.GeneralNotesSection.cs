@@ -137,6 +137,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && items["ldr_boot_path_serial"] != serial
                 && items["elf_boot_path_serial"] != serial)
                 notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
+            // LDR: Path: before settings is unreliable, because you can boot through installed patch or game data
             if (!string.IsNullOrEmpty(items["ldr_disc"])
                 && serial.StartsWith("BL")
                 && !string.IsNullOrEmpty(items["ldr_disc_serial"]))
