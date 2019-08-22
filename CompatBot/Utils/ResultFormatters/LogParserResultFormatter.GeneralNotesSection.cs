@@ -130,25 +130,18 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
                 notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
             var path = items["ldr_game"] ?? items["ldr_path"] ?? items["ldr_boot_path"] ?? items["elf_boot_path"];
-            if (!string.IsNullOrEmpty(path))
-            {
-                if (serial.StartsWith("NP"))
-                {
-                    if (items["ldr_game_serial"] != serial
-                        && items["ldr_path_serial"] != serial
-                        && items["ldr_boot_path_serial"] != serial
-                        && items["elf_boot_path_serial"] != serial)
-                        notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
-                }
-                else if (serial.StartsWith("BL"))
-                {
-                    if (!(string.IsNullOrEmpty(items["ldr_game_serial"])
-                          && string.IsNullOrEmpty(items["ldr_path_serial"])
-                          && string.IsNullOrEmpty(items["ldr_boot_path_serial"])
-                          && string.IsNullOrEmpty(items["elf_boot_path_serial"])))
-                        notes.Add("❌ Disc version of the game inside the `/dev_hdd0/game/` directory");
-                }
-            }
+            if (!string.IsNullOrEmpty(path)
+                && serial.StartsWith("NP")
+                && items["ldr_game_serial"] != serial
+                && items["ldr_path_serial"] != serial
+                && items["ldr_boot_path_serial"] != serial
+                && items["elf_boot_path_serial"] != serial)
+                notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
+            // LDR: Path: before settings is unreliable, because you can boot through installed patch or game data
+            if (!string.IsNullOrEmpty(items["ldr_disc"])
+                && serial.StartsWith("BL")
+                && !string.IsNullOrEmpty(items["ldr_disc_serial"]))
+                notes.Add("❌ Disc version of the game inside the `/dev_hdd0/game/` directory");
             if (!string.IsNullOrEmpty(serial) && isElf)
                 notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
 

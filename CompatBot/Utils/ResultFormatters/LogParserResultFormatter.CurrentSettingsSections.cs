@@ -102,7 +102,7 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
                 systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {items["thread_count"]} Threads | {items["memory_amount"]} GiB RAM";
-                if (!string.IsNullOrEmpty(items["cpu_tsc"]))
+                if (!string.IsNullOrEmpty(items["cpu_tsc"]) && items["cpu_tsc"] != "Bad")
                     systemInfo += " | TSC: " + items["cpu_tsc"];
                 if (!string.IsNullOrEmpty(items["cpu_extensions"]))
                     systemInfo += " | " + items["cpu_extensions"];

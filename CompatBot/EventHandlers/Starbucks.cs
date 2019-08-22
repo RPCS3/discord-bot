@@ -204,7 +204,11 @@ namespace CompatBot.EventHandlers
                 return;
 
             await Moderation.ToggleBadUpdateAnnouncementAsync(message).ConfigureAwait(false);
-            await message.DeleteReactionAsync(emoji, user).ConfigureAwait(false);
+            try
+            {
+                await message.DeleteReactionAsync(emoji, user).ConfigureAwait(false);
+            }
+            catch { }
         }
 
 
