@@ -7,8 +7,8 @@ namespace Tests
     [TestFixture]
     public class TimeParserTests
     {
-        [TestCase("2019-8-19 6:00 PT", "2019-08-19 13:00")]
-        [TestCase("2019-8-19 17:00 bst", "2019-08-19 16:00")]
+        [TestCase("2019-8-19 6:00 PT", "2019-08-19T13:00Z")]
+        [TestCase("2019-8-19 17:00 bst", "2019-08-19T16:00Z")]
         public void TimeZoneConverterTest(string input, string utcInput)
         {
             var utc = DateTime.Parse(utcInput).Normalize();
