@@ -57,11 +57,11 @@ namespace CompatBot.Commands
             "Not perfect, but ok", "So good!", "A lucky find!", "💯 approved", "I don't see any downsides",
             "Here's my seal of approval 💮", "As good as it gets", "A benchmark to pursue", "Should make you warm and fuzzy inside", "Fabulous",
             "Cool like a cup of good wine 🍷", "Magical ✨", "Wondrous like a unicorn 🦄", "Soothing sight for these tired eyes", "Lovely",
-            "So cute!", "It's so nice, I think about it every day!", "😊 Never expected to be this pretty!", "It's overflowing with charm!", "Filled with passion!", 
-	    "A love magnet", "Pretty Fancy", "Admirable", "Sweet as a candy", "Delightful",
-	    "Enchanting as the Sunset", "A beacon of hope!", "Filled with hope!", "Shiny!", "Absolute Hope!",
-	    "The meaning of hope", "Inspiring!"
-			
+            "So cute!", "It's so nice, I think about it every day!", "😊 Never expected to be this pretty!", "It's overflowing with charm!", "Filled with passion!",
+            "A love magnet", "Pretty Fancy", "Admirable", "Sweet as a candy", "Delightful",
+            "Enchanting as the Sunset", "A beacon of hope!", "Filled with hope!", "Shiny!", "Absolute Hope!",
+            "The meaning of hope", "Inspiring!",
+
             // 20
             "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect", "🆗",
             "You already know, my boi", "Unexpected like a bouquet of sunflowers 🌻", "Hard to measure precisely...", "Requires more data to analyze", "Passable",
@@ -72,12 +72,12 @@ namespace CompatBot.Commands
             "Bad", "Very bad", "Pretty bad", "Horrible", "Ugly",
             "Disgusting", "Literally the worst", "Not interesting", "Simply ugh", "I don't like it! You shouldn't either!",
             "Just like you, 💩", "Not approved", "Big Mistake", "The opposite of good", "Could be better",
-            "🤮", "😐",  "So-so", "Not worth it", "Mediocre at best",
+            "🤮", "😐", "So-so", "Not worth it", "Mediocre at best",
             "Useless", "I think you misspelled `poop` there", "Nothing special", "😔", "Real shame",
             "Boooooooo!", "Poopy", "Smelly", "Feeling-breaker", "Annoying",
-	    "Boring", "Easily forgettable", "An Abomination", "A Monstrosity", "Truly horrific",
-	    "Filled with despair!", "Eroded by despair", "Hopeless…", "It's pretty foolish to want to rate this", "Cursed with misfortune",
-	    "Nothing but terror"
+            "Boring", "Easily forgettable", "An Abomination", "A Monstrosity", "Truly horrific",
+            "Filled with despair!", "Eroded by despair", "Hopeless…", "It's pretty foolish to want to rate this", "Cursed with misfortune",
+            "Nothing but terror",
         };
 
         private static readonly char[] Separators = { ' ', '　', '\r', '\n' };
