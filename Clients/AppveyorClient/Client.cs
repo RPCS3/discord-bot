@@ -23,10 +23,11 @@ namespace AppveyorClient
 
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
+        private static readonly TimeSpan PrToArtifactCacheTime = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan JobToBuildCacheTime = TimeSpan.FromDays(30);
         private static readonly TimeSpan MasterBuildCacheTime = TimeSpan.FromDays(1);
         private static readonly TimeSpan JobIdSearchThreshold = TimeSpan.FromDays(6 * 30);
-        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromHours(1)});
+        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
 
         public Client()
         {
@@ -120,7 +121,7 @@ namespace AppveyorClient
                     Artifact = rpcs3Build,
                     DownloadUrl = $"https://ci.appveyor.com/api/buildjobs/{job.JobId}/artifacts/{rpcs3Build.FileName}",
                 };
-                ResponseCache.Set(prNumber, result, CacheTime);
+                ResponseCache.Set(prNumber, result, PrToArtifactCacheTime);
                 ApiConfig.Log.Debug($"Cached {nameof(ArtifactInfo)} for {prNumber} for {CacheTime}");
                 return result;
             }
