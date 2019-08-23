@@ -62,6 +62,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
                 var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
+                var onlineOnlypart = info.Network == true ? " 🌐" : "";
                 var pr = info.ToPrString(null, true);
 				var desc = $"{info.Status} since {info.ToUpdated()}";
 				if (pr is string _)
@@ -78,7 +79,7 @@ namespace CompatBot.Utils.ResultFormatters
                 }
                 return new DiscordEmbedBuilder
                     {
-                        Title = $"{productCodePart}{cacheTitle.Trim(200)}",
+                        Title = $"{productCodePart}{cacheTitle.Trim(200)}{onlineOnlypart}",
                         Url = $"https://forums.rpcs3.net/thread-{info.Thread}.html",
                         Description = desc,
                         Color = color,

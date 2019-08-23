@@ -32,5 +32,6 @@ namespace CompatApiClient.POCOs
         public int Thread;
         public string Commit;
         public int? Pr;
+        public bool? Network;
     }
 }
