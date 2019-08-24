@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using CompatBot.Utils;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.UserSecrets;
@@ -54,13 +55,16 @@ namespace CompatBot
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
 
         public static string Token => config.GetValue(nameof(Token), "");
-        public static string LogPath => config.GetValue(nameof(LogPath), "logs/bot.log"); // paths are relative to the assembly, so this will put it in the project's root
+        public static string LogPath => config.GetValue(nameof(LogPath), "../../../logs/"); // paths are relative to the assembly, so this will put it in the project's root
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
 
         public static string GoogleApiConfigPath 
         {
             get
             {
+                if (SandboxDetector.Detect() == "Docker")
+                    return "/bot-config/credentials.json";
+
                 if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
                 {
                     var path = Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId(attribute.UserSecretsId));
@@ -68,6 +72,7 @@ namespace CompatBot
                     if (File.Exists(path))
                         return path;
                 }
+                
                 return "Properties/credentials.json";
             }
         }
@@ -154,7 +159,7 @@ namespace CompatBot
 
                 config = new ConfigurationBuilder()
                          .AddUserSecrets(Assembly.GetExecutingAssembly()) // lower priority
-                         //.AddEnvironmentVariables()
+                         .AddEnvironmentVariables()
                          .AddInMemoryCollection(inMemorySettings)     // higher priority
                          .Build();
                 Log = GetLog();
@@ -172,7 +177,7 @@ namespace CompatBot
         {
             var config = new NLog.Config.LoggingConfiguration();
             var fileTarget = new FileTarget("logfile") {
-                FileName = Path.Combine("../../../", LogPath),
+                FileName = Path.Combine(LogPath, "bot.log"),
                 ArchiveEvery = FileArchivePeriod.Day,
                 ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
                 KeepFileOpen = true,

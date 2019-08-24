@@ -1,20 +1,75 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+jobs:
+- job: BuildAndTest
+  displayName: 'Run tests'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - script: dotnet restore --ignore-failed-sources
+    displayName: 'dotnet restore (first try)'
 
-pool:
-  vmImage: 'Ubuntu 16.04'
+  - script: dotnet restore --ignore-failed-sources
+    displayName: 'dotnet restore (second try)'
 
-variables:
-  buildConfiguration: 'Release'
+  - script: dotnet restore
+    displayName: 'dotnet restore (last try)'
 
-steps:
-- script: dotnet restore
-  displayName: 'dotnet restore'
+  - script: dotnet build --configuration Debug
+    displayName: 'dotnet build Debug'
 
-- script: dotnet build --configuration Debug
-  displayName: 'dotnet build Debug'
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet test'
+    inputs:
+      command: 'test'
+      projects: Tests/Tests.csproj
 
-- script: dotnet build --configuration Release
-  displayName: 'dotnet build Release'
+- job: DockerImage
+  displayName: 'Build Docker image'
+  condition: and(and(succeeded(), eq(variables['ReleaseBranch'], variables['Build.SourceBranch'])), ne(format('{0}', variables['DockerConnection']), ''))
+  dependsOn: BuildAndTest
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - script: git checkout -f $(Build.SourceBranchName)
+    displayName: 'create local tracking branch'
+
+  - script: git clean -dfx
+    displayName: 'clean build artifacts'
+
+  - script: dotnet restore --ignore-failed-sources
+    displayName: 'dotnet restore (first try)'
+
+  - script: dotnet restore --ignore-failed-sources
+    displayName: 'dotnet restore (second try)'
+
+  - script: dotnet restore
+    displayName: 'dotnet restore (last try)'
+
+  - script: dotnet build --configuration Release
+    displayName: 'dotnet build Release'
+
+  - script: mkdir packages && cp -a /home/vsts/.nuget/packages ./packages/
+    displayName: 'copy nuget package cache for docker'
+
+  - task: Docker@2
+    displayName: 'building release docker image'
+    condition: and(succeeded(), eq(variables['ReleaseKind'], 'release'))
+    inputs:
+      containerRegistry: $(DockerConnection)
+      repository: $(DockerRegistry)
+      command: 'buildAndPush'
+      Dockerfile: 'Dockerfile'
+      tags: |
+        $(Build.BuildId)
+        release-latest
+        latest
+        
+  - task: Docker@2
+    displayName: 'building test docker image'
+    condition: and(succeeded(), not(eq(variables['ReleaseKind'], 'release')))
+    inputs:
+      containerRegistry: $(DockerConnection)
+      repository: $(DockerRegistry)
+      command: 'buildAndPush'
+      Dockerfile: 'Dockerfile'
+      tags: test-latest
+        

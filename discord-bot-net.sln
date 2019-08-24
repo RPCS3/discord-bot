@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2035
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28917.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompatBot", "CompatBot\CompatBot.csproj", "{6D9CA448-60C1-4D66-91D6-EC6C586508E6}"
 EndProject
@@ -17,9 +17,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{E7FE0ADD-CBA6-4321-8A1C-0A3B5C3F54C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GithubClient", "Clients\GithubClient\GithubClient.csproj", "{AF8FDA29-864E-4A1C-9568-99DECB7E4B36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GithubClient", "Clients\GithubClient\GithubClient.csproj", "{AF8FDA29-864E-4A1C-9568-99DECB7E4B36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppveyorClient", "Clients\AppveyorClient\AppveyorClient.csproj", "{595ED201-1456-49F9-AD60-54B08499A5C1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AppveyorClient", "Clients\AppveyorClient\AppveyorClient.csproj", "{595ED201-1456-49F9-AD60-54B08499A5C1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AD87F38F-BFCE-4EA6-A430-20C497552FD7}"
+	ProjectSection(SolutionItems) = preProject
+		azure-pipelines.yml = azure-pipelines.yml
+		docker-compose.example.yml = docker-compose.example.yml
+		Dockerfile = Dockerfile
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

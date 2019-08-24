@@ -1,0 +1,13 @@
+version: "3"
+services:
+  bot:
+    image: rpcs3/discord-bot:latest
+  volumes:
+    - /home/MY_USER_NAME/.local/share/compat-bot:/bot-db
+    - /home/MY_USER_NAME/.microsoft/usersecrets/c2e6548b-b215-4a18-a010-958ef294b310:/bot-config
+    - /var/logs/compat-bot:/src/CompatBot/logs
+    - /ver/ird:/var/ird
+  environment:
+    Token: MY_BOT_TOKEN
+    LogPath: /var/logs/compat-bot
+    IrdCachePath: /var/ird

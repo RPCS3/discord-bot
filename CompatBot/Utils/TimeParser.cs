@@ -82,5 +82,7 @@ namespace CompatBot.Utils
                 return date.ToUniversalTime();
             return date.AsUtc();
         }
+
+        public static List<string> GetSupportedTimeZoneAbbreviations() => TimeZoneMap.Keys.ToList();
     }
 }
