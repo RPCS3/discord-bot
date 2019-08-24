@@ -80,7 +80,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Load libraries:"] = new Regex(@"libraries:\r?\n(?<library_list>(.*?(- .*?|\[\])\r?\n)+)", DefaultOptions),
                     ["HLE lwmutex:"] = new Regex(@"HLE lwmutex: (?<hle_lwmutex>.*?)\r?$", DefaultOptions),
                     ["Clocks scale:"] = new Regex(@"Clocks scale: (?<clock_scale>.*?)\r?$", DefaultOptions),
-                    ["Sleep timers accuracy:"] = new Regex(@"Sleep timers accuracy: (?<sleep_timer>.*?)\r?$", DefaultOptions),
+                    ["Sleep Timers Accuracy:"] = new Regex(@"Sleep Timers Accuracy: (?<sleep_timer>.*?)\r?$", DefaultOptions),
                 },
                 EndTrigger = new[] {"VFS:"},
             },
