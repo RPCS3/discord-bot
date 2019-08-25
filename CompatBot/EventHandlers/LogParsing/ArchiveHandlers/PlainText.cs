@@ -15,11 +15,13 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             LogSize = fileSize;
-            var result = fileName.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
-                         && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase)
-                         && header.Length > 8
-                         && Encoding.UTF8.GetString(header.Slice(0, 8)).Contains("RPCS3");
-            return (result, null);
+            if (fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
+                return (false, null);
+
+            if (header.Length > 10 && Encoding.UTF8.GetString(header.Slice(0, 10)).Contains("RPCS3 v"))
+                return (true, null);
+
+            return (false, null);
         }
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
