@@ -1,6 +1,8 @@
 RPCS3 Compatibility Bot
 =======================
 
+[![Build Status](https://13xforever.visualstudio.com/RPCS3%20Bot/_apis/build/status/13xforever.discord-bot?branchName=vnext)](https://13xforever.visualstudio.com/RPCS3%20Bot/_build/latest?definitionId=1&branchName=vnext)
+
 This is a tech support / moderation / crowd entertainment bot for the [RPCS3 discord server](https://discord.me/rpcs3) [![RPCS3 discord server](https://discordapp.com/api/guilds/272035812277878785/widget.png)](https://discord.me/rpcs3)
 
 You can read the design and implementation notes by visiting the folders in the web interface, or from the [architecture overview notes](architecture.md).

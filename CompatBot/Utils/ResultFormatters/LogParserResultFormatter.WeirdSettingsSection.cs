@@ -347,8 +347,9 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("ℹ To enter the character name, disable `Native UI` and use Japanese text");
 
                 if (items["sleep_timer"] is string sleepTimer
+                    && sleepTimer != "Usleep Only"
                     && sleepTimer != "Usleep")
-                    notes.Add("⚠ Please set `Sleep Timers Accuracy` setting to `Usleep`");
+                    notes.Add("⚠ Please set `Sleep Timers Accuracy` setting to `Usleep Only`");
             }
         }
 

@@ -107,14 +107,14 @@ namespace CompatBot.Database.Providers
             return false;
         }
 
-        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, string triggerContext = null)
+        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string triggerContext = null)
         {
             if (trigger == null)
                 return;
 
             var severity = ReportSeverity.Low;
             var completedActions = new List<FilterAction>();
-            if (trigger.Actions.HasFlag(FilterAction.RemoveContent))
+            if (trigger.Actions.HasFlag(FilterAction.RemoveContent) && !ignoreFlags.HasFlag(FilterAction.RemoveContent))
             {
                 try
                 {
@@ -127,7 +127,7 @@ namespace CompatBot.Database.Providers
                 }
             }
 
-            if (trigger.Actions.HasFlag(FilterAction.IssueWarning))
+            if (trigger.Actions.HasFlag(FilterAction.IssueWarning) && !ignoreFlags.HasFlag(FilterAction.IssueWarning))
             {
                 try
                 {
@@ -140,7 +140,7 @@ namespace CompatBot.Database.Providers
                 }
             }
 
-            if (trigger.Actions.HasFlag(FilterAction.SendMessage))
+            if (trigger.Actions.HasFlag(FilterAction.SendMessage) && !ignoreFlags.HasFlag(FilterAction.SendMessage))
             {
                 try
                 {
@@ -162,7 +162,7 @@ namespace CompatBot.Database.Providers
             var actionList = "";
             foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
             {
-                if (trigger.Actions.HasFlag(fa))
+                if (trigger.Actions.HasFlag(fa) && !ignoreFlags.HasFlag(fa))
                     actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + ' ';
             }
 
