@@ -9,7 +9,7 @@ After changing the classes you need to generate a new migration using dotnet ef 
 ```
 $ dotnet ef migrations add -c <DbClass> <MigrationName>
 ```
-Note that ef tools come bundled with dotnet sdk 2.x, but require [manual installation](https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet) starting dotnet sdk 3.0.
+Note that ef tools come bundled with dotnet sdk 2.x, but require [manual installation](https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet) starting with dotnet sdk 3.0.
 
 `BotDb`, `ThumbnailDb`
 -----------------------
