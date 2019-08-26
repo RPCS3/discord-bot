@@ -10,6 +10,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using NLog.Fluent;
 
 namespace CompatBot.Commands
 {
@@ -53,6 +54,7 @@ namespace CompatBot.Commands
                     DiscordMessage msg = null;
                     try
                     {
+                        Config.Log.Info("Checking for available updates...");
                         msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
                         await StatsStorage.SaveAsync(true).ConfigureAwait(false);
                         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for updates...").ConfigureAwait(false);
