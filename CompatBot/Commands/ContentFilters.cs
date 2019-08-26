@@ -22,7 +22,7 @@ namespace CompatBot.Commands
 {
     [Group("filters"), Aliases("piracy", "filter"), RequiresBotSudoerRole, RequiresDm]
     [Description("Used to manage content filters. **Works only in DM**")]
-    internal sealed class Antipiracy: BaseCommandModuleCustom
+    internal sealed class ContentFilters: BaseCommandModuleCustom
     {
         private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
         private static readonly char[] Separators = {' ', ',', ';', '|'};
