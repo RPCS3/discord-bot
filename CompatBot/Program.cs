@@ -101,7 +101,7 @@ namespace CompatBot
                     commands.RegisterCommands<CompatList>();
                     commands.RegisterCommands<Sudo>();
                     commands.RegisterCommands<CommandsManagement>();
-                    commands.RegisterCommands<Antipiracy>();
+                    commands.RegisterCommands<ContentFilters>();
                     commands.RegisterCommands<Warnings>();
                     commands.RegisterCommands<Explain>();
                     commands.RegisterCommands<Psn>();
