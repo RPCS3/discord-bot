@@ -220,15 +220,29 @@ namespace CompatBot.EventHandlers.LogParsing
             if (await ContentFilter.FindTriggerAsync(FilterContext.Log, line).ConfigureAwait(false) is Piracystring match
                 && match.Actions.HasFlag(FilterAction.RemoveContent))
             {
-                if (state.FilterTriggers.TryGetValue(match.Id, out var fh))
+                var m = match;
+                if (line.Contains("not valid, removing from"))
+                    m = new Piracystring
+                    {
+                        Id = match.Id,
+                        Actions = match.Actions & ~FilterAction.IssueWarning,
+                        Context = match.Context,
+                        CustomMessage = match.CustomMessage,
+                        Disabled = match.Disabled,
+                        ExplainTerm = match.ExplainTerm,
+                        String = match.String,
+                        ValidatingRegex = match.ValidatingRegex,
+                    };
+                if (state.FilterTriggers.TryGetValue(m.Id, out var fh))
                 {
                     if (fh.context.Length > line.Length)
-                        state.FilterTriggers[match.Id] = (match, line.ToUtf8());
+                        state.FilterTriggers[m.Id] = (m, line.ToUtf8());
                 }
                 else
                 {
-                    state.FilterTriggers[match.Id] = (match, line.ToUtf8());
-                    if (match.Actions.HasFlag(FilterAction.IssueWarning))
+                    var utf8line = line.ToUtf8();
+                    state.FilterTriggers[m.Id] = (m, utf8line);
+                    if (m.Actions.HasFlag(FilterAction.IssueWarning))
                         state.Error = LogParseState.ErrorCode.PiracyDetected;
                 }
             }
