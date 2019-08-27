@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.POCOs;
+using CompatBot.EventHandlers;
 using DSharpPlus.Entities;
 using GithubClient.POCOs;
 
@@ -41,7 +43,26 @@ namespace CompatBot.Utils.ResultFormatters
                 if (currentPr > 0 && currentPr != latestPr)
                     currentPrInfo = await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
             }
-            builder = builder ?? new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = latestPrInfo?.Title, Color = Config.Colors.DownloadLinks};
+            var desc = latestPrInfo?.Title;
+            if (!string.IsNullOrEmpty(desc)
+                && GithubLinksHandler.IssueMention.Matches(desc) is MatchCollection matches
+                && matches.Any())
+            {
+                foreach (Match m in matches)
+                {
+                    if (m.Groups["issue_mention"]?.Value is string str && !string.IsNullOrEmpty(str))
+                    {
+                        var num = m.Groups["number"].Value;
+                        if (string.IsNullOrEmpty(num))
+                            num = m.Groups["also_number"].Value;
+                        if (string.IsNullOrEmpty(num))
+                            continue;
+
+                        desc = desc.Replace(str, $"[{str}](https://github.com/RPCS3/rpcs3/issues/{num})");
+                    }
+                }
+            }
+            builder = builder ?? new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
             var currentCommit = currentPrInfo?.MergeCommitSha;
             var latestCommit = latestPrInfo?.MergeCommitSha;
             var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);

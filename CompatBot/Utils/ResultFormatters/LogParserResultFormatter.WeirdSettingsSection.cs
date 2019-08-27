@@ -370,7 +370,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly HashSet<string> GowHDIds = new HashSet<string>
         {
-            "BCAS20102", "BCES00791", "BCES00800", "BLJM60200", // collection except volume II
+            "BCAS20102", "BCES00791", "BCES00800", "BLJM60200", "BCUS98229", // collection except volume II
             "NPUA80491", "NPUA80490", "NPEA00255", "NPEA00256", "NPJA00062", "NPJA00061", "NPJA00066",
         };
 
@@ -397,11 +397,8 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["spu_decoder"] is string spuDecoder
                     && spuDecoder.Contains("LLVM")
                     && items["spu_block_size"] is string blockSize
-                    && blockSize != "Safe")
-                    notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
-                if (items["spu_block_size"] is string spuBlockSize
-                    && spuBlockSize != "Mega")
-                    notes.Add("ℹ `SPU Block Size` is recommended to set to `Mega`");
+                    && blockSize != "Mega")
+                    notes.Add("⚠ Please change `SPU Block Size` to `Mega` for this game");
             }
             else if (GowAscIds.Contains(serial))
                 notes.Add("ℹ This game is known to be very unstable");
