@@ -370,7 +370,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly HashSet<string> GowHDIds = new HashSet<string>
         {
-            "BCAS20102", "BCES00791", "BCES00800", "BLJM60200", // collection except volume II
+            "BCAS20102", "BCES00791", "BCES00800", "BLJM60200", "BCUS98229", // collection except volume II
             "NPUA80491", "NPUA80490", "NPEA00255", "NPEA00256", "NPJA00062", "NPJA00061", "NPJA00066",
         };
 
