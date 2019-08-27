@@ -362,13 +362,35 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
+        private static readonly HashSet<string> Gow3Ids = new HashSet<string>
+        {
+            "BCAS25003", "BCES00510", "BCES00516", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003",
+        };
+
+        private static readonly HashSet<string> GowHDIds = new HashSet<string>
+        {
+            "BCAS20102", "BCES00791", "BCES00800", "BLJM60200", // collection except volume II
+            "NPUA80491", "NPUA80490", "NPEA00255", "NPEA00256", "NPJA00062", "NPJA00061", "NPJA00066",
+        };
+
+        private static readonly HashSet<string> GowAscIds = new HashSet<string>
+        {
+            "BCAS25016", "BCES01741", "BCES01742", "BCUS98232",
+            "NPEA00445", "NPEA90123", "NPUA70216", "NPUA70269", "NPUA80918",
+            "NPHA80258",
+        };
+
         private static void CheckGoWSettings(string serial, NameValueCollection items, List<string> notes)
         {
             if (serial == "NPUA70080") // GoW3 Demo
                 return;
 
-            var title = items["embed_title"];
-            if (serial == "BCES00510" || serial == "BCUS98111" || serial == "BCJS75001" || serial == "BCJS37001" || serial == "BCKS15003") // GoW3
+            if (GowHDIds.Contains(serial))
+            {
+                if (items["renderer"] is string renderer && renderer != "OpenGL")
+                    notes.Add("⚠ `OpenGL` is recommended for classic God of War games");
+            }
+            else if (Gow3Ids.Contains(serial))
             {
                 notes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
                 if (items["spu_decoder"] is string spuDecoder
@@ -380,13 +402,8 @@ namespace CompatBot.Utils.ResultFormatters
                     && spuBlockSize != "Mega")
                     notes.Add("ℹ `SPU Block Size` is recommended to set to `Mega`");
             }
-            else if (serial == "BCAS25016" || title.Contains("God of War", StringComparison.InvariantCultureIgnoreCase))
-            {
-                if (title.Contains("Ascension", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("ℹ This game is known to be very unstable");
-                else if (items["renderer"] is string renderer && renderer != "OpenGL")
-                    notes.Add("⚠ `OpenGL` is recommended for classic God of War games");
-            }
+            else if (GowAscIds.Contains(serial))
+                notes.Add("ℹ This game is known to be very unstable");
         }
 
         private static readonly HashSet<string> DesIds = new HashSet<string>
