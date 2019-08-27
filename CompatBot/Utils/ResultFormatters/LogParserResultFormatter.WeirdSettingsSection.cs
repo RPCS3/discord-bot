@@ -77,6 +77,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckScottPilgrimSettings(serial, items, notes);
                 CheckGoWSettings(serial, items, notes);
                 CheckDesSettings(serial, items, notes, ppuPatches);
+                CheckTlouSettings(serial, items, notes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes);
@@ -453,6 +454,39 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
         }
+
+        private static readonly HashSet<string> TlouIds = new HashSet<string>
+        {
+            "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174",
+            "NPEA00435", "NPEA00521", "NPJA00096", "NPJA00129",
+            "NPUA30134", "NPUA70257", "NPUA80960", "NPUA81175",
+            "NPHA80206", "NPHA80279",
+        };
+
+        private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (!TlouIds.Contains(serial))
+                return;
+
+            if (items["write_color_buffers"] == DisabledMark)
+                notes.Add("⚠ Please enable `Write Color Buffers`");
+
+            if (items["read_color_buffers"] == DisabledMark)
+                notes.Add("⚠ Please enable `Read Color Buffers`");
+
+            if (items["read_depth_buffer"] == DisabledMark)
+                notes.Add("⚠ Please enable `Read Depth Buffer`");
+
+            if (items["cpu_blit"] == DisabledMark)
+                notes.Add("⚠ Please enable `Force CPU Blit`");
+
+            if (items["resolution_scale"] is string resFactor
+                && int.TryParse(resFactor, out var resolutionScale)
+                && resolutionScale > 100
+                && items["strict_rendering_mode"] != EnabledMark)
+                notes.Add("⚠ Please set `Resolution Scale` to 100%");
+        }
+
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes)
         {
