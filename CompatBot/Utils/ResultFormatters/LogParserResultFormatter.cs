@@ -92,7 +92,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             "BLES00932", "BLUS30443", "BCJS70013", "BCJS30022", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
-            "BCES00510", "BCUS98111", "BCJS37001", "BCKS15003", "NPUA70080", // God of War 3 / Demo
+            "BCAS25003", "BCES00510", "BCES00516", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003", "NPUA70080", // God of War 3 / Demo
             "BCES00006", "BCUS98137", "NPEA00333", "NPUA80499", // Motorstorm
             "BCES00484", "BCUS98242", "NPEA00315", "NPUA80661", // Motorstorm Apocalypse
             "BCES00129", "BCUS98155", // Motorstorm Pacific Rift

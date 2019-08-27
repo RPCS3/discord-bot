@@ -397,11 +397,8 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["spu_decoder"] is string spuDecoder
                     && spuDecoder.Contains("LLVM")
                     && items["spu_block_size"] is string blockSize
-                    && blockSize != "Safe")
-                    notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
-                if (items["spu_block_size"] is string spuBlockSize
-                    && spuBlockSize != "Mega")
-                    notes.Add("ℹ `SPU Block Size` is recommended to set to `Mega`");
+                    && blockSize != "Mega")
+                    notes.Add("⚠ Please change `SPU Block Size` to `Mega` for this game");
             }
             else if (GowAscIds.Contains(serial))
                 notes.Add("ℹ This game is known to be very unstable");
