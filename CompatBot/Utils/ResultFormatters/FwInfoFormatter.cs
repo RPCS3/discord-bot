@@ -54,8 +54,8 @@ namespace CompatBot.Utils.ResultFormatters
 
                         links.Append(newLink);
                     }
-                    result.AddField("System Software License Agreement", "You **must** read and agree with the terms described [here](https://doc.dl.playstation.net/doc/ps3-eula/) before downloading the update");
-                    result.AddField("Download links", links.ToString().TrimEnd());
+                    result.AddField("System Software License Agreement", "You **must** read and agree with the terms described [here](https://doc.dl.playstation.net/doc/ps3-eula/) before downloading");
+                    result.AddField("Download Links", links.ToString().TrimEnd());
                     return result.WithFooter("Every region has identical firmware content");
                 }
             }

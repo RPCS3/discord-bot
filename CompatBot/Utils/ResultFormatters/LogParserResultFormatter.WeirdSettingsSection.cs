@@ -298,16 +298,16 @@ namespace CompatBot.Utils.ResultFormatters
         private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes)
         {
             if (AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
-	    {
-		if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
+            {
+                if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
                 {
                     notes.Add("ℹ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
-		}
-		else if (items["audio_buffering"] == DisabledMark)
-		{
-		    notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
-		}
-	    }
+                }
+                else if (items["audio_buffering"] == DisabledMark)
+                {
+                    notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
+                }
+            }
         }
 
         private static void CheckSimpsonsSettings(string serial, List<string> notes)
