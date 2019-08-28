@@ -113,6 +113,7 @@ namespace CompatBot
                     commands.RegisterCommands<Events>();
                     commands.RegisterCommands<E3>();
                     commands.RegisterCommands<Cyberpunk2077>();
+                    commands.RegisterCommands<Rpcs3Ama>();
                     commands.RegisterCommands<BotStats>();
                     commands.RegisterCommands<Syscall>();
 
