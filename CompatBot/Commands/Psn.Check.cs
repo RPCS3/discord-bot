@@ -116,6 +116,18 @@ namespace CompatBot.Commands
 
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Added {itemsToCheck.Count} ID{StringUtils.GetSuffix(itemsToCheck.Count)} to the scraping queue").ConfigureAwait(false);
             }
+
+            [Command("firmware"), Aliases("fw")]
+            [Cooldown(1, 10, CooldownBucketType.Channel)]
+            [Description("Checks for latest PS3 firmware version")]
+            public Task Firmware(CommandContext ctx) => GetFirmwareAsync(ctx);
+
+            internal static async Task GetFirmwareAsync(CommandContext ctx)
+            {
+                var fwList = await Client.GetHighestFwVersionAsync(Config.Cts.Token).ConfigureAwait(false);
+                var embed = fwList.ToEmbed();
+                await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+            }
         }
     }
 }

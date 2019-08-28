@@ -33,6 +33,11 @@ namespace PsnClient
             "en-SK", "en-TH", "en-TR", "en-TW", "en-ZA", "ja-JP", "de-AT", "de-CH", "de-DE", "de-LU", "es-BO", "es-CR", "es-EC", "es-ES", "es-GT", "es-HN", "es-NI", "es-PA", "es-PY", "es-SV",
             "es-UY", "fr-BE", "fr-FR", "it-IT", "ko-KR", "nl-NL", "pt-PT", "ru-RU", "ru-UA", "zh-Hans-CN"
         };
+        // Dest=87;ImageVersion=0001091d;SystemSoftwareVersion=4.8500;CDN=http://duk01.ps3.update.playstation.net/update/ps3/image/uk/2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP;CDN_Timeout=30;
+        private static readonly Regex FwVersionInfo = new Regex(@"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+        private static readonly string[] KnownFwLocales = { "us", "eu", "uk", "au", "ru", "jp", "br", "cn", "hk", "mx", "sa", "tw", "kr", };
 
         public Client()
         {
@@ -321,6 +326,34 @@ namespace PsnClient
             }
         }
 
+        public async Task<List<FirmwareInfo>> GetHighestFwVersionAsync(CancellationToken cancellationToken)
+        {
+            var tasks = new List<Task<FirmwareInfo>>(KnownFwLocales.Length);
+            foreach (var fwLocale in KnownFwLocales)
+                tasks.Add(GetFwVersionAsync(fwLocale, cancellationToken));
+            var allVersions = new List<FirmwareInfo>(KnownFwLocales.Length);
+            foreach (var t in tasks)
+                try
+                {
+                    var ver = await t.ConfigureAwait(false);
+                    if (ver == null)
+                        continue;
+
+                    allVersions.Add(ver);
+                }
+                catch { }
+
+            allVersions = allVersions.OrderByDescending(fwi => fwi.Version).ToList();
+            if (allVersions.Any())
+            {
+                var maxFw = allVersions.First();
+                var result = allVersions.Where(fwi => fwi.Version == maxFw.Version).ToList();
+                return result;
+            }
+
+            return new List<FirmwareInfo>(0);
+        }
+
         private async Task<string> GetSessionCookies(string locale, CancellationToken cancellationToken)
         {
             var loc = locale.AsLocaleData();
@@ -369,6 +402,51 @@ namespace PsnClient
                 }
             } while (tries < 3);
             throw new InvalidOperationException("Couldn't obtain web session");
+        }
+
+        private async Task<FirmwareInfo> GetFwVersionAsync(string fwLocale, CancellationToken cancellationToken)
+        {
+            var uri = new Uri($"http://f{fwLocale}01.ps3.update.playstation.net/update/ps3/list/{fwLocale}/ps3-updatelist.txt");
+            try
+            {
+                using (var message = new HttpRequestMessage(HttpMethod.Get, uri))
+                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
+                    try
+                    {
+                        if (response.StatusCode != HttpStatusCode.OK)
+                            return null;
+
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        var data = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        if (string.IsNullOrEmpty(data))
+                            return null;
+
+                        if (FwVersionInfo.Match(data) is Match m && m.Success)
+                        {
+                            var ver = m.Groups["version"].Value;
+                            if (!string.IsNullOrEmpty(ver) && ver.Length > 4)
+                            {
+                                if (ver.EndsWith("00"))
+                                    ver = ver.Substring(0, 4); //4.85
+                                else
+                                    ver = ver.Substring(0, 4) + "." + ver.Substring(4).TrimEnd('0'); //4.851 -> 4.85.1
+                            }
+                            return new FirmwareInfo { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
+                        }
+
+                        return null;
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response);
+                        return null;
+                    }
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e, "Failed to GET " + uri);
+                return null;
+            }
         }
     }
 }
