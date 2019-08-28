@@ -418,6 +418,10 @@ namespace CompatBot.Commands
             return Psn.SearchForGame(ctx, game, 3);
         }
 
+        [Command("firmware"), Aliases("fw"), Cooldown(1, 10, CooldownBucketType.Channel)]
+        [Description("Checks for latest PS3 firmware version")]
+        public Task Firmware(CommandContext ctx) => Psn.Check.GetFirmwareAsync(ctx);
+
         [Command("compare"), Hidden]
         [Description("Calculates the similarity metric of two phrases from 0 (completely different) to 1 (identical)")]
         public Task Compare(CommandContext ctx, string strA, string strB)

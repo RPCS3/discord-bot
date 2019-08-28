@@ -192,4 +192,11 @@ namespace PsnClient.POCOs
         public string Id;
         public string Name;
     }
+
+    public class FirmwareInfo
+    {
+        public string Version;
+        public string DownloadUrl;
+        public string Locale;
+    }
 }

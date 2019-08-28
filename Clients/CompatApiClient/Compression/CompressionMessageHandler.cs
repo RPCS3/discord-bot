@@ -50,7 +50,9 @@ namespace CompatApiClient.Compression
                 }
             }
             request.Headers?.Remove(PostCompressionFlag);
+            //ApiConfig.Log.Trace($"{request.Method} {request.RequestUri}");
             var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            //ApiConfig.Log.Trace($"Response: {response.StatusCode} {request.RequestUri}");
             if (isClient && response.Content?.Headers?.ContentEncoding != null)
             {
                 var encoding = response.Content.Headers.ContentEncoding.FirstOrDefault();
