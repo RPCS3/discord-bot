@@ -32,7 +32,9 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var context = items["fatal_error_context"] ?? "";
                 builder.AddField("Fatal Error", $"```\n{fatalError.Trim(1020)}\n```");
-                if (fatalError.Contains("psf.cpp") || fatalError.Contains("invalid map<K, T>") || context.Contains("SaveData"))
+                if (fatalError.Contains("psf.cpp", StringComparison.InvariantCultureIgnoreCase)
+                    || fatalError.Contains("invalid map<K, T>", StringComparison.InvariantCultureIgnoreCase)
+                    || context.Contains("SaveData", StringComparison.InvariantCultureIgnoreCase))
                     notes.Add("❌ Game save data is corrupted");
                 else if (fatalError.Contains("Could not bind OpenGL context"))
                     notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
