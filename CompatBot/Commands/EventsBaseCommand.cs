@@ -470,6 +470,23 @@ namespace CompatBot.Commands
             return (false, msg);
         }
 
+        private static string NameWithoutLink(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return name;
+
+            var lastPartIdx = name.LastIndexOf(' ');
+            if (lastPartIdx < 0)
+                return name;
+
+            if (name.Length - lastPartIdx > 5
+                && name.Substring(lastPartIdx + 1, 5).ToLowerInvariant() is string lnk
+                && (lnk.StartsWith("<http") || lnk.StartsWith("http")))
+                return name.Substring(0, lastPartIdx);
+
+            return name;
+        }
+
         private static async Task<string> FuzzyMatchEventName(BotDb db, string eventName)
         {
             var knownEventNames = await db.EventSchedule.Select(e => e.EventName).Distinct().ToListAsync().ConfigureAwait(false);
@@ -481,7 +498,7 @@ namespace CompatBot.Commands
         {
             var now = DateTime.UtcNow.Ticks;
             var knownNames = await db.EventSchedule.Where(e => e.End > now).Select(e => e.Name).ToListAsync().ConfigureAwait(false);
-            var (score, name) = knownNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
+            var (score, name) = knownNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(NameWithoutLink(n)), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
             return score > 0.5 ? name : eventName;
         }
 
