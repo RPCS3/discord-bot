@@ -305,7 +305,7 @@ namespace CompatBot.Utils.ResultFormatters
 		}
 		else if (items["audio_buffering"] != EnabledMark)
 		{
-			notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
+		    notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
 		}
 	    }
         }
