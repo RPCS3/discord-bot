@@ -303,7 +303,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     notes.Add("ℹ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
 		}
-		else if (items["audio_buffering"] != EnabledMark)
+		else if (items["audio_buffering"] == DisabledMark)
 		{
 		    notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
 		}
