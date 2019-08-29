@@ -132,6 +132,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Downmix to Stereo:"] = new Regex("Downmix to Stereo: (?<audio_stereo>.*?)\r?$", DefaultOptions),
                     ["Master Volume:"] = new Regex("Master Volume: (?<audio_volume>.*?)\r?$", DefaultOptions),
                     ["Enable Buffering:"] = new Regex("Enable Buffering: (?<audio_buffering>.*?)\r?$", DefaultOptions),
+                    ["Desired Audio Buffer Duration:"] = new Regex("Desired Audio Buffer Duration: (?<audio_buffer_duration>.*?)\r?$", DefaultOptions),
                     ["Enable Time Stretching:"] = new Regex("Enable Time Stretching: (?<audio_stretching>.*?)\r?$", DefaultOptions),
 
                     ["Pad:"] = new Regex("Pad: (?<pad_handler>.*?)\r?$", DefaultOptions),
