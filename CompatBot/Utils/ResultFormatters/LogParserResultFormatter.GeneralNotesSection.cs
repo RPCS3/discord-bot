@@ -439,8 +439,6 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add($"❌ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
 
 
-            if (AllStarBattleIds.Contains(serial))
-                notes.Add("ℹ Missing health bars are random");
             if (DesIds.Contains(serial))
                 notes.Add("ℹ If you experience infinite load screen, clear `/dev_hdd1/` folder");
 
