@@ -505,8 +505,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (!Mgs4Ids.Contains(serial))
                 return;
 
-            notes.Add("ℹ Metal Gear Solid 4 is just got ingame, and is still very unstable");
-            notes.Add("ℹ There is not universal set of settings and game updates that works for everyone");
+            notes.Add("ℹ Metal Gear Solid 4 just got ingame, and is still very unstable");
+            notes.Add("ℹ There is no universal set of settings and game updates that works for everyone");
         }
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes)
