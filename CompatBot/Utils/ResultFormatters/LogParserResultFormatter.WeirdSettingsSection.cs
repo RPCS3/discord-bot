@@ -78,6 +78,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckGoWSettings(serial, items, notes);
                 CheckDesSettings(serial, items, notes, ppuPatches);
                 CheckTlouSettings(serial, items, notes);
+                CheckMgs4Settings(serial, items, notes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes);
@@ -492,6 +493,21 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ Please set `Resolution Scale` to 100%");
         }
 
+        private static readonly HashSet<string> Mgs4Ids = new HashSet<string>
+        {
+            "BLAS55005", "BLES00246", "BLJM57001", "BLJM67001", "BLKS25001", "BLUS30109", "BLUS30148",
+            "NPEB00027", "NPEB02182", "NPEB90116", "NPJB00698", "NPJB90149", "NPUB31633",
+            "NPHB00065", "NPHB00067",
+        };
+
+        private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (!Mgs4Ids.Contains(serial))
+                return;
+
+            notes.Add("ℹ Metal Gear Solid 4 is just got ingame, and is still very unstable");
+            notes.Add("ℹ There is not universal set of settings and game updates that works for everyone");
+        }
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes)
         {
