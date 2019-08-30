@@ -150,9 +150,20 @@ namespace CompatBot.EventHandlers
                                         }
                                         try
                                         {
+                                            /*
                                             botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                                 $"{message.Author.Mention}, please read carefully:",
                                                 embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
+                                            ).ConfigureAwait(false);
+                                            */
+                                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                                $"{message.Author.Mention}, please read carefully:\n" +
+                                                "🏴‍☠️ **Pirated content detected** 🏴‍☠️\n" +
+                                                "__You are being denied further support until you legally dump the game__.\n" +
+                                                "Please note that the RPCS3 community and its developers do not support piracy.\n" +
+                                                "Most of the issues with pirated dumps occur due to them being modified in some way " +
+                                                "that prevent them from working on RPCS3.\n" +
+                                                "If you need help obtaining valid working dump of the game you own, please read the quickstart guide at <https://rpcs3.net/quickstart>"
                                             ).ConfigureAwait(false);
                                         }
                                         catch (Exception e)
