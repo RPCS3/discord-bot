@@ -158,7 +158,7 @@ namespace CompatBot.Utils.ResultFormatters
                               "and therefore act unpredictably on RPCS3.\n" +
                               "If you need help obtaining legal dumps, please read [the quickstart guide](https://rpcs3.net/quickstart).";
                     builder.WithColor(Config.Colors.LogAlert)
-                        .WithTitle("Pirated release detected")
+                        .WithTitle("Pirated content detected")
                         .WithDescription(msg);
                 }
                 else

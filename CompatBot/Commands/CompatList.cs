@@ -172,6 +172,9 @@ Example usage:
                     {
                         var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
                         var botMember = discordClient.GetMember(compatChannel.Guild, discordClient.CurrentUser);
+                        if (botMember == null)
+                            return false;
+
                         if (!compatChannel.PermissionsFor(botMember).HasPermission(Permissions.SendMessages))
                         {
                             NewBuildsMonitor.Reset();
