@@ -196,10 +196,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             if (items["lib_loader"] is string libLoader
-                && libLoader.Contains("Auto", StringComparison.InvariantCultureIgnoreCase)
                 && (libLoader == "Auto"
                     || (libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase) &&
-                        string.IsNullOrEmpty(items["library_list"]))))
+                        (string.IsNullOrEmpty(items["library_list"]) || items["library_list"] == "None"))))
             {
                 if (items["game_title"] != "vsh.self")
                     notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
