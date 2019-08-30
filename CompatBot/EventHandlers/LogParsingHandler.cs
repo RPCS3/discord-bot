@@ -158,7 +158,7 @@ namespace CompatBot.EventHandlers
                                             */
                                             botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                                 $"{message.Author.Mention}, please read carefully:\n" +
-                                                "🏴‍☠️ **Pirated content detected** 🏴‍☠️\n" +
+                                                "🚨 **Pirated content detected** 🚨\n" +
                                                 "__You are being denied further support until you legally dump the game__.\n" +
                                                 "Please note that the RPCS3 community and its developers do not support piracy.\n" +
                                                 "Most of the issues with pirated dumps occur due to them being modified in some way " +
