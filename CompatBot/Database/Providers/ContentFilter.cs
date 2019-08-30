@@ -16,7 +16,6 @@ namespace CompatBot.Database.Providers
 {
     internal static class ContentFilter
     {
-        private static readonly object SyncObject = new object();
         private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>> filters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>>();
 
         static ContentFilter()
@@ -150,7 +149,7 @@ namespace CompatBot.Database.Providers
                         var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
                         msgContent = $"{message.Author.Mention} Please follow the {rules.Mention} and do not discuss piracy on this server. Repeated offence may result in a ban.";
                     }
-                    await message.Channel.SendMessageAsync(msgContent).ConfigureAwait(false);
+                    await message.Channel.SendMessageAsync($"{message.Author.Mention} {msgContent}").ConfigureAwait(false);
                     completedActions.Add(FilterAction.SendMessage);
                 }
                 catch (Exception e)
