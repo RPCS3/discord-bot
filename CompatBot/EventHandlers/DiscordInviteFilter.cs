@@ -42,6 +42,17 @@ namespace CompatBot.EventHandlers
             try
             {
                 var botMember = client.GetMember(guild, client.CurrentUser);
+                if (botMember == null)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+                    botMember = client.GetMember(guild, client.CurrentUser);
+                    if (botMember == null)
+                    {
+                        Config.Log.Error("Failed to resolve bot as the guild member for guild " + guild);
+                        return;
+                    }
+                }
+
                 var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
                 foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
                 {
