@@ -287,7 +287,7 @@ Example usage:
                     {
                         var info = resultInfo.AsString();
 #if DEBUG
-                        info = $"`{CompatApiResultUtils.GetScore(request.search, resultInfo.info):0.000000}` {info}";
+                        info = $"{StringUtils.InvisibleSpacer}`{CompatApiResultUtils.GetScore(request.search, resultInfo.info):0.000000}` {info}";
 #endif
                         result.AppendLine(info);
                     }
