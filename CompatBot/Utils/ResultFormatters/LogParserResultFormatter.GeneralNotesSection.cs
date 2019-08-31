@@ -465,7 +465,7 @@ namespace CompatBot.Utils.ResultFormatters
                     .Select(Path.GetFileName)
                     .Distinct()
                     .Except(KnownBogusLicenses)
-                    .Select(p => $"`{p}`")
+                    .Select(p => $"{StringUtils.InvisibleSpacer}`{p}`")
                     .ToList();
                 if (licenseNames.Count == 0)
                     return;
