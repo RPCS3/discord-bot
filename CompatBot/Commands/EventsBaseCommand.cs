@@ -244,7 +244,7 @@ namespace CompatBot.Commands
                 if (evt.Year != currentYear)
                 {
                     if (currentYear > 0)
-                        msg.AppendLine();
+                        msg.AppendLine().AppendLine($"__Year {evt.Year}__");
                     currentEvent = Guid.NewGuid().ToString();
                     currentYear = evt.Year;
                 }
@@ -256,7 +256,7 @@ namespace CompatBot.Commands
                     var printName = string.IsNullOrEmpty(currentEvent) ? "Various independent events" : $"**{currentEvent} {currentYear} schedule**";
                     msg.AppendLine($"{printName} (UTC):");
                 }
-                msg.Append("`");
+                msg.Append(StringUtils.InvisibleSpacer).Append("`");
                 if (ModProvider.IsMod(ctx.Message.Author.Id))
                     msg.Append($"[{evt.Id:0000}] ");
                 msg.Append($"{evt.Start.AsUtc():u}");
