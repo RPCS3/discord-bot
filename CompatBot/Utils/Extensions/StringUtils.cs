@@ -19,6 +19,7 @@ namespace CompatBot.Utils
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
         private static readonly MemoryCache FuzzyPairCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
         private const char StrikeThroughChar = '\u0336'; // 0x0335 = short dash, 0x0336 = long dash, 0x0337 = short slash, 0x0338 = long slash
+        public const char InvisibleSpacer = '\u206a';
 
         private static readonly HashSet<char> SpaceCharacters = new HashSet<char>
         {
@@ -135,8 +136,8 @@ namespace CompatBot.Utils
 
         public static string GetSuffix(long num) => num == 1 ? "" : "s";
 
-        public static string FixSpaces(this string text) => text?.Replace(" ", " \u206a")
-            .Replace("`", "\u206a`")
+        public static string FixSpaces(this string text) => text?.Replace(" ", " " + InvisibleSpacer)
+            .Replace("`", InvisibleSpacer + "`")
             .Replace(Environment.NewLine, "\n");
 
         public static int GetVisibleLength(this string s)
