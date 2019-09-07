@@ -107,6 +107,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Read Depth Buffer:"] = new Regex("Read Depth Buffer: (?<read_depth_buffer>.*?)\r?$", DefaultOptions),
                     ["VSync:"] = new Regex("VSync: (?<vsync>.*?)\r?$", DefaultOptions),
                     ["GPU texture scaling:"] = new Regex("Use GPU texture scaling: (?<gpu_texture_scaling>.*?)\r?$", DefaultOptions),
+                    ["Stretch To Display Area:"] = new Regex("Stretch To Display Area: (?<stretch_to_display>.*?)\r?$", DefaultOptions),
                     ["Strict Rendering Mode:"] = new Regex("Strict Rendering Mode: (?<strict_rendering_mode>.*?)\r?$", DefaultOptions),
                     ["Occlusion Queries:"] = new Regex("Occlusion Queries: (?<zcull>.*?)\r?$", DefaultOptions),
                     ["Vertex Cache:"] = new Regex("Disable Vertex Cache: (?<vertex_cache>.*?)\r?$", DefaultOptions),
