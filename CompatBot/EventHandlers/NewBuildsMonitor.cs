@@ -33,7 +33,7 @@ namespace CompatBot.EventHandlers
         public static async Task MonitorAsync(DiscordClient client)
         {
             var lastCheck = DateTime.UtcNow.AddDays(-1);
-            var resetThreshold = TimeSpan.FromMinutes(5);
+            var resetThreshold = TimeSpan.FromMinutes(10);
             try
             {
                 while (!Config.Cts.IsCancellationRequested)

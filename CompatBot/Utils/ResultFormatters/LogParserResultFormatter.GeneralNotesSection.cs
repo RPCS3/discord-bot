@@ -364,12 +364,6 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ An old version of the 60 fps patch is used");
             }
 
-            if (KnownDisableVertexCacheIds.Contains(serial))
-            {
-                if (items["vertex_cache"] == DisabledMark)
-                    notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
-            }
-
             bool discInsideGame = false;
             bool discAsPkg = false;
             var pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));

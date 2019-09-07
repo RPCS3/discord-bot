@@ -41,6 +41,13 @@ namespace CompatBot.Utils.ResultFormatters
                 if (dimensions.Length > 1 && int.TryParse(dimensions[1], out var height) && height < 720)
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
+            if (items["stretch_to_display"] == EnabledMark)
+                notes.Add("🤮 `Stretch to Display Area` is enabled");
+            if (KnownDisableVertexCacheIds.Contains(serial))
+            {
+                if (items["vertex_cache"] == DisabledMark)
+                    notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
+            }
 
             if (items["ppu_decoder"] is string ppuDecoder)
             {

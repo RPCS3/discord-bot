@@ -181,11 +181,14 @@ namespace CompatBot
                     client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
                     client.MessageCreated += TableFlipMonitor.OnMessageCreated;
                     client.MessageCreated += IsTheGamePlayableHandler.OnMessageCreated;
+                    client.MessageCreated += EmpathySimulationHandler.OnMessageCreated;
 
                     client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
                     client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
+                    client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
 
                     client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
+                    client.MessageDeleted += EmpathySimulationHandler.OnMessageDeleted;
 
                     client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
                     client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
