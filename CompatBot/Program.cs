@@ -185,10 +185,10 @@ namespace CompatBot
 
                     client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
                     client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
-                    client.MessageCreated += EmpathySimulationHandler.OnMessageUpdated;
+                    client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
 
                     client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
-                    client.MessageCreated += EmpathySimulationHandler.OnMessageDeleted;
+                    client.MessageDeleted += EmpathySimulationHandler.OnMessageDeleted;
 
                     client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
                     client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
