@@ -160,11 +160,11 @@ namespace CompatBot.Commands
                         if (ctx.User.Id == 247291873511604224ul)
                             score = StringUtils.GetStars(g.Attributes.StarRating?.Score);
                         else
-                        score = StringUtils.GetMoons(g.Attributes.StarRating?.Score);
-                    score = $"{score} ({g.Attributes.StarRating?.Score} by {g.Attributes.StarRating.Total} people)";
-                }
-                string fileSize = null;
-                if (g.Attributes.FileSize?.Value.HasValue ?? false)
+                            score = StringUtils.GetMoons(g.Attributes.StarRating?.Score);
+                        score = $"{score} ({g.Attributes.StarRating?.Score} by {g.Attributes.StarRating.Total} people)";
+                    }
+                    string fileSize = null;
+                    if (g.Attributes.FileSize?.Value.HasValue ?? false)
                     {
                         fileSize = g.Attributes.FileSize.Value.ToString();
                         if (g.Attributes.FileSize?.Unit is string unit && !string.IsNullOrEmpty(unit))
@@ -181,15 +181,16 @@ namespace CompatBot.Commands
                         Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}]{fileSize}",
                         Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                         Description = $"Rating: {score}\n" +
-                                      $"[Instructions](https://rpcs3.net/quickstart#software_distribution)",
+                                      "[Instructions](https://rpcs3.net/quickstart#software_distribution)",
                         ThumbnailUrl = thumb.url,
                     };
+                    await ProductCodeLookup.FixAfrikaAsync(ctx.Client, ctx.Message, result).ConfigureAwait(false);
 #if DEBUG
                     result.WithFooter("Test instance");
 #endif
                     hasResults = true;
                     await ch.SendMessageAsync(embed: result).ConfigureAwait(false);
-            }
+                }
                 if (hasResults)
                     await msg.DeleteAsync().ConfigureAwait(false);
                 else
