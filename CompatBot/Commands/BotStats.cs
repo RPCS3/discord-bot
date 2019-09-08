@@ -190,7 +190,7 @@ namespace CompatBot.Commands
             {
                 var syscallCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Distinct().Count();
                 var syscallModuleCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Select(sci => sci.Module).Distinct().Count();
-                var totalFuncCount = db.SyscallInfo.Count();
+                var totalFuncCount = db.SyscallInfo.Select(sci => sci.Function).Distinct().Count();
                 var totalModuleCount = db.SyscallInfo.Select(sci => sci.Module).Distinct().Count();
                 var fwCallCount = totalFuncCount - syscallCount;
                 var fwModuleCount = totalModuleCount - syscallModuleCount;
