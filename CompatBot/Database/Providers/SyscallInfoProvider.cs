@@ -47,10 +47,10 @@ namespace CompatBot.Database.Providers
             }
         }
 
-        public static async Task<(int funcs, int links)> FixAsync()
+        public static async Task<(int funcs, int links)> FixInvalidFunctionNamesAsync()
         {
-            int funcs = 0, links = 0;
             var syscallStats = new TSyscallStats();
+            int funcs = 0, links = 0;
             using (var db = new ThumbnailDb())
             {
                 var funcsToFix = new List<SyscallInfo>(0);
@@ -58,6 +58,9 @@ namespace CompatBot.Database.Providers
                 {
                     funcsToFix = await db.SyscallInfo.Where(sci => sci.Function.Contains('(')).ToListAsync().ConfigureAwait(false);
                     funcs = funcsToFix.Count;
+                    if (funcs == 0)
+                        return (0, 0);
+
                     foreach (var sci in funcsToFix)
                     {
                         var productIds = await db.SyscallToProductMap.AsNoTracking().Where(m => m.SyscallInfoId == sci.Id).Select(m => m.Product.ProductCode).Distinct().ToListAsync().ConfigureAwait(false);
@@ -89,6 +92,58 @@ namespace CompatBot.Database.Providers
                     {
                         Config.Log.Warn(e, "Failed to remove broken syscall mappings");
                         throw e;
+                    }
+                    finally
+                    {
+                        Limiter.Release();
+                    }
+                }
+            }
+            return (funcs, links);
+        }
+
+        public static async Task<(int funcs, int links)> FixDuplicatesAsync()
+        {
+            int funcs = 0, links = 0;
+            using (var db = new ThumbnailDb())
+            {
+                var duplicateFunctionNames = await db.SyscallInfo.Where(sci => db.SyscallInfo.Count(isci => isci.Function == sci.Function && isci.Module == sci.Module) > 1).Distinct().ToListAsync().ConfigureAwait(false);
+                if (duplicateFunctionNames.Count == 0)
+                    return (0, 0);
+
+                if (await Limiter.WaitAsync(1000, Config.Cts.Token))
+                {
+                    try
+                    {
+                        foreach (var dupFunc in duplicateFunctionNames)
+                        {
+                            var dups = db.SyscallInfo.Where(sci => sci.Function == dupFunc.Function && sci.Module == dupFunc.Module).ToList();
+                            if (dups.Count < 2)
+                                continue;
+
+                            var mostCommonDup = dups.Select(dup => (dup, count: db.SyscallToProductMap.Count(scm => scm.SyscallInfoId == dup.Id))).OrderByDescending(stat => stat.count).First().dup;
+                            var dupsToRemove = dups.Where(df => df.Id != mostCommonDup.Id).ToList();
+                            funcs += dupsToRemove.Count;
+                            foreach (var dupToRemove in dupsToRemove)
+                            {
+                                var mappings = db.SyscallToProductMap.Where(scm => scm.SyscallInfoId == dupToRemove.Id).ToList();
+                                links += mappings.Count;
+                                foreach (var mapping in mappings)
+                                {
+                                    if (!db.SyscallToProductMap.Any(scm => scm.ProductId == mapping.ProductId && scm.SyscallInfoId == mostCommonDup.Id))
+                                        db.SyscallToProductMap.Add(new SyscallToProductMap {ProductId = mapping.ProductId, SyscallInfoId = mostCommonDup.Id});
+                                }
+                            }
+                            await db.SaveChangesAsync().ConfigureAwait(false);
+                            db.SyscallInfo.RemoveRange(dupsToRemove);
+                            await db.SaveChangesAsync().ConfigureAwait(false);
+                        }
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e, "Failed to remove duplicate syscall entries");
+                        throw;
                     }
                     finally
                     {
