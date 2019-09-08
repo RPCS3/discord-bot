@@ -34,7 +34,6 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(content))
                 return;
 
-
             if (Throttling.TryGetValue(args.Channel.Id, out object mark) && mark != null)
                 return;
 
