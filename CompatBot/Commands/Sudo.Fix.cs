@@ -88,16 +88,24 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    var result = await SyscallInfoProvider.FixAsync().ConfigureAwait(false);
+                    await ctx.RespondAsync("Fixing invalid function names...").ConfigureAwait(false);
+                    var result = await SyscallInfoProvider.FixInvalidFunctionNamesAsync().ConfigureAwait(false);
                     if (result.funcs > 0)
                         await ctx.RespondAsync($"Successfully fixed {result.funcs} function name{(result.funcs == 1 ? "" : "s")} and {result.links} game link{(result.links == 1 ? "" : "s")}").ConfigureAwait(false);
                     else
                         await ctx.RespondAsync("No invalid syscall functions detected").ConfigureAwait(false);
+
+                    await ctx.RespondAsync("Fixing duplicates...").ConfigureAwait(false);
+                    result = await SyscallInfoProvider.FixDuplicatesAsync().ConfigureAwait(false);
+                    if (result.funcs > 0)
+                        await ctx.RespondAsync($"Successfully merged {result.funcs} function{(result.funcs == 1 ? "" : "s")} and {result.links} game link{(result.links == 1 ? "" : "s")}").ConfigureAwait(false);
+                    else
+                        await ctx.RespondAsync("No duplicate function entries found").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
                     Config.Log.Warn(e, "Failed to fix syscall info");
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to fix syscall information").ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to fix syscall information", true).ConfigureAwait(false);
                 }
             }
 
