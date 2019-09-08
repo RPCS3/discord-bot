@@ -2,10 +2,10 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
-using DSharpPlus;
+using CompatBot.Database.Providers;
+using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
@@ -18,7 +18,7 @@ namespace CompatBot.Commands
         private static readonly Regex Timestamp = new Regex(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
         private static readonly Regex Channel = new Regex(@"(?<id><#\d+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
-        [Group("fix"), Hidden, TriggersTyping]
+        [Group("fix"), Hidden]
         [Description("Commands to fix various stuff")]
         public sealed class Fix: BaseCommandModuleCustom
         {
@@ -79,6 +79,25 @@ namespace CompatBot.Commands
                 {
                     Config.Log.Warn(e, "Couldn't fix channel mentions");
                     await ctx.RespondAsync("Failed to fix warning timestamps").ConfigureAwait(false);
+                }
+            }
+
+            [Command("syscalls")]
+            [Description("Fixes invalid function names in `syscall-info` table and associated data")]
+            public async Task Syscalls(CommandContext ctx)
+            {
+                try
+                {
+                    var result = await SyscallInfoProvider.FixAsync().ConfigureAwait(false);
+                    if (result.funcs > 0)
+                        await ctx.RespondAsync($"Successfully fixed {result.funcs} function name{(result.funcs == 1 ? "" : "s")} and {result.links} game link{(result.links == 1 ? "" : "s")}").ConfigureAwait(false);
+                    else
+                        await ctx.RespondAsync("No invalid syscall functions detected").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to fix syscall info");
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to fix syscall information").ConfigureAwait(false);
                 }
             }
 
