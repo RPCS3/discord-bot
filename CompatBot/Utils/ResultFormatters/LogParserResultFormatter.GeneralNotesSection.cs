@@ -50,7 +50,7 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (fatalError.Contains("(e=0x17): file::read"))
                 {
                     // on windows this is ERROR_CRC
-                    notes.Add("❌ Filesystem might be corrupted");
+                    notes.Add("❌ Storage device communication error; check your cables");
                 }
                 else if (fatalError.Contains("Unknown primitive type"))
                 {
