@@ -124,16 +124,16 @@ namespace CompatBot.Utils.ResultFormatters
 
             var lines = new List<string>
             {
-                $"PPU Decoder: {items["ppu_decoder"],21}",
-                $"SPU Decoder: {items["spu_decoder"],21}",
-                $"SPU Lower Thread Priority: {items["spu_lower_thread_priority"],7}",
-                $"SPU Loop Detection: {items["spu_loop_detection"],14}",
-                $"Thread Scheduler: {items["thread_scheduler"],16}",
-                $"SPU Threads: {items["spu_threads"],21}",
-                $"SPU Block Size: {items["spu_block_size"] ?? "N/A",18}",
-                $"Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",17}",
-                $"Force CPU Blit: {items["cpu_blit"] ?? "N/A",18}",
-                $"Lib Loader: {items["lib_loader"],22}",
+                $"PPU Decoder: {items["ppu_decoder"],20}",
+                $"SPU Decoder: {items["spu_decoder"],20}",
+                $"SPU Lower Thread Priority: {items["spu_lower_thread_priority"],6}",
+                $"SPU Loop Detection: {items["spu_loop_detection"],13}",
+                $"Thread Scheduler: {items["thread_scheduler"],15}",
+                $"SPU Threads: {items["spu_threads"],20}",
+                $"SPU Block Size: {items["spu_block_size"] ?? "N/A",17}",
+                $"Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",16}",
+                $"Force CPU Blit: {items["cpu_blit"] ?? "N/A",17}",
+                $"Lib Loader: {items["lib_loader"],21}",
             };
             return ("CPU Settings", lines);
         }
@@ -145,16 +145,16 @@ namespace CompatBot.Utils.ResultFormatters
 
             var lines = new List<string>
             {
-                $"Renderer: {items["renderer"],24}",
-                $"Aspect ratio: {items["aspect_ratio"],20}",
-                $"Resolution: {items["resolution"],22}",
-                $"Resolution Scale: {items["resolution_scale"] ?? "N/A",16}",
-                $"Resolution Scale Threshold: {items["texture_scale_threshold"] ?? "N/A",6}",
-                $"Write Color Buffers: {items["write_color_buffers"],13}",
-                $"Anti-Aliasing: {items["msaa"] ?? "N/A",19}",
-                $"Anisotropic Filter: {items["af_override"] ?? "N/A",14}",
-                $"Frame Limit: {items["frame_limit"],21}",
-                $"VSync: {items["vsync"] ?? "N/A",27}",
+                $"Renderer: {items["renderer"],23}",
+                $"Aspect ratio: {items["aspect_ratio"],19}",
+                $"Resolution: {items["resolution"],21}",
+                $"Resolution Scale: {items["resolution_scale"] ?? "N/A",15}",
+                $"Resolution Scale Threshold: {items["texture_scale_threshold"] ?? "N/A",5}",
+                $"Write Color Buffers: {items["write_color_buffers"],12}",
+                $"Anti-Aliasing: {items["msaa"] ?? "N/A",18}",
+                $"Anisotropic Filter: {items["af_override"] ?? "N/A",13}",
+                $"Frame Limit: {items["frame_limit"],20}",
+                $"VSync: {items["vsync"] ?? "N/A",26}",
             };
             return ("GPU Settings", lines);
         }
