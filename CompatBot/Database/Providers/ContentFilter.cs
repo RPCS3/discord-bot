@@ -147,7 +147,7 @@ namespace CompatBot.Database.Providers
                     if (string.IsNullOrEmpty(msgContent))
                     {
                         var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
-                        msgContent = $"{message.Author.Mention} Please follow the {rules.Mention} and do not discuss piracy on this server. Repeated offence may result in a ban.";
+                        msgContent = $"Please follow the {rules.Mention} and do not discuss piracy on this server. Repeated offence may result in a ban.";
                     }
                     await message.Channel.SendMessageAsync($"{message.Author.Mention} {msgContent}").ConfigureAwait(false);
                     completedActions.Add(FilterAction.SendMessage);
