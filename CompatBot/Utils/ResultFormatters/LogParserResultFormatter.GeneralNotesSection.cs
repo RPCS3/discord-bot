@@ -47,6 +47,11 @@ namespace CompatBot.Utils.ResultFormatters
                     if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
                         notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
                 }
+                else if (fatalError.Contains("(e=0x17): file::read"))
+                {
+                    // on windows this is ERROR_CRC
+                    notes.Add("❌ Filesystem might be corrupted");
+                }
                 else if (fatalError.Contains("Unknown primitive type"))
                 {
                     notes.Add("⚠ RSX desync detected, it's probably random");
