@@ -439,7 +439,7 @@ namespace CompatBot.Utils.ResultFormatters
 
 
             if (DesIds.Contains(serial))
-                notes.Add("ℹ If you experience infinite load screen, clear cache with `File > All games > Remove Disk Cache`");
+                notes.Add("ℹ If you experience infinite load screen, clear game cache via `File` → `All games` → `Remove Disk Cache`");
 
             if (items["custom_config"] != null
                 && (notes.Any() || items["weird_settings_notes"] is string _))
