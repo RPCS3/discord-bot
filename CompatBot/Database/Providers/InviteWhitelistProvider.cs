@@ -18,7 +18,7 @@ namespace CompatBot.Database.Providers
 
         public static async Task<bool> IsWhitelistedAsync(DiscordInvite invite)
         {
-            var code = invite.IsTemporary || string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
+            var code = string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
             var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
             using (var db = new BotDb())
             {
@@ -28,7 +28,7 @@ namespace CompatBot.Database.Providers
 
                 if (name != null && name != whitelistedInvite.Name)
                     whitelistedInvite.Name = invite.Guild.Name;
-                if (code != null && code != whitelistedInvite.InviteCode)
+                if (string.IsNullOrEmpty(whitelistedInvite.InviteCode) && code != null)
                     whitelistedInvite.InviteCode = code;
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 return true;
@@ -40,7 +40,7 @@ namespace CompatBot.Database.Providers
             if (await IsWhitelistedAsync(invite).ConfigureAwait(false))
                 return false;
 
-            var code = invite.IsTemporary || string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
+            var code = invite.IsRevoked || string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
             var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
             using (var db = new BotDb())
             {
