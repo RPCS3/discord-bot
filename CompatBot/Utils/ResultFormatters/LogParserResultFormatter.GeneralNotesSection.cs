@@ -368,6 +368,17 @@ namespace CompatBot.Utils.ResultFormatters
                 if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
                     notes.Add("⚠ An old version of the 60 fps patch is used");
             }
+            if (items["ppu_hash"] is string ppuHashes
+                && ppuHashes.Split(Environment.NewLine, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string firstPpuHash
+                && !string.IsNullOrEmpty(firstPpuHash))
+            {
+                var exe = Path.GetFileName(items["elf_boot_path"] ?? "");
+                if (string.IsNullOrEmpty(exe) || exe.Equals("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase))
+                    exe = "Main";
+                else
+                    exe = $"`{exe}`";
+                notes.Add($"ℹ {exe} hash: `PPU-{firstPpuHash}`");
+            }
 
             bool discInsideGame = false;
             bool discAsPkg = false;
