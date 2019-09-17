@@ -42,7 +42,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
             if (items["stretch_to_display"] == EnabledMark)
-                notes.Add("🤮 `Stretch to Display Area` is enabled");
+                notes.Add("🤢 `Stretch to Display Area` is enabled");
             if (KnownDisableVertexCacheIds.Contains(serial))
             {
                 if (items["vertex_cache"] == DisabledMark)
