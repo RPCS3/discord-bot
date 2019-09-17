@@ -655,7 +655,8 @@ namespace CompatBot.Utils.ResultFormatters
             for (var i = 0; i < hashes.Length; i++)
             {
                 int.TryParse(patches[i], out var pCount);
-                result[hashes[i]] = pCount;
+                if (pCount > 0)
+                    result[hashes[i]] = pCount;
             }
             return result;
         }
