@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace Tests
 {
-    [TestFixture]
+    [TestFixture, Explicit("Requires files to run")]
     public class IrdTests
     {
         [Test]

@@ -47,12 +47,19 @@ How to Build
 
 How to Run in Production
 ------------------------
+
+### Running from source
 * Change configuration if needed (probably just token):
   * use `$ dotnet user-secrets set Token <your_token_here>`
   * for available configuration variables, see [Config.cs](CompatBot/Config.cs#L31)
 * Put `bot.db` in `CompatBot/` if you have one
 * `$ cd CompatBot`
 * `$ dotnet run -c Release`
+
+### Running with Docker
+* Official image is hosted on [Docker Hub](https://hub.docker.com/r/13xforever/rpcs3-discord-bot).
+* You should pull images tagged with `release-latest` (same thing as `latest`)
+* Please take a look at the [docker-compose.yml](docker-compose.yml) for required configuration (bot token and mounting points for persistent data).
 
 External resources that need manual updates
 -------------------------------------------

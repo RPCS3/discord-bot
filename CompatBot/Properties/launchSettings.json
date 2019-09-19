@@ -2,6 +2,9 @@
   "profiles": {
     "default": {
       "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
     }
   }
 }

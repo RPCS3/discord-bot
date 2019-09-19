@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands;
@@ -8,10 +9,12 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
+using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot
@@ -24,6 +27,17 @@ namespace CompatBot
 
         internal static async Task Main(string[] args)
         {
+            if (args.Length > 0 && args[0] == "--dry-run")
+            {
+                Console.WriteLine("Confinement: " + SandboxDetector.Detect());
+                Console.WriteLine("Database path: " + Path.GetDirectoryName(Path.GetFullPath(DbImporter.GetDbPath("fake.db", Environment.SpecialFolder.ApplicationData))));
+                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
+                {
+                    Console.WriteLine("Bot config path: " + Path.GetDirectoryName(Path.GetFullPath(Config.GoogleApiConfigPath)));
+                }
+                return;
+            }
+
             var singleInstanceCheckThread = new Thread(() =>
                                     {
                                         using (var instanceLock = new Mutex(false, @"Global\RPCS3 Compatibility Bot"))

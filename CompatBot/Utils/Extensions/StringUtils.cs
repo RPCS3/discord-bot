@@ -218,7 +218,7 @@ namespace CompatBot.Utils
             return result.ToString(0, result.Length-1);
         }
 
-        public static string GetMoons(decimal? stars)
+        public static string GetMoons(decimal? stars, bool haveFun = true)
         {
             if (!stars.HasValue)
                 return null;
@@ -232,7 +232,7 @@ namespace CompatBot.Utils
 
             if (halfStar == 4)
             {
-                if (new Random().Next(100) == 69)
+                if (haveFun && new Random().Next(100) == 69)
                     result += "🌝";
                 else
                     result += "🌕";
@@ -246,7 +246,7 @@ namespace CompatBot.Utils
 
             for (var i = 0; i < noStars; i++)
             {
-                if (i == 0 && halfStar == 0 && new Random().Next(100) == 69)
+                if (haveFun && i == 0 && halfStar == 0 && new Random().Next(100) == 69)
                     result += "🌚";
                 else
                     result += "🌑";

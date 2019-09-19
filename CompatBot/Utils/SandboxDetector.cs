@@ -12,6 +12,9 @@ namespace CompatBot.Utils
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLATPAK_SYSTEM_DIR")))
                 return "Flatpak";
 
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RUNNING_IN_DOCKER")))
+                return "Docker";
+
             return null;
         }
     }

@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Database.Migrations;
+using CompatBot.Utils;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
@@ -110,6 +111,9 @@ namespace CompatBot.Database
 
         internal static string GetDbPath(string dbName, Environment.SpecialFolder desiredFolder)
         {
+            if (SandboxDetector.Detect() == "Docker")
+                return Path.Combine("/bot-db/", dbName);
+                
             var settingsFolder = Path.Combine(Environment.GetFolderPath(desiredFolder), "compat-bot");
             try
             {
