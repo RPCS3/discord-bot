@@ -69,7 +69,7 @@ namespace CompatApiClient
             {
                 try
                 {
-                    using (var message = new HttpRequestMessage(HttpMethod.Get, "https://update.rpcs3.net/?c=" + commit))
+                    using (var message = new HttpRequestMessage(HttpMethod.Get, "https://update.rpcs3.net/?api=v1&c=" + commit))
                     using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
                         try
                         {
