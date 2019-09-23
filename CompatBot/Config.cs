@@ -55,8 +55,10 @@ namespace CompatBot
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
 
         public static string Token => config.GetValue(nameof(Token), "");
-        public static string LogPath => config.GetValue(nameof(LogPath), "../../../logs/"); // paths are relative to the assembly, so this will put it in the project's root
+        public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
+
+        internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
 
         public static string GoogleApiConfigPath 
         {
@@ -177,7 +179,7 @@ namespace CompatBot
         {
             var config = new NLog.Config.LoggingConfiguration();
             var fileTarget = new FileTarget("logfile") {
-                FileName = Path.Combine(LogPath, "bot.log"),
+                FileName = CurrentLogPath,
                 ArchiveEvery = FileArchivePeriod.Day,
                 ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
                 KeepFileOpen = true,
