@@ -66,14 +66,14 @@ namespace CompatBot.EventHandlers
                 foreach (var code in codesToLookup)
                     results.Add((code, client.LookupGameInfoAsync(code)));
                 var formattedResults = new List<DiscordEmbedBuilder>(results.Count);
-                foreach (var result in results)
+                foreach (var (code, task) in results)
                     try
                     {
-                        formattedResults.Add(await result.task.ConfigureAwait(false));
+                        formattedResults.Add(await task.ConfigureAwait(false));
                     }
                     catch (Exception e)
                     {
-                        Config.Log.Warn(e, $"Couldn't get product code info for {result.code}");
+                        Config.Log.Warn(e, $"Couldn't get product code info for {code}");
                     }
 
                 // get only results with unique titles

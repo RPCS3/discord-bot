@@ -95,19 +95,21 @@ namespace CompatBot.EventHandlers
                         botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
                         parsedLog = true;
 
-                        var timeout = new CancellationTokenSource(Config.LogParsingTimeout);
-                        var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
-                        var tries = 0;
                         LogParseState result = null;
-                        do
+                        using (var timeout = new CancellationTokenSource(Config.LogParsingTimeout))
+                        using (var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token))
                         {
-                            result = await ParseLogAsync(
-                                source,
-                                async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
-                                combinedTokenSource.Token
-                            ).ConfigureAwait(false);
-                            tries++;
-                        } while (result == null && !combinedTokenSource.IsCancellationRequested && tries < 3);
+                            var tries = 0;
+                            do
+                            {
+                                result = await ParseLogAsync(
+                                    source,
+                                    async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
+                                    combinedTokenSource.Token
+                                ).ConfigureAwait(false);
+                                tries++;
+                            } while (result == null && !combinedTokenSource.IsCancellationRequested && tries < 3);
+                        }
                         if (result == null)
                         {
                             botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: new DiscordEmbedBuilder
