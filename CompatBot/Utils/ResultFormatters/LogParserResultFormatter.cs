@@ -549,8 +549,8 @@ namespace CompatBot.Utils.ResultFormatters
                             return "10 19H1 Build " + v;
                         case 18362:
                             return "10 1903";
-                        case int v when v < 18836:
-                            return "10 19H2 Build " + v;
+                        case 18363:
+                            return "10 1909";
                         case int v when v < 20000:
                             return "10 20H1 Build " + v;
                         default:

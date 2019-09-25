@@ -151,7 +151,7 @@ namespace CompatBot.Commands
                     if (g == null)
                         continue;
 
-                    var thumb = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
+                    var (url, color) = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
                     string score;
                     if ((g.Attributes.StarRating?.Score ?? 0m) == 0m || (g.Attributes.StarRating?.Total ?? 0) == 0)
                         score = "N/A";
@@ -177,12 +177,12 @@ namespace CompatBot.Commands
                     //var instructions = g.Attributes.TopCategory == "disc_based_game" ? "dumping_procedure" : "software_distribution";
                     var result = new DiscordEmbedBuilder
                     {
-                        Color = thumb.color,
+                        Color = color,
                         Title = $"⏬ {g.Attributes.Name?.StripMarks()} [{region}]{fileSize}",
                         Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                         Description = $"Rating: {score}\n" +
                                       "[Instructions](https://rpcs3.net/quickstart#software_distribution)",
-                        ThumbnailUrl = thumb.url,
+                        ThumbnailUrl = url,
                     };
                     await ProductCodeLookup.FixAfrikaAsync(ctx.Client, ctx.Message, result).ConfigureAwait(false);
 #if DEBUG
