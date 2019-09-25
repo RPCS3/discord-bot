@@ -42,13 +42,11 @@ namespace CompatBot.Commands
             {
                 if (db.SyscallInfo.Any(sci => sci.Module == search || sci.Function == search))
                 {
-                    var productInfoList = await db.SyscallToProductMap.AsNoTracking()
+                    var productInfoList = db.SyscallToProductMap.AsNoTracking()
                         .Where(m => m.SyscallInfo.Module == search || m.SyscallInfo.Function == search)
                         .Select(m => new {m.Product.ProductCode, Name = m.Product.Name.StripMarks() ?? "???"})
                         .Distinct()
-                        .ToAsyncEnumerable()
-                        .ToList()
-                        .ConfigureAwait(false);
+                        .ToList();
                     var groupedList = productInfoList
                         .GroupBy(m => m.Name, m => m.ProductCode)
                         .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
@@ -125,15 +123,14 @@ namespace CompatBot.Commands
             {
                 title = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productId)?.Name;
                 title = string.IsNullOrEmpty(title) ? productId : $"[{productId}] {title.Trim(40)}";
-                var sysInfoList = await db.SyscallToProductMap.AsNoTracking()
+                var sysInfoList = db.SyscallToProductMap.AsNoTracking()
                     .Where(m => m.Product.ProductCode == productId)
                     .Select(m => m.SyscallInfo)
                     .Distinct()
-                    .ToAsyncEnumerable()
+                    .AsEnumerable()
                     .OrderBy(sci => sci.Module)
                     .ThenBy(sci => sci.Function)
-                    .ToList()
-                    .ConfigureAwait(false);
+                    .ToList();
                 if (ctx.User.Id == 216724245957312512UL)
                     sysInfoList = sysInfoList.Where(i => i.Function.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase)).ToList();
                 if (sysInfoList.Any())
