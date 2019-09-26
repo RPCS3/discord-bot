@@ -489,8 +489,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["read_depth_buffer"] == DisabledMark)
                 notes.Add("⚠ Please enable `Read Depth Buffer`");
 
-            if (items["cpu_blit"] == DisabledMark)
-                notes.Add("⚠ Please enable `Force CPU Blit`");
+            if (items["cpu_blit"] == EnabledMark)
+                notes.Add("⚠ Please disable `Force CPU Blit`");
 
             if (items["resolution_scale"] is string resFactor
                 && int.TryParse(resFactor, out var resolutionScale)
