@@ -57,7 +57,7 @@ How to Run in Production
 * `$ dotnet run -c Release`
 
 ### Running with Docker
-* Official image is hosted on [Docker Hub](https://hub.docker.com/r/13xforever/rpcs3-discord-bot).
+* Official image is hosted on [Docker Hub](https://hub.docker.com/r/rpcs3/discord-bot).
 * You should pull images tagged with `release-latest` (same thing as `latest`)
 * Please take a look at the [docker-compose.yml](docker-compose.yml) for required configuration (bot token and mounting points for persistent data).
 
