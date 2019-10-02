@@ -208,15 +208,17 @@ namespace CompatBot.Commands
                 var channel = message.Channel;
                 var isPrivate = channel.IsPrivate;
                 int count, removed;
+                bool isKot;
                 using (var db = new BotDb())
                 {
                     count = await db.Warning.CountAsync(w => w.DiscordId == userId && !w.Retracted).ConfigureAwait(false);
                     removed = await db.Warning.CountAsync(w => w.DiscordId == userId && w.Retracted).ConfigureAwait(false);
+                    isKot = db.Kot.Any(k => k.UserId == userId);
                 }
                 if (count == 0)
                 {
                     if (removed == 0)
-                        await message.RespondAsync(userName + " has no warnings, is a standup citizen, and a pillar of this community").ConfigureAwait(false);
+                        await message.RespondAsync($"{userName} has no warnings, is a standup {(isKot ? "kot" : "citizen")}, and {(isKot ? "paw beans" : "a pillar")} of this community").ConfigureAwait(false);
                     else
                         await message.RespondAsync(userName + " has no warnings" + (isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")})" : "")).ConfigureAwait(false);
                     return;

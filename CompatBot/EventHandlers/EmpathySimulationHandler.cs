@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatBot.Utils;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
@@ -19,6 +20,9 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
+            if (DefaultHandlerFilter.IsFluff(args.Message))
+                return;
+
             if (args.Channel.IsPrivate)
                 return;
 

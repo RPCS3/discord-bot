@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
+using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 
 namespace CompatBot.EventHandlers
@@ -38,7 +41,7 @@ namespace CompatBot.EventHandlers
         {
             "😶", "😣", "😥", "🤐", "😯", "😫", "😓", "😔", "😕", "☹",
             "🙁", "😖", "😞", "😟", "😢", "😭", "😦", "😧", "😨", "😩",
-            "😰",  "🙊",
+            "😰", "🙊", "😿"
             // "🥺",
         }.Select(DiscordEmoji.FromUnicode).ToArray();
 
@@ -51,6 +54,7 @@ namespace CompatBot.EventHandlers
         private static readonly DiscordEmoji[] ThankYouReactions = new[]
         {
             "😊", "😘", "😍", "🤗", "😳",
+            "😸", "😺", "😻",
             "🙌", "✌", "👌", "👋", "🙏", "🤝",
             "🎉", "✨",
             "❤", "💛", "💙", "💚", "💜", "💖",
@@ -63,6 +67,10 @@ namespace CompatBot.EventHandlers
             "Glad I could help", "I try my best", "Blessed day", "It is officially a good day today", "I will remember you when the uprising starts",
         };
 
+        private static readonly Regex Kot = new Regex(
+            @"\b(kot(to)?|cat)\b",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
+        );
         private static readonly Random rng = new Random();
         private static readonly object theDoor = new object();
 
@@ -117,6 +125,16 @@ namespace CompatBot.EventHandlers
                 return;
             }
 #endif
+
+            if (!string.IsNullOrEmpty(args.Message.Content) && Kot.IsMatch(args.Message.Content))
+                using (var db = new BotDb())
+                {
+                    if (!db.Kot.Any(k => k.UserId == args.Author.Id))
+                    {
+                        db.Kot.Add(new Kot {UserId = args.Author.Id});
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                    }
+                }
 
             var (needToSilence, needToThank) = NeedToSilence(args.Message);
             if (!(needToSilence || needToThank))
@@ -177,6 +195,5 @@ namespace CompatBot.EventHandlers
             var mentionsBot = msgContent.Contains("bot") || (msg.MentionedUsers?.Any(u => { try { return u.IsCurrent; } catch { return false; }}) ?? false);
             return (needToChill && mentionsBot, needToThank && mentionsBot);
         }
-
     }
 }
