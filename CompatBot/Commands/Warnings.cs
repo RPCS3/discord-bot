@@ -208,15 +208,32 @@ namespace CompatBot.Commands
                 var channel = message.Channel;
                 var isPrivate = channel.IsPrivate;
                 int count, removed;
+                bool isKot, isDoggo;
                 using (var db = new BotDb())
                 {
                     count = await db.Warning.CountAsync(w => w.DiscordId == userId && !w.Retracted).ConfigureAwait(false);
                     removed = await db.Warning.CountAsync(w => w.DiscordId == userId && w.Retracted).ConfigureAwait(false);
+                    isKot = db.Kot.Any(k => k.UserId == userId);
+                    isDoggo = db.Doggo.Any(d => d.UserId == userId);
                 }
                 if (count == 0)
                 {
                     if (removed == 0)
-                        await message.RespondAsync(userName + " has no warnings, is a standup citizen, and a pillar of this community").ConfigureAwait(false);
+                    {
+                        if (isKot && isDoggo)
+                        {
+                            if (new Random().NextDouble() < 0.5)
+                                isKot = false;
+                            else
+                                isDoggo = false;
+                        }
+                        if (isKot)
+                            await message.RespondAsync($"{userName} has no warnings, is an upstanding kot, and a paw bean of this community").ConfigureAwait(false);
+                        else if (isDoggo)
+                            await message.RespondAsync($"{userName} has no warnings, is a good boy, and a wiggling tail of this community").ConfigureAwait(false);
+                        else
+                            await message.RespondAsync($"{userName} has no warnings, is an upstanding citizen, and a pillar of this community").ConfigureAwait(false);
+                    }
                     else
                         await message.RespondAsync(userName + " has no warnings" + (isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")})" : "")).ConfigureAwait(false);
                     return;

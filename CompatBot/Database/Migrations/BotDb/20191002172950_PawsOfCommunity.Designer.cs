@@ -3,14 +3,16 @@ using System;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CompatBot.Database.Migrations
 {
     [DbContext(typeof(BotDb))]
-    partial class BotDbModelSnapshot : ModelSnapshot
+    [Migration("20191002172950_PawsOfCommunity")]
+    partial class PawsOfCommunity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,25 +58,6 @@ namespace CompatBot.Database.Migrations
                         .HasName("disabled_command_command");
 
                     b.ToTable("disabled_commands");
-                });
-
-            modelBuilder.Entity("CompatBot.Database.Doggo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnName("id");
-
-                    b.Property<ulong>("UserId")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasName("doggo_user_id");
-
-                    b.ToTable("doggo");
                 });
 
             modelBuilder.Entity("CompatBot.Database.EventSchedule", b =>
