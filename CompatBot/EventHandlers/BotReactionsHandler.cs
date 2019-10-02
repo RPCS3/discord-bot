@@ -9,7 +9,6 @@ using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 
 namespace CompatBot.EventHandlers
@@ -67,8 +66,8 @@ namespace CompatBot.EventHandlers
             "Glad I could help", "I try my best", "Blessed day", "It is officially a good day today", "I will remember you when the uprising starts",
         };
 
-        private static readonly Regex Kot = new Regex(
-            @"\b(kot(to)?|cat)\b",
+        private static readonly Regex Paws = new Regex(
+            @"\b((?<kot>kot(to)?)|(?<doggo>doggo|jarves))\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
         );
         private static readonly Random rng = new Random();
@@ -126,13 +125,30 @@ namespace CompatBot.EventHandlers
             }
 #endif
 
-            if (!string.IsNullOrEmpty(args.Message.Content) && Kot.IsMatch(args.Message.Content))
+            if (!string.IsNullOrEmpty(args.Message.Content) && Paws.Matches(args.Message.Content) is MatchCollection mc)
                 using (var db = new BotDb())
                 {
-                    if (!db.Kot.Any(k => k.UserId == args.Author.Id))
+                    var matchedGroups = (from m in mc
+                            from g in m.Groups
+                            where g.Success && !string.IsNullOrEmpty(g.Value)
+                            select g.Name
+                        ).Distinct()
+                        .ToArray();
+                    if (matchedGroups.Contains("kot"))
                     {
-                        db.Kot.Add(new Kot {UserId = args.Author.Id});
-                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        if (!db.Kot.Any(k => k.UserId == args.Author.Id))
+                        {
+                            db.Kot.Add(new Kot {UserId = args.Author.Id});
+                            await db.SaveChangesAsync().ConfigureAwait(false);
+                        }
+                    }
+                    if (matchedGroups.Contains("doggo"))
+                    {
+                        if (!db.Doggo.Any(d => d.UserId == args.Author.Id))
+                        {
+                            db.Doggo.Add(new Doggo {UserId = args.Author.Id});
+                            await db.SaveChangesAsync().ConfigureAwait(false);
+                        }
                     }
                 }
 
