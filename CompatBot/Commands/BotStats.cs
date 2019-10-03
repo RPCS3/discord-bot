@@ -41,6 +41,7 @@ namespace CompatBot.Commands
             AppendExplainStats(embed);
             AppendGameLookupStats(embed);
             AppendSyscallsStats(embed);
+            AppendPawStats(embed);
 #if DEBUG
             embed.WithFooter("Test Instance");
 #endif
@@ -200,6 +201,21 @@ namespace CompatBot.Commands
                     $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")} in {syscallModuleCount} module{(syscallModuleCount == 1 ? "" : "s")}\n" +
                     $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")} in {fwModuleCount} module{(fwModuleCount == 1 ? "" : "s")}\n",
                     true);
+            }
+        }
+
+        private void AppendPawStats(DiscordEmbedBuilder embed)
+        {
+            using (var db = new BotDb())
+            {
+                var kots = db.Kot.Count();
+                var doggos = db.Doggo.Count();
+                if (kots == 0 && doggos == 0)
+                    return;
+
+                var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
+                var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
+                embed.AddField("🐾 Stats", $"🐱 {kots - 1} {sign} {doggos - 1} 🐶", true);
             }
         }
     }
