@@ -26,7 +26,7 @@ namespace CompatBot.Commands
             "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
             "Certainly", "Of course", "Definitely", "Indeed",
             "Much yes", "Make it so", "Consider it done", "Totally", "You bet",
-            "Sure", "Yup", "Yep", "Okie dokie", "Certainly", "Yarp",
+            "Yup", "Yep", "Certainly", "Yarp",
 
             // 20
             "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
