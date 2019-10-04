@@ -25,7 +25,7 @@ namespace CompatBot.Commands
             "Don't be an idiot. YES.", "Mhm!", "Many Yes", "Yiss", "Sir, yes, Sir!", 
             "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
             "Certainly", "Of course", "Definitely", "Indeed",
-            "Much yes", "Make it so", "Consider it done", "Totally", "You bet",
+            "Much yes", "Consider it done", "Totally", "You bet",
             "Yup", "Yep", "Certainly", "Yarp",
 
             // 20
