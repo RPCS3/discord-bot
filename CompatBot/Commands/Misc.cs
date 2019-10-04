@@ -18,15 +18,15 @@ namespace CompatBot.Commands
 
         private static readonly List<string> EightBallAnswers = new List<string>
         {
-            // 29
+            // 37
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
             "Sure", "Yeah, why not", "Most likely", "Sim", "Oui",
             "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", "<:cell_ok_hand:324618647857397760>",
             "Don't be an idiot. YES.", "Mhm!", "Many Yes", "Yiss", "Sir, yes, Sir!", 
             "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
-            "Certainly", "Of course", "Definitely", "Indeed",
-            "Much yes", "Consider it done", "Totally", "You bet",
-            "Yup", "Yep", "Certainly", "Yarp",
+            "Certainly", "Of course", "Definitely", "Indeed", "Much yes",
+            "Consider it done", "Totally", "You bet", "Yup", "Yep",
+            "Certainly", "Yarp",
 
             // 20
             "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
@@ -34,13 +34,13 @@ namespace CompatBot.Commands
             "Don't ask me that again", "You should think twice before asking", "You what now?", "Ask Neko", "Ask Ani",
             "Bloody hell, answering that ain't so easy", "I'm pretty sure that's illegal!", "What do *you* think?", "Only on Wednesdays", "Look in the mirror, you know the answer already",
 
-            // 24
+            // 29
             "Nah mate", "Nope", "Njet", "Of course not", "Seriously no",
             "Noooooooooo", "Most likely not", "Não", "Non", "Hell no",
             "Absolutely not", "Nuh-uh!", "Nyet!", "Negatory!", "Heck no",
             "Nein!", "I think not", "I'm afraid not", "Nay", "Yesn't",
-            "No way", "Certainly not", "I must say no", "Nah", "Negative", "Definitely not",
-            "No way, Jose", "Not today", "Narp",
+            "No way", "Certainly not", "I must say no", "Nah", "Negative",
+            "Definitely not", "No way, Jose", "Not today", "Narp",
         };
 
         private static readonly List<string> EightBallTimeUnits = new List<string>
