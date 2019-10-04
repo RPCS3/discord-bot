@@ -25,6 +25,8 @@ namespace CompatBot.Commands
             "Don't be an idiot. YES.", "Mhm!", "Many Yes", "Yiss", "Sir, yes, Sir!", 
             "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
             "Certainly", "Of course", "Definitely", "Indeed",
+            "Much yes", "Make it so", "Consider it done", "Totally", "You bet",
+            "Sure", "Yup", "Yep", "Okie dokie", "Certainly", "Yarp",
 
             // 20
             "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
@@ -37,7 +39,8 @@ namespace CompatBot.Commands
             "Noooooooooo", "Most likely not", "Não", "Non", "Hell no",
             "Absolutely not", "Nuh-uh!", "Nyet!", "Negatory!", "Heck no",
             "Nein!", "I think not", "I'm afraid not", "Nay", "Yesn't",
-            "No way", "Certainly not", "I must say no", "Nah",
+            "No way", "Certainly not", "I must say no", "Nah", "Negative", "Definitely not",
+            "No way, Jose", "Not today", "Narp",
         };
 
         private static readonly List<string> EightBallTimeUnits = new List<string>
