@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -80,7 +81,7 @@ namespace CompatBot.EventHandlers
         {
             var membersWithRoles = listToCheckAgainst ??
                                    client.Guilds.SelectMany(guild => guild.Value.Members.Values)
-                                       .Where(m => m.Roles.Any())
+                                       .Where(m => m.Roles.Any() || m.IsCurrent)
                                        .OrderByDescending(m => m.Hierarchy)
                                        .ThenByDescending(m => m.JoinedAt)
                                        .ToList();
