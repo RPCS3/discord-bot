@@ -86,6 +86,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             "BLES00932", "BLUS30443", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
+            "BLUS31197", "NPUB31251", "NPEB01407", // DoD3
         };
 
         private static readonly HashSet<string> KnownWriteColorBuffersIds = new HashSet<string>
@@ -659,6 +660,14 @@ namespace CompatBot.Utils.ResultFormatters
                     result[hashes[i]] = pCount;
             }
             return result;
+        }
+
+        private static HashSet<string> GetHashes(string hashList)
+        {
+            if (string.IsNullOrEmpty(hashList))
+                return new HashSet<string>(0, StringComparer.InvariantCultureIgnoreCase);
+
+            return new HashSet<string>(hashList.Split(Environment.NewLine), StringComparer.InvariantCultureIgnoreCase);
         }
 
         internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source, LogParseState state = null)

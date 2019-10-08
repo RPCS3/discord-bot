@@ -74,17 +74,18 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+            var ppuHashes = GetHashes(items["ppu_hash"]);
             if (!string.IsNullOrEmpty(serial))
             {
                 CheckP5Settings(serial, items, notes);
                 CheckAsurasWrathSettings(serial, items, notes);
                 CheckJojoSettings(serial, items, notes);
                 CheckSimpsonsSettings(serial, notes);
-                CheckNierSettings(serial, items, notes, ppuPatches);
-                CheckDod3Settings(serial, items, notes, ppuPatches);
+                CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes);
+                CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes);
                 CheckScottPilgrimSettings(serial, items, notes);
                 CheckGoWSettings(serial, items, notes);
-                CheckDesSettings(serial, items, notes, ppuPatches);
+                CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes);
                 CheckTlouSettings(serial, items, notes);
                 CheckMgs4Settings(serial, items, notes);
             }
@@ -326,7 +327,13 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
+        private static readonly HashSet<string> KnownNierPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "13950b2e29e05a115fe317815d3da9d2b2baee65",
+            "f098ee8410599c81c89f90d698340a078dc69a90",
+        };
+
+        private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
         {
             if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
             {
@@ -358,6 +365,8 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     if (frameLimit != "30")
                         notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+                    if (ppuHashes.Overlaps(KnownNierPatches))
+                        notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#nier)");
                 }
 
                 if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
@@ -426,7 +435,13 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB01202", "NPUB30910", "NPJA00102",
         };
 
-        private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
+        private static readonly HashSet<string> KnownDesPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "83681f6110d33442329073b72b8dc88a2f677172",
+            "5446a2645880eefa75f7e374abd6b7818511e2ef",
+        };
+
+        private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
         {
             if (!DesIds.Contains(serial))
                 return;
@@ -443,32 +458,48 @@ namespace CompatBot.Utils.ResultFormatters
             if (serial != "BLES00932" && serial != "BLUS30443")
                 return;
 
-            if (ppuPatches.Any())
+            if (items["vblank_rate"] is string vbrStr
+                && items["clock_scale"] is string clkStr
+                && int.TryParse(vbrStr, out var vblankRate)
+                && int.TryParse(clkStr, out var clockScale))
             {
-                if (items["vblank_rate"] is string vbrStr
-                    && items["clock_scale"] is string clkStr
-                    && int.TryParse(vbrStr, out var vblankRate)
-                    && int.TryParse(clkStr, out var clockScale))
+                if (ppuPatches.Any())
                 {
                     if (vblankRate == 60)
                         notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
                     var vbrRatio = vblankRate / 60.0;
                     var clkRatio = clockScale / 100.0;
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
-                        notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0}%), but `Clock Scale` is set to {clockScale}%");
+                        notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%), but `Clock Scale` is set to {clockScale}%");
                     else if (vblankRate == 60)
                         notes.Add("ℹ Settings are not set for the FPS patch");
                     else
-                        notes.Add($"✅ Settings are set for the {vblankRate/2} FPS patch");
+                        notes.Add($"✅ Settings are set for the {vblankRate / 2} FPS patch");
                 }
                 else
                 {
-                    notes.Add("ℹ `VBlank Rate` or `Clock Scale` is not set");
+                    if (vblankRate > 60)
+                        notes.Add("ℹ Unlocking FPS requires game patch");
+                    if (ppuHashes.Overlaps(KnownDesPatches))
+                        notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#demons-souls)");
                 }
+            }
+            else if (ppuPatches.Any())
+            {
+                notes.Add("ℹ `VBlank Rate` or `Clock Scale` is not set");
             }
         }
 
-        private static void CheckDod3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
+        private static readonly HashSet<string> KnownDod3Patches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "f2f7f7ea0444353884bb715152147c3a29f4e790",
+            "2b393f064786e5895d5a576621deb4c9107a8f0b",
+            "b18834a8f21cd29a091b287a66656a279ccba507",
+            "9c04f427625a0064282432e4edfefe9e0956c303",
+            "e1a44e5d3fb03a37f0445e92ed13abce8d6efdd4",
+        };
+
+        private static void CheckDod3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
         {
             if (serial != "NPUB31251" && serial != "NPEB01407" && serial != "BLUS31197")
                 return;
@@ -491,6 +522,10 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     if (vbr > 60)
                         notes.Add("ℹ Unlocking FPS requires game patch");
+                    if (ppuHashes.Overlaps(KnownDod3Patches))
+                        notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#drakengard-3)");
+                    else if (ppuHashes.Any())
+                        notes.Add("🤔 Very interesting version of the game you got there");
                 }
             }
         }
