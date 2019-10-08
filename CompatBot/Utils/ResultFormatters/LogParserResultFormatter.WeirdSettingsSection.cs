@@ -81,6 +81,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckJojoSettings(serial, items, notes);
                 CheckSimpsonsSettings(serial, notes);
                 CheckNierSettings(serial, items, notes, ppuPatches);
+                CheckDod3Settings(serial, items, notes, ppuPatches);
                 CheckScottPilgrimSettings(serial, items, notes);
                 CheckGoWSettings(serial, items, notes);
                 CheckDesSettings(serial, items, notes, ppuPatches);
@@ -159,7 +160,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["vblank_rate"] is string vblank
                     && int.TryParse(vblank, out var vblankRate)
                     && vblankRate != 60)
-                    notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz");
+                    notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz ({vblankRate/60.0*100:0}%)");
 
                 if (items["clock_scale"] is string clockScaleStr
                     && int.TryParse(clockScaleStr, out var clockScale)
@@ -454,7 +455,7 @@ namespace CompatBot.Utils.ResultFormatters
                     var vbrRatio = vblankRate / 60.0;
                     var clkRatio = clockScale / 100.0;
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
-                        notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0.}%), but `Clock Scale` is set to {clockScale}%");
+                        notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio*100:0}%), but `Clock Scale` is set to {clockScale}%");
                     else if (vblankRate == 60)
                         notes.Add("ℹ Settings are not set for the FPS patch");
                     else
@@ -466,6 +467,35 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
         }
+
+        private static void CheckDod3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
+        {
+            if (serial != "NPUB31251" && serial != "NPEB01407" && serial != "BLUS31197")
+                return;
+
+            if (items["vblank_rate"] is string vbrStr
+                && int.TryParse(vbrStr, out var vbr))
+            {
+                if (ppuPatches.Any())
+                {
+                    if (vbr == 60)
+                        notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
+                    else if (vbr == 120 || vbr == 240)
+                        notes.Add($"✅ Settings are set for the {vbr / 2} FPS patch");
+                    else if (vbr > 240)
+                        notes.Add($"⚠ Settings are configured for the {vbr/2} FPS patch, which is too high; issues are expected");
+                    else
+                        notes.Add($"ℹ Settings are set for the {vbr/2} FPS patch");
+                }
+                else
+                {
+                    if (vbr > 60)
+                        notes.Add("ℹ Unlocking FPS requires game patch");
+                }
+            }
+        }
+
+
 
         private static readonly HashSet<string> TlouIds = new HashSet<string>
         {
