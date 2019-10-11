@@ -15,7 +15,7 @@ namespace CompatBot.EventHandlers
     internal static class EmpathySimulationHandler
     {
         private static readonly TCache MessageQueue = new TCache();
-        private static readonly TimeSpan ThrottleDuration = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan ThrottleDuration = TimeSpan.FromDays(1);
         private static readonly MemoryCache Throttling = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
@@ -27,6 +27,9 @@ namespace CompatBot.EventHandlers
                 return;
 
             if (args.Author.IsCurrent)
+                return;
+
+            if (args.Author.Id == 197163728867688448ul)
                 return;
 
             if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))

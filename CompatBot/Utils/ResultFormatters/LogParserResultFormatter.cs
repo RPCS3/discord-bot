@@ -86,7 +86,9 @@ namespace CompatBot.Utils.ResultFormatters
         {
             "BLES00932", "BLUS30443", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
-            "BLUS31197", "NPUB31251", "NPEB01407", // DoD3
+            "BLUS31197", "NPUB31251", "NPEB01407", "BLJM61043", "BCAS20311", // DoD3
+            "BLUS31405", // jojo asb
+            "BLJS10318", // jojo eoh
         };
 
         private static readonly HashSet<string> KnownWriteColorBuffersIds = new HashSet<string>
