@@ -42,7 +42,8 @@ namespace CompatBot.EventHandlers
                 return;
 
             var similarList = queue.Where(msg => content.Equals(msg.Content, StringComparison.InvariantCultureIgnoreCase)).ToList();
-            if (similarList.Count > 2 && similarList.Select(msg => msg.Author.Id).Distinct().Count() > 2)
+            var rng = new Random();
+            if (similarList.Count > rng.Next(2, 5) && similarList.Select(msg => msg.Author.Id).Distinct().Count() > 2)
             {
                 Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
                 var botMsg = await args.Channel.SendMessageAsync(content.ToLowerInvariant()).ConfigureAwait(false);
