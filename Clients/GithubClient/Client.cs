@@ -12,12 +12,14 @@ using CompatApiClient.Utils;
 using GithubClient.POCOs;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
+using Octokit;
 using JsonContractResolver = CompatApiClient.JsonContractResolver;
 
 namespace GithubClient
 {
     public class Client
     {
+        private readonly GitHubClient github;
         private readonly HttpClient client;
         private readonly MediaTypeFormatterCollection formatters;
 
@@ -33,6 +35,7 @@ namespace GithubClient
 
         public Client()
         {
+            github = new GitHubClient(new Octokit.ProductHeaderValue("RPCS3CompatibilityBot", "2.0"));
             client = HttpClientFactory.Create(new CompressionMessageHandler());
             var settings = new JsonSerializerSettings
             {
@@ -42,7 +45,7 @@ namespace GithubClient
             formatters = new MediaTypeFormatterCollection(new[] { new JsonMediaTypeFormatter { SerializerSettings = settings } });
         }
 
-        public async Task<PrInfo> GetPrInfoAsync(int pr, CancellationToken cancellationToken)
+        public async Task<PrInfo> GetPrInfoAsync(int pr)
         {
             if (StatusesCache.TryGetValue(pr, out PrInfo result))
             {
@@ -52,23 +55,9 @@ namespace GithubClient
 
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/pulls/" + pr))
-                {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
-                            result = await response.Content.ReadAsAsync<PrInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
-                }
+                result = await github.PullRequest.Get("RPCS3", "rpcs3", pr);
+
+                await UpdateRateLimitStats();
             }
             catch (Exception e)
             {
@@ -85,7 +74,7 @@ namespace GithubClient
             return result;
         }
 
-        public async Task<IssueInfo> GetIssueInfoAsync(int issue, CancellationToken cancellationToken)
+        public async Task<IssueInfo> GetIssueInfoAsync(int issue)
         {
             if (IssuesCache.TryGetValue(issue, out IssueInfo result))
             {
@@ -95,23 +84,9 @@ namespace GithubClient
 
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/issues/" + issue))
-                {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
-                            result = await response.Content.ReadAsAsync<IssueInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
-                }
+                result = await github.Issue.Get("RPCS3", "rpcs3", issue);
+
+                await UpdateRateLimitStats();
             }
             catch (Exception e)
             {
@@ -128,7 +103,7 @@ namespace GithubClient
             return result;
         }
 
-        public async Task<List<PrInfo>> GetOpenPrsAsync(CancellationToken cancellationToken)
+        public async Task<List<PrInfo>> GetOpenPrsAsync()
         {
             var requestUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=open";
             if (StatusesCache.TryGetValue(requestUri, out List<PrInfo> result))
@@ -139,23 +114,10 @@ namespace GithubClient
 
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, requestUri))
-                {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
-                            result = await response.Content.ReadAsAsync<List<PrInfo>>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
-                }
+                var allPRs = await github.PullRequest.GetAllForRepository("RPCS3", "rpcs3");
+                result.AddRange(allPRs.Select(x => (PrInfo)x));
+
+                await UpdateRateLimitStats();
             }
             catch (Exception e)
             {
@@ -187,7 +149,7 @@ namespace GithubClient
                         try
                         {
                             await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
+                            await UpdateRateLimitStats();
                             result = await response.Content.ReadAsAsync<List<StatusInfo>>(formatters, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception e)
@@ -210,23 +172,13 @@ namespace GithubClient
             return result;
         }
 
-        private static void UpdateRateLimitStats(HttpResponseHeaders headers)
+        private async Task UpdateRateLimitStats()
         {
-            if (headers.TryGetValues("X-RateLimit-Limit", out var rateLimitValues)
-                && rateLimitValues?.FirstOrDefault() is string limitValue
-                && int.TryParse(limitValue, out var limit)
-                && limit > 0)
-                RateLimit = limit;
-            if (headers.TryGetValues("X-RateLimit-Remaining", out var rateLimitRemainingValues)
-                && rateLimitRemainingValues?.FirstOrDefault() is string remainingValue
-                && int.TryParse(remainingValue, out var remaining)
-                && remaining > 0)
-                RateLimitRemaining = remaining;
-            if (headers.TryGetValues("X-RateLimit-Reset", out var rateLimitResetValues)
-                && rateLimitResetValues?.FirstOrDefault() is string resetValue
-                && long.TryParse(resetValue, out var resetSeconds)
-                && resetSeconds > 0)
-                RateLimitResetTime = DateTimeOffset.FromUnixTimeSeconds(resetSeconds).UtcDateTime;
+            var rateLimits = await github.Miscellaneous.GetRateLimits();
+            RateLimit = rateLimits.Rate.Limit;
+            RateLimitRemaining = rateLimits.Rate.Remaining;
+            RateLimitResetTime = rateLimits.Rate.Reset.UtcDateTime;
+
             if (RateLimitRemaining < 10)
                 ApiConfig.Log.Warn($"Github rate limit is low: {RateLimitRemaining} out of {RateLimit}, will be reset on {RateLimitResetTime:u}");
         }

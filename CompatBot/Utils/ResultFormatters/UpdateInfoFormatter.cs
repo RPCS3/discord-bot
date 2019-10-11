@@ -33,7 +33,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 if (latestPr > 0)
                 {
-                    latestPrInfo = await githubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    latestPrInfo = await githubClient.GetPrInfoAsync(latestPr.Value).ConfigureAwait(false);
                     url = latestPrInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + latestPr;
                     prDesc = $"PR #{latestPr} by {latestPrInfo?.User?.Login ?? "???"}";
                 }
@@ -41,7 +41,7 @@ namespace CompatBot.Utils.ResultFormatters
                     prDesc = "PR #???";
 
                 if (currentPr > 0 && currentPr != latestPr)
-                    currentPrInfo = await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    currentPrInfo = await githubClient.GetPrInfoAsync(currentPr.Value).ConfigureAwait(false);
             }
             var desc = latestPrInfo?.Title;
             if (!string.IsNullOrEmpty(desc)

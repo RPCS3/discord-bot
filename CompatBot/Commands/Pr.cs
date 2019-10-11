@@ -31,7 +31,7 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string searchStr = null)
         {
-            var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
+            var openPrList = await githubClient.GetOpenPrsAsync().ConfigureAwait(false);
             if (openPrList == null)
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't retrieve open pull requests list, try again later").ConfigureAwait(false);
@@ -88,7 +88,7 @@ namespace CompatBot.Commands
 
         public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)
         {
-            var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
+            var prInfo = await githubClient.GetPrInfoAsync(pr).ConfigureAwait(false);
             if (prInfo.Number == 0)
             {
                 await message.ReactWithAsync(Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
@@ -148,7 +148,7 @@ namespace CompatBot.Commands
 
         public static async Task LinkIssue(DiscordClient client, DiscordMessage message, int issue)
         {
-            var issueInfo = await githubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
+            var issueInfo = await githubClient.GetIssueInfoAsync(issue).ConfigureAwait(false);
             if (issueInfo.Number == 0)
                 return;
 
