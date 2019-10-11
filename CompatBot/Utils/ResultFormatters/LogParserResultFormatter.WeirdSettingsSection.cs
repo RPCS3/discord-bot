@@ -79,7 +79,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 CheckP5Settings(serial, items, notes);
                 CheckAsurasWrathSettings(serial, items, notes);
-                CheckJojoSettings(serial, items, notes);
+                CheckJojoSettings(serial, items, notes, ppuPatches, ppuHashes);
                 CheckSimpsonsSettings(serial, notes);
                 CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes);
                 CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes);
@@ -304,17 +304,41 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB01922", "NPUB31391", "NPJB00331",
         };
 
-        private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes)
+        private static readonly HashSet<string> KnownJojoPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "6875682ab309df32307c5305c43bb132c4e261fa",
+            "18cf9a4e8196684ed9ee816f82649561fd1bf182",
+        };
+
+        private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
         {
             if (AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
             {
                 if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
-                {
                     notes.Add("ℹ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
-                }
                 else if (items["audio_buffering"] == DisabledMark)
-                {
                     notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
+
+                if ((serial == "BLUS31405" || serial == "BLJS10318")
+                    && items["vblank_rate"] is string vbrStr
+                    && int.TryParse(vbrStr, out var vbr))
+                {
+                    if (ppuPatches.Any())
+                    {
+                        if (vbr == 60)
+                            notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
+                        else if (vbr == 120)
+                            notes.Add("✅ Settings are set for the 60 FPS patch");
+                        else
+                            notes.Add($"⚠ Settings are configured for the {vbr / 2} FPS patch, which is unsupported");
+                    }
+                    else
+                    {
+                        if (vbr > 60)
+                            notes.Add("ℹ Unlocking FPS requires game patch");
+                        if (ppuHashes.Overlaps(KnownJojoPatches))
+                            notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches)");
+                    }
                 }
             }
         }
@@ -490,6 +514,13 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
+        private static readonly HashSet<string> Dod3Ids = new HashSet<string>
+        {
+            "BLUS31197", "NPUB31251",
+            "NPEB01407",
+            "BLJM61043", "BCAS20311",
+        };
+
         private static readonly HashSet<string> KnownDod3Patches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "f2f7f7ea0444353884bb715152147c3a29f4e790",
@@ -497,11 +528,14 @@ namespace CompatBot.Utils.ResultFormatters
             "b18834a8f21cd29a091b287a66656a279ccba507",
             "9c04f427625a0064282432e4edfefe9e0956c303",
             "e1a44e5d3fb03a37f0445e92ed13abce8d6efdd4",
+            "a017576369165f3746730724c8ae762ed9bc64d8",
+            "c09c496514f6dc591434575b04eb7c003826c11d",
+            "5eb979631fbbe531db5d20f0622dca5a8b64090e",
         };
 
         private static void CheckDod3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
         {
-            if (serial != "NPUB31251" && serial != "NPEB01407" && serial != "BLUS31197")
+            if (!Dod3Ids.Contains(serial))
                 return;
 
             if (items["vblank_rate"] is string vbrStr
