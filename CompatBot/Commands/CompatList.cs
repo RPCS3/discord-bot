@@ -304,6 +304,10 @@ Example usage:
                 title = "unnamed";
             else if (title.Equals("nnk", StringComparison.InvariantCultureIgnoreCase))
                 title = "ni no kuni: wrath of the white witch";
+            else if (title.Contains("mgs4", StringComparison.InvariantCultureIgnoreCase))
+                title = title.Replace("mgs4", "mgs4gotp", StringComparison.InvariantCultureIgnoreCase);
+            else if (title.Contains("metal gear solid 4", StringComparison.InvariantCultureIgnoreCase))
+                title = title.Replace("metal gear solid 4", "mgs4gotp", StringComparison.InvariantCultureIgnoreCase);
             return title;
         }
     }
