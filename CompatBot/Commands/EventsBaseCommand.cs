@@ -105,7 +105,35 @@ namespace CompatBot.Commands
                 var lastNamedEvent = await db.EventSchedule.OrderByDescending(e => e.End).FirstOrDefaultAsync(e => e.Year == current.Year && e.EventName == eventName).ConfigureAwait(false);
                 if (lastNamedEvent.End <= currentTicks)
                 {
-                    var e3EndedMsg = $"__{eventName} {current.Year} has concluded. See you next year!__";
+                    if (lastNamedEvent.End < current.AddMonths(-1).Ticks)
+                    {
+                        firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year + 1 && e.EventName == eventName).ConfigureAwait(false);
+                        if (firstNamedEvent == null)
+                        {
+                            var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
+                            if (eventName.Length > 10)
+                                noEventMsg = "No information about such event at the moment";
+                            else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
+                            {
+                                noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
+                                promo = null;
+                            }
+                            if (!string.IsNullOrEmpty(promo))
+                                noEventMsg += promo;
+                            await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
+                            return;
+                        }
+                        
+                        var upcomingNamedEventMsg = $"__{FormatCountdown(firstNamedEvent.Start.AsUtc() - current)} until {eventName} {current.Year}!__";
+                        if (string.IsNullOrEmpty(promo) || nextEvent?.Id == firstNamedEvent.Id)
+                            upcomingNamedEventMsg += $"\nFirst event: {firstNamedEvent.Name}";
+                        else
+                            upcomingNamedEventMsg += promo;
+                        await ctx.RespondAsync(upcomingNamedEventMsg).ConfigureAwait(false);
+                        return;
+                    }
+
+                    var e3EndedMsg = $"__{eventName} {current.Year} has concluded. See you next year! (maybe)__";
                     if (!string.IsNullOrEmpty(promo))
                         e3EndedMsg += promo;
                     await ctx.RespondAsync(e3EndedMsg).ConfigureAwait(false);
