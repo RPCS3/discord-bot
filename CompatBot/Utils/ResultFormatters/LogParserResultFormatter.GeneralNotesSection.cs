@@ -19,14 +19,14 @@ namespace CompatBot.Utils.ResultFormatters
     {
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items, DiscordClient discordClient)
         {
-            BuildWeirdSettingsSection(builder, items);
+            var notes = new List<string>();
+            BuildWeirdSettingsSection(builder, items, notes);
             BuildMissingLicensesSection(builder, items);
             var (irdChecked, brokenDump, longestPath) = await HasBrokenFilesAsync(items).ConfigureAwait(false);
             brokenDump |= !string.IsNullOrEmpty(items["edat_block_offset"]);
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
-            var notes = new List<string>();
             var serial = items["serial"] ?? "";
             if (items["fatal_error"] is string fatalError)
             {
@@ -368,6 +368,9 @@ namespace CompatBot.Utils.ResultFormatters
                 if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
                     notes.Add("⚠ An old version of the 60 fps patch is used");
             }
+
+            if (items["game_version"] is string gameVer)
+                notes.Add("ℹ Game version: v" + gameVer);
             if (items["ppu_hash"] is string ppuHashes
                 && ppuHashes.Split(Environment.NewLine, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string firstPpuHash
                 && !string.IsNullOrEmpty(firstPpuHash))

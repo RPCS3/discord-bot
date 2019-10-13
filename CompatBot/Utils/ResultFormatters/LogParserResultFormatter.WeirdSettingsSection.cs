@@ -10,7 +10,7 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items)
+        private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items, List<string> generalNotes)
         {
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
@@ -79,18 +79,19 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 CheckP5Settings(serial, items, notes);
                 CheckAsurasWrathSettings(serial, items, notes);
-                CheckJojoSettings(serial, items, notes, ppuPatches, ppuHashes);
-                CheckSimpsonsSettings(serial, notes);
-                CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes);
-                CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes);
+                CheckJojoSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
+                CheckSimpsonsSettings(serial, generalNotes);
+                CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
+                CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckScottPilgrimSettings(serial, items, notes);
-                CheckGoWSettings(serial, items, notes);
-                CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes);
+                CheckGoWSettings(serial, items, notes, generalNotes);
+                CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckTlouSettings(serial, items, notes);
-                CheckMgs4Settings(serial, items, notes);
+                CheckMgs4Settings(serial, generalNotes);
+                CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
-                CheckVshSettings(items, notes);
+                CheckVshSettings(items, notes, generalNotes);
             if (items["game_category"] == "1P")
                 CheckPs1ClassicsSettings(items, notes);
 
@@ -176,7 +177,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && KnownMotionControlsIds.Contains(serial)
                 && items["pad_handler"] is string padHandler
                 && !padHandler.StartsWith("DualShock"))
-                notes.Add("❗ This game requires motion controls, please use DS3 or DS4 gamepad");
+                notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3 or DualShock 4 controller");
 
             if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
             {
@@ -310,7 +311,7 @@ namespace CompatBot.Utils.ResultFormatters
             "18cf9a4e8196684ed9ee816f82649561fd1bf182",
         };
 
-        private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
+        private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
         {
             if (AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
             {
@@ -337,17 +338,20 @@ namespace CompatBot.Utils.ResultFormatters
                         if (vbr > 60)
                             notes.Add("ℹ Unlocking FPS requires game patch");
                         if (ppuHashes.Overlaps(KnownJojoPatches))
-                            notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches)");
+                        {
+                            var link = serial == "BLUS31405" ? "60_FPS_Patch_4" : "60_FPS_Patch_5";
+                            generalNotes.Add($"ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#{link})");
+                        }
                     }
                 }
             }
         }
 
-        private static void CheckSimpsonsSettings(string serial, List<string> notes)
+        private static void CheckSimpsonsSettings(string serial, List<string> generalNotes)
         {
             if (serial == "BLES00142" || serial == "BLUS30065")
             {
-                notes.Add("ℹ This game has a controller initialization bug. Simply unplug and replug it until it works.");
+                generalNotes.Add("ℹ This game has a controller initialization bug. Simply unplug and replug it until it works.");
             }
         }
 
@@ -357,7 +361,7 @@ namespace CompatBot.Utils.ResultFormatters
             "f098ee8410599c81c89f90d698340a078dc69a90",
         };
 
-        private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
+        private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
         {
             if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
             {
@@ -390,7 +394,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (frameLimit != "30")
                         notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
                     if (ppuHashes.Overlaps(KnownNierPatches))
-                        notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#nier)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_7)");
                 }
 
                 if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
@@ -430,7 +434,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPHA80258",
         };
 
-        private static void CheckGoWSettings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckGoWSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
             if (serial == "NPUA70080") // GoW3 Demo
                 return;
@@ -442,7 +446,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
             else if (Gow3Ids.Contains(serial))
             {
-                notes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
+                generalNotes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
                 if (items["spu_decoder"] is string spuDecoder
                     && spuDecoder.Contains("LLVM")
                     && items["spu_block_size"] is string blockSize
@@ -450,7 +454,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ Please change `SPU Block Size` to `Mega` for this game");
             }
             else if (GowAscIds.Contains(serial))
-                notes.Add("ℹ This game is known to be very unstable");
+                generalNotes.Add("ℹ This game is known to be very unstable");
         }
 
         private static readonly HashSet<string> DesIds = new HashSet<string>
@@ -465,7 +469,7 @@ namespace CompatBot.Utils.ResultFormatters
             "5446a2645880eefa75f7e374abd6b7818511e2ef",
         };
 
-        private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
+        private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
         {
             if (!DesIds.Contains(serial))
                 return;
@@ -505,7 +509,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (vblankRate > 60)
                         notes.Add("ℹ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownDesPatches))
-                        notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#demons-souls)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60.2F120_FPS_Patch)");
                 }
             }
             else if (ppuPatches.Any())
@@ -533,7 +537,7 @@ namespace CompatBot.Utils.ResultFormatters
             "5eb979631fbbe531db5d20f0622dca5a8b64090e",
         };
 
-        private static void CheckDod3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
+        private static void CheckDod3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
         {
             if (!Dod3Ids.Contains(serial))
                 return;
@@ -557,9 +561,9 @@ namespace CompatBot.Utils.ResultFormatters
                     if (vbr > 60)
                         notes.Add("ℹ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownDod3Patches))
-                        notes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#drakengard-3)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60.2F120_FPS_Patch_2)");
                     else if (ppuHashes.Any())
-                        notes.Add("🤔 Very interesting version of the game you got there");
+                        generalNotes.Add("🤔 Very interesting version of the game you got there");
                 }
             }
         }
@@ -605,20 +609,69 @@ namespace CompatBot.Utils.ResultFormatters
             "NPHB00065", "NPHB00067",
         };
 
-        private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckMgs4Settings(string serial, List<string> generalNotes)
         {
             if (!Mgs4Ids.Contains(serial))
                 return;
 
-            notes.Add("ℹ Metal Gear Solid 4 just got ingame, and is still very unstable");
-            notes.Add("ℹ There is no universal set of settings and game updates that works for everyone");
+            generalNotes.Add("ℹ Metal Gear Solid 4 just got ingame, and is still very unstable");
+            generalNotes.Add("ℹ There is no universal set of settings and game updates that works for everyone");
         }
 
-        private static void CheckVshSettings(NameValueCollection items, List<string> notes)
+        private static readonly HashSet<string> PdfIds = new HashSet<string>
+        {
+            "BLJM60527", "BLUS31319", "BLAS50576",
+            "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287"
+        };
+
+
+        private static readonly HashSet<string> KnownPdfPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "f3227f57ec001582b253035fd90de77f05ead470",
+            "c02e3b52e3d75f52f76fb8f0fb5be7ca4d921949",
+            "1105af0a4d6a4a1481930c6f3090c476cde06c4c",
+        };
+
+        private static readonly HashSet<string> Pdf2ndIds = new HashSet<string>
+        {
+            "BCAS50693", "BLAS50693", "BLES02029", "BLJM61079",
+            "NPUB31488", "NPHB00671", "NPHB00662", "NPEB02013", "NPJB00435",
+        };
+
+
+        private static readonly HashSet<string> KnownPdf2ndPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "092c43e2bcacccfe3cdc22b0ab8062b91d4e1cf9",
+            "67e0e7c9b2a7a340c914a0d078e25aac1047e4d4",
+            "51d336edfa3774f2db83ed030611f462c097c40b",
+            "c70b15d3f6694af74fa329dd4fc25fe28a59e9cc",
+            "c3291f5919ca147ac854de10f7436f4ad494233f",
+            "058cf39c07fd13f100c1f6dc40a0ead9bf3ad51b",
+            "8fc9f26ed77cc9237db0e6348dcf9d6c451b6220",
+            "311fcd98af6adc5e64e6a833eb959f43b0976193",
+        };
+
+        private static void CheckProjectDivaSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
+        {
+            if (!PdfIds.Contains(serial) && !Pdf2ndIds.Contains(serial))
+                return;
+
+            if (!ppuPatches.Any())
+            {
+                if (ppuHashes.Overlaps(KnownPdfPatches))
+                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_2)");
+                else if (ppuHashes.Overlaps(KnownPdf2ndPatches))
+                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_3)");
+            }
+            if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+                notes.Add("⚠ `Frame Limiter` should be `Off`");
+        }
+
+        private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
             if (items["build_branch"] is string branch
                 && !branch.Contains("vsh", StringComparison.InvariantCultureIgnoreCase))
-                notes.Add("ℹ Booting `vsh.self` currently requires a special build");
+                generalNotes.Add("ℹ Booting `vsh.self` currently requires a special build");
             if (items["lib_loader"] is string libLoader
                 && libLoader != "Manual selection")
                 notes.Add("⚠ `Library Loader` must be set to `Manual`");
