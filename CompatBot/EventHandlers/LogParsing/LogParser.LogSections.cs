@@ -61,7 +61,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 Extractors = new Dictionary<string, Regex>
                 {
                     ["PPU Decoder:"] = new Regex(@"PPU Decoder: (?<ppu_decoder>.*?)\r?$", DefaultOptions),
-                    ["PPU Threads:"] = new Regex(@"Threads: (?<ppu_threads>.*?)\r?$", DefaultOptions),
+                    ["PPU Threads:"] = new Regex(@"PPU Threads: (?<ppu_threads>.*?)\r?$", DefaultOptions),
                     ["Use LLVM CPU:"] = new Regex("Use LLVM CPU: \\\"?(?<llvm_arch>.*?)\\\"?\r?$", DefaultOptions),
                     ["thread scheduler:"] = new Regex(@"scheduler: (?<thread_scheduler>.*?)\r?$", DefaultOptions),
                     ["SPU Decoder:"] = new Regex(@"SPU Decoder: (?<spu_decoder>.*?)\r?$", DefaultOptions),
