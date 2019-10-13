@@ -368,6 +368,9 @@ namespace CompatBot.Utils.ResultFormatters
                 if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
                     notes.Add("⚠ An old version of the 60 fps patch is used");
             }
+
+            if (items["game_version"] is string gameVer)
+                notes.Add("ℹ Game version: v" + gameVer);
             if (items["ppu_hash"] is string ppuHashes
                 && ppuHashes.Split(Environment.NewLine, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string firstPpuHash
                 && !string.IsNullOrEmpty(firstPpuHash))

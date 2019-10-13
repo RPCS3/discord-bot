@@ -274,6 +274,14 @@ namespace CompatBot.Utils.ResultFormatters
             }
             else
                 items["library_list"] = "None";
+            if (items["app_version"] is string appVer && !appVer.Equals("Unknown", StringComparison.InvariantCultureIgnoreCase))
+                items["game_version"] = appVer;
+            else if (items["disc_app_version"] is string discAppVer && !discAppVer.Equals("Unknown", StringComparison.InvariantCultureIgnoreCase))
+                items["game_version"] = discAppVer;
+            else if (items["disc_package_version"] is string discPkgVer && !discPkgVer.Equals("Unknown", StringComparison.InvariantCultureIgnoreCase))
+                items["game_version"] = discPkgVer;
+            if (items["game_version"] is string gameVer && gameVer.StartsWith("0"))
+                items["game_version"] = gameVer.Substring(1);
 
             foreach (var key in items.AllKeys)
             {
