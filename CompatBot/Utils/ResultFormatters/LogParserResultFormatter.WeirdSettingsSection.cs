@@ -99,6 +99,9 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
                 notes.Add("❔ `/host_root/` is enabled");
+            if (items["ppu_threads"] is string ppuThreads
+                && ppuThreads != "2")
+                notes.Add($"⚠ `PPU Threads` is set to `{ppuThreads.Sanitize()}`; please change it back to `2`");
             if (items["spurs_threads"] is string spursSetting
                 && int.TryParse(spursSetting, out var spursThreads)
                 && spursThreads != 6)
