@@ -88,6 +88,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckTlouSettings(serial, items, notes);
                 CheckMgs4Settings(serial, generalNotes);
+                CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -337,7 +338,10 @@ namespace CompatBot.Utils.ResultFormatters
                         if (vbr > 60)
                             notes.Add("ℹ Unlocking FPS requires game patch");
                         if (ppuHashes.Overlaps(KnownJojoPatches))
-                            generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches)");
+                        {
+                            var link = serial == "BLUS31405" ? "60_FPS_Patch_4" : "60_FPS_Patch_5";
+                            generalNotes.Add($"ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#{link})");
+                        }
                     }
                 }
             }
@@ -390,7 +394,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (frameLimit != "30")
                         notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
                     if (ppuHashes.Overlaps(KnownNierPatches))
-                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#nier)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_7)");
                 }
 
                 if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
@@ -505,7 +509,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (vblankRate > 60)
                         notes.Add("ℹ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownDesPatches))
-                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#demons-souls)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60.2F120_FPS_Patch)");
                 }
             }
             else if (ppuPatches.Any())
@@ -557,7 +561,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (vbr > 60)
                         notes.Add("ℹ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownDod3Patches))
-                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://github.com/RPCS3/rpcs3/wiki/Game-Patches#drakengard-3)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60.2F120_FPS_Patch_2)");
                     else if (ppuHashes.Any())
                         generalNotes.Add("🤔 Very interesting version of the game you got there");
                 }
@@ -612,6 +616,55 @@ namespace CompatBot.Utils.ResultFormatters
 
             generalNotes.Add("ℹ Metal Gear Solid 4 just got ingame, and is still very unstable");
             generalNotes.Add("ℹ There is no universal set of settings and game updates that works for everyone");
+        }
+
+        private static readonly HashSet<string> PdfIds = new HashSet<string>
+        {
+            "BLJM60527", "BLUS31319", "BLAS50576",
+            "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287"
+        };
+
+
+        private static readonly HashSet<string> KnownPdfPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "f3227f57ec001582b253035fd90de77f05ead470",
+            "c02e3b52e3d75f52f76fb8f0fb5be7ca4d921949",
+            "1105af0a4d6a4a1481930c6f3090c476cde06c4c",
+        };
+
+        private static readonly HashSet<string> Pdf2ndIds = new HashSet<string>
+        {
+            "BCAS50693", "BLAS50693", "BLES02029", "BLJM61079",
+            "NPUB31488", "NPHB00671", "NPHB00662", "NPEB02013", "NPJB00435",
+        };
+
+
+        private static readonly HashSet<string> KnownPdf2ndPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "092c43e2bcacccfe3cdc22b0ab8062b91d4e1cf9",
+            "67e0e7c9b2a7a340c914a0d078e25aac1047e4d4",
+            "51d336edfa3774f2db83ed030611f462c097c40b",
+            "c70b15d3f6694af74fa329dd4fc25fe28a59e9cc",
+            "c3291f5919ca147ac854de10f7436f4ad494233f",
+            "058cf39c07fd13f100c1f6dc40a0ead9bf3ad51b",
+            "8fc9f26ed77cc9237db0e6348dcf9d6c451b6220",
+            "311fcd98af6adc5e64e6a833eb959f43b0976193",
+        };
+
+        private static void CheckProjectDivaSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
+        {
+            if (!PdfIds.Contains(serial) && !Pdf2ndIds.Contains(serial))
+                return;
+
+            if (!ppuPatches.Any())
+            {
+                if (ppuHashes.Overlaps(KnownPdfPatches))
+                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_2)");
+                else if (ppuHashes.Overlaps(KnownPdf2ndPatches))
+                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_3)");
+            }
+            if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+                notes.Add("⚠ `Frame Limiter` should be `Off`");
         }
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
