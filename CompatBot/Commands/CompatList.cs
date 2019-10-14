@@ -152,18 +152,52 @@ Example usage:
                 return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
             }
 
-            public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null)
+            [Command("restore"), RequiresBotModRole]
+            [Description("Regenerates update announcement for specified bot message and build hash")]
+            public async Task Restore(CommandContext ctx, string botMsgLink, string updateCommitHash)
+            {
+                var botMsg = await ctx.GetMessageAsync(botMsgLink).ConfigureAwait(false);
+                if (botMsg?.Author == null || !botMsg.Author.IsCurrent || !string.IsNullOrEmpty(botMsg.Content) || botMsg.Embeds.Any())
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid source message link").ConfigureAwait(false);
+                    return;
+                }
+
+                if (!await CheckForRpcs3Updates(ctx.Client, null, updateCommitHash, botMsg).ConfigureAwait(false))
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to fetch update info").ConfigureAwait(false);
+                    return;
+                }
+
+                await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
+            }
+
+            public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null, DiscordMessage emptyBotMsg = null)
             {
                 var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
                 if (info?.ReturnCode != 1 && sinceCommit != null)
                     info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+
+                if (emptyBotMsg != null && info?.CurrentBuild != null)
+                    info.LatestBuild = info.CurrentBuild;
                 var embed = await info.AsEmbedAsync().ConfigureAwait(false);
                 if (info == null || embed.Color == Config.Colors.Maintenance)
+                {
+                    if (emptyBotMsg != null)
+                        return false;
+
                     embed = await CachedUpdateInfo.AsEmbedAsync().ConfigureAwait(false);
-                else
+                }
+                else if (emptyBotMsg == null)
                     CachedUpdateInfo = info;
                 if (channel != null)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                else if (emptyBotMsg != null)
+                {
+                    await emptyBotMsg.ModifyAsync(embed: embed.Build()).ConfigureAwait(false);
+                    return true;
+                }
+
                 var updateLinks = info?.LatestBuild?.Pr?.ToString();
                 if (!string.IsNullOrEmpty(updateLinks)
                     && lastUpdateInfo != updateLinks
