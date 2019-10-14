@@ -61,6 +61,9 @@ namespace CompatBot.EventHandlers
             if (channel.IsPrivate)
                 return;
 
+            if (message?.Author == null)
+                return;
+
             if (message.Author.IsCurrent)
                 return;
 
