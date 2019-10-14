@@ -194,6 +194,10 @@ Example usage:
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 else if (emptyBotMsg != null)
                 {
+                    if (embed.Color == Config.Colors.Maintenance)
+                        return false;
+
+                    Config.Log.Debug($"Restoring update announcement for build {sinceCommit}: {embed.Title}\n{embed.Description}");
                     await emptyBotMsg.ModifyAsync(embed: embed.Build()).ConfigureAwait(false);
                     return true;
                 }
