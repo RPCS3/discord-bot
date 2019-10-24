@@ -41,7 +41,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(content))
                 return;
 
-            if (Throttling.TryGetValue(args.Channel.Id, out object mark) && mark != null)
+            if (Throttling.TryGetValue(args.Channel.Id, out var mark) && mark != null)
                 return;
 
             var similarList = queue.Where(msg => content.Equals(msg.Content, StringComparison.InvariantCultureIgnoreCase)).ToList();

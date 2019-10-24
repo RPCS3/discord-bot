@@ -72,9 +72,9 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
                 notes.Add("❌ This game doesn't work on the emulator yet");
-            if (items["failed_to_decrypt"] is string _)
+            if (items["failed_to_decrypt"] != null)
                 notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
-            if (items["failed_to_boot"] is string _)
+            if (items["failed_to_boot"] != null)
                 notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
             if (items["failed_to_verify"] is string verifyFails)
             {
@@ -504,7 +504,15 @@ namespace CompatBot.Utils.ResultFormatters
                 return (false, false, defaultLongestPath);
 
             if (!productCode.StartsWith("B") && !productCode.StartsWith("M"))
+            {
+                if (P5Ids.Contains(productCode) && items["broken_digital_filename"] is string brokenDigitalFiles)
+                {
+                    var missingDigitalFiles = brokenDigitalFiles.Split(Environment.NewLine).Distinct().ToList();
+                    if (missingDigitalFiles.Contains("USRDIR/ps3.cpk") || missingDigitalFiles.Contains("USRDIR/data.cpk"))
+                        return (false, true, defaultLongestPath);
+                }
                 return (false, false, defaultLongestPath);
+            }
 
             HashSet<string> knownFiles;
             try
