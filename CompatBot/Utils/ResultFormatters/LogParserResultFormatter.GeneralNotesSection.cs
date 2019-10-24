@@ -445,7 +445,7 @@ namespace CompatBot.Utils.ResultFormatters
 
                 notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
                 if (buildBranch == "spu_perf")
-                    notes.Add($"ℹ `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
+                    notes.Add($"😱 `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
             }
 
             if (items["failed_pad"] is string failedPad)
