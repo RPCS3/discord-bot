@@ -11,7 +11,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using GithubClient.POCOs;
+using Octokit.GraphQL.Model;
 
 namespace CompatBot.Commands
 {
@@ -46,7 +46,7 @@ namespace CompatBot.Commands
 
             if (!string.IsNullOrEmpty(searchStr))
             {
-                var filteredList = openPrList.Where(pr => pr.Title.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) || pr.User.Login.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                var filteredList = openPrList.Where(pr => pr.Title.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) || pr.Author.Login.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase)).ToList();
                 if (filteredList.Count == 0)
                 {
                     var searchParts = searchStr.Split(' ', 2);
@@ -54,7 +54,7 @@ namespace CompatBot.Commands
                     {
                         var author = searchParts[0].Trim();
                         var substr = searchParts[1].Trim();
-                        openPrList = openPrList.Where(pr => pr.User.Login.Contains(author, StringComparison.InvariantCultureIgnoreCase) && pr.Title.Contains(substr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                        openPrList = openPrList.Where(pr => pr.Author.Login.Contains(author, StringComparison.InvariantCultureIgnoreCase) && pr.Title.Contains(substr, StringComparison.InvariantCultureIgnoreCase)).ToList();
                     }
                     else
                         openPrList = filteredList;
@@ -78,11 +78,11 @@ namespace CompatBot.Commands
             var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             const int maxTitleLength = 80;
             var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
-            var maxAuthor = openPrList.Max(pr => pr.User.Login.GetVisibleLength());
+            var maxAuthor = openPrList.Max(pr => pr.Author.Login.GetVisibleLength());
             var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.GetVisibleLength()), maxTitleLength);
             var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
             foreach (var pr in openPrList)
-                result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRightVisible(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
+                result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.Author.Login.PadRightVisible(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.Url}>");
             await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
 
@@ -91,19 +91,18 @@ namespace CompatBot.Commands
             var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
             if (prInfo.Number == 0)
             {
-                await message.ReactWithAsync(Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
+                await message.ReactWithAsync(Config.Reactions.Failure, prInfo.BodyText ?? "PR not found").ConfigureAwait(false);
                 return;
             }
 
-            var prState = prInfo.GetState();
             var embed = prInfo.AsEmbed();
-            if (prState.state == "Open" || prState.state == "Closed")
+            if (prInfo.State == PullRequestState.Open || prInfo.State == PullRequestState.Closed)
             {
                 var downloadHeader = "Latest PR Build Download";
                 var downloadText = "Waiting for the first successful build";
                 if (prInfo.StatusesUrl is string statusesUrl)
                 {
-                    if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                    if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt.UtcDateTime, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                     {
                         if (artifactInfo.Artifact.Created is DateTime buildTime)
                             downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
@@ -116,7 +115,7 @@ namespace CompatBot.Commands
                         downloadText = statuses?.First().Description ?? downloadText;
                     }
                 }
-                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt.UtcDateTime, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                 {
                     if (artifactInfo.Artifact.Created is DateTime buildTime)
                         downloadHeader = $"{downloadHeader} ({buildTime.ToUniversalTime():u})";
@@ -125,7 +124,7 @@ namespace CompatBot.Commands
                 if (!string.IsNullOrEmpty(downloadText))
                     embed.AddField(downloadHeader, downloadText);
             }
-            else if (prState.state == "Merged")
+            else if (prInfo.State == PullRequestState.Merged)
             {
                 var mergeTime = prInfo.MergedAt.GetValueOrDefault();
                 var now = DateTime.UtcNow;

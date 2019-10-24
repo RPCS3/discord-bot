@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using CompatApiClient.POCOs;
 using CompatBot.EventHandlers;
 using DSharpPlus.Entities;
-using GithubClient.POCOs;
+using Octokit.GraphQL.Model;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -25,8 +25,8 @@ namespace CompatBot.Utils.ResultFormatters
             var latestPr = latestBuild?.Pr;
             var currentPr = info.CurrentBuild?.Pr;
             string url = null;
-            PrInfo latestPrInfo = null;
-            PrInfo currentPrInfo = null;
+            PullRequest latestPrInfo = null;
+            PullRequest currentPrInfo = null;
 
             string prDesc = "";
             if (!justAppend)
@@ -34,8 +34,8 @@ namespace CompatBot.Utils.ResultFormatters
                 if (latestPr > 0)
                 {
                     latestPrInfo = await githubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
-                    url = latestPrInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + latestPr;
-                    prDesc = $"PR #{latestPr} by {latestPrInfo?.User?.Login ?? "???"}";
+                    url = latestPrInfo?.Url ?? "https://github.com/RPCS3/rpcs3/pull/" + latestPr;
+                    prDesc = $"PR #{latestPr} by {latestPrInfo?.Author?.Login ?? "???"}";
                 }
                 else
                     prDesc = "PR #???";
@@ -63,18 +63,18 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
             builder = builder ?? new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
-            var currentCommit = currentPrInfo?.MergeCommitSha;
-            var latestCommit = latestPrInfo?.MergeCommitSha;
-            var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var latestAppveyorBuild = await appveyorClient.GetMasterBuildAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+            var currentCommit = currentPrInfo?.MergeCommit?.Oid;
+            var latestCommit = latestPrInfo?.MergeCommit?.Oid;
+            var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt?.UtcDateTime, Config.Cts.Token).ConfigureAwait(false);
+            var latestAppveyorBuild = await appveyorClient.GetMasterBuildAsync(latestCommit, latestPrInfo?.MergedAt?.UtcDateTime, Config.Cts.Token).ConfigureAwait(false);
             var buildTimestampKind = "Build";
             var latestBuildTimestamp = latestAppveyorBuild?.Finished?.ToUniversalTime();
             var currentBuildTimestamp = currentAppveyorBuild?.Finished?.ToUniversalTime();
             if (!latestBuildTimestamp.HasValue)
             {
                 buildTimestampKind = "Merge";
-                latestBuildTimestamp = latestPrInfo?.MergedAt;
-                currentBuildTimestamp = currentPrInfo?.MergedAt;
+                latestBuildTimestamp = latestPrInfo?.MergedAt?.UtcDateTime;
+                currentBuildTimestamp = currentPrInfo?.MergedAt?.UtcDateTime;
             }
 
             if (!string.IsNullOrEmpty(latestBuild?.Datetime))
