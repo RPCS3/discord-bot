@@ -18,7 +18,7 @@ namespace CompatBot.Commands
 
         private static readonly List<string> EightBallAnswers = new List<string>
         {
-            // 37
+            // 43
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
             "Sure", "Yeah, why not", "Most likely", "Sim", "Oui",
             "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", "<:cell_ok_hand:324618647857397760>",
@@ -26,21 +26,24 @@ namespace CompatBot.Commands
             "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
             "Certainly", "Of course", "Definitely", "Indeed", "Much yes",
             "Consider it done", "Totally", "You bet", "Yup", "Yep",
-            "Certainly", "Yarp",
+            "Positive!", "Yarp", "Hmmm, yes!", "That's a yes for me", "Aye mate",
+            "Absolutely", "Totes my goats", "Without fail",
 
-            // 20
+            // 24
             "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
             "Maybe not, maybe yes", "Ugh", "Probably", "Ask again later", "Error 404: answer not found",
             "Don't ask me that again", "You should think twice before asking", "You what now?", "Ask Neko", "Ask Ani",
             "Bloody hell, answering that ain't so easy", "I'm pretty sure that's illegal!", "What do *you* think?", "Only on Wednesdays", "Look in the mirror, you know the answer already",
+            "Don't know, don't care", "_shows signs of complete confusion_", "Have you googled it?", "Not sure my dude", 
 
-            // 29
+            // 34
             "Nah mate", "Nope", "Njet", "Of course not", "Seriously no",
             "Noooooooooo", "Most likely not", "Não", "Non", "Hell no",
             "Absolutely not", "Nuh-uh!", "Nyet!", "Negatory!", "Heck no",
             "Nein!", "I think not", "I'm afraid not", "Nay", "Yesn't",
             "No way", "Certainly not", "I must say no", "Nah", "Negative",
-            "Definitely not", "No way, Jose", "Not today", "Narp",
+            "Definitely not", "No way, Jose", "Not today", "Narp", "Not in a million years", 
+            "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means",
         };
 
         private static readonly List<string> EightBallTimeUnits = new List<string>
@@ -51,7 +54,7 @@ namespace CompatBot.Commands
 
         private static readonly List<string> RateAnswers = new List<string>
         {
-            // 57
+            // 60
             "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
             "Glorious!", "Very good", "Excellent...", "Magnificent", "Rate bot says he likes, so you like too",
             "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "Belissimo!",
@@ -63,15 +66,16 @@ namespace CompatBot.Commands
             "So cute!", "It's so nice, I think about it every day!", "😊 Never expected to be this pretty!", "It's overflowing with charm!", "Filled with passion!",
             "A love magnet", "Pretty Fancy", "Admirable", "Sweet as a candy", "Delightful",
             "Enchanting as the Sunset", "A beacon of hope!", "Filled with hope!", "Shiny!", "Absolute Hope!",
-            "The meaning of hope", "Inspiring!",
+            "The meaning of hope", "Inspiring!", "Marvelous", "Breathtaking", "Better than bubble wrap.",
 
-            // 20
+            // 22
             "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect", "🆗",
             "You already know, my boi", "Unexpected like a bouquet of sunflowers 🌻", "Hard to measure precisely...", "Requires more data to analyze", "Passable",
             "Quite unique 🤔", "Less like an orange, and more like an apple", "I don't know, man...", "It is so tiring to grade everything...", "...",
-            "Bland like porridge", "🤔", "Ok-ish?", "Not _bad_, but also not _good_", "Why would you want to _rate_ this?",
+            "Bland like porridge", "🤔", "Ok-ish?", "Not _bad_, but also not _good_", "Why would you want to _rate_ this?", "meh",
+            "I've seen worse",
 
-            // 41
+            // 43
             "Bad", "Very bad", "Pretty bad", "Horrible", "Ugly",
             "Disgusting", "Literally the worst", "Not interesting", "Simply ugh", "I don't like it! You shouldn't either!",
             "Just like you, 💩", "Not approved", "Big Mistake", "The opposite of good", "Could be better",
@@ -80,7 +84,7 @@ namespace CompatBot.Commands
             "Boooooooo!", "Poopy", "Smelly", "Feeling-breaker", "Annoying",
             "Boring", "Easily forgettable", "An Abomination", "A Monstrosity", "Truly horrific",
             "Filled with despair!", "Eroded by despair", "Hopeless…", "It's pretty foolish to want to rate this", "Cursed with misfortune",
-            "Nothing but terror",
+            "Nothing but terror", "Not good, at all", "A waste of time",
         };
 
         private static readonly char[] Separators = { ' ', '　', '\r', '\n' };
