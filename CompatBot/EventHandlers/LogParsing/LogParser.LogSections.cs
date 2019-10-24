@@ -283,17 +283,13 @@ namespace CompatBot.EventHandlers.LogParsing
                 "vulkan_gpu", "vulkan_driver_version_raw",
                 "compat_database_path"
             );
-#if DEBUG
-            Console.WriteLine("===== cleared");
-#endif
+            Config.Log.Trace("===== cleared");
         }
 
         private static void MarkAsComplete(LogParseState state)
         {
             state.CompleteCollection = state.WipCollection;
-#if DEBUG
-            Console.WriteLine("----- complete section");
-#endif
+            Config.Log.Trace("----- complete section");
         }
 
         private static void MarkAsCompleteAndReset(LogParseState state)
