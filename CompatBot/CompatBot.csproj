@@ -23,11 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00625" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00625" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00625" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00628" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00628" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00628" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.41.1.1715" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.41.1.1734" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.3.3" />
     <PackageReference Include="MegaApiClient" Version="1.7.1" />
@@ -40,10 +40,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="3.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.5" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.3.32" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.4.37" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="NLog" Version="4.6.7" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="1.5.4" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="1.6.1" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.2" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="System.Drawing.Common" Version="4.6.0" />

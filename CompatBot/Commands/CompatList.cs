@@ -20,6 +20,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 
 namespace CompatBot.Commands
 {
@@ -181,10 +182,13 @@ Example usage:
                 if (emptyBotMsg != null && info?.CurrentBuild != null)
                     info.LatestBuild = info.CurrentBuild;
                 var embed = await info.AsEmbedAsync().ConfigureAwait(false);
-                if (info == null || embed.Color == Config.Colors.Maintenance)
+                if (info == null || embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                 {
                     if (emptyBotMsg != null)
+                    {
+                        Config.Log.Debug($"Failed to get update info for commit {sinceCommit}: {JsonConvert.SerializeObject(info)}");
                         return false;
+                    }
 
                     embed = await CachedUpdateInfo.AsEmbedAsync().ConfigureAwait(false);
                 }
@@ -194,7 +198,7 @@ Example usage:
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 else if (emptyBotMsg != null)
                 {
-                    if (embed.Color == Config.Colors.Maintenance)
+                    if (embed.Title == "Error")
                         return false;
 
                     Config.Log.Debug($"Restoring update announcement for build {sinceCommit}: {embed.Title}\n{embed.Description}");

@@ -41,11 +41,11 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(content))
                 return;
 
-            if (Throttling.TryGetValue(args.Channel.Id, out object mark) && mark != null)
+            if (Throttling.TryGetValue(args.Channel.Id, out var mark) && mark != null)
                 return;
 
             var similarList = queue.Where(msg => content.Equals(msg.Content, StringComparison.InvariantCultureIgnoreCase)).ToList();
-            if (similarList.Count > 2 && similarList.Select(msg => msg.Author.Id).Distinct().Count() > new Random().Next(2, 5))
+            if (similarList.Count > 2 && similarList.Select(msg => msg.Author.Id).Distinct().Count() > 2)
             {
                 Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
                 var botMsg = await args.Channel.SendMessageAsync(content.ToLowerInvariant()).ConfigureAwait(false);

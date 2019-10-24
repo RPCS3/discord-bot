@@ -83,7 +83,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckSimpsonsSettings(serial, generalNotes);
                 CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-                CheckScottPilgrimSettings(serial, items, notes);
+                CheckScottPilgrimSettings(serial, items, notes, generalNotes);
                 CheckGoWSettings(serial, items, notes, generalNotes);
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckTlouSettings(serial, items, notes);
@@ -410,12 +410,16 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static void CheckScottPilgrimSettings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckScottPilgrimSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
             if (serial == "NPEB00258" || serial == "NPUB30162" || serial == "NPJB00068")
             {
                 if (items["resolution"] is string res && res != "1920x1080")
                     notes.Add("⚠ For perfect sprite scaling without borders set `Resolution` to `1920x1080`");
+                if (items["game_version"] is string gameVer
+                    && Version.TryParse(gameVer, out var v)
+                    && v < new Version(1, 03))
+                    generalNotes.Add("⚠ Please update game to v1.03 if you experience visual issues");
             }
         }
 

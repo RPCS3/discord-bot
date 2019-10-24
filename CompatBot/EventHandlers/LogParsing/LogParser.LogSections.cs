@@ -186,7 +186,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["PPU executable hash:"] = new Regex(@"PPU executable hash: PPU-(?<ppu_hash>\w+) \(<-\s*(?<ppu_hash_patch>\d+)\).*?\r?$", DefaultOptions),
                     ["OVL executable hash:"] = new Regex(@"OVL executable hash: OVL-(?<ovl_hash>\w+) \(<-\s*(?<ovl_hash_patch>(?!0)\d+)\).*?\r?$", DefaultOptions),
                     ["Loaded SPU image:"] = new Regex(@"Loaded SPU image: SPU-(?<spu_hash>\w+) \(<-\s*(?<spu_hash_patch>(?!0)\d+)\).*?\r?$", DefaultOptions),
-                    ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_filename>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
+                    ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed .+\xE2\x80\x9C(/dev_bdvd/(?<broken_filename>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["'sys_fs_opendir' failed"] = new Regex(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["LDR: EDAT: "] = new Regex(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
                     ["PS3 firmware is not installed"] = new Regex(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
@@ -215,6 +215,7 @@ namespace CompatBot.EventHandlers.LogParsing
             "spu_hash",
             "spu_hash_patch",
             "broken_filename",
+            "broken_digital_filename",
             "broken_directory",
             "edat_block_offset",
             "failed_to_verify",
@@ -282,17 +283,13 @@ namespace CompatBot.EventHandlers.LogParsing
                 "vulkan_gpu", "vulkan_driver_version_raw",
                 "compat_database_path"
             );
-#if DEBUG
-            Console.WriteLine("===== cleared");
-#endif
+            Config.Log.Trace("===== cleared");
         }
 
         private static void MarkAsComplete(LogParseState state)
         {
             state.CompleteCollection = state.WipCollection;
-#if DEBUG
-            Console.WriteLine("----- complete section");
-#endif
+            Config.Log.Trace("----- complete section");
         }
 
         private static void MarkAsCompleteAndReset(LogParseState state)
