@@ -178,11 +178,7 @@ namespace CompatBot.Commands
                 Config.Log.Info("Restarting...");
                 using (var self = new Process
                 {
-#if DEBUG
-                    StartInfo = new ProcessStartInfo("dotnet", $"run -- {Config.Token} {channelId}")
-#else
                     StartInfo = new ProcessStartInfo("dotnet", $"run -c Release -- {Config.Token} {channelId}")
-#endif
                 })
                 {
                     self.Start();
