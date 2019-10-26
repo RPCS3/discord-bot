@@ -63,7 +63,7 @@ namespace CompatBot
                     return;
                 }
 
-                if (string.IsNullOrEmpty(Config.Token))
+                if (string.IsNullOrEmpty(Config.Token) || Config.Token.Length < 16)
                 {
                     Config.Log.Fatal("No token was specified.");
                     return;
@@ -244,7 +244,15 @@ namespace CompatBot
                     };
                     Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
 
-                    await client.ConnectAsync().ConfigureAwait(false);
+                    try
+                    {
+                        await client.ConnectAsync().ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Error(e, "Failed to connect to Discord: " + e.Message);
+                        throw;
+                    }
 
                     if (args.Length > 1 && ulong.TryParse(args[1], out var channelId))
                     {
