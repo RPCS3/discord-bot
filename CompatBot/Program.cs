@@ -27,9 +27,9 @@ namespace CompatBot
 
         internal static async Task Main(string[] args)
         {
+            Console.WriteLine("Confinement: " + SandboxDetector.Detect() ?? "None");
             if (args.Length > 0 && args[0] == "--dry-run")
             {
-                Console.WriteLine("Confinement: " + SandboxDetector.Detect());
                 Console.WriteLine("Database path: " + Path.GetDirectoryName(Path.GetFullPath(DbImporter.GetDbPath("fake.db", Environment.SpecialFolder.ApplicationData))));
                 if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
                 {

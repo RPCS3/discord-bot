@@ -166,6 +166,7 @@ namespace CompatBot
                          .Build();
                 Log = GetLog();
                 LoggerFactory = new NLogLoggerFactory();
+                Log.Info("Log path: " + CurrentLogPath);
             }
             catch (Exception e)
             {
