@@ -156,7 +156,7 @@ namespace CompatBot
             try
             {
                 var args = Environment.CommandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (args.Length > 1)
+                if (args.Length > 1 && SandboxDetector.Detect() != "Docker")
                     inMemorySettings[nameof(Token)] = args[1];
 
                 config = new ConfigurationBuilder()
