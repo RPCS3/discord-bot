@@ -8,4 +8,4 @@ RUN dotnet build "CompatBot/CompatBot.csproj" -c Release
 ENV RUNNING_IN_DOCKER true
 WORKDIR /src/CompatBot
 RUN dotnet run -c Release --dry-run
-ENTRYPOINT ["dotnet", "run", "-c Release", "CompatBot.csproj"]
+ENTRYPOINT ["dotnet", "run", "-c", "Release", "CompatBot.csproj"]
