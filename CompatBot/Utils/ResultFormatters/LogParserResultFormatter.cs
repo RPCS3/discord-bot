@@ -103,8 +103,8 @@ namespace CompatBot.Utils.ResultFormatters
             "BLJM60528", "NPJB00235", "NPHB00522", "NPJB90534", //E.X. Troopers / demo
             "BLES01987", "BLUS30964", "BLJS10160", // The Witch and the Hundred Knight
             "NPUA80965", "NPEA00452", "NPHA20002", "NPUA98153", // R&C Tools of Destruction
-            "BCAS20045", "BCES00052", "BCJS30014", "BCJS70004", "BCJS70012",
-            "BCKS10054", "BLES00052", "BLES00055",
+            "BCAS20045", "BCJS30014", "BCJS70004", "BCJS70012",
+            "BCKS10054", "BCES00052", "BLES00052",
         };
 
         private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
