@@ -35,21 +35,31 @@ namespace CompatBot.EventHandlers
             if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
                 MessageQueue[args.Channel.Id] = queue = new ConcurrentQueue<DiscordMessage>();
             queue.Enqueue(args.Message);
-            while (queue.Count > 4)
+            while (queue.Count > 10)
                 queue.TryDequeue(out _);
             var content = args.Message.Content;
             if (string.IsNullOrEmpty(content))
                 return;
 
-            if (Throttling.TryGetValue(args.Channel.Id, out var mark) && mark != null)
+            if (Throttling.TryGetValue(args.Channel.Id, out List<DiscordMessage> mark) && content.Equals(mark.FirstOrDefault()?.Content, StringComparison.InvariantCultureIgnoreCase))
+            {
+                mark.Add(args.Message);
+                Config.Log.Debug($"Bailed out of repeating '{content}' due to throttling");
                 return;
+            }
 
             var similarList = queue.Where(msg => content.Equals(msg.Content, StringComparison.InvariantCultureIgnoreCase)).ToList();
-            if (similarList.Count > 2 && similarList.Select(msg => msg.Author.Id).Distinct().Count() > 2)
+            if (similarList.Count > 2)
             {
-                Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
-                var botMsg = await args.Channel.SendMessageAsync(content.ToLowerInvariant()).ConfigureAwait(false);
-                similarList.Add(botMsg);
+                var uniqueUsers = similarList.Select(msg => msg.Author.Id).Distinct().Count();
+                if (uniqueUsers > 2)
+                {
+                    Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
+                    var botMsg = await args.Channel.SendMessageAsync(content.ToLowerInvariant()).ConfigureAwait(false);
+                    similarList.Add(botMsg);
+                }
+                else
+                    Config.Log.Debug($"Bailed out of repeating '{content}' due to {uniqueUsers} unique users");
             }
         }
 
