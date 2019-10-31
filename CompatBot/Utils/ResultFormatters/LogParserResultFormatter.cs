@@ -462,133 +462,71 @@ namespace CompatBot.Utils.ResultFormatters
             if (string.IsNullOrEmpty(driverVersionString) || !Version.TryParse(driverVersionString, out var driverVer))
                 return null;
 
-            switch (driverVer.Major)
+            return driverVer.Major switch
             {
-                case 6: //XDDM
-                    return "XP";
-                case 7:
-                    return "Vista";
-                case 8:
-                    return "7";
-                case 9:
-                    return "8";
-                case 10:
-                    return "8.1";
-                case int v when v >= 20 && v < 30:
-                    var wddmMinor = v % 10;
-                    switch (wddmMinor)
-                    {
-                        // see https://en.wikipedia.org/wiki/Windows_Display_Driver_Model#WDDM_2.0
-                        case 0:
-                            return "10";
-                        case 1:
-                            return "10 1607";
-                        case 2:
-                            return "10 1703";
-                        case 3:
-                            return "10 1709";
-                        case 4:
-                            return "10 1803";
-                        case 5:
-                            return "10 1809";
-                        case 6:
-                            return "10 1903";
-                        default:
-                            Config.Log.Warn($"Invalid WDDM version 2.{wddmMinor} in driver version {driverVersionString}");
-                            return null;
-                    }
-                default:
-                    Config.Log.Warn("Invalid video driver version " + driverVersionString);
-                    return null;
-            }
+                6 => "XP", //XDDM
+                7 => "Vista",
+                8 => "7",
+                9 => "8",
+                10 => "8.1",
+                int v when v >= 20 && v < 30 => ((v % 10) switch
+                {
+                    // see https://en.wikipedia.org/wiki/Windows_Display_Driver_Model#WDDM_2.0
+                    0 => "10",
+                    1 => "10 1607",
+                    2 => "10 1703",
+                    3 => "10 1709",
+                    4 => "10 1803",
+                    5 => "10 1809",
+                    6 => "10 1903",
+                    _ => null,
+                }),
+                _ => null,
+            };
         }
 
-        private static string GetWindowsVersion(Version windowsVersion)
-        {
-            switch (windowsVersion.Major)
+        private static string GetWindowsVersion(Version windowsVersion) =>
+            windowsVersion.Major switch
             {
-                case 5:
+                5 => windowsVersion.Minor switch
                 {
-                    switch (windowsVersion.Minor)
-                    {
-                        case 0:
-                            return "2000";
-                        case 1:
-                            return "XP";
-                        case 2:
-                            return "XP x64";
-                        default:
-                            Config.Log.Warn("Invalid Windows version " + windowsVersion);
-                            return null;
-                    }
-                }
-                case 6:
+                    0 => "2000",
+                    1 => "XP",
+                    2 => "XP x64",
+                    _ => null,
+                },
+                6 => windowsVersion.Minor switch
                 {
-                    switch (windowsVersion.Minor)
-                    {
-                        case 0:
-                            return "Vista";
-                        case 1:
-                            return "7";
-                        case 2:
-                            return "8";
-                        case 3:
-                            return "8.1";
-                        default:
-                            Config.Log.Warn("Invalid Windows version " + windowsVersion);
-                            return null;
-                    }
-                }
-                case 10:
+                    0 => "Vista",
+                    1 => "7",
+                    2 => "8",
+                    3 => "8.1",
+                    _ => null
+                },
+                10 => windowsVersion.Build switch
                 {
-                    switch (windowsVersion.Build)
-                    {
-                        case int v when v < 10240:
-                            return "10 TH1 Build " + v;
-                        case 10240:
-                            return "10 1507";
-                        case int v when v < 10586:
-                            return "10 TH2 Build " + v;
-                        case 10586:
-                            return "10 1511";
-                        case int v when v < 14393:
-                            return "10 RS1 Build " + v;
-                        case 14393:
-                            return "10 1607";
-                        case int v when v < 15063:
-                            return "10 RS2 Build " + v;
-                        case 15063:
-                            return "10 1703";
-                        case int v when v < 16299:
-                            return "10 RS3 Build " + v;
-                        case 16299:
-                            return "10 1709";
-                        case int v when v < 17134:
-                            return "10 RS4 Build " + v;
-                        case 17134:
-                            return "10 1803";
-                        case int v when v < 17763:
-                            return "10 RS5 Build " + v;
-                        case 17763:
-                            return "10 1809";
-                        case int v when v < 18362:
-                            return "10 19H1 Build " + v;
-                        case 18362:
-                            return "10 1903";
-                        case 18363:
-                            return "10 1909";
-                        case int v when v < 20000:
-                            return "10 20H1 Build " + v;
-                        default:
-                            Config.Log.Warn("Invalid Windows version " + windowsVersion);
-                            return "10 ??? Build " + windowsVersion.Build;
-                    }
-                }
-                default:
-                    Config.Log.Warn("Invalid Windows version " + windowsVersion);
-                    return null;
-            }
-        }
+                    int v when v < 10240 => ("10 TH1 Build " + v),
+                    10240 => "10 1507",
+                    int v when v < 10586 => ("10 TH2 Build " + v),
+                    10586 => "10 1511",
+                    int v when v < 14393 => ("10 RS1 Build " + v),
+                    14393 => "10 1607",
+                    int v when v < 15063 => ("10 RS2 Build " + v),
+                    15063 => "10 1703",
+                    int v when v < 16299 => ("10 RS3 Build " + v),
+                    16299 => "10 1709",
+                    int v when v < 17134 => ("10 RS4 Build " + v),
+                    17134 => "10 1803",
+                    int v when v < 17763 => ("10 RS5 Build " + v),
+                    17763 => "10 1809",
+                    int v when v < 18362 => ("10 19H1 Build " + v),
+                    18362 => "10 1903",
+                    18363 => "10 1909",
+                    int v when v < 20000 => ("10 20H1 Build " + v),
+                    _ => ("10 ??? Build " + windowsVersion.Build)
+                },
+                _ => null,
+            };
 
         private static string GetLinuxVersion(string release, string version)
         {
