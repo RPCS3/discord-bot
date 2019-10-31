@@ -57,8 +57,8 @@ namespace CompatBot.EventHandlers.LogParsing
                 {
                     var match = extractor.Match(buffer);
                     if (match.Success
-                        && match.Groups["syscall_module"]?.Value.ToUtf8() is string syscallModule
-                        && match.Groups["syscall_name"]?.Value.ToUtf8() is string syscallName)
+                        && match.Groups["syscall_module"]?.Value is string syscallModule
+                        && match.Groups["syscall_name"]?.Value is string syscallName)
                     {
                         lock (state)
                         {
