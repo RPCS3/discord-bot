@@ -14,7 +14,7 @@ namespace CompatBot.Utils
             try
             {
                 // when running dotnet from the snap, it will segfault on attempt to create a Bitmap
-                if (SandboxDetector.Detect() != null)
+                if (SandboxDetector.Detect() == SandboxType.Snap)
                     return defaultColor;
 
                 var analyzer = new ColorThief();
