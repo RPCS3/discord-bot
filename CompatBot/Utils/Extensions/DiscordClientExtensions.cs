@@ -70,7 +70,7 @@ namespace CompatBot.Utils
         {
             try
             {
-                showBoth = showBoth ?? message.Channel.IsPrivate;
+                showBoth ??= message.Channel.IsPrivate;
                 var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(Permissions.AddReactions);
                 if (canReact)
                     await message.CreateReactionAsync(emoji).ConfigureAwait(false);

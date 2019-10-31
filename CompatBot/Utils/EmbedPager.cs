@@ -36,7 +36,7 @@ namespace CompatBot.Utils
             if (maxLinesPerField < 1)
                 throw new ArgumentException("Expected a number greater than 0, but was " + maxLinesPerField, nameof(maxLinesPerField));
 
-            makeTitle = makeTitle ?? MakeTitle;
+            makeTitle ??= MakeTitle;
 
             var buffer = new StringBuilder();
             var lineCount = 0;

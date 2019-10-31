@@ -181,7 +181,7 @@ namespace PsnClient
             {
                 var loc = locale.AsLocaleData();
                 var url = new Uri($"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/container/{containerId}");
-                filters = filters ?? new Dictionary<string, string>();
+                filters ??= new Dictionary<string, string>();
                 filters["start"] = start.ToString();
                 filters["size"] = take.ToString();
                 filters["bucket"] = "games";

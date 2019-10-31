@@ -37,7 +37,7 @@ namespace CompatBot.EventHandlers
             {
                 if (msg.Author.IsCurrent)
                 {
-                    previousRepliesBuilder = previousRepliesBuilder ?? new StringBuilder();
+                    previousRepliesBuilder ??= new StringBuilder();
                     previousRepliesBuilder.AppendLine(msg.Content);
                     var embeds = msg.Embeds;
                     if (embeds?.Count > 0)

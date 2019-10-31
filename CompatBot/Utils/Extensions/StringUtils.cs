@@ -101,7 +101,7 @@ namespace CompatBot.Utils
 
         public static string AsString(this ReadOnlySequence<byte> buffer, Encoding encoding = null)
         {
-            encoding = encoding ?? Latin8BitEncoding;
+            encoding ??= Latin8BitEncoding;
             if (buffer.IsSingleSegment)
                 return encoding.GetString(buffer.First.Span);
 
@@ -186,7 +186,7 @@ namespace CompatBot.Utils
 
         public static string PadLeftVisible(this string s, int totalWidth, char padding = ' ')
         {
-            s = s ?? "";
+            s ??= "";
             var valueWidth = s.GetVisibleLength();
             var diff = s.Length - valueWidth;
             totalWidth += diff;
@@ -195,7 +195,7 @@ namespace CompatBot.Utils
 
         public static string PadRightVisible(this string s, int totalWidth, char padding = ' ')
         {
-            s = s ?? "";
+            s ??= "";
             var valueWidth = s.GetVisibleLength();
             var diff = s.Length - valueWidth;
             totalWidth += diff;

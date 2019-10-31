@@ -82,7 +82,7 @@ namespace IrdLibraryClient
                     {
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                         var result = await response.Content.ReadAsAsync<SearchResult>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
-                        result.Data = result.Data ?? new List<SearchResultItem>(0);
+                        result.Data ??= new List<SearchResultItem>(0);
                         foreach (var item in result.Data)
                         {
                             item.Filename = GetIrdFilename(item.Filename);
