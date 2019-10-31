@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CompatApiClient.Utils;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace CompatBot.Utils
 {
@@ -128,7 +126,7 @@ namespace CompatBot.Utils
                 width[i] = Math.Min(width[i], maxWidth[i]);
 
             var result = new StringBuilder().AppendLine("```");
-            var firstIdx = disabled.IndexOf(false);
+            var firstIdx = Array.IndexOf(disabled, false);
             if (firstIdx < 0)
                 throw new InvalidOperationException("Can't format table as every column is disabled");
 

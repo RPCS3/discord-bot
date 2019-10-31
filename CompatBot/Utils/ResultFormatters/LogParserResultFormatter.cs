@@ -414,9 +414,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             if (result.EndsWith(".0.0"))
-                result = result.Substring(0, result.Length - 4);
-            if (result.Length > 3 && result[result.Length - 2] == '.')
-                result = result.Substring(0, result.Length - 1) + "0" + result[result.Length - 1];
+                result = result[..^4];
+            if (result.Length > 3 && result[^2] == '.')
+                result = result[..^1] + "0" + result[^1];
             return result;
         }
 
