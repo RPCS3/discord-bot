@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,14 +28,12 @@ namespace CompatBot
 
         internal static async Task Main(string[] args)
         {
-            Console.WriteLine("Confinement: " + SandboxDetector.Detect() ?? "None");
+            Console.WriteLine("Confinement: " + SandboxDetector.Detect());
             if (args.Length > 0 && args[0] == "--dry-run")
             {
                 Console.WriteLine("Database path: " + Path.GetDirectoryName(Path.GetFullPath(DbImporter.GetDbPath("fake.db", Environment.SpecialFolder.ApplicationData))));
-                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
-                {
+                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() != null)
                     Console.WriteLine("Bot config path: " + Path.GetDirectoryName(Path.GetFullPath(Config.GoogleApiConfigPath)));
-                }
                 return;
             }
 
@@ -254,9 +253,9 @@ namespace CompatBot
                         throw;
                     }
 
-                    if (args.Length > 1 && ulong.TryParse(args[1], out var channelId))
+                    if (args.LastOrDefault() is string strCh && ulong.TryParse(strCh, out var channelId))
                     {
-                        Config.Log.Info($"Found channelId: {args[1]}");
+                        Config.Log.Info($"Found channelId: {strCh} (parsed as {channelId})");
                         DiscordChannel channel;
                         if (channelId == InvalidChannelId)
                         {
