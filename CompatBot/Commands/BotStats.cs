@@ -35,7 +35,7 @@ namespace CompatBot.Commands
                         .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n" +
                                                    $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
                                                    //$"SIMD Acceleration:{(Vector.IsHardwareAccelerated ? "✅ Supported" : "❌ Not supported")}\n" +
-                                                   $"Confinement: {SandboxDetector.Detect() ?? "None"}", true);
+                                                   $"Confinement: {SandboxDetector.Detect()}", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);
             AppendExplainStats(embed);

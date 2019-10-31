@@ -64,7 +64,7 @@ namespace CompatBot
         {
             get
             {
-                if (SandboxDetector.Detect() == "Docker")
+                if (SandboxDetector.Detect() == SandboxType.Docker)
                     return "/bot-config/credentials.json";
 
                 if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
@@ -156,7 +156,7 @@ namespace CompatBot
             try
             {
                 var args = Environment.CommandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (args.Length > 1 && SandboxDetector.Detect() != "Docker")
+                if (args.Length > 1 && SandboxDetector.Detect() != SandboxType.Docker)
                     inMemorySettings[nameof(Token)] = args[1];
 
                 config = new ConfigurationBuilder()

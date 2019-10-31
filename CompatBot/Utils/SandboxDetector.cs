@@ -4,18 +4,18 @@ namespace CompatBot.Utils
 {
     public static class SandboxDetector
     {
-        public static string Detect()
+        public static SandboxType Detect()
         {
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SNAP")))
-                return "Snap";
+                return SandboxType.Snap;
 
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLATPAK_SYSTEM_DIR")))
-                return "Flatpak";
+                return SandboxType.Flatpak;
 
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RUNNING_IN_DOCKER")))
-                return "Docker";
+                return SandboxType.Docker;
 
-            return null;
+            return SandboxType.None;
         }
     }
 }
