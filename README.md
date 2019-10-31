@@ -39,6 +39,7 @@ How to Build
 * Change configuration for test server in `CompatBot/Properties/launchSettings.json`
 * Note that token could be set in the settings _or_ supplied as a launch argument (higher priority)
 * If you've changed the database model, add a migration
+    * `$ dotnet tool install --global dotnet-ef` (if you have never installed the tools before)
 	* `$ cd CompatBot`
 	* `$ dotnet ef migrations add -c [BotDb|ThumbnailDb] MigrationName`
 	* `$ cd ..`
