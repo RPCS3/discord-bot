@@ -186,24 +186,32 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ PS2 software is not supported");
             }
 
-            if (items["compat_database_path"] is string compatDbPath
-                && InstallPath.Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is Match installPathMatch
-                && installPathMatch.Success)
+            if (items["compat_database_path"] is string compatDbPath)
             {
-                var rpcs3FolderMissing = string.IsNullOrEmpty(installPathMatch.Groups["rpcs3_folder"].Value);
-                var desktop = !string.IsNullOrEmpty(installPathMatch.Groups["desktop"].Value);
-                var programFiles = !string.IsNullOrEmpty(installPathMatch.Groups["program_files"].Value);
-                if (rpcs3FolderMissing)
+                if (InstallPath.Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is Match installPathMatch
+                    && installPathMatch.Success)
                 {
-                    if (desktop)
-                        notes.Add("ℹ RPCS3 installed directly on desktop, without folder");
-                    else if (programFiles)
-                        notes.Add("⚠ RPCS3 installed directly inside Program Files, without folder");
-                    else
-                        notes.Add("⚠ RPCS3 installed in the drive root, please create a folder and move all files inside");
+                    var rpcs3FolderMissing = string.IsNullOrEmpty(installPathMatch.Groups["rpcs3_folder"].Value);
+                    var desktop = !string.IsNullOrEmpty(installPathMatch.Groups["desktop"].Value);
+                    var programFiles = !string.IsNullOrEmpty(installPathMatch.Groups["program_files"].Value);
+                    if (rpcs3FolderMissing)
+                    {
+                        if (desktop)
+                            notes.Add("ℹ RPCS3 installed directly on desktop, without folder");
+                        else if (programFiles)
+                            notes.Add("⚠ RPCS3 installed directly inside Program Files, without folder");
+                        else
+                            notes.Add("⚠ RPCS3 installed in the drive root, please create a folder and move all files inside");
+                    }
+
+                    if (programFiles)
+                        notes.Add("⚠ Program Files have special permissions, please move RPCS3 to another location");
                 }
-                if (programFiles)
-                    notes.Add("⚠ Program Files have special permissions, please move RPCS3 to another location");
+
+                var pathSegments = PathUtils.GetSegments(compatDbPath);
+                var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.InvariantCultureIgnoreCase));
+                if (!string.IsNullOrEmpty(syncFolder))
+                    notes.Add($"⚠ RPCS3 installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
             }
 
             if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)

@@ -54,6 +54,18 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version AmdRecommendedOldWindowsVersion = new Version(18, 8, 1);
         private static readonly Version NvidiaFullscreenBugFixed = new Version(0, 0, 6, 8204);
 
+        private static readonly HashSet<string> KnownSyncFolders = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "OneDrive",
+            "MEGASync",
+            "RslSync",
+            "BTSync",
+            "Google Drive",
+            "Google Backup",
+            "Dropbox",
+
+        };
+
         private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
             // Demon's Souls
