@@ -14,6 +14,7 @@ namespace CompatBot.Utils.Extensions
             [FilterAction.IssueWarning] = 'w',
             [FilterAction.SendMessage] = 'm',
             [FilterAction.ShowExplain] = 'e',
+            [FilterAction.MuteModQueue] = 'u',
         };
 
         public static string ToFlagsString(this FilterAction flags)

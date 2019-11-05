@@ -95,6 +95,7 @@ namespace CompatBot.Database
         IssueWarning  = 0b_0000_0010,
         ShowExplain   = 0b_0000_0100,
         SendMessage   = 0b_0000_1000,
+        MuteModQueue  = 0b_0001_0000,
     }
 
     internal class Warning
