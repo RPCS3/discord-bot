@@ -245,7 +245,7 @@ namespace AppveyorClient
 
             try
             {
-                mergeDate = mergeDate ?? (DateTime.UtcNow - JobIdSearchThreshold);
+                mergeDate ??= (DateTime.UtcNow - JobIdSearchThreshold);
                 result = await FindBuildAsync(
                     h => h.Builds.Last().Created?.ToUniversalTime() > mergeDate,
                     b => b.CommitId.StartsWith(commit, StringComparison.InvariantCultureIgnoreCase) && b.Status == "success",

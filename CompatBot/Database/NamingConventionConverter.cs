@@ -12,15 +12,15 @@ namespace CompatBot.Database
 
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
-                entity.Relational().TableName = nameResolver(entity.Relational().TableName);
+                entity.SetTableName(nameResolver(entity.GetTableName()));
                 foreach (var property in entity.GetProperties())
-                    property.Relational().ColumnName = nameResolver(property.Name);
+                    property.SetColumnName(nameResolver(property.Name));
                 foreach (var key in entity.GetKeys())
-                    key.Relational().Name = nameResolver(key.Relational().Name);
+                    key.SetName(nameResolver(key.GetName()));
                 foreach (var key in entity.GetForeignKeys())
-                    key.Relational().Name = nameResolver(key.Relational().Name);
+                    key.SetConstraintName(nameResolver(key.GetConstraintName()));
                 foreach (var index in entity.GetIndexes())
-                    index.Relational().Name = nameResolver(index.Relational().Name);
+                    index.SetName(nameResolver(index.GetName()));
             }
         }
     }

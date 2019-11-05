@@ -36,8 +36,8 @@ namespace CompatBot.Utils
             if (string.IsNullOrEmpty(message))
                 return;
 
-            blockEnd = blockEnd ?? "";
-            blockStart = blockStart ?? "";
+            blockEnd ??= "";
+            blockStart ??= "";
             var maxContentSize = blockSize - blockEnd.Length - blockStart.Length;
             await channel.TriggerTypingAsync().ConfigureAwait(false);
             var buffer = new StringBuilder();

@@ -70,7 +70,7 @@ namespace CompatBot.Utils
         {
             try
             {
-                showBoth = showBoth ?? message.Channel.IsPrivate;
+                showBoth ??= message.Channel.IsPrivate;
                 var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(Permissions.AddReactions);
                 if (canReact)
                     await message.CreateReactionAsync(emoji).ConfigureAwait(false);
@@ -232,15 +232,13 @@ namespace CompatBot.Utils
             return result;
         }
 
-        private static DiscordColor GetColor(ReportSeverity severity)
-        {
-            switch (severity)
+        private static DiscordColor GetColor(ReportSeverity severity) =>
+            severity switch
             {
-                case ReportSeverity.Low: return Config.Colors.LogInfo;
-                case ReportSeverity.Medium: return Config.Colors.LogNotice;
-                case ReportSeverity.High: return Config.Colors.LogAlert;
-                default: return Config.Colors.LogUnknown;
-            }
-        }
+                ReportSeverity.Low => Config.Colors.LogInfo,
+                ReportSeverity.Medium => Config.Colors.LogNotice,
+                ReportSeverity.High => Config.Colors.LogAlert,
+                _ => Config.Colors.LogUnknown
+            };
     }
 }

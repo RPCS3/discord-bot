@@ -62,7 +62,7 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
             }
-            builder = builder ?? new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
+            builder ??= new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
             var currentCommit = currentPrInfo?.MergeCommitSha;
             var latestCommit = latestPrInfo?.MergeCommitSha;
             var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);

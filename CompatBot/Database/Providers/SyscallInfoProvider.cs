@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers
@@ -31,8 +32,8 @@ namespace CompatBot.Database.Providers
                             foreach (var moduleMap in productCodeMap.Value)
                             foreach (var func in moduleMap.Value)
                             {
-                                var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Module == moduleMap.Key && sci.Function == func)
-                                              ?? db.SyscallInfo.Add(new SyscallInfo {Module = moduleMap.Key, Function = func}).Entity;
+                                var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Module == moduleMap.Key.ToUtf8() && sci.Function == func.ToUtf8())
+                                              ?? db.SyscallInfo.Add(new SyscallInfo {Module = moduleMap.Key.ToUtf8(), Function = func.ToUtf8() }).Entity;
                                 if (!db.SyscallToProductMap.Any(m => m.ProductId == product.Id && m.SyscallInfoId == syscall.Id))
                                     db.SyscallToProductMap.Add(new SyscallToProductMap {ProductId = product.Id, SyscallInfoId = syscall.Id});
                             }

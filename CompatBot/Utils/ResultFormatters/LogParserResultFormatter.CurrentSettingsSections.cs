@@ -38,20 +38,14 @@ namespace CompatBot.Utils.ResultFormatters
                 var cpuModel = cpuInfo.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "").Trim();
                 if (cpuModel.StartsWith("DG1", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    switch (cpuModel[3])
+                    cpuModel = cpuModel[3] switch
                     {
-                        case '0': // DG1000FGF84HT
-                        case '1': // DG1101SKF84HV
-                            cpuModel = "AMD APU for PlayStation 4";
-                            break;
-                        case '2': // DG1201SLF87HW
-                        case '3': // DG1301SML87HY
-                            cpuModel = "AMD APU for PlayStation 4 Pro";
-                            break;
-                        default:
-                            cpuModel = "AMD APU for PlayStation?";
-                            break;
-                    }
+                        '0' => "AMD APU for PlayStation 4", // DG1000FGF84HT
+                        '1' => "AMD APU for PlayStation 4", // DG1101SKF84HV
+                        '2' => "AMD APU for PlayStation 4 Pro", // DG1201SLF87HW
+                        '3' => "AMD APU for PlayStation 4 Pro", // DG1301SML87HY
+                        _ => "AMD APU for PlayStation?",
+                    };
                 }
                 items["cpu_model"] = cpuModel;
                 items["thread_count"] = cpuInfo.Groups["thread_count"].Value;

@@ -129,7 +129,7 @@ namespace CompatBot.EventHandlers
                 using (var db = new BotDb())
                 {
                     var matchedGroups = (from m in mc
-                            from g in m.Groups
+                            from Group g in m.Groups
                             where g.Success && !string.IsNullOrEmpty(g.Value)
                             select g.Name
                         ).Distinct()

@@ -15,8 +15,7 @@ namespace CompatBot.Database
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
                 var pk = entity.GetKeys().FirstOrDefault(k => k.IsPrimaryKey());
-                if (pk != null)
-                    pk.Relational().Name = keyProperty;
+                pk?.SetName(keyProperty);
             }
         }
 
