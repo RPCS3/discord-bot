@@ -34,7 +34,8 @@ namespace CompatBot.Utils
                 if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.StandardName))
                 {
                     var acronyms = from tza in TimeZoneAcronyms
-                        where tza.Value.Contains(tzi.StandardName) || tza.Value.Contains(tzi.DaylightName)
+                        where tza.Value.Any(name => name.Equals(tzi.StandardName, StringComparison.InvariantCultureIgnoreCase))
+                              || tza.Value.Any(name => name.Equals(tzi.DaylightName, StringComparison.InvariantCulture))
                         select tza.Key;
                     foreach (var tza in acronyms)
                         result[tza] = tzi;
