@@ -94,7 +94,7 @@ namespace CompatBot.Commands
                     }
                     var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
                     var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
-                    var lastWarn = db.Warning.LastOrDefault()?.Timestamp;
+                    var lastWarn = timestamps.Any() ? timestamps.Last() : (long?)null;
                     if (lastWarn.HasValue)
                         longestGapBetweenWarning = Math.Max(longestGapBetweenWarning, DateTime.UtcNow.Ticks - lastWarn.Value);
                     // most warnings per 24h
