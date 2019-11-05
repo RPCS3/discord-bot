@@ -12,6 +12,7 @@ using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.DotNet.PlatformAbstractions;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands
@@ -33,9 +34,11 @@ namespace CompatBot.Commands
                         .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured", true)
                         .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
                         .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n" +
-                                                   $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
-                                                   //$"SIMD Acceleration:{(Vector.IsHardwareAccelerated ? "✅ Supported" : "❌ Not supported")}\n" +
-                                                   $"Confinement: {SandboxDetector.Detect()}", true);
+                                                   $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}",
+                                                   true)
+                        .AddField("Runtime info", $"Confinement: {SandboxDetector.Detect()}\n" +
+                                                  $"OS: {RuntimeEnvironment.OperatingSystem} {RuntimeEnvironment.OperatingSystemVersion}\n" +
+                                                  $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);
             AppendExplainStats(embed);
@@ -187,35 +190,49 @@ namespace CompatBot.Commands
 
         private void AppendSyscallsStats(DiscordEmbedBuilder embed)
         {
-            using (var db = new ThumbnailDb())
+            try
             {
-                var syscallCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Distinct().Count();
-                var syscallModuleCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Select(sci => sci.Module).Distinct().Count();
-                var totalFuncCount = db.SyscallInfo.Select(sci => sci.Function).Distinct().Count();
-                var totalModuleCount = db.SyscallInfo.Select(sci => sci.Module).Distinct().Count();
-                var fwCallCount = totalFuncCount - syscallCount;
-                var fwModuleCount = totalModuleCount - syscallModuleCount;
-                var gameCount = db.SyscallToProductMap.Select(m => m.ProductId).Distinct().Count();
-                embed.AddField("SceCall Stats",
-                    $"Tracked game IDs: {gameCount}\n" +
-                    $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")} in {syscallModuleCount} module{(syscallModuleCount == 1 ? "" : "s")}\n" +
-                    $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")} in {fwModuleCount} module{(fwModuleCount == 1 ? "" : "s")}\n",
-                    true);
+                using (var db = new ThumbnailDb())
+                {
+                    var syscallCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Distinct().Count();
+                    var syscallModuleCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Select(sci => sci.Module).Distinct().Count();
+                    var totalFuncCount = db.SyscallInfo.Select(sci => sci.Function).Distinct().Count();
+                    var totalModuleCount = db.SyscallInfo.Select(sci => sci.Module).Distinct().Count();
+                    var fwCallCount = totalFuncCount - syscallCount;
+                    var fwModuleCount = totalModuleCount - syscallModuleCount;
+                    var gameCount = db.SyscallToProductMap.Select(m => m.ProductId).Distinct().Count();
+                    embed.AddField("SceCall Stats",
+                        $"Tracked game IDs: {gameCount}\n" +
+                        $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")} in {syscallModuleCount} module{(syscallModuleCount == 1 ? "" : "s")}\n" +
+                        $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")} in {fwModuleCount} module{(fwModuleCount == 1 ? "" : "s")}\n",
+                        true);
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
             }
         }
 
         private void AppendPawStats(DiscordEmbedBuilder embed)
         {
-            using (var db = new BotDb())
+            try
             {
-                var kots = db.Kot.Count();
-                var doggos = db.Doggo.Count();
-                if (kots == 0 && doggos == 0)
-                    return;
+                using (var db = new BotDb())
+                {
+                    var kots = db.Kot.Count();
+                    var doggos = db.Doggo.Count();
+                    if (kots == 0 && doggos == 0)
+                        return;
 
-                var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
-                var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
-                embed.AddField("🐾 Stats", $"🐱 {kots - 1} {sign} {doggos - 1} 🐶", true);
+                    var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
+                    var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
+                    embed.AddField("🐾 Stats", $"🐱 {kots - 1} {sign} {doggos - 1} 🐶", true);
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
             }
         }
     }

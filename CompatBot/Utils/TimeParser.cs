@@ -6,23 +6,24 @@ namespace CompatBot.Utils
 {
     public static class TimeParser
     {
-        private static readonly Dictionary<string, TimeZoneInfo> TimeZoneMap;
+        public static readonly Dictionary<string, TimeZoneInfo> TimeZoneMap;
+        
+        public static Dictionary<string, string[]> TimeZoneAcronyms = new Dictionary<string, string[]>
+        {
+            ["PT"] = new[] { "Pacific Standard Time" },
+            ["PST"] = new[] { "Pacific Standard Time" },
+            ["PDT"] = new[] { "Pacific Standard Time" },
+            ["EST"] = new[] { "Eastern Standard Time" },
+            ["EDT"] = new[] { "Eastern Standard Time" },
+            ["CEST"] = new[] { "Central European Standard Time" },
+            ["BST"] = new[] { "British Summer Time", "GMT Standard Time" },
+            ["JST"] = new[] { "Japan Standard Time", "Tokyo Standard Time" },
+        };
 
         static TimeParser()
         {
-            var tzAcronyms = new Dictionary<string, string[]>
-            {
-                ["PT"] = new[] { "Pacific Standard Time" },
-                ["PST"] = new[] { "Pacific Standard Time" },
-                ["PDT"] = new[] { "Pacific Standard Time" },
-                ["EST"] = new[] { "Eastern Standard Time" },
-                ["EDT"] = new[] { "Eastern Standard Time" },
-                ["CEST"] = new[] { "Central European Standard Time" },
-                ["BST"] = new[] { "British Summer Time", "GMT Standard Time" },
-                ["JST"] = new[] { "Japan Standard Time", "Tokyo Standard Time" },
-            };
             var uniqueNames = new HashSet<string>(
-                from tznl in tzAcronyms.Values
+                from tznl in TimeZoneAcronyms.Values
                 from tzn in tznl
                 select tzn
             );
@@ -32,7 +33,7 @@ namespace CompatBot.Utils
             {
                 if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.StandardName))
                 {
-                    var acronyms = from tza in tzAcronyms
+                    var acronyms = from tza in TimeZoneAcronyms
                         where tza.Value.Contains(tzi.StandardName) || tza.Value.Contains(tzi.DaylightName)
                         select tza.Key;
                     foreach (var tza in acronyms)
