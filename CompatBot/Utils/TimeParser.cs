@@ -25,22 +25,29 @@ namespace CompatBot.Utils
             var uniqueNames = new HashSet<string>(
                 from tznl in TimeZoneAcronyms.Values
                 from tzn in tznl
-                select tzn
+                select tzn,
+                StringComparer.InvariantCultureIgnoreCase
             );
+            Config.Log.Trace("[TZI] Unique TZA names: " + uniqueNames.Count);
             var tzList = TimeZoneInfo.GetSystemTimeZones();
+            Config.Log.Trace("[TZI] System TZI count: " + tzList.Count);
             var result = new Dictionary<string, TimeZoneInfo>();
             foreach (var tzi in tzList)
             {
-                if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.StandardName))
+                Config.Log.Trace($"[TZI] Checking {tzi.Id} ({tzi.StandardName} / {tzi.DaylightName})");
+                if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.DaylightName))
                 {
+                    Config.Log.Trace("[TZI] Looks like it's a match!");
                     var acronyms = from tza in TimeZoneAcronyms
                         where tza.Value.Any(name => name.Equals(tzi.StandardName, StringComparison.InvariantCultureIgnoreCase))
                               || tza.Value.Any(name => name.Equals(tzi.DaylightName, StringComparison.InvariantCulture))
                         select tza.Key;
+                    Config.Log.Trace("[TZI] Matched acronyms: " + string.Join(", ", acronyms));
                     foreach (var tza in acronyms)
                         result[tza] = tzi;
                 }
             }
+            Config.Log.Trace("[TZI] Total matched acronyms: " + result.Count);
             TimeZoneMap = result;
         }
 
