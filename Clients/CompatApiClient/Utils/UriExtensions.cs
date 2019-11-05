@@ -82,7 +82,7 @@ namespace CompatApiClient
         {
             var query = uri.IsAbsoluteUri ? uri.Query : new Uri(FakeHost, uri).Query;
             if (!string.IsNullOrEmpty(query) && query.Length > 1)
-                query = query.Substring(1) + "&" + queryToAppend;
+                query = query[1..] + "&" + queryToAppend;
             else
                 query = queryToAppend;
             return SetQueryValue(uri, query);
@@ -102,7 +102,7 @@ namespace CompatApiClient
                 uri = new Uri(FakeHost, uri);
                 var builder = new UriBuilder(uri) { Query = value };
                 var additionalStrip = startWithSlash ? 0 : 1;
-                var newUri = builder.ToString().Substring(FakeHost.OriginalString.Length + additionalStrip);
+                var newUri = builder.ToString()[(FakeHost.OriginalString.Length + additionalStrip)..];
                 return new Uri(newUri, UriKind.Relative);
             }
         }

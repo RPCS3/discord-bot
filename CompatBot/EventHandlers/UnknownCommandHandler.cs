@@ -37,7 +37,7 @@ namespace CompatBot.EventHandlers
                     e.Context.Message,
                     e.Context.Prefix,
                     cmd,
-                    e.Context.Message.Content.Substring(e.Context.Prefix.Length).Trim()
+                    e.Context.Message.Content[(e.Context.Prefix.Length)..].Trim()
                 );
                 try { await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false); } catch { }
                 return;
@@ -55,7 +55,7 @@ namespace CompatBot.EventHandlers
             if (pos < 0)
                 return;
 
-            var gameTitle = e.Context.Message.Content.Substring(pos).TrimEager().Trim(40);
+            var gameTitle = e.Context.Message.Content[pos..].TrimEager().Trim(40);
             if (string.IsNullOrEmpty(gameTitle) || char.IsPunctuation(gameTitle[0]))
                 return;
 

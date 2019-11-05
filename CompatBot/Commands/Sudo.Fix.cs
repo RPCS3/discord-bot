@@ -38,7 +38,7 @@ namespace CompatBot.Commands
                                 if (match.Success && DateTime.TryParse(match.Groups["date"].Value, out var timestamp))
                                 {
                                     warning.Timestamp = timestamp.Ticks;
-                                    warning.FullReason = warning.FullReason.Substring(match.Groups["cutout"].Value.Length);
+                                    warning.FullReason = warning.FullReason[(match.Groups["cutout"].Value.Length)..];
                                     @fixed++;
                                 }
                             }

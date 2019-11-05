@@ -210,7 +210,7 @@ namespace CompatBot.Commands
         {
             question = question?.ToLowerInvariant() ?? "";
             if (question.StartsWith("when "))
-                await When(ctx, question.Substring(5)).ConfigureAwait(false);
+                await When(ctx, question[5..]).ConfigureAwait(false);
             else
             {
                 string answer;
@@ -232,7 +232,7 @@ namespace CompatBot.Commands
             if (number > 1)
             {
                 if (unit.EndsWith("ry"))
-                    unit = unit.Substring(0, unit.Length - 1) + "ie";
+                    unit = unit[..^1] + "ie";
                 unit += "s";
                 if (unit == "millenniums")
                     unit = "millennia";
@@ -280,19 +280,19 @@ namespace CompatBot.Commands
                     var tmp = word.TrimEnd(Suffixes);
                     if (tmp.Length != word.Length)
                     {
-                        suffix = word.Substring(tmp.Length);
+                        suffix = word[..tmp.Length];
                         word = tmp;
                     }
                     tmp = word.TrimStart(Prefixes);
                     if (tmp.Length != word.Length)
                     {
-                        result.Append(word.Substring(0, word.Length - tmp.Length));
+                        result.Append(word[..^tmp.Length]);
                         word = tmp;
                     }
                     if (word.EndsWith("'s"))
                     {
                         suffix = "'s" + suffix;
-                        word = word.Substring(0, word.Length - 2);
+                        word = word[..^2];
                     }
 
                     void MakeCustomRoleRating(DiscordMember mem)
@@ -307,7 +307,7 @@ namespace CompatBot.Commands
                                 if (!string.IsNullOrEmpty(role))
                                 {
                                     if (role.EndsWith('s'))
-                                        role = role.Substring(0, role.Length - 1);
+                                        role = role[..^1];
                                     var article = Vowels.Contains(role[0]) ? "n" : "";
                                     choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
                                     choiceFlags.Add('f');
@@ -385,10 +385,10 @@ namespace CompatBot.Commands
                 whatever = result.ToString();
                 var cutIdx = whatever.LastIndexOf("never mind");
                 if (cutIdx > -1)
-                    whatever = whatever.Substring(cutIdx);
+                    whatever = whatever[cutIdx..];
                 whatever = whatever.Replace("'s's", "'s").TrimStart(EveryTimable).Trim();
                 if (whatever.StartsWith("rate "))
-                    whatever = whatever.Substring("rate ".Length);
+                    whatever = whatever[("rate ".Length)..];
                 if (originalWhatever == "sonic" || originalWhatever.Contains("sonic the"))
                     choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count)).Concat(new[] {"Sonic out of 🦔", "Sonic out of 10"}).ToList();
 

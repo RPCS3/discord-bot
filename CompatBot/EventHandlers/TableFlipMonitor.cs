@@ -40,7 +40,7 @@ namespace CompatBot.EventHandlers
                 var tableIdx = content.IndexOf("┻━┻");
                 if (tableIdx < 0)
                     tableIdx = content.IndexOf("┻━┻");
-                var faceIdx = content.Substring(0, tableIdx).LastIndexOfAny(OpenParen);
+                var faceIdx = content[..tableIdx].LastIndexOfAny(OpenParen);
                 var face = content.Substring(faceIdx, tableIdx - faceIdx);
                 if (face.Length > 30)
                     return;
@@ -60,8 +60,8 @@ namespace CompatBot.EventHandlers
                     return;
 
                 var faceLength = reverseFace.Length;
-                if (faceLength > 5+4)
-                    reverseFace = $"{reverseFace.Substring(0, 2)}ಠ益ಠ{reverseFace.Substring(faceLength - 2, 2)}";
+                if (faceLength > 5 + 4)
+                    reverseFace = $"{reverseFace[..2]}ಠ益ಠ{reverseFace[^2..]}";
                 await args.Channel.SendMessageAsync("┬─┬﻿ " + reverseFace.Sanitize()).ConfigureAwait(false);
             }
             catch (Exception e)

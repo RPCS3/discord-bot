@@ -79,7 +79,7 @@ namespace CompatBot.Commands
                         var newTitle = "(๑•ิཬ•ั๑)";
                         var partStart = embed.Title.IndexOf(" [Part");
                         if (partStart > -1)
-                            newTitle += embed.Title.Substring(partStart);
+                            newTitle += embed.Title[partStart..];
                         embed.Title = newTitle;
                         if (!string.IsNullOrEmpty(embed.ThumbnailUrl))
                             embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
@@ -88,7 +88,7 @@ namespace CompatBot.Commands
                     await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
                 }
                 if (embeds.Count > 1 || embeds[0].Fields?.Count > 0)
-                    embeds[embeds.Count - 1] = embeds.Last().WithFooter("Note that you need to install all listed updates one by one");
+                    embeds[^1] = embeds.Last().WithFooter("Note that you need to install all listed updates one by one");
                 foreach (var embed in embeds)
                     await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             }

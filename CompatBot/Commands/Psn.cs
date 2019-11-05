@@ -118,11 +118,11 @@ namespace CompatBot.Commands
 
                 var alteredSearch = search.Trim();
                 if (alteredSearch.EndsWith("demo", StringComparison.InvariantCultureIgnoreCase))
-                    alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 4).TrimEnd();
+                    alteredSearch = alteredSearch[..^4].TrimEnd();
                 if (alteredSearch.EndsWith("trial", StringComparison.InvariantCultureIgnoreCase))
-                    alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 5).TrimEnd();
+                    alteredSearch = alteredSearch[..^5].TrimEnd();
                 if (alteredSearch.EndsWith("体験版"))
-                    alteredSearch = alteredSearch.Substring(0, alteredSearch.Length - 3).TrimEnd();
+                    alteredSearch = alteredSearch[..^3].TrimEnd();
 
                 if (string.IsNullOrEmpty(alteredSearch))
                     alteredSearch = search;

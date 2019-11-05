@@ -510,7 +510,7 @@ namespace CompatBot.Commands
             if (name.Length - lastPartIdx > 5
                 && name.Substring(lastPartIdx + 1, 5).ToLowerInvariant() is string lnk
                 && (lnk.StartsWith("<http") || lnk.StartsWith("http")))
-                return name.Substring(0, lastPartIdx);
+                return name[..lastPartIdx];
 
             return name;
         }

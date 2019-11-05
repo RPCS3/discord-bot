@@ -8,7 +8,7 @@ namespace CompatBot.Utils
     {
         public static readonly Dictionary<string, TimeZoneInfo> TimeZoneMap;
         
-        public static Dictionary<string, string[]> TimeZoneAcronyms = new Dictionary<string, string[]>
+        public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new Dictionary<string, string[]>
         {
             ["PT"] = new[] { "Pacific Standard Time" },
             ["PST"] = new[] { "Pacific Standard Time" },
@@ -50,17 +50,15 @@ namespace CompatBot.Utils
                 return false;
 
             dateTime = dateTime.ToUpperInvariant();
-            if (char.IsDigit(dateTime[dateTime.Length - 1]))
-            {
+            if (char.IsDigit(dateTime[^1]))
                 return DateTime.TryParse(dateTime, out result);
-            }
 
             var cutIdx = dateTime.LastIndexOf(' ');
             if (cutIdx < 0)
                 return false;
 
-            var tza = dateTime.Substring(cutIdx + 1);
-            dateTime = dateTime.Substring(0, cutIdx);
+            var tza = dateTime[(cutIdx+1)..];
+            dateTime = dateTime[..cutIdx];
             if (TimeZoneMap.TryGetValue(tza, out var tzi))
             {
                 if (!DateTime.TryParse(dateTime, out result))
@@ -74,14 +72,13 @@ namespace CompatBot.Utils
         }
 
 
-        public static DateTime Normalize(this DateTime date)
-        {
-            if (date.Kind == DateTimeKind.Utc)
-                return date;
-            if (date.Kind == DateTimeKind.Local)
-                return date.ToUniversalTime();
-            return date.AsUtc();
-        }
+        public static DateTime Normalize(this DateTime date) =>
+            date.Kind switch
+            {
+                DateTimeKind.Utc => date,
+                DateTimeKind.Local => date.ToUniversalTime(),
+                _ => date.AsUtc(),
+            };
 
         public static List<string> GetSupportedTimeZoneAbbreviations() => TimeZoneMap.Keys.ToList();
     }

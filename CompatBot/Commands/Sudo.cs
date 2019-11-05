@@ -82,7 +82,7 @@ namespace CompatBot.Commands
                                     endIdx = emojis.Length;
                                 emoji = emojis.Substring(i, endIdx - i);
                                 i = endIdx - 1;
-                                var emojiId = ulong.Parse(emoji.Substring(emoji.LastIndexOf(':') + 1));
+                                var emojiId = ulong.Parse(emoji[(emoji.LastIndexOf(':') + 1)..]);
                                 de = DiscordEmoji.FromGuildEmote(ctx.Client, emojiId);
                             }
                             else

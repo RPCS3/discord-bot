@@ -296,7 +296,7 @@ namespace CompatBot.Utils.ResultFormatters
             else if (items["disc_package_version"] is string discPkgVer && !discPkgVer.Equals("Unknown", StringComparison.InvariantCultureIgnoreCase))
                 items["game_version"] = discPkgVer;
             if (items["game_version"] is string gameVer && gameVer.StartsWith("0"))
-                items["game_version"] = gameVer.Substring(1);
+                items["game_version"] = gameVer[1..];
 
             foreach (var key in items.AllKeys)
             {
@@ -373,7 +373,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return false;
 
             var len = Math.Min(commitA.Length, commitB.Length);
-            return commitA.Substring(0, len) == commitB.Substring(0, len);
+            return commitA[..len] == commitB[..len];
         }
 
         private static string GetOpenglDriverVersion(string gpuInfo, string version)
@@ -547,7 +547,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (release.Contains(".fc"))
             {
-                var ver = release.Split('.').FirstOrDefault(p => p.StartsWith("fc"))?.Substring(2);
+                var ver = release.Split('.').FirstOrDefault(p => p.StartsWith("fc"))?[2..];
                 return "Fedora " + ver;
             }
 
