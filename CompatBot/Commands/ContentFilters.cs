@@ -42,7 +42,7 @@ namespace CompatBot.Commands
             using (var db = new BotDb())
             {
                 var duplicates = new Dictionary<string, FilterContext>(StringComparer.InvariantCultureIgnoreCase);
-                var filters = await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String.ToUpperInvariant()).AsNoTracking().ToListAsync().ConfigureAwait(false);
+                var filters = db.Piracystring.Where(ps => !ps.Disabled).AsNoTracking().AsEnumerable().OrderBy(ps => ps.String.ToUpperInvariant()).ToList();
                 var nonUniqueTriggers = (
                     from f in filters
                     group f by f.String.ToUpperInvariant()
