@@ -73,7 +73,7 @@ namespace CompatBot.Commands
                 var idx = term.LastIndexOf(" to ");
                 if (idx > 0)
                 {
-                    var potentialUserId = term.Substring(idx + 4).Trim();
+                    var potentialUserId = term[(idx + 4)..].Trim();
                     bool hasMention = false;
                     try
                     {
@@ -84,7 +84,7 @@ namespace CompatBot.Commands
 
                     if (hasMention)
                     {
-                        term = term.Substring(0, idx).TrimEnd();
+                        term = term[..idx].TrimEnd();
                         var mentionResult = await LookupTerm(term).ConfigureAwait(false);
                         if (mentionResult.score > result.score)
                             result = mentionResult;

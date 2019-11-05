@@ -6,23 +6,24 @@ namespace CompatBot.Utils
 {
     public static class TimeParser
     {
-        private static readonly Dictionary<string, TimeZoneInfo> TimeZoneMap;
+        public static readonly Dictionary<string, TimeZoneInfo> TimeZoneMap;
+        
+        public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new Dictionary<string, string[]>
+        {
+            ["PT"] = new[] { "Pacific Standard Time" },
+            ["PST"] = new[] { "Pacific Standard Time" },
+            ["PDT"] = new[] { "Pacific Standard Time" },
+            ["EST"] = new[] { "Eastern Standard Time" },
+            ["EDT"] = new[] { "Eastern Standard Time" },
+            ["CEST"] = new[] { "Central European Standard Time" },
+            ["BST"] = new[] { "British Summer Time", "GMT Standard Time" },
+            ["JST"] = new[] { "Japan Standard Time", "Tokyo Standard Time" },
+        };
 
         static TimeParser()
         {
-            var tzAcronyms = new Dictionary<string, string[]>
-            {
-                ["PT"] = new[] { "Pacific Standard Time" },
-                ["PST"] = new[] { "Pacific Standard Time" },
-                ["PDT"] = new[] { "Pacific Standard Time" },
-                ["EST"] = new[] { "Eastern Standard Time" },
-                ["EDT"] = new[] { "Eastern Standard Time" },
-                ["CEST"] = new[] { "Central European Standard Time" },
-                ["BST"] = new[] { "British Summer Time", "GMT Standard Time" },
-                ["JST"] = new[] { "Japan Standard Time", "Tokyo Standard Time" },
-            };
             var uniqueNames = new HashSet<string>(
-                from tznl in tzAcronyms.Values
+                from tznl in TimeZoneAcronyms.Values
                 from tzn in tznl
                 select tzn
             );
@@ -32,7 +33,7 @@ namespace CompatBot.Utils
             {
                 if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.StandardName))
                 {
-                    var acronyms = from tza in tzAcronyms
+                    var acronyms = from tza in TimeZoneAcronyms
                         where tza.Value.Contains(tzi.StandardName) || tza.Value.Contains(tzi.DaylightName)
                         select tza.Key;
                     foreach (var tza in acronyms)
@@ -49,17 +50,15 @@ namespace CompatBot.Utils
                 return false;
 
             dateTime = dateTime.ToUpperInvariant();
-            if (char.IsDigit(dateTime[dateTime.Length - 1]))
-            {
+            if (char.IsDigit(dateTime[^1]))
                 return DateTime.TryParse(dateTime, out result);
-            }
 
             var cutIdx = dateTime.LastIndexOf(' ');
             if (cutIdx < 0)
                 return false;
 
-            var tza = dateTime.Substring(cutIdx + 1);
-            dateTime = dateTime.Substring(0, cutIdx);
+            var tza = dateTime[(cutIdx+1)..];
+            dateTime = dateTime[..cutIdx];
             if (TimeZoneMap.TryGetValue(tza, out var tzi))
             {
                 if (!DateTime.TryParse(dateTime, out result))
@@ -73,14 +72,13 @@ namespace CompatBot.Utils
         }
 
 
-        public static DateTime Normalize(this DateTime date)
-        {
-            if (date.Kind == DateTimeKind.Utc)
-                return date;
-            if (date.Kind == DateTimeKind.Local)
-                return date.ToUniversalTime();
-            return date.AsUtc();
-        }
+        public static DateTime Normalize(this DateTime date) =>
+            date.Kind switch
+            {
+                DateTimeKind.Utc => date,
+                DateTimeKind.Local => date.ToUniversalTime(),
+                _ => date.AsUtc(),
+            };
 
         public static List<string> GetSupportedTimeZoneAbbreviations() => TimeZoneMap.Keys.ToList();
     }

@@ -47,7 +47,7 @@ namespace CompatBot.Commands.Converters
             }
 
             if (value.StartsWith('#'))
-                value = value.Substring(1);
+                value = value[1..];
             value = value.ToLowerInvariant();
             var chn = (
                 from g in guildList

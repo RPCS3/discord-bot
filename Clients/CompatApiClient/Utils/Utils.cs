@@ -14,7 +14,7 @@ namespace CompatApiClient.Utils
                 return str;
 
             if (str.Length > maxLength)
-                return str.Substring(0, maxLength - 1) + "…";
+                return str[..(maxLength - 1)] + "…";
 
             return str;
         }
@@ -27,7 +27,7 @@ namespace CompatApiClient.Utils
             if (string.IsNullOrEmpty(str) || str.Length <= maxLength)
                 return str;
 
-            return str.Substring(0, maxLength);
+            return str[..maxLength];
         }
 
         public static string Sanitize(this string str, bool breakLinks = true, bool replaceBackTicks = false)

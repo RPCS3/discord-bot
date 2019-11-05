@@ -72,7 +72,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var match = PsnScraper.ContentIdMatcher.Match(fname);
                 if (match.Success)
-                    return fname.Substring(20);
+                    return fname[20..];
             }
             catch { }
             return fname;

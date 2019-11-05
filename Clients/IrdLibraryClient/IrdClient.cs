@@ -223,7 +223,7 @@ namespace IrdLibraryClient
                 return null;
 
             var idx = html.LastIndexOf("</span>");
-            var result = html.Substring(idx + 7).Trim();
+            var result = html[(idx + 7)..].Trim();
             if (string.IsNullOrEmpty(result))
                 return null;
 

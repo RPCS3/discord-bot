@@ -278,7 +278,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
                     if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
-                        modelNumber = modelNumber.Substring(1);
+                        modelNumber = modelNumber[1..];
                     int.TryParse(modelNumber, out var modelNumberInt);
                     if (modelNumberInt < 500 || modelNumberInt > 1000)
                     {

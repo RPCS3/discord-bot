@@ -167,7 +167,8 @@ namespace CompatBot.Database.Providers
 
             try
             {
-                await client.ReportAsync("🤬 Content filter hit", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
+                if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue))
+                    await client.ReportAsync("🤬 Content filter hit", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
             }
             catch (Exception e)
             {

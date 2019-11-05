@@ -227,7 +227,7 @@ namespace CompatBot.EventHandlers
                     var linkStart = message.Content.IndexOf("http");
                     if (linkStart > -1)
                     {
-                        var link = message.Content.Substring(linkStart).Split(linkSeparator, 2)[0];
+                        var link = message.Content[linkStart..].Split(linkSeparator, 2)[0];
                         if (link.Contains(".log", StringComparison.InvariantCultureIgnoreCase) || link.Contains("rpcs3.zip", StringComparison.CurrentCultureIgnoreCase))
                             await channel.SendMessageAsync("If you intended to upload a log file please re-upload it directly to discord").ConfigureAwait(false);
                     }

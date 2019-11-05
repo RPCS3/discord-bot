@@ -427,9 +427,9 @@ namespace PsnClient
                             if (!string.IsNullOrEmpty(ver) && ver.Length > 4)
                             {
                                 if (ver.EndsWith("00"))
-                                    ver = ver.Substring(0, 4); //4.85
+                                    ver = ver[..4]; //4.85
                                 else
-                                    ver = ver.Substring(0, 4) + "." + ver.Substring(4).TrimEnd('0'); //4.851 -> 4.85.1
+                                    ver = ver[..4] + "." + ver[4..].TrimEnd('0'); //4.851 -> 4.85.1
                             }
                             return new FirmwareInfo { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
                         }

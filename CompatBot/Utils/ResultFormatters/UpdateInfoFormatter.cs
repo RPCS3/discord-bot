@@ -106,7 +106,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             var text = new Uri(link).Segments?.Last() ?? "";
             if (simpleName && text.StartsWith("rpcs3-"))
-                text = text.Substring(6);
+                text = text[6..];
             if (simpleName && text.Contains('_'))
                 text = text.Split('_', 2)[0] + Path.GetExtension(text);
 

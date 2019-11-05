@@ -42,7 +42,7 @@ namespace CompatBot.Commands
             using (var db = new BotDb())
             {
                 var duplicates = new Dictionary<string, FilterContext>(StringComparer.InvariantCultureIgnoreCase);
-                var filters = await db.Piracystring.Where(ps => !ps.Disabled).OrderBy(ps => ps.String.ToUpperInvariant()).AsNoTracking().ToListAsync().ConfigureAwait(false);
+                var filters = db.Piracystring.Where(ps => !ps.Disabled).AsNoTracking().AsEnumerable().OrderBy(ps => ps.String.ToUpperInvariant()).ToList();
                 var nonUniqueTriggers = (
                     from f in filters
                     group f by f.String.ToUpperInvariant()
@@ -255,6 +255,7 @@ namespace CompatBot.Commands
             var letterW = DiscordEmoji.FromUnicode("🇼");
             var letterM = DiscordEmoji.FromUnicode("🇲");
             var letterE = DiscordEmoji.FromUnicode("🇪");
+            var letterU = DiscordEmoji.FromUnicode("🇺");
 
             DiscordMessage msg = null;
             string errorMsg = null;
@@ -380,6 +381,7 @@ namespace CompatBot.Commands
                     $"**`W`** = **`{FilterAction.IssueWarning}`** will issue a warning to the user.\n" +
                     $"**`M`** = **`{FilterAction.SendMessage}`** send _a_ message with an explanation of why it was removed.\n" +
                     $"**`E`** = **`{FilterAction.ShowExplain}`** show `explain` for the specified term (**not implemented**).\n" +
+                    $"**`U`** = **`{FilterAction.MuteModQueue}`** mute mod queue reporting for this action.\n" +
                     "Reactions will toggle the action, text message will set the specified flags."
                 );
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **action(s)**", embed: embed).ConfigureAwait(false);
@@ -419,6 +421,12 @@ namespace CompatBot.Commands
                     filter.Actions ^= FilterAction.ShowExplain;
                     goto step3;
                 }
+
+                if (emoji.Emoji == letterU)
+                {
+                    filter.Actions ^= FilterAction.MuteModQueue;
+                    goto step3;
+                }
             }
             else if (txt != null)
             {
@@ -454,6 +462,12 @@ namespace CompatBot.Commands
                         case "SHOWEXPLAIN":
                         case "SENDEXPLAIN":
                             newActions |= FilterAction.ShowExplain;
+                            break;
+                        case "U":
+                        case "MMQ":
+                        case "MUTE":
+                        case "MUTEMODQUEUE":
+                            newActions |= FilterAction.MuteModQueue;
                             break;
                         case "ABORT":
                             return (false, msg);

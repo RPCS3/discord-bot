@@ -50,7 +50,7 @@ namespace CompatBot.Utils
                 return str;
 
             if (str.StartsWith('"') && str.EndsWith('"'))
-                return str.Substring(1, str.Length - 2);
+                return str[1..^1];
             return str;
         }
 
