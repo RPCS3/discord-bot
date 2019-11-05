@@ -46,30 +46,38 @@ namespace CompatBot.Commands
             [Description("List users with warnings, sorted from most warned to least")]
             public async Task Users(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
             {
-                var isMod = ctx.User.IsWhitelisted(ctx.Client, ctx.Guild);
-                if (number < 1)
-                    number = 10;
-                var table = new AsciiTable(
-                    new AsciiColumn("Username", maxWidth: 24),
-                    new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
-                    new AsciiColumn("Count", alignToRight: true),
-                    new AsciiColumn("All time", alignToRight: true)
-                );
-                using (var db = new BotDb())
+                try
                 {
-                    var query = from warn in db.Warning
-                        group warn by warn.DiscordId
-                        into userGroup
-                        let row = new {discordId = userGroup.Key, count = userGroup.Count(w => !w.Retracted), total = userGroup.Count()}
-                        orderby row.count descending
-                        select row;
-                    foreach (var row in query.Take(number))
+                    var isMod = ctx.User.IsWhitelisted(ctx.Client, ctx.Guild);
+                    if (number < 1)
+                        number = 10;
+                    var table = new AsciiTable(
+                        new AsciiColumn("Username", maxWidth: 24),
+                        new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
+                        new AsciiColumn("Count", alignToRight: true),
+                        new AsciiColumn("All time", alignToRight: true)
+                    );
+                    using (var db = new BotDb())
                     {
-                        var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
-                        table.Add(username, row.discordId.ToString(), row.count.ToString(), row.total.ToString());
+                        var query = from warn in db.Warning
+                            group warn by warn.DiscordId
+                            into userGroup
+                            let row = new {discordId = userGroup.Key, count = userGroup.Count(w => !w.Retracted), total = userGroup.Count()}
+                            orderby row.count descending
+                            select row;
+                        foreach (var row in query.Take(number))
+                        {
+                            var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
+                            table.Add(username, row.discordId.ToString(), row.count.ToString(), row.total.ToString());
+                        }
                     }
+                    await ctx.SendAutosplitMessageAsync(new StringBuilder("Warning count per user:").Append(table)).ConfigureAwait(false);
                 }
-                await ctx.SendAutosplitMessageAsync(new StringBuilder("Warning count per user:").Append(table)).ConfigureAwait(false);
+                catch (Exception e)
+                {
+                    Config.Log.Error(e);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "SQL query for this command is broken at the moment", true).ConfigureAwait(false);
+                }
             }
 
             [Command("by"), RequiresBotModRole]
