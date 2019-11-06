@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers
         {
             "shut the fuck up", "shut up", "shutup", "shuddup", "hush", "chill", "bad bot",
             "no one asked you", "useless bot", "bot sux", "fuck this bot", "fuck bot",
-            "shit bot", "succ",
+            "shit bot", "succ", "gay bot",
 
             "take this back", "take that back",
             "delete this", "delete that", "remove this", "remove that",
@@ -28,7 +28,7 @@ namespace CompatBot.EventHandlers
             {
                 "good bot", "gud bot", "good boy", "goodboy", "gud boy", "gud boi",
                 "cool", "nice", "clever", "sophisticated", "helpful", "fantastic",
-                "thank you", "thankyou", "thanks", "thnk", "thnks", "thnx", "thnku", "thank u", "tnx",
+                "thank you", "thankyou", "thanks", "thnk", "thnks", "thnx", "thnku", "thank u", "tnx", "thx",
                 "arigato", "aregato", "arigatou", "aregatou", "oregato", "origato",
                 "poor bot", "good job", "well done", "good work", "excellent work",
                 "bot is love", "love this bot", "love you", "like this bot", "awesome",
