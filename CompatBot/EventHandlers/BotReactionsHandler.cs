@@ -19,20 +19,20 @@ namespace CompatBot.EventHandlers
         {
             "shut the fuck up", "shut up", "shutup", "shuddup", "hush", "chill", "bad bot",
             "no one asked you", "useless bot", "bot sux", "fuck this bot", "fuck bot",
-            "shit bot", "succ",
+            "shit bot", "succ", "worst bot",
 
             "take this back", "take that back",
             "delete this", "delete that", "remove this", "remove that",
         }.ToDictionary(s => s, _ => true).Concat(
             new[]
             {
-                "good bot", "gud bot", "good boy", "goodboy", "gud boy", "gud boi",
+                "good bot", "gud bot", "good boy", "goodboy", "gud boy", "gud boi", "best bot", "bestest bot",
                 "cool", "nice", "clever", "sophisticated", "helpful", "fantastic",
-                "thank you", "thankyou", "thanks", "thnk", "thnks", "thnx", "thnku", "thank u", "tnx",
+                "thank you", "thankyou", "thanks", "thnk", "thnks", "thnx", "thnku", "thank u", "tnx", "thx",
                 "arigato", "aregato", "arigatou", "aregatou", "oregato", "origato",
                 "poor bot", "good job", "well done", "good work", "excellent work",
-                "bot is love", "love this bot", "love you", "like this bot", "awesome",
-                "great", "neat bot",
+                "bot is love", "love this bot", "love you", "like this bot", "awesome", "lovely bot",
+                "great", "neat bot", "gay bot",
             }.ToDictionary(s => s, _ => false)
         ), true);
 
