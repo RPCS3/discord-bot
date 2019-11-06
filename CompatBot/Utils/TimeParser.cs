@@ -34,13 +34,12 @@ namespace CompatBot.Utils
             var result = new Dictionary<string, TimeZoneInfo>();
             foreach (var tzi in tzList)
             {
-                Config.Log.Debug($"[TZI] Checking {tzi.Id} ({tzi.StandardName} / {tzi.DaylightName})");
-                if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.DaylightName))
+                Config.Log.Debug($"[TZI] Checking {tzi.Id} ({tzi.DisplayName} / {tzi.StandardName} / {tzi.DaylightName})");
+                if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.DaylightName) || uniqueNames.Contains(tzi.DisplayName))
                 {
                     Config.Log.Debug("[TZI] Looks like it's a match!");
                     var acronyms = from tza in TimeZoneAcronyms
-                        where tza.Value.Any(name => name.Equals(tzi.StandardName, StringComparison.InvariantCultureIgnoreCase))
-                              || tza.Value.Any(name => name.Equals(tzi.DaylightName, StringComparison.InvariantCulture))
+                        where tza.Value.Contains(tzi.StandardName) || tza.Value.Contains(tzi.DaylightName) || tza.Value.Contains(tzi.DisplayName)
                         select tza.Key;
                     Config.Log.Debug("[TZI] Matched acronyms: " + string.Join(", ", acronyms));
                     foreach (var tza in acronyms)
