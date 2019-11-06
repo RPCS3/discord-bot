@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers
         {
             "shut the fuck up", "shut up", "shutup", "shuddup", "hush", "chill", "bad bot",
             "no one asked you", "useless bot", "bot sux", "fuck this bot", "fuck bot",
-            "shit bot", "succ", "gay bot", "worst bot",
+            "shit bot", "succ", "worst bot",
 
             "take this back", "take that back",
             "delete this", "delete that", "remove this", "remove that",
@@ -32,7 +32,7 @@ namespace CompatBot.EventHandlers
                 "arigato", "aregato", "arigatou", "aregatou", "oregato", "origato",
                 "poor bot", "good job", "well done", "good work", "excellent work",
                 "bot is love", "love this bot", "love you", "like this bot", "awesome", "lovely bot",
-                "great", "neat bot",
+                "great", "neat bot", "gay bot",
             }.ToDictionary(s => s, _ => false)
         ), true);
 
