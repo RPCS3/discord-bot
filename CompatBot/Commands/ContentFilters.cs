@@ -386,7 +386,7 @@ namespace CompatBot.Commands
                 );
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **action(s)**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterR, letterW, letterM, letterE, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterR, letterW, letterM, letterE, letterU, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)

@@ -268,6 +268,12 @@ namespace CompatBot
                             await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
                         }
                     }
+                    else
+                    {
+                        Config.Log.Debug($"Args count: {args.Length}");
+                        var pArgs = args.Select(a => a == Config.Token ? "<Token>" : $"[{a}]");
+                        Config.Log.Debug("Args: " + string.Join(" ", pArgs));
+                    }
 
                     Config.Log.Debug("Running RPCS3 update check thread");
                     backgroundTasks = Task.WhenAll(

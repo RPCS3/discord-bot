@@ -10,14 +10,14 @@ namespace CompatBot.Utils
         
         public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new Dictionary<string, string[]>
         {
-            ["PT"] = new[] { "Pacific Standard Time" },
-            ["PST"] = new[] { "Pacific Standard Time" },
-            ["PDT"] = new[] { "Pacific Standard Time" },
-            ["EST"] = new[] { "Eastern Standard Time" },
-            ["EDT"] = new[] { "Eastern Standard Time" },
-            ["CEST"] = new[] { "Central European Standard Time" },
-            ["BST"] = new[] { "British Summer Time", "GMT Standard Time" },
-            ["JST"] = new[] { "Japan Standard Time", "Tokyo Standard Time" },
+            ["PT"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },
+            ["PST"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },
+            ["PDT"] = new[] { "Pacific Standard Time", "Pacific Daylight Time", "America/Los_Angeles" },
+            ["EST"] = new[] { "Eastern Standard Time", "America/New_York" },
+            ["EDT"] = new[] { "Eastern Standard Time", "Eastern Daylight Time", "America/New_York" },
+            ["CEST"] = new[] { "Central European Standard Time", "Europe/Berlin" },
+            ["BST"] = new[] { "British Summer Time", "GMT Standard Time", "Europe/London" },
+            ["JST"] = new[] { "Japan Standard Time", "Tokyo Standard Time", "Asia/Tokyo" },
         };
 
         static TimeParser()
@@ -25,21 +25,28 @@ namespace CompatBot.Utils
             var uniqueNames = new HashSet<string>(
                 from tznl in TimeZoneAcronyms.Values
                 from tzn in tznl
-                select tzn
+                select tzn,
+                StringComparer.InvariantCultureIgnoreCase
             );
+            Config.Log.Trace("[TZI] Unique TZA names: " + uniqueNames.Count);
             var tzList = TimeZoneInfo.GetSystemTimeZones();
+            Config.Log.Trace("[TZI] System TZI count: " + tzList.Count);
             var result = new Dictionary<string, TimeZoneInfo>();
             foreach (var tzi in tzList)
             {
-                if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.StandardName))
+                Config.Log.Trace($"[TZI] Checking {tzi.Id} ({tzi.DisplayName} / {tzi.StandardName} / {tzi.DaylightName})");
+                if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.DaylightName) || uniqueNames.Contains(tzi.Id))
                 {
+                    Config.Log.Trace("[TZI] Looks like it's a match!");
                     var acronyms = from tza in TimeZoneAcronyms
-                        where tza.Value.Contains(tzi.StandardName) || tza.Value.Contains(tzi.DaylightName)
+                        where tza.Value.Contains(tzi.StandardName) || tza.Value.Contains(tzi.DaylightName) || tza.Value.Contains(tzi.Id)
                         select tza.Key;
+                    Config.Log.Trace("[TZI] Matched acronyms: " + string.Join(", ", acronyms));
                     foreach (var tza in acronyms)
                         result[tza] = tzi;
                 }
             }
+            Config.Log.Trace("[TZI] Total matched acronyms: " + result.Count);
             TimeZoneMap = result;
         }
 
