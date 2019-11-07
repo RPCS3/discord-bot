@@ -208,6 +208,11 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"⚠ Please change `SPU Block Size`, `{spuBlockSize}` is currently unstable.");
             }
 
+            if (items["auto_start_on_boot"] == DisabledMark)
+                notes.Add("❔ `Automatically start games after boot` is disabled");
+            if (items["always_start_on_boot"] == DisabledMark)
+                notes.Add("❔ `Always start after boot` is disabled");
+
             if (items["lib_loader"] is string libLoader
                 && (libLoader == "Auto"
                     || (libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase) &&

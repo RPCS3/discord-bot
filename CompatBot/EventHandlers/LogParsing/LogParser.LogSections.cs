@@ -138,6 +138,8 @@ namespace CompatBot.EventHandlers.LogParsing
 
                     ["Pad:"] = new Regex("Pad: (?<pad_handler>.*?)\r?$", DefaultOptions),
 
+                    ["Automatically start games after boot:"] = new Regex("Automatically start games after boot: (?<auto_start_on_boot>.*?)\r?$", DefaultOptions),
+                    ["Always start after boot:"] = new Regex("Always start after boot: (?<always_start_on_boot>.*?)\r?$", DefaultOptions),
                     ["Use native user interface:"] = new Regex("Use native user interface: (?<native_ui>.*?)\r?$", DefaultOptions),
                 },
                 EndTrigger = new[] {"Log:"},
