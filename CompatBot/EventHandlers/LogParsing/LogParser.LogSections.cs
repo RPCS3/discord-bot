@@ -122,6 +122,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Vblank Rate:"] = new Regex("Vblank Rate: (?<vblank_rate>.*?)\r?$", DefaultOptions),
                     ["12:"] = new Regex(@"(D3D12|DirectX 12):\s*\r?\n\s*Adapter: (?<d3d_gpu>.*?)\r?$", DefaultOptions),
                     ["Vulkan:"] = new Regex(@"Vulkan:\s*\r?\n\s*Adapter: (?<vulkan_gpu>.*?)\r?$", DefaultOptions),
+                    ["Force FIFO present mode:"] = new Regex(@"Force FIFO present mode: (?<force_fifo_present>.*?)\r?$", DefaultOptions),
                 },
                 EndTrigger = new[] {"Audio:"},
             },
