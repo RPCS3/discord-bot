@@ -253,9 +253,27 @@ namespace CompatBot
                         throw;
                     }
 
-                    if (args.LastOrDefault() is string strCh && ulong.TryParse(strCh, out var channelId))
+                    ulong? channelId = null;
+                    if (SandboxDetector.Detect() == SandboxType.Docker)
                     {
-                        Config.Log.Info($"Found channelId: {strCh} (parsed as {channelId})");
+                        using (var db = new BotDb())
+                        {
+                            var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
+                            if (chState != null)
+                            {
+                                if (ulong.TryParse(chState.Value, out var ch))
+                                    channelId = ch;
+                                db.BotState.Remove(chState);
+                                db.SaveChanges();
+                            }
+                        }
+                    }
+                    if (args.LastOrDefault() is string strCh && ulong.TryParse(strCh, out var chId))
+                        channelId = chId;
+
+                    if (channelId.HasValue)
+                    {
+                        Config.Log.Info($"Found channelId {channelId}");
                         DiscordChannel channel;
                         if (channelId == InvalidChannelId)
                         {
@@ -264,7 +282,7 @@ namespace CompatBot
                         }
                         else
                         {
-                            channel = await client.GetChannelAsync(channelId).ConfigureAwait(false);
+                            channel = await client.GetChannelAsync(channelId.Value).ConfigureAwait(false);
                             await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
                         }
                     }
