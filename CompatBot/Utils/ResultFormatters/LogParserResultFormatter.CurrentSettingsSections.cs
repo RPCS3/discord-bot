@@ -194,7 +194,9 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void BuildLibsSection(DiscordEmbedBuilder builder, NameValueCollection items)
         {
-            if (items["lib_loader"] is string libs && libs.Contains("manual", StringComparison.InvariantCultureIgnoreCase))
+            if (items["lib_loader"] is string libs
+                && (libs.Contains("manual", StringComparison.InvariantCultureIgnoreCase)
+                    || libs.Contains("strict", StringComparison.InvariantCultureIgnoreCase)))
                 builder.AddField("Selected Libraries", items["library_list"]?.Trim(1024));
         }
     }

@@ -122,6 +122,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Vblank Rate:"] = new Regex("Vblank Rate: (?<vblank_rate>.*?)\r?$", DefaultOptions),
                     ["12:"] = new Regex(@"(D3D12|DirectX 12):\s*\r?\n\s*Adapter: (?<d3d_gpu>.*?)\r?$", DefaultOptions),
                     ["Vulkan:"] = new Regex(@"Vulkan:\s*\r?\n\s*Adapter: (?<vulkan_gpu>.*?)\r?$", DefaultOptions),
+                    ["Force FIFO present mode:"] = new Regex(@"Force FIFO present mode: (?<force_fifo_present>.*?)\r?$", DefaultOptions),
                 },
                 EndTrigger = new[] {"Audio:"},
             },
@@ -138,6 +139,8 @@ namespace CompatBot.EventHandlers.LogParsing
 
                     ["Pad:"] = new Regex("Pad: (?<pad_handler>.*?)\r?$", DefaultOptions),
 
+                    ["Automatically start games after boot:"] = new Regex("Automatically start games after boot: (?<auto_start_on_boot>.*?)\r?$", DefaultOptions),
+                    ["Always start after boot:"] = new Regex("Always start after boot: (?<always_start_on_boot>.*?)\r?$", DefaultOptions),
                     ["Use native user interface:"] = new Regex("Use native user interface: (?<native_ui>.*?)\r?$", DefaultOptions),
                 },
                 EndTrigger = new[] {"Log:"},

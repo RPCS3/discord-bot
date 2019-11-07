@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using CompatApiClient.Utils;
@@ -47,6 +48,24 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 if (items["vertex_cache"] == DisabledMark)
                     notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
+            }
+            if (items["force_fifo_present"] == EnabledMark)
+            {
+                notes.Add("⚠ Double-buffered VSync is forced");
+                if (items["frame_limit"] is string frameLimitStr)
+                {
+                    if (frameLimitStr == "Auto")
+                        notes.Add("ℹ Frame rate might be limited to 30 fps");
+                    else if (double.TryParse(frameLimitStr, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var frameLimit))
+                    {
+                        if (frameLimit > 30 && frameLimit < 60)
+                            notes.Add("⚠ Frame rate might be limited to 30 fps");
+                        else if (frameLimit < 30)
+                            notes.Add("⚠ Frame rate might be limited to 15 fps");
+                        else
+                            notes.Add("ℹ Frame pacing might be affected due to VSync and Frame Limiter enabled at the same time");
+                    }
+                }
             }
 
             if (items["ppu_decoder"] is string ppuDecoder)
@@ -208,10 +227,16 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"⚠ Please change `SPU Block Size`, `{spuBlockSize}` is currently unstable.");
             }
 
+            if (items["auto_start_on_boot"] == DisabledMark)
+                notes.Add("❔ `Automatically start games after boot` is disabled");
+            if (items["always_start_on_boot"] == DisabledMark)
+                notes.Add("❔ `Always start after boot` is disabled");
+
             if (items["lib_loader"] is string libLoader
                 && (libLoader == "Auto"
-                    || (libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase) &&
-                        (string.IsNullOrEmpty(items["library_list"]) || items["library_list"] == "None"))))
+                    || ((libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase)
+                         || libLoader.Contains("strict", StringComparison.InvariantCultureIgnoreCase))
+                        && (string.IsNullOrEmpty(items["library_list"]) || items["library_list"] == "None"))))
             {
                 if (items["game_title"] != "vsh.self")
                     notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
