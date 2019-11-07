@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -175,6 +176,22 @@ namespace CompatBot.Commands
 
             internal static void Restart(ulong channelId)
             {
+                if (SandboxDetector.Detect() == SandboxType.Docker)
+                {
+                    Config.Log.Info($"Saving channelId {channelId} into settings...");
+                    using (var db = new BotDb())
+                    {
+                        var ch = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
+                        if (ch is null)
+                        {
+                            ch = new BotState {Key = "bot-restart-channel", Value = channelId.ToString()};
+                            db.BotState.Add(ch);
+                        }
+                        else
+                            ch.Value = channelId.ToString();
+                        db.SaveChanges();
+                    }
+                }
                 Config.Log.Info("Restarting...");
                 using (var self = new Process
                 {
