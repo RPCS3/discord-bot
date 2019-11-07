@@ -49,25 +49,27 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["vertex_cache"] == DisabledMark)
                     notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
             }
+            
+            var vsync = items["vsync"] == EnabledMark;
             if (items["force_fifo_present"] == EnabledMark)
             {
                 notes.Add("⚠ Double-buffered VSync is forced");
-                if (items["frame_limit"] is string frameLimitStr)
+                vsync = true;
+            }
+            if (vsync && items["frame_limit"] is string frameLimitStr)
+            {
+                if (frameLimitStr == "Auto")
+                    notes.Add("ℹ Frame rate might be limited to 30 fps");
+                else if (double.TryParse(frameLimitStr, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var frameLimit))
                 {
-                    if (frameLimitStr == "Auto")
-                        notes.Add("ℹ Frame rate might be limited to 30 fps");
-                    else if (double.TryParse(frameLimitStr, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var frameLimit))
-                    {
-                        if (frameLimit > 30 && frameLimit < 60)
-                            notes.Add("⚠ Frame rate might be limited to 30 fps");
-                        else if (frameLimit < 30)
-                            notes.Add("⚠ Frame rate might be limited to 15 fps");
-                        else
-                            notes.Add("ℹ Frame pacing might be affected due to VSync and Frame Limiter enabled at the same time");
-                    }
+                    if (frameLimit > 30 && frameLimit < 60)
+                        notes.Add("⚠ Frame rate might be limited to 30 fps");
+                    else if (frameLimit < 30)
+                        notes.Add("⚠ Frame rate might be limited to 15 fps");
+                    else
+                        notes.Add("ℹ Frame pacing might be affected due to VSync and Frame Limiter enabled at the same time");
                 }
             }
-
             if (items["ppu_decoder"] is string ppuDecoder)
             {
                 if (KnownGamesThatRequireInterpreter.Contains(serial))
@@ -229,7 +231,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["auto_start_on_boot"] == DisabledMark)
                 notes.Add("❔ `Automatically start games after boot` is disabled");
-            if (items["always_start_on_boot"] == DisabledMark)
+            else if (items["always_start_on_boot"] == DisabledMark)
                 notes.Add("❔ `Always start after boot` is disabled");
 
             if (items["lib_loader"] is string libLoader
