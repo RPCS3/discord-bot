@@ -49,13 +49,25 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["vertex_cache"] == DisabledMark)
                     notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
             }
-            
+
+            if (items["rsx_not_supported"] is string notSupported)
+            {
+                var rsxCaveats = notSupported.Split(Environment.NewLine).Distinct().ToArray();
+                if (rsxCaveats.Contains("alpha-to-one for multisampling"))
+                {
+                    if (items["msaa"] is string msaa && msaa != "Disabled")
+                        generalNotes.Add("⚠ This GPU doesn't support required features for proper MSAA implementation");
+                }
+            }
+
             var vsync = items["vsync"] == EnabledMark;
             if (items["force_fifo_present"] == EnabledMark)
             {
                 notes.Add("⚠ Double-buffered VSync is forced");
                 vsync = true;
             }
+            if (items["rsx_swapchain_mode"] is string swapchainMode && swapchainMode == "2")
+                vsync = true;
             if (vsync && items["frame_limit"] is string frameLimitStr)
             {
                 if (frameLimitStr == "Auto")
