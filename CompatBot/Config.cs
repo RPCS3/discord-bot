@@ -155,10 +155,6 @@ namespace CompatBot
         {
             try
             {
-                var args = Environment.CommandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (args.Length > 1 && SandboxDetector.Detect() != SandboxType.Docker)
-                    inMemorySettings[nameof(Token)] = args[1];
-
                 config = new ConfigurationBuilder()
                          .AddUserSecrets(Assembly.GetExecutingAssembly()) // lower priority
                          .AddEnvironmentVariables()
