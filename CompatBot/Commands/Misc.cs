@@ -18,32 +18,32 @@ namespace CompatBot.Commands
 
         private static readonly List<string> EightBallAnswers = new List<string>
         {
-            // 43
+            // 45
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
             "Sure", "Yeah, why not", "Most likely", "Sim", "Oui",
-            "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", "<:cell_ok_hand:324618647857397760>",
+            "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", ":cell_ok_hand:",
             "Don't be an idiot. YES.", "Mhm!", "Many Yes", "Yiss", "Sir, yes, Sir!", 
             "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
             "Certainly", "Of course", "Definitely", "Indeed", "Much yes",
             "Consider it done", "Totally", "You bet", "Yup", "Yep",
             "Positive!", "Yarp", "Hmmm, yes!", "That's a yes for me", "Aye mate",
-            "Absolutely", "Totes my goats", "Without fail",
+            "Absolutely", "Totes my goats", "Without fail", "👌", "👍",
 
-            // 24
+            // 25
             "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not",
             "Maybe not, maybe yes", "Ugh", "Probably", "Ask again later", "Error 404: answer not found",
             "Don't ask me that again", "You should think twice before asking", "You what now?", "Ask Neko", "Ask Ani",
             "Bloody hell, answering that ain't so easy", "I'm pretty sure that's illegal!", "What do *you* think?", "Only on Wednesdays", "Look in the mirror, you know the answer already",
-            "Don't know, don't care", "_shows signs of complete confusion_", "Have you googled it?", "Not sure my dude", 
+            "Don't know, don't care", "_shows signs of complete confusion_", "Have you googled it?", "Not sure my dude", "🤔",
 
-            // 34
+            // 35
             "Nah mate", "Nope", "Njet", "Of course not", "Seriously no",
             "Noooooooooo", "Most likely not", "Não", "Non", "Hell no",
             "Absolutely not", "Nuh-uh!", "Nyet!", "Negatory!", "Heck no",
             "Nein!", "I think not", "I'm afraid not", "Nay", "Yesn't",
             "No way", "Certainly not", "I must say no", "Nah", "Negative",
             "Definitely not", "No way, Jose", "Not today", "Narp", "Not in a million years", 
-            "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means",
+            "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means", "👎",
         };
 
         private static readonly List<string> EightBallTimeUnits = new List<string>
@@ -216,6 +216,8 @@ namespace CompatBot.Commands
                 string answer;
                 lock (rng)
                     answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
+                if (answer.StartsWith(':') && answer.EndsWith(':'))
+                    answer = ctx.Client.GetEmoji(answer, "🔮");
                 await ctx.RespondAsync(answer).ConfigureAwait(false);
             }
         }
@@ -420,8 +422,14 @@ namespace CompatBot.Commands
         [Description("Find games to download")]
         public Task Download(CommandContext ctx, [RemainingText] string game)
         {
-            if (game?.ToUpperInvariant() == "RPCS3")
+            var invariantTitle = game?.ToUpperInvariant();
+            if (invariantTitle == "RPCS3")
                 return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
+
+            if (invariantTitle == "UNNAMED")
+                game = "Persona 5";
+            else if (invariantTitle == "KOT")
+                game = invariantTitle;
             return Psn.SearchForGame(ctx, game, 3);
         }
 

@@ -54,6 +54,14 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version AmdRecommendedOldWindowsVersion = new Version(18, 8, 1);
         private static readonly Version NvidiaFullscreenBugFixed = new Version(0, 0, 6, 8204);
 
+        private static readonly Dictionary<string, string> RsxPresentModeMap = new Dictionary<string, string>
+        {
+            ["0"] = "VK_PRESENT_MODE_IMMEDIATE_KHR",    // no vsync
+            ["1"] = "VK_PRESENT_MODE_MAILBOX_KHR",      // fast sync
+            ["2"] = "VK_PRESENT_MODE_FIFO_KHR",         // vsync
+            ["3"] = "VK_PRESENT_MODE_FIFO_RELAXED_KHR", // adaptive vsync
+        };
+
         private static readonly HashSet<string> KnownSyncFolders = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "OneDrive",
@@ -63,7 +71,6 @@ namespace CompatBot.Utils.ResultFormatters
             "Google Drive",
             "Google Backup",
             "Dropbox",
-
         };
 
         private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)

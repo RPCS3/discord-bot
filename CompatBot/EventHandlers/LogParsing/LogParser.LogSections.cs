@@ -114,6 +114,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Frame Skip:"] = new Regex("Enable Frame Skip: (?<frame_skip>.*?)\r?$", DefaultOptions),
                     ["Blit:"] = new Regex("Blit: (?<cpu_blit>.*?)\r?$", DefaultOptions),
                     ["Asynchronous Shader Compiler:"] = new Regex("Asynchronous Shader Compiler: (?<async_shaders>.*?)\r?$", DefaultOptions),
+                    ["Disable native float16 support:"] = new Regex("Disable native float16 support: (?<disable_native_float16>.*?)\r?$", DefaultOptions),
                     ["Multithreaded RSX:"] = new Regex("Multithreaded RSX: (?<mtrsx>.*?)\r?$", DefaultOptions),
                     ["Resolution Scale:"] = new Regex("Resolution Scale: (?<resolution_scale>.*?)\r?$", DefaultOptions),
                     ["Anisotropic Filter"] = new Regex("Anisotropic Filter Override: (?<af_override>.*?)\r?$", DefaultOptions),
@@ -179,6 +180,9 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Found vulkan-compatible GPU:"] = new Regex(@"Found vulkan-compatible GPU: (?<vulkan_found_device>.+)\r?$", DefaultOptions),
                     ["Renderer initialized on device"] = new Regex(@"Renderer initialized on device '(?<vulkan_initialized_device>.+)'\r?$", DefaultOptions),
                     ["RSX: Failed to compile shader"] = new Regex(@"RSX: Failed to compile shader: ERROR: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
+                    ["RSX: Your GPU does not support"] = new Regex(@"RSX: Your GPU does not support (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
+                    ["RSX: GPU/driver lacks support"] = new Regex(@"RSX: GPU/driver lacks support for (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
+                    ["RSX: Swapchain:"] = new Regex(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
                     ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ ({(?<fatal_error_context>.+?)} )?(?<fatal_error>.*?(\:\W*\r?\n\(.*?)*)\r?$", DefaultOptions),
                     ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
                     ["Rap file not found:"] = new Regex(@"Rap file not found: (?<rap_file>.*?)\r?$", DefaultOptions),
@@ -221,6 +225,7 @@ namespace CompatBot.EventHandlers.LogParsing
             "broken_directory",
             "edat_block_offset",
             "failed_to_verify",
+            "rsx_not_supported",
         };
 
         public static readonly string[] CountValueItems = {"enqueue_buffer_error"};

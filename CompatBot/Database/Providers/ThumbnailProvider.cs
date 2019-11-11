@@ -127,6 +127,7 @@ namespace CompatBot.Database.Providers
                     info = db.TitleInfo.Add(info).Entity;
                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                 }
+                DiscordColor? analyzedColor = null;
                 if (string.IsNullOrEmpty(info.ThumbnailEmbeddableUrl))
                 {
                     var em = await GetEmbeddableUrlAsync(client, contentId, info.ThumbnailUrl).ConfigureAwait(false);
@@ -134,14 +135,20 @@ namespace CompatBot.Database.Providers
                     {
                         info.ThumbnailEmbeddableUrl = eUrl;
                         if (em.image is byte[] jpg)
-                            info.EmbedColor = ColorGetter.Analyze(jpg, defaultColor).Value;
+                        {
+                            analyzedColor = ColorGetter.Analyze(jpg, defaultColor);
+                            var c = analyzedColor.Value.Value;
+                            if (c != defaultColor.Value)
+                                info.EmbedColor = c;
+                        }
                         await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                     }
                 }
-                if (!info.EmbedColor.HasValue)
+                if ((!info.EmbedColor.HasValue && !analyzedColor.HasValue)
+                    || (info.EmbedColor.HasValue && info.EmbedColor.Value == defaultColor.Value))
                 {
                     var c = await GetImageColorAsync(info.ThumbnailEmbeddableUrl, defaultColor).ConfigureAwait(false);
-                    if (c.HasValue)
+                    if (c.HasValue && c.Value.Value != defaultColor.Value)
                     {
                         info.EmbedColor = c.Value.Value;
                         await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
