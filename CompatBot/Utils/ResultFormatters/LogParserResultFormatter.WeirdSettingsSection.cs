@@ -61,6 +61,11 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var vsync = items["vsync"] == EnabledMark;
+            string vkPm;
+            if (items["rsx_present_mode"] is string pm)
+                RsxPresentModeMap.TryGetValue(pm, out vkPm);
+            else
+                vkPm = null;
             if (items["force_fifo_present"] == EnabledMark)
             {
                 notes.Add("⚠ Double-buffered VSync is forced");
@@ -81,6 +86,18 @@ namespace CompatBot.Utils.ResultFormatters
                     else
                         notes.Add("ℹ Frame pacing might be affected due to VSync and Frame Limiter enabled at the same time");
                 }
+            }
+            if (!vsync && vkPm != "VK_PRESENT_MODE_IMMEDIATE_KHR")
+            {
+                var pmDesc = vkPm switch
+                {
+                    "VK_PRESENT_MODE_MAILBOX_KHR" => "Fast Sync",
+                    "VK_PRESENT_MODE_FIFO_KHR" => "Double-buffered VSync",
+                    "VK_PRESENT_MODE_FIFO_RELAXED_KHR" => "Adaptive VSync",
+                    _ => null,
+                };
+                if (pmDesc != null)
+                    notes.Add($"ℹ `VSync` is disabled, but the drivers provided `{pmDesc}`");
             }
             if (items["ppu_decoder"] is string ppuDecoder)
             {
