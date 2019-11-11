@@ -21,7 +21,7 @@ namespace CompatBot.Commands
             // 45
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
             "Sure", "Yeah, why not", "Most likely", "Sim", "Oui",
-            "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", "<:cell_ok_hand:324618647857397760>",
+            "Heck yeah!", "Roger that", "Aye!", "Yes without a doubt m8!", ":cell_ok_hand:",
             "Don't be an idiot. YES.", "Mhm!", "Many Yes", "Yiss", "Sir, yes, Sir!", 
             "Yah!", "Ja", "Umu!", "Make it so", "Sure thing",
             "Certainly", "Of course", "Definitely", "Indeed", "Much yes",
@@ -216,6 +216,8 @@ namespace CompatBot.Commands
                 string answer;
                 lock (rng)
                     answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
+                if (answer.StartsWith(':') && answer.EndsWith(':'))
+                    answer = ctx.Client.GetEmoji(answer, "🔮");
                 await ctx.RespondAsync(answer).ConfigureAwait(false);
             }
         }
