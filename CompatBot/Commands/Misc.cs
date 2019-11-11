@@ -420,8 +420,14 @@ namespace CompatBot.Commands
         [Description("Find games to download")]
         public Task Download(CommandContext ctx, [RemainingText] string game)
         {
-            if (game?.ToUpperInvariant() == "RPCS3")
+            var invariantTitle = game?.ToUpperInvariant();
+            if (invariantTitle == "RPCS3")
                 return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
+
+            if (invariantTitle == "UNNAMED")
+                game = "Persona 5";
+            else if (invariantTitle == "KOT")
+                game = invariantTitle;
             return Psn.SearchForGame(ctx, game, 3);
         }
 

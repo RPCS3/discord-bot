@@ -126,10 +126,16 @@ namespace CompatBot.Commands
 
                 if (string.IsNullOrEmpty(alteredSearch))
                     alteredSearch = search;
+                var jpSearch = alteredSearch;
+                if (alteredSearch == "KOT")
+                {
+                    alteredSearch = "kitten";
+                    jpSearch = "猫";
+                }
                 var msgTask = msg.UpdateOrCreateMessageAsync(ch, "⏳ Searching...");
                 var psnResponseUSTask = titleId == null ? Client.SearchAsync("en-US", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-US", titleId, 1, Config.Cts.Token);
                 var psnResponseEUTask = titleId == null ? Client.SearchAsync("en-GB", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("en-GB", titleId, 1, Config.Cts.Token);
-                var psnResponseJPTask = titleId == null ? Client.SearchAsync("ja-JP", alteredSearch, Config.Cts.Token) : Client.ResolveContentAsync("ja-JP", titleId, 1, Config.Cts.Token);
+                var psnResponseJPTask = titleId == null ? Client.SearchAsync("ja-JP", jpSearch, Config.Cts.Token) : Client.ResolveContentAsync("ja-JP", titleId, 1, Config.Cts.Token);
                 await Task.WhenAll(msgTask, psnResponseUSTask, psnResponseEUTask, psnResponseJPTask).ConfigureAwait(false);
                 var responseUS = await psnResponseUSTask.ConfigureAwait(false);
                 var responseEU = await psnResponseEUTask.ConfigureAwait(false);
