@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.Design;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -59,6 +60,8 @@ namespace CompatBot.Utils.ResultFormatters
                         generalNotes.Add("⚠ This GPU doesn't support required features for proper MSAA implementation");
                 }
             }
+            if (items["msaa"] == DisabledMark)
+                notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
 
             var vsync = items["vsync"] == EnabledMark;
             string vkPm;
@@ -139,6 +142,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckTlouSettings(serial, items, notes);
                 CheckMgs4Settings(serial, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
+                CheckGt6Settings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -646,8 +650,11 @@ namespace CompatBot.Utils.ResultFormatters
             if (!TlouIds.Contains(serial))
                 return;
 
-            if (items["write_color_buffers"] == DisabledMark)
-                notes.Add("⚠ Please enable `Write Color Buffers`");
+            if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Mega")
+                notes.Add("⚠ Please set `SPU Block Size` to `Mega` for best performance");
+
+            if (items["write_color_buffers"] == EnabledMark)
+                notes.Add("⚠ `Write Color Buffers` is not required anymore");
 
             if (items["read_color_buffers"] == DisabledMark)
                 notes.Add("⚠ Please enable `Read Color Buffers`");
@@ -701,7 +708,6 @@ namespace CompatBot.Utils.ResultFormatters
             "NPUB31488", "NPHB00671", "NPHB00662", "NPEB02013", "NPJB00435",
         };
 
-
         private static readonly HashSet<string> KnownPdf2ndPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "092c43e2bcacccfe3cdc22b0ab8062b91d4e1cf9",
@@ -728,6 +734,80 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
+        }
+
+        private static readonly HashSet<string> Gt6Ids = new HashSet<string>
+        {
+            "BCAS20519", "BCAS20520", "BCAS20521", "BCAS25018", "BCAS25019",
+            "BCES01893", "BCES01905", "BCJS37016", "BCUS98296", "BCUS99247",
+            "NPEA00502", "NPJA00113", "NPUA81049",
+        };
+
+        private static void CheckGt6Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!Gt6Ids.Contains(serial))
+                return;
+
+            if (items["game_version"] is string gameVer
+                && Version.TryParse(gameVer, out var v))
+            {
+                if (v > new Version(1, 05))
+                {
+                    var needChanges = false;
+                    if (items["write_color_buffers"] == DisabledMark)
+                    {
+                        notes.Add("⚠ Please enable `Write Color Buffers`");
+                        needChanges = true;
+                    }
+                    if (items["read_color_buffer"] == DisabledMark)
+                    {
+                        notes.Add("⚠ Please enable `Read Color Buffer`");
+                        needChanges = true;
+                    }
+                    if (items["write_depth_buffers"] == DisabledMark)
+                    {
+                        notes.Add("ℹ `Write Depth Buffers` might be required");
+                        needChanges = true;
+                    }
+                    if (items["read_depth_buffer"] == DisabledMark)
+                    {
+                        notes.Add("ℹ `Read Depth Buffer` might be required");
+                        needChanges = true;
+                    }
+                    if (needChanges)
+                        generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
+                }
+                else
+                {
+                    var needChanges = false;
+                    if (items["write_color_buffers"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Write Color Buffers` is not required");
+                        needChanges = true;
+                    }
+                    if (items["read_color_buffer"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Read Color Buffer` is not required");
+                        needChanges = true;
+                    }
+                    if (items["write_depth_buffers"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Write Depth Buffers` is not required");
+                        needChanges = true;
+                    }
+                    if (items["read_depth_buffer"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Read Depth Buffer` is not required");
+                        needChanges = true;
+                    }
+                    if (needChanges)
+                        generalNotes.Add("⚠ Game versions up to v1.05 do not require advanced settings");
+                }
+            }
+            else
+            {
+                generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
+            }
         }
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
