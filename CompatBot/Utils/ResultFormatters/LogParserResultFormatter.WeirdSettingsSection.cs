@@ -142,6 +142,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckTlouSettings(serial, items, notes);
                 CheckMgs4Settings(serial, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
+                CheckGt5Settings(serial, items, notes, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
@@ -736,6 +737,25 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
         }
 
+        private static readonly HashSet<string> Gt5Ids = new HashSet<string>
+        {
+            "BCAS20108", "BCAS20151", "BCAS20154", "BCAS20164", "BCAS20229", "BCAS20267",
+            "BCES00569",
+            "BCJS30001", "BCJS30050", "BCJS30100",
+            "BCUS98114", "BCUS98272", "BCUS98394",
+        };
+
+        private static void CheckGt5Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!Gt5Ids.Contains(serial))
+                return;
+
+            if (items["game_version"] is string gameVer
+                && Version.TryParse(gameVer, out var v)
+                && v > new Version(1, 05) && v < new Version(1, 10))
+                generalNotes.Add("ℹ Game versions between 1.05 and 1.10 can fail to boot with HDD space error");
+        }
+
         private static readonly HashSet<string> Gt6Ids = new HashSet<string>
         {
             "BCAS20519", "BCAS20520", "BCAS20521", "BCAS25018", "BCAS25019",
@@ -748,15 +768,18 @@ namespace CompatBot.Utils.ResultFormatters
             if (!Gt6Ids.Contains(serial))
                 return;
 
+            if (items["spu_loop_detection"] == EnabledMark)
+                notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
+
             if (items["game_version"] is string gameVer
                 && Version.TryParse(gameVer, out var v))
             {
                 if (v > new Version(1, 05))
                 {
                     var needChanges = false;
-                    if (items["write_color_buffers"] == DisabledMark)
+                    if (items["write_color_buffers"] == EnabledMark)
                     {
-                        notes.Add("⚠ Please enable `Write Color Buffers`");
+                        notes.Add("⚠ `Write Color Buffers` is enabled, and can cause screen flicker");
                         needChanges = true;
                     }
                     if (items["read_color_buffer"] == DisabledMark)
@@ -764,11 +787,13 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ Please enable `Read Color Buffer`");
                         needChanges = true;
                     }
+/*
                     if (items["write_depth_buffers"] == DisabledMark)
                     {
                         notes.Add("ℹ `Write Depth Buffers` might be required");
                         needChanges = true;
                     }
+*/
                     if (items["read_depth_buffer"] == DisabledMark)
                     {
                         notes.Add("ℹ `Read Depth Buffer` might be required");
