@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel.Design;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -278,8 +277,9 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
             }
 
-            if (notes.Any())
-                items["weird_settings_notes"] = "true";
+            if (items["custom_config"] != null && notes.Any())
+                generalNotes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
+
             var notesContent = new StringBuilder();
             foreach (var line in SortLines(notes))
                 notesContent.AppendLine(line);
