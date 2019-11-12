@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.Design;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -748,58 +749,64 @@ namespace CompatBot.Utils.ResultFormatters
                 return;
 
             if (items["game_version"] is string gameVer
-                && Version.TryParse(gameVer, out var v)
-                && v > new Version(1, 05))
+                && Version.TryParse(gameVer, out var v))
             {
-                var needChanges = false;
-                if (items["write_color_buffers"] == DisabledMark)
+                if (v > new Version(1, 05))
                 {
-                    notes.Add("⚠ Please enable `Write Color Buffers`");
-                    needChanges = true;
+                    var needChanges = false;
+                    if (items["write_color_buffers"] == DisabledMark)
+                    {
+                        notes.Add("⚠ Please enable `Write Color Buffers`");
+                        needChanges = true;
+                    }
+                    if (items["read_color_buffer"] == DisabledMark)
+                    {
+                        notes.Add("⚠ Please enable `Read Color Buffer`");
+                        needChanges = true;
+                    }
+                    if (items["write_depth_buffers"] == DisabledMark)
+                    {
+                        notes.Add("ℹ `Write Depth Buffers` might be required");
+                        needChanges = true;
+                    }
+                    if (items["read_depth_buffer"] == DisabledMark)
+                    {
+                        notes.Add("ℹ `Read Depth Buffer` might be required");
+                        needChanges = true;
+                    }
+                    if (needChanges)
+                        generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
                 }
-                if (items["read_color_buffer"] == DisabledMark)
+                else
                 {
-                    notes.Add("⚠ Please enable `Read Color Buffer`");
-                    needChanges = true;
+                    var needChanges = false;
+                    if (items["write_color_buffers"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Write Color Buffers` is not required");
+                        needChanges = true;
+                    }
+                    if (items["read_color_buffer"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Read Color Buffer` is not required");
+                        needChanges = true;
+                    }
+                    if (items["write_depth_buffers"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Write Depth Buffers` is not required");
+                        needChanges = true;
+                    }
+                    if (items["read_depth_buffer"] == EnabledMark)
+                    {
+                        notes.Add("⚠ `Read Depth Buffer` is not required");
+                        needChanges = true;
+                    }
+                    if (needChanges)
+                        generalNotes.Add("⚠ Game versions up to v1.05 do not require advanced settings");
                 }
-                if (items["write_depth_buffers"] == DisabledMark)
-                {
-                    notes.Add("ℹ `Write Depth Buffers` might be required");
-                    needChanges = true;
-                }
-                if (items["read_depth_buffer"] == DisabledMark)
-                {
-                    notes.Add("ℹ `Read Depth Buffer` might be required");
-                    needChanges = true;
-                }
-                if (needChanges)
-                    generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
             }
             else
             {
-                var needChanges = false;
-                if (items["write_color_buffers"] == EnabledMark)
-                {
-                    notes.Add("⚠ `Write Color Buffers` is not required");
-                    needChanges = true;
-                }
-                if (items["read_color_buffer"] == EnabledMark)
-                {
-                    notes.Add("⚠ `Read Color Buffer` is not required");
-                    needChanges = true;
-                }
-                if (items["write_depth_buffers"] == EnabledMark)
-                {
-                    notes.Add("⚠ `Write Depth Buffers` is not required");
-                    needChanges = true;
-                }
-                if (items["read_depth_buffer"] == EnabledMark)
-                {
-                    notes.Add("⚠ `Read Depth Buffer` is not required");
-                    needChanges = true;
-                }
-                if (needChanges)
-                    generalNotes.Add("⚠ Game versions up to v1.05 do not require advanced settings");
+                generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
             }
         }
 
