@@ -646,8 +646,11 @@ namespace CompatBot.Utils.ResultFormatters
             if (!TlouIds.Contains(serial))
                 return;
 
-            if (items["write_color_buffers"] == DisabledMark)
-                notes.Add("⚠ Please enable `Write Color Buffers`");
+            if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Mega")
+                notes.Add("⚠ Please set `SPU Block Size` to `Mega` for best performance");
+
+            if (items["write_color_buffers"] == EnabledMark)
+                notes.Add("⚠ `Write Color Buffers` is not required anymore");
 
             if (items["read_color_buffers"] == DisabledMark)
                 notes.Add("⚠ Please enable `Read Color Buffers`");
