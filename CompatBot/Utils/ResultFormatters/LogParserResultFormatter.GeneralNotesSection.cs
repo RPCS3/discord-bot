@@ -463,10 +463,6 @@ namespace CompatBot.Utils.ResultFormatters
             if (DesIds.Contains(serial))
                 notes.Add("ℹ If you experience infinite load screen, clear game cache via `File` → `All games` → `Remove Disk Cache`");
 
-            if (items["custom_config"] != null
-                && (notes.Any() || items["weird_settings_notes"] is string _))
-                notes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
-
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
 
