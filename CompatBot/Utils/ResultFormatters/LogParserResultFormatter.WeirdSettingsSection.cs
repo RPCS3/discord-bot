@@ -59,6 +59,8 @@ namespace CompatBot.Utils.ResultFormatters
                         generalNotes.Add("⚠ This GPU doesn't support required features for proper MSAA implementation");
                 }
             }
+            if (items["msaa"] == DisabledMark)
+                notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
 
             var vsync = items["vsync"] == EnabledMark;
             string vkPm;
