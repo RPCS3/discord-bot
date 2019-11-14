@@ -652,7 +652,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return;
 
             if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Mega")
-                notes.Add("⚠ Please set `SPU Block Size` to `Mega` for best performance");
+                notes.Add("ℹ Try setting `SPU Block Size` to `Mega` for best performance");
 
             if (items["write_color_buffers"] == EnabledMark)
                 notes.Add("⚠ `Write Color Buffers` is not required anymore");
