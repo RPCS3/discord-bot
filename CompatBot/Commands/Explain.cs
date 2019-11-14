@@ -272,7 +272,7 @@ namespace CompatBot.Commands
                 else
                     try
                     {
-                        foreach (var embed in new EmbedPager().BreakInEmbeds(new DiscordEmbedBuilder {Title = TermListTitle, Color = Config.Colors.Help}, keywords))
+                        foreach (var embed in keywords.BreakInEmbeds(new DiscordEmbedBuilder {Title = TermListTitle, Color = Config.Colors.Help}))
                             await responseChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                     }
                     catch (Exception e)

@@ -14,6 +14,7 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -155,7 +156,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly char[] PrioritySeparator = {' '};
         private static readonly string[] EmojiPriority = { "😱", "💢", "‼", "❗",  "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
         private const string EnabledMark = "[x]";
-        private const string DisabledMark = "[ ]";
+        private const string DisabledMark = "[\u00a0]";
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message, ISource source)
         {
@@ -272,17 +273,30 @@ namespace CompatBot.Utils.ResultFormatters
                 if (auto && manual)
                     items["lib_loader"] = "Auto & manual select";
                 else if (liblv2 && manual)
-                    items["lib_loader"] = "Liblv2 & manual select";
+                    items["lib_loader"] = "Liblv2.sprx & manual";
                 else if (liblv2 && strict)
-                    items["lib_loader"] = "Liblv2 & strict select";
+                    items["lib_loader"] = "Liblv2.sprx & strict";
                 else if (auto)
                     items["lib_loader"] = "Auto";
                 else if (manual)
                     items["lib_loader"] = "Manual selection";
                 else
-                    items["lib_loader"] = "Load liblv2.sprx only";
+                    items["lib_loader"] = "Liblv2.sprx only";
 
             }
+
+            string reformatDecoder(string dec)
+            {
+                var match = Regex.Match(dec, @"(?<name>[^(]+)(\((?<type>.+)\))?", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+                var n = match.Groups["name"].Value.TrimEnd();
+                var t = match.Groups["type"].Value;
+                if (string.IsNullOrEmpty(t))
+                    return n;
+                return $"{n}/{t}";
+            }
+
+            items["ppu_decoder"] = reformatDecoder(items["ppu_decoder"]);
+            items["spu_decoder"] = reformatDecoder(items["spu_decoder"]);
             if (items["win_path"] != null)
                 items["os_type"] = "Windows";
             else if (items["lin_path"] != null)
@@ -320,7 +334,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (!string.IsNullOrEmpty(notesContent))
             {
-                var fields = new EmbedPager().BreakInFieldContent(notesContent.Split(Environment.NewLine), 100).ToList();
+                var fields = EmbedPager.BreakInFieldContent(notesContent.Split(Environment.NewLine), 100).ToList();
                 if (fields.Count > 1)
                     for (var idx = 0; idx < fields.Count; idx++)
                         builder.AddField($"{sectionName} #{idx + 1} of {fields.Count}", fields[idx].content);
