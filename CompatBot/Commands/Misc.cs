@@ -444,5 +444,47 @@ namespace CompatBot.Commands
             var result = strA.GetFuzzyCoefficientCached(strB);
             return ctx.RespondAsync($"Similarity score is {result:0.######}");
         }
+#if DEBUG
+        [Command("whitespacetest"), Aliases("wst", "wstest")]
+        [Description("Testing discord embeds breakage for whitespaces")]
+        public async Task WhitespaceTest(CommandContext ctx)
+        {
+            var checkMark = "[\u00a0]";
+            const int width = 20;
+            var result = new StringBuilder($"` 1. Dots:{checkMark.PadLeft(width, '.')}`").AppendLine()
+                .AppendLine($"` 2. None:{checkMark,width}`");
+            var ln = 3;
+            foreach (var c in StringUtils.SpaceCharacters)
+                result.AppendLine($"`{ln++,2}. {(int)c:x4}:{checkMark,width}`");
+            void addRandomStuff(DiscordEmbedBuilder emb)
+            {
+                var txt = "😾 lasjdf wqoieyr osdf `Vreoh Sdab` wohe `270`\n" +
+                          "🤔 salfhiosfhsero hskfh shufwei oufhwehw e wkihrwe h\n" +
+                          "ℹ sakfjas f hs `ASfhewighehw safds` asfw\n" +
+                          "🔮 ¯\\\\\\_(ツ)\\_/¯";
+
+                emb.AddField("Random section", txt, false);
+            }
+            var embed = new DiscordEmbedBuilder()
+                .WithTitle("Whitespace embed test")
+                .WithDescription("In a perfect world all these lines would look the same, with perfectly formed columns");
+
+            var lines = result.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            var embedList = lines.BreakInEmbeds(embed, lines.Length / 2 + lines.Length % 2, "Normal");
+            foreach (var _ in embedList)
+            {
+                //drain the enumerable
+            }
+            embed.AddField("-", "-", false);
+
+            lines = result.ToString().Replace(' ', StringUtils.Nbsp).Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            embedList = lines.BreakInEmbeds(embed, lines.Length / 2 + lines.Length % 2, "Non-breakable spaces");
+            foreach (var _ in embedList)
+            {
+                //drain the enumerable
+            }
+            await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+        }
+#endif
     }
 }

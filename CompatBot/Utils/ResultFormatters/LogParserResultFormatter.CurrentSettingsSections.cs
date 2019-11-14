@@ -111,23 +111,24 @@ namespace CompatBot.Utils.ResultFormatters
             builder.AddField("Build Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
         }
 
+        private const int ColumnWidth = 30;
+
         private static (string name, List<string> lines) BuildCpuSection(NameValueCollection items)
         {
             if (string.IsNullOrEmpty(items["ppu_decoder"]))
                 return (null, null);
-
             var lines = new List<string>
             {
-                $"PPU Decoder: {items["ppu_decoder"],20}",
-                $"SPU Decoder: {items["spu_decoder"],20}",
-                $"SPU Lower Thread Priority: {items["spu_lower_thread_priority"],6}",
-                $"SPU Loop Detection: {items["spu_loop_detection"],13}",
-                $"Thread Scheduler: {items["thread_scheduler"],15}",
-                $"SPU Threads: {items["spu_threads"],20}",
-                $"SPU Block Size: {items["spu_block_size"] ?? "N/A",17}",
-                $"Accurate xfloat: {items["accurate_xfloat"] ?? "N/A",16}",
-                $"Force CPU Blit: {items["cpu_blit"] ?? "N/A",17}",
-                $"Lib Loader: {items["lib_loader"],21}",
+                $"PPU Decoder:{items["ppu_decoder"],ColumnWidth-11}",
+                $"SPU Decoder:{items["spu_decoder"],ColumnWidth-11}",
+                $"SPU Lower Thread Priority:{items["spu_lower_thread_priority"],ColumnWidth-25}",
+                $"SPU Loop Detection:{items["spu_loop_detection"],ColumnWidth-18}",
+                $"Thread Scheduler:{items["thread_scheduler"],ColumnWidth-16}",
+                $"SPU Threads:{items["spu_threads"],ColumnWidth-11}",
+                $"SPU Block Size:{items["spu_block_size"] ?? "N/A",ColumnWidth-14}",
+                $"Accurate xfloat:{items["accurate_xfloat"] ?? "N/A",ColumnWidth-15}",
+                $"Force CPU Blit:{items["cpu_blit"] ?? "N/A",ColumnWidth-14}",
+                $"Lib Mode:{items["lib_loader"],ColumnWidth-8}",
             };
             return ("CPU Settings", lines);
         }
@@ -139,16 +140,16 @@ namespace CompatBot.Utils.ResultFormatters
 
             var lines = new List<string>
             {
-                $"Renderer: {items["renderer"],23}",
-                $"Aspect ratio: {items["aspect_ratio"],19}",
-                $"Resolution: {items["resolution"],21}",
-                $"Resolution Scale: {items["resolution_scale"] ?? "N/A",15}",
-                $"Resolution Scale Threshold: {items["texture_scale_threshold"] ?? "N/A",5}",
-                $"Write Color Buffers: {items["write_color_buffers"],12}",
-                $"Anti-Aliasing: {items["msaa"] ?? "N/A",18}",
-                $"Anisotropic Filter: {items["af_override"] ?? "N/A",13}",
-                $"Frame Limit: {items["frame_limit"],20}",
-                $"VSync: {items["vsync"] ?? "N/A",26}",
+                $"Renderer:{items["renderer"],ColumnWidth-8}",
+                $"Aspect ratio:{items["aspect_ratio"],ColumnWidth-12}",
+                $"Resolution:{items["resolution"],ColumnWidth-10}",
+                $"Resolution Scale:{items["resolution_scale"] ?? "N/A",ColumnWidth-16}",
+                $"Res Scale Threshold:{items["texture_scale_threshold"] ?? "N/A",ColumnWidth-19}",
+                $"Write Color Buffers:{items["write_color_buffers"],ColumnWidth-19}",
+                $"Anti-Aliasing:{items["msaa"] ?? "N/A",ColumnWidth-13}",
+                $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
+                $"Frame Limit:{items["frame_limit"],ColumnWidth-11}",
+                $"VSync:{items["vsync"] ?? "N/A",ColumnWidth-5}",
             };
             return ("GPU Settings", lines);
         }
