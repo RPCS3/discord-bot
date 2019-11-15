@@ -150,7 +150,7 @@ Example usage:
             public Task Clear(CommandContext ctx)
             {
                 lastUpdateInfo = null;
-                return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
+                return CheckForRpcs3Updates(ctx.Client, null);
             }
 
             [Command("restore"), RequiresBotModRole]
@@ -175,28 +175,29 @@ Example usage:
 
             public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null, DiscordMessage emptyBotMsg = null)
             {
+                var updateAnnouncement = emptyBotMsg is null;
                 var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
                 if (info?.ReturnCode != 1 && sinceCommit != null)
                     info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
 
-                if (emptyBotMsg != null && info?.CurrentBuild != null)
+                if (!updateAnnouncement && info?.CurrentBuild != null)
                     info.LatestBuild = info.CurrentBuild;
-                var embed = await info.AsEmbedAsync().ConfigureAwait(false);
+                var embed = await info.AsEmbedAsync(updateAnnouncement).ConfigureAwait(false);
                 if (info == null || embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                 {
-                    if (emptyBotMsg != null)
+                    if (!updateAnnouncement)
                     {
                         Config.Log.Debug($"Failed to get update info for commit {sinceCommit}: {JsonConvert.SerializeObject(info)}");
                         return false;
                     }
 
-                    embed = await CachedUpdateInfo.AsEmbedAsync().ConfigureAwait(false);
+                    embed = await CachedUpdateInfo.AsEmbedAsync(updateAnnouncement).ConfigureAwait(false);
                 }
-                else if (emptyBotMsg == null)
+                else if (updateAnnouncement)
                     CachedUpdateInfo = info;
                 if (channel != null)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                else if (emptyBotMsg != null)
+                else if (!updateAnnouncement)
                 {
                     if (embed.Title == "Error")
                         return false;

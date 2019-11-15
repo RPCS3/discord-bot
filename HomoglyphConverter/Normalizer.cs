@@ -25,7 +25,7 @@ namespace HomoglyphConverter
         };
 
         // as per http://www.unicode.org/reports/tr39/#Confusable_Detection
-        public static string ToSkeletonString(this string input)
+        private static string ToSkeletonString(this string input)
         {
             if (string.IsNullOrEmpty(input))
                 return input;

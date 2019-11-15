@@ -378,7 +378,15 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             if (items["game_version"] is string gameVer)
-                notes.Add("ℹ Game version: v" + gameVer);
+            {
+                var msg = "ℹ Game version: v" + gameVer;
+                if (items["game_update_version"] is string gameUpVer
+                    && Version.TryParse(gameVer, out var gv)
+                    && Version.TryParse(gameUpVer, out var guv)
+                    && guv > gv)
+                    msg += $" (update available: v{gameUpVer})";
+                notes.Add(msg);
+            }
             if (items["ppu_hash"] is string ppuHashes
                 && ppuHashes.Split(Environment.NewLine, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string firstPpuHash
                 && !string.IsNullOrEmpty(firstPpuHash))

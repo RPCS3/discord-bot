@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.POCOs;
+using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
 using DSharpPlus.Entities;
 using GithubClient.POCOs;
@@ -15,7 +16,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
 
-        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordEmbedBuilder builder = null)
+        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, bool includePrBody = false, DiscordEmbedBuilder builder = null)
         {
             if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download) == null)
                 return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
@@ -44,6 +45,11 @@ namespace CompatBot.Utils.ResultFormatters
                     currentPrInfo = await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
             }
             var desc = latestPrInfo?.Title;
+            if (includePrBody
+                && latestPrInfo?.Body is string prInfoBody
+                && !string.IsNullOrEmpty(prInfoBody))
+                desc = $"**{desc.TrimEnd()}**\n\n{prInfoBody}";
+            desc = desc?.Trim();
             if (!string.IsNullOrEmpty(desc)
                 && GithubLinksHandler.IssueMention.Matches(desc) is MatchCollection matches
                 && matches.Any())
@@ -62,6 +68,7 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
             }
+            desc = desc.Trim(EmbedPager.MaxDescriptionLength);
             builder ??= new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
             var currentCommit = currentPrInfo?.MergeCommitSha;
             var latestCommit = latestPrInfo?.MergeCommitSha;
