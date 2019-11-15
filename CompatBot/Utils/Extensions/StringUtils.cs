@@ -317,6 +317,13 @@ namespace CompatBot.Utils
             return match.Coefficient;
         }
 
+        internal static bool EqualsIgnoringDiacritics(this string strA, string strB)
+        {
+            var a = strA.ToCanonicalForm();
+            var b = strB.ToCanonicalForm();
+            return string.Compare(a, b, CultureInfo.InvariantCulture, CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase) == 0;
+        }
+
         private static double GetScoreWithAcronym(this string strA, string strB)
         {
             var fullMatch = strA.DiceCoefficient(strB);

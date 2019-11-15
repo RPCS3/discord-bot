@@ -1,4 +1,7 @@
-﻿using CompatBot.Utils;
+﻿using System;
+using System.Globalization;
+using CompatBot.Utils;
+using HomoglyphConverter;
 using NUnit.Framework;
 
 namespace Tests
@@ -22,6 +25,13 @@ namespace Tests
             Assert.That("abc".TrimVisible(100), Is.EqualTo("abc"));
             Assert.That("abc".TrimVisible(3), Is.EqualTo("abc"));
             Assert.That("abc".TrimVisible(2), Is.EqualTo("a…"));
+        }
+
+        [TestCase("cockatrice", "сockаtrice")]
+        [TestCase("cockatrice", "çöćķåťřĩĉȅ")]
+        public void HomoglyphDetectionTest(string strA, string strB)
+        {
+            Assert.That(strA.EqualsIgnoringDiacritics(strB), Is.True);
         }
     }
 }

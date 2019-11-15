@@ -136,7 +136,7 @@ namespace CompatBot.EventHandlers
                 {
                     UsernameLock.Release(1);
                 }
-            result = Normalizer.ToCanonicalForm(name);
+            result = name.ToCanonicalForm();
             if (UsernameLock.Wait(0))
                 try
                 {
