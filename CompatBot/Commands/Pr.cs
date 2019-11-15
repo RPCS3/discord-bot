@@ -11,7 +11,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using GithubClient.POCOs;
 
 namespace CompatBot.Commands
 {
@@ -133,7 +132,7 @@ namespace CompatBot.Commands
                 if (updateInfo != null)
                 {
                     if (DateTime.TryParse(updateInfo.LatestBuild?.Datetime, out var masterBuildTime) && masterBuildTime.Ticks >= mergeTime.Ticks)
-                        embed = await updateInfo.AsEmbedAsync(embed).ConfigureAwait(false);
+                        embed = await updateInfo.AsEmbedAsync(false, embed).ConfigureAwait(false);
                     else
                     {
                         var waitTime = TimeSpan.FromMinutes(5);
