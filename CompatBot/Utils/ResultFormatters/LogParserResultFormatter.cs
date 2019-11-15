@@ -14,7 +14,7 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+using PsnClient.POCOs;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -22,6 +22,7 @@ namespace CompatBot.Utils.ResultFormatters
     {
         private static readonly Client compatClient = new Client();
         private static readonly IrdClient irdClient = new IrdClient();
+        private static readonly PsnClient.Client psnClient = new PsnClient.Client();
 
         private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
@@ -173,7 +174,16 @@ namespace CompatBot.Utils.ResultFormatters
                     collection["serial"] = psnSerial;
                     collection["game_category"] = "HG";
                 }
+                var titleUpdateInfoTask = psnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
                 var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true).ConfigureAwait(false);
+                try
+                {
+                    var titleUpdateInfo = await titleUpdateInfoTask.ConfigureAwait(false);
+                    if (titleUpdateInfo?.Tag?.Packages?.LastOrDefault()?.Version is string tuVersion)
+                        collection["game_update_version"] = tuVersion;
+
+                }
+                catch {}
                 builder = new DiscordEmbedBuilder(gameInfo) {ThumbnailUrl = null}; // or this will fuck up all formatting
                 collection["embed_title"] = builder.Title ?? "";
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
@@ -318,6 +328,8 @@ namespace CompatBot.Utils.ResultFormatters
                 items["game_version"] = discPkgVer;
             if (items["game_version"] is string gameVer && gameVer.StartsWith("0"))
                 items["game_version"] = gameVer[1..];
+            if (items["game_update_version"] is string gameUpVer && gameUpVer.StartsWith("0"))
+                items["game_update_version"] = gameUpVer[1..];
 
             foreach (var key in items.AllKeys)
             {
@@ -334,7 +346,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (!string.IsNullOrEmpty(notesContent))
             {
-                var fields = EmbedPager.BreakInFieldContent(notesContent.Split(Environment.NewLine), 100).ToList();
+                var fields = notesContent.Split(Environment.NewLine).BreakInFieldContent(100).ToList();
                 if (fields.Count > 1)
                     for (var idx = 0; idx < fields.Count; idx++)
                         builder.AddField($"{sectionName} #{idx + 1} of {fields.Count}", fields[idx].content);
