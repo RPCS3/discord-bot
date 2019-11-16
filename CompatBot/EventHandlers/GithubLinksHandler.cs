@@ -13,7 +13,7 @@ namespace CompatBot.EventHandlers
     internal static class GithubLinksHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        public static readonly Regex IssueMention = new Regex(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|(\W|^)#(?<also_number>\d{4}))\b", DefaultOptions);
+        public static readonly Regex IssueMention = new Regex(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|(?=\W|^)#(?<also_number>\d{4}))\b", DefaultOptions);
         private static readonly Regex IssueLink = new Regex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
         private static readonly GithubClient.Client Client = new GithubClient.Client();
 
