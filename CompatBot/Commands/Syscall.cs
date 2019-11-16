@@ -48,7 +48,7 @@ namespace CompatBot.Commands
                         .Distinct()
                         .ToList();
                     var groupedList = productInfoList
-                        .GroupBy(m => m.Name, m => m.ProductCode)
+                        .GroupBy(m => m.Name, m => m.ProductCode, StringComparer.InvariantCultureIgnoreCase)
                         .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
                         .ToList();
                     if (groupedList.Any())
