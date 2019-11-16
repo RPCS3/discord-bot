@@ -29,11 +29,17 @@ namespace CompatBot.Database.Providers
                         {
                             var product = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCodeMap.Key)
                                           ?? db.Thumbnail.Add(new Thumbnail {ProductCode = productCodeMap.Key}).Entity;
+                            if (product.Id == 0)
+                                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+
                             foreach (var moduleMap in productCodeMap.Value)
                             foreach (var func in moduleMap.Value)
                             {
                                 var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Module == moduleMap.Key.ToUtf8() && sci.Function == func.ToUtf8())
                                               ?? db.SyscallInfo.Add(new SyscallInfo {Module = moduleMap.Key.ToUtf8(), Function = func.ToUtf8() }).Entity;
+                                if (syscall.Id == 0)
+                                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+
                                 if (!db.SyscallToProductMap.Any(m => m.ProductId == product.Id && m.SyscallInfoId == syscall.Id))
                                     db.SyscallToProductMap.Add(new SyscallToProductMap {ProductId = product.Id, SyscallInfoId = syscall.Id});
                             }
