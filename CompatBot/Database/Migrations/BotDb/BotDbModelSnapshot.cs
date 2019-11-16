@@ -139,27 +139,29 @@ namespace CompatBot.Database.Migrations
                 });
 
             modelBuilder.Entity("CompatBot.Database.ForcedNickname", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnName("id");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnName("id");
 
-                    b.Property<string>("Nickname")
-                        .IsRequired()
-                        .HasColumnName("nickname");
+                b.Property<ulong>("GuildId")
+                    .HasColumnName("guild_id");
 
-                    b.Property<ulong>("UserId")
-                        .HasColumnName("user_id");
+                b.Property<string>("Nickname")
+                    .HasColumnName("nickname");
 
-                    b.HasKey("Id")
-                        .HasName("id");
+                b.Property<ulong>("UserId")
+                    .HasColumnName("user_id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasName("blacklisted_user_user_id");
+                b.HasKey("Id")
+                    .HasName("id");
 
-                    b.ToTable("forced_nicknames");
-                });
+                b.HasIndex("UserId", "GuildId")
+                    .IsUnique()
+                    .HasName("forced_nickname_user_id_guild_id");
+
+                b.ToTable("forced_nicknames");
+            });
 
             modelBuilder.Entity("CompatBot.Database.Kot", b =>
                 {

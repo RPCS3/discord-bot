@@ -190,6 +190,11 @@ namespace CompatBot
                     }
                     Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
                 };
+                client.GuildDownloadCompleted += async gdcArgs =>
+                {
+                    UsernameValidationMonitor.SetupGuilds(gdcArgs.Guilds.Select(x => x.Value).ToList());
+                    await Task.CompletedTask;
+                };
                 client.GuildUnavailable += guArgs =>
                 {
                     Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
@@ -310,13 +315,14 @@ namespace CompatBot
                     Config.Log.Debug("Args: " + string.Join(" ", pArgs));
                 }
 
-                Config.Log.Debug("Running RPCS3 update check thread");
-                backgroundTasks = Task.WhenAll(
-                    backgroundTasks,
-                    NewBuildsMonitor.MonitorAsync(client),
-                    Watchdog.Watch(client),
-                    InviteWhitelistProvider.CleanupAsync(client)
-                );
+                    Config.Log.Debug("Running RPCS3 update check thread");
+                    backgroundTasks = Task.WhenAll(
+                        backgroundTasks,
+                        NewBuildsMonitor.MonitorAsync(client),
+                        Watchdog.Watch(client),
+                        InviteWhitelistProvider.CleanupAsync(client),
+                        UsernameValidationMonitor.MonitorAsync()
+                    );
 
                 while (!Config.Cts.IsCancellationRequested)
                 {

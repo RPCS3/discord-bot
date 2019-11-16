@@ -54,7 +54,7 @@ namespace CompatBot
         public static int BuildNumberDifferenceForOutdatedBuilds => config.GetValue(nameof(BuildNumberDifferenceForOutdatedBuilds), 10);
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
         public static int MaxSyscallResultLines => config.GetValue(nameof(MaxSyscallResultLines), 13);
-
+        public static int ForcedNicknamesRecheckTimeInSeconds => config.GetValue(nameof(ForcedNicknamesRecheckTimeInSeconds), 3 * 60 * 60);
         public static string Token => config.GetValue(nameof(Token), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
