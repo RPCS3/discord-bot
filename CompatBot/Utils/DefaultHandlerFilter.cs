@@ -7,6 +7,9 @@ namespace CompatBot.Utils
     {
         internal static bool IsFluff(DiscordMessage message)
         {
+            if (message == null)
+                return true;
+
             if (message.Author.IsBotSafeCheck())
                 return true;
 

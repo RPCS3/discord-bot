@@ -212,6 +212,9 @@ namespace CompatBot.Utils.ResultFormatters
                 var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.InvariantCultureIgnoreCase));
                 if (!string.IsNullOrEmpty(syncFolder))
                     notes.Add($"⚠ RPCS3 installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
+                var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
+                if (!string.IsNullOrEmpty(rar))
+                    notes.Add($"❌ RPCS3 is launched from WinRAR; please extract all files instead");
             }
 
             if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)

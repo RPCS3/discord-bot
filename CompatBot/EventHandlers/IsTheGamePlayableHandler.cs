@@ -31,7 +31,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {
-            if (DefaultHandlerFilter.IsFluff(args.Message))
+            if (DefaultHandlerFilter.IsFluff(args?.Message))
                 return;
 
 #if !DEBUG
