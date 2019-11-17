@@ -297,6 +297,9 @@ namespace CompatBot.Utils.ResultFormatters
 
             string reformatDecoder(string dec)
             {
+                if (string.IsNullOrEmpty(dec))
+                    return dec;
+
                 var match = Regex.Match(dec, @"(?<name>[^(]+)(\((?<type>.+)\))?", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
                 var n = match.Groups["name"].Value.TrimEnd();
                 var t = match.Groups["type"].Value;
