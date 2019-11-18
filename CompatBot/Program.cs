@@ -68,6 +68,26 @@ namespace CompatBot
                     return;
                 }
 
+                if (SandboxDetector.Detect() == SandboxType.Docker)
+                {
+                    Config.Log.Info("Checking for updates...");
+                    try
+                    {
+                        var (updated, stdout) = await Sudo.Bot.UpdateAsync().ConfigureAwait(false);
+                        if (!string.IsNullOrEmpty(stdout) && updated)
+                            Config.Log.Debug(stdout);
+                        if (updated)
+                        {
+                            Sudo.Bot.RestartNoSaving(0);
+                            return;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Error(e, "Failed to check for updates");
+                    }
+                }
+
                 using (var db = new BotDb())
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
