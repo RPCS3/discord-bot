@@ -59,27 +59,12 @@ namespace CompatBot.Commands
                         msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
                         await StatsStorage.SaveAsync(true).ConfigureAwait(false);
                         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for updates...").ConfigureAwait(false);
-                        using (var git = new Process
-                        {
-                            StartInfo = new ProcessStartInfo("git", "pull")
-                            {
-                                CreateNoWindow = true,
-                                UseShellExecute = false,
-                                RedirectStandardOutput = true,
-                                StandardOutputEncoding = Encoding.UTF8,
-                            },
-                        })
-                        {
-                            git.Start();
-                            var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-                            git.WaitForExit();
-                            if (!string.IsNullOrEmpty(stdout))
-                            {
-                                await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
-                                if (stdout.Contains("Already up to date", StringComparison.InvariantCultureIgnoreCase))
-                                    return;
-                            }
-                        }
+                        var (updated, stdout) = await UpdateAsync().ConfigureAwait(false);
+                        if (!string.IsNullOrEmpty(stdout))
+                            await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
+                        if (!updated)
+                            return;
+
                         msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id);
                     }
@@ -174,35 +159,59 @@ namespace CompatBot.Commands
                 }
             }
 
+            internal static async Task<(bool updated, string stdout)> UpdateAsync()
+            {
+                using var git = new Process
+                {
+                    StartInfo = new ProcessStartInfo("git", "pull")
+                    {
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        StandardOutputEncoding = Encoding.UTF8,
+                    },
+                };
+                git.Start();
+                var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
+                git.WaitForExit();
+                if (string.IsNullOrEmpty(stdout))
+                    return (false, stdout);
+
+                if (stdout.Contains("Already up to date", StringComparison.InvariantCultureIgnoreCase))
+                    return (false, stdout);
+
+                return (true, stdout);
+            }
+
             internal static void Restart(ulong channelId)
             {
                 if (SandboxDetector.Detect() == SandboxType.Docker)
                 {
                     Config.Log.Info($"Saving channelId {channelId} into settings...");
-                    using (var db = new BotDb())
+                    using var db = new BotDb();
+                    var ch = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
+                    if (ch is null)
                     {
-                        var ch = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
-                        if (ch is null)
-                        {
-                            ch = new BotState {Key = "bot-restart-channel", Value = channelId.ToString()};
-                            db.BotState.Add(ch);
-                        }
-                        else
-                            ch.Value = channelId.ToString();
-                        db.SaveChanges();
+                        ch = new BotState {Key = "bot-restart-channel", Value = channelId.ToString()};
+                        db.BotState.Add(ch);
                     }
+                    else
+                        ch.Value = channelId.ToString();
+                    db.SaveChanges();
                 }
+                RestartNoSaving(channelId);
+            }
+
+            internal static void RestartNoSaving(ulong channelId)
+            {
                 Config.Log.Info("Restarting...");
-                using (var self = new Process
+                using var self = new Process
                 {
                     StartInfo = new ProcessStartInfo("dotnet", $"run -c Release -- {channelId}")
-                })
-                {
-                    self.Start();
-                    Config.inMemorySettings["shutdown"] = "true";
-                    Config.Cts.Cancel();
-                    return;
-                }
+                };
+                self.Start();
+                Config.inMemorySettings["shutdown"] = "true";
+                Config.Cts.Cancel();
             }
         }
     }
