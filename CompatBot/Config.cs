@@ -118,7 +118,7 @@ namespace CompatBot
             public static readonly DiscordEmoji PleaseWait = DiscordEmoji.FromUnicode("👀");
             public static readonly DiscordEmoji PiracyCheck = DiscordEmoji.FromUnicode("🔨");
             public static readonly DiscordEmoji Shutup = DiscordEmoji.FromUnicode("🔇");
-            public static readonly DiscordEmoji BadUpdate = DiscordEmoji.FromUnicode("⚠");
+            public static readonly DiscordEmoji BadUpdate = DiscordEmoji.FromUnicode("⚠\ufe0f");
         }
 
         public static class Moderation
