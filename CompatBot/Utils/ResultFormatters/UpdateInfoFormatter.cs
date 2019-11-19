@@ -58,13 +58,19 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     if (m.Groups["issue_mention"]?.Value is string str && !string.IsNullOrEmpty(str))
                     {
+                        var name = str;
                         var num = m.Groups["number"].Value;
                         if (string.IsNullOrEmpty(num))
                             num = m.Groups["also_number"].Value;
                         if (string.IsNullOrEmpty(num))
+                        {
+                            num = m.Groups["another_number"].Value;
+                            name = "#" + num;
+                        }
+                        if (string.IsNullOrEmpty(num))
                             continue;
 
-                        desc = desc.Replace(str, $"[{str}](https://github.com/RPCS3/rpcs3/issues/{num})");
+                        desc = desc.Replace(str, $"[{name}](https://github.com/RPCS3/rpcs3/issues/{num})");
                     }
                 }
             }
