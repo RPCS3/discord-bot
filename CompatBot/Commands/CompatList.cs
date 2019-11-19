@@ -175,17 +175,18 @@ Example usage:
 
             public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null, DiscordMessage emptyBotMsg = null)
             {
-                var updateAnnouncement = emptyBotMsg is null;
+                var updateAnnouncement = channel is null;
+                var updateAnnouncementRestore = emptyBotMsg != null;
                 var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
                 if (info?.ReturnCode != 1 && sinceCommit != null)
                     info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
 
-                if (!updateAnnouncement && info?.CurrentBuild != null)
+                if (updateAnnouncementRestore && info?.CurrentBuild != null)
                     info.LatestBuild = info.CurrentBuild;
                 var embed = await info.AsEmbedAsync(updateAnnouncement).ConfigureAwait(false);
                 if (info == null || embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                 {
-                    if (!updateAnnouncement)
+                    if (updateAnnouncementRestore)
                     {
                         Config.Log.Debug($"Failed to get update info for commit {sinceCommit}: {JsonConvert.SerializeObject(info)}");
                         return false;
@@ -193,11 +194,11 @@ Example usage:
 
                     embed = await CachedUpdateInfo.AsEmbedAsync(updateAnnouncement).ConfigureAwait(false);
                 }
-                else if (updateAnnouncement)
+                else if (!updateAnnouncementRestore)
                     CachedUpdateInfo = info;
-                if (channel != null)
+                if (!updateAnnouncement)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                else if (!updateAnnouncement)
+                else if (updateAnnouncementRestore)
                 {
                     if (embed.Title == "Error")
                         return false;
@@ -224,20 +225,23 @@ Example usage:
                             return false;
                         }
 
+                        if (!updateAnnouncement)
+                            embed = await CachedUpdateInfo.AsEmbedAsync(true).ConfigureAwait(false);
+                        if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
+                            return false;
+
                         embed.Title = $"[New Update] {embed.Title}";
                         await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                         lastUpdateInfo = updateLinks;
-                        using (var db = new BotDb())
-                        {
-                            var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
-                            if (currentState == null)
-                                db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = updateLinks});
-                            else
-                                currentState.Value = updateLinks;
-                            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-                            NewBuildsMonitor.Reset();
-                            return true;
-                        }
+                        using var db = new BotDb();
+                        var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
+                        if (currentState == null)
+                            db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = updateLinks});
+                        else
+                            currentState.Value = updateLinks;
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                        NewBuildsMonitor.Reset();
+                        return true;
                     }
                     catch (Exception e)
                     {
