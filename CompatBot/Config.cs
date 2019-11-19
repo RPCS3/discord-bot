@@ -53,6 +53,7 @@ namespace CompatBot
         public static int MinimumBufferSize => config.GetValue(nameof(MinimumBufferSize), 512);
         public static int BuildNumberDifferenceForOutdatedBuilds => config.GetValue(nameof(BuildNumberDifferenceForOutdatedBuilds), 10);
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
+        public static int MaxSyscallResultLines => config.GetValue(nameof(MaxSyscallResultLines), 13);
 
         public static string Token => config.GetValue(nameof(Token), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
