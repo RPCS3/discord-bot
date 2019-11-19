@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -53,10 +54,31 @@ namespace CompatBot.Commands
                         .ToList();
                     if (groupedList.Any())
                     {
-                        var result = new StringBuilder($"List of games using `{search}`:```").AppendLine();
+                        var bigList = groupedList.Count >= Config.MaxSyscallResultLines;
+
+                        var result = new StringBuilder();
+                        var fullList = bigList ? new StringBuilder() : null;
+                        result.AppendLine($"List of games using `{search}`:```");
+                        var c = 0;
                         foreach (var gi in groupedList)
-                            result.AppendLine($"{gi.Key.Trim(40)} [{string.Join(", ", gi.Distinct().OrderBy(pc => pc).AsEnumerable())}]");
+                        {
+                            var productIds = string.Join(", ", gi.Distinct().OrderBy(pc => pc).AsEnumerable());
+                            if (c < Config.MaxSyscallResultLines)
+                                result.AppendLine($"{gi.Key.Trim(60)} [{productIds}]");
+                            if (bigList)
+                                fullList.AppendLine($"{gi.Key} [{productIds}]");
+                            c++;
+                        }
                         await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                        if (bigList)
+                        {
+                            using var memoryStream = new MemoryStream((int)(fullList.Capacity*1.25));
+                            using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
+                            await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
+                            await streamWriter.FlushAsync().ConfigureAwait(false);
+                            memoryStream.Seek(0, SeekOrigin.Begin);
+                            await ctx.RespondWithFileAsync($"{search}.txt", memoryStream, $"See attached file for full list of {groupedList.Count} entries").ConfigureAwait(false);
+                        }
                     }
                     else
                         await ctx.RespondAsync($"No games found that use `{search}`").ConfigureAwait(false);
