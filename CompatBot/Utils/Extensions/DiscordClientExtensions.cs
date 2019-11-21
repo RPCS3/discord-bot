@@ -156,7 +156,7 @@ namespace CompatBot.Utils
             return GetEmoji(client, emojiName, fallbackEmoji == null ? null : DiscordEmoji.FromUnicode(fallbackEmoji));
         }
 
-        public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, DiscordEmoji fallbackEmoji = null)
+        public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, DiscordEmoji fallbackEmoji)
         {
             try
             {

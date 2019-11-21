@@ -183,7 +183,7 @@ Example usage:
 
                 if (updateAnnouncementRestore && info?.CurrentBuild != null)
                     info.LatestBuild = info.CurrentBuild;
-                var embed = await info.AsEmbedAsync(updateAnnouncement).ConfigureAwait(false);
+                var embed = await info.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
                 if (info == null || embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                 {
                     if (updateAnnouncementRestore)
@@ -192,7 +192,7 @@ Example usage:
                         return false;
                     }
 
-                    embed = await CachedUpdateInfo.AsEmbedAsync(updateAnnouncement).ConfigureAwait(false);
+                    embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
                 }
                 else if (!updateAnnouncementRestore)
                     CachedUpdateInfo = info;
@@ -226,7 +226,7 @@ Example usage:
                         }
 
                         if (!updateAnnouncement)
-                            embed = await CachedUpdateInfo.AsEmbedAsync(true).ConfigureAwait(false);
+                            embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
                         if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                             return false;
 
