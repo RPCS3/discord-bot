@@ -408,6 +408,12 @@ namespace CompatBot.Utils.ResultFormatters
                         }
                     }
                 }
+
+                if (serial == "BLUS31405"
+                    && items["compat_database_path"] is string compatDbPath
+                    && compatDbPath.Contains("JoJo ASB Emulator v.04")
+                    && !string.IsNullOrEmpty(items["rap_file"]))
+                    generalNotes.Add("🤔 Very interesting version of the game you got there");
             }
         }
 

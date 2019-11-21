@@ -164,7 +164,7 @@ namespace CompatBot.Commands
                 }
                 await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
                 if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
-                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Created new event schedule entry")).ConfigureAwait(false);
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Created new event schedule entry #" + evt.Id)).ConfigureAwait(false);
                 else
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Added a new schedule entry").ConfigureAwait(false);
             }
@@ -222,7 +222,7 @@ namespace CompatBot.Commands
                 {
                     await db.SaveChangesAsync().ConfigureAwait(false);
                     if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
-                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Updated event schedule entry")).ConfigureAwait(false);
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Updated event schedule entry #" + evt.Id)).ConfigureAwait(false);
                     else
                         await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
                 }
