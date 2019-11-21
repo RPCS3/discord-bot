@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using GithubClient.POCOs;
 
@@ -16,7 +17,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
 
-        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, bool includePrBody = false, DiscordEmbedBuilder builder = null)
+        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder builder = null)
         {
             if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download) == null)
                 return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
@@ -36,7 +37,11 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     latestPrInfo = await githubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
                     url = latestPrInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + latestPr;
-                    prDesc = $"PR #{latestPr} by {latestPrInfo?.User?.Login ?? "???"}";
+                    var userName = latestPrInfo?.User?.Login ?? "???";
+                    var emoji = GetUserNameEmoji(client, userName);
+                    if (emoji != null)
+                        userName += " " + emoji;
+                    prDesc = $"PR #{latestPr} by {userName}";
                 }
                 else
                     prDesc = "PR #???";
@@ -125,6 +130,33 @@ namespace CompatBot.Utils.ResultFormatters
 
             return $"[⏬ {text}]({link}){"   ".FixSpaces()}";
         }
+
+        private static DiscordEmoji GetUserNameEmoji(DiscordClient client, string githubLogin)
+            => client.GetEmoji(githubLogin switch
+            {
+#if DEBUG
+                _ => client.Guilds.Values.First().Emojis.Values.ToList().RandomElement(githubLogin.GetHashCode()).GetDiscordName(),
+#else
+                "Nekotekina" => ":nekotekina:",
+                "kd-11" => ":kd11:",
+                "Megamouse" => ":megamouse:",
+                "elad335" => ":elad:",
+                "hcorion" => ":hcorion:",
+                "AniLeo" => ":ani:",
+                "Talkashie" => ":font:",
+                "jarveson" => ":jarves:",
+                /*
+                "RipleyTom" => null,
+                "VelocityRa" => null,
+                "Whatcookie" => null,
+                "CookiePLMonster" => null,
+                "Ruipin" => null,
+                "rajkosto" => null,
+                "isJuhn" => null,
+                */
+                _ => null,
+#endif
+            });
 
         public static TimeSpan? GetUpdateDelta(DateTime? latest, DateTime? current)
         {

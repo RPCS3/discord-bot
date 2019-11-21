@@ -35,5 +35,16 @@ namespace CompatBot.Utils
         {
             yield return item;
         }
+
+        public static T RandomElement<T>(this IList<T> collection, int? seed = null)
+        {
+            if (collection?.Count > 0)
+            {
+                var rng = seed.HasValue ? new Random(seed.Value) : new Random();
+                return collection[rng.Next(collection.Count)];
+            }
+            else
+                return default;
+        }
     }
 }
