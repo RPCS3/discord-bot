@@ -124,9 +124,55 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
             }
-
+            if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) &&
+                resScaleFactor < 100)
+                notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
             var ppuHashes = GetHashes(items["ppu_hash"]);
+            if (items["write_color_buffers"] == DisabledMark
+                && !string.IsNullOrEmpty(serial)
+                && KnownWriteColorBuffersIds.Contains(serial))
+            {
+                if (DesIds.Contains(serial) && ppuPatches.Any())
+                    notes.Add("ℹ `Write Color Buffers` is disabled");
+                else
+                    notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
+            }
+            if (items["vertex_cache"] == EnabledMark
+                && !string.IsNullOrEmpty(serial)
+                && !KnownDisableVertexCacheIds.Contains(serial))
+                notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
+            if (items["frame_skip"] == EnabledMark)
+                notes.Add("⚠ `Frame Skip` is enabled, please disable");
+            if (items["cpu_blit"] is string cpuBlit
+                && cpuBlit == EnabledMark
+                && items["write_color_buffers"] is string wcb
+                && wcb == DisabledMark)
+                notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
+            if (items["zcull"] is string zcull && zcull == EnabledMark)
+                notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+            if (!KnownFpsUnlockPatchIds.Contains(serial) || !ppuPatches.Any())
+            {
+                if (items["vblank_rate"] is string vblank
+                    && int.TryParse(vblank, out var vblankRate)
+                    && vblankRate != 60)
+                    notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz ({vblankRate / 60.0 * 100:0}%)");
+
+                if (items["clock_scale"] is string clockScaleStr
+                    && int.TryParse(clockScaleStr, out var clockScale)
+                    && clockScale != 100)
+                    notes.Add($"ℹ `Clock Scale` is set to {clockScale}%");
+            }
+            if (items["lib_loader"] is string libLoader
+                && (libLoader == "Auto"
+                    || ((libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase)
+                         || libLoader.Contains("strict", StringComparison.InvariantCultureIgnoreCase))
+                        && (string.IsNullOrEmpty(items["library_list"]) || items["library_list"] == "None"))))
+            {
+                if (items["game_title"] != "vsh.self")
+                    notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
+            }
+
             if (!string.IsNullOrEmpty(serial))
             {
                 CheckP5Settings(serial, items, notes);
@@ -139,7 +185,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckGoWSettings(serial, items, notes, generalNotes);
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckTlouSettings(serial, items, notes);
-                CheckMgs4Settings(serial, generalNotes);
+                CheckMgs4Settings(serial, items, notes, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckGt5Settings(serial, items, notes, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
@@ -176,33 +222,8 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
 
-            if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) &&
-                resScaleFactor < 100)
-                notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
             if (items["async_shaders"] == EnabledMark)
                 notes.Add("❔ `Async Shader Compiler` is disabled");
-            if (items["write_color_buffers"] == DisabledMark
-                && !string.IsNullOrEmpty(serial)
-                && KnownWriteColorBuffersIds.Contains(serial))
-            {
-                if (DesIds.Contains(serial) && ppuPatches.Any())
-                    notes.Add("ℹ `Write Color Buffers` is disabled");
-                else
-                    notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
-            }
-            if (items["vertex_cache"] == EnabledMark
-                && !string.IsNullOrEmpty(serial)
-                && !KnownDisableVertexCacheIds.Contains(serial))
-                notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
-            if (items["frame_skip"] == EnabledMark)
-                notes.Add("⚠ `Frame Skip` is enabled, please disable");
-            if (items["cpu_blit"] is string cpuBlit
-                && cpuBlit == EnabledMark
-                && items["write_color_buffers"] is string wcb
-                && wcb == DisabledMark)
-                notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
-            if (items["zcull"] is string zcull && zcull == EnabledMark)
-                notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
                 && int.TryParse(driverRecoveryTimeout, out var drtValue) && drtValue != 1000000)
             {
@@ -212,19 +233,6 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too low: {GetTimeFormat(drtValue)} (1 frame @ {(1_000_000.0 / drtValue):0.##} fps)");
                 else if (drtValue > 10_000_000)
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
-            }
-
-            if (!KnownFpsUnlockPatchIds.Contains(serial) || !ppuPatches.Any())
-            {
-                if (items["vblank_rate"] is string vblank
-                    && int.TryParse(vblank, out var vblankRate)
-                    && vblankRate != 60)
-                    notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz ({vblankRate/60.0*100:0}%)");
-
-                if (items["clock_scale"] is string clockScaleStr
-                    && int.TryParse(clockScaleStr, out var clockScale)
-                    && clockScale != 100)
-                    notes.Add($"ℹ `Clock Scale` is set to {clockScale}%");
             }
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
@@ -266,16 +274,6 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❔ `Automatically start games after boot` is disabled");
             else if (items["always_start_on_boot"] == DisabledMark)
                 notes.Add("❔ `Always start after boot` is disabled");
-
-            if (items["lib_loader"] is string libLoader
-                && (libLoader == "Auto"
-                    || ((libLoader.Contains("manual", StringComparison.InvariantCultureIgnoreCase)
-                         || libLoader.Contains("strict", StringComparison.InvariantCultureIgnoreCase))
-                        && (string.IsNullOrEmpty(items["library_list"]) || items["library_list"] == "None"))))
-            {
-                if (items["game_title"] != "vsh.self")
-                    notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
-            }
 
             if (items["custom_config"] != null && notes.Any())
                 generalNotes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
@@ -686,13 +684,21 @@ namespace CompatBot.Utils.ResultFormatters
             "NPHB00065", "NPHB00067",
         };
 
-        private static void CheckMgs4Settings(string serial, List<string> generalNotes)
+        private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
             if (!Mgs4Ids.Contains(serial))
                 return;
 
-            generalNotes.Add("ℹ Metal Gear Solid 4 just got ingame, and is still very unstable");
-            generalNotes.Add("ℹ There is no universal set of settings and game updates that works for everyone");
+            if (items["build_branch"] == "mgs4")
+            {
+                notes.Clear();
+                generalNotes.Add("⚠ Custom RPCS3 builds are not officially supported");
+            }
+            else
+            {
+                generalNotes.Add("ℹ Metal Gear Solid 4 just got ingame, and is still very unstable");
+                generalNotes.Add("ℹ There is no universal set of settings and game updates that works for everyone");
+            }
         }
 
         private static readonly HashSet<string> PdfIds = new HashSet<string>
