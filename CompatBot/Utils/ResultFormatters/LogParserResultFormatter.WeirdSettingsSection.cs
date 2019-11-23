@@ -747,6 +747,18 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
+            if (items["msaa"] is string msaa && msaa != "Disabled")
+            {
+                if (items["resolution_scale"] is string resScaleStr
+                    && int.TryParse(resScaleStr, out var resScale)
+                    && resScale > 100)
+                {
+                    var level = "ℹ";
+                    if (resScale > 200)
+                        level = "⚠";
+                    notes.Add($"{level} If you have missing UI elements or experience performance issues, decrease `Resolution Scale` or disable `Anti-aliasing`");
+                }
+            }
         }
 
         private static readonly HashSet<string> Gt5Ids = new HashSet<string>
