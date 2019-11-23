@@ -91,7 +91,7 @@ namespace CompatBot.EventHandlers
                     if (source != null)
                     {
                         Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
-                        var analyzingProgressEmbed = GetAnalyzingMsgEmbed();
+                        var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
                         botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
                         parsedLog = true;
 
@@ -315,11 +315,12 @@ namespace CompatBot.EventHandlers
             return result;
         }
 
-        private static DiscordEmbedBuilder GetAnalyzingMsgEmbed()
+        private static DiscordEmbedBuilder GetAnalyzingMsgEmbed(DiscordClient client)
         {
+            var indicator = client.GetEmoji(":kannamag:", Config.Reactions.PleaseWait);
             return new DiscordEmbedBuilder
             {
-                Description = "👀 Looking at the log, please wait... 👀",
+                Description = $"{indicator} Looking at the log, please wait... {indicator}",
                 Color = Config.Colors.LogUnknown,
             };
         }
