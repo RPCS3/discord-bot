@@ -21,7 +21,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var notes = new List<string>();
             BuildWeirdSettingsSection(builder, items, notes);
-            BuildMissingLicensesSection(builder, items);
+            BuildMissingLicensesSection(builder, items, notes);
             var (irdChecked, brokenDump, longestPath) = await HasBrokenFilesAsync(items).ConfigureAwait(false);
             brokenDump |= !string.IsNullOrEmpty(items["edat_block_offset"]);
             var elfBootPath = items["elf_boot_path"] ?? "";
@@ -483,32 +483,38 @@ namespace CompatBot.Utils.ResultFormatters
             PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
 
-        private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, NameValueCollection items)
+        private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, NameValueCollection items, List<string> generalNotes)
         {
             if (items["rap_file"] is string rap)
             {
                 var limitTo = 5;
                 var licenseNames = rap.Split(Environment.NewLine)
-                    .Distinct()
                     .Select(Path.GetFileName)
                     .Distinct()
                     .Except(KnownBogusLicenses)
+                    .ToList();
+                var formattedLicenseNames = licenseNames
                     .Select(p => $"{StringUtils.InvisibleSpacer}`{p}`")
                     .ToList();
-                if (licenseNames.Count == 0)
+                if (formattedLicenseNames.Count == 0)
                     return;
 
                 string content;
-                if (licenseNames.Count > limitTo)
+                if (formattedLicenseNames.Count > limitTo)
                 {
-                    content = string.Join(Environment.NewLine, licenseNames.Take(limitTo - 1));
-                    var other = licenseNames.Count - limitTo + 1;
+                    content = string.Join(Environment.NewLine, formattedLicenseNames.Take(limitTo - 1));
+                    var other = formattedLicenseNames.Count - limitTo + 1;
                     content += $"{Environment.NewLine}and {other} other license{StringUtils.GetSuffix(other)}";
                 }
                 else
-                    content = string.Join(Environment.NewLine, licenseNames);
+                    content = string.Join(Environment.NewLine, formattedLicenseNames);
 
                 builder.AddField("Missing Licenses", content);
+
+                var gameRegion = items["serial"] is string serial && serial.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
+                var dlcRegions = licenseNames.Select(n => n[2]).Concat(gameRegion).Distinct().ToArray();
+                if (dlcRegions.Length > 1)
+                    generalNotes.Add($"🤔 Very interesting DLC collection from {dlcRegions.Length} different regions you got there");
             }
         }
 

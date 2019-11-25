@@ -46,35 +46,31 @@ namespace CompatBot.Commands
                 {
                     await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     var members = GetMembers(ctx.Client);
-                    using (var compressedResult = new MemoryStream())
+                    using var compressedResult = new MemoryStream();
+                    using (var memoryStream = new MemoryStream())
                     {
-                        using (var memoryStream = new MemoryStream())
+                        using (var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true))
                         {
-                            using (var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true))
-                            {
-                                foreach (var member in members)
-                                    await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}").ConfigureAwait(false);
-                                await writer.FlushAsync().ConfigureAwait(false);
-                            }
-                            memoryStream.Seek(0, SeekOrigin.Begin);
-                            if (memoryStream.Length <= Config.AttachmentSizeLimit)
-                            {
-                                await ctx.RespondWithFileAsync("names.txt", memoryStream).ConfigureAwait(false);
-                                return;
-                            }
-
-                            using (var gzip = new GZipStream(compressedResult, CompressionLevel.Optimal, true))
-                            {
-                                await memoryStream.CopyToAsync(gzip).ConfigureAwait(false);
-                                await gzip.FlushAsync().ConfigureAwait(false);
-                            }
+                            foreach (var member in members)
+                                await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}").ConfigureAwait(false);
+                            await writer.FlushAsync().ConfigureAwait(false);
                         }
-                        compressedResult.Seek(0, SeekOrigin.Begin);
-                        if (compressedResult.Length <= Config.AttachmentSizeLimit)
-                            await ctx.RespondWithFileAsync("names.txt.gz", compressedResult).ConfigureAwait(false);
-                        else
-                            await ctx.RespondAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
+                        memoryStream.Seek(0, SeekOrigin.Begin);
+                        if (memoryStream.Length <= Config.AttachmentSizeLimit)
+                        {
+                            await ctx.RespondWithFileAsync("names.txt", memoryStream).ConfigureAwait(false);
+                            return;
+                        }
+
+                        using var gzip = new GZipStream(compressedResult, CompressionLevel.Optimal, true);
+                        await memoryStream.CopyToAsync(gzip).ConfigureAwait(false);
+                        await gzip.FlushAsync().ConfigureAwait(false);
                     }
+                    compressedResult.Seek(0, SeekOrigin.Begin);
+                    if (compressedResult.Length <= Config.AttachmentSizeLimit)
+                        await ctx.RespondWithFileAsync("names.txt.gz", compressedResult).ConfigureAwait(false);
+                    else
+                        await ctx.RespondAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -208,40 +204,36 @@ namespace CompatBot.Commands
                         checkedMembers.Add(member);
                     }
 
-                    using (var compressedStream = new MemoryStream())
+                    using var compressedStream = new MemoryStream();
+                    using var uncompressedStream = new MemoryStream();
+                    using (var writer = new StreamWriter(uncompressedStream, new UTF8Encoding(false), 4096, true))
                     {
-                        using (var uncompressedStream = new MemoryStream())
-                        {
-                            using (var writer = new StreamWriter(uncompressedStream, new UTF8Encoding(false), 4096, true))
-                            {
-                                writer.Write(result.ToString());
-                                writer.Flush();
-                            }
-                            uncompressedStream.Seek(0, SeekOrigin.Begin);
-                            if (result.Length <= headerLength)
-                            {
-                                await ctx.RespondAsync("No potential name spoofing was detected").ConfigureAwait(false);
-                                return;
-                            }
-
-                            if (uncompressedStream.Length <= Config.AttachmentSizeLimit)
-                            {
-                                await ctx.RespondWithFileAsync("spoofing_check_results.txt", uncompressedStream).ConfigureAwait(false);
-                                return;
-                            }
-
-                            using (var gzip = new GZipStream(compressedStream, CompressionLevel.Optimal, true))
-                            {
-                                uncompressedStream.CopyTo(gzip);
-                                gzip.Flush();
-                            }
-                            compressedStream.Seek(0, SeekOrigin.Begin);
-                            if (compressedStream.Length <= Config.AttachmentSizeLimit)
-                                await ctx.RespondWithFileAsync("spoofing_check_results.txt.gz", compressedStream).ConfigureAwait(false);
-                            else
-                                await ctx.RespondAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);
-                        }
+                        writer.Write(result.ToString());
+                        writer.Flush();
                     }
+                    uncompressedStream.Seek(0, SeekOrigin.Begin);
+                    if (result.Length <= headerLength)
+                    {
+                        await ctx.RespondAsync("No potential name spoofing was detected").ConfigureAwait(false);
+                        return;
+                    }
+
+                    if (uncompressedStream.Length <= Config.AttachmentSizeLimit)
+                    {
+                        await ctx.RespondWithFileAsync("spoofing_check_results.txt", uncompressedStream).ConfigureAwait(false);
+                        return;
+                    }
+
+                    using (var gzip = new GZipStream(compressedStream, CompressionLevel.Optimal, true))
+                    {
+                        uncompressedStream.CopyTo(gzip);
+                        gzip.Flush();
+                    }
+                    compressedStream.Seek(0, SeekOrigin.Begin);
+                    if (compressedStream.Length <= Config.AttachmentSizeLimit)
+                        await ctx.RespondWithFileAsync("spoofing_check_results.txt.gz", compressedStream).ConfigureAwait(false);
+                    else
+                        await ctx.RespondAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {

@@ -31,7 +31,7 @@ namespace CompatBot.Commands
             [Description("Returns currently checked out bot commit")]
             public async Task Version(CommandContext ctx)
             {
-                using (var git = new Process
+                using var git = new Process
                 {
                     StartInfo = new ProcessStartInfo("git", "log -1 --oneline")
                     {
@@ -40,14 +40,12 @@ namespace CompatBot.Commands
                         RedirectStandardOutput = true,
                         StandardOutputEncoding = Encoding.UTF8,
                     },
-                })
-                {
-                    git.Start();
-                    var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-                    git.WaitForExit();
-                    if (!string.IsNullOrEmpty(stdout))
-                        await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
-                }
+                };
+                git.Start();
+                var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
+                git.WaitForExit();
+                if (!string.IsNullOrEmpty(stdout))
+                    await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
             }
 
             [Command("update"), Aliases("upgrade", "pull")]
@@ -131,31 +129,29 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    using (var db = new BotDb())
+                    using var db = new BotDb();
+                    var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
+                    var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
+                    if (Enum.TryParse(activity, true, out ActivityType activityType)
+                        && !string.IsNullOrEmpty(message))
                     {
-                        var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
-                        var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
-                        if (Enum.TryParse(activity, true, out ActivityType activityType)
-                            && !string.IsNullOrEmpty(message))
-                        {
-                            if (status == null)
-                                await db.BotState.AddAsync(new BotState {Key = "bot-status-activity", Value = activity}).ConfigureAwait(false);
-                            else
-                                status.Value = activity;
-                            if (txt == null)
-                                await db.BotState.AddAsync(new BotState {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
-                            else
-                                txt.Value = message;
-                            await ctx.Client.UpdateStatusAsync(new DiscordActivity(message, activityType), UserStatus.Online).ConfigureAwait(false);
-                        }
+                        if (status == null)
+                            await db.BotState.AddAsync(new BotState {Key = "bot-status-activity", Value = activity}).ConfigureAwait(false);
                         else
-                        {
-                            if (status != null)
-                                db.BotState.Remove(status);
-                            await ctx.Client.UpdateStatusAsync(new DiscordActivity()).ConfigureAwait(false);
-                        }
-                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                            status.Value = activity;
+                        if (txt == null)
+                            await db.BotState.AddAsync(new BotState {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
+                        else
+                            txt.Value = message;
+                        await ctx.Client.UpdateStatusAsync(new DiscordActivity(message, activityType), UserStatus.Online).ConfigureAwait(false);
                     }
+                    else
+                    {
+                        if (status != null)
+                            db.BotState.Remove(status);
+                        await ctx.Client.UpdateStatusAsync(new DiscordActivity()).ConfigureAwait(false);
+                    }
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {

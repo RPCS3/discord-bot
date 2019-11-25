@@ -39,101 +39,99 @@ namespace CompatBot.Commands
                 return;
             }
 
-            using (var db = new ThumbnailDb())
+            using var db = new ThumbnailDb();
+            if (db.SyscallInfo.Any(sci => sci.Module == search || sci.Function == search))
             {
-                if (db.SyscallInfo.Any(sci => sci.Module == search || sci.Function == search))
+                var productInfoList = db.SyscallToProductMap.AsNoTracking()
+                    .Where(m => m.SyscallInfo.Module == search || m.SyscallInfo.Function == search)
+                    .Select(m => new {m.Product.ProductCode, Name = m.Product.Name.StripMarks() ?? "???"})
+                    .Distinct()
+                    .ToList();
+                var groupedList = productInfoList
+                    .GroupBy(m => m.Name, m => m.ProductCode, StringComparer.InvariantCultureIgnoreCase)
+                    .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                if (groupedList.Any())
                 {
-                    var productInfoList = db.SyscallToProductMap.AsNoTracking()
-                        .Where(m => m.SyscallInfo.Module == search || m.SyscallInfo.Function == search)
-                        .Select(m => new {m.Product.ProductCode, Name = m.Product.Name.StripMarks() ?? "???"})
-                        .Distinct()
-                        .ToList();
-                    var groupedList = productInfoList
-                        .GroupBy(m => m.Name, m => m.ProductCode, StringComparer.InvariantCultureIgnoreCase)
-                        .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-                    if (groupedList.Any())
-                    {
-                        var bigList = groupedList.Count >= Config.MaxSyscallResultLines;
+                    var bigList = groupedList.Count >= Config.MaxSyscallResultLines;
 
-                        var result = new StringBuilder();
-                        var fullList = bigList ? new StringBuilder() : null;
-                        result.AppendLine($"List of games using `{search}`:```");
-                        var c = 0;
-                        foreach (var gi in groupedList)
-                        {
-                            var productIds = string.Join(", ", gi.Distinct().OrderBy(pc => pc).AsEnumerable());
-                            if (c < Config.MaxSyscallResultLines)
-                                result.AppendLine($"{gi.Key.Trim(60)} [{productIds}]");
-                            if (bigList)
-                                fullList.AppendLine($"{gi.Key} [{productIds}]");
-                            c++;
-                        }
-                        await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                    var result = new StringBuilder();
+                    var fullList = bigList ? new StringBuilder() : null;
+                    result.AppendLine($"List of games using `{search}`:```");
+                    var c = 0;
+                    foreach (var gi in groupedList)
+                    {
+                        var productIds = string.Join(", ", gi.Distinct().OrderBy(pc => pc).AsEnumerable());
+                        if (c < Config.MaxSyscallResultLines)
+                            result.AppendLine($"{gi.Key.Trim(60)} [{productIds}]");
                         if (bigList)
-                        {
-                            using var memoryStream = new MemoryStream((int)(fullList.Capacity*1.25));
-                            using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
-                            await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
-                            await streamWriter.FlushAsync().ConfigureAwait(false);
-                            memoryStream.Seek(0, SeekOrigin.Begin);
-                            await ctx.RespondWithFileAsync($"{search}.txt", memoryStream, $"See attached file for full list of {groupedList.Count} entries").ConfigureAwait(false);
-                        }
+                            fullList.AppendLine($"{gi.Key} [{productIds}]");
+                        c++;
                     }
-                    else
-                        await ctx.RespondAsync($"No games found that use `{search}`").ConfigureAwait(false);
+                    await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                    if (bigList)
+                    {
+                        using var memoryStream = new MemoryStream((int)(fullList.Capacity*1.25));
+                        using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
+                        await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
+                        await streamWriter.FlushAsync().ConfigureAwait(false);
+                        memoryStream.Seek(0, SeekOrigin.Begin);
+                        await ctx.RespondWithFileAsync($"{search}.txt", memoryStream, $"See attached file for full list of {groupedList.Count} entries").ConfigureAwait(false);
+                    }
                 }
                 else
+                    await ctx.RespondAsync($"No games found that use `{search}`").ConfigureAwait(false);
+            }
+            else
+            {
+                var result = new StringBuilder("Unknown entity name");
+                var modules = await db.SyscallInfo.Select(sci => sci.Module).Distinct().ToListAsync().ConfigureAwait(false);
+                var substrModules = modules.Where(m => m.Contains(search, StringComparison.CurrentCultureIgnoreCase));
+                var fuzzyModules = modules
+                    .Select(m => (name: m, score: search.GetFuzzyCoefficientCached(m)))
+                    .Where(i => i.score > 0.6)
+                    .OrderByDescending(i => i.score)
+                    .Select(i => i.name)
+                    .ToList();
+                modules = substrModules
+                    .Concat(fuzzyModules)
+                    .Distinct()
+                    .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var modulesFound = modules.Any();
+                if (modulesFound)
                 {
-                    var result = new StringBuilder("Unknown entity name");
-                    var modules = await db.SyscallInfo.Select(sci => sci.Module).Distinct().ToListAsync().ConfigureAwait(false);
-                    var substrModules = modules.Where(m => m.Contains(search, StringComparison.CurrentCultureIgnoreCase));
-                    var fuzzyModules = modules
-                        .Select(m => (name: m, score: search.GetFuzzyCoefficientCached(m)))
-                        .Where(i => i.score > 0.6)
-                        .OrderByDescending(i => i.score)
-                        .Select(i => i.name)
-                        .ToList();
-                    modules = substrModules
-                        .Concat(fuzzyModules)
-                        .Distinct()
-                        .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-                    var modulesFound = modules.Any();
-                    if (modulesFound)
-                    {
-                        result.AppendLine(", possible modules:```");
-                        foreach (var m in modules)
-                            result.AppendLine(m);
-                        result.AppendLine("```");
-                    }
-
-                    var functions = await db.SyscallInfo.Select(sci => sci.Function).Distinct().ToListAsync().ConfigureAwait(false);
-                    var substrFuncs = functions.Where(f => f.Contains(search, StringComparison.InvariantCultureIgnoreCase));
-                    var fuzzyFuncs = functions
-                        .Select(f => (name: f, score: search.GetFuzzyCoefficientCached(f)))
-                        .Where(i => i.score > 0.6)
-                        .OrderByDescending(i => i.score)
-                        .Select(i => i.name)
-                        .ToList();
-                    functions = substrFuncs
-                        .Concat(fuzzyFuncs)
-                        .Distinct()
-                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-                    var functionsFound = functions.Any();
-                    if (functionsFound)
-                    {
-                        if (modulesFound)
-                            result.AppendLine("Possible functions:```");
-                        else
-                            result.AppendLine(", possible functions:```");
-                        foreach (var f in functions)
-                            result.AppendLine(f);
-                        result.AppendLine("```");
-                    }
-                    await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
+                    result.AppendLine(", possible modules:```");
+                    foreach (var m in modules)
+                        result.AppendLine(m);
+                    result.AppendLine("```");
                 }
+
+                var functions = await db.SyscallInfo.Select(sci => sci.Function).Distinct().ToListAsync().ConfigureAwait(false);
+                var substrFuncs = functions.Where(f => f.Contains(search, StringComparison.InvariantCultureIgnoreCase));
+                var fuzzyFuncs = functions
+                    .Select(f => (name: f, score: search.GetFuzzyCoefficientCached(f)))
+                    .Where(i => i.score > 0.6)
+                    .OrderByDescending(i => i.score)
+                    .Select(i => i.name)
+                    .ToList();
+                functions = substrFuncs
+                    .Concat(fuzzyFuncs)
+                    .Distinct()
+                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var functionsFound = functions.Any();
+                if (functionsFound)
+                {
+                    if (modulesFound)
+                        result.AppendLine("Possible functions:```");
+                    else
+                        result.AppendLine(", possible functions:```");
+                    foreach (var f in functions)
+                        result.AppendLine(f);
+                    result.AppendLine("```");
+                }
+                await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
             }
         }
 
@@ -141,30 +139,28 @@ namespace CompatBot.Commands
         {
             productId = productId.ToUpperInvariant();
             string title = null;
-            using (var db = new ThumbnailDb())
+            using var db = new ThumbnailDb();
+            title = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productId)?.Name;
+            title = string.IsNullOrEmpty(title) ? productId : $"[{productId}] {title.Trim(40)}";
+            var sysInfoList = db.SyscallToProductMap.AsNoTracking()
+                .Where(m => m.Product.ProductCode == productId)
+                .Select(m => m.SyscallInfo)
+                .Distinct()
+                .AsEnumerable()
+                .OrderBy(sci => sci.Module)
+                .ThenBy(sci => sci.Function)
+                .ToList();
+            if (ctx.User.Id == 216724245957312512UL)
+                sysInfoList = sysInfoList.Where(i => i.Function.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase)).ToList();
+            if (sysInfoList.Any())
             {
-                title = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productId)?.Name;
-                title = string.IsNullOrEmpty(title) ? productId : $"[{productId}] {title.Trim(40)}";
-                var sysInfoList = db.SyscallToProductMap.AsNoTracking()
-                    .Where(m => m.Product.ProductCode == productId)
-                    .Select(m => m.SyscallInfo)
-                    .Distinct()
-                    .AsEnumerable()
-                    .OrderBy(sci => sci.Module)
-                    .ThenBy(sci => sci.Function)
-                    .ToList();
-                if (ctx.User.Id == 216724245957312512UL)
-                    sysInfoList = sysInfoList.Where(i => i.Function.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase)).ToList();
-                if (sysInfoList.Any())
-                {
-                    var result = new StringBuilder($"List of syscalls used by `{title}`:```").AppendLine();
-                    foreach (var sci in sysInfoList)
-                        result.AppendLine($"{sci.Module}: {sci.Function}");
-                    await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
-                }
-                else
-                    await ctx.RespondAsync($"No information available for `{title}`").ConfigureAwait(false);
+                var result = new StringBuilder($"List of syscalls used by `{title}`:```").AppendLine();
+                foreach (var sci in sysInfoList)
+                    result.AppendLine($"{sci.Module}: {sci.Function}");
+                await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }
+            else
+                await ctx.RespondAsync($"No information available for `{title}`").ConfigureAwait(false);
         }
     }
 }

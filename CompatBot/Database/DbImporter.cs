@@ -50,64 +50,62 @@ namespace CompatBot.Database
         private static async Task ImportAsync(BotDb dbContext, CancellationToken cancellationToken)
         {
             var db = dbContext.Database;
-            using (var tx = await db.BeginTransactionAsync(cancellationToken))
+            using var tx = await db.BeginTransactionAsync(cancellationToken);
+            try
             {
-                try
-                {
-                    // __EFMigrationsHistory table will be already created by the failed migration attempt
+                // __EFMigrationsHistory table will be already created by the failed migration attempt
 #pragma warning disable EF1001 // Internal EF Core API usage.
-                    await db.ExecuteSqlRawAsync($"INSERT INTO `__EFMigrationsHistory`(`MigrationId`,`ProductVersion`) VALUES ({new InitialCreate().GetId()},'manual')", cancellationToken);
-                    await db.ExecuteSqlRawAsync($"INSERT INTO `__EFMigrationsHistory`(`MigrationId`,`ProductVersion`) VALUES ({new Explanations().GetId()},'manual')", cancellationToken);
+                await db.ExecuteSqlRawAsync($"INSERT INTO `__EFMigrationsHistory`(`MigrationId`,`ProductVersion`) VALUES ({new InitialCreate().GetId()},'manual')", cancellationToken);
+                await db.ExecuteSqlRawAsync($"INSERT INTO `__EFMigrationsHistory`(`MigrationId`,`ProductVersion`) VALUES ({new Explanations().GetId()},'manual')", cancellationToken);
 #pragma warning restore EF1001 // Internal EF Core API usage.
-                    // create constraints on moderator
-                    await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_moderator` (
+                // create constraints on moderator
+                await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_moderator` (
                                                      `id`         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                                                      `discord_id` INTEGER NOT NULL,
                                                      `sudoer`     INTEGER NOT NULL
                                                  )", cancellationToken);
-                    await db.ExecuteSqlRawAsync("INSERT INTO temp_new_moderator SELECT `id`,`discord_id`,`sudoer` FROM `moderator`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("DROP TABLE `moderator`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_moderator` RENAME TO `moderator`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `moderator_discord_id` ON `moderator` (`discord_id`)", cancellationToken);
-                    // create constraints on piracystring
-                    await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_piracystring` (
+                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_moderator SELECT `id`,`discord_id`,`sudoer` FROM `moderator`", cancellationToken);
+                await db.ExecuteSqlRawAsync("DROP TABLE `moderator`", cancellationToken);
+                await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_moderator` RENAME TO `moderator`", cancellationToken);
+                await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `moderator_discord_id` ON `moderator` (`discord_id`)", cancellationToken);
+                // create constraints on piracystring
+                await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_piracystring` (
                                                      `id`     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                                                      `string` varchar ( 255 ) NOT NULL
                                                  )", cancellationToken);
-                    await db.ExecuteSqlRawAsync("INSERT INTO temp_new_piracystring SELECT `id`,`string` FROM `piracystring`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("DROP TABLE `piracystring`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_piracystring` RENAME TO `piracystring`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `piracystring_string` ON `piracystring` (`string`)", cancellationToken);
-                    // create constraints on warning
-                    await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_warning` (
+                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_piracystring SELECT `id`,`string` FROM `piracystring`", cancellationToken);
+                await db.ExecuteSqlRawAsync("DROP TABLE `piracystring`", cancellationToken);
+                await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_piracystring` RENAME TO `piracystring`", cancellationToken);
+                await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `piracystring_string` ON `piracystring` (`string`)", cancellationToken);
+                // create constraints on warning
+                await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_warning` (
                                                      `id`          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                                                      `discord_id`  INTEGER NOT NULL,
                                                      `reason`      TEXT NOT NULL,
                                                      `full_reason` TEXT NOT NULL,
                                                      `issuer_id`   INTEGER NOT NULL DEFAULT 0
                                                  )", cancellationToken);
-                    await db.ExecuteSqlRawAsync("INSERT INTO temp_new_warning SELECT `id`,`discord_id`,`reason`,`full_reason`,`issuer_id` FROM `warning`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("DROP TABLE `warning`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_warning` RENAME TO `warning`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("CREATE INDEX `warning_discord_id` ON `warning` (`discord_id`)", cancellationToken);
-                    // create constraints on explanation
-                    await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_explanation` (
+                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_warning SELECT `id`,`discord_id`,`reason`,`full_reason`,`issuer_id` FROM `warning`", cancellationToken);
+                await db.ExecuteSqlRawAsync("DROP TABLE `warning`", cancellationToken);
+                await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_warning` RENAME TO `warning`", cancellationToken);
+                await db.ExecuteSqlRawAsync("CREATE INDEX `warning_discord_id` ON `warning` (`discord_id`)", cancellationToken);
+                // create constraints on explanation
+                await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_explanation` (
                                                      `id`      INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                                                      `keyword` TEXT NOT NULL,
                                                      `text`    TEXT NOT NULL
                                                  )", cancellationToken);
-                    await db.ExecuteSqlRawAsync("INSERT INTO temp_new_explanation SELECT `id`,`keyword`,`text` FROM `explanation`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("DROP TABLE `explanation`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_explanation` RENAME TO `explanation`", cancellationToken);
-                    await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `explanation_keyword` ON `explanation` (`keyword`)", cancellationToken);
-                    tx.Commit();
-                }
-                catch (Exception e)
-                {
-                    //tx.Rollback();
-                    tx.Commit();
-                    throw e;
-                }
+                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_explanation SELECT `id`,`keyword`,`text` FROM `explanation`", cancellationToken);
+                await db.ExecuteSqlRawAsync("DROP TABLE `explanation`", cancellationToken);
+                await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_explanation` RENAME TO `explanation`", cancellationToken);
+                await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `explanation_keyword` ON `explanation` (`keyword`)", cancellationToken);
+                tx.Commit();
+            }
+            catch (Exception e)
+            {
+                //tx.Rollback();
+                tx.Commit();
+                throw e;
             }
         }
 

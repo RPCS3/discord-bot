@@ -18,14 +18,12 @@ namespace CompatBot.EventHandlers
             if (!args.Message.Attachments.Any())
                 return;
 
-            using (var db = new ThumbnailDb())
+            using var db = new ThumbnailDb();
+            var thumb = db.Thumbnail.FirstOrDefault(i => i.ContentId == args.Message.Content);
+            if (thumb?.EmbeddableUrl is string url && !string.IsNullOrEmpty(url) && args.Message.Attachments.Any(a => a.Url == url))
             {
-                var thumb = db.Thumbnail.FirstOrDefault(i => i.ContentId == args.Message.Content);
-                if (thumb?.EmbeddableUrl is string url && !string.IsNullOrEmpty(url) && args.Message.Attachments.Any(a => a.Url == url))
-                {
-                    thumb.EmbeddableUrl = null;
-                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-                }
+                thumb.EmbeddableUrl = null;
+                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
         }
     }

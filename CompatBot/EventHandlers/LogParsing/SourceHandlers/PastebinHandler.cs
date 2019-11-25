@@ -24,50 +24,48 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             if (matches.Count == 0)
                 return (null, null);
 
-            using (var client = HttpClientFactory.Create())
-                foreach (Match m in matches)
+            using var client = HttpClientFactory.Create();
+            foreach (Match m in matches)
+            {
+                try
                 {
-                    try
+                    if (m.Groups["pastebin_id"].Value is string pid
+                        && !string.IsNullOrEmpty(pid))
                     {
-                        if (m.Groups["pastebin_id"].Value is string pid
-                            && !string.IsNullOrEmpty(pid))
+                        var uri = new Uri("https://pastebin.com/raw/" + pid);
+                        using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                        var buf = bufferPool.Rent(1024);
+                        try
                         {
-                            var uri = new Uri("https://pastebin.com/raw/" + pid);
-                            using (var stream = await client.GetStreamAsync(uri).ConfigureAwait(false))
+                            var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                            var filename = pid + ".log";
+                            var filesize = stream.CanSeek ? (int)stream.Length : 0;
+                            foreach (var handler in handlers)
                             {
-                                var buf = bufferPool.Rent(1024);
-                                try
-                                {
-                                    var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                                    var filename = pid + ".log";
-                                    var filesize = stream.CanSeek ? (int)stream.Length : 0;
-                                    foreach (var handler in handlers)
-                                    {
-                                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
-                                        if (canHandle)
-                                            return (new PastebinSource(uri, filename, filesize, handler), null);
-                                        else if (!string.IsNullOrEmpty(reason))
-                                            return (null, reason);
-                                    }
-                                }
-                                finally
-                                {
-                                    bufferPool.Return(buf);
-                                }
+                                var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                                if (canHandle)
+                                    return (new PastebinSource(uri, filename, filesize, handler), null);
+                                else if (!string.IsNullOrEmpty(reason))
+                                    return (null, reason);
                             }
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        Config.Log.Warn(e, $"Error sniffing {m.Groups["mega_link"].Value}");
+                        finally
+                        {
+                            bufferPool.Return(buf);
+                        }
                     }
                 }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Error sniffing {m.Groups["mega_link"].Value}");
+                }
+            }
             return (null, null);
         }
 
         private sealed class PastebinSource : ISource
         {
-            private Uri uri;
+            private readonly Uri uri;
             private readonly IArchiveHandler handler;
             public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
@@ -86,9 +84,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
-                using (var client = HttpClientFactory.Create())
-                using (var stream = await client.GetStreamAsync(uri).ConfigureAwait(false))
-                    await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
+                using var client = HttpClientFactory.Create();
+                using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }
     }

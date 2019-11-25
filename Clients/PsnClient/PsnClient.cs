@@ -69,20 +69,18 @@ namespace PsnClient
             try
             {
                 var cookieHeaderValue = await GetSessionCookies(locale, cancellationToken).ConfigureAwait(false);
-                using (var getMessage = new HttpRequestMessage(HttpMethod.Get, "https://store.playstation.com/kamaji/api/valkyrie_storefront/00_09_000/user/stores"))
+                using var getMessage = new HttpRequestMessage(HttpMethod.Get, "https://store.playstation.com/kamaji/api/valkyrie_storefront/00_09_000/user/stores");
+                getMessage.Headers.Add("Cookie", cookieHeaderValue);
+                using var response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    getMessage.Headers.Add("Cookie", cookieHeaderValue);
-                    using (var response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false))
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            return await response.Content.ReadAsAsync<Stores>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                            return null;
-                        }
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    return await response.Content.ReadAsAsync<Stores>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
                 }
             }
             catch (Exception e)
@@ -152,21 +150,21 @@ namespace PsnClient
             {
                 var loc = locale.AsLocaleData();
                 var baseUrl = $"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/storefront/{containerId}";
-                using (var message = new HttpRequestMessage(HttpMethod.Get, baseUrl))
-                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                    try
-                    {
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                            return null;
-
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        return await response.Content.ReadAsAsync<StoreNavigation>(dashedFormatters, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
+                using var message = new HttpRequestMessage(HttpMethod.Get, baseUrl);
+                using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (response.StatusCode == HttpStatusCode.NotFound)
                         return null;
-                    }
+
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    return await response.Content.ReadAsAsync<StoreNavigation>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
+                }
             }
             catch (Exception e)
             {
@@ -186,21 +184,21 @@ namespace PsnClient
                 filters["size"] = take.ToString();
                 filters["bucket"] = "games";
                 url = url.SetQueryParameters(filters);
-                using (var message = new HttpRequestMessage(HttpMethod.Get, url))
-                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                    try
-                    {
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                            return null;
-
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
+                using var message = new HttpRequestMessage(HttpMethod.Get, url);
+                using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (response.StatusCode == HttpStatusCode.NotFound)
                         return null;
-                    }
+
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
+                }
             }
             catch (Exception e)
             {
@@ -214,21 +212,21 @@ namespace PsnClient
             try
             {
                 var loc = locale.AsLocaleData();
-                using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/resolve/{contentId}?depth={depth}"))
-                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                    try
-                    {
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                            return null;
-
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
+                using var message = new HttpRequestMessage(HttpMethod.Get, $"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/resolve/{contentId}?depth={depth}");
+                using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (response.StatusCode == HttpStatusCode.NotFound)
                         return null;
-                    }
+
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
+                }
             }
             catch (Exception e)
             {
@@ -242,23 +240,23 @@ namespace PsnClient
             if (ResponseCache.TryGetValue(productId, out TitlePatch patchInfo))
                 return patchInfo;
 
-            using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml"))
-            using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                try
-                {
-                    if (response.StatusCode == HttpStatusCode.NotFound)
-                        return null;
+            using var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml");
+            using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                    return null;
 
-                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
-                    ResponseCache.Set(productId, patchInfo);
-                    return patchInfo ?? new TitlePatch { Tag = new TitlePatchTag { Packages = new TitlePatchPackage[0], },  };
-                }
-                catch (Exception e)
-                {
-                    ConsoleLogger.PrintError(e, response);
-                    throw e;
-                }
+                await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                ResponseCache.Set(productId, patchInfo);
+                return patchInfo ?? new TitlePatch { Tag = new TitlePatchTag { Packages = new TitlePatchPackage[0], },  };
+            }
+            catch (Exception e)
+            {
+                ConsoleLogger.PrintError(e, response);
+                throw e;
+            }
         }
 
         public async Task<TitleMeta> GetTitleMetaAsync(string productId, CancellationToken cancellationToken)
@@ -270,23 +268,23 @@ namespace PsnClient
             var hash = TmdbHasher.GetTitleHash(id);
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, $"https://tmdb.np.dl.playstation.net/tmdb/{id}_{hash}/{id}.xml"))
-                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                    try
-                    {
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                            return null;
-
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        meta = await response.Content.ReadAsAsync<TitleMeta>(xmlFormatters, cancellationToken).ConfigureAwait(false);
-                        ResponseCache.Set(id, meta);
-                        return meta;
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
+                using var message = new HttpRequestMessage(HttpMethod.Get, $"https://tmdb.np.dl.playstation.net/tmdb/{id}_{hash}/{id}.xml");
+                using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (response.StatusCode == HttpStatusCode.NotFound)
                         return null;
-                    }
+
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    meta = await response.Content.ReadAsAsync<TitleMeta>(xmlFormatters, cancellationToken).ConfigureAwait(false);
+                    ResponseCache.Set(id, meta);
+                    return meta;
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
+                }
             }
             catch (Exception e)
             {
@@ -303,21 +301,21 @@ namespace PsnClient
                 var searchId = Uri.EscapeUriString(search);
                 var queryId = Uri.EscapeDataString(searchId);
                 var uri = new Uri($"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/faceted-search/{searchId}?query={queryId}&game_content_type=games&size=30&bucket=games&platform=ps3&start=0");
-                using (var message = new HttpRequestMessage(HttpMethod.Get, uri))
-                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                    try
-                    {
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                            return null;
-
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
+                using var message = new HttpRequestMessage(HttpMethod.Get, uri);
+                using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (response.StatusCode == HttpStatusCode.NotFound)
                         return null;
-                    }
+
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
+                }
             }
             catch (Exception e)
             {
@@ -409,38 +407,38 @@ namespace PsnClient
             var uri = new Uri($"http://f{fwLocale}01.ps3.update.playstation.net/update/ps3/list/{fwLocale}/ps3-updatelist.txt");
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, uri))
-                using (var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false))
-                    try
+                using var message = new HttpRequestMessage(HttpMethod.Get, uri);
+                using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (response.StatusCode != HttpStatusCode.OK)
+                        return null;
+
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    var data = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(data))
+                        return null;
+
+                    if (FwVersionInfo.Match(data) is Match m && m.Success)
                     {
-                        if (response.StatusCode != HttpStatusCode.OK)
-                            return null;
-
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        var data = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        if (string.IsNullOrEmpty(data))
-                            return null;
-
-                        if (FwVersionInfo.Match(data) is Match m && m.Success)
+                        var ver = m.Groups["version"].Value;
+                        if (!string.IsNullOrEmpty(ver) && ver.Length > 4)
                         {
-                            var ver = m.Groups["version"].Value;
-                            if (!string.IsNullOrEmpty(ver) && ver.Length > 4)
-                            {
-                                if (ver.EndsWith("00"))
-                                    ver = ver[..4]; //4.85
-                                else
-                                    ver = ver[..4] + "." + ver[4..].TrimEnd('0'); //4.851 -> 4.85.1
-                            }
-                            return new FirmwareInfo { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
+                            if (ver.EndsWith("00"))
+                                ver = ver[..4]; //4.85
+                            else
+                                ver = ver[..4] + "." + ver[4..].TrimEnd('0'); //4.851 -> 4.85.1
                         }
+                        return new FirmwareInfo { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
+                    }
 
-                        return null;
-                    }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
-                        return null;
-                    }
+                    return null;
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
+                }
             }
             catch (Exception e)
             {

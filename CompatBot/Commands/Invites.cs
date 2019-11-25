@@ -22,51 +22,49 @@ namespace CompatBot.Commands
         public async Task List(CommandContext ctx)
         {
             const string linkPrefix = "discord.gg/";
-            using (var db = new BotDb())
+            using var db = new BotDb();
+            var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
+            if (whitelistedInvites.Count == 0)
             {
-                var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
-                if (whitelistedInvites.Count == 0)
-                {
-                    await ctx.RespondAsync("There are no whitelisted discord servers").ConfigureAwait(false);
-                    return;
-                }
-
-                var table = new AsciiTable(
-                    new AsciiColumn("ID", alignToRight: true),
-                    new AsciiColumn("Server ID", alignToRight: true),
-                    new AsciiColumn("Invite", disabled: !ctx.Channel.IsPrivate),
-                    new AsciiColumn("Server Name")
-                );
-                foreach (var item in whitelistedInvites)
-                {
-                    string guildName = null;
-                    if (!string.IsNullOrEmpty(item.InviteCode))
-                        try
-                        {
-                            var invite = await ctx.Client.GetInviteByCodeAsync(item.InviteCode).ConfigureAwait(false);
-                            guildName = invite?.Guild.Name;
-                        }
-                        catch { }
-                    if (string.IsNullOrEmpty(guildName))
-                        try
-                        {
-                            var guild = await ctx.Client.GetGuildAsync(item.GuildId).ConfigureAwait(false);
-                            guildName = guild.Name;
-                        }
-                        catch { }
-                    if (string.IsNullOrEmpty(guildName))
-                        guildName = item.Name ?? "";
-                    var link = "";
-                    if (!string.IsNullOrEmpty(item.InviteCode))
-                        link = linkPrefix + item.InviteCode;
-                    //discord expands invite links even if they're inside the code block for some reason
-                    table.Add(item.Id.ToString(), item.GuildId.ToString(), "\u200d" + link, guildName.Sanitize());
-                }
-                var result = new StringBuilder()
-                    .AppendLine("Whitelisted discord servers:")
-                    .Append(table);
-                await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
+                await ctx.RespondAsync("There are no whitelisted discord servers").ConfigureAwait(false);
+                return;
             }
+
+            var table = new AsciiTable(
+                new AsciiColumn("ID", alignToRight: true),
+                new AsciiColumn("Server ID", alignToRight: true),
+                new AsciiColumn("Invite", disabled: !ctx.Channel.IsPrivate),
+                new AsciiColumn("Server Name")
+            );
+            foreach (var item in whitelistedInvites)
+            {
+                string guildName = null;
+                if (!string.IsNullOrEmpty(item.InviteCode))
+                    try
+                    {
+                        var invite = await ctx.Client.GetInviteByCodeAsync(item.InviteCode).ConfigureAwait(false);
+                        guildName = invite?.Guild.Name;
+                    }
+                    catch { }
+                if (string.IsNullOrEmpty(guildName))
+                    try
+                    {
+                        var guild = await ctx.Client.GetGuildAsync(item.GuildId).ConfigureAwait(false);
+                        guildName = guild.Name;
+                    }
+                    catch { }
+                if (string.IsNullOrEmpty(guildName))
+                    guildName = item.Name ?? "";
+                var link = "";
+                if (!string.IsNullOrEmpty(item.InviteCode))
+                    link = linkPrefix + item.InviteCode;
+                //discord expands invite links even if they're inside the code block for some reason
+                table.Add(item.Id.ToString(), item.GuildId.ToString(), "\u200d" + link, guildName.Sanitize());
+            }
+            var result = new StringBuilder()
+                .AppendLine("Whitelisted discord servers:")
+                .Append(table);
+            await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
         }
 
         [Command("whitelist"), Aliases("add", "allow"), Priority(10)]

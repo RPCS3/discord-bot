@@ -63,9 +63,8 @@ namespace CompatBot.EventHandlers
 
         public static async Task<Explanation> GetExplanationAsync(string term)
         {
-            Explanation result;
-            using (var db = new BotDb())
-                result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+            using var db = new BotDb();
+            var result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
             return result ?? DefaultExplanation[term];
         }
     }

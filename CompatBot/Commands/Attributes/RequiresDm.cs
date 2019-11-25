@@ -13,8 +13,8 @@ namespace CompatBot.Commands.Attributes
         private const string Source = "https://cdn.discordapp.com/attachments/417347469521715210/534798232858001418/24qx11.jpg";
         private static readonly Lazy<byte[]> Poster = new Lazy<byte[]>(() =>
         {
-            using (var client = HttpClientFactory.Create())
-                return client.GetByteArrayAsync(Source).ConfigureAwait(true).GetAwaiter().GetResult();
+            using var client = HttpClientFactory.Create();
+            return client.GetByteArrayAsync(Source).ConfigureAwait(true).GetAwaiter().GetResult();
         });
 
         public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)

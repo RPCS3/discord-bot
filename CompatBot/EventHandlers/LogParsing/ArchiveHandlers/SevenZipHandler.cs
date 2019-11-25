@@ -33,35 +33,31 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         {
             try
             {
-                using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
-                {
-                    await sourceStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                    using (var zipArchive = SevenZipArchive.Open(fileStream))
-                    using (var zipReader = zipArchive.ExtractAllEntries())
-                        while (zipReader.MoveToNextEntry())
-                            if (!zipReader.Entry.IsDirectory
-                                && zipReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
-                                && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                LogSize = zipReader.Entry.Size;
-                                using (var entryStream = zipReader.OpenEntryStream())
-                                {
-                                    int read;
-                                    FlushResult flushed;
-                                    do
-                                    {
-                                        var memory = writer.GetMemory(Config.MinimumBufferSize);
-                                        read = await entryStream.ReadAsync(memory, cancellationToken);
-                                        writer.Advance(read);
-                                        flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
-                                }
-                                writer.Complete();
-                                return;
-                            }
-                    Config.Log.Warn("No 7z entries that match the log criteria");
-                }
+                using var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose);
+                await sourceStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
+                fileStream.Seek(0, SeekOrigin.Begin);
+                using var zipArchive = SevenZipArchive.Open(fileStream);
+                using var zipReader = zipArchive.ExtractAllEntries();
+                while (zipReader.MoveToNextEntry())
+                    if (!zipReader.Entry.IsDirectory
+                        && zipReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                        && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        LogSize = zipReader.Entry.Size;
+                        using var entryStream = zipReader.OpenEntryStream();
+                        int read;
+                        FlushResult flushed;
+                        do
+                        {
+                            var memory = writer.GetMemory(Config.MinimumBufferSize);
+                            read = await entryStream.ReadAsync(memory, cancellationToken);
+                            writer.Advance(read);
+                            flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                        } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
+                        writer.Complete();
+                        return;
+                    }
+                Config.Log.Warn("No 7z entries that match the log criteria");
             }
             catch (Exception e)
             {

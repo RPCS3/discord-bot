@@ -110,22 +110,20 @@ namespace CompatBot.Commands
             {
                 var logPath = Config.CurrentLogPath;
                 var attachmentSizeLimit = Config.AttachmentSizeLimit;
-                using (var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var result = new MemoryStream((int)Math.Min(attachmentSizeLimit, log.Length)))
+                using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var result = new MemoryStream((int)Math.Min(attachmentSizeLimit, log.Length));
+                using (var gzip = new GZipStream(result, CompressionLevel.Optimal, true))
                 {
-                    using (var gzip = new GZipStream(result, CompressionLevel.Optimal, true))
-                    {
-                        await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
-                        await gzip.FlushAsync().ConfigureAwait(false);
-                    }
-                    if (result.Length <= attachmentSizeLimit)
-                    {
-                        result.Seek(0, SeekOrigin.Begin);
-                        await ctx.RespondWithFileAsync(Path.GetFileName(logPath) + ".gz", result).ConfigureAwait(false);
-                    }
-                    else
-                        await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask Nicba for help :(", true).ConfigureAwait(false);
+                    await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
+                    await gzip.FlushAsync().ConfigureAwait(false);
                 }
+                if (result.Length <= attachmentSizeLimit)
+                {
+                    result.Seek(0, SeekOrigin.Begin);
+                    await ctx.RespondWithFileAsync(Path.GetFileName(logPath) + ".gz", result).ConfigureAwait(false);
+                }
+                else
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask Nicba for help :(", true).ConfigureAwait(false);
             }
             catch (Exception e)
             {

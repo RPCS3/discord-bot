@@ -23,29 +23,27 @@ namespace CompatBot.Database.Providers
             {
                 try
                 {
-                    using (var db = new ThumbnailDb())
+                    using var db = new ThumbnailDb();
+                    foreach (var productCodeMap in syscallInfo)
                     {
-                        foreach (var productCodeMap in syscallInfo)
+                        var product = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCodeMap.Key)
+                                      ?? db.Thumbnail.Add(new Thumbnail {ProductCode = productCodeMap.Key}).Entity;
+                        if (product.Id == 0)
+                            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+
+                        foreach (var moduleMap in productCodeMap.Value)
+                        foreach (var func in moduleMap.Value)
                         {
-                            var product = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCodeMap.Key)
-                                          ?? db.Thumbnail.Add(new Thumbnail {ProductCode = productCodeMap.Key}).Entity;
-                            if (product.Id == 0)
+                            var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Module == moduleMap.Key.ToUtf8() && sci.Function == func.ToUtf8())
+                                          ?? db.SyscallInfo.Add(new SyscallInfo {Module = moduleMap.Key.ToUtf8(), Function = func.ToUtf8() }).Entity;
+                            if (syscall.Id == 0)
                                 await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
 
-                            foreach (var moduleMap in productCodeMap.Value)
-                            foreach (var func in moduleMap.Value)
-                            {
-                                var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Module == moduleMap.Key.ToUtf8() && sci.Function == func.ToUtf8())
-                                              ?? db.SyscallInfo.Add(new SyscallInfo {Module = moduleMap.Key.ToUtf8(), Function = func.ToUtf8() }).Entity;
-                                if (syscall.Id == 0)
-                                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-
-                                if (!db.SyscallToProductMap.Any(m => m.ProductId == product.Id && m.SyscallInfoId == syscall.Id))
-                                    db.SyscallToProductMap.Add(new SyscallToProductMap {ProductId = product.Id, SyscallInfoId = syscall.Id});
-                            }
+                            if (!db.SyscallToProductMap.Any(m => m.ProductId == product.Id && m.SyscallInfoId == syscall.Id))
+                                db.SyscallToProductMap.Add(new SyscallToProductMap {ProductId = product.Id, SyscallInfoId = syscall.Id});
                         }
-                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                     }
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                 }
                 finally
                 {

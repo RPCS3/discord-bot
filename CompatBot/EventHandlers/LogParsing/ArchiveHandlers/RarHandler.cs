@@ -36,34 +36,32 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         {
             try
             {
-                using (var statsStream = new BufferCopyStream(sourceStream))
-                using (var rarReader = RarReader.Open(statsStream))
-                    while (rarReader.MoveToNextEntry())
+                using var statsStream = new BufferCopyStream(sourceStream);
+                using var rarReader = RarReader.Open(statsStream);
+                while (rarReader.MoveToNextEntry())
+                {
+                    if (!rarReader.Entry.IsDirectory
+                        && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                        && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (!rarReader.Entry.IsDirectory
-                            && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
-                            && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
+                        LogSize = rarReader.Entry.Size;
+                        using var rarStream = rarReader.OpenEntryStream();
+                        int read;
+                        FlushResult flushed;
+                        do
                         {
-                            LogSize = rarReader.Entry.Size;
-                            using (var rarStream = rarReader.OpenEntryStream())
-                            {
-                                int read;
-                                FlushResult flushed;
-                                do
-                                {
-                                    var memory = writer.GetMemory(Config.MinimumBufferSize);
-                                    read = await rarStream.ReadAsync(memory, cancellationToken);
-                                    writer.Advance(read);
-                                    SourcePosition = statsStream.Position;
-                                    flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                                    SourcePosition = statsStream.Position;
-                                } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
-                            }
-                            writer.Complete();
-                            return;
-                        }
-                        SourcePosition = statsStream.Position;
+                            var memory = writer.GetMemory(Config.MinimumBufferSize);
+                            read = await rarStream.ReadAsync(memory, cancellationToken);
+                            writer.Advance(read);
+                            SourcePosition = statsStream.Position;
+                            flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                            SourcePosition = statsStream.Position;
+                        } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
+                        writer.Complete();
+                        return;
                     }
+                    SourcePosition = statsStream.Position;
+                }
                 Config.Log.Warn("No rar entries that match the log criteria");
             }
             catch (Exception e)

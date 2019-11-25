@@ -126,31 +126,31 @@ namespace CompatBot.EventHandlers
 #endif
 
             if (!string.IsNullOrEmpty(args.Message.Content) && Paws.Matches(args.Message.Content) is MatchCollection mc)
-                using (var db = new BotDb())
+            {
+                using var db = new BotDb();
+                var matchedGroups = (from m in mc
+                        from Group g in m.Groups
+                        where g.Success && !string.IsNullOrEmpty(g.Value)
+                        select g.Name
+                    ).Distinct()
+                    .ToArray();
+                if (matchedGroups.Contains("kot"))
                 {
-                    var matchedGroups = (from m in mc
-                            from Group g in m.Groups
-                            where g.Success && !string.IsNullOrEmpty(g.Value)
-                            select g.Name
-                        ).Distinct()
-                        .ToArray();
-                    if (matchedGroups.Contains("kot"))
+                    if (!db.Kot.Any(k => k.UserId == args.Author.Id))
                     {
-                        if (!db.Kot.Any(k => k.UserId == args.Author.Id))
-                        {
-                            db.Kot.Add(new Kot {UserId = args.Author.Id});
-                            await db.SaveChangesAsync().ConfigureAwait(false);
-                        }
-                    }
-                    if (matchedGroups.Contains("doggo"))
-                    {
-                        if (!db.Doggo.Any(d => d.UserId == args.Author.Id))
-                        {
-                            db.Doggo.Add(new Doggo {UserId = args.Author.Id});
-                            await db.SaveChangesAsync().ConfigureAwait(false);
-                        }
+                        db.Kot.Add(new Kot {UserId = args.Author.Id});
+                        await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
+                if (matchedGroups.Contains("doggo"))
+                {
+                    if (!db.Doggo.Any(d => d.UserId == args.Author.Id))
+                    {
+                        db.Doggo.Add(new Doggo {UserId = args.Author.Id});
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                    }
+                }
+            }
 
             var (needToSilence, needToThank) = NeedToSilence(args.Message);
             if (!(needToSilence || needToThank))

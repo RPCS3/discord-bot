@@ -38,21 +38,19 @@ namespace CompatBot
             }
 
             var singleInstanceCheckThread = new Thread(() =>
-                                    {
-                                        using (var instanceLock = new Mutex(false, @"Global\RPCS3 Compatibility Bot"))
-                                        {
-                                            if (instanceLock.WaitOne(1000))
-                                                try
-                                                {
-                                                    InstanceCheck.Release();
-                                                    ShutdownCheck.Wait();
-                                                }
-                                                finally
-                                                {
-                                                    instanceLock.ReleaseMutex();
-                                                }
-                                        }
-                                    });
+            {
+                using var instanceLock = new Mutex(false, @"Global\RPCS3 Compatibility Bot");
+                if (instanceLock.WaitOne(1000))
+                    try
+                    {
+                        InstanceCheck.Release();
+                        ShutdownCheck.Wait();
+                    }
+                    finally
+                    {
+                        instanceLock.ReleaseMutex();
+                    }
+            });
             try
             {
                 singleInstanceCheckThread.Start();
@@ -122,211 +120,207 @@ namespace CompatBot
                     Token = Config.Token,
                     TokenType = TokenType.Bot,
                 };
-                using (var client = new DiscordClient(config))
+                using var client = new DiscordClient(config);
+                var commands = client.UseCommandsNext(new CommandsNextConfiguration
                 {
-                    var commands = client.UseCommandsNext(new CommandsNextConfiguration
+                    StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
+                    Services = new ServiceCollection().BuildServiceProvider(),
+                });
+                commands.RegisterConverter(new TextOnlyDiscordChannelConverter());
+                commands.RegisterCommands<Misc>();
+                commands.RegisterCommands<CompatList>();
+                commands.RegisterCommands<Sudo>();
+                commands.RegisterCommands<CommandsManagement>();
+                commands.RegisterCommands<ContentFilters>();
+                commands.RegisterCommands<Warnings>();
+                commands.RegisterCommands<Explain>();
+                commands.RegisterCommands<Psn>();
+                commands.RegisterCommands<Invites>();
+                commands.RegisterCommands<Moderation>();
+                commands.RegisterCommands<Ird>();
+                commands.RegisterCommands<BotMath>();
+                commands.RegisterCommands<Pr>();
+                commands.RegisterCommands<Events>();
+                commands.RegisterCommands<E3>();
+                commands.RegisterCommands<Cyberpunk2077>();
+                commands.RegisterCommands<Rpcs3Ama>();
+                commands.RegisterCommands<BotStats>();
+                commands.RegisterCommands<Syscall>();
+
+                commands.CommandErrored += UnknownCommandHandler.OnError;
+
+                var interactivityConfig = new InteractivityConfiguration { };
+                client.UseInteractivity(interactivityConfig);
+
+                client.Ready += async r =>
+                {
+                    Config.Log.Info("Bot is ready to serve!");
+                    Config.Log.Info("");
+                    Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
+                    Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
+                    Config.Log.Info("");
+                };
+                client.GuildAvailable += async gaArgs =>
+                {
+                    await BotStatusMonitor.RefreshAsync(gaArgs.Client).ConfigureAwait(false);
+                    Watchdog.DisconnectTimestamps.Clear();
+                    if (gaArgs.Guild.Id != Config.BotGuildId)
                     {
-                        StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
-                        Services = new ServiceCollection().BuildServiceProvider(),
-                    });
-                    commands.RegisterConverter(new TextOnlyDiscordChannelConverter());
-                    commands.RegisterCommands<Misc>();
-                    commands.RegisterCommands<CompatList>();
-                    commands.RegisterCommands<Sudo>();
-                    commands.RegisterCommands<CommandsManagement>();
-                    commands.RegisterCommands<ContentFilters>();
-                    commands.RegisterCommands<Warnings>();
-                    commands.RegisterCommands<Explain>();
-                    commands.RegisterCommands<Psn>();
-                    commands.RegisterCommands<Invites>();
-                    commands.RegisterCommands<Moderation>();
-                    commands.RegisterCommands<Ird>();
-                    commands.RegisterCommands<BotMath>();
-                    commands.RegisterCommands<Pr>();
-                    commands.RegisterCommands<Events>();
-                    commands.RegisterCommands<E3>();
-                    commands.RegisterCommands<Cyberpunk2077>();
-                    commands.RegisterCommands<Rpcs3Ama>();
-                    commands.RegisterCommands<BotStats>();
-                    commands.RegisterCommands<Syscall>();
-
-                    commands.CommandErrored += UnknownCommandHandler.OnError;
-
-                    var interactivityConfig = new InteractivityConfiguration { };
-                    client.UseInteractivity(interactivityConfig);
-
-                    client.Ready += async r =>
-                                    {
-                                        Config.Log.Info("Bot is ready to serve!");
-                                        Config.Log.Info("");
-                                        Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
-                                        Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
-                                        Config.Log.Info("");
-                                    };
-                    client.GuildAvailable += async gaArgs =>
-                    {
-                                                 await BotStatusMonitor.RefreshAsync(gaArgs.Client).ConfigureAwait(false);
-                                                 Watchdog.DisconnectTimestamps.Clear();
-                                                 if (gaArgs.Guild.Id != Config.BotGuildId)
-                                                 {
 #if DEBUG
-                                                     Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})");
+                        Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})");
 #else
-                                                     Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...");
-                                                     await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
+                         Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...");
+                         await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
 #endif
-                                                     return;
-                                                 }
+                        return;
+                    }
 
-                                                 Config.Log.Info($"Server {gaArgs.Guild.Name} is available now");
-                                                 Config.Log.Info($"Checking moderation backlogs in {gaArgs.Guild.Name}...");
-                                                 try
-                                                 {
-                                                     await Task.WhenAll(
-                                                         Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default),
-                                                         DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)
-                                                     ).ConfigureAwait(false);
-                                                 }
-                                                 catch (Exception e)
-                                                 {
-                                                     Config.Log.Warn(e, "Error running backlog tasks");
-                                                 }
-                                                 Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
-                                             };
-                    client.GuildUnavailable += guArgs =>
-                                               {
-                                                   Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
-                                                   return Task.CompletedTask;
-                                               };
-
-                    client.MessageReactionAdded += Starbucks.Handler;
-                    client.MessageReactionAdded += AntipiracyMonitor.OnReaction;
-
-                    client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
-                    client.MessageCreated += ProductCodeLookup.OnMessageCreated;
-                    client.MessageCreated += LogParsingHandler.OnMessageCreated;
-                    client.MessageCreated += LogAsTextMonitor.OnMessageCreated;
-                    client.MessageCreated += DiscordInviteFilter.OnMessageCreated;
-                    client.MessageCreated += PostLogHelpHandler.OnMessageCreated;
-                    client.MessageCreated += BotReactionsHandler.OnMessageCreated;
-                    client.MessageCreated += AppveyorLinksHandler.OnMessageCreated;
-                    client.MessageCreated += GithubLinksHandler.OnMessageCreated;
-                    client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
-                    client.MessageCreated += TableFlipMonitor.OnMessageCreated;
-                    client.MessageCreated += IsTheGamePlayableHandler.OnMessageCreated;
-                    client.MessageCreated += EmpathySimulationHandler.OnMessageCreated;
-
-                    client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
-                    client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
-                    client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
-
-                    client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
-                    client.MessageDeleted += EmpathySimulationHandler.OnMessageDeleted;
-
-                    client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
-                    client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
-
-                    client.GuildMemberAdded += Greeter.OnMemberAdded;
-                    client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
-                    client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
-
-                    client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
-                    client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
-
-                    client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
-                    {
-                        Action<Exception, string> logLevel = Config.Log.Info;
-                        if (eventArgs.Level == LogLevel.Debug)
-                            logLevel = Config.Log.Debug;
-                        else if (eventArgs.Level == LogLevel.Info)
-                        {
-                            //logLevel = Config.Log.Info;
-                            if (eventArgs.Message?.Contains("Session resumed") ?? false)
-                                Watchdog.DisconnectTimestamps.Clear();
-                        }
-                        else if (eventArgs.Level == LogLevel.Warning)
-                        {
-                            logLevel = Config.Log.Warn;
-                            if (eventArgs.Message?.Contains("Dispatch:PRESENCES_REPLACE") ?? false)
-                                BotStatusMonitor.RefreshAsync(client).ConfigureAwait(false).GetAwaiter().GetResult();
-                        }
-                        else if (eventArgs.Level == LogLevel.Error)
-                            logLevel = Config.Log.Error;
-                        else if (eventArgs.Level == LogLevel.Critical)
-                        {
-                            logLevel = Config.Log.Fatal;
-                            if ((eventArgs.Message?.Contains("Socket connection terminated") ?? false)
-                                || (eventArgs.Message?.Contains("heartbeats were skipped. Issuing reconnect.") ?? false))
-                                Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
-                        }
-                        logLevel(eventArgs.Exception, eventArgs.Message);
-                    };
-                    Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
-
+                    Config.Log.Info($"Server {gaArgs.Guild.Name} is available now");
+                    Config.Log.Info($"Checking moderation backlogs in {gaArgs.Guild.Name}...");
                     try
                     {
-                        await client.ConnectAsync().ConfigureAwait(false);
+                        await Task.WhenAll(
+                            Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default),
+                            DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)
+                        ).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
-                        Config.Log.Error(e, "Failed to connect to Discord: " + e.Message);
-                        throw;
+                        Config.Log.Warn(e, "Error running backlog tasks");
                     }
+                    Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
+                };
+                client.GuildUnavailable += guArgs =>
+                {
+                    Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
+                    return Task.CompletedTask;
+                };
 
-                    ulong? channelId = null;
-                    if (SandboxDetector.Detect() == SandboxType.Docker)
+                client.MessageReactionAdded += Starbucks.Handler;
+                client.MessageReactionAdded += AntipiracyMonitor.OnReaction;
+
+                client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
+                client.MessageCreated += ProductCodeLookup.OnMessageCreated;
+                client.MessageCreated += LogParsingHandler.OnMessageCreated;
+                client.MessageCreated += LogAsTextMonitor.OnMessageCreated;
+                client.MessageCreated += DiscordInviteFilter.OnMessageCreated;
+                client.MessageCreated += PostLogHelpHandler.OnMessageCreated;
+                client.MessageCreated += BotReactionsHandler.OnMessageCreated;
+                client.MessageCreated += AppveyorLinksHandler.OnMessageCreated;
+                client.MessageCreated += GithubLinksHandler.OnMessageCreated;
+                client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
+                client.MessageCreated += TableFlipMonitor.OnMessageCreated;
+                client.MessageCreated += IsTheGamePlayableHandler.OnMessageCreated;
+                client.MessageCreated += EmpathySimulationHandler.OnMessageCreated;
+
+                client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
+                client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
+                client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
+
+                client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
+                client.MessageDeleted += EmpathySimulationHandler.OnMessageDeleted;
+
+                client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
+                client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
+
+                client.GuildMemberAdded += Greeter.OnMemberAdded;
+                client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
+                client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
+
+                client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
+                client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
+
+                client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
+                {
+                    Action<Exception, string> logLevel = Config.Log.Info;
+                    if (eventArgs.Level == LogLevel.Debug)
+                        logLevel = Config.Log.Debug;
+                    else if (eventArgs.Level == LogLevel.Info)
                     {
-                        using (var db = new BotDb())
-                        {
-                            var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
-                            if (chState != null)
-                            {
-                                if (ulong.TryParse(chState.Value, out var ch))
-                                    channelId = ch;
-                                db.BotState.Remove(chState);
-                                db.SaveChanges();
-                            }
-                        }
+                        //logLevel = Config.Log.Info;
+                        if (eventArgs.Message?.Contains("Session resumed") ?? false)
+                            Watchdog.DisconnectTimestamps.Clear();
                     }
-                    if (args.LastOrDefault() is string strCh && ulong.TryParse(strCh, out var chId))
-                        channelId = chId;
-
-                    if (channelId.HasValue)
+                    else if (eventArgs.Level == LogLevel.Warning)
                     {
-                        Config.Log.Info($"Found channelId {channelId}");
-                        DiscordChannel channel;
-                        if (channelId == InvalidChannelId)
-                        {
-                            channel = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                            await channel.SendMessageAsync("Bot has suffered some catastrophic failure and was restarted").ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            channel = await client.GetChannelAsync(channelId.Value).ConfigureAwait(false);
-                            await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
-                        }
+                        logLevel = Config.Log.Warn;
+                        if (eventArgs.Message?.Contains("Dispatch:PRESENCES_REPLACE") ?? false)
+                            BotStatusMonitor.RefreshAsync(client).ConfigureAwait(false).GetAwaiter().GetResult();
+                    }
+                    else if (eventArgs.Level == LogLevel.Error)
+                        logLevel = Config.Log.Error;
+                    else if (eventArgs.Level == LogLevel.Critical)
+                    {
+                        logLevel = Config.Log.Fatal;
+                        if ((eventArgs.Message?.Contains("Socket connection terminated") ?? false)
+                            || (eventArgs.Message?.Contains("heartbeats were skipped. Issuing reconnect.") ?? false))
+                            Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
+                    }
+                    logLevel(eventArgs.Exception, eventArgs.Message);
+                };
+                Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
+
+                try
+                {
+                    await client.ConnectAsync().ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, "Failed to connect to Discord: " + e.Message);
+                    throw;
+                }
+
+                ulong? channelId = null;
+                if (SandboxDetector.Detect() == SandboxType.Docker)
+                {
+                    using var db = new BotDb();
+                    var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
+                    if (chState != null)
+                    {
+                        if (ulong.TryParse(chState.Value, out var ch))
+                            channelId = ch;
+                        db.BotState.Remove(chState);
+                        db.SaveChanges();
+                    }
+                }
+                if (args.LastOrDefault() is string strCh && ulong.TryParse(strCh, out var chId))
+                    channelId = chId;
+
+                if (channelId.HasValue)
+                {
+                    Config.Log.Info($"Found channelId {channelId}");
+                    DiscordChannel channel;
+                    if (channelId == InvalidChannelId)
+                    {
+                        channel = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                        await channel.SendMessageAsync("Bot has suffered some catastrophic failure and was restarted").ConfigureAwait(false);
                     }
                     else
                     {
-                        Config.Log.Debug($"Args count: {args.Length}");
-                        var pArgs = args.Select(a => a == Config.Token ? "<Token>" : $"[{a}]");
-                        Config.Log.Debug("Args: " + string.Join(" ", pArgs));
+                        channel = await client.GetChannelAsync(channelId.Value).ConfigureAwait(false);
+                        await channel.SendMessageAsync("Bot is up and running").ConfigureAwait(false);
                     }
+                }
+                else
+                {
+                    Config.Log.Debug($"Args count: {args.Length}");
+                    var pArgs = args.Select(a => a == Config.Token ? "<Token>" : $"[{a}]");
+                    Config.Log.Debug("Args: " + string.Join(" ", pArgs));
+                }
 
-                    Config.Log.Debug("Running RPCS3 update check thread");
-                    backgroundTasks = Task.WhenAll(
-                        backgroundTasks,
-                        NewBuildsMonitor.MonitorAsync(client),
-                        Watchdog.Watch(client),
-                        InviteWhitelistProvider.CleanupAsync(client)
-                    );
+                Config.Log.Debug("Running RPCS3 update check thread");
+                backgroundTasks = Task.WhenAll(
+                    backgroundTasks,
+                    NewBuildsMonitor.MonitorAsync(client),
+                    Watchdog.Watch(client),
+                    InviteWhitelistProvider.CleanupAsync(client)
+                );
 
-                    while (!Config.Cts.IsCancellationRequested)
-                    {
-                        if (client.Ping > 1000)
-                            Config.Log.Warn($"High ping detected: {client.Ping}");
-                        await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
-                    }
+                while (!Config.Cts.IsCancellationRequested)
+                {
+                    if (client.Ping > 1000)
+                        Config.Log.Warn($"High ping detected: {client.Ping}");
+                    await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
                 }
                 await backgroundTasks.ConfigureAwait(false);
             }

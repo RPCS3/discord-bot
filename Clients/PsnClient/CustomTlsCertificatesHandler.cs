@@ -31,18 +31,16 @@ namespace PsnClient
 
                 foreach (var resource in certNames)
                 {
-                    using (var stream = current.GetManifestResourceStream(resource))
-                    using (var memStream = new MemoryStream())
+                    using var stream = current.GetManifestResourceStream(resource);
+                    using var memStream = new MemoryStream();
+                    stream.CopyTo(memStream);
+                    var cert = new X509Certificate2(memStream.ToArray());
+                    var cn = cert.GetNameInfo(X509NameType.SimpleName, false);
+                    if ((cn?.StartsWith("SCEI DNAS Root") ?? false))
                     {
-                        stream.CopyTo(memStream);
-                        var cert = new X509Certificate2(memStream.ToArray());
-                        var cn = cert.GetNameInfo(X509NameType.SimpleName, false);
-                        if ((cn?.StartsWith("SCEI DNAS Root") ?? false))
-                        {
-                            CustomCACollecction.Add(cert);
-                            ApiConfig.Log.Debug($"Using Sony root CA with CN '{cn}' for custom certificate validation");
-                            importedCAs = true;
-                        }
+                        CustomCACollecction.Add(cert);
+                        ApiConfig.Log.Debug($"Using Sony root CA with CN '{cn}' for custom certificate validation");
+                        importedCAs = true;
                     }
                 }
             }
@@ -75,24 +73,22 @@ namespace PsnClient
                 result = false;
                 try
                 {
-                    using (var customChain = new X509Chain(false))
+                    using var customChain = new X509Chain(false);
+                    var policy = customChain.ChainPolicy;
+                    policy.ExtraStore.AddRange(CustomCACollecction);
+                    policy.RevocationMode = X509RevocationMode.NoCheck;
+                    if (customChain.Build(certificate) && customChain.ChainStatus.All(s => s.Status == X509ChainStatusFlags.NoError))
                     {
-                        var policy = customChain.ChainPolicy;
-                        policy.ExtraStore.AddRange(CustomCACollecction);
-                        policy.RevocationMode = X509RevocationMode.NoCheck;
-                        if (customChain.Build(certificate) && customChain.ChainStatus.All(s => s.Status == X509ChainStatusFlags.NoError))
-                        {
-                            ApiConfig.Log.Debug($"Successfully validated certificate {thumbprint} for {requestMessage.RequestUri.Host}");
-                            result = true;
-                        }
-                        if (!result)
-                            result = customChain.ChainStatus.All(s => s.Status == X509ChainStatusFlags.UntrustedRoot);
-                        if (!result)
-                        {
-                            ApiConfig.Log.Warn($"Failed to validate certificate {thumbprint} for {requestMessage.RequestUri.Host}");
-                            foreach (var s in customChain.ChainStatus)
-                                ApiConfig.Log.Debug($"{s.Status}: {s.StatusInformation}");
-                        }
+                        ApiConfig.Log.Debug($"Successfully validated certificate {thumbprint} for {requestMessage.RequestUri.Host}");
+                        result = true;
+                    }
+                    if (!result)
+                        result = customChain.ChainStatus.All(s => s.Status == X509ChainStatusFlags.UntrustedRoot);
+                    if (!result)
+                    {
+                        ApiConfig.Log.Warn($"Failed to validate certificate {thumbprint} for {requestMessage.RequestUri.Host}");
+                        foreach (var s in customChain.ChainStatus)
+                            ApiConfig.Log.Debug($"{s.Status}: {s.StatusInformation}");
                     }
                     ValidationCache[thumbprint] = result;
                 }

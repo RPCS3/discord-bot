@@ -200,28 +200,24 @@ namespace CompatBot.EventHandlers
             {
                 try
                 {
-                    using (var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/" + meLink))
+                    using var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/" + meLink);
+                    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+                    request.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
+                    request.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                    using var response = await HttpClient.SendAsync(request);
+                    var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    if (response.IsSuccessStatusCode)
                     {
-                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
-                        request.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
-                        using (var response = await HttpClient.SendAsync(request))
-                        {
-                            var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            if (response.IsSuccessStatusCode)
-                            {
-                                if (string.IsNullOrEmpty(html))
-                                    continue;
+                        if (string.IsNullOrEmpty(html))
+                            continue;
 
-                                foreach (Match match in DiscordInviteLink.Matches(html))
-                                    inviteCodes.Add(match.Groups["invite_id"].Value);
-                            }
-                            else
-                            {
-                                hasInvalidInvites = true;
-                                Config.Log.Warn($"Got {response.StatusCode} from discord.me: {html}");
-                            }
-                        }
+                        foreach (Match match in DiscordInviteLink.Matches(html))
+                            inviteCodes.Add(match.Groups["invite_id"].Value);
+                    }
+                    else
+                    {
+                        hasInvalidInvites = true;
+                        Config.Log.Warn($"Got {response.StatusCode} from discord.me: {html}");
                     }
                 }
                 catch (Exception e)

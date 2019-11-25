@@ -14,21 +14,19 @@ namespace CompatBot.Utils
             if (selector == null)
                 throw new ArgumentNullException(nameof(selector));
 
-            using (var e = source.GetEnumerator())
+            using var e = source.GetEnumerator();
+            if (!e.MoveNext())
+                yield break;
+
+            T prev = e.Current;
+            if (!e.MoveNext())
+                yield break;
+
+            do
             {
-                if (!e.MoveNext())
-                    yield break;
-
-                T prev = e.Current;
-                if (!e.MoveNext())
-                    yield break;
-
-                do
-                {
-                    yield return selector(prev, e.Current);
-                    prev = e.Current;
-                } while (e.MoveNext());
-            }
+                yield return selector(prev, e.Current);
+                prev = e.Current;
+            } while (e.MoveNext());
         }
 
         public static IEnumerable<T> Single<T>(T item)
