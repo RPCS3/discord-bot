@@ -77,64 +77,57 @@ namespace CompatBot.ThumbScrapper
                     using (var downloadStream = await HttpClient.GetStreamAsync(TitleDownloadLink).ConfigureAwait(false))
                         await downloadStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
                     fileStream.Seek(0, SeekOrigin.Begin);
-                    using (var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                    using var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read);
+                    var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase));
+                    if (logEntry == null)
+                        throw new InvalidOperationException("No zip entries that match the .xml criteria");
+
+                    using var zipStream = logEntry.Open();
+                    using var xmlReader = XmlReader.Create(zipStream, new XmlReaderSettings { Async = true });
+                    xmlReader.ReadToFollowing("PS3TDB");
+                    var version = xmlReader.GetAttribute("version");
+                    if (!DateTime.TryParseExact(version, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var timestamp))
+                        return;
+
+                    if (ScrapeStateProvider.IsFresh("PS3TDB", timestamp))
                     {
-                        var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase));
-                        if (logEntry == null)
-                            throw new InvalidOperationException("No zip entries that match the .xml criteria");
+                        await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
+                        return;
+                    }
 
-                        using (var zipStream = logEntry.Open())
-                        using (var xmlReader = XmlReader.Create(zipStream, new XmlReaderSettings { Async = true }))
+                    while (!cancellationToken.IsCancellationRequested && xmlReader.ReadToFollowing("game"))
+                    {
+                        if (xmlReader.ReadToFollowing("id"))
                         {
-                            xmlReader.ReadToFollowing("PS3TDB");
-                            var version = xmlReader.GetAttribute("version");
-                            if (!DateTime.TryParseExact(version, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var timestamp))
-                                return;
+                            var productId = (await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false)).ToUpperInvariant();
+                            if (!ProductCodeLookup.ProductCode.IsMatch(productId))
+                                continue;
 
-                            if (ScrapeStateProvider.IsFresh("PS3TDB", timestamp))
-                            {
-                                await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
-                                return;
-                            }
+                            string title = null;
+                            if (xmlReader.ReadToFollowing("locale") && xmlReader.ReadToFollowing("title"))
+                                title = await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
-                            while (!cancellationToken.IsCancellationRequested && xmlReader.ReadToFollowing("game"))
+                            if (!string.IsNullOrEmpty(title))
                             {
-                                if (xmlReader.ReadToFollowing("id"))
+                                using var db = new ThumbnailDb();
+                                var item = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
+                                if (item == null)
                                 {
-                                    var productId = (await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false)).ToUpperInvariant();
-                                    if (!ProductCodeLookup.ProductCode.IsMatch(productId))
-                                        continue;
-
-                                    string title = null;
-                                    if (xmlReader.ReadToFollowing("locale") && xmlReader.ReadToFollowing("title"))
-                                        title = await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false);
-
-                                    if (!string.IsNullOrEmpty(title))
+                                    await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productId, Name = title}, cancellationToken).ConfigureAwait(false);
+                                    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                                }
+                                else
+                                {
+                                    if (item.Name != title && item.Timestamp == 0)
                                     {
-                                        using (var db = new ThumbnailDb())
-                                        {
-                                            var item = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
-                                            if (item == null)
-                                            {
-                                                await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productId, Name = title}, cancellationToken).ConfigureAwait(false);
-                                                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                                            }
-                                            else
-                                            {
-                                                if (item.Name != title && item.Timestamp == 0)
-                                                {
-                                                    item.Name = title;
-                                                    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                                                }
-                                            }
-                                        }
+                                        item.Name = title;
+                                        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                                     }
                                 }
                             }
-                            await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
                         }
-
                     }
+                    await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
                 }
                 await ScrapeStateProvider.SetLastRunTimestampAsync(container).ConfigureAwait(false);
             }

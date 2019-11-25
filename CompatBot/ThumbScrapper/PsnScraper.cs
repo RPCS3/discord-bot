@@ -349,42 +349,40 @@ namespace CompatBot.ThumbScrapper
                 return;
 
             name = string.IsNullOrEmpty(name) ? null : name;
-            using (var db = new ThumbnailDb())
+            using var db = new ThumbnailDb();
+            var savedItem = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
+            if (savedItem == null)
             {
-                var savedItem = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
-                if (savedItem == null)
+                var newItem = new Thumbnail
                 {
-                    var newItem = new Thumbnail
-                    {
-                        ProductCode = productCode,
-                        ContentId = contentId,
-                        Name = name,
-                        Url = url,
-                        Timestamp = DateTime.UtcNow.Ticks,
-                    };
-                    db.Thumbnail.Add(newItem);
-                }
-                else if (!string.IsNullOrEmpty(url))
-                {
-                    if (string.IsNullOrEmpty(savedItem.Url))
-                        savedItem.Url = url;
-                    if (string.IsNullOrEmpty(savedItem.Name) && !string.IsNullOrEmpty(name))
-                        savedItem.Name = name;
-                    if (!ScrapeStateProvider.IsFresh(savedItem.Timestamp))
-                    {
-                        if (savedItem.Url != url)
-                        {
-                            savedItem.Url = url;
-                            savedItem.EmbeddableUrl = null;
-                        }
-                        if (name != null && savedItem.Name != name)
-                            savedItem.Name = name;
-                    }
-                    savedItem.ContentId = contentId;
-                    savedItem.Timestamp = DateTime.UtcNow.Ticks;
-                }
-                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    ProductCode = productCode,
+                    ContentId = contentId,
+                    Name = name,
+                    Url = url,
+                    Timestamp = DateTime.UtcNow.Ticks,
+                };
+                db.Thumbnail.Add(newItem);
             }
+            else if (!string.IsNullOrEmpty(url))
+            {
+                if (string.IsNullOrEmpty(savedItem.Url))
+                    savedItem.Url = url;
+                if (string.IsNullOrEmpty(savedItem.Name) && !string.IsNullOrEmpty(name))
+                    savedItem.Name = name;
+                if (!ScrapeStateProvider.IsFresh(savedItem.Timestamp))
+                {
+                    if (savedItem.Url != url)
+                    {
+                        savedItem.Url = url;
+                        savedItem.EmbeddableUrl = null;
+                    }
+                    if (name != null && savedItem.Name != name)
+                        savedItem.Name = name;
+                }
+                savedItem.ContentId = contentId;
+                savedItem.Timestamp = DateTime.UtcNow.Ticks;
+            }
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private static async Task ScrapeContainerIdsAsync(string locale, string containerId, HashSet<string> knownContainerIds, CancellationToken cancellationToken)

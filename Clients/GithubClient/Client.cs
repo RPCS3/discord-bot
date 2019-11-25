@@ -52,22 +52,18 @@ namespace GithubClient
 
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/pulls/" + pr))
+                using var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/pulls/" + pr);
+                message.Headers.UserAgent.Add(ProductInfoHeader);
+                using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
-                            result = await response.Content.ReadAsAsync<PrInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    UpdateRateLimitStats(response.Headers);
+                    result = await response.Content.ReadAsAsync<PrInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
                 }
             }
             catch (Exception e)
@@ -95,22 +91,18 @@ namespace GithubClient
 
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/issues/" + issue))
+                using var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/issues/" + issue);
+                message.Headers.UserAgent.Add(ProductInfoHeader);
+                using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
-                            result = await response.Content.ReadAsAsync<IssueInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    UpdateRateLimitStats(response.Headers);
+                    result = await response.Content.ReadAsAsync<IssueInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
                 }
             }
             catch (Exception e)
@@ -139,22 +131,18 @@ namespace GithubClient
 
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, requestUri))
+                using var message = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                message.Headers.UserAgent.Add(ProductInfoHeader);
+                using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
-                            result = await response.Content.ReadAsAsync<List<PrInfo>>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    UpdateRateLimitStats(response.Headers);
+                    result = await response.Content.ReadAsAsync<List<PrInfo>>(formatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
                 }
             }
             catch (Exception e)
@@ -179,22 +167,18 @@ namespace GithubClient
 
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, statusesUrl))
+                using var message = new HttpRequestMessage(HttpMethod.Get, statusesUrl);
+                message.Headers.UserAgent.Add(ProductInfoHeader);
+                using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            UpdateRateLimitStats(response.Headers);
-                            result = await response.Content.ReadAsAsync<List<StatusInfo>>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    UpdateRateLimitStats(response.Headers);
+                    result = await response.Content.ReadAsAsync<List<StatusInfo>>(formatters, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
                 }
             }
             catch (Exception e)

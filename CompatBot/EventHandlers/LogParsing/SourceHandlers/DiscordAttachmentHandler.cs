@@ -14,44 +14,42 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     {
         public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
-            using (var client = HttpClientFactory.Create())
-                foreach (var attachment in message.Attachments)
+            using var client = HttpClientFactory.Create();
+            foreach (var attachment in message.Attachments)
+            {
+                try
                 {
+                    using var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false);
+                    var buf = bufferPool.Rent(1024);
                     try
                     {
-                        using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
+                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                        foreach (var handler in handlers)
                         {
-                            var buf = bufferPool.Rent(1024);
-                            try
-                            {
-                                var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                                foreach (var handler in handlers)
-                                {
-                                    var (canHandle, reason) = handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read));
-                                    if (canHandle)
-                                        return (new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize), null);
-                                    else if (!string.IsNullOrEmpty(reason))
-                                        return (null, reason);
-                                }
-                            }
-                            finally
-                            {
-                                bufferPool.Return(buf);
-                            }
+                            var (canHandle, reason) = handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read));
+                            if (canHandle)
+                                return (new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize), null);
+                            else if (!string.IsNullOrEmpty(reason))
+                                return (null, reason);
                         }
                     }
-                    catch (Exception e)
+                    finally
                     {
-                        Config.Log.Error(e, "Error sniffing the rar content");
+                        bufferPool.Return(buf);
                     }
                 }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, "Error sniffing the rar content");
+                }
+            }
             return (null, null);
         }
 
         private sealed class DiscordAttachmentSource : ISource
         {
-            private DiscordAttachment attachment;
-            private IArchiveHandler handler;
+            private readonly DiscordAttachment attachment;
+            private readonly IArchiveHandler handler;
 
             public string SourceType => "Discord attachment";
             public string FileName { get; }
@@ -69,9 +67,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
-                using (var client = HttpClientFactory.Create())
-                using (var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false))
-                    await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
+                using var client = HttpClientFactory.Create();
+                using var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false);
+                await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }
     }

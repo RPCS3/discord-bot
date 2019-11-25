@@ -76,25 +76,25 @@ namespace IrdLibraryClient
 
                         ["_"] = DateTime.UtcNow.Ticks.ToString(),
                     });
-                using (var getMessage = new HttpRequestMessage(HttpMethod.Get, requestUri))
-                using (var response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false))
-                    try
+                using var getMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                using var response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    var result = await response.Content.ReadAsAsync<SearchResult>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
+                    result.Data ??= new List<SearchResultItem>(0);
+                    foreach (var item in result.Data)
                     {
-                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        var result = await response.Content.ReadAsAsync<SearchResult>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
-                        result.Data ??= new List<SearchResultItem>(0);
-                        foreach (var item in result.Data)
-                        {
-                            item.Filename = GetIrdFilename(item.Filename);
-                            item.Title = GetTitle(item.Title);
-                        }
-                        return result;
+                        item.Filename = GetIrdFilename(item.Filename);
+                        item.Title = GetTitle(item.Title);
                     }
-                    catch (Exception e)
-                    {
-                        ConsoleLogger.PrintError(e, response);
-                        return null;
-                    }
+                    return result;
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
+                    return null;
+                }
             }
             catch (Exception e)
             {

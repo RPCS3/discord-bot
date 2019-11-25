@@ -36,20 +36,20 @@ namespace CompatApiClient
             {
                 try
                 {
-                    using (var message = new HttpRequestMessage(HttpMethod.Get, url))
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            var result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
-                            result.RequestBuilder = requestBuilder;
-                            result.RequestDuration = DateTime.UtcNow - startTime;
-                            return result;
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response, false);
-                        }
+                    using var message = new HttpRequestMessage(HttpMethod.Get, url);
+                    using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        var result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
+                        result.RequestBuilder = requestBuilder;
+                        result.RequestDuration = DateTime.UtcNow - startTime;
+                        return result;
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response, false);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -69,16 +69,16 @@ namespace CompatApiClient
             {
                 try
                 {
-                    using (var message = new HttpRequestMessage(HttpMethod.Get, "https://update.rpcs3.net/?api=v1&c=" + commit))
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                        try
-                        {
-                            return await response.Content.ReadAsAsync<UpdateInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response, false);
-                        }
+                    using var message = new HttpRequestMessage(HttpMethod.Get, "https://update.rpcs3.net/?api=v1&c=" + commit);
+                    using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        return await response.Content.ReadAsAsync<UpdateInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response, false);
+                    }
                 }
                 catch (Exception e)
                 {

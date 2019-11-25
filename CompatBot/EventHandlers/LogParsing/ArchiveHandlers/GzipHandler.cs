@@ -31,33 +31,31 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
         {
-            using (var statsStream = new BufferCopyStream(sourceStream) )
-            using (var gzipStream = new GZipStream(statsStream, CompressionMode.Decompress))
+            using var statsStream = new BufferCopyStream(sourceStream);
+            using var gzipStream = new GZipStream(statsStream, CompressionMode.Decompress);
+            try
             {
-                try
+                int read;
+                FlushResult flushed;
+                do
                 {
-                    int read;
-                    FlushResult flushed;
-                    do
-                    {
-                        var memory = writer.GetMemory(Config.MinimumBufferSize);
-                        read = await gzipStream.ReadAsync(memory, cancellationToken);
-                        writer.Advance(read);
-                        SourcePosition = statsStream.Position;
-                        flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                        SourcePosition = statsStream.Position;
-                    } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
+                    var memory = writer.GetMemory(Config.MinimumBufferSize);
+                    read = await gzipStream.ReadAsync(memory, cancellationToken);
+                    writer.Advance(read);
+                    SourcePosition = statsStream.Position;
+                    flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                    SourcePosition = statsStream.Position;
+                } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
 
-                    var buf = statsStream.GetBufferedBytes();
-                    if (buf.Length > 3)
-                        LogSize = BitConverter.ToInt32(buf.AsSpan(buf.Length - 4, 4));
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Error(e, "Error filling the log pipe");
-                    writer.Complete(e);
-                    return;
-                }
+                var buf = statsStream.GetBufferedBytes();
+                if (buf.Length > 3)
+                    LogSize = BitConverter.ToInt32(buf.AsSpan(buf.Length - 4, 4));
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, "Error filling the log pipe");
+                writer.Complete(e);
+                return;
             }
             writer.Complete();
         }

@@ -34,8 +34,8 @@ namespace CompatBot.Commands
 
         static CompatList()
         {
-            using (var db = new BotDb())
-                lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+            using var db = new BotDb();
+            lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
         }
 
         [Command("compat"), Aliases("c", "compatibility")]

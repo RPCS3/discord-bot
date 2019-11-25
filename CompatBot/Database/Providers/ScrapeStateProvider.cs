@@ -48,30 +48,26 @@ namespace CompatBot.Database.Providers
                 throw new ArgumentException(nameof(locale));
 
             var id = GetId(locale, containerId);
-            using (var db = new ThumbnailDb())
-            {
-                var timestamp = db.State.FirstOrDefault(s => s.Locale == id);
-                if (timestamp == null)
-                    db.State.Add(new State {Locale = id, Timestamp = DateTime.UtcNow.Ticks});
-                else
-                    timestamp.Timestamp = DateTime.UtcNow.Ticks;
-                await db.SaveChangesAsync().ConfigureAwait(false);
-            }
+            using var db = new ThumbnailDb();
+            var timestamp = db.State.FirstOrDefault(s => s.Locale == id);
+            if (timestamp == null)
+                db.State.Add(new State {Locale = id, Timestamp = DateTime.UtcNow.Ticks});
+            else
+                timestamp.Timestamp = DateTime.UtcNow.Ticks;
+            await db.SaveChangesAsync().ConfigureAwait(false);
         }
 
         public static async Task CleanAsync(CancellationToken cancellationToken)
         {
-            using (var db = new ThumbnailDb())
-            {
-                var latestTimestamp = db.State.OrderByDescending(s => s.Timestamp).FirstOrDefault()?.Timestamp;
-                if (!latestTimestamp.HasValue)
-                    return;
+            using var db = new ThumbnailDb();
+            var latestTimestamp = db.State.OrderByDescending(s => s.Timestamp).FirstOrDefault()?.Timestamp;
+            if (!latestTimestamp.HasValue)
+                return;
 
-                var cutOff = new DateTime(latestTimestamp.Value, DateTimeKind.Utc).Add(-CheckInterval);
-                var oldItems = db.State.Where(s => s.Timestamp < cutOff.Ticks);
-                db.State.RemoveRange(oldItems);
-                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
+            var cutOff = new DateTime(latestTimestamp.Value, DateTimeKind.Utc).Add(-CheckInterval);
+            var oldItems = db.State.Where(s => s.Timestamp < cutOff.Ticks);
+            db.State.RemoveRange(oldItems);
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private static string GetId(string locale, string containerId)

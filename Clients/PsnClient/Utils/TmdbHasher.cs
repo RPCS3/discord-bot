@@ -11,8 +11,8 @@ namespace PsnClient.Utils
 
         public static string GetTitleHash(string productId)
         {
-            using (var hmacSha1 = new HMACSHA1(HmacKey))
-                return hmacSha1.ComputeHash(Encoding.ASCII.GetBytes(productId)).ToHexString();
+            using var hmacSha1 = new HMACSHA1(HmacKey);
+            return hmacSha1.ComputeHash(Encoding.ASCII.GetBytes(productId)).ToHexString();
         }
 
         public static byte[] FromHexString(this string hexString)

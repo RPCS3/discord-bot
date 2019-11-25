@@ -56,68 +56,66 @@ namespace CompatBot.Commands
         {
             try
             {
-                using (var db = new BotDb())
+                using var db = new BotDb();
+                var timestamps = db.Warning
+                    .Where(w => w.Timestamp.HasValue && !w.Retracted)
+                    .OrderBy(w => w.Timestamp)
+                    .Select(w => w.Timestamp.Value)
+                    .ToList();
+                var firstWarnTimestamp = timestamps.FirstOrDefault();
+                var previousTimestamp = firstWarnTimestamp;
+                var longestGapBetweenWarning = 0L;
+                long longestGapStart = 0L, longestGapEnd = 0L;
+                var span24h = TimeSpan.FromHours(24).Ticks;
+                var currentSpan = new Queue<long>();
+                long mostWarningsStart = 0L, mostWarningsEnd = 0L, daysWithoutWarnings = 0L;
+                var mostWarnings = 0;
+                for (var i = 0; i < timestamps.Count; i++)
                 {
-                    var timestamps = db.Warning
-                        .Where(w => w.Timestamp.HasValue && !w.Retracted)
-                        .OrderBy(w => w.Timestamp)
-                        .Select(w => w.Timestamp.Value)
-                        .ToList();
-                    var firstWarnTimestamp = timestamps.FirstOrDefault();
-                    var previousTimestamp = firstWarnTimestamp;
-                    var longestGapBetweenWarning = 0L;
-                    long longestGapStart = 0L, longestGapEnd = 0L;
-                    var span24h = TimeSpan.FromHours(24).Ticks;
-                    var currentSpan = new Queue<long>();
-                    long mostWarningsStart = 0L, mostWarningsEnd = 0L, daysWithoutWarnings = 0L;
-                    var mostWarnings = 0;
-                    for (var i = 0; i < timestamps.Count; i++)
+                    var currentTimestamp = timestamps[i];
+                    var newGap = currentTimestamp - previousTimestamp;
+                    if (newGap > longestGapBetweenWarning)
                     {
-                        var currentTimestamp = timestamps[i];
-                        var newGap = currentTimestamp - previousTimestamp;
-                        if (newGap > longestGapBetweenWarning)
-                        {
-                            longestGapBetweenWarning = newGap;
-                            longestGapStart = previousTimestamp;
-                            longestGapEnd = currentTimestamp;
-                        }
-                        if (newGap > span24h)
-                            daysWithoutWarnings += newGap / span24h;
-                        previousTimestamp = currentTimestamp;
+                        longestGapBetweenWarning = newGap;
+                        longestGapStart = previousTimestamp;
+                        longestGapEnd = currentTimestamp;
+                    }
+                    if (newGap > span24h)
+                        daysWithoutWarnings += newGap / span24h;
+                    previousTimestamp = currentTimestamp;
 
-                        currentSpan.Enqueue(currentTimestamp);
-                        while (currentSpan.Count > 0 && currentTimestamp - currentSpan.Peek() > span24h)
-                            currentSpan.Dequeue();
-                        if (currentSpan.Count > mostWarnings)
-                        {
-                            mostWarnings = currentSpan.Count;
-                            mostWarningsStart = currentSpan.Peek();
-                            mostWarningsEnd = currentTimestamp;
-                        }
-                    }
-                    var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
-                    var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
-                    var lastWarn = timestamps.Any() ? timestamps.Last() : (long?)null;
-                    if (lastWarn.HasValue)
-                        longestGapBetweenWarning = Math.Max(longestGapBetweenWarning, DateTime.UtcNow.Ticks - lastWarn.Value);
-                    // most warnings per 24h
-                    var statsBuilder = new StringBuilder();
-                    if (longestGapBetweenWarning > 0)
-                        statsBuilder.AppendLine($@"Longest between warnings: **{TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()}** between {longestGapStart.AsUtc():yyyy-MM-dd} and {longestGapEnd.AsUtc():yyyy-MM-dd}");
-                    if (mostWarnings > 0)
-                        statsBuilder.AppendLine($"Most warnings in 24h: **{mostWarnings}** on {mostWarningsEnd.AsUtc():yyyy-MM-dd}");
-                    if (daysWithoutWarnings > 0 && firstWarnTimestamp > 0)
-                        statsBuilder.AppendLine($"Full days without warnings: **{daysWithoutWarnings}** out of {(DateTime.UtcNow - firstWarnTimestamp.AsUtc()).TotalDays:0}");
+                    currentSpan.Enqueue(currentTimestamp);
+                    while (currentSpan.Count > 0 && currentTimestamp - currentSpan.Peek() > span24h)
+                        currentSpan.Dequeue();
+                    if (currentSpan.Count > mostWarnings)
                     {
-                        statsBuilder.Append($"Warnings in the last 24h: **{warnCount}**");
-                        if (warnCount == 0)
-                            statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
-                        statsBuilder.AppendLine();
+                        mostWarnings = currentSpan.Count;
+                        mostWarningsStart = currentSpan.Peek();
+                        mostWarningsEnd = currentTimestamp;
                     }
-                    if (lastWarn.HasValue)
-                        statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
-                    embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);
                 }
+                var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
+                var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
+                var lastWarn = timestamps.Any() ? timestamps.Last() : (long?)null;
+                if (lastWarn.HasValue)
+                    longestGapBetweenWarning = Math.Max(longestGapBetweenWarning, DateTime.UtcNow.Ticks - lastWarn.Value);
+                // most warnings per 24h
+                var statsBuilder = new StringBuilder();
+                if (longestGapBetweenWarning > 0)
+                    statsBuilder.AppendLine($@"Longest between warnings: **{TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()}** between {longestGapStart.AsUtc():yyyy-MM-dd} and {longestGapEnd.AsUtc():yyyy-MM-dd}");
+                if (mostWarnings > 0)
+                    statsBuilder.AppendLine($"Most warnings in 24h: **{mostWarnings}** on {mostWarningsEnd.AsUtc():yyyy-MM-dd}");
+                if (daysWithoutWarnings > 0 && firstWarnTimestamp > 0)
+                    statsBuilder.AppendLine($"Full days without warnings: **{daysWithoutWarnings}** out of {(DateTime.UtcNow - firstWarnTimestamp.AsUtc()).TotalDays:0}");
+                {
+                    statsBuilder.Append($"Warnings in the last 24h: **{warnCount}**");
+                    if (warnCount == 0)
+                        statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
+                    statsBuilder.AppendLine();
+                }
+                if (lastWarn.HasValue)
+                    statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
+                embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);
             }
             catch (Exception e)
             {
@@ -192,21 +190,19 @@ namespace CompatBot.Commands
         {
             try
             {
-                using (var db = new ThumbnailDb())
-                {
-                    var syscallCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Distinct().Count();
-                    var syscallModuleCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Select(sci => sci.Module).Distinct().Count();
-                    var totalFuncCount = db.SyscallInfo.Select(sci => sci.Function).Distinct().Count();
-                    var totalModuleCount = db.SyscallInfo.Select(sci => sci.Module).Distinct().Count();
-                    var fwCallCount = totalFuncCount - syscallCount;
-                    var fwModuleCount = totalModuleCount - syscallModuleCount;
-                    var gameCount = db.SyscallToProductMap.Select(m => m.ProductId).Distinct().Count();
-                    embed.AddField("SceCall Stats",
-                        $"Tracked game IDs: {gameCount}\n" +
-                        $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")} in {syscallModuleCount} module{(syscallModuleCount == 1 ? "" : "s")}\n" +
-                        $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")} in {fwModuleCount} module{(fwModuleCount == 1 ? "" : "s")}\n",
-                        true);
-                }
+                using var db = new ThumbnailDb();
+                var syscallCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Distinct().Count();
+                var syscallModuleCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Select(sci => sci.Module).Distinct().Count();
+                var totalFuncCount = db.SyscallInfo.Select(sci => sci.Function).Distinct().Count();
+                var totalModuleCount = db.SyscallInfo.Select(sci => sci.Module).Distinct().Count();
+                var fwCallCount = totalFuncCount - syscallCount;
+                var fwModuleCount = totalModuleCount - syscallModuleCount;
+                var gameCount = db.SyscallToProductMap.Select(m => m.ProductId).Distinct().Count();
+                embed.AddField("SceCall Stats",
+                    $"Tracked game IDs: {gameCount}\n" +
+                    $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")} in {syscallModuleCount} module{(syscallModuleCount == 1 ? "" : "s")}\n" +
+                    $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")} in {fwModuleCount} module{(fwModuleCount == 1 ? "" : "s")}\n",
+                    true);
             }
             catch (Exception e)
             {
@@ -218,17 +214,15 @@ namespace CompatBot.Commands
         {
             try
             {
-                using (var db = new BotDb())
-                {
-                    var kots = db.Kot.Count();
-                    var doggos = db.Doggo.Count();
-                    if (kots == 0 && doggos == 0)
-                        return;
+                using var db = new BotDb();
+                var kots = db.Kot.Count();
+                var doggos = db.Doggo.Count();
+                if (kots == 0 && doggos == 0)
+                    return;
 
-                    var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
-                    var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
-                    embed.AddField("🐾 Stats", $"🐱 {kots - 1} {sign} {doggos - 1} 🐶", true);
-                }
+                var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
+                var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
+                embed.AddField("🐾 Stats", $"🐱 {kots - 1} {sign} {doggos - 1} 🐶", true);
             }
             catch (Exception e)
             {

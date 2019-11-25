@@ -21,8 +21,8 @@ namespace CompatBot.Database.Providers
                 try
                 {
                     using (var httpClient = HttpClientFactory.Create(new CompressionMessageHandler()))
-                    using (var response = await httpClient.GetStreamAsync("https://raw.githubusercontent.com/GPUOpen-Drivers/amd-vulkan-versions/master/amdversions.xml").ConfigureAwait(false))
                     {
+                        using var response = await httpClient.GetStreamAsync("https://raw.githubusercontent.com/GPUOpen-Drivers/amd-vulkan-versions/master/amdversions.xml").ConfigureAwait(false);
                         var xml = await XDocument.LoadAsync(response, LoadOptions.None, Config.Cts.Token).ConfigureAwait(false);
                         foreach (var driver in xml.Root.Elements("driver"))
                         {

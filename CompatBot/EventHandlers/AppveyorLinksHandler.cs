@@ -56,12 +56,10 @@ namespace CompatBot.EventHandlers
                     }
                     else if (match.Groups["job_id"].Value is string jobId && !string.IsNullOrEmpty(jobId))
                     {
-                        using (var timeoutCts = new CancellationTokenSource(Config.LogParsingTimeout))
-                        using (var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(Config.Cts.Token, timeoutCts.Token))
-                        {
-                            var buildInfo = await AppveyorClient.GetBuildAsync(jobId, combinedCts.Token).ConfigureAwait(false);
-                            pr = buildInfo?.PullRequestId;
-                        }
+                        using var timeoutCts = new CancellationTokenSource(Config.LogParsingTimeout);
+                        using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(Config.Cts.Token, timeoutCts.Token);
+                        var buildInfo = await AppveyorClient.GetBuildAsync(jobId, combinedCts.Token).ConfigureAwait(false);
+                        pr = buildInfo?.PullRequestId;
                     }
                     if (pr > 0)
                         await Commands.Pr.LinkPrBuild(args.Client, args.Message, pr.Value).ConfigureAwait(false);

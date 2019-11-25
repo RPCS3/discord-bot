@@ -31,25 +31,23 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
         {
-            using (var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-                await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
+            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
         }
 
         public static async Task<ISource> DetectArchiveHandlerAsync(string path, ICollection<IArchiveHandler> handlers)
         {
             var buf = new byte[1024];
-            using (var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+            foreach (var handler in handlers)
             {
-                var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                foreach (var handler in handlers)
-                {
-                    var (canHandle, reason) = handler.CanHandle(Path.GetFileName(path), (int)stream.Length, buf.AsSpan(0, read));
-                    if (canHandle)
-                        return new FileSource(path, handler);
-                    else if (!string.IsNullOrEmpty(reason))
-                        throw new InvalidOperationException(reason);
-                }
-
+                var (canHandle, reason) = handler.CanHandle(Path.GetFileName(path), (int)stream.Length, buf.AsSpan(0, read));
+                if (canHandle)
+                    return new FileSource(path, handler);
+                
+                if (!string.IsNullOrEmpty(reason))
+                    throw new InvalidOperationException(reason);
             }
             throw new InvalidOperationException("Unknown source type");
         }

@@ -91,8 +91,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
-                using (var stream = await client.DownloadAsync(uri, doodad, cancellationToken).ConfigureAwait(false))
-                    await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
+                using var stream = await client.DownloadAsync(uri, doodad, cancellationToken).ConfigureAwait(false);
+                await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }
     }

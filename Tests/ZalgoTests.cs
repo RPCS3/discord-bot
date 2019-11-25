@@ -19,15 +19,15 @@ namespace Tests
             var resultPath = Path.Combine(Path.GetDirectoryName(samplePath), "zalgo.txt");
 
             var names = await File.ReadAllLinesAsync(samplePath, Encoding.UTF8);
-            using (var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            using (var w = new StreamWriter(r, new UTF8Encoding(false)))
-                foreach (var line in names)
-                {
-                    var user = UserInfo.Parse(line);
-                    var isZalgo = UsernameZalgoMonitor.NeedsRename(user.DisplayName);
-                    if (isZalgo)
-                        await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
-                }
+            using var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+            using var w = new StreamWriter(r, new UTF8Encoding(false));
+            foreach (var line in names)
+            {
+                var user = UserInfo.Parse(line);
+                var isZalgo = UsernameZalgoMonitor.NeedsRename(user.DisplayName);
+                if (isZalgo)
+                    await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
+            }
         }
 
         [Test, Explicit("Requires external data")]
@@ -39,7 +39,8 @@ namespace Tests
             var stats = new int[10];
             var names = await File.ReadAllLinesAsync(samplePath, Encoding.UTF8);
             using (var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            using (var w = new StreamWriter(r, new UTF8Encoding(false)))
+            {
+                using var w = new StreamWriter(r, new UTF8Encoding(false));
                 foreach (var line in names)
                 {
                     var user = UserInfo.Parse(line);
@@ -49,6 +50,7 @@ namespace Tests
                     await w.WriteAsync('\t').ConfigureAwait(false);
                     await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
                 }
+            }
 
             for (var i = 0; i < stats.Length && stats[i] > 0; i++)
             {

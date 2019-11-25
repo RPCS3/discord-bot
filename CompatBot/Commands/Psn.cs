@@ -106,14 +106,12 @@ namespace CompatBot.Commands
                 var productIds = ProductCodeLookup.GetProductIds(search);
                 if (productIds.Count > 0)
                 {
-                    using (var db = new ThumbnailDb())
-                    {
-                        var contentId = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productIds[0].ToUpperInvariant()).ConfigureAwait(false);
-                        if (contentId?.ContentId != null)
-                            titleId = contentId.ContentId;
-                        if (contentId?.Name != null)
-                            search = contentId.Name;
-                    }
+                    using var db = new ThumbnailDb();
+                    var contentId = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productIds[0].ToUpperInvariant()).ConfigureAwait(false);
+                    if (contentId?.ContentId != null)
+                        titleId = contentId.ContentId;
+                    if (contentId?.Name != null)
+                        search = contentId.Name;
                 }
 
                 var alteredSearch = search.Trim();

@@ -139,24 +139,20 @@ namespace AppveyorClient
         {
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, buildUrl))
+                using var message = new HttpRequestMessage(HttpMethod.Get, buildUrl);
+                message.Headers.UserAgent.Add(ProductInfoHeader);
+                using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            var result = await response.Content.ReadAsAsync<BuildInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                            ResponseCache.Set(buildUrl, result, CacheTime);
-                            //ApiConfig.Log.Debug($"Cached {nameof(BuildInfo)} for {buildUrl} for {CacheTime}");
-                            return result;
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    var result = await response.Content.ReadAsAsync<BuildInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                    ResponseCache.Set(buildUrl, result, CacheTime);
+                    //ApiConfig.Log.Debug($"Cached {nameof(BuildInfo)} for {buildUrl} for {CacheTime}");
+                    return result;
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
                 }
             }
             catch (Exception e)
@@ -206,24 +202,20 @@ namespace AppveyorClient
             var requestUri = $"https://ci.appveyor.com/api/buildjobs/{jobId}/artifacts";
             try
             {
-                using (var message = new HttpRequestMessage(HttpMethod.Get, requestUri))
+                using var message = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                message.Headers.UserAgent.Add(ProductInfoHeader);
+                using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
-                    using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                    {
-                        try
-                        {
-                            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                            var result = await response.Content.ReadAsAsync<List<Artifact>>(formatters, cancellationToken).ConfigureAwait(false);
-                            ResponseCache.Set(requestUri, result, CacheTime);
-                            ApiConfig.Log.Debug($"Cached {nameof(Artifact)} for {jobId} for {CacheTime}");
-                            return result;
-                        }
-                        catch (Exception e)
-                        {
-                            ConsoleLogger.PrintError(e, response);
-                        }
-                    }
+                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    var result = await response.Content.ReadAsAsync<List<Artifact>>(formatters, cancellationToken).ConfigureAwait(false);
+                    ResponseCache.Set(requestUri, result, CacheTime);
+                    ApiConfig.Log.Debug($"Cached {nameof(Artifact)} for {jobId} for {CacheTime}");
+                    return result;
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.PrintError(e, response);
                 }
             }
             catch (Exception e)
@@ -273,23 +265,19 @@ namespace AppveyorClient
                 Build build = null;
                 do
                 {
-                    using (var message = new HttpRequestMessage(HttpMethod.Get, historyUrl))
+                    using var message = new HttpRequestMessage(HttpMethod.Get, historyUrl);
+                    message.Headers.UserAgent.Add(ProductInfoHeader);
+                    using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                    try
                     {
-                        message.Headers.UserAgent.Add(ProductInfoHeader);
-                        using (var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
-                        {
-                            try
-                            {
-                                await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                                historyPage = await response.Content.ReadAsAsync<HistoryInfo>(formatters, cancellationToken).ConfigureAwait(false);
-                                build = historyPage?.Builds?.FirstOrDefault(selectPredicate);
-                            }
-                            catch (Exception e)
-                            {
-                                ConsoleLogger.PrintError(e, response);
-                                break;
-                            }
-                        }
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        historyPage = await response.Content.ReadAsAsync<HistoryInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                        build = historyPage?.Builds?.FirstOrDefault(selectPredicate);
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response);
+                        break;
                     }
                     historyUrl = baseUrl.SetQueryParameter("startBuildId", historyPage?.Builds?.Last().BuildId.ToString());
                 } while (build == null && historyPage?.Builds?.Count > 0 && takePredicate(historyPage));

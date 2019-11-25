@@ -89,76 +89,70 @@ namespace CompatBot.Commands
         [Description("Adds a new content filter")]
         public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string trigger)
         {
-            using (var db = new BotDb())
+            using var db = new BotDb();
+            Piracystring filter;
+            if (string.IsNullOrEmpty(trigger))
+                filter = new Piracystring();
+            else
             {
-                Piracystring filter;
-                if (string.IsNullOrEmpty(trigger))
-                    filter = new Piracystring();
+                filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled).ConfigureAwait(false);
+                if (filter == null)
+                    filter = new Piracystring {String = trigger};
                 else
-                {
-                    filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled).ConfigureAwait(false);
-                    if (filter == null)
-                        filter = new Piracystring {String = trigger};
-                    else
-                        filter.Disabled = false;
-                }
-                var isNewFilter = filter.Id == default;
-                if (isNewFilter)
-                {
-                    filter.Context = FilterContext.Chat | FilterContext.Log;
-                    filter.Actions = FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage;
-                }
-
-                var (success, msg) = await EditFilterPropertiesAsync(ctx, db, filter).ConfigureAwait(false);
-                if (success)
-                {
-                    if (isNewFilter)
-                        await db.Piracystring.AddAsync(filter).ConfigureAwait(false);
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Created a new content filter")).ConfigureAwait(false);
-                    var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                    var reportMsg = $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
-                    if (!string.IsNullOrEmpty(filter.ValidatingRegex))
-                        reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
-                    await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
-                    ContentFilter.RebuildMatcher();
-                }
-                else
-                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Content filter creation aborted").ConfigureAwait(false);
+                    filter.Disabled = false;
             }
+            var isNewFilter = filter.Id == default;
+            if (isNewFilter)
+            {
+                filter.Context = FilterContext.Chat | FilterContext.Log;
+                filter.Actions = FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage;
+            }
+
+            var (success, msg) = await EditFilterPropertiesAsync(ctx, db, filter).ConfigureAwait(false);
+            if (success)
+            {
+                if (isNewFilter)
+                    await db.Piracystring.AddAsync(filter).ConfigureAwait(false);
+                await db.SaveChangesAsync().ConfigureAwait(false);
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Created a new content filter")).ConfigureAwait(false);
+                var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+                var reportMsg = $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
+                if (!string.IsNullOrEmpty(filter.ValidatingRegex))
+                    reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
+                await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
+                ContentFilter.RebuildMatcher();
+            }
+            else
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Content filter creation aborted").ConfigureAwait(false);
         }
 
         [Command("edit"), Aliases("fix", "update", "change")]
         [Description("Modifies the specified content filter")]
         public async Task Edit(CommandContext ctx, [Description("Filter ID")] int id)
         {
-            using (var db = new BotDb())
+            using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
+            if (filter == null)
             {
-                var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
-                if (filter == null)
-                {
-                    await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
-                    return;
-                }
-
-                await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
+                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
             }
+
+            await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
         }
 
         [Command("edit")]
         public async Task Edit(CommandContext ctx, [Description("Trigger to edit"), RemainingText] string trigger)
         {
-            using (var db = new BotDb())
+            using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
+            if (filter == null)
             {
-                var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
-                if (filter == null)
-                {
-                    await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
-                    return;
-                }
-
-                await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
+                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
             }
+
+            await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
         }
 
         [Command("remove"), Aliases("delete", "del")]

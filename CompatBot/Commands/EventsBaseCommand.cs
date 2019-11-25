@@ -28,71 +28,101 @@ namespace CompatBot.Commands
             var originalEventName = eventName = eventName.Trim(40);
             var current = DateTime.UtcNow;
             var currentTicks = current.Ticks;
-            using (var db = new BotDb())
+            using var db = new BotDb();
+            var currentEvents = await db.EventSchedule.OrderBy(e => e.End).Where(e => e.Start <= currentTicks && e.End >= currentTicks).ToListAsync().ConfigureAwait(false);
+            var nextEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(eventName))
             {
-                var currentEvents = await db.EventSchedule.OrderBy(e => e.End).Where(e => e.Start <= currentTicks && e.End >= currentTicks).ToListAsync().ConfigureAwait(false);
-                var nextEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
-                if (string.IsNullOrEmpty(eventName))
+                var nearestEventMsg = "";
+                if (currentEvents.Count > 0)
                 {
-                    var nearestEventMsg = "";
-                    if (currentEvents.Count > 0)
+                    if (currentEvents.Count == 1)
+                        nearestEventMsg = $"Current event: {currentEvents[0].Name} (going for {FormatCountdown(current - currentEvents[0].Start.AsUtc())})\n";
+                    else
                     {
-                        if (currentEvents.Count == 1)
-                            nearestEventMsg = $"Current event: {currentEvents[0].Name} (going for {FormatCountdown(current - currentEvents[0].Start.AsUtc())})\n";
-                        else
-                        {
-                            nearestEventMsg = "Current events:\n";
-                            foreach (var e in currentEvents)
-                                nearestEventMsg += $"{e.Name} (going for {FormatCountdown(current - e.Start.AsUtc())})\n";
-                        }
+                        nearestEventMsg = "Current events:\n";
+                        foreach (var e in currentEvents)
+                            nearestEventMsg += $"{e.Name} (going for {FormatCountdown(current - e.Start.AsUtc())})\n";
                     }
-                    if (nextEvent != null)
-                        nearestEventMsg += $"Next event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
-                    await ctx.RespondAsync(nearestEventMsg.TrimEnd()).ConfigureAwait(false);
+                }
+                if (nextEvent != null)
+                    nearestEventMsg += $"Next event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
+                await ctx.RespondAsync(nearestEventMsg.TrimEnd()).ConfigureAwait(false);
+                return;
+            }
+
+            eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
+            var promo = "";
+            if (currentEvents.Count > 0)
+                promo = $"\nMeanwhile check out this {(string.IsNullOrEmpty(currentEvents[0].EventName) ? "" : currentEvents[0].EventName + " " + currentEvents[0].Year + " ")}event in progress: {currentEvents[0].Name} (going for {FormatCountdown(current - currentEvents[0].Start.AsUtc())})";
+            else if (nextEvent != null)
+                promo = $"\nMeanwhile check out this upcoming {(string.IsNullOrEmpty(nextEvent.EventName) ? "" : nextEvent.EventName + " " + nextEvent.Year + " ")}event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
+            var firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year && e.EventName == eventName).ConfigureAwait(false);
+            if (firstNamedEvent == null)
+            {
+                var scheduleEntry = await FuzzyMatchEntryName(db, originalEventName).ConfigureAwait(false);
+                var events = await db.EventSchedule.OrderBy(e => e.Start).Where(e => e.End > current.Ticks && e.Name == scheduleEntry).ToListAsync().ConfigureAwait(false);
+                if (events.Any())
+                {
+                    var eventListMsg = new StringBuilder();
+                    foreach (var eventEntry in events)
+                    {
+                        if (eventEntry.Start < current.Ticks)
+                            eventListMsg.AppendLine($"{eventEntry.Name} ends in {FormatCountdown(eventEntry.End.AsUtc() - current)}");
+                        else
+                            eventListMsg.AppendLine($"{eventEntry.Name} starts in {FormatCountdown(eventEntry.Start.AsUtc() - current)}");
+                    }
+                    await ctx.SendAutosplitMessageAsync(eventListMsg.ToString(), blockStart: "", blockEnd: "").ConfigureAwait(false);
                     return;
                 }
 
-                eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
-                var promo = "";
-                if (currentEvents.Count > 0)
-                    promo = $"\nMeanwhile check out this {(string.IsNullOrEmpty(currentEvents[0].EventName) ? "" : currentEvents[0].EventName + " " + currentEvents[0].Year + " ")}event in progress: {currentEvents[0].Name} (going for {FormatCountdown(current - currentEvents[0].Start.AsUtc())})";
-                else if (nextEvent != null)
-                    promo = $"\nMeanwhile check out this upcoming {(string.IsNullOrEmpty(nextEvent.EventName) ? "" : nextEvent.EventName + " " + nextEvent.Year + " ")}event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
-                var firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year && e.EventName == eventName).ConfigureAwait(false);
-                if (firstNamedEvent == null)
+                var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
+                if (eventName.Length > 10)
+                    noEventMsg = "No information about such event at the moment";
+                else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
                 {
-                    var scheduleEntry = await FuzzyMatchEntryName(db, originalEventName).ConfigureAwait(false);
-                    var events = await db.EventSchedule.OrderBy(e => e.Start).Where(e => e.End > current.Ticks && e.Name == scheduleEntry).ToListAsync().ConfigureAwait(false);
-                    if (events.Any())
+                    noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
+                    promo = null;
+                }
+                if (!string.IsNullOrEmpty(promo))
+                    noEventMsg += promo;
+                await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
+                return;
+            }
+
+            if (firstNamedEvent.Start >= currentTicks)
+            {
+                var upcomingNamedEventMsg = $"__{FormatCountdown(firstNamedEvent.Start.AsUtc() - current)} until {eventName} {firstNamedEvent.Year}!__";
+                if (string.IsNullOrEmpty(promo) || nextEvent?.Id == firstNamedEvent.Id)
+                    upcomingNamedEventMsg += $"\nFirst event: {firstNamedEvent.Name}";
+                else
+                    upcomingNamedEventMsg += promo;
+                await ctx.RespondAsync(upcomingNamedEventMsg).ConfigureAwait(false);
+                return;
+            }
+
+            var lastNamedEvent = await db.EventSchedule.OrderByDescending(e => e.End).FirstOrDefaultAsync(e => e.Year == current.Year && e.EventName == eventName).ConfigureAwait(false);
+            if (lastNamedEvent.End <= currentTicks)
+            {
+                if (lastNamedEvent.End < current.AddMonths(-1).Ticks)
+                {
+                    firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year + 1 && e.EventName == eventName).ConfigureAwait(false);
+                    if (firstNamedEvent == null)
                     {
-                        var eventListMsg = new StringBuilder();
-                        foreach (var eventEntry in events)
+                        var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
+                        if (eventName.Length > 10)
+                            noEventMsg = "No information about such event at the moment";
+                        else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
                         {
-                            if (eventEntry.Start < current.Ticks)
-                                eventListMsg.AppendLine($"{eventEntry.Name} ends in {FormatCountdown(eventEntry.End.AsUtc() - current)}");
-                            else
-                                eventListMsg.AppendLine($"{eventEntry.Name} starts in {FormatCountdown(eventEntry.Start.AsUtc() - current)}");
+                            noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
+                            promo = null;
                         }
-                        await ctx.SendAutosplitMessageAsync(eventListMsg.ToString(), blockStart: "", blockEnd: "").ConfigureAwait(false);
+                        if (!string.IsNullOrEmpty(promo))
+                            noEventMsg += promo;
+                        await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
                         return;
                     }
-
-                    var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
-                    if (eventName.Length > 10)
-                        noEventMsg = "No information about such event at the moment";
-                    else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
-                    {
-                        noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
-                        promo = null;
-                    }
-                    if (!string.IsNullOrEmpty(promo))
-                        noEventMsg += promo;
-                    await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
-                    return;
-                }
-
-                if (firstNamedEvent.Start >= currentTicks)
-                {
+                        
                     var upcomingNamedEventMsg = $"__{FormatCountdown(firstNamedEvent.Start.AsUtc() - current)} until {eventName} {firstNamedEvent.Year}!__";
                     if (string.IsNullOrEmpty(promo) || nextEvent?.Id == firstNamedEvent.Id)
                         upcomingNamedEventMsg += $"\nFirst event: {firstNamedEvent.Name}";
@@ -102,53 +132,21 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                var lastNamedEvent = await db.EventSchedule.OrderByDescending(e => e.End).FirstOrDefaultAsync(e => e.Year == current.Year && e.EventName == eventName).ConfigureAwait(false);
-                if (lastNamedEvent.End <= currentTicks)
-                {
-                    if (lastNamedEvent.End < current.AddMonths(-1).Ticks)
-                    {
-                        firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year + 1 && e.EventName == eventName).ConfigureAwait(false);
-                        if (firstNamedEvent == null)
-                        {
-                            var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
-                            if (eventName.Length > 10)
-                                noEventMsg = "No information about such event at the moment";
-                            else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
-                            {
-                                noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
-                                promo = null;
-                            }
-                            if (!string.IsNullOrEmpty(promo))
-                                noEventMsg += promo;
-                            await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
-                            return;
-                        }
-                        
-                        var upcomingNamedEventMsg = $"__{FormatCountdown(firstNamedEvent.Start.AsUtc() - current)} until {eventName} {firstNamedEvent.Year}!__";
-                        if (string.IsNullOrEmpty(promo) || nextEvent?.Id == firstNamedEvent.Id)
-                            upcomingNamedEventMsg += $"\nFirst event: {firstNamedEvent.Name}";
-                        else
-                            upcomingNamedEventMsg += promo;
-                        await ctx.RespondAsync(upcomingNamedEventMsg).ConfigureAwait(false);
-                        return;
-                    }
-
-                    var e3EndedMsg = $"__{eventName} {current.Year} has concluded. See you next year! (maybe)__";
-                    if (!string.IsNullOrEmpty(promo))
-                        e3EndedMsg += promo;
-                    await ctx.RespondAsync(e3EndedMsg).ConfigureAwait(false);
-                    return;
-                }
-
-                var currentNamedEvent = await db.EventSchedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.Start <= currentTicks && e.End >= currentTicks && e.EventName == eventName).ConfigureAwait(false);
-                var nextNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks && e.EventName == eventName).ConfigureAwait(false);
-                var msg = $"__{eventName} {current.Year} is already in progress!__\n";
-                if (currentNamedEvent != null)
-                    msg += $"Current event: {currentNamedEvent.Name} (going for {FormatCountdown(current - currentNamedEvent.Start.AsUtc())})\n";
-                if (nextNamedEvent != null)
-                    msg += $"Next event: {nextNamedEvent.Name} (starts in {FormatCountdown(nextNamedEvent.Start.AsUtc() - current)})";
-                await ctx.SendAutosplitMessageAsync(msg.TrimEnd(), blockStart: "", blockEnd: "").ConfigureAwait(false);
+                var e3EndedMsg = $"__{eventName} {current.Year} has concluded. See you next year! (maybe)__";
+                if (!string.IsNullOrEmpty(promo))
+                    e3EndedMsg += promo;
+                await ctx.RespondAsync(e3EndedMsg).ConfigureAwait(false);
+                return;
             }
+
+            var currentNamedEvent = await db.EventSchedule.OrderBy(e => e.End).FirstOrDefaultAsync(e => e.Start <= currentTicks && e.End >= currentTicks && e.EventName == eventName).ConfigureAwait(false);
+            var nextNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks && e.EventName == eventName).ConfigureAwait(false);
+            var msg = $"__{eventName} {current.Year} is already in progress!__\n";
+            if (currentNamedEvent != null)
+                msg += $"Current event: {currentNamedEvent.Name} (going for {FormatCountdown(current - currentNamedEvent.Start.AsUtc())})\n";
+            if (nextNamedEvent != null)
+                msg += $"Next event: {nextNamedEvent.Name} (starts in {FormatCountdown(nextNamedEvent.Start.AsUtc() - current)})";
+            await ctx.SendAutosplitMessageAsync(msg.TrimEnd(), blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
 
         protected async Task Add(CommandContext ctx, string eventName = null)
@@ -206,30 +204,28 @@ namespace CompatBot.Commands
 
         protected async Task Update(CommandContext ctx, int id, string eventName = null)
         {
-            using (var db = new BotDb())
+            using var db = new BotDb();
+            var evt = eventName == null
+                ? db.EventSchedule.FirstOrDefault(e => e.Id == id)
+                : db.EventSchedule.FirstOrDefault(e => e.Id == id && e.EventName == eventName);
+            if (evt == null)
             {
-                var evt = eventName == null
-                    ? db.EventSchedule.FirstOrDefault(e => e.Id == id)
-                    : db.EventSchedule.FirstOrDefault(e => e.Id == id && e.EventName == eventName);
-                if (evt == null)
-                {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
-                    return;
-                }
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"No event with id {id}").ConfigureAwait(false);
+                return;
+            }
 
-                var (success, msg) = await EditEventPropertiesAsync(ctx, evt, eventName).ConfigureAwait(false);
-                if (success)
-                {
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
-                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Updated event schedule entry #" + evt.Id)).ConfigureAwait(false);
-                    else
-                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
-                }
+            var (success, msg) = await EditEventPropertiesAsync(ctx, evt, eventName).ConfigureAwait(false);
+            if (success)
+            {
+                await db.SaveChangesAsync().ConfigureAwait(false);
+                if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Updated event schedule entry #" + evt.Id)).ConfigureAwait(false);
                 else
-                {
-                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
-                }
+                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
+            }
+            else
+            {
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
             }
         }
 
