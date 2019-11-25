@@ -216,24 +216,23 @@ namespace CompatBot.Commands
                 }
                 if (count == 0)
                 {
-                    if (removed == 0)
+                    if (isKot && isDoggo)
                     {
-                        if (isKot && isDoggo)
-                        {
-                            if (new Random().NextDouble() < 0.5)
-                                isKot = false;
-                            else
-                                isDoggo = false;
-                        }
-                        if (isKot)
-                            await message.RespondAsync($"{userName} has no warnings, is an upstanding kot, and a paw bean of this community").ConfigureAwait(false);
-                        else if (isDoggo)
-                            await message.RespondAsync($"{userName} has no warnings, is a good boy, and a wiggling tail of this community").ConfigureAwait(false);
+                        if (new Random().NextDouble() < 0.5)
+                            isKot = false;
                         else
-                            await message.RespondAsync($"{userName} has no warnings, is an upstanding citizen, and a pillar of this community").ConfigureAwait(false);
+                            isDoggo = false;
                     }
-                    else
-                        await message.RespondAsync(userName + " has no warnings" + (isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")})" : "")).ConfigureAwait(false);
+                    var msg = (removed, isKot, isDoggo) switch
+                    {
+                        (0, true, false) => $"{userName} has no warnings, is an upstanding kot, and a paw bean of this community",
+                        (0, false, true) => $"{userName} has no warnings, is a good boy, and a wiggling tail of this community",
+                        (0, _, _) => $"{userName} has no warnings, is an upstanding citizen, and a pillar of this community",
+                        (_, true, false) => $"{userName} has no warnings{(isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")}), but are they a good kot?" : "")}",
+                        (_, false, true) => $"{userName} has no warnings{(isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")}), but are they a good boy?" : "")}",
+                        _ => $"{userName} has no warnings{(isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")})" : "")}",
+                    };
+                    await message.RespondAsync(msg).ConfigureAwait(false);
                     return;
                 }
 
