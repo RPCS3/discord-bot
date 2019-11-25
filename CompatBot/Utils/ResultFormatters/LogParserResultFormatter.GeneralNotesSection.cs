@@ -512,7 +512,7 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.AddField("Missing Licenses", content);
 
                 var gameRegion = items["serial"] is string serial && serial.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
-                var dlcRegions = licenseNames.Select(n => n[2]).Concat(gameRegion).Distinct().ToArray();
+                var dlcRegions = licenseNames.Select(n => n[9]).Concat(gameRegion).Distinct().ToArray();
                 if (dlcRegions.Length > 1)
                     generalNotes.Add($"🤔 Very interesting DLC collection from {dlcRegions.Length} different regions you got there");
             }
