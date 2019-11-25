@@ -22,7 +22,7 @@ namespace GithubClient
         private readonly MediaTypeFormatterCollection formatters;
 
         private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
-        private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(3);
         private static readonly TimeSpan IssueStatusCacheTime = TimeSpan.FromMinutes(30);
         private static readonly MemoryCache StatusesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
         private static readonly MemoryCache IssuesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(30) });
