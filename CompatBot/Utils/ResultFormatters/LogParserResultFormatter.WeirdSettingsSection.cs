@@ -655,8 +655,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (!TlouIds.Contains(serial))
                 return;
 
-            if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Mega")
-                notes.Add("ℹ Try setting `SPU Block Size` to `Mega` for best performance");
+            if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
+                notes.Add("ℹ Please set `SPU Block Size` to `Safe` to reduce crash rate");
 
             if (items["write_color_buffers"] == EnabledMark)
                 notes.Add("⚠ `Write Color Buffers` is not required anymore");
