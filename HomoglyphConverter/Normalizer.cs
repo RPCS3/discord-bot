@@ -22,6 +22,7 @@ namespace HomoglyphConverter
             ["}|{"] = "Ж",
             ["wv"] = "vw",
             ["WV"] = "VW",
+            ["ĸ"] = "k",
         };
 
         // as per http://www.unicode.org/reports/tr39/#Confusable_Detection

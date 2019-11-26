@@ -197,9 +197,9 @@ namespace CompatBot
                 };
 
                 client.MessageReactionAdded += Starbucks.Handler;
-                client.MessageReactionAdded += AntipiracyMonitor.OnReaction;
+                client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
-                client.MessageCreated += AntipiracyMonitor.OnMessageCreated; // should be first
+                client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
                 client.MessageCreated += ProductCodeLookup.OnMessageCreated;
                 client.MessageCreated += LogParsingHandler.OnMessageCreated;
                 client.MessageCreated += LogAsTextMonitor.OnMessageCreated;
@@ -213,7 +213,7 @@ namespace CompatBot
                 client.MessageCreated += IsTheGamePlayableHandler.OnMessageCreated;
                 client.MessageCreated += EmpathySimulationHandler.OnMessageCreated;
 
-                client.MessageUpdated += AntipiracyMonitor.OnMessageUpdated;
+                client.MessageUpdated += ContentFilterMonitor.OnMessageUpdated;
                 client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
                 client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
 

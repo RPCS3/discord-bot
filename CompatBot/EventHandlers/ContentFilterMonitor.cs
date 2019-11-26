@@ -6,7 +6,7 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
-    internal static class AntipiracyMonitor
+    internal static class ContentFilterMonitor
     {
         public static async Task OnMessageCreated(MessageCreateEventArgs args)
         {

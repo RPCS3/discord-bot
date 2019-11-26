@@ -9,6 +9,7 @@ using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using HomoglyphConverter;
 using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 
@@ -28,7 +29,6 @@ namespace CompatBot.Database.Providers
             if (string.IsNullOrEmpty(str))
                 return Task.FromResult((Piracystring)null);
 
-
             if (!filters.TryGetValue(ctx, out var matcher))
                 return Task.FromResult((Piracystring)null);
 
@@ -42,6 +42,20 @@ namespace CompatBot.Database.Providers
                 }
                 return true;
             });
+
+            if (result is null && ctx == FilterContext.Chat)
+            {
+                str = str.ToCanonicalForm();
+                matcher?.ParseText(str, h =>
+                {
+                    if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
+                    {
+                        result = h.Value;
+                        return h.Value.Actions.HasFlag(FilterAction.RemoveContent);
+                    }
+                    return true;
+                });
+            }
 
             return Task.FromResult(result);
         }
@@ -65,8 +79,7 @@ namespace CompatBot.Database.Providers
                         {
                             var duplicate = (
                                 from ps in f
-                                group ps by ps.String
-                                into g
+                                group ps by ps.String into g
                                 where g.Count() > 1
                                 select g.Key
                             ).ToList();
