@@ -298,7 +298,12 @@ namespace CompatBot.Utils.ResultFormatters
                         && Version.TryParse(items["build_version"], out var buildVersion)
                         && int.TryParse(items["build_number"], out var buildNumber))
                     {
-                        buildVersion = new Version(buildVersion.Major, buildVersion.Minor, buildVersion.Build, buildNumber);
+                        buildVersion = new Version(
+	                        Math.Max(buildVersion.Major, 0), 
+	                        Math.Max(buildVersion.Minor, 0),
+	                        Math.Max(buildVersion.Build, 0),
+	                        Math.Max(buildNumber, 0)
+	                    );
                         if (IsNvidia(gpuInfo))
                         {
                             if (driverVersion < NvidiaRecommendedOldWindowsVersion)
