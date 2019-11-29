@@ -1,6 +1,4 @@
-﻿using System;
-using System.Globalization;
-using CompatBot.Utils;
+﻿using CompatBot.Utils;
 using HomoglyphConverter;
 using NUnit.Framework;
 
@@ -29,9 +27,18 @@ namespace Tests
 
         [TestCase("cockatrice", "сockаtrice")]
         [TestCase("cockatrice", "çöćķåťřĩĉȅ")]
-        public void HomoglyphDetectionTest(string strA, string strB)
+        public void DiacriticsDetectionTest(string strA, string strB)
         {
             Assert.That(strA.EqualsIgnoringDiacritics(strB), Is.True);
+        }
+
+        [TestCase("cockatrice", "cockatrice")]
+        [TestCase("сосkаtriсе", "cockatrice")]
+        [TestCase("cocкatrice", "cockatrice")]
+        [TestCase("c‎ockatrice", "cockatrice")]
+        public void HomoglyphDetectionTest(string strA, string strB)
+        {
+            Assert.That(strA.StripInvisible().ToCanonicalForm(), Is.EqualTo(strB));
         }
     }
 }

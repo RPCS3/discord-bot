@@ -159,6 +159,24 @@ namespace CompatBot.Utils
             return c;
         }
 
+        public static string StripInvisible(this string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return s;
+
+            var e = StringInfo.GetTextElementEnumerator(s.Normalize());
+            var result = new StringBuilder();
+            while (e.MoveNext())
+            {
+                var strEl = e.GetTextElement();
+                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format || strEl[0] == StrikeThroughChar)
+                    continue;
+
+                result.Append(strEl);
+            }
+            return result.ToString();
+        }
+
         public static string TrimVisible(this string s, int maxLength)
         {
             if (string.IsNullOrEmpty(s))
