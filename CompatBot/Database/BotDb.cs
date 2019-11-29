@@ -45,7 +45,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasName("stats_category_key");
             modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasName("kot_user_id");
             modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasName("doggo_user_id");
-            modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.UserId, d.GuildId }).IsUnique().HasName("forced_nickname_user_id_guild_id");
+            modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasName("forced_nickname_guild_id_user_id");
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();

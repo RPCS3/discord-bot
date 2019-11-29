@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Database;
@@ -48,50 +47,40 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        private static readonly IList<DiscordGuild> AvailableGuilds = new List<DiscordGuild>();
-
-        public static void SetupGuilds(IEnumerable<DiscordGuild>guilds)
-        {
-            foreach (var discordGuild in guilds)
-            {
-                AvailableGuilds.Add(discordGuild);
-            }
-        }
-
-        public static async Task MonitorAsync()
+        public static async Task MonitorAsync(DiscordClient client)
         {
             while (!Config.Cts.IsCancellationRequested)
             {
-                if (!AvailableGuilds.Any())
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(3), Config.Cts.Token).ConfigureAwait(false);
-                    continue;
-                }
-                foreach (var guild in AvailableGuilds)
-                {
-                    try
-                    {
-                        using (var context = new BotDb())
-                        {
-                            var forcedNicknames = await context.ForcedNicknames.Where(x=>x.GuildId == guild.Id).ToDictionaryAsync(x => x.UserId).ConfigureAwait(false);
-                            var membersToUpdate = guild.Members.Where(x => forcedNicknames.ContainsKey(x.Key))
-                                .Select(x => (discordMember: x.Value, forcedNickname: forcedNicknames[x.Key]))
-                                .Where(x => x.discordMember.DisplayName != x.forcedNickname.Nickname)
-                                .ToList();
-
-                            foreach (var (discordMember, forcedNickname) in membersToUpdate)
-                            {
-                                await discordMember.ModifyAsync(x => x.Nickname = forcedNickname.Nickname).ConfigureAwait(false);
-                            }
-                        }
-
-                    }
-                    catch (Exception e)
-                    {
-                        Config.Log.Error(e);
-                    }
-                }
+                await UpdateMembersNickname(client);
                 await Task.Delay(TimeSpan.FromSeconds(Config.ForcedNicknamesRecheckTimeInSeconds), Config.Cts.Token).ConfigureAwait(false);
+            }
+        }
+
+        public static async Task UpdateMembersNickname(DiscordClient client)
+        {
+            foreach (var (guildId, guild) in client.Guilds)
+            {
+                try
+                {
+                    using var context = new BotDb();
+                    var forcedNicknames = await context.ForcedNicknames
+                        .Where(x => x.GuildId == guildId)
+                        .ToDictionaryAsync(x => x.UserId)
+                        .ConfigureAwait(false);
+                    var allMembers = await guild.GetAllMembersAsync().ConfigureAwait(false);
+                    var membersToUpdate = allMembers.Where(x => forcedNicknames.TryGetValue(x.Id, out var forcedNickname)
+                                                                && forcedNickname.Nickname != x.DisplayName)
+                        .ToList();
+
+                    foreach (var member in membersToUpdate)
+                    {
+                        await member.ModifyAsync(x => x.Nickname = forcedNicknames[member.Id].Nickname).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e);
+                }
             }
         }
     }

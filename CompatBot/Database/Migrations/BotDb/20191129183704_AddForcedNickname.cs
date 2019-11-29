@@ -14,7 +14,7 @@ namespace CompatBot.Database.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     user_id = table.Column<ulong>(nullable: false),
                     guild_id = table.Column<ulong>(nullable: false),
-                    nickname = table.Column<string>(nullable: true)
+                    nickname = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -22,9 +22,9 @@ namespace CompatBot.Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "forced_nickname_user_id_guild_id",
+                name: "forced_nickname_guild_id_user_id",
                 table: "forced_nicknames",
-                columns: new[] { "user_id", "guild_id" },
+                columns: new[] { "guild_id", "user_id" },
                 unique: true);
         }
 

@@ -146,6 +146,7 @@ namespace CompatBot
                 commands.RegisterCommands<Rpcs3Ama>();
                 commands.RegisterCommands<BotStats>();
                 commands.RegisterCommands<Syscall>();
+                commands.RegisterCommands<ForcedNicknames>();
 
                 commands.CommandErrored += UnknownCommandHandler.OnError;
 
@@ -192,8 +193,7 @@ namespace CompatBot
                 };
                 client.GuildDownloadCompleted += async gdcArgs =>
                 {
-                    UsernameValidationMonitor.SetupGuilds(gdcArgs.Guilds.Select(x => x.Value).ToList());
-                    await Task.CompletedTask;
+                    await UsernameValidationMonitor.UpdateMembersNickname(gdcArgs.Client);
                 };
                 client.GuildUnavailable += guArgs =>
                 {
@@ -228,14 +228,14 @@ namespace CompatBot
                 client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
                 client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
 
-                    client.GuildMemberAdded += Greeter.OnMemberAdded;
-                    client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
-                    client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
-                    client.GuildMemberAdded += UsernameValidationMonitor.OnMemberAdded;
+                client.GuildMemberAdded += Greeter.OnMemberAdded;
+                client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
+                client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
+                client.GuildMemberAdded += UsernameValidationMonitor.OnMemberAdded;
 
-                    client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
-                    client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
-                    client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
+                client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
+                client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
+                client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
 
                 client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
                 {
@@ -315,14 +315,14 @@ namespace CompatBot
                     Config.Log.Debug("Args: " + string.Join(" ", pArgs));
                 }
 
-                    Config.Log.Debug("Running RPCS3 update check thread");
-                    backgroundTasks = Task.WhenAll(
-                        backgroundTasks,
-                        NewBuildsMonitor.MonitorAsync(client),
-                        Watchdog.Watch(client),
-                        InviteWhitelistProvider.CleanupAsync(client),
-                        UsernameValidationMonitor.MonitorAsync()
-                    );
+                Config.Log.Debug("Running RPCS3 update check thread");
+                backgroundTasks = Task.WhenAll(
+                    backgroundTasks,
+                    NewBuildsMonitor.MonitorAsync(client),
+                    Watchdog.Watch(client),
+                    InviteWhitelistProvider.CleanupAsync(client),
+                    UsernameValidationMonitor.MonitorAsync(client)
+                );
 
                 while (!Config.Cts.IsCancellationRequested)
                 {
