@@ -33,8 +33,8 @@ namespace CompatBot.Commands
                         .AddField("Memory Usage", $"{GC.GetTotalMemory(false).AsStorageUnit()}", true)
                         .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured", true)
                         .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-                        .AddField(".NET versions", $"Runtime {System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()}\n" +
-                                                   $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}",
+                        .AddField(".NET info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
+                                                   $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode",
                                                    true)
                         .AddField("Runtime info", $"Confinement: {SandboxDetector.Detect()}\n" +
                                                   $"OS: {RuntimeEnvironment.OperatingSystem} {RuntimeEnvironment.OperatingSystemVersion}\n" +
