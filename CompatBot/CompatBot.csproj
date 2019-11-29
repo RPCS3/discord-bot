@@ -9,6 +9,8 @@
     <LangVersion>latest</LangVersion>
     <NoWarn>1701;1702;VSTHRD200</NoWarn>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>

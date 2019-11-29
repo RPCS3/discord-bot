@@ -45,7 +45,7 @@ namespace CompatBot.Database.Providers
 
             if (result is null && ctx == FilterContext.Chat)
             {
-                str = str.ToCanonicalForm();
+                str = str.StripInvisible().ToCanonicalForm();
                 matcher?.ParseText(str, h =>
                 {
                     if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
