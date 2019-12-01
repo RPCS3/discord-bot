@@ -1,4 +1,5 @@
-﻿using CompatBot.Utils;
+﻿using System.Text;
+using CompatBot.Utils;
 using HomoglyphConverter;
 using NUnit.Framework;
 
@@ -36,9 +37,12 @@ namespace Tests
         [TestCase("сосkаtriсе", "cockatrice")]
         [TestCase("cocкatrice", "cockatrice")]
         [TestCase("c‎ockatrice", "cockatrice")]
+        [TestCase("соc͏katrice", "cockatrice")]
+        [TestCase("çöćķåťřĩĉȅ", "cockatrice")]
+        [TestCase("с⁪◌ck⁬åťřĩĉȅ", "cockatrice")]
         public void HomoglyphDetectionTest(string strA, string strB)
         {
-            Assert.That(strA.StripInvisible().ToCanonicalForm(), Is.EqualTo(strB));
+            Assert.That(strA.StripInvisibleAndDiacritics().ToCanonicalForm(), Is.EqualTo(strB));
         }
     }
 }

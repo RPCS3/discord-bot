@@ -23,6 +23,7 @@ namespace HomoglyphConverter
             ["wv"] = "vw",
             ["WV"] = "VW",
             ["ĸ"] = "k",
+            ["◌"] = "o",
         };
 
         // as per http://www.unicode.org/reports/tr39/#Confusable_Detection

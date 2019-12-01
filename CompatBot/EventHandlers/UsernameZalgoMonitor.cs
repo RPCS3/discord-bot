@@ -88,7 +88,7 @@ namespace CompatBot.EventHandlers
                 {
                     case UnicodeCategory.ModifierSymbol:
                     case UnicodeCategory.NonSpacingMark:
-                        if (++consecutive < 3)
+                        if (++consecutive < 2)
                             builder.Append(c);
                         break;
 
