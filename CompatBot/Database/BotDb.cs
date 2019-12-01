@@ -19,7 +19,7 @@ namespace CompatBot.Database
         public DbSet<Stats> Stats { get; set; }
         public DbSet<Kot> Kot { get; set; }
         public DbSet<Doggo> Doggo { get; set; }
-
+        public DbSet<ForcedNickname> ForcedNicknames { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
@@ -45,6 +45,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasName("stats_category_key");
             modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasName("kot_user_id");
             modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasName("doggo_user_id");
+            modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasName("forced_nickname_guild_id_user_id");
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
@@ -172,5 +173,14 @@ namespace CompatBot.Database
     {
         public int Id { get; set; }
         public ulong UserId { get; set; }
+    }
+
+    internal class ForcedNickname
+    {
+        public int Id { get; set; }
+        public ulong GuildId { set; get; }
+        public ulong UserId { set; get; }
+        [Required]
+        public string Nickname { get; set; }
     }
 }

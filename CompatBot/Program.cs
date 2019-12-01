@@ -146,6 +146,7 @@ namespace CompatBot
                 commands.RegisterCommands<Rpcs3Ama>();
                 commands.RegisterCommands<BotStats>();
                 commands.RegisterCommands<Syscall>();
+                commands.RegisterCommands<ForcedNicknames>();
 
                 commands.CommandErrored += UnknownCommandHandler.OnError;
 
@@ -190,6 +191,7 @@ namespace CompatBot
                     }
                     Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
                 };
+                client.GuildAvailable += gaArgs => UsernameValidationMonitor.MonitorAsync(gaArgs.Client, true);
                 client.GuildUnavailable += guArgs =>
                 {
                     Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
@@ -226,9 +228,11 @@ namespace CompatBot
                 client.GuildMemberAdded += Greeter.OnMemberAdded;
                 client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
                 client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
+                client.GuildMemberAdded += UsernameValidationMonitor.OnMemberAdded;
 
                 client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
                 client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
+                client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
 
                 client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
                 {
@@ -313,7 +317,8 @@ namespace CompatBot
                     backgroundTasks,
                     NewBuildsMonitor.MonitorAsync(client),
                     Watchdog.Watch(client),
-                    InviteWhitelistProvider.CleanupAsync(client)
+                    InviteWhitelistProvider.CleanupAsync(client),
+                    UsernameValidationMonitor.MonitorAsync(client)
                 );
 
                 while (!Config.Cts.IsCancellationRequested)

@@ -33,6 +33,7 @@ namespace CompatBot
         public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
         public static readonly TimeSpan ShutupTimeLimit = TimeSpan.FromMinutes(5);
+        public static readonly TimeSpan ForcedNicknamesRecheckTime = TimeSpan.FromHours(3);
         public static readonly Stopwatch Uptime = Stopwatch.StartNew();
 
         // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
@@ -54,7 +55,6 @@ namespace CompatBot
         public static int BuildNumberDifferenceForOutdatedBuilds => config.GetValue(nameof(BuildNumberDifferenceForOutdatedBuilds), 10);
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
         public static int MaxSyscallResultLines => config.GetValue(nameof(MaxSyscallResultLines), 13);
-
         public static string Token => config.GetValue(nameof(Token), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");

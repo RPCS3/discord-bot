@@ -17,14 +17,21 @@ namespace CompatBot.Utils
         {
             if (guild == null)
                 return GetMember(client, userId);
+
+            return GetMember(client, guild.Id, userId);
+        }
+
+        public static DiscordMember GetMember(this DiscordClient client, ulong guildId, ulong userId)
+        {
             return (from g in client.Guilds
-                    where g.Key == guild.Id
+                    where g.Key == guildId
                     from u in g.Value.Members.Values
                     where u.Id == userId
                     select u
                 ).FirstOrDefault();
         }
 
+        public static DiscordMember GetMember(this DiscordClient client, ulong guildId, DiscordUser user) => GetMember(client, guildId, user.Id);
         public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, DiscordUser user) => GetMember(client, guild, user.Id);
 
         public static DiscordMember GetMember(this DiscordClient client, ulong userId)

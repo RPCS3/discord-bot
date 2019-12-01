@@ -22,7 +22,7 @@ namespace CompatBot.Commands
         [Description("Commands to audit server things")]
         public sealed class Audit: BaseCommandModuleCustom
         {
-            private static readonly SemaphoreSlim CheckLock = new SemaphoreSlim(1, 1);
+            public static readonly SemaphoreSlim CheckLock = new SemaphoreSlim(1, 1);
 
             [Command("spoofing"), Aliases("impersonation"), RequireDirectMessage]
             [Description("Checks every user on the server for name spoofing")]
@@ -79,7 +79,7 @@ namespace CompatBot.Commands
                 }
                 finally
                 {
-                    CheckLock.Release(1);
+                    CheckLock.Release();
                     await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                 }
             }
@@ -115,7 +115,7 @@ namespace CompatBot.Commands
                 }
                 finally
                 {
-                    CheckLock.Release(1);
+                    CheckLock.Release();
                     await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                 }
             }
@@ -160,7 +160,7 @@ namespace CompatBot.Commands
                 }
                 finally
                 {
-                    CheckLock.Release(1);
+                    CheckLock.Release();
                     await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                 }
             }
@@ -243,7 +243,7 @@ namespace CompatBot.Commands
                 }
                 finally
                 {
-                    CheckLock.Release(1);
+                    CheckLock.Release();
                     await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                 }
             }
