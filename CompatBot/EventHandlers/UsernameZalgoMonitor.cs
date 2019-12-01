@@ -70,10 +70,10 @@ namespace CompatBot.EventHandlers
         public static bool NeedsRename(string displayName)
         {
             displayName = displayName?.Normalize().TrimEager();
-            return displayName != StripZalgo(displayName);
+            return displayName != StripZalgo(displayName, 3);
         }
 
-        public static string StripZalgo(string displayName)
+        public static string StripZalgo(string displayName, int level = 2)
         {
             displayName = displayName?.Normalize().TrimEager();
             if (string.IsNullOrEmpty(displayName))
@@ -88,7 +88,7 @@ namespace CompatBot.EventHandlers
                 {
                     case UnicodeCategory.ModifierSymbol:
                     case UnicodeCategory.NonSpacingMark:
-                        if (++consecutive < 2)
+                        if (++consecutive < level)
                             builder.Append(c);
                         break;
 
