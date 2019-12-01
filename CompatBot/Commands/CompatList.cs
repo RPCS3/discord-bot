@@ -249,7 +249,7 @@ Example usage:
                     }
                     finally
                     {
-                        updateCheck.Release(1);
+                        updateCheck.Release();
                     }
                 return false;
             }

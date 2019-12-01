@@ -134,7 +134,7 @@ namespace CompatBot.EventHandlers
                 }
                 finally
                 {
-                    UsernameLock.Release(1);
+                    UsernameLock.Release();
                 }
             result = name.ToCanonicalForm();
             if (UsernameLock.Wait(0))
@@ -144,7 +144,7 @@ namespace CompatBot.EventHandlers
                 }
                 finally
                 {
-                    UsernameLock.Release(1);
+                    UsernameLock.Release();
                 }
             return result;
         }

@@ -191,10 +191,6 @@ namespace CompatBot
                     }
                     Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
                 };
-                client.GuildDownloadCompleted += async gdcArgs =>
-                {
-                    await UsernameValidationMonitor.UpdateMembersNickname(gdcArgs.Client);
-                };
                 client.GuildUnavailable += guArgs =>
                 {
                     Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");

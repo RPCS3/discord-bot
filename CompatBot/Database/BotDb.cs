@@ -178,8 +178,8 @@ namespace CompatBot.Database
     internal class ForcedNickname
     {
         public int Id { get; set; }
-        public ulong UserId { set; get; }
         public ulong GuildId { set; get; }
+        public ulong UserId { set; get; }
         [Required]
         public string Nickname { get; set; }
     }

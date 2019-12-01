@@ -12,8 +12,8 @@ namespace CompatBot.Database.Migrations
                 {
                     id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<ulong>(nullable: false),
                     guild_id = table.Column<ulong>(nullable: false),
+                    user_id = table.Column<ulong>(nullable: false),
                     nickname = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
