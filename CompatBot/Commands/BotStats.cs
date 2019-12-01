@@ -38,6 +38,7 @@ namespace CompatBot.Commands
                                                    true)
                         .AddField("Runtime info", $"Confinement: {SandboxDetector.Detect()}\n" +
                                                   $"OS: {RuntimeEnvironment.OperatingSystem} {RuntimeEnvironment.OperatingSystemVersion}\n" +
+                                                  $"CPUs: {Environment.ProcessorCount}\n" +
                                                   $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);

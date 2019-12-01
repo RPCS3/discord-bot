@@ -159,20 +159,32 @@ namespace CompatBot.Utils
             return c;
         }
 
-        public static string StripInvisible(this string s)
+        public static string StripInvisibleAndDiacritics(this string s)
         {
             if (string.IsNullOrEmpty(s))
                 return s;
 
-            var e = StringInfo.GetTextElementEnumerator(s.Normalize());
+            var e = StringInfo.GetTextElementEnumerator(s.Normalize(NormalizationForm.FormD));
             var result = new StringBuilder();
             while (e.MoveNext())
             {
                 var strEl = e.GetTextElement();
-                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format || strEl[0] == StrikeThroughChar)
-                    continue;
-
-                result.Append(strEl);
+                foreach (var ch in strEl)
+                    switch (char.GetUnicodeCategory(ch))
+                    {
+                        case UnicodeCategory.Control:
+                        case UnicodeCategory.EnclosingMark:
+                        case UnicodeCategory.ConnectorPunctuation:
+                        case UnicodeCategory.Format:
+                        case UnicodeCategory.NonSpacingMark:
+                        case UnicodeCategory.SpacingCombiningMark:
+                            continue;
+                        default:
+                            if (ch == StrikeThroughChar)
+                                continue;
+                            result.Append(ch);
+                            break;
+                    }
             }
             return result.ToString();
         }

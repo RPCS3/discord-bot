@@ -29,7 +29,7 @@ namespace CompatBot.EventHandlers
                 return;
 
 #if !DEBUG
-            if (!args.Channel.Name.Equals("help", StringComparison.InvariantCultureIgnoreCase))
+            if (!"help".Equals(args?.Channel?.Name, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
             if (DateTime.UtcNow - lastMention < ThrottlingThreshold)
