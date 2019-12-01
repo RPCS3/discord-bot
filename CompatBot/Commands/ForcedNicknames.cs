@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
@@ -19,43 +20,81 @@ namespace CompatBot.Commands
         [GroupCommand]
         [Description("Enforces specific nickname for particular user.")]
         public async Task Add(CommandContext ctx, 
-            [Description("Discord user to add to forced nickname list.")] DiscordMember discordMember, 
+            [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
             [Description("Nickname which should be displayed.")] string expectedNickname)
         {
             try
             {
-                if (!(ctx.Guild?.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
-                {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Bot doesn't have required permissions to rename other members", true).ConfigureAwait(false);
-                    return;
-                }
-
                 if (expectedNickname.Length < 2 || expectedNickname.Length > 32)
                 {
                     await ctx.ReactWithAsync( Config.Reactions.Failure, "Nickname must be between 2 and 32 characters long").ConfigureAwait(false);
                     return;
                 }
 
-                using var context = new BotDb();
-                var forcedNickname = context.ForcedNicknames.SingleOrDefault(mem => mem.UserId == discordMember.Id && mem.GuildId == discordMember.Guild.Id);
-                if (forcedNickname is null)
+                List<DiscordGuild> guilds;
+                if (ctx.Guild == null)
                 {
-                    forcedNickname = new ForcedNickname {UserId = discordMember.Id, GuildId = discordMember.Guild.Id, Nickname = expectedNickname};
-                    context.ForcedNicknames.Add(forcedNickname);
+                    guilds = ctx.Client.Guilds?.Values.ToList() ?? new List<DiscordGuild>(0);
+                    if (guilds.Count > 1)
+                        await ctx.RespondAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
+                }
+                else
+                    guilds = new List<DiscordGuild> {ctx.Guild};
+
+                int changed = 0, noPermissions = 0, skipped = 0, failed = 0;
+                using var db = new BotDb();
+                foreach (var guild in guilds)
+                {
+                    var enforceRules = db.ForcedNicknames.FirstOrDefault(mem => mem.UserId == discordUser.Id && mem.GuildId == guild.Id);
+                    if (enforceRules is null)
+                    {
+                        enforceRules = new ForcedNickname {UserId = discordUser.Id, GuildId = guild.Id, Nickname = expectedNickname};
+                        db.ForcedNicknames.Add(enforceRules);
+                    }
+                    else
+                    {
+                        if (enforceRules.Nickname == expectedNickname)
+                        {
+                            skipped++;
+                            continue;
+                        }
+                        enforceRules.Nickname = expectedNickname;
+                    }
+                    if (!(ctx.Guild?.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
+                    {
+                        noPermissions++;
+                        continue;
+                    }
+
+                    if (ctx.Client.GetMember(guild, discordUser) is DiscordMember discordMember)
+                        try
+                        {
+                            await discordMember.ModifyAsync(x => x.Nickname = expectedNickname).ConfigureAwait(false);
+                            changed++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Warn(ex, "Failed to change nickname");
+                            failed++;
+                        }
+                }
+                await db.SaveChangesAsync().ConfigureAwait(false);
+                if (guilds.Count > 1)
+                {
+                    if (changed > 0)
+                        await ctx.ReactWithAsync(Config.Reactions.Success, $"Forced nickname for {discordUser.Mention} in {changed} server{(changed == 1 ? "" : "s")}", true).ConfigureAwait(false);
+                    else
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to force nickname for {discordUser.Mention} in any server").ConfigureAwait(false);
                 }
                 else
                 {
-                    if (forcedNickname.Nickname == expectedNickname)
-                    {
-                        await ctx.ReactWithAsync(Config.Reactions.Failure, "User already has this nickname forced").ConfigureAwait(false);
-                        return;
-                    }
-
-                    forcedNickname.Nickname = expectedNickname;
+                    if (changed > 0)
+                        await ctx.ReactWithAsync(Config.Reactions.Success, $"Forced nickname for {discordUser.Mention}", true).ConfigureAwait(false);
+                    else if (failed > 0)
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to force nickname for {discordUser.Mention}").ConfigureAwait(false);
+                    else if (noPermissions > 0)
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"No permissions to force nickname for {discordUser.Mention}").ConfigureAwait(false);
                 }
-                await context.SaveChangesAsync().ConfigureAwait(false);
-                await discordMember.ModifyAsync(x => x.Nickname = expectedNickname).ConfigureAwait(false);
-                await ctx.ReactWithAsync(Config.Reactions.Success, $"Forced nickname for {discordMember}").ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -66,18 +105,30 @@ namespace CompatBot.Commands
 
         [Command("clear"), Aliases("remove")]
         [Description("Removes nickname restriction from particular user.")]
-        public async Task Remove(CommandContext ctx, [Description("Discord user to remove from forced nickname list.")] DiscordMember discordMember)
+        public async Task Remove(CommandContext ctx, [Description("Discord user to remove from forced nickname list.")] DiscordUser discordUser)
         {
             try
             {
-                using var context = new BotDb();
-                var forcedNickname = context.ForcedNicknames.SingleOrDefault(mem => mem.UserId == discordMember.Id && mem.GuildId == discordMember.Guild.Id);
-                if (forcedNickname is null)
+                using var db = new BotDb();
+                var enforcedRules = ctx.Guild == null
+                    ? await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id).ToListAsync().ConfigureAwait(false)
+                    : await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id && mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
+                if (enforcedRules.Count == 0)
                     return;
 
-                context.ForcedNicknames.Remove(forcedNickname);
-                await context.SaveChangesAsync().ConfigureAwait(false);
-                await discordMember.ModifyAsync(mem => mem.Nickname = default).ConfigureAwait(false);
+                db.ForcedNicknames.RemoveRange(enforcedRules);
+                await db.SaveChangesAsync().ConfigureAwait(false);
+                foreach (var rule in enforcedRules)
+                    if (ctx.Client.GetMember(rule.GuildId, discordUser) is DiscordMember discordMember)
+                        try
+                        {
+                            //todo: change to mem.Nickname = default when the library fixes their shit
+                            await discordMember.ModifyAsync(mem => mem.Nickname = new Optional<string>("")).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Debug(ex);
+                        }
                 await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -91,17 +142,27 @@ namespace CompatBot.Commands
         [Description("Lists all users who has restricted nickname.")]
         public async Task List(CommandContext ctx)
         {
-            using var context = new BotDb();
-            var forcedNicknames = await context.ForcedNicknames.AsNoTracking().Where(mem => mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
+            using var db = new BotDb();
+            var selectExpr = db.ForcedNicknames.AsNoTracking();
+            if (ctx.Guild != null)
+                selectExpr = selectExpr.Where(mem => mem.GuildId == ctx.Guild.Id);
+
+            var forcedNicknames = from m in selectExpr.AsEnumerable()
+                orderby m.UserId, m.Nickname
+                let result = new {m.UserId, m.Nickname}
+                select result;
             var table = new AsciiTable(
-                new AsciiColumn("ID", !(ctx.Channel.IsPrivate || ctx.User.IsWhitelisted(ctx.Client))),
+                new AsciiColumn("ID", !ctx.Channel.IsPrivate || !ctx.User.IsWhitelisted(ctx.Client)),
                 new AsciiColumn("Username"),
                 new AsciiColumn("Forced nickname")
             );
-            foreach (var forcedNickname in forcedNicknames)
+            var previousUser = 0ul;
+            foreach (var forcedNickname in forcedNicknames.Distinct())
             {
-                var username = await ctx.GetUserNameAsync(forcedNickname.UserId).ConfigureAwait(false);
-                table.Add(forcedNickname.UserId.ToString(), username, forcedNickname.Nickname);
+                var sameUser = forcedNickname.UserId == previousUser;
+                var username = sameUser ? "" : await ctx.GetUserNameAsync(forcedNickname.UserId).ConfigureAwait(false);
+                table.Add( sameUser ? "" : forcedNickname.UserId.ToString(), username, forcedNickname.Nickname);
+                previousUser = forcedNickname.UserId;
             }
             await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
         } 

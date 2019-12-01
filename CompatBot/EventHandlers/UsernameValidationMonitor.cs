@@ -27,8 +27,8 @@ namespace CompatBot.EventHandlers
                 if (!(guild.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
                     return;
 
-                using var context = new BotDb();
-                var forcedNickname = await context.ForcedNicknames.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == guildMember.Id && x.GuildId == guildMember.Guild.Id).ConfigureAwait(false);
+                using var db = new BotDb();
+                var forcedNickname = await db.ForcedNicknames.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == guildMember.Id && x.GuildId == guildMember.Guild.Id).ConfigureAwait(false);
                 if (forcedNickname is null)
                     return;
                     
@@ -36,6 +36,7 @@ namespace CompatBot.EventHandlers
                     return;
 
                 await guildMember.ModifyAsync(mem => mem.Nickname = forcedNickname.Nickname).ConfigureAwait(false);
+                Config.Log.Info($"Enforced nickname {forcedNickname.Nickname} for user {guildMember.Id} ({guildMember.Username}#{guildMember.Discriminator})");
             }
             catch (Exception e)
             {
@@ -43,10 +44,12 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task MonitorAsync(DiscordClient client)
+        public static async Task MonitorAsync(DiscordClient client, bool once = false)
         {
-            while (!Config.Cts.IsCancellationRequested)
+            do
             {
+                if (!once)
+                    await Task.Delay(Config.ForcedNicknamesRecheckTime, Config.Cts.Token).ConfigureAwait(false);
                 if (await Moderation.Audit.CheckLock.WaitAsync(0).ConfigureAwait(false))
                     try
                     {
@@ -57,8 +60,8 @@ namespace CompatBot.EventHandlers
                                 if (!(guild.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
                                     continue;
 
-                                using var context = new BotDb();
-                                var forcedNicknames = await context.ForcedNicknames
+                                using var db = new BotDb();
+                                var forcedNicknames = await db.ForcedNicknames
                                     .Where(mem => mem.GuildId == guild.Id)
                                     .ToListAsync()
                                     .ConfigureAwait(false);
@@ -69,7 +72,12 @@ namespace CompatBot.EventHandlers
                                 {
                                     var member = client.GetMember(guild, forced.UserId);
                                     if (member.DisplayName != forced.Nickname)
-                                        try { await member.ModifyAsync(mem => mem.Nickname = forced.Nickname).ConfigureAwait(false); } catch { }
+                                        try
+                                        {
+                                            await member.ModifyAsync(mem => mem.Nickname = forced.Nickname).ConfigureAwait(false);
+                                            Config.Log.Info($"Enforced nickname {forced.Nickname} for user {member.Id} ({member.Username}#{member.Discriminator})");
+                                        }
+                                        catch {}
                                 }
                             }
                             catch (Exception e)
@@ -82,8 +90,7 @@ namespace CompatBot.EventHandlers
                     {
                         Moderation.Audit.CheckLock.Release();
                     }
-                await Task.Delay(Config.ForcedNicknamesRecheckTime, Config.Cts.Token).ConfigureAwait(false);
-            }
+            } while (!Config.Cts.IsCancellationRequested && !once);
         }
     }
 }
