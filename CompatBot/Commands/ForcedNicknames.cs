@@ -21,7 +21,7 @@ namespace CompatBot.Commands
         [Description("Enforces specific nickname for particular user.")]
         public async Task Add(CommandContext ctx, 
             [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
-            [Description("Nickname which should be displayed.")] string expectedNickname)
+            [Description("Nickname which should be displayed."), RemainingText] string expectedNickname)
         {
             try
             {
@@ -147,10 +147,18 @@ namespace CompatBot.Commands
             if (ctx.Guild != null)
                 selectExpr = selectExpr.Where(mem => mem.GuildId == ctx.Guild.Id);
 
-            var forcedNicknames = from m in selectExpr.AsEnumerable()
+            var forcedNicknames = (
+                from m in selectExpr.AsEnumerable()
                 orderby m.UserId, m.Nickname
                 let result = new {m.UserId, m.Nickname}
-                select result;
+                select result
+            ).ToList();
+            if (forcedNicknames.Count == 0)
+            {
+                await ctx.RespondAsync("No users with forced nicknames").ConfigureAwait(false);
+                return;
+            }
+
             var table = new AsciiTable(
                 new AsciiColumn("ID", !ctx.Channel.IsPrivate || !ctx.User.IsWhitelisted(ctx.Client)),
                 new AsciiColumn("Username"),
