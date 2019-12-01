@@ -21,7 +21,7 @@ namespace CompatBot.Commands
         [Description("Enforces specific nickname for particular user.")]
         public async Task Add(CommandContext ctx, 
             [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
-            [Description("Nickname which should be displayed.")] string expectedNickname)
+            [Description("Nickname which should be displayed."), RemainingText] string expectedNickname)
         {
             try
             {
