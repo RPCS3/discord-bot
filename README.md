@@ -9,7 +9,7 @@ You can read the design and implementation notes by visiting the folders in the 
 
 Development Requirements
 ------------------------
-* [.NET Core 3.0 SDK](https://dotnet.microsoft.com/download) or newer
+* [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download) or newer
 * Any text editor, but here are some recommends:
   * [Visual Studio](https://visualstudio.microsoft.com/) (Windows and Mac only, has free Community edition)
   * [Visual Studio Code](https://code.visualstudio.com/) (cross-platform, free)
@@ -17,9 +17,9 @@ Development Requirements
 
 Runtime Requirements
 --------------------
-* [.NET Core 3.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
+* [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
   * needs `dotnet` command available (i.e. alias for the Snap package)
-* [.NET Core 3.0 Runtime for server apps](https://dotnet.microsoft.com/download) or newer for compiled version
+* [.NET Core 3.1 Runtime for server apps](https://dotnet.microsoft.com/download) or newer for compiled version
 * Optionally Google API credentials to access Google Drive:
   * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
   * Select the project and enable [Google Drive API](https://console.developers.google.com/apis/library/drive.googleapis.com)
