@@ -449,6 +449,16 @@ namespace CompatBot.Utils.ResultFormatters
                 return AmdDriverVersionProvider.GetFromVulkanAsync(result).ConfigureAwait(false).GetAwaiter().GetResult();
             }
 
+            if (gpu.Contains("Intel", StringComparison.InvariantCultureIgnoreCase)
+                && Version.TryParse(result, out var ver)
+                && ver.Minor > 400
+                && ver.Build >= 0)
+            {
+                var build = ((ver.Minor & 0b_11) << 12) | ver.Build;
+                var minor = ver.Minor >> 2;
+                return new Version(ver.Major, minor, build).ToString();
+            }
+
             if (result.EndsWith(".0.0"))
                 result = result[..^4];
             if (result.Length > 3 && result[^2] == '.')
