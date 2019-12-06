@@ -273,7 +273,7 @@ Example usage:
             await Task.Delay(5_000).ConfigureAwait(false);
 #endif
             var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-            if (result.Results.Count == 1)
+            if (result.Results?.Count == 1)
                 await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, new List<string>(result.Results.Keys)).ConfigureAwait(false);
             else
                 foreach (var msg in FormatSearchResults(ctx, result))
