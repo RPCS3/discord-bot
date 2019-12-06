@@ -71,7 +71,7 @@ namespace CompatBot.Commands
                     await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
                     if (bigList)
                     {
-                        using var memoryStream = new MemoryStream((int)(fullList.Capacity*1.25));
+                        using var memoryStream = Config.MemoryStreamManager.GetStream();
                         using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
                         await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
                         await streamWriter.FlushAsync().ConfigureAwait(false);

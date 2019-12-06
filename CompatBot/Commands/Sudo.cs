@@ -111,7 +111,7 @@ namespace CompatBot.Commands
                 var logPath = Config.CurrentLogPath;
                 var attachmentSizeLimit = Config.AttachmentSizeLimit;
                 using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                using var result = new MemoryStream((int)Math.Min(attachmentSizeLimit, log.Length));
+                using var result = Config.MemoryStreamManager.GetStream();
                 using (var gzip = new GZipStream(result, CompressionLevel.Optimal, true))
                 {
                     await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
