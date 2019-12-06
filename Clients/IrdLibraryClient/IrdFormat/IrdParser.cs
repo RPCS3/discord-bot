@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using CompatApiClient;
 using Force.Crc32;
 
 namespace IrdLibraryClient.IrdFormat
@@ -21,7 +22,7 @@ namespace IrdLibraryClient.IrdFormat
             {
                 using var compressedStream = new MemoryStream(content, false);
                 using var gzip = new GZipStream(compressedStream, CompressionMode.Decompress);
-                using var decompressedStream = new MemoryStream();
+                using var decompressedStream = ApiConfig.MemoryStreamManager.GetStream();
                 gzip.CopyTo(decompressedStream);
                 content = decompressedStream.ToArray();
             }

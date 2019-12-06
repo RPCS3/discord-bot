@@ -10,6 +10,7 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.Logging;
+using Microsoft.IO;
 using NLog;
 using NLog.Extensions.Logging;
 using NLog.Filters;
@@ -26,6 +27,7 @@ namespace CompatBot
         internal static readonly ILogger Log;
         internal static readonly ILoggerFactory LoggerFactory;
         internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new ConcurrentDictionary<string, string>();
+        internal static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
 
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
         public static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);

@@ -11,7 +11,7 @@ namespace CompatApiClient.Compression
 
         public virtual async Task<long> CompressAsync(Stream source, Stream destination)
         {
-            using var memStream = new MemoryStream();
+            using var memStream = ApiConfig.MemoryStreamManager.GetStream();
             using (var compressed = CreateCompressionStream(memStream))
                 await source.CopyToAsync(compressed).ConfigureAwait(false);
             memStream.Seek(0, SeekOrigin.Begin);
@@ -21,7 +21,7 @@ namespace CompatApiClient.Compression
 
         public virtual async Task<long> DecompressAsync(Stream source, Stream destination)
         {
-            using var memStream = new MemoryStream();
+            using var memStream = ApiConfig.MemoryStreamManager.GetStream();
             using (var decompressed = CreateDecompressionStream(source))
                 await decompressed.CopyToAsync(memStream).ConfigureAwait(false);
             memStream.Seek(0, SeekOrigin.Begin);

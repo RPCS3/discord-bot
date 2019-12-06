@@ -46,8 +46,8 @@ namespace CompatBot.Commands
                 {
                     await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     var members = GetMembers(ctx.Client);
-                    using var compressedResult = new MemoryStream();
-                    using (var memoryStream = new MemoryStream())
+                    using var compressedResult = Config.MemoryStreamManager.GetStream();
+                    using (var memoryStream = Config.MemoryStreamManager.GetStream())
                     {
                         using (var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true))
                         {
@@ -204,8 +204,8 @@ namespace CompatBot.Commands
                         checkedMembers.Add(member);
                     }
 
-                    using var compressedStream = new MemoryStream();
-                    using var uncompressedStream = new MemoryStream();
+                    using var compressedStream = Config.MemoryStreamManager.GetStream();
+                    using var uncompressedStream = Config.MemoryStreamManager.GetStream();
                     using (var writer = new StreamWriter(uncompressedStream, new UTF8Encoding(false), 4096, true))
                     {
                         writer.Write(result.ToString());

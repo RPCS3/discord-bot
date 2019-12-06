@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.IO;
 using NLog;
 
 namespace CompatApiClient
@@ -70,6 +71,7 @@ namespace CompatApiClient
         }
 
         public static readonly ILogger Log;
+        public static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
 
         static ApiConfig()
         {

@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using CompatApiClient;
 using DiscUtils.Iso9660;
 
 namespace IrdLibraryClient.IrdFormat
@@ -10,7 +11,7 @@ namespace IrdLibraryClient.IrdFormat
     {
         public static List<string> GetFilenames(this Ird ird)
         {
-            using var decompressedStream = new MemoryStream();
+            using var decompressedStream = ApiConfig.MemoryStreamManager.GetStream();
             using (var compressedStream = new MemoryStream(ird.Header, false))
             {
                 using var gzip = new GZipStream(compressedStream, CompressionMode.Decompress);

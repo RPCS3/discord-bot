@@ -22,8 +22,8 @@ namespace CompatBot.Commands.Attributes
             if (ctx.Channel.IsPrivate || help)
                 return true;
 
-            using (var stream = new MemoryStream(Poster.Value))
-                await ctx.RespondWithFileAsync("senpai_plz.jpg", stream).ConfigureAwait(false);
+            using var stream = new MemoryStream(Poster.Value);
+            await ctx.RespondWithFileAsync("senpai_plz.jpg", stream).ConfigureAwait(false);
             return false;
         }
     }

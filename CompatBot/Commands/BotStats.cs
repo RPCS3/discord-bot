@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
@@ -30,8 +31,12 @@ namespace CompatBot.Commands
             }
                         .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
                         .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
-                        .AddField("Memory Usage", $"{GC.GetTotalMemory(false).AsStorageUnit()}", true)
                         .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured", true)
+                        .AddField("Memory Usage", $"GC: {GC.GetTotalMemory(false).AsStorageUnit()}\n" +
+                                                  $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
+                                                  $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
+                                                  $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
+                                                  $" S: {Config.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.SmallPoolInUseSize + Config.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}", true)
                         .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
                         .AddField(".NET info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
                                                    $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode",

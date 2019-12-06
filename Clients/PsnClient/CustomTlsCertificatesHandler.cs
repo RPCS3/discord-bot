@@ -32,8 +32,8 @@ namespace PsnClient
                 foreach (var resource in certNames)
                 {
                     using var stream = current.GetManifestResourceStream(resource);
-                    using var memStream = new MemoryStream();
-                    stream.CopyTo(memStream);
+                    using var memStream = ApiConfig.MemoryStreamManager.GetStream();
+                    stream?.CopyTo(memStream);
                     var cert = new X509Certificate2(memStream.ToArray());
                     var cn = cert.GetNameInfo(X509NameType.SimpleName, false);
                     if ((cn?.StartsWith("SCEI DNAS Root") ?? false))

@@ -163,7 +163,7 @@ namespace CompatBot.Database.Providers
                     return (url, null);
 
                 using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
-                using var memStream = new MemoryStream();
+                using var memStream = Config.MemoryStreamManager.GetStream();
                 await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
                 // minimum jpg size is 119 bytes, png is 67 bytes
                 if (memStream.Length < 64)
@@ -190,7 +190,7 @@ namespace CompatBot.Database.Providers
                     return null;
 
                 using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
-                using var memStream = new MemoryStream();
+                using var memStream = Config.MemoryStreamManager.GetStream();
                 await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
                 // minimum jpg size is 119 bytes, png is 67 bytes
                 if (memStream.Length < 64)
