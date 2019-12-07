@@ -295,7 +295,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             }
 
-            string reformatDecoder(string dec)
+            static string reformatDecoder(string dec)
             {
                 if (string.IsNullOrEmpty(dec))
                     return dec;
@@ -303,9 +303,7 @@ namespace CompatBot.Utils.ResultFormatters
                 var match = Regex.Match(dec, @"(?<name>[^(]+)(\((?<type>.+)\))?", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
                 var n = match.Groups["name"].Value.TrimEnd();
                 var t = match.Groups["type"].Value;
-                if (string.IsNullOrEmpty(t))
-                    return n;
-                return $"{n}/{t}";
+                return string.IsNullOrEmpty(t) ? n : $"{n}/{t}";
             }
 
             items["ppu_decoder"] = reformatDecoder(items["ppu_decoder"]);
