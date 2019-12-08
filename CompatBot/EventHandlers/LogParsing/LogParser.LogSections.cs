@@ -206,7 +206,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
-                EndTrigger = new[] {"All threads stopped...", "LDR: Booting from"},
+                EndTrigger = new[] { "Stopping emulator...", "All threads stopped...", "LDR: Booting from"},
             }
         };
 
