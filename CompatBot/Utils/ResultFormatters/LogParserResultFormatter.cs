@@ -148,6 +148,11 @@ namespace CompatBot.Utils.ResultFormatters
             "EP0700-NPEB01158_00-NNKDLFULLGAMEPTB.rap",
         };
 
+        private static readonly HashSet<string> KnownCustomLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "EP4062-NPEB02436_00-PPERSONA5X000000.rap",
+        };
+
         private static readonly TimeSpan OldBuild = TimeSpan.FromDays(30);
         private static readonly TimeSpan VeryOldBuild = TimeSpan.FromDays(60);
         //private static readonly TimeSpan VeryVeryOldBuild = TimeSpan.FromDays(90);
