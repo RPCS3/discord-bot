@@ -519,7 +519,9 @@ namespace CompatBot.Utils.ResultFormatters
                 var gameRegion = items["serial"] is string serial && serial.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
                 var dlcRegions = licenseNames.Select(n => n[9]).Concat(gameRegion).Distinct().ToArray();
                 if (dlcRegions.Length > 1)
-                    generalNotes.Add($"🤔 Very interesting DLC collection from {dlcRegions.Length} different regions you got there");
+                    generalNotes.Add($"🤔 That is a very interesting DLC collection from {dlcRegions.Length} different regions");
+                if (KnownCustomLicenses.Overlaps(licenseNames))
+                    generalNotes.Add("🤔 That is a very interesting license you're missing");
             }
         }
 
