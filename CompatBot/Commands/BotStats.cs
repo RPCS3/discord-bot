@@ -228,12 +228,17 @@ namespace CompatBot.Commands
 
                 var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
                 var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
-                embed.AddField("🐾 Stats", $"🐱 {kots - 1} {sign} {doggos - 1} 🐶", true);
+                var kot = sign == ">" ? GoodKot[new Random().Next(GoodKot.Length)] : sign == ":" ? "🐱" : MeanKot[new Random().Next(MeanKot.Length)];
+                embed.AddField("🐾 Stats", $"{kot} {kots - 1} {sign} {doggos - 1} 🐶", true);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e);
             }
         }
+
+        private static readonly string[] GoodKot = {"😸", "😺", "😻", "😽",};
+        private static readonly string[] MeanKot = {"🙀", "😿", "😾",};
+
     }
 }
