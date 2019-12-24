@@ -29,19 +29,19 @@ namespace CompatBot.Commands
             {
                 Color = DiscordColor.Purple,
             }
-                        .AddField("Current uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
-                        .AddField("Discord latency", $"{ctx.Client.Ping} ms", true)
+                        .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
+                        .AddField("Discord Latency", $"{ctx.Client.Ping} ms", true)
                         .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured", true)
                         .AddField("Memory Usage", $"GC: {GC.GetTotalMemory(false).AsStorageUnit()}\n" +
                                                   $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
                                                   $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
                                                   $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
                                                   $" S: {Config.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.SmallPoolInUseSize + Config.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}", true)
-                        .AddField("GitHub rate limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-                        .AddField(".NET info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
+                        .AddField("GitHub Rate Limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
+                        .AddField(".NET Info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
                                                    $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode",
                                                    true)
-                        .AddField("Runtime info", $"Confinement: {SandboxDetector.Detect()}\n" +
+                        .AddField("Runtime Info", $"Confinement: {SandboxDetector.Detect()}\n" +
                                                   $"OS: {RuntimeEnvironment.OperatingSystem} {RuntimeEnvironment.OperatingSystemVersion}\n" +
                                                   $"CPUs: {Environment.ProcessorCount}\n" +
                                                   $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
@@ -121,7 +121,7 @@ namespace CompatBot.Commands
                 }
                 if (lastWarn.HasValue)
                     statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
-                embed.AddField("Warning stats", statsBuilder.ToString().TrimEnd(), true);
+                embed.AddField("Warning Stats", statsBuilder.ToString().TrimEnd(), true);
             }
             catch (Exception e)
             {
@@ -146,7 +146,7 @@ namespace CompatBot.Commands
                 foreach (var cmdStat in top)
                     statsBuilder.AppendLine($"{n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.##}%)");
                 statsBuilder.AppendLine($"Total commands executed: {totalCalls}");
-                embed.AddField($"Top {top.Count} recent commands", statsBuilder.ToString().TrimEnd(), true);
+                embed.AddField($"Top {top.Count} Recent Commands", statsBuilder.ToString().TrimEnd(), true);
             }
         }
 
@@ -167,7 +167,7 @@ namespace CompatBot.Commands
                 foreach (var explain in top)
                     statsBuilder.AppendLine($"{n++}. {explain.term} ({explain.stat} display{(explain.stat == 1 ? "" : "s")}, {explain.stat * 100.0 / totalExplains:0.##}%)");
                 statsBuilder.AppendLine($"Total explanations shown: {totalExplains}");
-                embed.AddField($"Top {top.Count} recent explanations", statsBuilder.ToString().TrimEnd(), true);
+                embed.AddField($"Top {top.Count} Recent Explanations", statsBuilder.ToString().TrimEnd(), true);
             }
         }
 
@@ -188,7 +188,7 @@ namespace CompatBot.Commands
                 foreach (var title in top)
                     statsBuilder.AppendLine($"{n++}. {title.title.Trim(40)} ({title.stat} search{(title.stat == 1 ? "" : "es")}, {title.stat * 100.0 / totalLookups:0.##}%)");
                 statsBuilder.AppendLine($"Total game lookups: {totalLookups}");
-                embed.AddField($"Top {top.Count} recent game lookups", statsBuilder.ToString().TrimEnd(), true);
+                embed.AddField($"Top {top.Count} Recent Game Lookups", statsBuilder.ToString().TrimEnd(), true);
             }
         }
 
@@ -228,12 +228,17 @@ namespace CompatBot.Commands
 
                 var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
                 var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
-                embed.AddField("🐾 Stats", $"🐱 {kots - 1} {sign} {doggos - 1} 🐶", true);
+                var kot = sign == ">" ? GoodKot[new Random().Next(GoodKot.Length)] : sign == ":" ? "🐱" : MeanKot[new Random().Next(MeanKot.Length)];
+                embed.AddField("🐾 Stats", $"{kot} {kots - 1} {sign} {doggos - 1} 🐶", true);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e);
             }
         }
+
+        private static readonly string[] GoodKot = {"😸", "😺", "😻", "😽",};
+        private static readonly string[] MeanKot = {"🙀", "😿", "😾",};
+
     }
 }

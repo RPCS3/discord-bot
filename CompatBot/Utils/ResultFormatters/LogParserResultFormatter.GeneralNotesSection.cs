@@ -246,6 +246,7 @@ namespace CompatBot.Utils.ResultFormatters
                             || cpu.EndsWith('U')
                             || cpu.EndsWith('M')
                             || cpu.Contains('Y')
+                            || cpu[^2] == 'G'
                             || ((cpu.EndsWith("HQ") || cpu.EndsWith('H'))
                                 && threadCount < 8)))
                         notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");

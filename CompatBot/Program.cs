@@ -165,6 +165,7 @@ namespace CompatBot
                 {
                     await BotStatusMonitor.RefreshAsync(gaArgs.Client).ConfigureAwait(false);
                     Watchdog.DisconnectTimestamps.Clear();
+                    Watchdog.TimeSinceLastIncomingMessage.Restart();
                     if (gaArgs.Guild.Id != Config.BotGuildId)
                     {
 #if DEBUG
@@ -201,6 +202,7 @@ namespace CompatBot
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
+                client.MessageCreated += _ => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
                 client.MessageCreated += ProductCodeLookup.OnMessageCreated;
                 client.MessageCreated += LogParsingHandler.OnMessageCreated;
