@@ -71,7 +71,7 @@ namespace CompatBot.EventHandlers
                                 foreach (var forced in forcedNicknames)
                                 {
                                     var member = client.GetMember(guild, forced.UserId);
-                                    if (member.DisplayName != forced.Nickname)
+                                    if (member?.DisplayName != forced.Nickname)
                                         try
                                         {
                                             await member.ModifyAsync(mem => mem.Nickname = forced.Nickname).ConfigureAwait(false);
