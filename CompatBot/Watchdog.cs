@@ -13,13 +13,14 @@ namespace CompatBot
         private static readonly TimeSpan IncomingMessageCheckInterval = TimeSpan.FromMinutes(10);
         public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new ConcurrentQueue<DateTime>();
         public static readonly Stopwatch TimeSinceLastIncomingMessage = Stopwatch.StartNew();
+        private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < IncomingMessageCheckInterval;
 
         public static async Task Watch(DiscordClient client)
         {
             do
             {
                 await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
-                if (DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < IncomingMessageCheckInterval)
+                if (IsOk)
                     continue;
 
                 try
@@ -27,11 +28,12 @@ namespace CompatBot
                     Config.Log.Warn("Potential socket deadlock detected, reconnecting...");
                     await client.ReconnectAsync(true).ConfigureAwait(false);
                     await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
-                    if (DisconnectTimestamps.IsEmpty)
+                    if (IsOk)
                     {
                         Config.Log.Info("Looks like we're back in business");
                         continue;
                     }
+
                     Config.Log.Error("Hard reconnect failed, restarting...");
                     Sudo.Bot.Restart(Program.InvalidChannelId);
                 }
