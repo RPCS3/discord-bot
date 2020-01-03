@@ -212,7 +212,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"⚠ RPCS3 installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
                 var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
                 if (!string.IsNullOrEmpty(rar))
-                    notes.Add($"❌ RPCS3 is launched from WinRAR; please extract all files instead");
+                    notes.Add("❌ RPCS3 is launched from WinRAR; please extract all files instead");
             }
 
             if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
@@ -245,8 +245,7 @@ namespace CompatBot.Utils.ResultFormatters
                             || cpu.EndsWith('M')
                             || cpu.Contains('Y')
                             || cpu[^2] == 'G'
-                            || ((cpu.EndsWith("HQ") || cpu.EndsWith('H'))
-                                && threadCount < 8)))
+                            || threadCount < 8))
                         notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
                 }
             }
