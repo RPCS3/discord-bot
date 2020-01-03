@@ -204,6 +204,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckGt5Settings(serial, items, notes, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
+                CheckSly4Settings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -871,6 +872,28 @@ namespace CompatBot.Utils.ResultFormatters
             else
             {
                 generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
+            }
+        }
+
+        private static readonly HashSet<string> Sly4Ids = new HashSet<string>
+        {
+            "BCES01284", "BCUS98247", "BCUS99142",
+            "NPEA00429", "NPUA80875",
+            "NPEA90120", "NPUA70250", // demos
+            "NPUA30123", // soundtrack ???
+        };
+
+        private static void CheckSly4Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!Sly4Ids.Contains(serial))
+                return;
+
+            if (items["resolution_scale"] is string resScale
+                && int.TryParse(resScale, out var resScaling)
+                && resScaling > 100
+                && items["cpu_blit"] == DisabledMark)
+            {
+                notes.Add("⚠ Proper resolution scaling requires `Force CPU Blit` to be `Enabled`");
             }
         }
 

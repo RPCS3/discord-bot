@@ -135,6 +135,7 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
             "NPEA00094", "NPEA00250", "NPJA00039", "NPUA80083", // flower
             "NPEA00036", "NPUA80069", "NPJA00004", // locoroco
+            "BCES01284", "BCUS98247", "BCUS99142", "NPEA00429", "NPUA80875", "NPEA90120", "NPUA70250", // sly cooper 4
         };
 
         private static readonly HashSet<string> KnownGamesThatRequireInterpreter = new HashSet<string>
