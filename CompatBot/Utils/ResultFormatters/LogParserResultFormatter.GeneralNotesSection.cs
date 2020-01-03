@@ -20,8 +20,6 @@ namespace CompatBot.Utils.ResultFormatters
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items, DiscordClient discordClient)
         {
             var notes = new List<string>();
-            BuildWeirdSettingsSection(builder, items, notes);
-            BuildMissingLicensesSection(builder, items, notes);
             var (irdChecked, brokenDump, longestPath) = await HasBrokenFilesAsync(items).ConfigureAwait(false);
             brokenDump |= !string.IsNullOrEmpty(items["edat_block_offset"]);
             var elfBootPath = items["elf_boot_path"] ?? "";
@@ -324,15 +322,21 @@ namespace CompatBot.Utils.ResultFormatters
                         {
                             if (driverVersion < AmdRecommendedOldWindowsVersion)
                                 notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
+                            else if (driverVersion > AmdLastGoodOpenGLWindowsVersion)
+                            {
+                                if (items["renderer"] == "OpenGL")
+                                    notes.Add("⚠ AMD drivers 19.12.0 and newer are incompatible with the OpenGL renderer");
+                            }
                         }
                     }
                     else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))
                     {
                         if (IsAmd(gpuInfo))
-                            notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
+                            notes.Add($"❗ Please update your AMD GPU driver to version {AmdLastGoodOpenGLWindowsVersion} or newer");
                     }
                 }
             }
+            items["supported_gpu"] = supportedGpu ? EnabledMark : DisabledMark;
 
             if (!string.IsNullOrEmpty(items["shader_compile_error"]))
             {
@@ -482,6 +486,9 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
+
+            BuildWeirdSettingsSection(builder, items, notes);
+            BuildMissingLicensesSection(builder, items, notes);
 
             var notesContent = new StringBuilder();
             foreach (var line in SortLines(notes, pirateEmoji))

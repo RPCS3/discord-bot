@@ -34,6 +34,10 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["renderer"] == "D3D12")
                 notes.Add("💢 Do **not** use DX12 renderer");
+            if (items["renderer"] == "OpenGL"
+                && items["supported_gpu"] == EnabledMark
+                && !GowHDIds.Contains(serial))
+                notes.Add("⚠ `Vulkan` is the recommended `Renderer`");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
             {
                 if (items["resolution"] != "1920x1080" || !Known1080pIds.Contains(serial))
@@ -59,8 +63,19 @@ namespace CompatBot.Utils.ResultFormatters
                         generalNotes.Add("⚠ This GPU doesn't support required features for proper MSAA implementation");
                 }
             }
+            var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
+                            && gpuInfo.Contains("Radeon RX 5")
+                            && items["os_type"] == "Windows";
             if (items["msaa"] == DisabledMark)
-                notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
+            {
+                if (!isWireframeBugPossible)
+                    notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
+            }
+            else if (items["msaa"] == EnabledMark)
+            {
+                if (isWireframeBugPossible)
+                    notes.Add("⚠ Please disable `Anti-aliasing` if you experience a wireframe-like visual artifacts");
+            }
 
             var vsync = items["vsync"] == EnabledMark;
             string vkPm;
