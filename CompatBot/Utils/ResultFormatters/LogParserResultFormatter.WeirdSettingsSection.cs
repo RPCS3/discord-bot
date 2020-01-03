@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using DSharpPlus.Entities;
 
@@ -64,7 +65,7 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
-                            && gpuInfo.Contains("Radeon RX 5")
+                            && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
                             && items["os_type"] == "Windows";
             if (items["msaa"] == "Disabled")
             {
