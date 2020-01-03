@@ -528,6 +528,7 @@ namespace CompatBot.Utils.ResultFormatters
                     4 => "10 1803",
                     5 => "10 1809",
                     6 => "10 1903",
+                    7 => "10 2004",
                     _ => null,
                 }),
                 _ => null,
@@ -571,7 +572,8 @@ namespace CompatBot.Utils.ResultFormatters
                     int v when v < 18362 => ("10 19H1 Build " + v),
                     18362 => "10 1903",
                     18363 => "10 1909",
-                    int v when v < 20000 => ("10 20H1 Build " + v),
+                    int v when v < 19536 => ("10 20H1 Build " + v),
+                    int v when v < 20000 => ("10 20H2 Build " + v),
                     _ => ("10 ??? Build " + windowsVersion.Build)
                 },
                 _ => null,
