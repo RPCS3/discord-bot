@@ -66,12 +66,12 @@ namespace CompatBot.Utils.ResultFormatters
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
                             && gpuInfo.Contains("Radeon RX 5")
                             && items["os_type"] == "Windows";
-            if (items["msaa"] == DisabledMark)
+            if (items["msaa"] == "Disabled")
             {
                 if (!isWireframeBugPossible)
                     notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
             }
-            else if (items["msaa"] == EnabledMark)
+            else if (items["msaa"] is string msaa && msaa != "Disabled")
             {
                 if (isWireframeBugPossible)
                     notes.Add("⚠ Please disable `Anti-aliasing` if you experience a wireframe-like visual artifacts");
