@@ -54,6 +54,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version NvidiaFullscreenBugMaxVersion = new Version(499, 99);
         private static readonly Version NvidiaRecommendedOldWindowsVersion = new Version(399, 24);
         private static readonly Version AmdRecommendedOldWindowsVersion = new Version(18, 8, 1);
+        private static readonly Version AmdLastGoodOpenGLWindowsVersion = new Version(19, 11, 3);
         private static readonly Version NvidiaFullscreenBugFixed = new Version(0, 0, 6, 8204);
 
         private static readonly Dictionary<string, string> RsxPresentModeMap = new Dictionary<string, string>
@@ -134,6 +135,7 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
             "NPEA00094", "NPEA00250", "NPJA00039", "NPUA80083", // flower
             "NPEA00036", "NPUA80069", "NPJA00004", // locoroco
+            "BCES01284", "BCUS98247", "BCUS99142", "NPEA00429", "NPUA80875", "NPEA90120", "NPUA70250", // sly cooper 4
         };
 
         private static readonly HashSet<string> KnownGamesThatRequireInterpreter = new HashSet<string>
@@ -528,6 +530,7 @@ namespace CompatBot.Utils.ResultFormatters
                     4 => "10 1803",
                     5 => "10 1809",
                     6 => "10 1903",
+                    7 => "10 2004",
                     _ => null,
                 }),
                 _ => null,
@@ -571,7 +574,8 @@ namespace CompatBot.Utils.ResultFormatters
                     int v when v < 18362 => ("10 19H1 Build " + v),
                     18362 => "10 1903",
                     18363 => "10 1909",
-                    int v when v < 20000 => ("10 20H1 Build " + v),
+                    int v when v < 19536 => ("10 20H1 Build " + v),
+                    int v when v < 20000 => ("10 20H2 Build " + v),
                     _ => ("10 ??? Build " + windowsVersion.Build)
                 },
                 _ => null,

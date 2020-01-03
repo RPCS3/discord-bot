@@ -22,7 +22,7 @@ namespace CompatBot.Utils.ResultFormatters
             items["has_tsx"] = hasTsx ? EnabledMark : DisabledMark;
             items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
             if (items["enable_tsx"] == "Disabled" && hasTsx && !hasTsxFa)
-                notes.Add("⚠ TSX support is disabled; performance may suffer");
+                notes.Add("ℹ TSX support is disabled");
             else if (items["enable_tsx"] == "Enabled" && hasTsxFa)
                 notes.Add("⚠ Disable TSX support if you experience performance issues");
             if (items["spu_lower_thread_priority"] == EnabledMark
@@ -34,6 +34,10 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["renderer"] == "D3D12")
                 notes.Add("💢 Do **not** use DX12 renderer");
+            if (items["renderer"] == "OpenGL"
+                && items["supported_gpu"] == EnabledMark
+                && !GowHDIds.Contains(serial))
+                notes.Add("⚠ `Vulkan` is the recommended `Renderer`");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
             {
                 if (items["resolution"] != "1920x1080" || !Known1080pIds.Contains(serial))
@@ -56,11 +60,22 @@ namespace CompatBot.Utils.ResultFormatters
                 if (rsxCaveats.Contains("alpha-to-one for multisampling"))
                 {
                     if (items["msaa"] is string msaa && msaa != "Disabled")
-                        generalNotes.Add("⚠ This GPU doesn't support required features for proper MSAA implementation");
+                        generalNotes.Add("⚠ The drivers or GPU do not support all required features for proper MSAA implementation");
                 }
             }
+            var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
+                            && gpuInfo.Contains("Radeon RX 5")
+                            && items["os_type"] == "Windows";
             if (items["msaa"] == DisabledMark)
-                notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
+            {
+                if (!isWireframeBugPossible)
+                    notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
+            }
+            else if (items["msaa"] == EnabledMark)
+            {
+                if (isWireframeBugPossible)
+                    notes.Add("⚠ Please disable `Anti-aliasing` if you experience a wireframe-like visual artifacts");
+            }
 
             var vsync = items["vsync"] == EnabledMark;
             string vkPm;
@@ -189,6 +204,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckGt5Settings(serial, items, notes, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
+                CheckSly4Settings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -856,6 +872,28 @@ namespace CompatBot.Utils.ResultFormatters
             else
             {
                 generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
+            }
+        }
+
+        private static readonly HashSet<string> Sly4Ids = new HashSet<string>
+        {
+            "BCES01284", "BCUS98247", "BCUS99142",
+            "NPEA00429", "NPUA80875",
+            "NPEA90120", "NPUA70250", // demos
+            "NPUA30123", // soundtrack ???
+        };
+
+        private static void CheckSly4Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!Sly4Ids.Contains(serial))
+                return;
+
+            if (items["resolution_scale"] is string resScale
+                && int.TryParse(resScale, out var resScaling)
+                && resScaling > 100
+                && items["cpu_blit"] == DisabledMark)
+            {
+                notes.Add("⚠ Proper resolution scaling requires `Force CPU Blit` to be `Enabled`");
             }
         }
 
