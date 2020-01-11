@@ -61,7 +61,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (rsxCaveats.Contains("alpha-to-one for multisampling"))
                 {
                     if (items["msaa"] is string msaa && msaa != "Disabled")
-                        generalNotes.Add("⚠ The drivers or GPU do not support all required features for proper MSAA implementation");
+                        generalNotes.Add("⚠ The driver or GPU do not support all required features for proper MSAA implementation");
                 }
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
@@ -265,8 +265,10 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 if (items["os_type"] == "Windows" && !audioBackend.Equals("XAudio2", StringComparison.InvariantCultureIgnoreCase))
                     notes.Add("⚠ Please use `XAudio2` as the audio backend on Windows");
-                else if (items["os_type"] == "Linux" && !audioBackend.Equals("OpenAL", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("ℹ `OpenAL` is the recommended audio backend on Linux");
+                else if (items["os_type"] == "Linux"
+                         && !audioBackend.Equals("OpenAL", StringComparison.InvariantCultureIgnoreCase)
+                         && !audioBackend.Equals("FAudio", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("ℹ `FAudio` and `OpenAL` are the recommended audio backends on Linux");
                 if (audioBackend.Equals("null", StringComparison.InvariantCultureIgnoreCase))
                     notes.Add("⚠ `Audio backend` is set to `null`");
             }
@@ -539,8 +541,8 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["spu_decoder"] is string spuDecoder
                     && spuDecoder.Contains("LLVM")
                     && items["spu_block_size"] is string blockSize
-                    && blockSize != "Mega")
-                    notes.Add("⚠ Please change `SPU Block Size` to `Mega` for this game");
+                    && blockSize != "Safe")
+                    notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
             }
             else if (GowAscIds.Contains(serial))
                 generalNotes.Add("ℹ This game is known to be very unstable");
