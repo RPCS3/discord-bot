@@ -152,6 +152,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly HashSet<string> KnownCustomLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "EP4062-NPEB02436_00-PPERSONA5X000000.rap",
+            "UP2611-NPUB31848_00-PPERSONA5X000000.rap",
         };
 
         private static readonly TimeSpan OldBuild = TimeSpan.FromDays(30);
