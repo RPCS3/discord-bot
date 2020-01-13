@@ -291,7 +291,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
-                if (spuBlockSize == "Giga")
+                if (spuBlockSize != "Safe")
                     notes.Add($"⚠ Please change `SPU Block Size`, `{spuBlockSize}` is currently unstable.");
             }
 
