@@ -206,6 +206,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckGt5Settings(serial, items, notes, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
                 CheckSly4Settings(serial, items, notes, generalNotes);
+                CheckDragonsCrownSettings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -253,7 +254,12 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
-                notes.Add("ℹ `Multithreaded RSX` is enabled");
+            {
+                if (items["fatal_error"] is string fatal && fatal.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR"))
+                    notes.Add("⚠ `Multithreaded RSX` is enabled, please disable for this game");
+                else
+                    notes.Add("ℹ `Multithreaded RSX` is enabled");
+            }
 
             if (!string.IsNullOrEmpty(serial)
                 && KnownMotionControlsIds.Contains(serial)
@@ -285,7 +291,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
-                if (spuBlockSize == "Giga")
+                if (spuBlockSize != "Safe")
                     notes.Add($"⚠ Please change `SPU Block Size`, `{spuBlockSize}` is currently unstable.");
             }
 
@@ -897,6 +903,23 @@ namespace CompatBot.Utils.ResultFormatters
                 && items["cpu_blit"] == DisabledMark)
             {
                 notes.Add("⚠ Proper resolution scaling requires `Force CPU Blit` to be `Enabled`");
+            }
+        }
+
+        private static readonly HashSet<string> DragonsCrownIds = new HashSet<string>
+        {
+            "BCAS20290", "BCAS20298", "BLES01950", "BLJM61041", "BLUS30767",
+            "NPEB01836", "NPUB31235",
+        };
+
+        private static void CheckDragonsCrownSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!DragonsCrownIds.Contains(serial))
+                return;
+
+            if (items["spu_loop_detection"] == EnabledMark)
+            {
+                notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
             }
         }
 
