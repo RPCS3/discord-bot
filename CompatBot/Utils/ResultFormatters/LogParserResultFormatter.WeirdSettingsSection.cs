@@ -206,6 +206,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckGt5Settings(serial, items, notes, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
                 CheckSly4Settings(serial, items, notes, generalNotes);
+                CheckDragonsCrownSettings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -902,6 +903,23 @@ namespace CompatBot.Utils.ResultFormatters
                 && items["cpu_blit"] == DisabledMark)
             {
                 notes.Add("⚠ Proper resolution scaling requires `Force CPU Blit` to be `Enabled`");
+            }
+        }
+
+        private static readonly HashSet<string> DragonsCrownIds = new HashSet<string>
+        {
+            "BCAS20290", "BCAS20298", "BLES01950", "BLJM61041", "BLUS30767",
+            "NPEB01836", "NPUB31235",
+        };
+
+        private static void CheckDragonsCrownSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!DragonsCrownIds.Contains(serial))
+                return;
+
+            if (items["spu_loop_detection"] == EnabledMark)
+            {
+                notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
             }
         }
 
