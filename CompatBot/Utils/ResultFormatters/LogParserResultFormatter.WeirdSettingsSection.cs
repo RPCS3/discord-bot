@@ -253,7 +253,12 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
-                notes.Add("ℹ `Multithreaded RSX` is enabled");
+            {
+                if (items["fatal_error"] is string fatal && fatal.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR"))
+                    notes.Add("⚠ `Multithreaded RSX` is enabled, please disable for this game");
+                else
+                    notes.Add("ℹ `Multithreaded RSX` is enabled");
+            }
 
             if (!string.IsNullOrEmpty(serial)
                 && KnownMotionControlsIds.Contains(serial)
