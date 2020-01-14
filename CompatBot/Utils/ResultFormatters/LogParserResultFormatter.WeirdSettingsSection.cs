@@ -70,7 +70,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["msaa"] == "Disabled")
             {
                 if (!isWireframeBugPossible)
-                    notes.Add("⚠ `Anti-aliasing` is disabled, may result in visual artifacts");
+                    notes.Add("ℹ `Anti-aliasing` is disabled, which may result in visual artifacts");
             }
             else if (items["msaa"] is string msaa && msaa != "Disabled")
             {
@@ -718,7 +718,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["build_branch"] == "mgs4")
             {
-                notes.Clear();
+                //notes.Clear();
                 generalNotes.Add("⚠ Custom RPCS3 builds are not officially supported");
             }
             else

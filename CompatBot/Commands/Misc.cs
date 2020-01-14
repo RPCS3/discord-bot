@@ -450,8 +450,9 @@ namespace CompatBot.Commands
         [Description("Describe Playstation product code")]
         public async Task ProductCode(CommandContext ctx, [RemainingText, Description("Product code such as BLUS12345 or SCES")] string productCode)
         {
-            productCode = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault()?.ToUpperInvariant();
-            if (productCode?.Length > 4)
+            productCode = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault() ?? productCode;
+            productCode = productCode?.ToUpperInvariant();
+            if (productCode?.Length > 3)
             {
                 var dsc = ProductCodeDecoder.Decode(productCode);
                 var info = string.Join('\n', dsc);
