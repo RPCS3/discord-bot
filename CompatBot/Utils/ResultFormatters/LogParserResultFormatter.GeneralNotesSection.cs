@@ -328,6 +328,11 @@ namespace CompatBot.Utils.ResultFormatters
                             }
                         }
                     }
+                    else if (driverVersionString.Contains("newer than", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (items["renderer"] == "OpenGL")
+                            notes.Add("⚠ AMD drivers 19.12.0 and newer are incompatible with the OpenGL renderer");
+                    }
                     else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))
                     {
                         if (IsAmd(gpuInfo))
