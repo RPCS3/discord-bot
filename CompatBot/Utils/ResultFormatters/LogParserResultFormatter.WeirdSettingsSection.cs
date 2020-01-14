@@ -718,7 +718,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["build_branch"] == "mgs4")
             {
-                notes.Clear();
+                //notes.Clear();
                 generalNotes.Add("⚠ Custom RPCS3 builds are not officially supported");
             }
             else
