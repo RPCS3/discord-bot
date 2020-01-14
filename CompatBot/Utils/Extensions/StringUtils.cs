@@ -40,9 +40,9 @@ namespace CompatBot.Utils
         public static string StripMarks(this string str)
         {
             return str?.Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
-                .Replace("®", "", StringComparison.InvariantCultureIgnoreCase)
+                .Replace("®", "")
                 .Replace("(TM)", "", StringComparison.InvariantCultureIgnoreCase)
-                .Replace("™", "", StringComparison.InvariantCultureIgnoreCase);
+                .Replace("™", "");
         }
 
         public static string StripQuotes(this string str)

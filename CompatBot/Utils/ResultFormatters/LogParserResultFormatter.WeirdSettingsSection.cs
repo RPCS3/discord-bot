@@ -544,11 +544,13 @@ namespace CompatBot.Utils.ResultFormatters
             else if (Gow3Ids.Contains(serial))
             {
                 generalNotes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
+                /*
                 if (items["spu_decoder"] is string spuDecoder
                     && spuDecoder.Contains("LLVM")
                     && items["spu_block_size"] is string blockSize
                     && blockSize != "Safe")
                     notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
+            */
             }
             else if (GowAscIds.Contains(serial))
                 generalNotes.Add("ℹ This game is known to be very unstable");

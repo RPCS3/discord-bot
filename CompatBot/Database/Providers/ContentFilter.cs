@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Utils;
-using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using HomoglyphConverter;
@@ -100,7 +99,12 @@ namespace CompatBot.Database.Providers
             if (message.Channel.IsPrivate)
                 return true;
 
+            /*
             if (message.Author.IsBotSafeCheck())
+                return true;
+            */
+
+            if (message.Author.IsCurrent)
                 return true;
 
 #if !DEBUG

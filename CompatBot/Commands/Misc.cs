@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -444,6 +445,29 @@ namespace CompatBot.Commands
             var result = strA.GetFuzzyCoefficientCached(strB);
             return ctx.RespondAsync($"Similarity score is {result:0.######}");
         }
+
+        [Command("productcode"), Aliases("pci", "decode")]
+        [Description("Describe Playstation product code")]
+        public async Task ProductCode(CommandContext ctx, [RemainingText, Description("Product code such as BLUS12345 or SCES")] string productCode)
+        {
+            productCode = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault()?.ToUpperInvariant();
+            if (productCode?.Length > 4)
+            {
+                var dsc = ProductCodeDecoder.Decode(productCode);
+                var info = string.Join('\n', dsc);
+                if (productCode.Length == 9)
+                {
+                    var embed = await ctx.Client.LookupGameInfoAsync(productCode).ConfigureAwait(false);
+                    embed.AddField("Product code info", info);
+                    await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+                }
+                else
+                    await ctx.RespondAsync(info).ConfigureAwait(false);
+            }
+            else
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid product code").ConfigureAwait(false);
+        }
+
 #if DEBUG
         [Command("whitespacetest"), Aliases("wst", "wstest")]
         [Description("Testing discord embeds breakage for whitespaces")]

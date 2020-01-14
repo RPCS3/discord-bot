@@ -38,13 +38,11 @@ namespace CompatBot.EventHandlers
             if (!(args.Channel.Id == Config.BotGeneralChannelId
                   || args.Channel.Name.Equals("help", StringComparison.InvariantCultureIgnoreCase)))
                 return;
-#endif
 
             if (CooldownBuckets.TryGetValue(args.Channel.Id, out var lastCheck)
                 && DateTime.UtcNow - lastCheck < CooldownThreshold)
                 return;
 
-#if !DEBUG
             if (args.Author.IsSmartlisted(args.Client, args.Guild))
                 return;
 #endif
