@@ -222,7 +222,7 @@ namespace CompatBot.Commands
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Updated content filter")).ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                var reportMsg = $"{member.GetMentionWithNickname()} changed content filter: `{filter.String.Sanitize()}`";
+                var reportMsg = $"{member.GetMentionWithNickname()} changed content filter #{filter.Id} (`{filter.Actions.ToFlagsString()}`): `{filter.String.Sanitize()}`";
                 if (!string.IsNullOrEmpty(filter.ValidatingRegex))
                     reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
                 await ctx.Client.ReportAsync("🆙 Content filter updated", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
