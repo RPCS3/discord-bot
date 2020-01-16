@@ -83,6 +83,25 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
             }
+            if (!string.IsNullOrEmpty(desc)
+                && GithubLinksHandler.ImageMarkup.Matches(desc) is MatchCollection imgMatches
+                && imgMatches.Any())
+            {
+                var uniqueLinks = new HashSet<string>(10);
+                foreach (Match m in imgMatches)
+                {
+                    if (m.Groups["img_markup"]?.Value is string str
+                        && !string.IsNullOrEmpty(str)
+                        && uniqueLinks.Add(str))
+                    {
+                        var caption = m.Groups["img_caption"].Value;
+                        var link = m.Groups["img_link"].Value;
+                        if (!string.IsNullOrEmpty(caption))
+                            caption = " " + caption;
+                        desc = desc.Replace(str, $"[🖼{caption}]({link})");
+                    }
+                }
+            }
             desc = desc.Trim(EmbedPager.MaxDescriptionLength);
             builder ??= new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
             var currentCommit = currentPrInfo?.MergeCommitSha;
