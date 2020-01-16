@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -59,9 +60,12 @@ namespace CompatBot.Utils.ResultFormatters
                 && GithubLinksHandler.IssueMention.Matches(desc) is MatchCollection matches
                 && matches.Any())
             {
+                var uniqueLinks = new HashSet<string>(10);
                 foreach (Match m in matches)
                 {
-                    if (m.Groups["issue_mention"]?.Value is string str && !string.IsNullOrEmpty(str))
+                    if (m.Groups["issue_mention"]?.Value is string str
+                        && !string.IsNullOrEmpty(str)
+                        && uniqueLinks.Add(str))
                     {
                         var name = str;
                         var num = m.Groups["number"].Value;
