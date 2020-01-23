@@ -126,6 +126,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPUA80965", "NPEA00452", "NPHA20002", "NPUA98153", // R&C Tools of Destruction
             "BCAS20045", "BCJS30014", "BCJS70004", "BCJS70012",
             "BCKS10054", "BCES00052", "BLES00052",
+            "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
         };
 
         private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
