@@ -143,6 +143,18 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
         };
 
+        private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull = new HashSet<string>
+        {
+            "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758", //rdr
+            "BLJM60314", "BLJM60403", "BLJM61181", "BLKS20315",
+            "NPEB00833", "NPHB00465", "NPHB00466", "NPUB30638", "NPUB30639",
+            "NPUB50139", // max payne 3 / rdr bundle???
+            "BLAS55005", "BLES00246", "BLJM57001", "BLJM67001", "BLKS25001", "BLUS30109", "BLUS30148", //mgs4
+            "NPEB00027", "NPEB02182", "NPEB90116", "NPJB00698", "NPJB90149", "NPUB31633",
+            "NPHB00065", "NPHB00067",
+            "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
+        };
+
         private static readonly HashSet<string> KnownBogusLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "UP0700-NPUB30932_00-NNKDLFULLGAMEPTB.rap",

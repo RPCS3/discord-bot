@@ -16,6 +16,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
+            int.TryParse(items["thread_count"], out var threadCount);
             if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]) || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             var hasTsx = items["cpu_extensions"]?.Contains("TSX") ?? false;
@@ -27,7 +28,6 @@ namespace CompatBot.Utils.ResultFormatters
             else if (items["enable_tsx"] == "Enabled" && hasTsxFa)
                 notes.Add("⚠ Disable TSX support if you experience performance issues");
             if (items["spu_lower_thread_priority"] == EnabledMark
-                && int.TryParse(items["thread_count"], out var threadCount)
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
             if (items["llvm_arch"] is string llvmArch)
@@ -167,6 +167,13 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == EnabledMark)
                 notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+            else if (items["relaxed_zcull"] is string relaxedZcull)
+            {
+                if (relaxedZcull == EnabledMark && !KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
+                    notes.Add("ℹ `Relaxed ZCull Sync` is enabled and can cause performance and visual issues");
+                else if (relaxedZcull == DisabledMark && KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
+                    notes.Add("ℹ Enabling `Relaxed ZCull Sync` for this game may improve performance");
+            }
             if (!KnownFpsUnlockPatchIds.Contains(serial) || !ppuPatches.Any())
             {
                 if (items["vblank_rate"] is string vblank
@@ -201,6 +208,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckGoWSettings(serial, items, notes, generalNotes);
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckTlouSettings(serial, items, notes);
+                CheckRdrSettings(serial, items, notes);
                 CheckMgs4Settings(serial, items, notes, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckGt5Settings(serial, items, notes, generalNotes);
@@ -243,7 +251,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["async_shaders"] == EnabledMark)
                 notes.Add("❔ `Async Shader Compiler` is disabled");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
-                && int.TryParse(driverRecoveryTimeout, out var drtValue) && drtValue != 1000000)
+                && int.TryParse(driverRecoveryTimeout, out var drtValue)
+                && drtValue != 1000000)
             {
                 if (drtValue == 0)
                     notes.Add("⚠ `Driver Recovery Timeout` is set to 0 (infinite), please use default value of 1000000");
@@ -252,11 +261,24 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (drtValue > 10_000_000)
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
             }
+            if (items["driver_wakeup_delay"] is string strDriverWakup
+                && int.TryParse(strDriverWakup, out var driverWakupDelay)
+                && driverWakupDelay > 1)
+            {
+                if (driverWakupDelay > 1000)
+                    notes.Add($"⚠ `Driver Waku-up Delay` is set to {GetTimeFormat(driverWakupDelay)}, and will impact performance");
+                else
+                    notes.Add($"ℹ `Driver Waku-up Delay` is set to {GetTimeFormat(driverWakupDelay)}");
+            }
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
             {
                 if (items["fatal_error"] is string fatal && fatal.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR"))
                     notes.Add("⚠ `Multithreaded RSX` is enabled, please disable for this game");
+                else if (items["write_color_buffers"] == EnabledMark)
+                    notes.Add("⚠ `Multithreaded RSX` is enabled along with `Write Color Buffers` which may cause crashes");
+                else if (threadCount < 6)
+                    notes.Add("⚠ `Multithreaded RSX` is enabled on a CPU with few threads");
                 else
                     notes.Add("ℹ `Multithreaded RSX` is enabled");
             }
@@ -667,8 +689,6 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-
-
         private static readonly HashSet<string> TlouIds = new HashSet<string>
         {
             "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174",
@@ -702,6 +722,20 @@ namespace CompatBot.Utils.ResultFormatters
                 && resolutionScale > 100
                 && items["strict_rendering_mode"] != EnabledMark)
                 notes.Add("⚠ Please set `Resolution Scale` to 100%");
+        }
+
+        private static readonly HashSet<string> RdrIds = new HashSet<string>
+        {
+            "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758",
+            "BLJM60314", "BLJM60403", "BLJM61181", "BLKS20315",
+            "NPEB00833", "NPHB00465", "NPHB00466", "NPUB30638", "NPUB30639",
+            "NPUB50139", // max payne 3 / rdr bundle???
+        };
+
+        private static void CheckRdrSettings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (!RdrIds.Contains(serial))
+                return;
         }
 
         private static readonly HashSet<string> Mgs4Ids = new HashSet<string>
