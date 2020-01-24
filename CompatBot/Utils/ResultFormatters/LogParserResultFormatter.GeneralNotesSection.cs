@@ -226,9 +226,6 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         if (threadCount < 12)
                             notes.Add("⚠ Six cores or more is recommended for Ryzen CPUs");
-                        if (items["os_type"] != "Linux"
-                            && items["thread_scheduler"] == DisabledMark)
-                            notes.Add("⚠ Please enable `Thread scheduler` option in the CPU Settings");
                     }
                     else
                         notes.Add("⚠ AMD CPUs before Ryzen are too weak for PS3 emulation");

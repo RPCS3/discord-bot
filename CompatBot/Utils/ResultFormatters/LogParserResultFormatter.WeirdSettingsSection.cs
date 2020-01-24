@@ -30,6 +30,25 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
+            if (items["cpu_model"] is string cpu
+                && cpu.StartsWith("AMD")
+                && cpu.Contains("Ryzen")
+                && items["os_type"] != "Linux")
+            {
+                if (Version.TryParse(items["os_version"], out var winVer)
+                    && (winVer.Major < 10 || (winVer.Major == 10 && winVer.Build < 18362))) // everything before win 10 1903
+                {
+                    if (items["thread_scheduler"] == DisabledMark)
+                        notes.Add("⚠ Please enable `Thread Scheduler` option in the CPU Settings");
+                }
+                else
+                {
+                    if (items["thread_scheduler"] == DisabledMark)
+                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                    else
+                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                }
+            }
             if (items["llvm_arch"] is string llvmArch)
                 notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
 
