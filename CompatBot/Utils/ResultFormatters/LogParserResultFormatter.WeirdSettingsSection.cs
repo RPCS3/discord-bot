@@ -49,11 +49,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["stretch_to_display"] == EnabledMark)
                 notes.Add("🤢 `Stretch to Display Area` is enabled");
-            if (KnownDisableVertexCacheIds.Contains(serial))
-            {
-                if (items["vertex_cache"] == DisabledMark)
-                    notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
-            }
+            var vertexCacheDisabled = items["vertex_cache"] == EnabledMark || items["mtrsx"] == EnabledMark;
+            if (KnownDisableVertexCacheIds.Contains(serial) && !vertexCacheDisabled)
+                notes.Add("⚠ This game requires disabling `Vertex Cache` option");
 
             if (items["rsx_not_supported"] is string notSupported)
             {
@@ -155,9 +153,10 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
             }
             if (items["vertex_cache"] == EnabledMark
+                && items["mtrsx"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
                 && !KnownDisableVertexCacheIds.Contains(serial))
-                notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
+                notes.Add("ℹ `Vertex Cache` is disabled, and may impact performance");
             if (items["frame_skip"] == EnabledMark)
                 notes.Add("⚠ `Frame Skip` is enabled, please disable");
             if (items["cpu_blit"] is string cpuBlit

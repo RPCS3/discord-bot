@@ -95,6 +95,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly string[] KnownDisableVertexCacheIds =
         {
             "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
+            "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
         };
 
         private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
