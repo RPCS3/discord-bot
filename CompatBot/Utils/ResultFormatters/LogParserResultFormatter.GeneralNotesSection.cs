@@ -226,9 +226,6 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         if (threadCount < 12)
                             notes.Add("⚠ Six cores or more is recommended for Ryzen CPUs");
-                        if (items["os_type"] != "Linux"
-                            && items["thread_scheduler"] == DisabledMark)
-                            notes.Add("⚠ Please enable `Thread scheduler` option in the CPU Settings");
                     }
                     else
                         notes.Add("⚠ AMD CPUs before Ryzen are too weak for PS3 emulation");
@@ -245,7 +242,7 @@ namespace CompatBot.Utils.ResultFormatters
                             || cpu.EndsWith('M')
                             || cpu.Contains('Y')
                             || cpu[^2] == 'G'
-                            || threadCount < 8))
+                            || threadCount < 6))
                         notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
                 }
             }

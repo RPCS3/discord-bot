@@ -95,6 +95,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly string[] KnownDisableVertexCacheIds =
         {
             "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
+            "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
         };
 
         private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
@@ -126,6 +127,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPUA80965", "NPEA00452", "NPHA20002", "NPUA98153", // R&C Tools of Destruction
             "BCAS20045", "BCJS30014", "BCJS70004", "BCJS70012",
             "BCKS10054", "BCES00052", "BLES00052",
+            "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
         };
 
         private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
@@ -262,7 +264,7 @@ namespace CompatBot.Utils.ResultFormatters
                 items["gpu_info"] = items["gpu_info"].StripMarks();
                 items["driver_version_info"] = GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
                                                GetVulkanDriverVersion(items["gpu_info"], items["vulkan_found_device"]) ??
-                                                GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ?? 
+                                               GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
                                                GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
             }
             if (items["driver_version_info"] != null)

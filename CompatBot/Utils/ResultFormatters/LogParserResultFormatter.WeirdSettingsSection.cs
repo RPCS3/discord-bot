@@ -30,6 +30,25 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
+            if (items["cpu_model"] is string cpu
+                && cpu.StartsWith("AMD")
+                && cpu.Contains("Ryzen")
+                && items["os_type"] != "Linux")
+            {
+                if (Version.TryParse(items["os_version"], out var winVer)
+                    && (winVer.Major < 10 || (winVer.Major == 10 && winVer.Build < 18362))) // everything before win 10 1903
+                {
+                    if (items["thread_scheduler"] == DisabledMark)
+                        notes.Add("⚠ Please enable `Thread Scheduler` option in the CPU Settings");
+                }
+                else
+                {
+                    if (items["thread_scheduler"] == DisabledMark)
+                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                    else
+                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                }
+            }
             if (items["llvm_arch"] is string llvmArch)
                 notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
 
@@ -49,11 +68,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["stretch_to_display"] == EnabledMark)
                 notes.Add("🤢 `Stretch to Display Area` is enabled");
-            if (KnownDisableVertexCacheIds.Contains(serial))
-            {
-                if (items["vertex_cache"] == DisabledMark)
-                    notes.Add("⚠ This game requires disabling `Vertex Cache` in the GPU tab of the Settings");
-            }
+            var vertexCacheDisabled = items["vertex_cache"] == EnabledMark || items["mtrsx"] == EnabledMark;
+            if (KnownDisableVertexCacheIds.Contains(serial) && !vertexCacheDisabled)
+                notes.Add("⚠ This game requires disabling `Vertex Cache` option");
 
             if (items["rsx_not_supported"] is string notSupported)
             {
@@ -155,9 +172,10 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
             }
             if (items["vertex_cache"] == EnabledMark
+                && items["mtrsx"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
                 && !KnownDisableVertexCacheIds.Contains(serial))
-                notes.Add("⚠ `Vertex Cache` is disabled, please re-enable");
+                notes.Add("ℹ `Vertex Cache` is disabled, and may impact performance");
             if (items["frame_skip"] == EnabledMark)
                 notes.Add("⚠ `Frame Skip` is enabled, please disable");
             if (items["cpu_blit"] is string cpuBlit
@@ -261,14 +279,14 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (drtValue > 10_000_000)
                     notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
             }
-            if (items["driver_wakeup_delay"] is string strDriverWakup
-                && int.TryParse(strDriverWakup, out var driverWakupDelay)
-                && driverWakupDelay > 1)
+            if (items["driver_wakeup_delay"] is string strDriverWakeup
+                && int.TryParse(strDriverWakeup, out var driverWakeupDelay)
+                && driverWakeupDelay > 1)
             {
-                if (driverWakupDelay > 1000)
-                    notes.Add($"⚠ `Driver Waku-up Delay` is set to {GetTimeFormat(driverWakupDelay)}, and will impact performance");
+                if (driverWakeupDelay > 1000)
+                    notes.Add($"⚠ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}, and will impact performance");
                 else
-                    notes.Add($"ℹ `Driver Waku-up Delay` is set to {GetTimeFormat(driverWakupDelay)}");
+                    notes.Add($"ℹ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}");
             }
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
