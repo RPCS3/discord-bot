@@ -160,6 +160,7 @@ namespace CompatBot.EventHandlers
                 return;
 
             var members = users
+                .Distinct()
                 .Select(u => channel.Guild
                             .GetMemberAsync(u.Id)
                             .ContinueWith(ct => ct.IsCompletedSuccessfully ? ct : Task.FromResult((DiscordMember)null), TaskScheduler.Default))
