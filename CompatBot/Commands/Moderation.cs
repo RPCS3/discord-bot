@@ -140,7 +140,7 @@ namespace CompatBot.Commands
                 return;
             }
 
-            await ctx.Client.ReportAsync("👀 Message report", msg, new[] {ctx.Message.Author}, comment, ReportSeverity.Medium).ConfigureAwait(false);
+            await ctx.Client.ReportAsync("👀 Message report", msg, new[] {ctx.Client.GetMember(ctx.Message.Author)}, comment, ReportSeverity.Medium).ConfigureAwait(false);
             await msg.ReactWithAsync(Config.Reactions.Moderated).ConfigureAwait(false);
             await ctx.ReactWithAsync(Config.Reactions.Success, "Message reported").ConfigureAwait(false);
         }
