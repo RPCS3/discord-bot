@@ -156,7 +156,11 @@ namespace CompatBot.EventHandlers
                 return;
 
             var users = await message.GetReactionsAsync(emoji).ConfigureAwait(false);
+            if (users.Any(u => u.IsCurrent))
+                return;
+
             var members = users
+                .Distinct()
                 .Select(u => channel.Guild
                             .GetMemberAsync(u.Id)
                             .ContinueWith(ct => ct.IsCompletedSuccessfully ? ct : Task.FromResult((DiscordMember)null), TaskScheduler.Default))
@@ -164,15 +168,7 @@ namespace CompatBot.EventHandlers
                 .Select(t => t.Unwrap().ConfigureAwait(false).GetAwaiter().GetResult())
                 .Where(m => m != null)
                 .ToList();
-            var reporters = new List<DiscordMember>(Config.Moderation.StarbucksThreshold);
-            foreach (var member in members)
-            {
-                if (member.IsCurrent)
-                    return;
-
-                if (member.Roles.Any())
-                    reporters.Add(member);
-            }
+            var reporters = members.Where(m => m.Roles.Any()).ToList();
             if (reporters.Count < Config.Moderation.StarbucksThreshold)
                 return;
 
