@@ -318,11 +318,6 @@ namespace CompatBot.Utils.ResultFormatters
                         {
                             if (driverVersion < AmdRecommendedOldWindowsVersion)
                                 notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
-                            else if (driverVersion > AmdLastGoodOpenGLWindowsVersion)
-                            {
-                                if (items["renderer"] == "OpenGL")
-                                    notes.Add("⚠ AMD drivers 19.12.0 and newer are incompatible with the OpenGL renderer");
-                            }
                         }
                     }
                     else if (driverVersionString.Contains("newer than", StringComparison.InvariantCultureIgnoreCase))
