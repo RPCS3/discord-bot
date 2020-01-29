@@ -28,10 +28,11 @@ namespace PsnClient
         private static readonly Regex ContainerIdLink = new Regex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
         private static readonly string[] KnownStoreLocales =
         {
-            "en-US", "en-GB", "en-AE", "en-AR", "en-AU", "en-BG", "en-BH", "en-BR", "en-CA", "en-CL", "en-CO", "en-CY", "en-CZ", "en-DK", "en-FI", "en-GR", "en-HK", "en-HR", "en-HU", "en-ID",
-            "en-IE", "en-IL", "en-IN", "en-IS", "en-KW", "en-LB", "en-MT", "en-MX", "en-MY", "en-NO", "en-NZ", "en-OM", "en-PE", "en-PL", "en-QA", "en-RO", "en-SA", "en-SE", "en-SG", "en-SI",
-            "en-SK", "en-TH", "en-TR", "en-TW", "en-ZA", "ja-JP", "de-AT", "de-CH", "de-DE", "de-LU", "es-BO", "es-CR", "es-EC", "es-ES", "es-GT", "es-HN", "es-NI", "es-PA", "es-PY", "es-SV",
-            "es-UY", "fr-BE", "fr-FR", "it-IT", "ko-KR", "nl-NL", "pt-PT", "ru-RU", "ru-UA", "zh-Hans-CN"
+            "en-US", "en-GB", "en-AE", "en-AU", "en-BG", "en-BH", "en-CA", "en-CY", "en-CZ", "en-DK", "en-FI", "en-GR", "en-HK", "en-HR", "en-HU", "en-ID", "en-IE", "en-IL", "en-IN", "en-IS",
+            "en-KW", "en-LB", "en-MT", "en-MY", "en-NO", "en-NZ", "en-OM", "en-PL", "en-QA", "en-RO", "en-SA", "en-SE", "en-SG", "en-SI", "en-SK", "en-TH", "en-TR", "en-TW", "en-ZA", "ja-JP",
+            "ar-AE", "ar-BH", "ar-KW", "ar-LB", "ar-OM", "ar-QA", "ar-SA", "da-DK", "de-AT", "de-CH", "de-DE", "de-LU", "es-AR", "es-BO", "es-CL", "es-CO", "es-CR", "es-EC", "es-ES", "es-GT",
+            "es-HN", "es-MX", "es-NI", "es-PA", "es-PE", "es-PY", "es-SV", "es-UY", "fi-FI", "fr-BE", "fr-CA", "fr-CH", "fr-FR", "fr-LU", "it-CH", "it-IT", "ko-KR", "nl-BE", "nl-NL", "no-NO",
+            "pl-PL", "pt-BR", "pt-PT", "ru-RU", "ru-UA", "sv-SE", "tr-TR", "zh-Hans-CN", "zh-Hans-HK", "zh-Hant-HK", "zh-Hant-TW",
         };
         // Dest=87;ImageVersion=0001091d;SystemSoftwareVersion=4.8500;CDN=http://duk01.ps3.update.playstation.net/update/ps3/image/uk/2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP;CDN_Timeout=30;
         private static readonly Regex FwVersionInfo = new Regex(@"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
