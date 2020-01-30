@@ -54,7 +54,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["custom config:"] = new Regex(@"custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
                 },
                 OnNewLineAsync = PiracyCheckAsync,
-                EndTrigger = new[] {"Core:"},
+                EndTrigger = new[] {"Used configuration:"},
             },
             new LogSection
             {
