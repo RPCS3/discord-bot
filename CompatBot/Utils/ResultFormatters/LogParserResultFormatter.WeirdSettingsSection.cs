@@ -47,9 +47,9 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                 {
                     if (items["thread_scheduler"] == DisabledMark)
-                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
+                        notes.Add("ℹ Enabling `Thread Scheduler` may or may not increase performance");
                     else
-                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
+                        notes.Add("ℹ Disabling `Thread Scheduler` may or may not increase performance");
                 }
             }
             if (items["llvm_arch"] is string llvmArch)
@@ -89,7 +89,7 @@ namespace CompatBot.Utils.ResultFormatters
                         }
                     }
                     else
-                        notes.Add($"ℹ Setting `Aspect Ratio` to {ratio.numerator}:{ratio.denumerator} may improve compatibility");
+                        notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
                     if (!serial.StartsWith('S')
                         && height < 720)
                         notes.Add("⚠ `Resolution` below 720p will not improve performance");
@@ -107,7 +107,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (rsxCaveats.Contains("alpha-to-one for multisampling"))
                 {
                     if (items["msaa"] is string msaa && msaa != "Disabled")
-                        generalNotes.Add("⚠ The driver or GPU do not support all required features for proper MSAA implementation");
+                        generalNotes.Add("⚠ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
                 }
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
