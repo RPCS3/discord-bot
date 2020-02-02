@@ -314,7 +314,7 @@ namespace CompatBot.Utils.ResultFormatters
                                     notes.Add("ℹ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
                             }
                         }
-                        else if (IsAmd(gpuInfo))
+                        else if (IsAmd(gpuInfo) && items["os_type"] == "Windows")
                         {
                             if (driverVersion < AmdRecommendedOldWindowsVersion)
                                 notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
