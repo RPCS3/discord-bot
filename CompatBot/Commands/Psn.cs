@@ -47,13 +47,11 @@ namespace CompatBot.Commands
         [Description("Forces a full PSN rescan")]
         public async Task Rescan(CommandContext ctx)
         {
-            using (var db = new ThumbnailDb())
-            {
-                var items = db.State.ToList();
-                foreach (var state in items)
-                    state.Timestamp = 0;
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-            }
+            using var db = new ThumbnailDb();
+            var items = db.State.ToList();
+            foreach (var state in items)
+                state.Timestamp = 0;
+            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             await ctx.ReactWithAsync(Config.Reactions.Success, "Reset state timestamps").ConfigureAwait(false);
         }
 
@@ -79,6 +77,22 @@ namespace CompatBot.Commands
         [Command("search")]
         public Task Search(CommandContext ctx, [RemainingText] string search)
             => SearchForGame(ctx, search, 10);
+
+        [Command("rename"), Aliases("setname", "settitle"), RequiresBotModRole]
+        [Description("Command to set or change game title for specific product code")]
+        public async Task Rename(CommandContext ctx, [Description("Product code such as BLUS12345")] string productCode, [RemainingText, Description("New game title to save in the database")] string title)
+        {
+            using var db = new ThumbnailDb();
+            var item = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
+            if (item == null) 
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Unknown product code {productCode}", true).ConfigureAwait(false);
+            else
+            {
+                item.Name = title;
+                await db.SaveChangesAsync().ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Success, "Title updated successfully").ConfigureAwait(false);
+            }
+        }
 
         public static async Task SearchForGame(CommandContext ctx, string search, int maxResults)
         {
