@@ -157,9 +157,19 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
             }
-            if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) &&
-                resScaleFactor < 100)
-                notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
+            if (items["resolution_scale"] is string resScale
+                && int.TryParse(resScale, out var resScaleFactor))
+            {
+                if (resScaleFactor < 100)
+                    notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
+                if (resScaleFactor != 100
+                    && items["texture_scale_threshold"] is string thresholdStr
+                    && int.TryParse(thresholdStr, out var threshold)
+                    && threshold < 16)
+                {
+                    notes.Add("⚠ `Resolution Scaling Threshold` below `16x16` may result in corrupted visuals and game crash");
+                }
+            }
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"], true);
             var ppuHashes = GetHashes(items["ppu_hash"]);
             if (items["write_color_buffers"] == DisabledMark
