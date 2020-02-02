@@ -66,11 +66,34 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["resolution"] != "1920x1080" || !Known1080pIds.Contains(serial))
                     notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
                 var dimensions = items["resolution"].Split("x");
-                if (!serial.StartsWith('S')
-                    && dimensions.Length > 1
-                    && int.TryParse(dimensions[1], out var height)
-                    && height < 720)
-                    notes.Add("⚠ `Resolution` below 720p will not improve performance");
+                if (dimensions.Length > 1
+                    && int.TryParse(dimensions[0], out var width)
+                    && int.TryParse(dimensions[1], out var height))
+                {
+                    var ratio = Reduce(width, height);
+                    if (ratio == (8, 5))
+                        ratio = (16, 10);
+                    if (items["aspect_ratio"] is string strAr
+                        && strAr != "Auto")
+                    {
+                        var arParts = strAr.Split(':');
+                        if (arParts.Length > 1
+                            && int.TryParse(arParts[0], out var arWidth)
+                            && int.TryParse(arParts[1], out var arHeight))
+                        {
+                            var arRatio = Reduce(arWidth, arHeight);
+                            if (arRatio == (8, 5))
+                                arRatio = (16, 10);
+                            if (arRatio != ratio) 
+                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {strAr}");
+                        }
+                    }
+                    else
+                        notes.Add($"ℹ Setting `Aspect Ratio` to {ratio.numerator}:{ratio.denumerator} may improve compatibility");
+                    if (!serial.StartsWith('S')
+                        && height < 720)
+                        notes.Add("⚠ `Resolution` below 720p will not improve performance");
+                }
             }
             if (items["stretch_to_display"] == EnabledMark)
                 notes.Add("🤢 `Stretch to Display Area` is enabled");

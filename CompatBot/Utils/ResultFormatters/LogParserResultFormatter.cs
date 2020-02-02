@@ -756,5 +756,29 @@ namespace CompatBot.Utils.ResultFormatters
             }
             return builder;
         }
+
+        private static (int numerator, int denumerator) Reduce(int numerator, int denumerator)
+        {
+            var gcd = Gcd(numerator, denumerator);
+            return (numerator / gcd, denumerator / gcd);
+        }
+
+        private static int Gcd(int a, int b)
+        {
+            while (a != b)
+            {
+                if (a % b == 0)
+                    return b;
+
+                if (b % a == 0)
+                    return a;
+
+                if (a > b)
+                    a -= b;
+                if (b > a)
+                    b -= a;
+            }
+            return a;
+        }
     }
 }
