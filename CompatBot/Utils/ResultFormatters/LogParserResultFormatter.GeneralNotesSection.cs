@@ -314,7 +314,7 @@ namespace CompatBot.Utils.ResultFormatters
                                     notes.Add("ℹ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
                             }
                         }
-                        else if (IsAmd(gpuInfo))
+                        else if (IsAmd(gpuInfo) && items["os_type"] == "Windows")
                         {
                             if (driverVersion < AmdRecommendedOldWindowsVersion)
                                 notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
@@ -352,9 +352,10 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ Audio backend issues detected; check for high audio driver/sink latency");
             }
 
-            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
-            var ovlPatches = GetPatches(items["ovl_hash"], items["ovl_hash_patch"]);
-            var spuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"]);
+            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"], true);
+            var ovlPatches = GetPatches(items["ovl_hash"], items["ovl_hash_patch"], true);
+            var allSpuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"], false);
+            var spuPatches = new Dictionary<string, int>(allSpuPatches.Where(kvp => kvp.Value != 0));
             if (ppuPatches.Any() || spuPatches.Any() || ovlPatches.Any())
             {
                 var patchCount = "";
@@ -384,6 +385,14 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
                 if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
                     notes.Add("⚠ An old version of the 60 fps patch is used");
+            }
+            var mlaaHashes = KnownMlaaSpuHashes.Intersect(allSpuPatches.Keys).ToList();
+            if (mlaaHashes.Count != 0)
+            {
+                if (mlaaHashes.Any(h => allSpuPatches[h] != 0))
+                    notes.Add("ℹ MLAA patch was applied");
+                else
+                    notes.Add("ℹ This game has MLAA disable patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#SPU_MLAA)");
             }
 
             if (items["game_version"] is string gameVer)

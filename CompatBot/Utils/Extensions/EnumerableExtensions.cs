@@ -44,5 +44,8 @@ namespace CompatBot.Utils
             else
                 return default;
         }
+
+        public static bool AnyPatchesApplied(this Dictionary<string, int> patches)
+            => patches.Values.Any(v => v > 0);
     }
 }

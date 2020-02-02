@@ -44,9 +44,9 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                 {
                     if (items["thread_scheduler"] == DisabledMark)
-                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
                     else
-                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
                 }
             }
             if (items["llvm_arch"] is string llvmArch)
@@ -157,16 +157,26 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
             }
-            if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) &&
-                resScaleFactor < 100)
-                notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
-            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+            if (items["resolution_scale"] is string resScale
+                && int.TryParse(resScale, out var resScaleFactor))
+            {
+                if (resScaleFactor < 100)
+                    notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
+                if (resScaleFactor != 100
+                    && items["texture_scale_threshold"] is string thresholdStr
+                    && int.TryParse(thresholdStr, out var threshold)
+                    && threshold < 16)
+                {
+                    notes.Add("⚠ `Resolution Scaling Threshold` below `16x16` may result in corrupted visuals and game crash");
+                }
+            }
+            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"], true);
             var ppuHashes = GetHashes(items["ppu_hash"]);
             if (items["write_color_buffers"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
                 && KnownWriteColorBuffersIds.Contains(serial))
             {
-                if (DesIds.Contains(serial) && ppuPatches.Any())
+                if (DesIds.Contains(serial) && ppuPatches.Count != 0)
                     notes.Add("ℹ `Write Color Buffers` is disabled");
                 else
                     notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
@@ -192,7 +202,7 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (relaxedZcull == DisabledMark && KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
                     notes.Add("ℹ Enabling `Relaxed ZCull Sync` for this game may improve performance");
             }
-            if (!KnownFpsUnlockPatchIds.Contains(serial) || !ppuPatches.Any())
+            if (!KnownFpsUnlockPatchIds.Contains(serial) || ppuPatches.Count == 0)
             {
                 if (items["vblank_rate"] is string vblank
                     && int.TryParse(vblank, out var vblankRate)
