@@ -319,6 +319,12 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (af == "1")
                     items["af_override"] = "Disabled";
             }
+            if (items["zcull"] == "true")
+                items["zcull_status"] = DisabledMark;
+            else if (items["relaxed_zcull"] == "true")
+                items["zcull_status"] = "Relaxed";
+            else
+                items["zcull_status"] = EnabledMark;
             if (items["lib_loader"] is string libLoader)
             {
                 var liblv2 = libLoader.Contains("liblv2", StringComparison.InvariantCultureIgnoreCase);
