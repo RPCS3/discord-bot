@@ -44,9 +44,9 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                 {
                     if (items["thread_scheduler"] == DisabledMark)
-                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
                     else
-                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may increase performance");
+                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
                 }
             }
             if (items["llvm_arch"] is string llvmArch)
