@@ -62,7 +62,10 @@ namespace CompatBot.EventHandlers.LogParsing
                 } while (lineEnd != null);
 
                 if (result.IsCanceled || cancellationToken.IsCancellationRequested)
-                    state.Error = LogParseState.ErrorCode.SizeLimit;
+                {
+                    if (state.Error == LogParseState.ErrorCode.None)
+                        state.Error = LogParseState.ErrorCode.SizeLimit;
+                }
                 else if (result.IsCompleted)
                     await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                 var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;

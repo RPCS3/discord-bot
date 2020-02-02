@@ -152,12 +152,6 @@ namespace CompatBot.EventHandlers
                                         }
                                         try
                                         {
-                                            /*
-                                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                                $"{message.Author.Mention}, please read carefully:",
-                                                embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
-                                            ).ConfigureAwait(false);
-                                            */
                                             botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                                 $"{message.Author.Mention}, please read carefully:\n" +
                                                 "🏴‍☠️ **Pirated content detected** 🏴‍☠️\n" +
