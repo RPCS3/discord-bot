@@ -47,6 +47,18 @@ namespace CompatBot.Commands
             "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means", "👎",
         };
 
+        private static readonly List<string> EightBallSnarkyComments = new List<string>
+        {
+            "Can't answer the question that wasn't asked",
+            "Having issues with my mind reading attachment, you'll have to state your question explicitly",
+            "Bad reception on your brain waves today, can't read the question",
+            "What should the answer be for the question that wasn't asked 🤔",
+            "In Discord no one can read your question if you don't type it",
+            "In space no one can hear you scream; that's what you're doing right now",
+            "Unfortunately there's no technology to transmit your question telepathically just yet",
+            "I'd say maybe, but I'd need to see your question first",
+        };
+
         private static readonly List<string> EightBallTimeUnits = new List<string>
         {
             "second", "minute", "hour", "day", "week", "month", "year", "decade", "century", "millennium",
@@ -215,8 +227,9 @@ namespace CompatBot.Commands
             else
             {
                 string answer;
+                var pool = string.IsNullOrEmpty(question) ? EightBallSnarkyComments : EightBallAnswers;
                 lock (rng)
-                    answer = EightBallAnswers[rng.Next(EightBallAnswers.Count)];
+                    answer = pool[rng.Next(pool.Count)];
                 if (answer.StartsWith(':') && answer.EndsWith(':'))
                     answer = ctx.Client.GetEmoji(answer, "🔮");
                 await ctx.RespondAsync(answer).ConfigureAwait(false);
