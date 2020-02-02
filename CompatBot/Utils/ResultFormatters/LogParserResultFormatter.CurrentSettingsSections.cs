@@ -141,13 +141,13 @@ namespace CompatBot.Utils.ResultFormatters
             var lines = new List<string>
             {
                 $"Renderer:{items["renderer"],ColumnWidth-8}",
-                $"Aspect ratio:{items["aspect_ratio"],ColumnWidth-12}",
                 $"Resolution:{items["resolution"],ColumnWidth-10}",
                 $"Resolution Scale:{items["resolution_scale"] ?? "N/A",ColumnWidth-16}",
                 $"Res Scale Threshold:{items["texture_scale_threshold"] ?? "N/A",ColumnWidth-19}",
-                $"Write Color Buffers:{items["write_color_buffers"],ColumnWidth-19}",
                 $"Anti-Aliasing:{items["msaa"] ?? "N/A",ColumnWidth-13}",
                 $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
+                $"Write Color Buffers:{items["write_color_buffers"],ColumnWidth-19}",
+                $"ZCull:{items["zcull_status"],ColumnWidth-5}",
                 $"Frame Limit:{items["frame_limit"],ColumnWidth-11}",
                 $"VSync:{items["vsync"] ?? "N/A",ColumnWidth-5}",
             };

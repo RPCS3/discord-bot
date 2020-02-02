@@ -17,7 +17,10 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
             int.TryParse(items["thread_count"], out var threadCount);
-            if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]) || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
+            if (items["disable_logs"] == EnabledMark)
+                notes.Add("❗ `Silence All Logs` is enabled, please disable and upload a new log");
+            else if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"])
+                     || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             var hasTsx = items["cpu_extensions"]?.Contains("TSX") ?? false;
             var hasTsxFa = items["cpu_extensions"]?.Contains("TSX-FA") ?? false;
@@ -44,9 +47,9 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                 {
                     if (items["thread_scheduler"] == DisabledMark)
-                        notes.Add("ℹ Enabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
+                        notes.Add("ℹ Enabling `Thread Scheduler` may or may not increase performance");
                     else
-                        notes.Add("ℹ Disabling `Thread Scheduler` option in the CPU Settings may or may not increase performance");
+                        notes.Add("ℹ Disabling `Thread Scheduler` may or may not increase performance");
                 }
             }
             if (items["llvm_arch"] is string llvmArch)
@@ -63,8 +66,34 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["resolution"] != "1920x1080" || !Known1080pIds.Contains(serial))
                     notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
                 var dimensions = items["resolution"].Split("x");
-                if (dimensions.Length > 1 && int.TryParse(dimensions[1], out var height) && height < 720)
-                    notes.Add("⚠ `Resolution` below 720p will not improve performance");
+                if (dimensions.Length > 1
+                    && int.TryParse(dimensions[0], out var width)
+                    && int.TryParse(dimensions[1], out var height))
+                {
+                    var ratio = Reduce(width, height);
+                    if (ratio == (8, 5))
+                        ratio = (16, 10);
+                    if (items["aspect_ratio"] is string strAr
+                        && strAr != "Auto")
+                    {
+                        var arParts = strAr.Split(':');
+                        if (arParts.Length > 1
+                            && int.TryParse(arParts[0], out var arWidth)
+                            && int.TryParse(arParts[1], out var arHeight))
+                        {
+                            var arRatio = Reduce(arWidth, arHeight);
+                            if (arRatio == (8, 5))
+                                arRatio = (16, 10);
+                            if (arRatio != ratio) 
+                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {strAr}");
+                        }
+                    }
+                    else
+                        notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
+                    if (!serial.StartsWith('S')
+                        && height < 720)
+                        notes.Add("⚠ `Resolution` below 720p will not improve performance");
+                }
             }
             if (items["stretch_to_display"] == EnabledMark)
                 notes.Add("🤢 `Stretch to Display Area` is enabled");
@@ -78,7 +107,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (rsxCaveats.Contains("alpha-to-one for multisampling"))
                 {
                     if (items["msaa"] is string msaa && msaa != "Disabled")
-                        generalNotes.Add("⚠ The driver or GPU do not support all required features for proper MSAA implementation");
+                        generalNotes.Add("⚠ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
                 }
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
@@ -342,7 +371,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_block_size"] is string spuBlockSize)
             {
                 if (spuBlockSize != "Safe")
-                    notes.Add($"⚠ Please change `SPU Block Size`, `{spuBlockSize}` is currently unstable.");
+                    notes.Add($"⚠ Please change `SPU Block Size` to `Safe`, currently `{spuBlockSize}` is unstable.");
             }
 
             if (items["auto_start_on_boot"] == DisabledMark)

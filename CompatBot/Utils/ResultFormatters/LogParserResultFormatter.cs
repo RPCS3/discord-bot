@@ -319,6 +319,12 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (af == "1")
                     items["af_override"] = "Disabled";
             }
+            if (items["zcull"] == "true")
+                items["zcull_status"] = DisabledMark;
+            else if (items["relaxed_zcull"] == "true")
+                items["zcull_status"] = "Relaxed";
+            else
+                items["zcull_status"] = EnabledMark;
             if (items["lib_loader"] is string libLoader)
             {
                 var liblv2 = libLoader.Contains("liblv2", StringComparison.InvariantCultureIgnoreCase);
@@ -755,6 +761,30 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.WithFooter(msg);
             }
             return builder;
+        }
+
+        private static (int numerator, int denumerator) Reduce(int numerator, int denumerator)
+        {
+            var gcd = Gcd(numerator, denumerator);
+            return (numerator / gcd, denumerator / gcd);
+        }
+
+        private static int Gcd(int a, int b)
+        {
+            while (a != b)
+            {
+                if (a % b == 0)
+                    return b;
+
+                if (b % a == 0)
+                    return a;
+
+                if (a > b)
+                    a -= b;
+                if (b > a)
+                    b -= a;
+            }
+            return a;
         }
     }
 }
