@@ -160,13 +160,13 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["resolution_scale"] is string resScale && int.TryParse(resScale, out var resScaleFactor) &&
                 resScaleFactor < 100)
                 notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
-            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"]);
+            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"], true);
             var ppuHashes = GetHashes(items["ppu_hash"]);
             if (items["write_color_buffers"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
                 && KnownWriteColorBuffersIds.Contains(serial))
             {
-                if (DesIds.Contains(serial) && ppuPatches.Any())
+                if (DesIds.Contains(serial) && ppuPatches.Count != 0)
                     notes.Add("ℹ `Write Color Buffers` is disabled");
                 else
                     notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
@@ -192,7 +192,7 @@ namespace CompatBot.Utils.ResultFormatters
                 else if (relaxedZcull == DisabledMark && KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
                     notes.Add("ℹ Enabling `Relaxed ZCull Sync` for this game may improve performance");
             }
-            if (!KnownFpsUnlockPatchIds.Contains(serial) || !ppuPatches.Any())
+            if (!KnownFpsUnlockPatchIds.Contains(serial) || ppuPatches.Count == 0)
             {
                 if (items["vblank_rate"] is string vblank
                     && int.TryParse(vblank, out var vblankRate)
