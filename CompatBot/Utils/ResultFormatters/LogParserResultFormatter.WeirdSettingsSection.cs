@@ -17,7 +17,10 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
             int.TryParse(items["thread_count"], out var threadCount);
-            if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"]) || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
+            if (items["disable_logs"] == EnabledMark)
+                notes.Add("❗ `Silence All Logs` is enabled, please disable and upload a new log");
+            else if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"])
+                     || !string.IsNullOrWhiteSpace(items["log_disabled_channels_multiline"]))
                 notes.Add("❗ Some logging priorities were modified, please reset and upload a new log");
             var hasTsx = items["cpu_extensions"]?.Contains("TSX") ?? false;
             var hasTsxFa = items["cpu_extensions"]?.Contains("TSX-FA") ?? false;
