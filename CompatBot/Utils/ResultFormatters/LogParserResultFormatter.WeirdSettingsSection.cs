@@ -63,7 +63,10 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["resolution"] != "1920x1080" || !Known1080pIds.Contains(serial))
                     notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
                 var dimensions = items["resolution"].Split("x");
-                if (dimensions.Length > 1 && int.TryParse(dimensions[1], out var height) && height < 720)
+                if (!serial.StartsWith('S')
+                    && dimensions.Length > 1
+                    && int.TryParse(dimensions[1], out var height)
+                    && height < 720)
                     notes.Add("⚠ `Resolution` below 720p will not improve performance");
             }
             if (items["stretch_to_display"] == EnabledMark)
@@ -342,7 +345,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_block_size"] is string spuBlockSize)
             {
                 if (spuBlockSize != "Safe")
-                    notes.Add($"⚠ Please change `SPU Block Size`, `{spuBlockSize}` is currently unstable.");
+                    notes.Add($"⚠ Please change `SPU Block Size` to `Safe`, currently `{spuBlockSize}` is unstable.");
             }
 
             if (items["auto_start_on_boot"] == DisabledMark)
