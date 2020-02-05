@@ -255,7 +255,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(serial))
             {
-                CheckP5Settings(serial, items, notes);
+                CheckP5Settings(serial, items, notes, ppuPatches);
                 CheckAsurasWrathSettings(serial, items, notes);
                 CheckJojoSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckSimpsonsSettings(serial, generalNotes);
@@ -394,7 +394,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB02436", "NPUB31848", "NPJB00769",
         };
 
-        private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
         {
             if (P5Ids.Contains(serial))
             {
@@ -440,7 +440,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Force CPU Blit` is not required, please disable");
                 if (items["strict_rendering_mode"] is string srm && srm == EnabledMark)
                     notes.Add("⚠ `Strict Rendering Mode` is not required, please disable");
-                if (string.IsNullOrEmpty(items["ppu_hash_patch"])
+                if (ppuPatches.Count == 0
                     && items["resolution_scale"] is string resScale
                     && int.TryParse(resScale, out var scale)
                     && scale > 100)
