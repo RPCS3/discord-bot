@@ -90,7 +90,7 @@ namespace CompatBot.Commands
             var (_, _, invites) = await ctx.Client.GetInvitesAsync(invite, tryMessageAsACode: true).ConfigureAwait(false);
             if (invites.Count == 0)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Need to specify an invite link or a server id").ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Need to specify an invite link or token").ConfigureAwait(false);
                 return;
             }
 
@@ -103,6 +103,30 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Success, "Invite whitelist was successfully updated!").ConfigureAwait(false);
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to add {errors} invite{StringUtils.GetSuffix(errors)} to the whitelist").ConfigureAwait(false);
+            await List(ctx).ConfigureAwait(false);
+        }
+
+
+        [Command("update")]
+        [Description("Updates server invite code")]
+        public async Task Update(CommandContext ctx, [RemainingText, Description("An invite link or an invite token")] string invite)
+        {
+            var (_, _, invites) = await ctx.Client.GetInvitesAsync(invite, tryMessageAsACode: true).ConfigureAwait(false);
+            if (invites.Count == 0)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Need to specify an invite link or token").ConfigureAwait(false);
+                return;
+            }
+
+            var errors = 0;
+            foreach (var i in invites)
+                if (!await InviteWhitelistProvider.IsWhitelistedAsync(i).ConfigureAwait(false))
+                    errors++;
+
+            if (errors == 0)
+                await ctx.ReactWithAsync(Config.Reactions.Success, "Invite whitelist was successfully updated!").ConfigureAwait(false);
+            else
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to update {errors} invite{StringUtils.GetSuffix(errors)}").ConfigureAwait(false);
             await List(ctx).ConfigureAwait(false);
         }
 
