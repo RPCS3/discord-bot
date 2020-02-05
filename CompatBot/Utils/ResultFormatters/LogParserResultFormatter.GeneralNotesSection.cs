@@ -352,6 +352,9 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ Audio backend issues detected; check for high audio driver/sink latency");
             }
 
+            if (!string.IsNullOrEmpty(items["patch_error_file"])) 
+                notes.Add($"⚠ Failed to load `patch.yml`, check syntax around line {items["patch_error_line"]} column {items["patch_error_column"]}");
+
             var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"], true);
             var ovlPatches = GetPatches(items["ovl_hash"], items["ovl_hash_patch"], true);
             var allSpuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"], false);
