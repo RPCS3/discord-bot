@@ -84,12 +84,13 @@ namespace CompatBot.Database.Providers
                         try
                         {
                             var result = await client.GetInviteByCodeAsync(invite.InviteCode).ConfigureAwait(false);
-                            if (result?.IsRevoked == false)
+                            if (result?.IsRevoked == true)
                                 invite.InviteCode = null;
                         }
                         catch (NotFoundException)
                         {
                             invite.InviteCode = null;
+                            Config.Log.Info($"Removed invite code {invite.InviteCode} for server {invite.Name}");
                         }
                         catch (Exception e)
                         {
