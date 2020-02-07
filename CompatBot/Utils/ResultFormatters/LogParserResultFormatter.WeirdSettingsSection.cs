@@ -16,15 +16,6 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
-
-            if (items["native_ui"] == EnabledMark
-                && items["build_number"] is string strBuild
-                && int.TryParse(strBuild, out var buildNumber)
-                && buildNumber >= 9522)
-            {
-                notes.Add("❗ Please disable `Native UI` option if you experience emulator crashes");
-            }
-
             int.TryParse(items["thread_count"], out var threadCount);
             if (items["disable_logs"] == EnabledMark)
                 notes.Add("❗ `Silence All Logs` is enabled, please disable and upload a new log");
