@@ -48,7 +48,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (StatusColors.TryGetValue(info.Status, out _))
             {
                 var title = info.Title.Trim(40);
-                return $"{StringUtils.InvisibleSpacer}`[{titleId,-9}] {title,-40} {info.Status,8} since {info.ToUpdated(),-10} (PR {info.ToPrString("#????"),-5})` https://forums.rpcs3.net/thread-{info.Thread}.html";
+                return $"{StringUtils.InvisibleSpacer}`[{titleId,-9}] {title,-40} {info.Status,8} since {info.ToUpdated(),-10} (PR {info.ToPrString("#????"),-5})` <https://forums.rpcs3.net/thread-{info.Thread}.html>";
             }
 
             return $"Product code {titleId} was not found in compatibility database";
