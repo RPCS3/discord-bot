@@ -539,6 +539,7 @@ namespace CompatBot.Utils.ResultFormatters
                     generalNotes.Add($"🤔 That is a very interesting DLC collection from {dlcRegions.Length} different regions");
                 if (KnownCustomLicenses.Overlaps(licenseNames))
                     generalNotes.Add("🤔 That is a very interesting license you're missing");
+                generalNotes.Add("⚠ DLC without a license is useless and may lead to game crash in some cases");
             }
         }
 
