@@ -513,6 +513,7 @@ namespace CompatBot.Utils.ResultFormatters
                     .Select(Path.GetFileName)
                     .Distinct()
                     .Except(KnownBogusLicenses)
+                    .OrderBy(l => l)
                     .ToList();
                 var formattedLicenseNames = licenseNames
                     .Select(p => $"{StringUtils.InvisibleSpacer}`{p}`")
