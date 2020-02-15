@@ -166,18 +166,14 @@ namespace CompatBot.Utils.ResultFormatters
             "UP2611-NPUB31848_00-PPERSONA5X000000.rap",
         };
 
-        // v1.4.2 https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#SPU_MLAA
+        // v1.5 https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#SPU_MLAA
         private static readonly HashSet<string> KnownMlaaSpuHashes = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
-            "1dbc4a6d4925b004b25b41d9ae2cf7a6e60e793a",
             "7b5ea49122ec7f023d4a72452dc7a9208d9d6dbf",
             "7cd211ff1cbd33163eb0711440dccbb3c1dbcf6c",
             "45f98378f0837fc6821f63576f65d47d10f9bbcb",
-            "58fb5172bd99336a4ac96eefb00e739ce41f788b",
             "82b3399c8e6533ba991eedb0e139bf20c7783bac",
             "191fe1c92c8360992b3240348e70ea37d50812d4",
-            "239ea3f6ee242d11d857c844820aeda5157691c3",
-            "273bd5a0640e71876c11878ba9496d928d608f9e",
             "530c255936b07b25467a58e24ceff5fd4e2960b7",
             "702d0205a89d445d15dc0f96548546c4e2e7a59f",
             "969cf3e9db75f52a6b41074ccbff74106b709854",
@@ -187,6 +183,7 @@ namespace CompatBot.Utils.ResultFormatters
             "9001b44fd7278b5a6fa5385939fe928a0e549394",
             "794795c449beef176d076816284849d266f55f99",
             "931132fd48a40bce0bec28e21f760b1fc6ca4364",
+            "1549476fe258150ff9f902229ffaed69a932a9c1",
             "a129a01a270246c85df18eee0e959ef4263b6510",
             "ac189d7f87091160a94e69803ac0cff0a8bb7813",
             "df5b1c3353cc36bb2f0fb59197d849bb99c3fecd",
