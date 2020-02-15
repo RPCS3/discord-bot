@@ -671,7 +671,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var vbrRatio = vblankRate / 60.0;
                 var clkRatio = clockScale / 100.0;
-                if (ppuPatches.Count >= 25)
+                if (ppuPatches.Values.Any(v => v >= 25))
                 {
                     if (vblankRate != 60)
                         notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%)");
@@ -680,17 +680,17 @@ namespace CompatBot.Utils.ResultFormatters
                     else
                         notes.Add("✅ Settings are set for the variable rate FPS patch");
                 }
-                if (ppuPatches.Any())
+                else if (ppuPatches.Any())
                 {
                     if (vblankRate == 60)
                         notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
                         notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%), but `Clock Scale` is set to {clockScale}%");
                     else if (vblankRate == 60)
-                        notes.Add("ℹ Settings are not set for the FPS patch");
+                        notes.Add("ℹ Settings are not set for the fixed rate FPS patch");
                     else
-                        notes.Add($"✅ Settings are set for the fixed {vblankRate / 2} FPS patch");
-                    notes.Add("⚠ There is a new variable frame rate FPS patch available");
+                        notes.Add($"✅ Settings are set for the fixed rate {vblankRate / 2} FPS patch");
+                    notes.Add("⚠ There is a new variable frame rate FPS patch available, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Demon.27s_Souls)");
                 }
                 else
                 {
