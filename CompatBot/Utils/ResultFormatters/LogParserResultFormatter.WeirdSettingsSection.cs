@@ -819,6 +819,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 //notes.Clear();
                 generalNotes.Add("⚠ Custom RPCS3 builds are not officially supported");
+                generalNotes.Add("⚠ This custom build comes with pre-configured settings, don't change anything");
             }
             else
             {
