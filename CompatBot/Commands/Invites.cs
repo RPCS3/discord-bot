@@ -59,7 +59,7 @@ namespace CompatBot.Commands
                 if (!string.IsNullOrEmpty(item.InviteCode))
                     link = linkPrefix + item.InviteCode;
                 //discord expands invite links even if they're inside the code block for some reason
-                table.Add(item.Id.ToString(), item.GuildId.ToString(), "\u200d" + link, guildName.Sanitize());
+                table.Add(item.Id.ToString(), item.GuildId.ToString(), link + StringUtils.InvisibleSpacer, guildName.Sanitize());
             }
             var result = new StringBuilder()
                 .AppendLine("Whitelisted discord servers:")

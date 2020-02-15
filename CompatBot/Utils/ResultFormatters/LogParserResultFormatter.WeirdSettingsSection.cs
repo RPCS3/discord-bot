@@ -112,7 +112,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
                             && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
-                            && items["os_type"] == "Windows";
+                            && !gpuInfo.Contains("RADV");
             if (items["msaa"] == "Disabled")
             {
                 if (!isWireframeBugPossible)
@@ -505,7 +505,7 @@ namespace CompatBot.Utils.ResultFormatters
                             notes.Add("ℹ Unlocking FPS requires game patch");
                         if (ppuHashes.Overlaps(KnownJojoPatches))
                         {
-                            var link = serial == "BLUS31405" ? "60_FPS_Patch_4" : "60_FPS_Patch_5";
+                            var link = serial == "BLUS31405" ? "JoJo.27s_Bizarre_Adventure:_All_Star_Battle" : "JoJo.27s_Bizarre_Adventure:_Eyes_of_Heaven";
                             generalNotes.Add($"ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#{link})");
                         }
                     }
@@ -566,7 +566,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (frameLimit != "30")
                         notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
                     if (ppuHashes.Overlaps(KnownNierPatches))
-                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_7)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#NieR)");
                 }
 
                 if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
@@ -669,25 +669,33 @@ namespace CompatBot.Utils.ResultFormatters
                 && int.TryParse(vbrStr, out var vblankRate)
                 && int.TryParse(clkStr, out var clockScale))
             {
-                if (ppuPatches.Any())
+                var vbrRatio = vblankRate / 60.0;
+                var clkRatio = clockScale / 100.0;
+                if (ppuPatches.Values.Any(v => v >= 25))
+                {
+                    if (vblankRate != 60)
+                        notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%)");
+                    if (clockScale != 100)
+                        notes.Add($"⚠ `Clock Scale` is set to {clockScale}%, please set it back to 100%");
+                    else
+                        notes.Add("✅ Settings are set for the variable rate FPS patch");
+                }
+                else if (ppuPatches.Any())
                 {
                     if (vblankRate == 60)
                         notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
-                    var vbrRatio = vblankRate / 60.0;
-                    var clkRatio = clockScale / 100.0;
                     if (Math.Abs(vbrRatio - clkRatio) > 0.05)
                         notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%), but `Clock Scale` is set to {clockScale}%");
                     else if (vblankRate == 60)
-                        notes.Add("ℹ Settings are not set for the FPS patch");
+                        notes.Add("ℹ Settings are not set for the fixed rate FPS patch");
                     else
-                        notes.Add($"✅ Settings are set for the {vblankRate / 2} FPS patch");
+                        notes.Add($"✅ Settings are set for the fixed rate {vblankRate / 2} FPS patch");
+                    notes.Add("⚠ There is a new variable frame rate FPS patch available, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Demon.27s_Souls)");
                 }
                 else
                 {
-                    if (vblankRate > 60)
-                        notes.Add("ℹ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownDesPatches))
-                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60.2F120_FPS_Patch)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Demon.27s_Souls)");
                 }
             }
             else if (ppuPatches.Any())
@@ -739,7 +747,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (vbr > 60)
                         notes.Add("ℹ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownDod3Patches))
-                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60.2F120_FPS_Patch_2)");
+                        generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Drakengard_3)");
                     else if (ppuHashes.Any())
                         generalNotes.Add("🤔 Very interesting version of the game you got there");
                 }
@@ -811,6 +819,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 //notes.Clear();
                 generalNotes.Add("⚠ Custom RPCS3 builds are not officially supported");
+                generalNotes.Add("⚠ This custom build comes with pre-configured settings, don't change anything");
             }
             else
             {
@@ -859,9 +868,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (!ppuPatches.Any())
             {
                 if (ppuHashes.Overlaps(KnownPdfPatches))
-                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_2)");
+                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Hatsune_Miku:_Project_Diva_F)");
                 else if (ppuHashes.Overlaps(KnownPdf2ndPatches))
-                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#60_FPS_Patch_3)");
+                    generalNotes.Add("ℹ This game has an FPS unlock patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Hatsune_Miku:_Project_Diva_F_2nd)");
             }
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
