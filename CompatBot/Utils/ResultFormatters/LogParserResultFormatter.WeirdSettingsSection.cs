@@ -112,7 +112,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
                             && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
-                            && items["os_type"] == "Windows"; //todo: add amdvlk
+                            && !gpuInfo.Contains("RADV");
             if (items["msaa"] == "Disabled")
             {
                 if (!isWireframeBugPossible)
