@@ -175,13 +175,13 @@ namespace CompatBot.Utils.ResultFormatters
             if (vsync && items["frame_limit"] is string frameLimitStr)
             {
                 if (frameLimitStr == "Auto")
-                    notes.Add("ℹ Frame rate might be limited to 30 fps");
+                    notes.Add("ℹ Frame rate might be limited to 30 fps due to enabled VSync");
                 else if (double.TryParse(frameLimitStr, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var frameLimit))
                 {
                     if (frameLimit > 30 && frameLimit < 60)
-                        notes.Add("⚠ Frame rate might be limited to 30 fps");
+                        notes.Add("ℹ Frame rate might be limited to 30 fps due to enabled VSync");
                     else if (frameLimit < 30)
-                        notes.Add("⚠ Frame rate might be limited to 15 fps");
+                        notes.Add("ℹ Frame rate might be limited to 15 fps due to enabled VSync");
                     else
                         notes.Add("ℹ Frame pacing might be affected due to VSync and Frame Limiter enabled at the same time");
                 }
@@ -311,7 +311,7 @@ namespace CompatBot.Utils.ResultFormatters
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
             if (items["game_category"] == "1P")
-                CheckPs1ClassicsSettings(items, notes);
+                CheckPs1ClassicsSettings(items, notes, generalNotes);
 
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
@@ -1079,13 +1079,14 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ `Force CPU Blit` should be enabled for proper visuals");
         }
 
-        private static void CheckPs1ClassicsSettings(NameValueCollection items, List<string> notes)
+        private static void CheckPs1ClassicsSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
             if (items["spu_decoder"] is string spuDecoder
                 && !spuDecoder.Contains("ASMJIT"))
-                notes.Add("ℹ Please set `SPU Decoder` to use `Recompiler (ASMJIT)`");
+                notes.Add("⚠ Please set `SPU Decoder` to use `Recompiler (ASMJIT)`");
             if (items["cpu_blit"] == EnabledMark)
-                notes.Add("⚠ Please disable `Force CPU Blit` for PS1 Classics");
+                notes.Add("ℹ Please disable `Force CPU Blit` for PS1 Classics");
+            generalNotes.Add("ℹ PS1 Classics compatibility is subject to [official Sony emulator accuracy](https://www.psdevwiki.com/ps3/PS1_Classics_Emulator_Compatibility_List)");
         }
     }
 }
