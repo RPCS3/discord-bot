@@ -244,18 +244,28 @@ namespace CompatBot.EventHandlers
             LogParseState result = null;
             try
             {
-                var pipe = new Pipe();
-                var fillPipeTask = source.FillPipeAsync(pipe.Writer, cancellationToken);
-                var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, cancellationToken);
-                do
+                try
                 {
-                    await Task.WhenAny(readPipeTask, Task.Delay(5000, cancellationToken)).ConfigureAwait(false);
-                    if (!readPipeTask.IsCompleted)
-                        await onProgressAsync().ConfigureAwait(false);
-                } while (!readPipeTask.IsCompleted && !cancellationToken.IsCancellationRequested);
-                result = await readPipeTask.ConfigureAwait(false);
-                await fillPipeTask.ConfigureAwait(false);
-                result.TotalBytes = source.LogFileSize;
+                    var pipe = new Pipe();
+                    var fillPipeTask = source.FillPipeAsync(pipe.Writer, cancellationToken);
+                    var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, cancellationToken);
+                    do
+                    {
+                        await Task.WhenAny(readPipeTask, Task.Delay(5000, cancellationToken)).ConfigureAwait(false);
+                        if (!readPipeTask.IsCompleted)
+                            await onProgressAsync().ConfigureAwait(false);
+                    } while (!readPipeTask.IsCompleted && !cancellationToken.IsCancellationRequested);
+                    result = await readPipeTask.ConfigureAwait(false);
+                    await fillPipeTask.ConfigureAwait(false);
+                    result.TotalBytes = source.LogFileSize;
+                }
+                catch (Exception pre)
+                {
+                    if (!(pre is OperationCanceledException))
+                        Config.Log.Error(pre);
+                    if (result == null)
+                        throw pre;
+                }
 
                 if (result.FilterTriggers.Any())
                 {
