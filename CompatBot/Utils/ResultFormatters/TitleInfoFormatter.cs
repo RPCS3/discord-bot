@@ -64,13 +64,13 @@ namespace CompatBot.Utils.ResultFormatters
                 var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
                 var onlineOnlypart = info.Network == true ? " 🌐" : "";
                 var pr = info.ToPrString(null, true);
-				var desc = $"{info.Status} since {info.ToUpdated()}";
-				if (pr is string _)
+                var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
+                if (pr != null)
                     desc += $" (PR {pr})";
                 if (!forLog && !string.IsNullOrEmpty(info.AlternativeTitle))
                     desc = info.AlternativeTitle + Environment.NewLine + desc;
                 if (!string.IsNullOrEmpty(info.WikiTitle))
-                    desc +=  $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={info.WikiTitle})";
+                    desc += $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={info.WikiTitle})";
                 var cacheTitle = info.Title ?? gameTitle;
                 if (!string.IsNullOrEmpty(cacheTitle))
                 {
@@ -78,13 +78,13 @@ namespace CompatBot.Utils.ResultFormatters
                     StatsStorage.GameStatCache.Set(cacheTitle, ++stat, StatsStorage.CacheTime);
                 }
                 return new DiscordEmbedBuilder
-                    {
-                        Title = $"{productCodePart}{cacheTitle.Trim(200)}{onlineOnlypart}",
-                        Url = $"https://forums.rpcs3.net/thread-{info.Thread}.html",
-                        Description = desc,
-                        Color = color,
-                        ThumbnailUrl = thumbnailUrl
-                    };
+                {
+                    Title = $"{productCodePart}{cacheTitle.Trim(200)}{onlineOnlypart}",
+                    Url = info.Thread > 0 ? $"https://forums.rpcs3.net/thread-{info.Thread}.html" : null,
+                    Description = desc,
+                    Color = color,
+                    ThumbnailUrl = thumbnailUrl
+                };
             }
             else
             {

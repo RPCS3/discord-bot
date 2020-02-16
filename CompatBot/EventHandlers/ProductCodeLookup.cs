@@ -106,7 +106,7 @@ namespace CompatBot.EventHandlers
                 .ToList();
         }
 
-        public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false)
+        public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false, string category = null)
         {
             if (string.IsNullOrEmpty(code))
                 return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog);
@@ -121,12 +121,34 @@ namespace CompatBot.EventHandlers
                     return TitleInfo.CommunicationError.AsEmbed(null);
 
                 var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
-                if (result?.Results == null)
-                    return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
 
-                if (result.Results.TryGetValue(code, out var info))
+                if (result != null && result.Results.TryGetValue(code, out var info))
                     return info.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
 
+                if (category == "1P")
+                {
+                    var ti = new TitleInfo
+                    {
+                        Commit = "8b449ce76c91d5ff7a2829b233befe7d6df4b24f",
+                        Date = "2018-06-23",
+                        Pr = 4802,
+                        Status = "playable",
+                    };
+                    return ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
+                }
+                if (category == "2P"
+                    || category == "2G"
+                    || category == "2D"
+                    || category == "PP"
+                    || category == "PE"
+                    || category == "MN")
+                {
+                    var ti = new TitleInfo
+                    {
+                        Status = "nothing"
+                    };
+                    return ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
+                }
                 return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
             }
             catch (Exception e)

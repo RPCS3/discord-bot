@@ -217,7 +217,7 @@ namespace CompatBot.Utils.ResultFormatters
                     collection["game_category"] = "HG";
                 }
                 var titleUpdateInfoTask = psnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
-                var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true).ConfigureAwait(false);
+                var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true, category: collection["game_category"]).ConfigureAwait(false);
                 try
                 {
                     var titleUpdateInfo = await titleUpdateInfoTask.ConfigureAwait(false);
