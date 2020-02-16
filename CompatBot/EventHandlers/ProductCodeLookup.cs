@@ -122,7 +122,7 @@ namespace CompatBot.EventHandlers
 
                 var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
 
-                if (result != null && result.Results.TryGetValue(code, out var info))
+                if (result?.Results != null && result.Results.TryGetValue(code, out var info))
                     return info.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
 
                 if (category == "1P")
