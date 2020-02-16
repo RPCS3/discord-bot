@@ -63,7 +63,9 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Vulkan` is the recommended `Renderer`");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
             {
-                if (items["resolution"] != "1920x1080" || !Known1080pIds.Contains(serial))
+                if (items["game_category"] != "1P"
+                    && !(items["resolution"] == "1920x1080"
+                         && Known1080pIds.Contains(serial)))
                     notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
                 var dimensions = items["resolution"].Split("x");
                 if (dimensions.Length > 1
@@ -71,6 +73,7 @@ namespace CompatBot.Utils.ResultFormatters
                     && int.TryParse(dimensions[1], out var height))
                 {
                     var ratio = Reduce(width, height);
+                    var canBeWideOrSquare = width == 720 && (height == 480 || height == 576);
                     if (ratio == (8, 5))
                         ratio = (16, 10);
                     if (items["aspect_ratio"] is string strAr
@@ -84,16 +87,48 @@ namespace CompatBot.Utils.ResultFormatters
                             var arRatio = Reduce(arWidth, arHeight);
                             if (arRatio == (8, 5))
                                 arRatio = (16, 10);
-                            if (arRatio != ratio) 
+                            /*
+                            if (items["game_category"] == "1P")
+                            {
+                                if (arRatio != (4, 3))
+                                    notes.Add("⚠ PS1 Classics should use `Aspect Ratio` of 4:3");
+                            }
+                            else
+                            */
+                            if (arRatio != ratio && !canBeWideOrSquare)
                                 notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {strAr}");
                         }
                     }
                     else
-                        notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
-                    if (!serial.StartsWith('S')
-                        && height < 720)
+                    {
+                        if (canBeWideOrSquare)
+                            notes.Add("ℹ Setting `Aspect Ratio` to `16:9` of `4:3` instead of `Auto` may improve compatibility");
+                        else
+                            notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
+                    }
+                    if (height < 720 && items["game_category"] != "1P")
                         notes.Add("⚠ `Resolution` below 720p will not improve performance");
                 }
+            }
+            else if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] == "1280x720" && items["game_category"] == "1P")
+            {
+                if (serial.Length > 3)
+                {
+                    if (serial[2] == 'E')
+                    {
+                        if (items["resolution"] != "720x576")
+                            notes.Add("⚠ PAL PS1 Classics should use `Resolution` of `720x576`");
+                    }
+                    else
+                    {
+                        if (items["resolution"] != "720x480")
+                            notes.Add("⚠ NTSC PS1 Classics should use `Resolution` of `720x480`");
+                    }
+                }
+                /*
+                if (items["aspect_ratio"] is string strAr && strAr != "4:3")
+                    notes.Add("⚠ PS1 Classics should use `Aspect Ratio` of 4:3");
+                */
             }
             if (items["stretch_to_display"] == EnabledMark)
                 notes.Add("🤢 `Stretch to Display Area` is enabled");
@@ -1046,12 +1081,11 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckPs1ClassicsSettings(NameValueCollection items, List<string> notes)
         {
-            if (items["lib_loader"] is string libLoader
-                && libLoader != "Auto")
-                notes.Add("⚠ `Library Loader` must be set to `Auto` for PS1 Classics");
             if (items["spu_decoder"] is string spuDecoder
-                && !spuDecoder.Contains("LLVM"))
-                notes.Add("ℹ Please set `SPU Decoder` to use `Recompiler (LLVM)`");
+                && !spuDecoder.Contains("ASMJIT"))
+                notes.Add("ℹ Please set `SPU Decoder` to use `Recompiler (ASMJIT)`");
+            if (items["cpu_blit"] == EnabledMark)
+                notes.Add("⚠ Please disable `Force CPU Blit` for PS1 Classics");
         }
     }
 }
