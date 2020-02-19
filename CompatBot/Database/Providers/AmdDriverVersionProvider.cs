@@ -136,6 +136,25 @@ namespace CompatBot.Database.Providers
 
                     return $"newer than {newest.vv} ({vulkanVersion})";
                 }
+                else
+                {
+                    for (var i = 1; i < vkVersions.Count; i++)
+                    {
+                        if (vkVer < vkVersions[i].v)
+                        {
+                            var lowerVer = vkVersions[i - 1].v;
+                            var mapKey = VulkanToDriver.Keys.FirstOrDefault(k => Version.Parse(k) == lowerVer);
+                            if (mapKey != null)
+                            {
+                                if (VulkanToDriver.TryGetValue(mapKey, out var driverList))
+                                {
+                                    var oldestLowerVersion = driverList.Select(Version.Parse).OrderByDescending(v => v).First();
+                                    return $"unknown version between {oldestLowerVersion} and {vkVersions[i].vv} ({vulkanVersion})";
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             return vulkanVersion;

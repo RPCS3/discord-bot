@@ -82,8 +82,6 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (brokenDump)
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
-            else if (irdChecked)
-                notes.Add("✅ Checked missing files against IRD");
             if (items["fw_version_installed"] is string fw && !string.IsNullOrEmpty(fw))
             {
                 if (Version.TryParse(fw, out var fwv))

@@ -132,7 +132,7 @@ namespace CompatBot.EventHandlers
                         Commit = "8b449ce76c91d5ff7a2829b233befe7d6df4b24f",
                         Date = "2018-06-23",
                         Pr = 4802,
-                        Status = "playable",
+                        Status = "Playable",
                     };
                     return ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
                 }
@@ -145,7 +145,7 @@ namespace CompatBot.EventHandlers
                 {
                     var ti = new TitleInfo
                     {
-                        Status = "nothing"
+                        Status = "Nothing"
                     };
                     return ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
                 }
