@@ -36,8 +36,11 @@ namespace CompatBot.EventHandlers.LogParsing
                             (buffer, state) =>
                             {
 #if DEBUG
-                                state.ExtractorHitStats.TryGetValue(extractorPair.Key, out var stat);
-                                state.ExtractorHitStats[extractorPair.Key] = stat + 1;
+                                lock (state.ExtractorHitStats)
+                                {
+                                    state.ExtractorHitStats.TryGetValue(extractorPair.Key, out var stat);
+                                    state.ExtractorHitStats[extractorPair.Key] = stat + 1;
+                                }
 #endif
                                 OnExtractorHit(buffer, extractorPair.Key, extractorPair.Value, state);
                             })

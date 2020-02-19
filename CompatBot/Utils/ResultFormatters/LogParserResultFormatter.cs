@@ -207,9 +207,10 @@ namespace CompatBot.Utils.ResultFormatters
             var collection = state.CompleteCollection ?? state.WipCollection;
             if (collection?.Count > 0)
             {
+                var ldrGameSerial = collection["ldr_game_serial"] ?? collection["ldr_path_serial"];
                 if (collection["serial"] is string serial
                     && KnownDiscOnPsnIds.TryGetValue(serial, out var psnSerial)
-                    && collection["ldr_game_serial"] is string ldrGameSerial
+                    && !string.IsNullOrEmpty(ldrGameSerial)
                     && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase)
                     && ldrGameSerial.Equals(psnSerial, StringComparison.InvariantCultureIgnoreCase))
                 {
