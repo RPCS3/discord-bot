@@ -311,7 +311,7 @@ namespace CompatBot.Commands
 
         step1:
             // step 1: get the new start date
-            var embed = FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} [PST]`\nBy default all times use UTC, only limited number of time zones supported");
+            var embed = FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} PST`\nBy default all times use UTC, only limited number of time zones supported");
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
             (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
@@ -333,6 +333,9 @@ namespace CompatBot.Commands
                     errorMsg = $"Couldn't parse `{txt.Content}` as a start date and time";
                     goto step1;
                 }
+                if (newTime < DateTime.UtcNow && evt.End == default)
+                    errorMsg = "Specified time is in the past, are you sure it is correct?";
+
 
                 var duration = evt.End - evt.Start;
                 evt.Start = newTime.Ticks;
@@ -590,8 +593,9 @@ namespace CompatBot.Commands
                 result.WithFooter($"Ends in {FormatCountdown(evt.End.AsUtc() - currentTime)}");
             var eventDuration = evt.End.AsUtc() - start;
             var durationFormat = eventDuration.TotalDays > 0 ? @"d\d\ h\h\ m\m" : @"h\h\ m\m";
+            var startWarn = start < DateTime.UtcNow ? "⚠ " : "";
             result
-                .AddFieldEx("Start time", evt.Start == 0 ? "-" : start.ToString("u"), highlight == field++, true)
+                .AddFieldEx(startWarn + "Start time", evt.Start == 0 ? "-" : start.ToString("u"), highlight == field++, true)
                 .AddFieldEx("Duration", evt.Start == evt.End ? "-" : eventDuration.ToString(durationFormat), highlight == field++, true)
                 .AddFieldEx("Event name", string.IsNullOrEmpty(evt.EventName) ? "-" : evt.EventName, highlight == field++, true)
                 .AddFieldEx("Schedule entry title", string.IsNullOrEmpty(evt.Name) ? "-" : evt.Name, highlight == field++, true);
