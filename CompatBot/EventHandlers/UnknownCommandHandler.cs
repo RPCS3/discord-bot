@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
@@ -19,8 +21,13 @@ namespace CompatBot.EventHandlers
             if (e.Context.User.IsBotSafeCheck())
                 return;
 
-            if (!(e.Exception is CommandNotFoundException cnfe))
+            var ex = e.Exception;
+            if (ex is InvalidOperationException && ex.Message.Contains("No matching subcommands were found"))
+                ex = new CommandNotFoundException(e.Command.Name);
+
+            if (!(ex is CommandNotFoundException cnfe))
             {
+
                 Config.Log.Error(e.Exception);
                 return;
             }
@@ -46,11 +53,6 @@ namespace CompatBot.EventHandlers
             if (cnfe.CommandName.Length < 3)
                 return;
 
-#if !DEBUG
-            if (e.Context.User.IsSmartlisted(e.Context.Client, e.Context.Guild))
-                return;
-#endif
-
             var pos = e.Context.Message?.Content?.IndexOf(cnfe.CommandName) ?? -1;
             if (pos < 0)
                 return;
@@ -60,6 +62,31 @@ namespace CompatBot.EventHandlers
                 return;
 
             var term = gameTitle.ToLowerInvariant();
+            if (e.Context.User.IsSmartlisted(e.Context.Client, e.Context.Guild))
+            {
+                if (e.Context.Prefix == Config.CommandPrefix)
+                {
+                    var knownCmds = GetAllRegisteredCommands(e.Context);
+                    var termParts = term.Split(' ', 4, StringSplitOptions.RemoveEmptyEntries);
+                    var terms = new string[termParts.Length];
+                    terms[0] = termParts[0];
+                    for (var i = 1; i < termParts.Length; i++)
+                        terms[i] = terms[i - 1] + ' ' + termParts[i];
+                    var cmdMatch = (
+                            from t in terms
+                            from kc in knownCmds
+                            let v = (cmd: kc, w: t.GetFuzzyCoefficientCached(kc))
+                            where v.w > 0 && v.w < 1 // if it was a 100% match, we wouldn't be here
+                            orderby v.w descending
+                            select v
+                        )
+                        .FirstOrDefault();
+                    if (cmdMatch.w > 0)
+                        await e.Context.Channel.SendMessageAsync($"Did you mean to use `!{cmdMatch.cmd}` command?").ConfigureAwait(false);
+                }
+                return;
+            }
+
             var (explanation, fuzzyMatch, score) = await Explain.LookupTerm(term).ConfigureAwait(false);
             if (score > 0.5 && explanation != null)
             {
@@ -95,6 +122,7 @@ namespace CompatBot.EventHandlers
                 return;
             }
 
+
             var ch = await e.Context.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync(
                 $"I am not sure what you wanted me to do, please use one of the following commands:\n" +
@@ -103,5 +131,33 @@ namespace CompatBot.EventHandlers
                 $"`{Config.CommandPrefix}help` to look at available bot commands\n"
             ).ConfigureAwait(false);
         }
+
+        private static List<string> GetAllRegisteredCommands(CommandContext ctx)
+        {
+            if (allKnownBotCommands != null)
+                return allKnownBotCommands;
+
+            static void dumpChildren(CommandGroup group, List<string> commandList)
+            {
+                foreach (var cmd in group.Children)
+                {
+                    commandList.Add(cmd.QualifiedName);
+                    if (cmd is CommandGroup g)
+                        dumpChildren(g, commandList);
+                }
+            }
+
+            var result = new List<string>();
+            foreach (var cmd in ctx.CommandsNext.RegisteredCommands.Values)
+            {
+                result.Add(cmd.QualifiedName);
+                if (cmd is CommandGroup g)
+                    dumpChildren(g, result);
+            }
+            allKnownBotCommands = result;
+            return allKnownBotCommands;
+        }
+
+        private static List<string> allKnownBotCommands;
     }
 }
