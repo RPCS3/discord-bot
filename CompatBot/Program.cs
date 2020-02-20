@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -24,6 +25,8 @@ namespace CompatBot
     {
         private static readonly SemaphoreSlim InstanceCheck = new SemaphoreSlim(0, 1);
         private static readonly SemaphoreSlim ShutdownCheck = new SemaphoreSlim(0, 1);
+        // pre-load the assembly so it won't fail after framework update while the process is still running
+        private static readonly Assembly diagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
         internal const ulong InvalidChannelId = 13;
 
         internal static async Task Main(string[] args)
@@ -37,6 +40,8 @@ namespace CompatBot
                 return;
             }
 
+            if (Process.GetCurrentProcess().Id == 0)
+                Config.Log.Info("Well, this was unexpected");
             var singleInstanceCheckThread = new Thread(() =>
             {
                 using var instanceLock = new Mutex(false, @"Global\RPCS3 Compatibility Bot");
