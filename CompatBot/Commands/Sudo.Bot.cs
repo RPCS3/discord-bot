@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +11,6 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
-using NLog.Fluent;
 
 namespace CompatBot.Commands
 {
@@ -24,9 +22,6 @@ namespace CompatBot.Commands
         [Description("Commands to manage the bot instance")]
         public sealed class Bot: BaseCommandModuleCustom
         {
-            // pre-load the assembly so it won't fail after framework update while the process is still running
-            private static Assembly diagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
-
             [Command("version")]
             [Description("Returns currently checked out bot commit")]
             public async Task Version(CommandContext ctx)
@@ -204,8 +199,6 @@ namespace CompatBot.Commands
 
             internal static void RestartNoSaving(ulong channelId)
             {
-                if (diagnosticsAssembly == null)
-                    Config.Log.Warn("Somehow pre-loaded assembly is null");
                 Config.Log.Info("Restarting...");
                 using var self = new Process
                 {

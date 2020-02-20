@@ -76,7 +76,7 @@ namespace CompatBot.EventHandlers
                             from t in terms
                             from kc in knownCmds
                             let v = (cmd: kc, w: t.GetFuzzyCoefficientCached(kc))
-                            where v.w > 0 && v.w < 1 // if it was a 100% match, we wouldn't be here
+                            where v.w > 0.3 && v.w < 1 // if it was a 100% match, we wouldn't be here
                             orderby v.w descending
                             select v
                         )
