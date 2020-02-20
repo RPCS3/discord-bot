@@ -100,27 +100,37 @@ namespace CompatBot.Commands
                     }
                     previousTimestamp = currentTimestamp;
                 }
-                var yesterday = DateTime.UtcNow.AddDays(-1).Ticks;
-                var warnCount = db.Warning.Count(w => w.Timestamp > yesterday);
+
+                var utcNow = DateTime.UtcNow;
+                var yesterday = utcNow.AddDays(-1).Ticks;
+                var last24hWarnings = db.Warning.Where(w => w.Timestamp > yesterday).ToList();
+                var warnCount = last24hWarnings.Count;
+                if (warnCount > mostWarnings)
+                {
+                    mostWarnings = warnCount;
+                    mostWarningsStart = last24hWarnings.Min(w => w.Timestamp.Value);
+                    mostWarningsEnd = utcNow.Ticks;
+                }
                 var lastWarn = timestamps.Any() ? timestamps.Last() : (long?)null;
                 if (lastWarn.HasValue)
                 {
-                    var utcNow = DateTime.UtcNow.Ticks;
-                    var currentGapBetweenWarnings = utcNow - lastWarn.Value;
+                    var currentGapBetweenWarnings = utcNow.Ticks - lastWarn.Value;
                     if (currentGapBetweenWarnings > longestGapBetweenWarning)
                     {
                         longestGapBetweenWarning = currentGapBetweenWarnings;
                         longestGapStart = lastWarn.Value;
-                        longestGapEnd = utcNow;
+                        longestGapEnd = utcNow.Ticks;
                     }
                     daysWithoutWarnings += currentGapBetweenWarnings / span24h;
                 }
                 // most warnings per 24h
                 var statsBuilder = new StringBuilder();
+                var rightDate = longestGapEnd == utcNow.Ticks ? "now" : longestGapEnd.AsUtc().ToString("yyyy-MM-dd");
                 if (longestGapBetweenWarning > 0)
-                    statsBuilder.AppendLine($"Longest between warnings: **{TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()}** between {longestGapStart.AsUtc():yyyy-MM-dd} and {longestGapEnd.AsUtc():yyyy-MM-dd}");
+                    statsBuilder.AppendLine($"Longest between warnings: **{TimeSpan.FromTicks(longestGapBetweenWarning).AsShortTimespan()}** between {longestGapStart.AsUtc():yyyy-MM-dd} and {rightDate}");
+                rightDate = mostWarningsEnd == utcNow.Ticks ? "today" : $"on {mostWarningsEnd.AsUtc():yyyy-MM-dd}";
                 if (mostWarnings > 0)
-                    statsBuilder.AppendLine($"Most warnings in 24h: **{mostWarnings}** on {mostWarningsEnd.AsUtc():yyyy-MM-dd}");
+                    statsBuilder.AppendLine($"Most warnings in 24h: **{mostWarnings}** {rightDate}");
                 if (daysWithoutWarnings > 0 && firstWarnTimestamp > 0)
                     statsBuilder.AppendLine($"Full days without warnings: **{daysWithoutWarnings}** out of {(DateTime.UtcNow - firstWarnTimestamp.AsUtc()).TotalDays:0}");
                 {
@@ -130,7 +140,7 @@ namespace CompatBot.Commands
                     statsBuilder.AppendLine();
                 }
                 if (lastWarn.HasValue)
-                    statsBuilder.AppendLine($@"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
+                    statsBuilder.AppendLine($"Time since last warning: {(DateTime.UtcNow - lastWarn.Value.AsUtc()).AsShortTimespan()}");
                 embed.AddField("Warning Stats", statsBuilder.ToString().TrimEnd(), true);
             }
             catch (Exception e)
