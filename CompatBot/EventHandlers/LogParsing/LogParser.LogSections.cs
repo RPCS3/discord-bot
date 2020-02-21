@@ -247,7 +247,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 && match.Actions.HasFlag(FilterAction.RemoveContent))
             {
                 var m = match;
-                if (line.Contains("not valid, removing from"))
+                if (line.Contains("not valid, removing from") || line.Contains("Invalid disc path registered"))
                     m = new Piracystring
                     {
                         Id = match.Id,
