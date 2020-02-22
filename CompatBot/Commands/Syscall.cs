@@ -14,11 +14,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
+    [Group("syscall"), Aliases("syscalls", "cell", "sce", "scecall", "scecalls"), LimitedToSpamChannel]
+    [Description("Provides information about syscalls used by games")]
     internal sealed class Syscall: BaseCommandModuleCustom
     {
-        [Command("syscall"), Aliases("syscalls", "cell", "sce", "scecall", "scecalls"), LimitedToSpamChannel]
-        [Description("Provides information about syscalls used by games")]
-        public async Task Search(CommandContext ctx,[RemainingText, Description("Product ID, module, or function name. **Case sensitive**")] string search)
+        [GroupCommand]
+        public async Task Search(CommandContext ctx, [RemainingText, Description("Product ID, module, or function name. **Case sensitive**")] string search)
         {
             if (string.IsNullOrEmpty(search))
             {
@@ -133,6 +134,39 @@ namespace CompatBot.Commands
                 }
                 await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
             }
+        }
+
+        [Command("rename"), RequiresBotModRole]
+        [Description("Provides an option to rename function call")]
+        public async Task Rename(CommandContext ctx, [Description("Old function name")] string oldFunctionName, [Description("New function name")] string newFunctionName)
+        {
+            using var db = new ThumbnailDb();
+            var oldMatches = await db.SyscallInfo.Where(sci => sci.Function == oldFunctionName).ToListAsync().ConfigureAwait(false);
+            if (oldMatches.Count == 0)
+            {
+                await ctx.RespondAsync($"Function `{oldFunctionName}` could not be found").ConfigureAwait(false);
+                await Search(ctx, oldFunctionName).ConfigureAwait(false);
+                return;
+            }
+            
+            if (oldMatches.Count > 1)
+            {
+                await ctx.RespondAsync("More than one matching function was found, I can't handle this right now 😔").ConfigureAwait(false);
+                await Search(ctx, oldFunctionName).ConfigureAwait(false);
+                return;
+            }
+            
+            var conflicts = await db.SyscallInfo.Where(sce => sce.Function == newFunctionName).AnyAsync().ConfigureAwait(false);
+            if (conflicts)
+            {
+                await ctx.RespondAsync($"There is already a function `{newFunctionName}`").ConfigureAwait(false);
+                await Search(ctx, newFunctionName).ConfigureAwait(false);
+                return;
+            }
+            
+            oldMatches[0].Function = newFunctionName;
+            await db.SaveChangesAsync().ConfigureAwait(false);
+            await ctx.RespondAsync($"Function `{oldFunctionName}` was successfully renamed to `{newFunctionName}`").ConfigureAwait(false);
         }
 
         private async Task ReturnSyscallsByGameAsync(CommandContext ctx, string productId)
