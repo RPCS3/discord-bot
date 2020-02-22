@@ -199,6 +199,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Pad handler expected but none initialized"] = new Regex(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
                     ["XAudio2Thread"] = new Regex(@"XAudio2Thread\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["cellAudio Thread"] = new Regex(@"XAudio2Backend\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
+                    ["using a Null renderer instead"] = new Regex(@"Audio renderer (?<audio_backend_init_error>.+) could not be initialized\r?$", DefaultOptions),
                     ["PPU executable hash:"] = new Regex(@"PPU executable hash: PPU-(?<ppu_hash>\w+) \(<-\s*(?<ppu_hash_patch>\d+)\).*?\r?$", DefaultOptions),
                     ["OVL executable hash:"] = new Regex(@"OVL executable hash: OVL-(?<ovl_hash>\w+) \(<-\s*(?<ovl_hash_patch>\d+)\).*?\r?$", DefaultOptions),
                     ["SPU executable hash:"] = new Regex(@"SPU executable hash: SPU-(?<spu_hash>\w+) \(<-\s*(?<spu_hash_patch>\d+)\).*?\r?$", DefaultOptions),

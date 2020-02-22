@@ -440,7 +440,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
                 notes.Add("⚠ Pad initialization problem detected; try disabling `Native UI`");
             if (!string.IsNullOrEmpty(items["xaudio_init_error"]))
-                notes.Add("❌ XAudio initialization failed; make sure you have audio output device working");
+                notes.Add("❌ XAudio initialization failed; make sure you have a working audio output device");
+            else if (items["audio_backend_init_error"] is string audioBackend) 
+                notes.Add($"⚠ {audioBackend} initialization failed; make sure you have a working audio output device");
 
             if (!string.IsNullOrEmpty(items["fw_missing_msg"])
                 || !string.IsNullOrEmpty(items["fw_missing_something"]))
