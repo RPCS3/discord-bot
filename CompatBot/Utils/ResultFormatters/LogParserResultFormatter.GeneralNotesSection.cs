@@ -287,6 +287,8 @@ namespace CompatBot.Utils.ResultFormatters
 
                 if (items["driver_version_info"] is string driverVersionString)
                 {
+                    if (driverVersionString.Contains('-'))
+                        driverVersionString = driverVersionString.Split(new[] {' ', '-'}, StringSplitOptions.RemoveEmptyEntries).Last();
                     if (Version.TryParse(driverVersionString, out var driverVersion)
                         && Version.TryParse(items["build_version"], out var buildVersion)
                         && int.TryParse(items["build_number"], out var buildNumber))
@@ -317,11 +319,6 @@ namespace CompatBot.Utils.ResultFormatters
                             if (driverVersion < AmdRecommendedOldWindowsVersion)
                                 notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
                         }
-                    }
-                    else if (driverVersionString.Contains("newer than", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (items["renderer"] == "OpenGL")
-                            notes.Add("⚠ AMD drivers 19.12.0 and newer are incompatible with the OpenGL renderer");
                     }
                     else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))
                     {
