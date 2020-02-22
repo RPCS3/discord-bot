@@ -142,7 +142,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (rsxCaveats.Contains("alpha-to-one for multisampling"))
                 {
                     if (items["msaa"] is string msaa && msaa != "Disabled")
-                        generalNotes.Add("⚠ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
+                        generalNotes.Add("ℹ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
                 }
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
