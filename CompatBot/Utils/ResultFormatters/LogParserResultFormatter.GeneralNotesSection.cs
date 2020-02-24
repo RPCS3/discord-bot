@@ -393,28 +393,6 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("ℹ This game has MLAA disable patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#SPU_MLAA)");
             }
 
-            if (items["game_version"] is string gameVer)
-            {
-                var msg = "ℹ Game version: v" + gameVer;
-                if (items["game_update_version"] is string gameUpVer
-                    && Version.TryParse(gameVer, out var gv)
-                    && Version.TryParse(gameUpVer, out var guv)
-                    && guv > gv)
-                    msg += $" (update available: v{gameUpVer})";
-                notes.Add(msg);
-            }
-            if (items["ppu_hash"] is string ppuHashes
-                && ppuHashes.Split(Environment.NewLine, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string firstPpuHash
-                && !string.IsNullOrEmpty(firstPpuHash))
-            {
-                var exe = Path.GetFileName(items["elf_boot_path"] ?? "");
-                if (string.IsNullOrEmpty(exe) || exe.Equals("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase))
-                    exe = "Main";
-                else
-                    exe = $"`{exe}`";
-                notes.Add($"ℹ {exe} hash: `PPU-{firstPpuHash}`");
-            }
-
             bool discInsideGame = false;
             bool discAsPkg = false;
             var pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
@@ -485,9 +463,30 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["failed_pad"] is string failedPad)
                 notes.Add($"❌ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
 
-
             if (DesIds.Contains(serial))
                 notes.Add("ℹ If you experience infinite load screen, clear game cache via `File` → `All games` → `Remove Disk Cache`");
+
+            if (items["game_version"] is string gameVer)
+            {
+                var msg = "ℹ Game version: v" + gameVer;
+                if (items["game_update_version"] is string gameUpVer
+                    && Version.TryParse(gameVer, out var gv)
+                    && Version.TryParse(gameUpVer, out var guv)
+                    && guv > gv)
+                    msg += $" (update available: v{gameUpVer})";
+                notes.Add(msg);
+            }
+            if (items["ppu_hash"] is string ppuHashes
+                && ppuHashes.Split(Environment.NewLine, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string firstPpuHash
+                && !string.IsNullOrEmpty(firstPpuHash))
+            {
+                var exe = Path.GetFileName(items["elf_boot_path"] ?? "");
+                if (string.IsNullOrEmpty(exe) || exe.Equals("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase))
+                    exe = "Main";
+                else
+                    exe = $"`{exe}`";
+                notes.Add($"ℹ {exe} hash: `PPU-{firstPpuHash}`");
+            }
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
