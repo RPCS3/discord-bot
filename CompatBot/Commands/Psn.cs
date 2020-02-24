@@ -82,6 +82,7 @@ namespace CompatBot.Commands
         [Description("Command to set or change game title for specific product code")]
         public async Task Rename(CommandContext ctx, [Description("Product code such as BLUS12345")] string productCode, [RemainingText, Description("New game title to save in the database")] string title)
         {
+            productCode = productCode.ToUpperInvariant();
             using var db = new ThumbnailDb();
             var item = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
             if (item == null) 
