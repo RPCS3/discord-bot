@@ -112,7 +112,7 @@ namespace CompatBot.Commands
                     {
                         var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
                         statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
-                        downloadText = statuses?.First().Description ?? downloadText;
+                        downloadText = statuses?.FirstOrDefault()?.Description ?? downloadText;
                     }
                 }
                 else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
