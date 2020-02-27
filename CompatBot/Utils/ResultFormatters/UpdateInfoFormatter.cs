@@ -108,12 +108,12 @@ namespace CompatBot.Utils.ResultFormatters
             var latestCommit = latestPrInfo?.MergeCommitSha;
             var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
             var latestAppveyorBuild = await appveyorClient.GetMasterBuildAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var buildTimestampKind = "Build";
+            var buildTimestampKind = "Built";
             var latestBuildTimestamp = latestAppveyorBuild?.Finished?.ToUniversalTime();
             var currentBuildTimestamp = currentAppveyorBuild?.Finished?.ToUniversalTime();
             if (!latestBuildTimestamp.HasValue)
             {
-                buildTimestampKind = "Merge";
+                buildTimestampKind = "Merged";
                 latestBuildTimestamp = latestPrInfo?.MergedAt;
                 currentBuildTimestamp = currentPrInfo?.MergedAt;
             }
@@ -131,9 +131,8 @@ namespace CompatBot.Utils.ResultFormatters
                     timestampInfo += $" ({(DateTime.UtcNow - latestBuildTimestamp.Value).AsTimeDeltaDescription()} ago)";
 
                 if (justAppend)
-                    builder.AddField($"Latest master build ({timestampInfo})", "This pull request has been merged, and is a part of `master` now");
-                else
-                    builder.AddField($"{buildTimestampKind} timestamp", timestampInfo);
+                    builder.AddField("Latest master build", "This pull request has been merged, and is a part of `master` now");
+                builder.WithFooter($"{buildTimestampKind} on {timestampInfo}");
             }
             return builder
                 .AddField("Windows download", GetLinkMessage(latestBuild?.Windows?.Download, true), true)
