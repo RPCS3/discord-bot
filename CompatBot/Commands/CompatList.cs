@@ -230,7 +230,7 @@ Example usage:
                         if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                             return false;
 
-                        embed.Title = $"[New Update] {embed.Title}";
+                        //embed.Title = $"[New Update] {embed.Title}";
                         await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                         lastUpdateInfo = updateLinks;
                         using var db = new BotDb();
