@@ -107,7 +107,7 @@ namespace CompatBot
             public static readonly DiscordColor PrMerged = new DiscordColor(0x6f42c1);
             public static readonly DiscordColor PrClosed = new DiscordColor(0xcb2431);
 
-            public static readonly DiscordColor UpdateStatusGood = DiscordColor.Green;
+            public static readonly DiscordColor UpdateStatusGood = new DiscordColor(0x3b88c3);
             public static readonly DiscordColor UpdateStatusBad = DiscordColor.Yellow;
         }
 

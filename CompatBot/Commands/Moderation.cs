@@ -102,7 +102,7 @@ namespace CompatBot.Commands
 
             var result = new DiscordEmbedBuilder(embed);
             const string warningTitle = "Warning!";
-            if (embed.Color.Value.Value == Config.Colors.DownloadLinks.Value)
+            if (embed.Color.Value.Value == Config.Colors.UpdateStatusGood.Value)
             {
                 result = result.WithColor(Config.Colors.UpdateStatusBad);
                 result.ClearFields();
@@ -117,9 +117,9 @@ namespace CompatBot.Commands
                     result.AddField(f.Name, f.Value, f.Inline);
                 }
             }
-            else
+            else if (embed.Color.Value.Value == Config.Colors.UpdateStatusBad.Value)
             {
-                result = result.WithColor(Config.Colors.DownloadLinks);
+                result = result.WithColor(Config.Colors.UpdateStatusGood);
                 result.ClearFields();
                 foreach (var f in embed.Fields)
                 {
