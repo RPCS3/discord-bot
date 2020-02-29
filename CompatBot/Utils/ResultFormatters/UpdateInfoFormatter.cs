@@ -56,30 +56,50 @@ namespace CompatBot.Utils.ResultFormatters
                 && !string.IsNullOrEmpty(prInfoBody))
                 desc = $"**{desc.TrimEnd()}**\n\n{prInfoBody}";
             desc = desc?.Trim();
-            if (!string.IsNullOrEmpty(desc)
-                && GithubLinksHandler.IssueMention.Matches(desc) is MatchCollection matches
-                && matches.Any())
+            if (!string.IsNullOrEmpty(desc))
             {
-                var uniqueLinks = new HashSet<string>(10);
-                foreach (Match m in matches)
+                if (GithubLinksHandler.IssueMention.Matches(desc) is MatchCollection issueMatches && issueMatches.Any())
                 {
-                    if (m.Groups["issue_mention"]?.Value is string str
-                        && !string.IsNullOrEmpty(str)
-                        && uniqueLinks.Add(str))
+                    var uniqueLinks = new HashSet<string>(10);
+                    foreach (Match m in issueMatches)
                     {
-                        var name = str;
-                        var num = m.Groups["number"].Value;
-                        if (string.IsNullOrEmpty(num))
-                            num = m.Groups["also_number"].Value;
-                        if (string.IsNullOrEmpty(num))
+                        if (m.Groups["issue_mention"]?.Value is string str
+                            && !string.IsNullOrEmpty(str)
+                            && uniqueLinks.Add(str))
                         {
-                            num = m.Groups["another_number"].Value;
-                            name = "#" + num;
-                        }
-                        if (string.IsNullOrEmpty(num))
-                            continue;
+                            var name = str;
+                            var num = m.Groups["number"].Value;
+                            if (string.IsNullOrEmpty(num))
+                                num = m.Groups["also_number"].Value;
+                            if (string.IsNullOrEmpty(num))
+                            {
+                                num = m.Groups["another_number"].Value;
+                                name = "#" + num;
+                            }
+                            if (string.IsNullOrEmpty(num))
+                                continue;
 
-                        desc = desc.Replace(str, $"[{name}](https://github.com/RPCS3/rpcs3/issues/{num})");
+                            desc = desc.Replace(str, $"[{name}](https://github.com/RPCS3/rpcs3/issues/{num})");
+                        }
+                    }
+                }
+                if (GithubLinksHandler.CommitMention.Matches(desc) is MatchCollection commitMatches && commitMatches.Any())
+                {
+                    var uniqueLinks = new HashSet<string>(2);
+                    foreach (Match m in commitMatches)
+                    {
+                        if (m.Groups["commit_mention"]?.Value is string lnk
+                            && !string.IsNullOrEmpty(lnk)
+                            && uniqueLinks.Add(lnk))
+                        {
+                            var num = m.Groups["commit_hash"].Value;
+                            if (string.IsNullOrEmpty(num))
+                                continue;
+
+                            if (num.Length > 7)
+                                num = num[..7];
+                            desc = desc.Replace(lnk, $"[{num}]({lnk})");
+                        }
                     }
                 }
             }
@@ -199,7 +219,12 @@ namespace CompatBot.Utils.ResultFormatters
 
         public static string AsTimeDeltaDescription(this TimeSpan delta)
         {
-            if (delta.TotalHours < 1)
+            if (delta.TotalMinutes < 1)
+            {
+                var seconds = (int)delta.TotalSeconds;
+                return $"{seconds} second{(seconds == 1 ? "" : "s")}";
+            }
+            else if (delta.TotalHours < 1)
             {
                 var minutes = (int)delta.TotalMinutes;
                 return $"{minutes} minute{(minutes == 1 ? "" : "s")}";
