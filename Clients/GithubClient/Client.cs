@@ -120,9 +120,12 @@ namespace GithubClient
             return result;
         }
 
-        public async Task<List<PrInfo>> GetOpenPrsAsync(CancellationToken cancellationToken)
+        public Task<List<PrInfo>> GetOpenPrsAsync(CancellationToken cancellationToken) => GetPrsWithStatusAsync("open", cancellationToken);
+        public Task<List<PrInfo>> GetClosedPrsAsync(CancellationToken cancellationToken) => GetPrsWithStatusAsync("closed&sort=updated&direction=desc", cancellationToken);
+
+        private async Task<List<PrInfo>> GetPrsWithStatusAsync(string status, CancellationToken cancellationToken)
         {
-            var requestUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=open";
+            var requestUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=" + status;
             if (StatusesCache.TryGetValue(requestUri, out List<PrInfo> result))
             {
                 ApiConfig.Log.Debug("Returned list of opened PRs from cache");
@@ -152,6 +155,8 @@ namespace GithubClient
             if (result != null)
             {
                 StatusesCache.Set(requestUri, result, PrStatusCacheTime);
+                foreach (var prInfo in result)
+                    StatusesCache.Set(prInfo.Number, prInfo, PrStatusCacheTime);
                 ApiConfig.Log.Debug($"Cached list of open PRs for {PrStatusCacheTime}");
             }
             return result;

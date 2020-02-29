@@ -237,7 +237,7 @@ namespace AppveyorClient
 
             try
             {
-                mergeDate ??= (DateTime.UtcNow - JobIdSearchThreshold);
+                mergeDate ??= DateTime.UtcNow - JobIdSearchThreshold;
                 result = await FindBuildAsync(
                     h => h.Builds.Last().Created?.ToUniversalTime() > mergeDate,
                     b => b.CommitId.StartsWith(commit, StringComparison.InvariantCultureIgnoreCase) && b.Status == "success",
@@ -253,6 +253,54 @@ namespace AppveyorClient
             }
             ApiConfig.Log.Debug($"Failed to find master {nameof(Build)} for commit {commit}");
             return null;
+        }
+
+        public async Task<List<Build>> GetMasterBuildsAsync(string oldestPrCommit, string newestPrCommit, DateTime? oldestDateTime, CancellationToken cancellationToken)
+        {
+            var emptyList = new List<Build>();
+            if (string.IsNullOrEmpty(oldestPrCommit))
+                return emptyList;
+
+            oldestDateTime ??= DateTime.UtcNow - MasterBuildCacheTime;
+            try
+            {
+                var baseUrl = new Uri("https://ci.appveyor.com/api/projects/rpcs3/RPCS3/history?recordsNumber=100");
+                var historyUrl = baseUrl;
+                HistoryInfo historyPage = null;
+                var builds = new List<Build>(10);
+                bool hasOldestBuild = false;
+                do
+                {
+                    using var message = new HttpRequestMessage(HttpMethod.Get, historyUrl);
+                    message.Headers.UserAgent.Add(ProductInfoHeader);
+                    using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        historyPage = await response.Content.ReadAsAsync<HistoryInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                        var buildsOnPage = historyPage?.Builds?.Where(b => b.Branch == "master" && b.IsTag == false) ?? emptyList;
+                        hasOldestBuild = buildsOnPage.Any(b => b.CommitId.StartsWith(oldestPrCommit, StringComparison.InvariantCultureIgnoreCase));
+                        builds.AddRange(buildsOnPage);
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response);
+                        break;
+                    }
+                    historyUrl = baseUrl.SetQueryParameter("startBuildId", historyPage?.Builds?.Last().BuildId.ToString());
+                } while (!hasOldestBuild && historyPage?.Builds?.Count > 0);
+                return builds
+                    .SkipWhile(b => !b.CommitId.StartsWith(newestPrCommit, StringComparison.InvariantCultureIgnoreCase))
+                    .Skip(1)
+                    .TakeWhile(b => !b.CommitId.StartsWith(oldestPrCommit, StringComparison.InvariantCultureIgnoreCase))
+                    .ToList();
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Error(e);
+            }
+            ApiConfig.Log.Debug($"Failed to find master {nameof(Build)}s between commits {oldestPrCommit} and {newestPrCommit}");
+            return emptyList;
         }
 
         public async Task<Build> FindBuildAsync(Func<HistoryInfo, bool> takePredicate, Func<Build, bool> selectPredicate, CancellationToken cancellationToken)

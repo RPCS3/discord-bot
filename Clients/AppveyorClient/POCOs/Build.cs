@@ -8,6 +8,7 @@ namespace AppveyorClient.POCOs
         public string AuthorName;
         public string AuthorUsername;
         public string Branch;
+        public bool IsTag;
         public int BuildId;
         public int BuildNumber;
         public DateTime? Created;

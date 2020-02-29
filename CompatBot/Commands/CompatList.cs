@@ -27,6 +27,8 @@ namespace CompatBot.Commands
     internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client client = new Client();
+        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
+        private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
         private static string lastUpdateInfo = null;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
@@ -208,9 +210,9 @@ Example usage:
                     return true;
                 }
 
-                var updateLinks = info?.LatestBuild?.Pr?.ToString();
-                if (!string.IsNullOrEmpty(updateLinks)
-                    && lastUpdateInfo != updateLinks
+                var latestUpdatePr = info?.LatestBuild?.Pr?.ToString();
+                if (!string.IsNullOrEmpty(latestUpdatePr)
+                    && lastUpdateInfo != latestUpdatePr
                     && await updateCheck.WaitAsync(0).ConfigureAwait(false))
                     try
                     {
@@ -230,15 +232,17 @@ Example usage:
                         if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                             return false;
 
-                        embed.Title = $"[New Update] {embed.Title}";
+                        await CheckMissedBuildsBetween(discordClient, compatChannel, lastUpdateInfo, latestUpdatePr, Config.Cts.Token).ConfigureAwait(false);
+
+                        //embed.Title = $"[New Update] {embed.Title}";
                         await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                        lastUpdateInfo = updateLinks;
+                        lastUpdateInfo = latestUpdatePr;
                         using var db = new BotDb();
                         var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
                         if (currentState == null)
-                            db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = updateLinks});
+                            db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr});
                         else
-                            currentState.Value = updateLinks;
+                            currentState.Value = latestUpdatePr;
                         await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                         NewBuildsMonitor.Reset();
                         return true;
@@ -252,6 +256,74 @@ Example usage:
                         updateCheck.Release();
                     }
                 return false;
+            }
+
+            private static async Task CheckMissedBuildsBetween(DiscordClient discordClient, DiscordChannel compatChannel, string previousUpdatePr, string latestUpdatePr, CancellationToken cancellationToken)
+            {
+                if (!int.TryParse(previousUpdatePr, out var oldestPr)
+                    || !int.TryParse(latestUpdatePr, out var newestPr))
+                    return;
+
+                var mergedPrs = await githubClient.GetClosedPrsAsync(cancellationToken).ConfigureAwait(false); // this will cache 30 latest PRs
+                var newestPrCommit = await githubClient.GetPrInfoAsync(newestPr, cancellationToken).ConfigureAwait(false);
+                var oldestPrCommit = await githubClient.GetPrInfoAsync(oldestPr, cancellationToken).ConfigureAwait(false);
+                if (newestPrCommit.MergedAt == null || oldestPrCommit.MergedAt == null)
+                    return;
+
+                mergedPrs = mergedPrs.Where(pri => pri.MergedAt.HasValue)
+                    .OrderBy(pri => pri.MergedAt.Value)
+                    .SkipWhile(pri => pri.Number != oldestPr)
+                    .Skip(1)
+                    .TakeWhile(pri => pri.Number != newestPr)
+                    .ToList();
+                if (mergedPrs.Count == 0)
+                    return;
+
+                var failedBuilds = await appveyorClient.GetMasterBuildsAsync(oldestPrCommit.MergeCommitSha, newestPrCommit.MergeCommitSha, oldestPrCommit.MergedAt, cancellationToken).ConfigureAwait(false);
+                foreach (var mergedPr in mergedPrs)
+                {
+                    var updateInfo = await client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false);
+                    if (updateInfo.ReturnCode == 0 || updateInfo.ReturnCode == 1) // latest or known build
+                    {
+                        updateInfo.LatestBuild = updateInfo.CurrentBuild;
+                        updateInfo.CurrentBuild = null;
+                        var embed = await updateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
+                        await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                    }
+                    else if (updateInfo.ReturnCode == -1) // unknown build
+                    {
+                        var masterBuildInfo = failedBuilds.FirstOrDefault(b => b.CommitId.Equals(mergedPr.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase));
+                        if (masterBuildInfo == null)
+                            continue;
+
+                        var buildTime = (masterBuildInfo.Finished ?? masterBuildInfo.Updated ?? masterBuildInfo.Started ?? masterBuildInfo.Created)?.ToUniversalTime();
+                        updateInfo = new UpdateInfo
+                        {
+                            ReturnCode = 1,
+                            LatestBuild = new BuildInfo
+                            {
+                                Datetime = buildTime?.ToString("yyyy-MM-dd HH:mm:ss"),
+                                Pr = mergedPr.Number,
+                                Windows = new BuildLink
+                                {
+                                    Download = "https://ci.appveyor.com/project/rpcs3/rpcs3/builds/" + masterBuildInfo.BuildId,
+                                },
+                            },
+                        };
+                        var embed = await updateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
+                        embed.Color = Config.Colors.PrClosed;
+                        embed.ClearFields();
+                        var reason = masterBuildInfo.Status ?? "Failed to build";
+                        if (reason == "failed")
+                            reason = "Failed to build";
+                        reason = char.ToUpperInvariant(reason[0]) + reason[1..];
+                        if (buildTime.HasValue)
+                            embed.WithFooter($"{reason} on {buildTime:u} ({(DateTime.UtcNow - buildTime.Value).AsTimeDeltaDescription()} ago)");
+                        else
+                            embed.WithFooter(reason);
+                        await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                    }
+                }
             }
         }
 
