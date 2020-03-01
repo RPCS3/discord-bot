@@ -67,7 +67,11 @@ namespace CompatBot.EventHandlers.LogParsing
                         state.Error = LogParseState.ErrorCode.SizeLimit;
                 }
                 else if (result.IsCompleted)
+                {
+                    if (!buffer.End.Equals(currentSectionLines.Last.Value.End))
+                        await OnNewLineAsync(buffer.Slice(0), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                     await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
+                }
                 var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;
                 totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
                 reader.AdvanceTo(sectionStart.Start);
@@ -112,7 +116,6 @@ namespace CompatBot.EventHandlers.LogParsing
             if (currentProcessor.OnExtract != null)
                 await TaskScheduler.AddAsync(state, Task.Run(() => currentProcessor.OnExtract(firstSectionLine, section, state)));
             sectionLines.RemoveFirst();
-
         }
     }
 }
