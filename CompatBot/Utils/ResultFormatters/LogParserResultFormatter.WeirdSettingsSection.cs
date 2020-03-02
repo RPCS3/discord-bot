@@ -233,8 +233,9 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ `Resolution Scaling Threshold` below `16x16` may result in corrupted visuals and game crash");
                 }
             }
-            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"], true);
-            var ppuHashes = GetHashes(items["ppu_hash"]);
+            var allPpuHashes = GetPatches(multiItems["ppu_patch"], false);
+            var ppuPatches = allPpuHashes.Where(kvp => kvp.Value > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var ppuHashes = new HashSet<string>(allPpuHashes.Keys, StringComparer.InvariantCultureIgnoreCase);
             if (items["write_color_buffers"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
                 && KnownWriteColorBuffersIds.Contains(serial))

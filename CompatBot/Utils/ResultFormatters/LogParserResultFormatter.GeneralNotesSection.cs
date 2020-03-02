@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -22,7 +21,7 @@ namespace CompatBot.Utils.ResultFormatters
             var items = state.CompleteCollection;
             var multiItems = state.CompleteMultiValueCollection;
             var notes = new List<string>();
-            var (irdChecked, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
+            var (_, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
             brokenDump |= multiItems["edat_block_offset"].Any();
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
@@ -348,9 +347,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["patch_error_file"])) 
                 notes.Add($"⚠ Failed to load `patch.yml`, check syntax around line {items["patch_error_line"]} column {items["patch_error_column"]}");
 
-            var ppuPatches = GetPatches(items["ppu_hash"], items["ppu_hash_patch"], true);
-            var ovlPatches = GetPatches(items["ovl_hash"], items["ovl_hash_patch"], true);
-            var allSpuPatches = GetPatches(items["spu_hash"], items["spu_hash_patch"], false);
+            var ppuPatches = GetPatches(multiItems["ppu_patch"], true);
+            var ovlPatches = GetPatches(multiItems["ovl_patch"], true);
+            var allSpuPatches = GetPatches(multiItems["spu_patch"], false);
             var spuPatches = new Dictionary<string, int>(allSpuPatches.Where(kvp => kvp.Value != 0));
             if (ppuPatches.Any() || spuPatches.Any() || ovlPatches.Any())
             {
@@ -474,9 +473,10 @@ namespace CompatBot.Utils.ResultFormatters
                     msg += $" (update available: v{gameUpVer})";
                 notes.Add(msg);
             }
-            if (items["ppu_hash"] is string ppuHashes
-                && ppuHashes.Split(Environment.NewLine, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string firstPpuHash
-                && !string.IsNullOrEmpty(firstPpuHash))
+            if (multiItems["ppu_patch"].FirstOrDefault() is string firstPpuPatch
+                && ProgramHashPatch.Match(firstPpuPatch) is Match m
+                && m.Success
+                && m.Groups["hash"].Value is string firstPpuHash)
             {
                 var exe = Path.GetFileName(items["elf_boot_path"] ?? "");
                 if (string.IsNullOrEmpty(exe) || exe.Equals("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase))

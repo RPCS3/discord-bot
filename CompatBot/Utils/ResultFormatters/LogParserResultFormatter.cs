@@ -38,6 +38,7 @@ namespace CompatBot.Utils.ResultFormatters
             @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+))\r?$",
             DefaultSingleLine);
         private static readonly Regex LinuxKernelVersion = new Regex(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
+        private static readonly Regex ProgramHashPatch = new Regex(@"(?<hash>\w+) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
         private static readonly char[] NewLineChars = {'\r', '\n'};
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
@@ -704,25 +705,18 @@ namespace CompatBot.Utils.ResultFormatters
                 .ToList();
         }
 
-        private static Dictionary<string, int> GetPatches(string hashList, string patchesList, in bool onlyApplied)
+        private static Dictionary<string, int> GetPatches(UniqueList<string> patchList, in bool onlyApplied)
         {
-            if (string.IsNullOrEmpty(hashList) || string.IsNullOrEmpty(patchesList))
+            if (!patchList.Any())
                 return new Dictionary<string, int>(0);
 
-            var hashes = hashList.Split(Environment.NewLine);
-            var patches = patchesList.Split(Environment.NewLine);
-            if (hashes.Length != patches.Length)
+            var result = new Dictionary<string, int>(patchList.Count);
+            foreach (var patch in patchList)
             {
-                Config.Log.Warn($"Hashes count: {hashes.Length}, Patches count: {patches.Length}");
-                return new Dictionary<string, int>(0);
-            }
-
-            var result = new Dictionary<string, int>();
-            for (var i = 0; i < hashes.Length; i++)
-            {
-                if (int.TryParse(patches[i], out var pCount))
+                var match = ProgramHashPatch.Match(patch);
+                if (match.Success && int.TryParse(match.Groups["patch_count"].Value, out var pCount))
                     if (!onlyApplied || pCount > 0)
-                        result[hashes[i]] = pCount;
+                        result[match.Groups["hash"].Value] = pCount;
             }
             return result;
         }
