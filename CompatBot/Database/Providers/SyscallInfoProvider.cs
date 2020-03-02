@@ -61,7 +61,7 @@ namespace CompatBot.Database.Providers
                 var funcsToRemove = new List<SyscallInfo>(0);
                 try
                 {
-                    funcsToRemove = await db.SyscallInfo.Where(sci => sci.Function.Contains('(') || sci.Function.StartsWith('“')).ToListAsync().ConfigureAwait(false);
+                    funcsToRemove = db.SyscallInfo.AsEnumerable().Where(sci => sci.Function.Contains('(') || sci.Function.StartsWith('“')).ToList();
                     funcs = funcsToRemove.Count;
                     if (funcs == 0)
                         return (0, 0);
