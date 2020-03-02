@@ -58,15 +58,15 @@ namespace CompatBot.Database.Providers
             int funcs = 0, links = 0;
             using (var db = new ThumbnailDb())
             {
-                var funcsToFix = new List<SyscallInfo>(0);
+                var funcsToRemove = new List<SyscallInfo>(0);
                 try
                 {
-                    funcsToFix = await db.SyscallInfo.Where(sci => sci.Function.Contains('(')).ToListAsync().ConfigureAwait(false);
-                    funcs = funcsToFix.Count;
+                    funcsToRemove = await db.SyscallInfo.Where(sci => sci.Function.Contains('(') || sci.Function.StartsWith('“')).ToListAsync().ConfigureAwait(false);
+                    funcs = funcsToRemove.Count;
                     if (funcs == 0)
                         return (0, 0);
 
-                    foreach (var sci in funcsToFix)
+                    foreach (var sci in funcsToRemove.Where(sci => sci.Function.Contains('(')))
                     {
                         var productIds = await db.SyscallToProductMap.AsNoTracking().Where(m => m.SyscallInfoId == sci.Id).Select(m => m.Product.ProductCode).Distinct().ToListAsync().ConfigureAwait(false);
                         links += productIds.Count;
@@ -90,7 +90,7 @@ namespace CompatBot.Database.Providers
                 {
                     try
                     {
-                        db.SyscallInfo.RemoveRange(funcsToFix);
+                        db.SyscallInfo.RemoveRange(funcsToRemove);
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                     catch (Exception e)
