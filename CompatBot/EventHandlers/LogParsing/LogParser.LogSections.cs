@@ -223,6 +223,8 @@ namespace CompatBot.EventHandlers.LogParsing
 
         public static readonly HashSet<string> MultiValueItems = new HashSet<string>
         {
+            "fatal_error_context",
+            "fatal_error",
             "rap_file",
             "vulkan_found_device",
             "vulkan_compatible_device_name",
