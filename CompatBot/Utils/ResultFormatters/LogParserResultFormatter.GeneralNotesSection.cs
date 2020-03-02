@@ -27,40 +27,60 @@ namespace CompatBot.Utils.ResultFormatters
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var serial = items["serial"] ?? "";
-            if (items["fatal_error"] is string fatalError)
+            if (multiItems["fatal_error"] is UniqueList<string> fatalErrors && fatalErrors.Any())
             {
-                var context = items["fatal_error_context"] ?? "";
-                builder.AddField("Fatal Error", $"```\n{fatalError.Trim(1020)}\n```");
-                if (fatalError.Contains("psf.cpp", StringComparison.InvariantCultureIgnoreCase)
-                    || fatalError.Contains("invalid map<K, T>", StringComparison.InvariantCultureIgnoreCase)
-                    || context.Contains("SaveData", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("❌ Game save data is corrupted");
-                else if (fatalError.Contains("Could not bind OpenGL context"))
-                    notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
-                else if (fatalError.Contains("file is null"))
+                var contexts = multiItems["fatal_error_context"];
+                foreach (var fatalError in fatalErrors)
                 {
-                    if (context.StartsWith("RSX", StringComparison.InvariantCultureIgnoreCase) || fatalError.StartsWith("RSX:"))
-                        notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
-                    if (context.StartsWith("SPU", StringComparison.InvariantCultureIgnoreCase))
-                        notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
-                    if (context.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase))
-                        notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
-                }
-                else if (fatalError.Contains("(e=0x17): file::read"))
-                {
-                    // on windows this is ERROR_CRC
-                    notes.Add("❌ Storage device communication error; check your cables");
-                }
-                else if (fatalError.Contains("Unknown primitive type"))
-                {
-                    notes.Add("⚠ RSX desync detected, it's probably random");
+                    var knownFatal = false;
+                    if (fatalError.Contains("psf.cpp", StringComparison.InvariantCultureIgnoreCase)
+                        || fatalError.Contains("invalid map<K, T>", StringComparison.InvariantCultureIgnoreCase)
+                        || contexts.Any(c => c.Contains("SaveData", StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ Game save data is corrupted");
+                    }
+                    else if (fatalError.Contains("Could not bind OpenGL context"))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
+                    }
+                    else if (fatalError.Contains("file is null"))
+                    {
+                        if (contexts.Any(c => c.StartsWith("RSX", StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
+                        }
+                        if (contexts.Any(c => c.StartsWith("SPU", StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
+                        }
+                        if (contexts.Any(c => c.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
+                        }
+                    }
+                    else if (fatalError.Contains("(e=0x17): file::read"))
+                    {
+                        // on windows this is ERROR_CRC
+                        notes.Add("❌ Storage device communication error; check your cables");
+                    }
+                    else if (fatalError.Contains("Unknown primitive type"))
+                    {
+                        notes.Add("⚠ RSX desync detected, it's probably random");
+                    }
+                    if (!knownFatal)
+                        builder.AddField("Fatal Error", $"```\n{fatalError.Trim(1020)}\n```");
                 }
             }
             else if (items["unimplemented_syscall"] is string unimplementedSyscall)
             {
                 if (unimplementedSyscall.Contains("syscall_988"))
                 {
-                    fatalError = "Unimplemented syscall " + unimplementedSyscall;
+                    var fatalError = "Unimplemented syscall " + unimplementedSyscall;
                     builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
                     if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
                         notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
