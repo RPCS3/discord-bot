@@ -48,6 +48,12 @@ namespace CompatBot.Utils
 				list.Add(item);
 		}
 
+		public void AddRange(IEnumerable<T> collection)
+		{
+			foreach (var item in collection)
+				Add(item);
+		}
+
 		public void Clear()
 		{
 			list.Clear();

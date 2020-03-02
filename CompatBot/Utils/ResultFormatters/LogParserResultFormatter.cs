@@ -204,7 +204,11 @@ namespace CompatBot.Utils.ResultFormatters
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message, ISource source)
         {
             DiscordEmbedBuilder builder;
-            var collection = state.CompleteCollection ?? state.WipCollection;
+            state.CompleteCollection ??= state.WipCollection;
+            state.CompleteMultiValueCollection ??= state.WipMultiValueCollection;
+            var collection = state.CompleteCollection;
+            var multiValueCollection = state.CompleteMultiValueCollection;
+
             if (collection?.Count > 0)
             {
                 var ldrGameSerial = collection["ldr_game_serial"] ?? collection["ldr_path_serial"];
@@ -242,13 +246,13 @@ namespace CompatBot.Utils.ResultFormatters
                 }
                 else
                 {
-                    CleanupValues(collection);
+                    CleanupValues(state);
                     BuildInfoSection(builder, collection);
                     var colA = BuildCpuSection(collection);
                     var colB = BuildGpuSection(collection);
                     BuildSettingsSections(builder, collection, colA, colB);
                     BuildLibsSection(builder, collection);
-                    await BuildNotesSectionAsync(builder, state, collection, client).ConfigureAwait(false);
+                    await BuildNotesSectionAsync(builder, state, client).ConfigureAwait(false);
                 }
             }
             else
@@ -263,8 +267,10 @@ namespace CompatBot.Utils.ResultFormatters
             return builder;
         }
 
-        private static void CleanupValues(NameValueCollection items)
+        private static void CleanupValues(LogParseState state)
         {
+            var items = state.CompleteCollection;
+            var multiItems = state.CompleteMultiValueCollection;
             if (items["strict_rendering_mode"] == "true")
                 items["resolution_scale"] = "Strict Mode";
             if (items["spu_threads"] == "0")
@@ -284,19 +290,19 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["gpu_info"]))
             {
                 items["gpu_info"] = items["gpu_info"].StripMarks();
-                items["driver_version_info"] = GetVulkanDriverVersion(items["vulkan_initialized_device"], items["vulkan_found_device"]) ??
-                                               GetVulkanDriverVersion(items["gpu_info"], items["vulkan_found_device"]) ??
+                items["driver_version_info"] = GetVulkanDriverVersion(items["vulkan_initialized_device"], multiItems["vulkan_found_device"]) ??
+                                               GetVulkanDriverVersion(items["gpu_info"], multiItems["vulkan_found_device"]) ??
                                                GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
                                                GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
             }
             if (items["driver_version_info"] != null)
                 items["gpu_info"] += $" ({items["driver_version_info"]})";
 
-            if (items["vulkan_compatible_device_name"] is string vulkanDevices)
+            if (multiItems["vulkan_compatible_device_name"] is UniqueList<string> vulkanDevices && vulkanDevices.Any())
             {
-                var devices = vulkanDevices.Split(Environment.NewLine)
+                var devices = vulkanDevices
                     .Distinct()
-                    .Select(n => new {name = n.StripMarks(), driverVersion = GetVulkanDriverVersion(n, items["vulkan_found_device"])})
+                    .Select(n => new {name = n.StripMarks(), driverVersion = GetVulkanDriverVersion(n, multiItems["vulkan_found_device"])})
                     .Reverse()
                     .ToList();
                 if (string.IsNullOrEmpty(items["gpu_info"]) && devices.Count > 0)
@@ -472,12 +478,12 @@ namespace CompatBot.Utils.ResultFormatters
             return version;
         }
 
-        private static string GetVulkanDriverVersion(string gpu, string foundDevices)
+        private static string GetVulkanDriverVersion(string gpu, UniqueList<string> foundDevices)
         {
-            if (string.IsNullOrEmpty(gpu) || string.IsNullOrEmpty(foundDevices))
+            if (string.IsNullOrEmpty(gpu) || !foundDevices.Any())
                 return null;
 
-            var info = (from line in foundDevices.Split(Environment.NewLine)
+            var info = (from line in foundDevices
                     let m = VulkanDeviceInfo.Match(line)
                     where m.Success
                     select m

@@ -17,11 +17,13 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, NameValueCollection items, DiscordClient discordClient)
+        private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
         {
+            var items = state.CompleteCollection;
+            var multiItems = state.CompleteMultiValueCollection;
             var notes = new List<string>();
-            var (irdChecked, brokenDump, longestPath) = await HasBrokenFilesAsync(items).ConfigureAwait(false);
-            brokenDump |= !string.IsNullOrEmpty(items["edat_block_offset"]);
+            var (irdChecked, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
+            brokenDump |= multiItems["edat_block_offset"].Any();
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
@@ -74,12 +76,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
             if (items["failed_to_boot"] != null)
                 notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
-            if (items["failed_to_verify"] is string verifyFails)
-            {
-                var types = verifyFails.Split(Environment.NewLine).Distinct().ToList();
-                if (types.Contains("sce"))
-                    notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
-            }
+            if (multiItems["failed_to_verify"].Contains("sce"))
+                notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
             if (brokenDump)
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
             if (items["fw_version_installed"] is string fw && !string.IsNullOrEmpty(fw))
@@ -491,8 +489,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
 
-            BuildWeirdSettingsSection(builder, items, notes);
-            BuildMissingLicensesSection(builder, items, notes);
+            BuildWeirdSettingsSection(builder, state, notes);
+            BuildMissingLicensesSection(builder, serial, multiItems, notes);
 
             var notesContent = new StringBuilder();
             foreach (var line in SortLines(notes, pirateEmoji))
@@ -500,12 +498,12 @@ namespace CompatBot.Utils.ResultFormatters
             PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
 
-        private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, NameValueCollection items, List<string> generalNotes)
+        private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, string serial, NameUniqueObjectCollection<string> items, List<string> generalNotes)
         {
-            if (items["rap_file"] is string rap)
+            if (items["rap_file"] is UniqueList<string> raps && raps.Any())
             {
                 var limitTo = 5;
-                var licenseNames = rap.Split(Environment.NewLine)
+                var licenseNames = raps
                     .Select(Path.GetFileName)
                     .Distinct()
                     .Except(KnownBogusLicenses)
@@ -529,7 +527,7 @@ namespace CompatBot.Utils.ResultFormatters
 
                 builder.AddField("Missing Licenses", content);
 
-                var gameRegion = items["serial"] is string serial && serial.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
+                var gameRegion = serial?.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
                 var dlcRegions = licenseNames.Select(n => n[9]).Concat(gameRegion).Distinct().ToArray();
                 if (dlcRegions.Length > 1)
                     generalNotes.Add($"🤔 That is a very interesting DLC collection from {dlcRegions.Length} different regions");
@@ -539,18 +537,21 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static async Task<(bool irdChecked, bool broken, int longestPath)> HasBrokenFilesAsync(NameValueCollection items)
+        private static async Task<(bool irdChecked, bool broken, int longestPath)> HasBrokenFilesAsync(LogParseState state)
         {
+            var items = state.CompleteCollection;
+            var multiItems = state.CompleteMultiValueCollection;
             var defaultLongestPath = "/PS3_GAME/USRDIR/".Length + (1+8+3)*2; // usually there's at least one more level for data files
             if (!(items["serial"] is string productCode))
                 return (false, false, defaultLongestPath);
 
             if (!productCode.StartsWith("B") && !productCode.StartsWith("M"))
             {
-                if (P5Ids.Contains(productCode) && items["broken_digital_filename"] is string brokenDigitalFiles)
+                if (P5Ids.Contains(productCode)
+                    && multiItems["broken_digital_filename"] is UniqueList<string> brokenDigitalFiles
+                    && brokenDigitalFiles.Any())
                 {
-                    var missingDigitalFiles = brokenDigitalFiles.Split(Environment.NewLine).Distinct().ToList();
-                    if (missingDigitalFiles.Contains("USRDIR/ps3.cpk") || missingDigitalFiles.Contains("USRDIR/data.cpk"))
+                    if (brokenDigitalFiles.Contains("USRDIR/ps3.cpk") || brokenDigitalFiles.Contains("USRDIR/data.cpk"))
                         return (false, true, defaultLongestPath);
                 }
                 return (false, false, defaultLongestPath);
@@ -576,8 +577,8 @@ namespace CompatBot.Utils.ResultFormatters
                 return (false, false, defaultLongestPath);
 
             var longestPath = knownFiles.Max(p => p.TrimEnd('.').Length);
-            if (string.IsNullOrEmpty(items["broken_directory"])
-                && string.IsNullOrEmpty(items["broken_filename"]))
+            if (!multiItems["broken_directory"].Any()
+                && !multiItems["broken_filename"].Any())
                 return (false, false, longestPath);
 
             var missingDirs = items["broken_directory"]?.Split(Environment.NewLine).Distinct().ToList() ??

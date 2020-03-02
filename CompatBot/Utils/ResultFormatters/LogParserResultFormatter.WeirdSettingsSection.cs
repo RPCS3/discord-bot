@@ -6,14 +6,17 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
+using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, NameValueCollection items, List<string> generalNotes)
+        private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, LogParseState state, List<string> generalNotes)
         {
+            var items = state.CompleteCollection;
+            var multiItems = state.CompleteMultiValueCollection;
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
             int.TryParse(items["thread_count"], out var threadCount);
@@ -136,18 +139,14 @@ namespace CompatBot.Utils.ResultFormatters
             if (KnownDisableVertexCacheIds.Contains(serial) && !vertexCacheDisabled)
                 notes.Add("⚠ This game requires disabling `Vertex Cache` option");
 
-            if (items["rsx_not_supported"] is string notSupported)
+            if (multiItems["rsx_not_supported"].Contains("alpha-to-one for multisampling"))
             {
-                var rsxCaveats = notSupported.Split(Environment.NewLine).Distinct().ToArray();
-                if (rsxCaveats.Contains("alpha-to-one for multisampling"))
-                {
-                    if (items["msaa"] is string msaa && msaa != "Disabled")
-                        generalNotes.Add("ℹ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
-                }
+                if (items["msaa"] is string msaa && msaa != "Disabled")
+                    generalNotes.Add("ℹ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
-                            && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
-                            && !gpuInfo.Contains("RADV");
+                                         && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
+                                         && !gpuInfo.Contains("RADV");
             if (items["msaa"] == "Disabled")
             {
                 if (!isWireframeBugPossible)
@@ -292,7 +291,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 CheckP5Settings(serial, items, notes, ppuPatches);
                 CheckAsurasWrathSettings(serial, items, notes);
-                CheckJojoSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
+                CheckJojoSettings(serial, state, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckSimpsonsSettings(serial, generalNotes);
                 CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
@@ -512,8 +511,9 @@ namespace CompatBot.Utils.ResultFormatters
             "18cf9a4e8196684ed9ee816f82649561fd1bf182",
         };
 
-        private static void CheckJojoSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
+        private static void CheckJojoSettings(string serial, LogParseState state, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
         {
+            var items = state.CompleteCollection;
             if (AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
             {
                 if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
@@ -549,7 +549,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (serial == "BLUS31405"
                     && items["compat_database_path"] is string compatDbPath
                     && compatDbPath.Contains("JoJo ASB Emulator v.04")
-                    && !string.IsNullOrEmpty(items["rap_file"]))
+                    && state.CompleteMultiValueCollection["rap_file"].Any())
                     generalNotes.Add("🤔 Very interesting version of the game you got there");
             }
         }
