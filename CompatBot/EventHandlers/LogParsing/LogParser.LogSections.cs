@@ -193,18 +193,17 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["RSX: Your GPU does not support"] = new Regex(@"RSX: Your GPU does not support (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: GPU/driver lacks support"] = new Regex(@"RSX: GPU/driver lacks support for (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: Swapchain:"] = new Regex(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
-                    ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ ({(?<fatal_error_context>.+?)} )?(?<fatal_error>.*?(\:\W*\r?\n\(.*?)*)\r?$", DefaultOptions),
-                    ["} SYS:"] = new Regex(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>.+)} )?SYS:\s*\r?\n)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7)", DefaultSingleLineOptions),
+                    ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?\w+:\s*(class [^\r\n]+ thrown: )?\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7)", DefaultSingleLineOptions),
                     ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
-                    ["Rap file not found:"] = new Regex(@"Rap file not found: (?<rap_file>.*?)\r?$", DefaultOptions),
+                    ["Rap file not found:"] = new Regex(@"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?)(\xE2\x80\x9D)?\r?$", DefaultOptions),
                     ["Pad handler expected but none initialized"] = new Regex(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
                     ["XAudio2Thread"] = new Regex(@"XAudio2Thread\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["cellAudio Thread"] = new Regex(@"XAudio2Backend\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["using a Null renderer instead"] = new Regex(@"Audio renderer (?<audio_backend_init_error>.+) could not be initialized\r?$", DefaultOptions),
-                    ["PPU executable hash:"] = new Regex(@"PPU executable hash: PPU-(?<ppu_hash>\w+) \(<-\s*(?<ppu_hash_patch>\d+)\).*?\r?$", DefaultOptions),
-                    ["OVL executable hash:"] = new Regex(@"OVL executable hash: OVL-(?<ovl_hash>\w+) \(<-\s*(?<ovl_hash_patch>\d+)\).*?\r?$", DefaultOptions),
-                    ["SPU executable hash:"] = new Regex(@"SPU executable hash: SPU-(?<spu_hash>\w+) \(<-\s*(?<spu_hash_patch>\d+)\).*?\r?$", DefaultOptions),
-                    ["Loaded SPU image:"] = new Regex(@"Loaded SPU image: SPU-(?<spu_hash>\w+) \(<-\s*(?<spu_hash_patch>\d+)\).*?\r?$", DefaultOptions),
+                    ["PPU executable hash:"] = new Regex(@"PPU executable hash: PPU-(?<ppu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
+                    ["OVL executable hash:"] = new Regex(@"OVL executable hash: OVL-(?<ovl_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
+                    ["SPU executable hash:"] = new Regex(@"SPU executable hash: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
+                    ["Loaded SPU image:"] = new Regex(@"Loaded SPU image: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
                     ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed (?!with 0x8001002c).+\xE2\x80\x9C(/dev_bdvd/(?<broken_filename>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["'sys_fs_opendir' failed"] = new Regex(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["EDAT: "] = new Regex(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
@@ -227,12 +226,9 @@ namespace CompatBot.EventHandlers.LogParsing
             "rap_file",
             "vulkan_found_device",
             "vulkan_compatible_device_name",
-            "ppu_hash",
-            "ppu_hash_patch",
-            "ovl_hash",
-            "ovl_hash_patch",
-            "spu_hash",
-            "spu_hash_patch",
+            "ppu_patch",
+            "ovl_patch",
+            "spu_patch",
             "broken_filename",
             "broken_digital_filename",
             "broken_directory",
@@ -290,10 +286,15 @@ namespace CompatBot.EventHandlers.LogParsing
             void Copy(params string[] keys)
             {
                 foreach (var key in keys)
+                {
                     if (state.CompleteCollection?[key] is string value)
                         state.WipCollection[key] = value;
+                    if (state.CompleteMultiValueCollection?[key] is UniqueList<string> collection)
+                        state.WipMultiValueCollection[key] = collection;
+                }
             }
             state.WipCollection = new NameValueCollection();
+            state.WipMultiValueCollection = new NameUniqueObjectCollection<string>();
             Copy(
                 "build_and_specs", "fw_version_installed",
                 "vulkan_gpu", "d3d_gpu",
@@ -309,6 +310,7 @@ namespace CompatBot.EventHandlers.LogParsing
         private static void MarkAsComplete(LogParseState state)
         {
             state.CompleteCollection = state.WipCollection;
+            state.CompleteMultiValueCollection = state.WipMultiValueCollection;
             Config.Log.Trace("----- complete section");
         }
 

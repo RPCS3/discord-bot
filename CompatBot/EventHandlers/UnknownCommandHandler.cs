@@ -40,11 +40,12 @@ namespace CompatBot.EventHandlers
                 && (e.Context.Message.Content?.EndsWith("?") ?? false)
                 && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
             {
+                var prefixLen = e.Context.Prefix.Length; // workaround for resharper bug
                 var updatedContext = e.Context.CommandsNext.CreateContext(
                     e.Context.Message,
                     e.Context.Prefix,
                     cmd,
-                    e.Context.Message.Content[(e.Context.Prefix.Length)..].Trim()
+                    e.Context.Message.Content[prefixLen..].Trim()
                 );
                 try { await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false); } catch { }
                 return;
