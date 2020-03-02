@@ -92,12 +92,7 @@ namespace CompatBot.EventHandlers.LogParsing
                         lock (state)
                         {
                             if (MultiValueItems.Contains(group.Name))
-                            {
-                                var currentValue = state.WipCollection[group.Name];
-                                if (!string.IsNullOrEmpty(currentValue))
-                                    currentValue += Environment.NewLine;
-                                state.WipCollection[group.Name] = currentValue + strValue;
-                            }
+                                state.WipMultiValueCollection[group.Name].Add(strValue);
                             else
                                 state.WipCollection[group.Name] = strValue;
                             if (CountValueItems.Contains(group.Name))

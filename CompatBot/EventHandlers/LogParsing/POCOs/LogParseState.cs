@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using CompatBot.Database;
+using CompatBot.Utils;
 
 namespace CompatBot.EventHandlers.LogParsing.POCOs
 {
     public class LogParseState
     {
         public NameValueCollection CompleteCollection = null;
+		public NameUniqueObjectCollection<string> CompleteMultiValueCollection = null;
         public NameValueCollection WipCollection = new NameValueCollection();
+        public NameUniqueObjectCollection<string> WipMultiValueCollection = new NameUniqueObjectCollection<string>();
         public readonly Dictionary<string, int> ValueHitStats = new Dictionary<string, int>();
         public readonly Dictionary<string, Dictionary<string, HashSet<string>>> Syscalls = new Dictionary<string, Dictionary<string, HashSet<string>>>();
         public int Id = 0;
