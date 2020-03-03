@@ -68,7 +68,13 @@ namespace CompatBot.Database.Providers
 
                     foreach (var sci in funcsToRemove.Where(sci => sci.Function.Contains('(')))
                     {
-                        var productIds = await db.SyscallToProductMap.AsNoTracking().Where(m => m.SyscallInfoId == sci.Id).Select(m => m.Product.ProductCode).Distinct().ToListAsync().ConfigureAwait(false);
+                        var productIds = await db.SyscallToProductMap
+                            .AsNoTracking()
+                            .Where(m => m.SyscallInfoId == sci.Id)
+                            .Select(m => m.Product.ProductCode)
+                            .Distinct()
+                            .ToListAsync()
+                            .ConfigureAwait(false);
                         links += productIds.Count;
                         foreach (var productId in productIds)
                         {

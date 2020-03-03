@@ -31,7 +31,7 @@ namespace CompatBot.Commands
             }
                         .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
                         .AddField("Discord Latency", $"{ctx.Client.Ping} ms", true)
-                        .AddField("Google Drive API", File.Exists(Config.GoogleApiConfigPath) ? "✅ Configured" : "❌ Not configured", true)
+                        .AddField("API Tokens", GetConfiguredApiStats(), true)
                         .AddField("Memory Usage", $"GC: {GC.GetTotalMemory(false).AsStorageUnit()}\n" +
                                                   $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
                                                   $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
@@ -56,6 +56,16 @@ namespace CompatBot.Commands
 #endif
             var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
+        }
+
+        private static string GetConfiguredApiStats()
+        {
+            return new StringBuilder()
+                .Append(File.Exists(Config.GoogleApiConfigPath) ? "✅" : "❌").AppendLine(" Google Drive")
+                .Append(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅").AppendLine(" Azure DevOps")
+                .ToString()
+                .Trim();
+
         }
 
         private static void AppendPiracyStats(DiscordEmbedBuilder embed)
