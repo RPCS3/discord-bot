@@ -59,6 +59,7 @@ namespace CompatBot
         public static int MaxSyscallResultLines => config.GetValue(nameof(MaxSyscallResultLines), 13);
         public static TimeSpan IncomingMessageCheckIntervalInMinutes => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMinutes), 10));
         public static string Token => config.GetValue(nameof(Token), "");
+        public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
 
