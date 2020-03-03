@@ -107,7 +107,7 @@ namespace CompatBot.Commands
                 var downloadHeader = "Windows PR Build";
                 var downloadText = "⏳ Pending...";
                 var linuxDownloadHeader = "Linux PR Build";
-                var linuxDownloadText = "⏳ Pending...";
+                string linuxDownloadText = null;
 
                 // windows build
                 if (prInfo.StatusesUrl is string statusesUrl)
@@ -141,6 +141,7 @@ namespace CompatBot.Commands
                 if (!string.IsNullOrEmpty(personalAccessToken))
                     try
                     {
+                        linuxDownloadText = "⏳ Pending...";
                         var azureCreds = new VssBasicCredential("bot", personalAccessToken);
                         var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
                         var azurePipelinesClient = azureConnection.GetClient<BuildHttpClient>();
@@ -196,6 +197,7 @@ namespace CompatBot.Commands
                     catch (Exception e)
                     {
                         Config.Log.Error(e, "Failed to get Azure DevOps build info");
+                        linuxDownloadText = null; // probably due to expired access token
                     }
 
                 if (!string.IsNullOrEmpty(downloadText))
