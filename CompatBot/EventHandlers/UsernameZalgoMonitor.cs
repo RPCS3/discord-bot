@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
+using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -22,10 +24,14 @@ namespace CompatBot.EventHandlers
             {
                 var m = args.Client.GetMember(args.UserAfter);
                 if (NeedsRename(m.DisplayName))
+                {
+                    var suggestedName = StripZalgo(m.DisplayName).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
-                        $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nSuggestion to rename: **{StripZalgo(m.DisplayName).Sanitize()}**",
+                        $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
+                    await DmUser(args.Client, args.Client.GetMember(args.UserAfter), suggestedName).ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
@@ -39,10 +45,14 @@ namespace CompatBot.EventHandlers
             {
                 var name = args.Member.DisplayName;
                 if (NeedsRename(name))
+                {
+                    var suggestedName = StripZalgo(name).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
-                        $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
+                        $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
+                    await DmUser(args.Client, args.Member, suggestedName).ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
@@ -56,10 +66,14 @@ namespace CompatBot.EventHandlers
             {
                 var name = args.Member.DisplayName;
                 if (NeedsRename(name))
+                {
+                    var suggestedName = StripZalgo(name).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
-                        $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{StripZalgo(name).Sanitize()}**",
+                        $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
+                    await DmUser(args.Client, args.Member, suggestedName).ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
@@ -71,6 +85,23 @@ namespace CompatBot.EventHandlers
         {
             displayName = displayName?.Normalize().TrimEager();
             return displayName != StripZalgo(displayName, 3);
+        }
+
+        private static async Task DmUser(DiscordClient client, DiscordMember member, string suggestedName)
+        {
+            try
+            {
+                var rulesChannel = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
+                var msg = $"Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, please change it accordingly.\n" +
+                          $"I'd suggest using `{suggestedName}`, but I'm not perfect and can't clean all the junk in some cases, so change it at your discretion.\n" +
+                          "You can change your _display name_ by clicking on the server name at the top left and selecting **Change Nickname**.";
+                var dm = await member.CreateDmChannelAsync().ConfigureAwait(false);
+                await dm.SendMessageAsync(msg).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
         }
 
         public static string StripZalgo(string displayName, int level = 2)
