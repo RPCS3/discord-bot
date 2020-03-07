@@ -6,6 +6,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.Utils;
+using CompatBot.Utils.ResultFormatters;
 
 namespace CompatBot.EventHandlers.LogParsing
 {
@@ -31,15 +32,8 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["RPCS3"] = new Regex(@"^\s*(?<build_and_specs>RPCS3.*)\r?$", DefaultSingleLineOptions),
-                },
-                OnNewLineAsync = PiracyCheckAsync,
-                EndTrigger = new[] {"·"},
-            },
-            new LogSection
-            {
-                Extractors = new Dictionary<string, Regex>
-                {
+                    ["RPCS3"] = new Regex(@"(^|.+0:00:00\.000000)\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n\xC2\xB7|$)", DefaultSingleLineOptions),
+                    ["Operating system:"] = LogParserResult.OsInfoInLog,
                     ["Physical device intialized"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Found vulkan-compatible GPU:"] = new Regex(@"Found vulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
                     ["Finished reading database from file:"] = new Regex(@"Finished reading database from file: (?<compat_database_path>.*compat_database.dat) }.*\r?$", DefaultOptions),

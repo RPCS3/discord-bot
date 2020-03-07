@@ -74,6 +74,27 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
             }
+            else if (items["os_version_major"] is string _ || items["posix_name"] is string _)
+            {
+                switch (items["os_type"]?.ToLowerInvariant())
+                {
+                    case "windows":
+                    {
+                        items["os_type"] = "Windows";
+                        items["os_version"] = $"{items["os_version_major"]}.{items["os_version_minor"]}.{items["os_version_build"]}";
+                        if (Version.TryParse(items["os_version"], out var winVersion) && GetWindowsVersion(winVersion) is string winVer)
+                            items["os_windows_version"] = winVer;
+                        break;
+                    }
+                    case "posix":
+                    {
+                        items["os_type"] = items["posix_name"];
+                        items["os_version"] = items["posix_release"];
+                        items["os_linux_version"] = GetLinuxVersion(items["os_version"], osInfo.Groups["posix_version"].Value);
+                        break;
+                    }
+                }
+            }
             if (buildInfo.Success)
             {
                 systemInfo = $"RPCS3 v{buildInfo.Groups["version_string"].Value} {buildInfo.Groups["stage"].Value}";
