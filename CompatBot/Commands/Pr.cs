@@ -155,7 +155,7 @@ namespace CompatBot.Commands
                         ).ConfigureAwait(false);
                         var filterBranch = $"refs/pull/{pr}/merge";
                         builds = builds
-                            .Where(b => b.SourceBranch == filterBranch && b.SourceVersion.Equals(prInfo.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase)) // b.TriggerInfo.TryGetValue("pr.number", out var prNum) && prNum == pr.ToString()
+                            .Where(b => b.SourceBranch == filterBranch && b.TriggerInfo.TryGetValue("pr.sourceSha", out var trc) && trc.Equals(prInfo.Head?.Sha, StringComparison.InvariantCultureIgnoreCase))
                             .OrderByDescending(b => b.StartTime)
                             .ToList();
                         var latestBuild = builds.FirstOrDefault();

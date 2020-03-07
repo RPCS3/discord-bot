@@ -16,6 +16,8 @@ namespace GithubClient.POCOs
         public DateTime? MergedAt;
         public string MergeCommitSha;
         public string StatusesUrl;
+        public RefInfo Head;
+        public RefInfo Base;
         public int Additions;
         public int Deletions;
         public int ChangedFiles;
@@ -48,5 +50,13 @@ namespace GithubClient.POCOs
         public string HtmlUrl;
         public string DiffUrl;
         public string PatchUrl;
+    }
+
+    public class RefInfo
+    {
+        public string Label;
+        public string Ref;
+        public GithubUser User;
+        public string Sha;
     }
 }
