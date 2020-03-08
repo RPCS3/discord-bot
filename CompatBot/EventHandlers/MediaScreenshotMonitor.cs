@@ -19,6 +19,7 @@ namespace CompatBot.EventHandlers
         private static readonly ComputerVisionClient client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
         private static readonly SemaphoreSlim workSemaphore = new SemaphoreSlim(0);
         private static readonly ConcurrentQueue<(MessageCreateEventArgs evt, string readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, string readOperationId)>();
+        public static int MaxQueueLength = 0;
 
         public static async Task OnMessageCreated(MessageCreateEventArgs evt)
         {
@@ -68,6 +69,7 @@ namespace CompatBot.EventHandlers
                 if (Config.Cts.IsCancellationRequested)
                     return;
 
+                MaxQueueLength = Math.Max(MaxQueueLength, workQueue.Count);
                 if (!workQueue.TryDequeue(out var item))
                     continue;
 
