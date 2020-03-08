@@ -93,7 +93,7 @@ namespace CompatBot.EventHandlers
                             Config.Log.Debug($"{prefix} {l.Text}");
                             if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Log, l.Text).ConfigureAwait(false) is Piracystring hit)
                             {
-                                await ContentFilter.PerformFilterActions(item.evt.Client, item.evt.Message, hit, triggerContext: l.Text, infraction: "🖼 Screenshot of a pirated game", "Screenshot of a pirated game").ConfigureAwait(false);
+                                await ContentFilter.PerformFilterActions(item.evt.Client, item.evt.Message, hit, triggerContext: l.Text, infraction: "🖼 Screenshot of a pirated game",  warningReason: "Screenshot of a pirated game").ConfigureAwait(false);
                                 cnt = false;
                             }
                         }
