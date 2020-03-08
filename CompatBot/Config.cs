@@ -60,6 +60,8 @@ namespace CompatBot
         public static TimeSpan IncomingMessageCheckIntervalInMinutes => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMinutes), 10));
         public static string Token => config.GetValue(nameof(Token), "");
         public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
+        public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");
+        public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/");
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
 

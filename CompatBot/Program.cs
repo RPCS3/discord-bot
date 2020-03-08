@@ -153,6 +153,9 @@ namespace CompatBot
                 commands.RegisterCommands<Syscall>();
                 commands.RegisterCommands<ForcedNicknames>();
 
+                if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+                    commands.RegisterCommands<Vision>();
+
                 commands.CommandErrored += UnknownCommandHandler.OnError;
 
                 var interactivityConfig = new InteractivityConfiguration { };
