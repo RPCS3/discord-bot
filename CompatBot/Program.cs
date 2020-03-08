@@ -107,7 +107,8 @@ namespace CompatBot
                     new PsnScraper().RunAsync(Config.Cts.Token),
                     GameTdbScraper.RunAsync(Config.Cts.Token),
                     new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token),
-                    StatsStorage.BackgroundSaveAsync()
+                    StatsStorage.BackgroundSaveAsync(),
+                    MediaScreenshotMonitor.ProcessWorkQueue()
                 );
 
                 try
@@ -152,6 +153,9 @@ namespace CompatBot
                 commands.RegisterCommands<BotStats>();
                 commands.RegisterCommands<Syscall>();
                 commands.RegisterCommands<ForcedNicknames>();
+
+                if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+                    commands.RegisterCommands<Vision>();
 
                 commands.CommandErrored += UnknownCommandHandler.OnError;
 
@@ -209,6 +213,8 @@ namespace CompatBot
 
                 client.MessageCreated += _ => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
+                if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+                    client.MessageCreated += MediaScreenshotMonitor.OnMessageCreated;
                 client.MessageCreated += ProductCodeLookup.OnMessageCreated;
                 client.MessageCreated += LogParsingHandler.OnMessageCreated;
                 client.MessageCreated += LogAsTextMonitor.OnMessageCreated;

@@ -63,6 +63,7 @@ namespace CompatBot.Commands
             return new StringBuilder()
                 .Append(File.Exists(Config.GoogleApiConfigPath) ? "✅" : "❌").AppendLine(" Google Drive")
                 .Append(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅").AppendLine(" Azure DevOps")
+                .Append(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅").AppendLine(" Azure Computer Vision")
                 .ToString()
                 .Trim();
 
