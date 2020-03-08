@@ -23,7 +23,7 @@ namespace CompatBot.Commands
                                              //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
-        [Command("describe"), RequiresBotModRole]
+        [Command("describe"), RequiresSupporterRole]
         [Description("Generates an image description from the attached image, or from the url")]
         public async Task Describe(CommandContext ctx)
         {
@@ -33,7 +33,7 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "No images detected").ConfigureAwait(false);
         }
 
-        [Command("describe"), RequiresBotModRole]
+        [Command("describe"), RequiresSupporterRole]
         public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl)
         {
             try

@@ -156,6 +156,14 @@ namespace CompatBot
                 "Testers",
                 "Helpers"
             };
+
+            public static readonly IReadOnlyCollection<string> SupporterRoleList = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                "Fans",
+                "Supporters",
+                "Spectators",
+                "Nitro Booster",
+            };
         }
 
         static Config()

@@ -38,6 +38,18 @@ namespace CompatBot.Utils
             return member?.Roles.IsSmartlisted() ?? false;
         }
 
+        public static bool IsSupporter(this DiscordUser user, DiscordClient client, DiscordGuild guild = null)
+        {
+            if (user == null)
+                return false;
+
+            if (client == null)
+                return false;
+
+            var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
+            return member?.Roles.IsSupporter() ?? false;
+        }
+
         public static bool IsWhitelisted(this DiscordMember member)
         {
             return ModProvider.IsMod(member.Id) || member.Roles.IsWhitelisted();
@@ -56,6 +68,11 @@ namespace CompatBot.Utils
         public static bool IsSmartlisted(this IEnumerable<DiscordRole> memberRoles)
         {
             return memberRoles?.Any(r => Config.Moderation.RoleSmartList.Contains(r.Name)) ?? false;
+        }
+
+        public static bool IsSupporter(this IEnumerable<DiscordRole> memberRoles)
+        {
+            return memberRoles?.Any(r => Config.Moderation.SupporterRoleList.Contains(r.Name)) ?? false;
         }
     }
 }
