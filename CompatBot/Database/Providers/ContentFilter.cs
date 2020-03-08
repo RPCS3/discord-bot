@@ -123,7 +123,7 @@ namespace CompatBot.Database.Providers
             return false;
         }
 
-        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string triggerContext = null)
+        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string triggerContext = null, string infraction = null, string warningReason = null)
         {
             if (trigger == null)
                 return;
@@ -135,13 +135,21 @@ namespace CompatBot.Database.Providers
                 try
                 {
                     await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e);
+                    severity = ReportSeverity.High;
+                }
+                try
+                {
                     var author = client.GetMember(message.Author);
                     Config.Log.Debug($"Removed message from {author.GetMentionWithNickname()} in #{message.Channel.Name}: {message.Content}");
                     completedActions.Add(FilterAction.RemoveContent);
                 }
-                catch
+                catch (Exception e)
                 {
-                    severity = ReportSeverity.High;
+                    Config.Log.Warn(e);
                 }
             }
 
@@ -149,7 +157,7 @@ namespace CompatBot.Database.Providers
             {
                 try
                 {
-                    await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Mention of piracy", message.Content.Sanitize()).ConfigureAwait(false);
+                    await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, warningReason ?? "Mention of piracy", message.Content.Sanitize()).ConfigureAwait(false);
                     completedActions.Add(FilterAction.IssueWarning);
                 }
                 catch (Exception e)
@@ -187,7 +195,7 @@ namespace CompatBot.Database.Providers
             try
             {
                 if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue))
-                    await client.ReportAsync("🤬 Content filter hit", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
+                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
             }
             catch (Exception e)
             {

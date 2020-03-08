@@ -107,7 +107,8 @@ namespace CompatBot
                     new PsnScraper().RunAsync(Config.Cts.Token),
                     GameTdbScraper.RunAsync(Config.Cts.Token),
                     new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token),
-                    StatsStorage.BackgroundSaveAsync()
+                    StatsStorage.BackgroundSaveAsync(),
+                    MediaScreenshotMonitor.ProcessWorkQueue()
                 );
 
                 try
