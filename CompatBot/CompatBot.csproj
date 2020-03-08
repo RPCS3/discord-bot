@@ -28,11 +28,12 @@
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00662" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00662" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.44.0.1863" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.44.1.1876" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
     <PackageReference Include="MegaApiClient" Version="1.7.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
+    <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.ComputerVision" Version="5.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.2">
       <PrivateAssets>all</PrivateAssets>
