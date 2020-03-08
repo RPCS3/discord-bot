@@ -212,6 +212,8 @@ namespace CompatBot
 
                 client.MessageCreated += _ => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
+                if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+                    client.MessageCreated += MediaScreenshotMonitor.OnMessageCreated;
                 client.MessageCreated += ProductCodeLookup.OnMessageCreated;
                 client.MessageCreated += LogParsingHandler.OnMessageCreated;
                 client.MessageCreated += LogAsTextMonitor.OnMessageCreated;

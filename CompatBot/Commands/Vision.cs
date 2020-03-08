@@ -15,12 +15,12 @@ namespace CompatBot.Commands
 {
     internal sealed class Vision: BaseCommandModuleCustom
     {
-        private static IEnumerable<DiscordAttachment> GetImageAttachment(DiscordMessage message)
+        internal static IEnumerable<DiscordAttachment> GetImageAttachment(DiscordMessage message)
             => message.Attachments.Where(a =>
                                              a.FileName.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
                                              || a.FileName.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                                              || a.FileName.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase)
-                                             || a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
+                                             //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
         [Command("describe"), RequiresBotModRole]
@@ -34,14 +34,17 @@ namespace CompatBot.Commands
         }
 
         [Command("describe"), RequiresBotModRole]
-        public async Task Describe(CommandContext ctx, string imageUrl)
+        public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl)
         {
             try
             {
                 if (!Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute))
                 {
                     var str = imageUrl.ToLowerInvariant();
-                    if ((str.StartsWith("this") || str.StartsWith("that"))
+                    if ((str.StartsWith("this")
+                         || str.StartsWith("that")
+                         || str.StartsWith("last")
+                         || str.StartsWith("previous"))
                         && ctx.Channel.PermissionsFor(ctx.Client.GetMember(ctx.Guild, ctx.Client.CurrentUser)).HasPermission(Permissions.ReadMessageHistory))
                         try
                         {
