@@ -135,6 +135,7 @@ namespace CompatBot.Database.Providers
                 try
                 {
                     await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
+                    completedActions.Add(FilterAction.RemoveContent);
                 }
                 catch (Exception e)
                 {
@@ -145,7 +146,6 @@ namespace CompatBot.Database.Providers
                 {
                     var author = client.GetMember(message.Author);
                     Config.Log.Debug($"Removed message from {author.GetMentionWithNickname()} in #{message.Channel.Name}: {message.Content}");
-                    completedActions.Add(FilterAction.RemoveContent);
                 }
                 catch (Exception e)
                 {

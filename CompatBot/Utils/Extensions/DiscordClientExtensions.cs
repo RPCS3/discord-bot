@@ -150,12 +150,18 @@ namespace CompatBot.Utils
 
         public static string GetMentionWithNickname(this DiscordMember member)
         {
+            if (member == null)
+                return null;
+
             return string.IsNullOrEmpty(member.Nickname) ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
         }
 
         public static string GetUsernameWithNickname(this DiscordMember member)
         {
-            return string.IsNullOrEmpty(member?.Nickname) ? $"`{member?.Username.Sanitize()}`" : $"`{member.Username.Sanitize()}` (shown as `{member.Nickname.Sanitize()}`)";
+            if (member == null)
+                return null;
+
+            return string.IsNullOrEmpty(member.Nickname) ? $"`{member.Username.Sanitize()}`" : $"`{member.Username.Sanitize()}` (shown as `{member.Nickname.Sanitize()}`)";
         }
 
         public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, string fallbackEmoji = null)
