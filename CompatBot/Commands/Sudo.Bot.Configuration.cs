@@ -29,7 +29,13 @@ namespace CompatBot.Commands
                     {
                         var result = new StringBuilder("Set variables:").AppendLine();
                         foreach (var v in setVars)
+                        {
+#if DEBUG
+                            result.Append(v.Key[(SqlConfiguration.ConfigVarPrefix.Length)..]).Append(" = ").AppendLine(v.Value);
+#else
                             result.AppendLine(v.Key[(SqlConfiguration.ConfigVarPrefix.Length)..]);
+#endif
+                        }
                         await ctx.RespondAsync(result.ToString()).ConfigureAwait(false);
                     }
                     else
@@ -41,6 +47,7 @@ namespace CompatBot.Commands
                 public async Task Set(CommandContext ctx, string key, [RemainingText] string value)
                 {
                     Config.inMemorySettings[key] = value;
+                    Config.RebuildConfiguration();
                     key = SqlConfiguration.ConfigVarPrefix + key;
                     using var db = new BotDb();
                     var v = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
@@ -60,6 +67,7 @@ namespace CompatBot.Commands
                 public async Task Clear(CommandContext ctx, string key)
                 {
                     Config.inMemorySettings.TryRemove(key, out _);
+                    Config.RebuildConfiguration();
                     key = SqlConfiguration.ConfigVarPrefix + key;
                     using var db = new BotDb();
                     var v = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);

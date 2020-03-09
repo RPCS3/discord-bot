@@ -12,8 +12,12 @@ namespace CompatBot.Database.Providers
         {
             using var db = new BotDb();
             var setVars = await db.BotState.AsNoTracking().Where(v => v.Key.StartsWith(ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
-            foreach (var v in setVars)
+            if (setVars.Any())
+            {
+                foreach (var v in setVars)
                 Config.inMemorySettings[v.Key[(ConfigVarPrefix.Length)..]] = v.Value;
+                Config.RebuildConfiguration();
+            }
         }
     }
 }
