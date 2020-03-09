@@ -13,6 +13,7 @@ using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
 namespace CompatBot.Commands
 {
+    [Cooldown(1, 5, CooldownBucketType.Channel)]
     internal sealed class Vision: BaseCommandModuleCustom
     {
         internal static IEnumerable<DiscordAttachment> GetImageAttachment(DiscordMessage message)
@@ -68,8 +69,9 @@ namespace CompatBot.Commands
                         }
                         catch (Exception e)
                         {
-                            Config.Log.Warn(e, "Failed to generate image description");
-                            await ctx.RespondAsync("Failed to generate image description, probably because image is too large (dimensions or file size)").ConfigureAwait(false);
+                            Config.Log.Warn(e, "Failed to get link to the previously posted image");
+                            await ctx.RespondAsync("Sorry chief, can't find any images in the recent posts").ConfigureAwait(false);
+                            return;
                         }
                 }
 
@@ -111,6 +113,7 @@ namespace CompatBot.Commands
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to get image description");
+                await ctx.RespondAsync("Failed to generate image description, probably because image is too large (dimensions or file size)").ConfigureAwait(false);
             }
         }
     }
