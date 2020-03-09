@@ -108,12 +108,11 @@ namespace CompatBot.Commands
                 }
                 else
                     msg = "An image so weird, I have no words to describe it";
-                var tags = result.Tags?.Where(t => t.Confidence > 0.5).ToList();
-                if (tags?.Count > 0)
+                if (result.Description.Tags.Count > 0)
                 {
-                    if (tags.Any(t => t.Name == "cat"))
+                    if (result.Description.Tags.Any(t => t == "cat"))
                         await ctx.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodKot[new Random().Next(BotStats.GoodKot.Length)])).ConfigureAwait(false);
-                    if (tags.Any(t => t.Name == "dog"))
+                    if (result.Description.Tags.Any(t => t == "dog"))
                         await ctx.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodDog[new Random().Next(BotStats.GoodDog.Length)])).ConfigureAwait(false);
                 }
                 await ctx.RespondAsync(msg).ConfigureAwait(false);
