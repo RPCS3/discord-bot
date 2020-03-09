@@ -91,7 +91,7 @@ namespace CompatBot.EventHandlers
                     if (result.Status == TextOperationStatusCodes.Succeeded)
                     {
                         var cnt = true;
-                        var prefix = $"[{item.evt.Message.Id % 100}]";
+                        var prefix = $"[{item.evt.Message.Id % 100:00}]";
                         Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
                         foreach (var r in result.RecognitionResults)
                         foreach (var l in r.Lines)
