@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
+using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.EventArgs;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
@@ -27,11 +28,14 @@ namespace CompatBot.EventHandlers
             if (message == null)
                 return;
 
-            if (Config.Moderation.Channels.Contains(evt.Channel.Id) || evt.Channel.Name.Contains("help"))
+            if (!(Config.Moderation.Channels.Contains(evt.Channel.Id) || evt.Channel.Name.Contains("help")))
                 return;
 
 #if !DEBUG
             if (message.Author.IsBotSafeCheck())
+                return;
+
+            if (message.Author.IsSmartlisted(evt.Client))
                 return;
 #endif
 
@@ -87,15 +91,26 @@ namespace CompatBot.EventHandlers
                     if (result.Status == TextOperationStatusCodes.Succeeded)
                     {
                         var cnt = true;
-                        var prefix = $"[{item.evt.Message.Id % 100}]";
-                        Config.Log.Debug($"{prefix} OCR result of message{item.evt.Message.JumpLink}:");
+                        var prefix = $"[{item.evt.Message.Id % 100:00}]";
+                        Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
                         foreach (var r in result.RecognitionResults)
                         foreach (var l in r.Lines)
                         {
                             Config.Log.Debug($"{prefix} {l.Text}");
                             if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Log, l.Text).ConfigureAwait(false) is Piracystring hit)
                             {
-                                await ContentFilter.PerformFilterActions(item.evt.Client, item.evt.Message, hit, triggerContext: l.Text, infraction: "🖼 Screenshot of a pirated game",  warningReason: "Screenshot of a pirated game").ConfigureAwait(false);
+                                FilterAction suppressFlags = 0;
+                                if ("media".Equals(item.evt.Channel.Name))
+                                    suppressFlags = FilterAction.SendMessage | FilterAction.ShowExplain;
+                                await ContentFilter.PerformFilterActions(
+                                    item.evt.Client,
+                                    item.evt.Message,
+                                    hit,
+                                    suppressFlags,
+                                    l.Text,
+                                    "🖼 Screenshot of a pirated game",
+                                    "Screenshot of a pirated game"
+                                ).ConfigureAwait(false);
                                 cnt = false;
                             }
                         }

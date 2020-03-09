@@ -269,8 +269,8 @@ namespace CompatBot.Commands
             }
         }
 
-        private static readonly string[] GoodKot = {"😸", "😺", "😻", "😽",};
+        internal static readonly string[] GoodDog = {"🐶", "🐕", "🐩", "🐕‍🦺",};
+        internal static readonly string[] GoodKot = {"😸", "😺", "😻", "😽",};
         private static readonly string[] MeanKot = {"🙀", "😿", "😾",};
-
     }
 }
