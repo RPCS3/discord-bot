@@ -88,7 +88,7 @@ namespace CompatBot.EventHandlers
                     {
                         var cnt = true;
                         var prefix = $"[{item.evt.Message.Id % 100}]";
-                        Config.Log.Debug($"{prefix} OCR result of message{item.evt.Message.JumpLink}:");
+                        Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
                         foreach (var r in result.RecognitionResults)
                         foreach (var l in r.Lines)
                         {
