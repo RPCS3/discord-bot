@@ -39,6 +39,7 @@ namespace CompatBot.Commands
         {
             try
             {
+                var reactMsg = ctx.Message;
                 if (!Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute))
                 {
                     var str = imageUrl.ToLowerInvariant();
@@ -49,22 +50,29 @@ namespace CompatBot.Commands
                         && ctx.Channel.PermissionsFor(ctx.Client.GetMember(ctx.Guild, ctx.Client.CurrentUser)).HasPermission(Permissions.ReadMessageHistory))
                         try
                         {
-                            var previousMessages = await ctx.Channel.GetMessagesBeforeAsync(ctx.Message.Id, 5).ConfigureAwait(false);
-                            imageUrl = (
+                            var previousMessages = await ctx.Channel.GetMessagesBeforeAsync(ctx.Message.Id, 10).ConfigureAwait(false);
+                            var (selectedMsg, selectedAttachment) = (
                                 from m in previousMessages
                                 where m.Attachments?.Count > 0
                                 from a in GetImageAttachment(m)
-                                select a
-                            ).FirstOrDefault()?.Url;
+                                select (m, a)
+                            ).FirstOrDefault();
+                            if (selectedMsg != null)
+                                reactMsg = selectedMsg;
+                            imageUrl = selectedAttachment?.Url;
                             if (string.IsNullOrEmpty(imageUrl))
                             {
-                                imageUrl = (
+
+                                var (selectedMsg2, selectedUrl) = (
                                     from m in previousMessages
                                     where m.Embeds?.Count > 0
                                     from e in m.Embeds
                                     let url = e.Image?.Url ?? e.Image?.ProxyUrl ?? e.Thumbnail?.Url ?? e.Thumbnail?.ProxyUrl
-                                    select url
-                                ).FirstOrDefault()?.ToString();
+                                    select (m, url)
+                                ).FirstOrDefault();
+                                if (selectedMsg2 != null)
+                                    reactMsg = selectedMsg2;
+                                imageUrl = selectedUrl?.ToString();
                             }
                         }
                         catch (Exception e)
@@ -108,14 +116,14 @@ namespace CompatBot.Commands
                 }
                 else
                     msg = "An image so weird, I have no words to describe it";
+                await ctx.RespondAsync(msg).ConfigureAwait(false);
                 if (result.Description.Tags.Count > 0)
                 {
                     if (result.Description.Tags.Any(t => t == "cat"))
-                        await ctx.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodKot[new Random().Next(BotStats.GoodKot.Length)])).ConfigureAwait(false);
+                        await reactMsg.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodKot[new Random().Next(BotStats.GoodKot.Length)])).ConfigureAwait(false);
                     if (result.Description.Tags.Any(t => t == "dog"))
-                        await ctx.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodDog[new Random().Next(BotStats.GoodDog.Length)])).ConfigureAwait(false);
+                        await reactMsg.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodDog[new Random().Next(BotStats.GoodDog.Length)])).ConfigureAwait(false);
                 }
-                await ctx.RespondAsync(msg).ConfigureAwait(false);
             }
             catch (Exception e)
             {
