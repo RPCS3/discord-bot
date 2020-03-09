@@ -20,7 +20,7 @@ namespace CompatBot.Commands
 
         [Group("bot"), Aliases("kot")]
         [Description("Commands to manage the bot instance")]
-        public sealed class Bot: BaseCommandModuleCustom
+        public sealed partial class Bot: BaseCommandModuleCustom
         {
             [Command("version")]
             [Description("Returns currently checked out bot commit")]

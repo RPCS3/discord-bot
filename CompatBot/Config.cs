@@ -23,7 +23,7 @@ namespace CompatBot
 {
     internal static class Config
     {
-        private static readonly IConfigurationRoot config;
+        private static IConfigurationRoot config;
         internal static readonly ILogger Log;
         internal static readonly ILoggerFactory LoggerFactory;
         internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new ConcurrentDictionary<string, string>();
@@ -170,11 +170,7 @@ namespace CompatBot
         {
             try
             {
-                config = new ConfigurationBuilder()
-                         .AddUserSecrets(Assembly.GetExecutingAssembly()) // lower priority
-                         .AddEnvironmentVariables()
-                         .AddInMemoryCollection(inMemorySettings)     // higher priority
-                         .Build();
+                RebuildConfiguration();
                 Log = GetLog();
                 LoggerFactory = new NLogLoggerFactory();
                 Log.Info("Log path: " + CurrentLogPath);
@@ -185,6 +181,15 @@ namespace CompatBot
                 Console.WriteLine("Error initializing settings: " + e.Message);
                 Console.ResetColor();
             }
+        }
+
+        internal static void RebuildConfiguration()
+        {
+            config = new ConfigurationBuilder()
+                .AddUserSecrets(Assembly.GetExecutingAssembly()) // lower priority
+                .AddEnvironmentVariables()
+                .AddInMemoryCollection(inMemorySettings)     // higher priority
+                .Build();
         }
 
         private static ILogger GetLog()
