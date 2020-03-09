@@ -21,7 +21,6 @@ namespace GithubClient
         private readonly HttpClient client;
         private readonly MediaTypeFormatterCollection formatters;
 
-        private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(3);
         private static readonly TimeSpan IssueStatusCacheTime = TimeSpan.FromMinutes(30);
         private static readonly MemoryCache StatusesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
@@ -53,7 +52,7 @@ namespace GithubClient
             try
             {
                 using var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/pulls/" + pr);
-                message.Headers.UserAgent.Add(ProductInfoHeader);
+                message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
@@ -92,7 +91,7 @@ namespace GithubClient
             try
             {
                 using var message = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/RPCS3/rpcs3/issues/" + issue);
-                message.Headers.UserAgent.Add(ProductInfoHeader);
+                message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
@@ -135,7 +134,7 @@ namespace GithubClient
             try
             {
                 using var message = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                message.Headers.UserAgent.Add(ProductInfoHeader);
+                message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
@@ -173,7 +172,7 @@ namespace GithubClient
             try
             {
                 using var message = new HttpRequestMessage(HttpMethod.Get, statusesUrl);
-                message.Headers.UserAgent.Add(ProductInfoHeader);
+                message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {

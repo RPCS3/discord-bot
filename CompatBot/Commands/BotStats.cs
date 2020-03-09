@@ -26,25 +26,26 @@ namespace CompatBot.Commands
         public async Task Show(CommandContext ctx)
         {
             var embed = new DiscordEmbedBuilder
-            {
-                Color = DiscordColor.Purple,
-            }
-                        .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
-                        .AddField("Discord Latency", $"{ctx.Client.Ping} ms", true)
-                        .AddField("API Tokens", GetConfiguredApiStats(), true)
-                        .AddField("Memory Usage", $"GC: {GC.GetTotalMemory(false).AsStorageUnit()}\n" +
-                                                  $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
-                                                  $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
-                                                  $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
-                                                  $" S: {Config.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.SmallPoolInUseSize + Config.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}", true)
-                        .AddField("GitHub Rate Limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-                        .AddField(".NET Info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
-                                                   $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode",
-                                                   true)
-                        .AddField("Runtime Info", $"Confinement: {SandboxDetector.Detect()}\n" +
-                                                  $"OS: {RuntimeEnvironment.OperatingSystem} {RuntimeEnvironment.OperatingSystemVersion}\n" +
-                                                  $"CPUs: {Environment.ProcessorCount}\n" +
-                                                  $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
+                {
+                    Color = DiscordColor.Purple,
+                }
+                .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
+                .AddField("Discord Latency", $"{ctx.Client.Ping} ms", true);
+            if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+                embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
+            embed.AddField("API Tokens", GetConfiguredApiStats(), true)
+                .AddField("Memory Usage", $"GC: {GC.GetTotalMemory(false).AsStorageUnit()}\n" +
+                                          $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
+                                          $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
+                                          $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
+                                          $" S: {Config.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.SmallPoolInUseSize + Config.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}", true)
+                .AddField("GitHub Rate Limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
+                .AddField(".NET Info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
+                                       $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode", true)
+                .AddField("Runtime Info", $"Confinement: {SandboxDetector.Detect()}\n" +
+                                          $"OS: {RuntimeEnvironment.OperatingSystem} {RuntimeEnvironment.OperatingSystemVersion}\n" +
+                                          $"CPUs: {Environment.ProcessorCount}\n" +
+                                          $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
             AppendPiracyStats(embed);
             AppendCmdStats(ctx, embed);
             AppendExplainStats(embed);
@@ -63,7 +64,7 @@ namespace CompatBot.Commands
             return new StringBuilder()
                 .Append(File.Exists(Config.GoogleApiConfigPath) ? "✅" : "❌").AppendLine(" Google Drive")
                 .Append(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅").AppendLine(" Azure DevOps")
-                .Append(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅").AppendLine(" Azure Computer Vision")
+                .Append(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅").AppendLine(" Computer Vision")
                 .ToString()
                 .Trim();
 

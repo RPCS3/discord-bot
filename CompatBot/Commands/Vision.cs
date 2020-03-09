@@ -68,7 +68,8 @@ namespace CompatBot.Commands
                         }
                         catch (Exception e)
                         {
-                            Config.Log.Warn(e, "Failed to ");
+                            Config.Log.Warn(e, "Failed to generate image description");
+                            await ctx.RespondAsync("Failed to generate image description, probably because image is too large (dimensions or file size)").ConfigureAwait(false);
                         }
                 }
 
