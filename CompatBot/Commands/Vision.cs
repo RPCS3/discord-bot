@@ -13,6 +13,7 @@ using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
 namespace CompatBot.Commands
 {
+    [Cooldown(1, 5, CooldownBucketType.Channel)]
     internal sealed class Vision: BaseCommandModuleCustom
     {
         internal static IEnumerable<DiscordAttachment> GetImageAttachment(DiscordMessage message)
