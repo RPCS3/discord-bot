@@ -92,31 +92,8 @@ namespace CompatBot.Commands
                 }
             }
 
-            try
-            {
-                if (result.explanation != null && result.score > 0.5)
-                {
-                    if (!string.IsNullOrEmpty(result.fuzzyMatch))
-                    {
-                        var fuzzyNotice = $"Showing explanation for `{result.fuzzyMatch}`:";
-#if DEBUG
-                        fuzzyNotice = $"Showing explanation for `{result.fuzzyMatch}` ({result.score:0.######}):";
-#endif
-                        await ctx.RespondAsync(fuzzyNotice).ConfigureAwait(false);
-                    }
-
-                    var explain = result.explanation;
-                    StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
-                    StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
-                    await ctx.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
-                    return;
-                }
-            }
-            catch (Exception e)
-            {
-                Config.Log.Error(e, "Failed to explain " + sourceTerm);
+            if (await SendExplanation(result, term, ctx.Message).ConfigureAwait(false))
                 return;
-            }
 
             string inSpecificLocation = null;
             if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
@@ -399,6 +376,36 @@ namespace CompatBot.Commands
             else
                 coefficient = 2.0;
             return (explanation, fuzzyMatch, coefficient);
+        }
+
+        internal static async Task<bool> SendExplanation((Explanation explanation, string fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage)
+        {
+            try
+            {
+                if (termLookupResult.explanation != null && termLookupResult.score > 0.5)
+                {
+                    if (!string.IsNullOrEmpty(termLookupResult.fuzzyMatch))
+                    {
+                        var fuzzyNotice = $"Showing explanation for `{termLookupResult.fuzzyMatch}`:";
+#if DEBUG
+                        fuzzyNotice = $"Showing explanation for `{termLookupResult.fuzzyMatch}` ({termLookupResult.score:0.######}):";
+#endif
+                        await sourceMessage.Channel.SendMessageAsync(fuzzyNotice).ConfigureAwait(false);
+                    }
+
+                    var explain = termLookupResult.explanation;
+                    StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
+                    StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
+                    await sourceMessage.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, "Failed to explain " + term);
+                return true;
+            }
+            return false;
         }
 
         private static async Task DumpLink(CommandContext ctx, string messageLink)

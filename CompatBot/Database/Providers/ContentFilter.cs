@@ -11,6 +11,7 @@ using DSharpPlus.Entities;
 using HomoglyphConverter;
 using Microsoft.EntityFrameworkCore;
 using NReco.Text;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Database.Providers
 {
@@ -120,7 +121,7 @@ namespace CompatBot.Database.Providers
                 return true;
 
             await PerformFilterActions(client, message, trigger).ConfigureAwait(false);
-            return false;
+            return (trigger.Actions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
         }
 
         public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string triggerContext = null, string infraction = null, string warningReason = null)
@@ -183,6 +184,12 @@ namespace CompatBot.Database.Providers
                 {
                     Config.Log.Warn(e, $"Failed to send message in #{message.Channel.Name}");
                 }
+            }
+
+            if (trigger.Actions.HasFlag(FilterAction.ShowExplain) && !ignoreFlags.HasFlag(FilterAction.ShowExplain))
+            {
+                var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
+                await Explain.SendExplanation(result, trigger.ExplainTerm, message).ConfigureAwait(false);
             }
 
             var actionList = "";
