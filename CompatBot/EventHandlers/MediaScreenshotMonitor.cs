@@ -28,7 +28,7 @@ namespace CompatBot.EventHandlers
             if (message == null)
                 return;
 
-            if (Config.Moderation.Channels.Contains(evt.Channel.Id) || evt.Channel.Name.Contains("help"))
+            if (!(Config.Moderation.Channels.Contains(evt.Channel.Id) || evt.Channel.Name.Contains("help")))
                 return;
 
 #if !DEBUG
