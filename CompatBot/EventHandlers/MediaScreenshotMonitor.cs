@@ -97,7 +97,7 @@ namespace CompatBot.EventHandlers
                         foreach (var l in r.Lines)
                         {
                             Config.Log.Debug($"{prefix} {l.Text}");
-                            if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Log, l.Text).ConfigureAwait(false) is Piracystring hit)
+                            if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Chat, l.Text).ConfigureAwait(false) is Piracystring hit)
                             {
                                 FilterAction suppressFlags = 0;
                                 if ("media".Equals(item.evt.Channel.Name))
