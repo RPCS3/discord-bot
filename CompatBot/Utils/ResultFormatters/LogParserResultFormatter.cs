@@ -325,11 +325,11 @@ namespace CompatBot.Utils.ResultFormatters
                     items["af_override"] = "Disabled";
             }
             if (items["zcull"] == "true")
-                items["zcull_status"] = DisabledMark;
+                items["zcull_status"] = "Disabled";
             else if (items["relaxed_zcull"] == "true")
                 items["zcull_status"] = "Relaxed";
             else
-                items["zcull_status"] = EnabledMark;
+                items["zcull_status"] = "Full";
             if (items["lib_loader"] is string libLoader)
             {
                 var liblv2 = libLoader.Contains("liblv2", StringComparison.InvariantCultureIgnoreCase);
