@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
+using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.EventArgs;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
@@ -32,6 +33,9 @@ namespace CompatBot.EventHandlers
 
 #if !DEBUG
             if (message.Author.IsBotSafeCheck())
+                return;
+
+            if (message.Author.IsSmartlisted(evt.Client))
                 return;
 #endif
 
