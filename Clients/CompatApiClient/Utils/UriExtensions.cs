@@ -59,6 +59,14 @@ namespace CompatApiClient
             return SetQueryValue(uri, FormatUriParams(parameters));
         }
 
+        public static Uri SetQueryParameters(this Uri uri, IEnumerable<(string name, string value)> items)
+        {
+            var parameters = ParseQueryString(uri);
+            foreach (var item in items)
+                parameters[item.name] = item.value;
+            return SetQueryValue(uri, FormatUriParams(parameters));
+        }
+
         public static string FormatUriParams(NameValueCollection parameters)
         {
             if (parameters == null || parameters.Count == 0)

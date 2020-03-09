@@ -68,7 +68,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                             bufferPool.Return(buf);
                         }
                     }
-
                     catch (Exception e)
                     {
                         Config.Log.Warn(e, $"Error sniffing {m.Groups["link"].Value}");

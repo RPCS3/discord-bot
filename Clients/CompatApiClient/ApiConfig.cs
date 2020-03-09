@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using Microsoft.IO;
 using NLog;
 
@@ -10,6 +11,7 @@ namespace CompatApiClient
 
     public static class ApiConfig
     {
+        public static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         public static int Version { get; } = 1;
         public static Uri BaseUrl { get; } = new Uri("https://rpcs3.net/compatibility");
         public static string DateInputFormat { get; } = "yyyy-M-d";

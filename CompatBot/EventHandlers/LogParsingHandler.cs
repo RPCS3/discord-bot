@@ -32,6 +32,7 @@ namespace CompatBot.EventHandlers
             new GoogleDriveHandler(),
             new DropboxHandler(),
             new MegaHandler(),
+            new OneDriveSourceHandler(),
             new GenericLinkHandler(),
             new PastebinHandler(),
         };

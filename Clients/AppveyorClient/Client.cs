@@ -21,7 +21,6 @@ namespace AppveyorClient
         private readonly HttpClient client;
         private readonly MediaTypeFormatterCollection formatters;
 
-        private static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
         private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
         private static readonly TimeSpan PrToArtifactCacheTime = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan JobToBuildCacheTime = TimeSpan.FromDays(30);
@@ -140,7 +139,7 @@ namespace AppveyorClient
             try
             {
                 using var message = new HttpRequestMessage(HttpMethod.Get, buildUrl);
-                message.Headers.UserAgent.Add(ProductInfoHeader);
+                message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
@@ -203,7 +202,7 @@ namespace AppveyorClient
             try
             {
                 using var message = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                message.Headers.UserAgent.Add(ProductInfoHeader);
+                message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
@@ -272,7 +271,7 @@ namespace AppveyorClient
                 do
                 {
                     using var message = new HttpRequestMessage(HttpMethod.Get, historyUrl);
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
+                    message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                     using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                     try
                     {
@@ -314,7 +313,7 @@ namespace AppveyorClient
                 do
                 {
                     using var message = new HttpRequestMessage(HttpMethod.Get, historyUrl);
-                    message.Headers.UserAgent.Add(ProductInfoHeader);
+                    message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                     using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                     try
                     {
