@@ -138,6 +138,14 @@ namespace CompatBot
                 319224795785068545,
             }.AsReadOnly();
 
+            public static readonly IReadOnlyCollection<ulong> OcrChannels = new HashSet<ulong>(Channels)
+            {
+                272035812277878785,
+                277227681836302338,
+                564846659109126244,
+                534749301797158914,
+            };
+
             public static readonly IReadOnlyCollection<string> RoleWhiteList = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
             {
                 "Administrator",
