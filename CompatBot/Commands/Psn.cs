@@ -171,16 +171,14 @@ namespace CompatBot.Commands
 
                     var (url, color) = await ThumbnailProvider.GetThumbnailUrlWithColorAsync(ctx.Client, g.Id, PsnBlue, g.Attributes.ThumbnailUrlBase).ConfigureAwait(false);
                     string score;
-                    if ((g.Attributes.StarRating?.Score ?? 0m) == 0m || (g.Attributes.StarRating?.Total ?? 0) == 0)
-                        score = "N/A";
+                    if (ctx.User.Id == 247291873511604224ul)
+                        score = StringUtils.GetStars(g.Attributes.StarRating?.Score ?? 0);
                     else
-                    {
-                        if (ctx.User.Id == 247291873511604224ul)
-                            score = StringUtils.GetStars(g.Attributes.StarRating?.Score);
-                        else
-                            score = StringUtils.GetMoons(g.Attributes.StarRating?.Score);
+                        score = StringUtils.GetMoons(g.Attributes.StarRating?.Score ?? 0);
+                    if ((g.Attributes.StarRating?.Score ?? 0m) == 0m || (g.Attributes.StarRating?.Total ?? 0) == 0)
+                        score = $"{score} (N/A)";
+                    else
                         score = $"{score} ({g.Attributes.StarRating?.Score} by {g.Attributes.StarRating.Total} people)";
-                    }
                     string fileSize = null;
                     if (g.Attributes.FileSize?.Value.HasValue ?? false)
                     {
