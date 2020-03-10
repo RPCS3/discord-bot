@@ -2,14 +2,17 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
@@ -92,10 +95,12 @@ namespace CompatBot.EventHandlers
                     {
                         var cnt = true;
                         var prefix = $"[{item.evt.Message.Id % 100:00}]";
+                        var ocrText = new StringBuilder($"OCR result of message <{item.evt.Message.JumpLink}>:");
                         Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
                         foreach (var r in result.RecognitionResults)
                         foreach (var l in r.Lines)
                         {
+                            ocrText.AppendLine(l.Text.Sanitize());
                             Config.Log.Debug($"{prefix} {l.Text}");
                             if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Chat, l.Text).ConfigureAwait(false) is Piracystring hit)
                             {
@@ -113,6 +118,15 @@ namespace CompatBot.EventHandlers
                                 ).ConfigureAwait(false);
                                 cnt = false;
                             }
+                        }
+                        try
+                        {
+                            var botSpamCh = await item.evt.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                            await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Warn(ex);
                         }
                     }
                     else if (result.Status == TextOperationStatusCodes.NotStarted || result.Status == TextOperationStatusCodes.Running)
