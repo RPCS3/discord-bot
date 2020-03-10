@@ -121,7 +121,7 @@ namespace CompatBot.EventHandlers
                         }
                         try
                         {
-                            var botSpamCh = await item.evt.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                            var botSpamCh = await item.evt.Client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
                             await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
                         }
                         catch (Exception ex)
