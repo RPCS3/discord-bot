@@ -93,40 +93,44 @@ namespace CompatBot.EventHandlers
                     var result = await client.GetReadOperationResultAsync(item.readOperationId, Config.Cts.Token).ConfigureAwait(false);
                     if (result.Status == TextOperationStatusCodes.Succeeded)
                     {
-                        var cnt = true;
-                        var prefix = $"[{item.evt.Message.Id % 100:00}]";
-                        var ocrText = new StringBuilder($"OCR result of message <{item.evt.Message.JumpLink}>:");
-                        Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
-                        foreach (var r in result.RecognitionResults)
-                        foreach (var l in r.Lines)
+                        if (result.RecognitionResults.SelectMany(r => r.Lines).Any())
                         {
-                            ocrText.AppendLine(l.Text.Sanitize());
-                            Config.Log.Debug($"{prefix} {l.Text}");
-                            if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Chat, l.Text).ConfigureAwait(false) is Piracystring hit)
+                            var cnt = true;
+                            var prefix = $"[{item.evt.Message.Id % 100:00}]";
+                            var ocrText = new StringBuilder($"OCR result of message <{item.evt.Message.JumpLink}>:").AppendLine();
+                            Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
+                            foreach (var r in result.RecognitionResults)
+                            foreach (var l in r.Lines)
                             {
-                                FilterAction suppressFlags = 0;
-                                if ("media".Equals(item.evt.Channel.Name))
-                                    suppressFlags = FilterAction.SendMessage | FilterAction.ShowExplain;
-                                await ContentFilter.PerformFilterActions(
-                                    item.evt.Client,
-                                    item.evt.Message,
-                                    hit,
-                                    suppressFlags,
-                                    l.Text,
-                                    "🖼 Screenshot of a pirated game",
-                                    "Screenshot of a pirated game"
-                                ).ConfigureAwait(false);
-                                cnt = false;
+                                ocrText.AppendLine(l.Text.Sanitize());
+                                Config.Log.Debug($"{prefix} {l.Text}");
+                                if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Chat, l.Text).ConfigureAwait(false) is Piracystring hit)
+                                {
+                                    FilterAction suppressFlags = 0;
+                                    if ("media".Equals(item.evt.Channel.Name))
+                                        suppressFlags = FilterAction.SendMessage | FilterAction.ShowExplain;
+                                    await ContentFilter.PerformFilterActions(
+                                        item.evt.Client,
+                                        item.evt.Message,
+                                        hit,
+                                        suppressFlags,
+                                        l.Text,
+                                        "🖼 Screenshot of a pirated game",
+                                        "Screenshot of a pirated game"
+                                    ).ConfigureAwait(false);
+                                    cnt |= hit.Actions.HasFlag(FilterAction.RemoveContent) | hit.Actions.HasFlag(FilterAction.IssueWarning);
+                                }
                             }
-                        }
-                        try
-                        {
-                            var botSpamCh = await item.evt.Client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                            await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            Config.Log.Warn(ex);
+                            if (!cnt)
+                                try
+                                {
+                                    var botSpamCh = await item.evt.Client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                                    await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Config.Log.Warn(ex);
+                                }
                         }
                     }
                     else if (result.Status == TextOperationStatusCodes.NotStarted || result.Status == TextOperationStatusCodes.Running)
