@@ -118,18 +118,19 @@ namespace CompatBot.EventHandlers
                                         "🖼 Screenshot of a pirated game",
                                         "Screenshot of a pirated game"
                                     ).ConfigureAwait(false);
-                                    cnt = false;
+                                    cnt |= hit.Actions.HasFlag(FilterAction.RemoveContent) | hit.Actions.HasFlag(FilterAction.IssueWarning);
                                 }
                             }
-                            try
-                            {
-                                var botSpamCh = await item.evt.Client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                                await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
-                            }
-                            catch (Exception ex)
-                            {
-                                Config.Log.Warn(ex);
-                            }
+                            if (!cnt)
+                                try
+                                {
+                                    var botSpamCh = await item.evt.Client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                                    await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Config.Log.Warn(ex);
+                                }
                         }
                     }
                     else if (result.Status == TextOperationStatusCodes.NotStarted || result.Status == TextOperationStatusCodes.Running)
