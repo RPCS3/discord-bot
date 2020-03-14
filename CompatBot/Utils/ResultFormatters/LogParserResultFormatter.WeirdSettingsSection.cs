@@ -575,7 +575,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var frameLimit = items["frame_limit"];
                 var vsync = items["vsync"] == EnabledMark;
-                if (ppuPatches.Any())
+                if (ppuPatches.Count == 1)
                 {
                     if (frameLimit == "Off")
                     {
@@ -596,7 +596,10 @@ namespace CompatBot.Utils.ResultFormatters
                         if (vsync)
                             notes.Add("⚠ Please set `Framerate Limiter` to `Off`");
                     }
+                    notes.Add("⚠ There is a new variable frame rate FPS patch available, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#NieR)");
                 }
+                else if (ppuPatches.Count > 1)
+                    notes.Add("✅ Using the variable rate FPS patch");
                 else
                 {
                     if (frameLimit != "30")
