@@ -575,7 +575,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 var frameLimit = items["frame_limit"];
                 var vsync = items["vsync"] == EnabledMark;
-                if (ppuPatches.Count == 1)
+                if (ppuPatches.Any() && ppuPatches.Values.Max() > 1)
                 {
                     if (frameLimit == "Off")
                     {
