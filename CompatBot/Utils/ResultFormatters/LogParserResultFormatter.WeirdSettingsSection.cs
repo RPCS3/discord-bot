@@ -313,6 +313,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["game_category"] == "1P")
                 CheckPs1ClassicsSettings(items, notes, generalNotes);
 
+            if (items["game_title"] != "vsh.self" && items["debug_console_mode"] == EnabledMark)
+                notes.Add("⚠ `Debug Console Mode` is enabled, and may cause game crashes");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
