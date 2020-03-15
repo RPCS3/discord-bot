@@ -313,6 +313,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["game_category"] == "1P")
                 CheckPs1ClassicsSettings(items, notes, generalNotes);
 
+            if (items["game_title"] != "vsh.self" && items["debug_console_mode"] == EnabledMark)
+                notes.Add("⚠ `Debug Console Mode` is enabled, and may cause game crashes");
             if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
                 notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
             if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
@@ -576,6 +578,8 @@ namespace CompatBot.Utils.ResultFormatters
                 var frameLimit = items["frame_limit"];
                 var vsync = items["vsync"] == EnabledMark;
                 if (ppuPatches.Any() && ppuPatches.Values.Max() > 1)
+                    notes.Add("✅ Using the variable rate FPS patch");
+                else if (ppuPatches.Any())
                 {
                     if (frameLimit == "Off")
                     {
@@ -598,8 +602,6 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                     notes.Add("⚠ There is a new variable frame rate FPS patch available, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#NieR)");
                 }
-                else if (ppuPatches.Count > 1)
-                    notes.Add("✅ Using the variable rate FPS patch");
                 else
                 {
                     if (frameLimit != "30")

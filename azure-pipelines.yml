@@ -11,7 +11,7 @@ jobs:
   - task: UseDotNet@2
     displayName: 'update dotnet core sdk'
     inputs:
-        version: 3.1.x
+        version: "3.1.x"
 
   - script: dotnet restore --ignore-failed-sources
     displayName: 'dotnet restore (first try)'
@@ -33,7 +33,7 @@ jobs:
 
 - job: DockerImage
   displayName: 'Build Docker image'
-  condition: and(succeeded(), eq(variables['ReleaseBranch'], variables['Build.SourceBranch']))
+  condition: "and(succeeded(), eq(variables['ReleaseBranch'], variables['Build.SourceBranch']))"
   dependsOn: BuildAndTest
   pool:
     vmImage: 'ubuntu-latest'
@@ -61,7 +61,7 @@ jobs:
   - script: dotnet build --configuration Release
     displayName: 'dotnet build Release'
 
-  - script: mkdir packages && cp -a /home/vsts/.nuget/packages ./packages/
+  - script: "mkdir packages && cp -a /home/vsts/.nuget/packages ./packages/"
     displayName: 'copy nuget package cache for docker'
 
   - task: Docker@2
@@ -73,7 +73,7 @@ jobs:
 
   - task: Docker@2
     displayName: 'building release docker image'
-    condition: and(succeeded(), eq(variables['ReleaseKind'], 'release'))
+    condition: "and(succeeded(), eq(variables['ReleaseKind'], 'release'))"
     inputs:
       repository: $(DockerRegistry)
       command: 'buildAndPush'
@@ -85,7 +85,7 @@ jobs:
         
   - task: Docker@2
     displayName: 'building test docker image'
-    condition: and(succeeded(), not(eq(variables['ReleaseKind'], 'release')))
+    condition: "and(succeeded(), not(eq(variables['ReleaseKind'], 'release')))"
     inputs:
       repository: $(DockerRegistry)
       command: 'buildAndPush'
