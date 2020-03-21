@@ -50,7 +50,7 @@ namespace CompatBot
                     }
 
                     Config.Log.Error("Hard reconnect failed, restarting...");
-                    Sudo.Bot.Restart(Program.InvalidChannelId, "Restarted to reset potential socket deadlock");
+                    Sudo.Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential socket deadlock (last incoming message event: {TimeSinceLastIncomingMessage.Elapsed:h\:mm\:ss} ago)");
                 }
                 catch (Exception e)
                 {
