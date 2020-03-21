@@ -34,7 +34,6 @@ namespace CompatBot.Database
             modelBuilder.Entity<Thumbnail>().HasIndex(m => m.Timestamp).HasName("thumbnail_timestamp");
             modelBuilder.Entity<TitleInfo>().HasIndex(ti => ti.ContentId).IsUnique().HasName("title_info_content_id");
             modelBuilder.Entity<TitleInfo>().HasIndex(ti => ti.Timestamp).HasName("title_info_timestamp");
-            modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Module).HasName("syscall_info_module");
             modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Function).HasName("syscall_info_function");
             modelBuilder.Entity<SyscallToProductMap>().HasKey(m => new {m.ProductId, m.SyscallInfoId});
 
@@ -82,8 +81,6 @@ namespace CompatBot.Database
     internal class SyscallInfo
     {
         public int Id { get; set; }
-        [Required]
-        public string Module { get; set; }
         [Required]
         public string Function { get; set; }
 

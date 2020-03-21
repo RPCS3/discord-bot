@@ -41,10 +41,10 @@ namespace CompatBot.Commands
             }
 
             using var db = new ThumbnailDb();
-            if (db.SyscallInfo.Any(sci => sci.Module == search || sci.Function == search))
+            if (db.SyscallInfo.Any(sci => sci.Function == search))
             {
                 var productInfoList = db.SyscallToProductMap.AsNoTracking()
-                    .Where(m => m.SyscallInfo.Module == search || m.SyscallInfo.Function == search)
+                    .Where(m => m.SyscallInfo.Function == search)
                     .Select(m => new {m.Product.ProductCode, Name = m.Product.Name.StripMarks() ?? "???"})
                     .Distinct()
                     .ToList();
@@ -86,28 +86,6 @@ namespace CompatBot.Commands
             else
             {
                 var result = new StringBuilder("Unknown entity name");
-                var modules = await db.SyscallInfo.Select(sci => sci.Module).Distinct().ToListAsync().ConfigureAwait(false);
-                var substrModules = modules.Where(m => m.Contains(search, StringComparison.CurrentCultureIgnoreCase));
-                var fuzzyModules = modules
-                    .Select(m => (name: m, score: search.GetFuzzyCoefficientCached(m)))
-                    .Where(i => i.score > 0.6)
-                    .OrderByDescending(i => i.score)
-                    .Select(i => i.name)
-                    .ToList();
-                modules = substrModules
-                    .Concat(fuzzyModules)
-                    .Distinct()
-                    .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-                var modulesFound = modules.Any();
-                if (modulesFound)
-                {
-                    result.AppendLine(", possible modules:```");
-                    foreach (var m in modules)
-                        result.AppendLine(m);
-                    result.AppendLine("```");
-                }
-
                 var functions = await db.SyscallInfo.Select(sci => sci.Function).Distinct().ToListAsync().ConfigureAwait(false);
                 var substrFuncs = functions.Where(f => f.Contains(search, StringComparison.InvariantCultureIgnoreCase));
                 var fuzzyFuncs = functions
@@ -124,10 +102,7 @@ namespace CompatBot.Commands
                 var functionsFound = functions.Any();
                 if (functionsFound)
                 {
-                    if (modulesFound)
-                        result.AppendLine("Possible functions:```");
-                    else
-                        result.AppendLine(", possible functions:```");
+                    result.AppendLine(", possible functions:```");
                     foreach (var f in functions)
                         result.AppendLine(f);
                     result.AppendLine("```");
@@ -172,25 +147,23 @@ namespace CompatBot.Commands
         private async Task ReturnSyscallsByGameAsync(CommandContext ctx, string productId)
         {
             productId = productId.ToUpperInvariant();
-            string title = null;
             using var db = new ThumbnailDb();
-            title = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productId)?.Name;
+            var title = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productId)?.Name;
             title = string.IsNullOrEmpty(title) ? productId : $"[{productId}] {title.Trim(40)}";
             var sysInfoList = db.SyscallToProductMap.AsNoTracking()
                 .Where(m => m.Product.ProductCode == productId)
                 .Select(m => m.SyscallInfo)
                 .Distinct()
                 .AsEnumerable()
-                .OrderBy(sci => sci.Module)
-                .ThenBy(sci => sci.Function)
+                .OrderBy(sci => sci.Function.TrimStart('_'))
                 .ToList();
             if (ctx.User.Id == 216724245957312512UL)
-                sysInfoList = sysInfoList.Where(i => i.Function.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase)).ToList();
+                sysInfoList = sysInfoList.Where(i => i.Function.StartsWith("sys_") || i.Function.StartsWith("_sys_")).ToList();
             if (sysInfoList.Any())
             {
                 var result = new StringBuilder($"List of syscalls used by `{title}`:```").AppendLine();
                 foreach (var sci in sysInfoList)
-                    result.AppendLine($"{sci.Module}: {sci.Function}");
+                    result.AppendLine(sci.Function);
                 await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }
             else

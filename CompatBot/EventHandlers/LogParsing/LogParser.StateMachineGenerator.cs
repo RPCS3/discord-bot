@@ -59,17 +59,13 @@ namespace CompatBot.EventHandlers.LogParsing
                 if (state.WipCollection["serial"] is string serial)
                 {
                     var match = extractor.Match(buffer);
-                    if (match.Success
-                        && match.Groups["syscall_module"]?.Value is string syscallModule
-                        && match.Groups["syscall_name"]?.Value is string syscallName)
+                    if (match.Success && match.Groups["syscall_name"]?.Value is string syscallName)
                     {
                         lock (state)
                         {
                             if (!state.Syscalls.TryGetValue(serial, out var serialSyscallStats))
-                                state.Syscalls[serial] = serialSyscallStats = new Dictionary<string, HashSet<string>>();
-                            if (!serialSyscallStats.TryGetValue(syscallModule, out var moduleStats))
-                                serialSyscallStats[syscallModule] = moduleStats = new HashSet<string>();
-                            moduleStats.Add(syscallName);
+                                state.Syscalls[serial] = serialSyscallStats = new HashSet<string>();
+                            serialSyscallStats.Add(syscallName);
                         }
                     }
                 }

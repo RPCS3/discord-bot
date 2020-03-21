@@ -14,6 +14,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.DotNet.PlatformAbstractions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands
@@ -229,17 +230,14 @@ namespace CompatBot.Commands
             try
             {
                 using var db = new ThumbnailDb();
-                var syscallCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Distinct().Count();
-                var syscallModuleCount = db.SyscallInfo.Where(sci => sci.Function.StartsWith("sys_")).Select(sci => sci.Module).Distinct().Count();
-                var totalFuncCount = db.SyscallInfo.Select(sci => sci.Function).Distinct().Count();
-                var totalModuleCount = db.SyscallInfo.Select(sci => sci.Module).Distinct().Count();
+                var syscallCount = db.SyscallInfo.AsNoTracking().Where(sci => sci.Function.StartsWith("sys_") || sci.Function.StartsWith("_sys_")).Distinct().Count();
+                var totalFuncCount = db.SyscallInfo.AsNoTracking().Select(sci => sci.Function).Distinct().Count();
                 var fwCallCount = totalFuncCount - syscallCount;
-                var fwModuleCount = totalModuleCount - syscallModuleCount;
-                var gameCount = db.SyscallToProductMap.Select(m => m.ProductId).Distinct().Count();
+                var gameCount = db.SyscallToProductMap.AsNoTracking().Select(m => m.ProductId).Distinct().Count();
                 embed.AddField("SceCall Stats",
                     $"Tracked game IDs: {gameCount}\n" +
-                    $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")} in {syscallModuleCount} module{(syscallModuleCount == 1 ? "" : "s")}\n" +
-                    $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")} in {fwModuleCount} module{(fwModuleCount == 1 ? "" : "s")}\n",
+                    $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")}\n" +
+                    $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")}\n",
                     true);
             }
             catch (Exception e)
