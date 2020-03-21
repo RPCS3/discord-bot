@@ -63,7 +63,7 @@ namespace CompatBot.Commands
                             return;
 
                         msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
-                        Restart(ctx.Channel.Id);
+                        Restart(ctx.Channel.Id, "Restarted after successful bot update");
                     }
                     catch (Exception e)
                     {
@@ -90,7 +90,7 @@ namespace CompatBot.Commands
                         msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
                         await StatsStorage.SaveAsync(true).ConfigureAwait(false);
                         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
-                        Restart(ctx.Channel.Id);
+                        Restart(ctx.Channel.Id, "Restarted due to command request");
                     }
                     catch (Exception e)
                     {
@@ -178,7 +178,7 @@ namespace CompatBot.Commands
                 return (true, stdout);
             }
 
-            internal static void Restart(ulong channelId)
+            internal static void Restart(ulong channelId, string restartMsg)
             {
                 if (SandboxDetector.Detect() == SandboxType.Docker)
                 {
@@ -192,6 +192,14 @@ namespace CompatBot.Commands
                     }
                     else
                         ch.Value = channelId.ToString();
+                    var msg = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-msg");
+                    if (msg is null)
+                    {
+                        msg = new BotState {Key = "bot-restart-msg", Value = restartMsg};
+                        db.BotState.Add(msg);
+                    }
+                    else
+                        msg.Value = restartMsg;
                     db.SaveChanges();
                 }
                 RestartNoSaving(channelId);
