@@ -81,7 +81,7 @@ namespace CompatBot
                             Config.Log.Debug(stdout);
                         if (updated)
                         {
-                            Sudo.Bot.RestartNoSaving(0);
+                            Sudo.Bot.Restart(InvalidChannelId, "Restarted due to new bot updates not present in this Docker image");
                             return;
                         }
                     }
@@ -293,20 +293,26 @@ namespace CompatBot
                 }
 
                 ulong? channelId = null;
-                if (SandboxDetector.Detect() == SandboxType.Docker)
+                string restartMsg = null;
+                using (var db = new BotDb())
                 {
-                    using var db = new BotDb();
                     var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
                     if (chState != null)
                     {
                         if (ulong.TryParse(chState.Value, out var ch))
                             channelId = ch;
                         db.BotState.Remove(chState);
-                        db.SaveChanges();
                     }
+                    var msgState = db.BotState.FirstOrDefault(i => i.Key == "bot-restart-msg");
+                    if (msgState != null)
+                    {
+                        restartMsg = msgState.Value;
+                        db.BotState.Remove(msgState);
+                    }
+                    db.SaveChanges();
                 }
-                if (args.LastOrDefault() is string strCh && ulong.TryParse(strCh, out var chId))
-                    channelId = chId;
+                if (string.IsNullOrEmpty(restartMsg))
+                    restartMsg = null;
 
                 if (channelId.HasValue)
                 {
@@ -315,7 +321,7 @@ namespace CompatBot
                     if (channelId == InvalidChannelId)
                     {
                         channel = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                        await channel.SendMessageAsync("Bot has suffered some catastrophic failure and was restarted").ConfigureAwait(false);
+                        await channel.SendMessageAsync(restartMsg ?? "Bot has suffered some catastrophic failure and was restarted").ConfigureAwait(false);
                     }
                     else
                     {
@@ -359,7 +365,7 @@ namespace CompatBot
                     singleInstanceCheckThread.Join(100);
             }
             if (!Config.inMemorySettings.ContainsKey("shutdown"))
-                Sudo.Bot.Restart(InvalidChannelId);
+                Sudo.Bot.Restart(InvalidChannelId, null);
         }
     }
 }

@@ -4,11 +4,13 @@ using System.IO.Compression;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
+using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
@@ -129,6 +131,43 @@ namespace CompatBot.Commands
             {
                 Config.Log.Warn(e, "Failed to upload current log");
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send the log", true).ConfigureAwait(false);
+            }
+        }
+
+        [Command("dbbackup"), Aliases("thumbs", "dbb")]
+        [Description("Uploads current Thumbs.db file as an attachment")]
+        public async Task ThumbsBackup(CommandContext ctx)
+        {
+            try
+            {
+                string dbPath;
+                using (var db = new ThumbnailDb())
+                using (var connection = db.Database.GetDbConnection())
+                    dbPath = connection.DataSource;
+                var attachmentSizeLimit = Config.AttachmentSizeLimit;
+                var dbDir = Path.GetDirectoryName(dbPath);
+                var dbName = Path.GetFileNameWithoutExtension(dbPath);
+                using var result = Config.MemoryStreamManager.GetStream();
+                using (var zip = new ZipArchive(result, ZipArchiveMode.Create, true))
+                    foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
+                    {
+                        using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        using var entryStream = zip.CreateEntry(Path.GetFileName(fname), CompressionLevel.Optimal).Open();
+                        await dbData.CopyToAsync(entryStream, Config.Cts.Token).ConfigureAwait(false);
+                        await entryStream.FlushAsync().ConfigureAwait(false);
+                    }
+                if (result.Length <= attachmentSizeLimit)
+                {
+                    result.Seek(0, SeekOrigin.Begin);
+                    await ctx.RespondWithFileAsync(Path.GetFileName(dbName) + ".zip", result).ConfigureAwait(false);
+                }
+                else
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask Nicba for help :(", true).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to upload current Thumbs.db backup");
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send Thumbs.db backup", true).ConfigureAwait(false);
             }
         }
     }
