@@ -54,7 +54,7 @@ namespace CompatBot.EventHandlers.LogParsing
 
         private static void OnExtractorHit(string buffer, string trigger, Regex extractor, LogParseState state)
         {
-            if (trigger == "{PPU[")
+            if (trigger == "⁂" || trigger == "{PPU[")
             {
                 if (state.WipCollection["serial"] is string serial)
                 {
