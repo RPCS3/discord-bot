@@ -171,6 +171,9 @@ namespace CompatBot.Utils
 
         public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, DiscordEmoji fallbackEmoji)
         {
+            if (string.IsNullOrEmpty(emojiName))
+                return fallbackEmoji;
+
             try
             {
                 if (!emojiName.StartsWith(":"))
