@@ -10,7 +10,6 @@ namespace CompatBot.Database
     {
         public DbSet<State> State { get; set; }
         public DbSet<Thumbnail> Thumbnail { get; set; }
-        [Obsolete("Please don't use for anything")]
         public DbSet<SyscallInfo> SyscallInfo { get; set; }
         public DbSet<SyscallToProductMap> SyscallToProductMap { get; set; }
 
