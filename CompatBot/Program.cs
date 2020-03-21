@@ -168,7 +168,7 @@ namespace CompatBot
 
                 client.Ready += async r =>
                                 {
-                                    var admin = await r.Client.GetUserAsync(Config.BotAdminId).ConfigureAwait(false); // this is bugged at the moment
+                                    var admin = await r.Client.GetUserAsync(Config.BotAdminId).ConfigureAwait(false);
                                     Config.Log.Info("Bot is ready to serve!");
                                     Config.Log.Info("");
                                     Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
