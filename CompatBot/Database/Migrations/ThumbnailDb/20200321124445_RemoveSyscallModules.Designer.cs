@@ -3,14 +3,16 @@ using System;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CompatBot.Migrations
 {
     [DbContext(typeof(ThumbnailDb))]
-    partial class ThumbnailDbModelSnapshot : ModelSnapshot
+    [Migration("20200321124445_RemoveSyscallModules")]
+    partial class RemoveSyscallModules
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -95,10 +97,6 @@ namespace CompatBot.Migrations
                         .HasColumnName("content_id")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("EmbedColor")
-                        .HasColumnName("embed_color")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("EmbeddableUrl")
                         .HasColumnName("embeddable_url")
                         .HasColumnType("TEXT");
@@ -135,6 +133,47 @@ namespace CompatBot.Migrations
                         .HasName("thumbnail_timestamp");
 
                     b.ToTable("thumbnail");
+                });
+
+            modelBuilder.Entity("CompatBot.Database.TitleInfo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ContentId")
+                        .IsRequired()
+                        .HasColumnName("content_id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EmbedColor")
+                        .HasColumnName("embed_color")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ThumbnailEmbeddableUrl")
+                        .HasColumnName("thumbnail_embeddable_url")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .HasColumnName("thumbnail_url")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Timestamp")
+                        .HasColumnName("timestamp")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id")
+                        .HasName("id");
+
+                    b.HasIndex("ContentId")
+                        .IsUnique()
+                        .HasName("title_info_content_id");
+
+                    b.HasIndex("Timestamp")
+                        .HasName("title_info_timestamp");
+
+                    b.ToTable("title_info");
                 });
 
             modelBuilder.Entity("CompatBot.Database.SyscallToProductMap", b =>

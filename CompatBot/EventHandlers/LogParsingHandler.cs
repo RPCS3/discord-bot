@@ -298,15 +298,10 @@ namespace CompatBot.EventHandlers
 
                 Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
                 Config.Log.Debug("Syscall stats:");
-                int serialCount = result.Syscalls.Count, moduleCount = 0, functionCount = 0;
-                foreach (var moduleStats in result.Syscalls.Values)
-                {
-                    moduleCount += moduleStats.Count;
-                    foreach (var funcStats in moduleStats.Values)
-                        functionCount += funcStats.Count;
-                }
+                int serialCount = result.Syscalls.Count, functionCount = 0;
+                foreach (var funcStats in result.Syscalls.Values)
+                    functionCount += funcStats.Count;
                 Config.Log.Debug("Product keys: " + serialCount);
-                Config.Log.Debug("Modules: " + moduleCount);
                 Config.Log.Debug("Functions: " + functionCount);
                 Config.Log.Debug("Saving syscall information...");
                 var sw = Stopwatch.StartNew();

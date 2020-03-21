@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers
 {
-    using TSyscallStats = Dictionary<string, Dictionary<string, HashSet<string>>>;
+    using TSyscallStats = Dictionary<string, HashSet<string>>;
 
     internal static class SyscallInfoProvider
     {
@@ -31,11 +31,10 @@ namespace CompatBot.Database.Providers
                         if (product.Id == 0)
                             await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
 
-                        foreach (var moduleMap in productCodeMap.Value)
-                        foreach (var func in moduleMap.Value)
+                        foreach (var func in productCodeMap.Value)
                         {
-                            var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Module == moduleMap.Key.ToUtf8() && sci.Function == func.ToUtf8())
-                                          ?? db.SyscallInfo.Add(new SyscallInfo {Module = moduleMap.Key.ToUtf8(), Function = func.ToUtf8() }).Entity;
+                            var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Function == func.ToUtf8())
+                                          ?? db.SyscallInfo.Add(new SyscallInfo {Function = func.ToUtf8() }).Entity;
                             if (syscall.Id == 0)
                                 await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
 
@@ -78,10 +77,8 @@ namespace CompatBot.Database.Providers
                         links += productIds.Count;
                         foreach (var productId in productIds)
                         {
-                            if (!syscallStats.TryGetValue(productId, out var scInfo))
-                                syscallStats[productId] = scInfo = new Dictionary<string, HashSet<string>>();
-                            if (!scInfo.TryGetValue(sci.Module, out var smInfo))
-                                scInfo[sci.Module] = smInfo = new HashSet<string>();
+                            if (!syscallStats.TryGetValue(productId, out var smInfo))
+                                syscallStats[productId] = smInfo = new HashSet<string>();
                             smInfo.Add(sci.Function.Split('(', 2)[0]);
                         }
                     }
@@ -118,7 +115,7 @@ namespace CompatBot.Database.Providers
             int funcs = 0, links = 0;
             using (var db = new ThumbnailDb())
             {
-                var duplicateFunctionNames = await db.SyscallInfo.Where(sci => db.SyscallInfo.Count(isci => isci.Function == sci.Function && isci.Module == sci.Module) > 1).Distinct().ToListAsync().ConfigureAwait(false);
+                var duplicateFunctionNames = await db.SyscallInfo.Where(sci => db.SyscallInfo.Count(isci => isci.Function == sci.Function) > 1).Distinct().ToListAsync().ConfigureAwait(false);
                 if (duplicateFunctionNames.Count == 0)
                     return (0, 0);
 
@@ -128,7 +125,7 @@ namespace CompatBot.Database.Providers
                     {
                         foreach (var dupFunc in duplicateFunctionNames)
                         {
-                            var dups = db.SyscallInfo.Where(sci => sci.Function == dupFunc.Function && sci.Module == dupFunc.Module).ToList();
+                            var dups = db.SyscallInfo.Where(sci => sci.Function == dupFunc.Function).ToList();
                             if (dups.Count < 2)
                                 continue;
 

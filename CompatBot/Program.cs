@@ -164,17 +164,17 @@ namespace CompatBot
 
                 commands.CommandErrored += UnknownCommandHandler.OnError;
 
-                var interactivityConfig = new InteractivityConfiguration { };
-                client.UseInteractivity(interactivityConfig);
+                client.UseInteractivity(new InteractivityConfiguration());
 
                 client.Ready += async r =>
-                {
-                    Config.Log.Info("Bot is ready to serve!");
-                    Config.Log.Info("");
-                    Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
-                    Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({(await r.Client.GetUserAsync(Config.BotAdminId)).Username})");
-                    Config.Log.Info("");
-                };
+                                {
+                                    var admin = await r.Client.GetUserAsync(Config.BotAdminId).ConfigureAwait(false); // this is bugged at the moment
+                                    Config.Log.Info("Bot is ready to serve!");
+                                    Config.Log.Info("");
+                                    Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
+                                    Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({admin.Username ?? "???"}#{admin.Discriminator ?? "????"})");
+                                    Config.Log.Info("");
+                                };
                 client.GuildAvailable += async gaArgs =>
                 {
                     await BotStatusMonitor.RefreshAsync(gaArgs.Client).ConfigureAwait(false);

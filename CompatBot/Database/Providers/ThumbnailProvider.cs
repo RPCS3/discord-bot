@@ -112,27 +112,34 @@ namespace CompatBot.Database.Providers
 
             contentId = contentId.ToUpperInvariant();
             using var db = new ThumbnailDb();
-            var info = await db.TitleInfo.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
+            var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
             if (info == null)
             {
-                info = new TitleInfo {ContentId = contentId, ThumbnailUrl = url, Timestamp = DateTime.UtcNow.Ticks};
+                info = new Thumbnail
+                {
+                    ProductCode = contentId[7..16],
+                    ContentId = contentId,
+                    Url = url,
+                    Timestamp = DateTime.UtcNow.Ticks
+                };
                 var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ContentId == contentId).ConfigureAwait(false);
                 if (thumb?.EmbeddableUrl is string eUrl
                     && thumb.Url is string thumbUrl
                     && thumbUrl == url)
-                    info.ThumbnailEmbeddableUrl = eUrl;
-                info = db.TitleInfo.Add(info).Entity;
+                    info.EmbeddableUrl = eUrl;
+                info = db.Thumbnail.Add(info).Entity;
                 await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
             DiscordColor? analyzedColor = null;
-            if (string.IsNullOrEmpty(info.ThumbnailEmbeddableUrl))
+            if (string.IsNullOrEmpty(info.EmbeddableUrl))
             {
-                var em = await GetEmbeddableUrlAsync(client, contentId, info.ThumbnailUrl).ConfigureAwait(false);
+                var em = await GetEmbeddableUrlAsync(client, contentId, info.Url).ConfigureAwait(false);
                 if (em.url is string eUrl)
                 {
-                    info.ThumbnailEmbeddableUrl = eUrl;
+                    info.EmbeddableUrl = eUrl;
                     if (em.image is byte[] jpg)
                     {
+                        Config.Log.Trace("Getting dominant color for " + eUrl);
                         analyzedColor = ColorGetter.Analyze(jpg, defaultColor);
                         var c = analyzedColor.Value.Value;
                         if (c != defaultColor.Value)
@@ -144,7 +151,7 @@ namespace CompatBot.Database.Providers
             if ((!info.EmbedColor.HasValue && !analyzedColor.HasValue)
                 || (info.EmbedColor.HasValue && info.EmbedColor.Value == defaultColor.Value))
             {
-                var c = await GetImageColorAsync(info.ThumbnailEmbeddableUrl, defaultColor).ConfigureAwait(false);
+                var c = await GetImageColorAsync(info.EmbeddableUrl, defaultColor).ConfigureAwait(false);
                 if (c.HasValue && c.Value.Value != defaultColor.Value)
                 {
                     info.EmbedColor = c.Value.Value;
@@ -152,7 +159,7 @@ namespace CompatBot.Database.Providers
                 }
             }
             var color = info.EmbedColor.HasValue ? new DiscordColor(info.EmbedColor.Value) : defaultColor;
-            return (info.ThumbnailEmbeddableUrl, color);
+            return (info.EmbeddableUrl, color);
         }
 
         public static async Task<(string url, byte[] image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
@@ -198,6 +205,7 @@ namespace CompatBot.Database.Providers
 
                 memStream.Seek(0, SeekOrigin.Begin);
 
+                Config.Log.Trace("Getting dominant color for " + url);
                 return ColorGetter.Analyze(memStream.ToArray(), defaultColor);
             }
             catch (Exception e)

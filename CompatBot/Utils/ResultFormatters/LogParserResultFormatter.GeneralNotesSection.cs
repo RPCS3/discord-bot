@@ -47,20 +47,33 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                     else if (fatalError.Contains("file is null"))
                     {
-                        if (contexts.Any(c => c.StartsWith("RSX", StringComparison.InvariantCultureIgnoreCase)))
+                        if (contexts.Any(c => c.StartsWith("RSX")))
                         {
                             knownFatal = true;
                             notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
                         }
-                        if (contexts.Any(c => c.StartsWith("SPU", StringComparison.InvariantCultureIgnoreCase)))
+                        if (contexts.Any(c => c.StartsWith("SPU")))
                         {
                             knownFatal = true;
                             notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
                         }
-                        if (contexts.Any(c => c.StartsWith("PPU", StringComparison.InvariantCultureIgnoreCase)))
+                        if (contexts.Any(c => c.StartsWith("PPU")))
                         {
                             knownFatal = true;
                             notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
+                        }
+                    }
+                    else if (fatalError.Contains("Null function") && fatalError.Contains("JIT"))
+                    {
+                        if (contexts.Any(c => c.StartsWith("PPU")))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ PPU cache has issues; right-click on the game, then `Remove` → `PPU Cache`");
+                        }
+                        if (contexts.Any(c => c.StartsWith("SPU")))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ SPU cache has issues; right-click on the game, then `Remove` → `SPU Cache`");
                         }
                     }
                     else if (fatalError.Contains("(e=0x17): file::read"))

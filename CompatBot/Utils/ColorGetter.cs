@@ -27,7 +27,6 @@ namespace CompatBot.Utils
                     .ThenByDescending(p => p.hsl.S)
                     .ToList();
 #if DEBUG
-
                 Config.Log.Trace("Selected palette:");
                 foreach (var cl in colors)
                     Config.Log.Trace($"{cl.c.ToHexString()}, HSL: {cl.hsl.H+90:#00} {cl.hsl.S:0.00} {cl.hsl.L:0.00}");

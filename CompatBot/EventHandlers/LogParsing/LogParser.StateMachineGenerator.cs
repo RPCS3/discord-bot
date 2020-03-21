@@ -54,22 +54,18 @@ namespace CompatBot.EventHandlers.LogParsing
 
         private static void OnExtractorHit(string buffer, string trigger, Regex extractor, LogParseState state)
         {
-            if (trigger == "{PPU[")
+            if (trigger == "⁂" || trigger == "{PPU[")
             {
                 if (state.WipCollection["serial"] is string serial)
                 {
                     var match = extractor.Match(buffer);
-                    if (match.Success
-                        && match.Groups["syscall_module"]?.Value is string syscallModule
-                        && match.Groups["syscall_name"]?.Value is string syscallName)
+                    if (match.Success && match.Groups["syscall_name"]?.Value is string syscallName)
                     {
                         lock (state)
                         {
                             if (!state.Syscalls.TryGetValue(serial, out var serialSyscallStats))
-                                state.Syscalls[serial] = serialSyscallStats = new Dictionary<string, HashSet<string>>();
-                            if (!serialSyscallStats.TryGetValue(syscallModule, out var moduleStats))
-                                serialSyscallStats[syscallModule] = moduleStats = new HashSet<string>();
-                            moduleStats.Add(syscallName);
+                                state.Syscalls[serial] = serialSyscallStats = new HashSet<string>();
+                            serialSyscallStats.Add(syscallName);
                         }
                     }
                 }
