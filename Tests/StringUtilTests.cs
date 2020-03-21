@@ -44,5 +44,13 @@ namespace Tests
         {
             Assert.That(strA.StripInvisibleAndDiacritics().ToCanonicalForm(), Is.EqualTo(strB));
         }
+
+        [Test]
+        public void SubstringTest()
+        {
+            var contentId = "UP2611-NPUB31848_00-HDDBOOTPERSONA05";
+            var productCode = "NPUB31848";
+            Assert.That(contentId[7..16], Is.EqualTo(productCode));
+        }
     }
 }
