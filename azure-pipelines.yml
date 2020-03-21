@@ -1,7 +1,7 @@
-trigger:
-- master
-pr:
-- master
+#trigger:
+#- master
+#pr:
+#- master
 jobs:
 - job: BuildAndTest
   displayName: 'Run tests'
