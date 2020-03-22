@@ -187,7 +187,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["RSX: Your GPU does not support"] = new Regex(@"RSX: Your GPU does not support (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: GPU/driver lacks support"] = new Regex(@"RSX: GPU/driver lacks support for (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: Swapchain:"] = new Regex(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
-                    ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?\w+:\s*(class [^\r\n]+ thrown: )?\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7)", DefaultSingleLineOptions),
+                    ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7)", DefaultSingleLineOptions),
                     ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
                     ["Rap file not found:"] = new Regex(@"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?)(\xE2\x80\x9D)?\r?$", DefaultOptions),
                     ["Pad handler expected but none initialized"] = new Regex(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
