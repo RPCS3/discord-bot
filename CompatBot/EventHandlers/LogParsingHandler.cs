@@ -96,20 +96,21 @@ namespace CompatBot.EventHandlers
                         botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
                         parsedLog = true;
 
-                        LogParseState result = null;
+                        LogParseState result = null, tmpResult = null;
                         using (var timeout = new CancellationTokenSource(Config.LogParsingTimeout))
                         {
                             using var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
                             var tries = 0;
                             do
                             {
-                                result = await ParseLogAsync(
+                                tmpResult = await ParseLogAsync(
                                     source,
                                     async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
                                     combinedTokenSource.Token
                                 ).ConfigureAwait(false);
+                                result ??= tmpResult;
                                 tries++;
-                            } while (result == null && !combinedTokenSource.IsCancellationRequested && tries < 3);
+                            } while ((tmpResult == null || tmpResult.Error == LogParseState.ErrorCode.UnknownError) && !combinedTokenSource.IsCancellationRequested && tries < 3);
                         }
                         if (result == null)
                         {

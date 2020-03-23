@@ -232,6 +232,8 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     notes.Add("⚠ `Resolution Scaling Threshold` below `16x16` may result in corrupted visuals and game crash");
                 }
+                if (resScaleFactor > 300)
+                    notes.Add("⚠ Excessive `Resolution Scale` may impact performance");
             }
             var allPpuHashes = GetPatches(multiItems["ppu_patch"], false);
             var ppuPatches = allPpuHashes.Where(kvp => kvp.Value > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -305,8 +307,8 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckGt5Settings(serial, items, notes, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
-                CheckSly4Settings(serial, items, notes, generalNotes);
-                CheckDragonsCrownSettings(serial, items, notes, generalNotes);
+                CheckSly4Settings(serial, items, notes);
+                CheckDragonsCrownSettings(serial, items, notes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -842,6 +844,9 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (!RdrIds.Contains(serial))
                 return;
+
+            if (items["write_color_buffers"] == DisabledMark)
+                notes.Add("ℹ `Write Color Buffers` is required for proper visuals at night");
         }
 
         private static readonly HashSet<string> Mgs4Ids = new HashSet<string>
@@ -851,7 +856,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPHB00065", "NPHB00067",
         };
 
-        private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> _, List<string> generalNotes)
         {
             if (!Mgs4Ids.Contains(serial))
                 return;
@@ -937,7 +942,7 @@ namespace CompatBot.Utils.ResultFormatters
             "BCUS98114", "BCUS98272", "BCUS98394",
         };
 
-        private static void CheckGt5Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        private static void CheckGt5Settings(string serial, NameValueCollection items, List<string> _, List<string> generalNotes)
         {
             if (!Gt5Ids.Contains(serial))
                 return;
@@ -1035,7 +1040,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPUA30123", // soundtrack ???
         };
 
-        private static void CheckSly4Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        private static void CheckSly4Settings(string serial, NameValueCollection items, List<string> notes)
         {
             if (!Sly4Ids.Contains(serial))
                 return;
@@ -1055,15 +1060,13 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB01836", "NPUB31235",
         };
 
-        private static void CheckDragonsCrownSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        private static void CheckDragonsCrownSettings(string serial, NameValueCollection items, List<string> notes)
         {
             if (!DragonsCrownIds.Contains(serial))
                 return;
 
             if (items["spu_loop_detection"] == EnabledMark)
-            {
                 notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
-            }
         }
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)

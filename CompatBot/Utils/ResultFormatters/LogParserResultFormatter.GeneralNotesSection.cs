@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
@@ -30,7 +31,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (multiItems["fatal_error"] is UniqueList<string> fatalErrors && fatalErrors.Any())
             {
                 var contexts = multiItems["fatal_error_context"];
-                foreach (var fatalError in fatalErrors)
+                var reducedFatalErros = GroupSimilar(fatalErrors);
+                foreach (var (fatalError, count, similarity) in reducedFatalErros)
                 {
                     var knownFatal = false;
                     if (fatalError.Contains("psf.cpp", StringComparison.InvariantCultureIgnoreCase)
@@ -86,7 +88,16 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ RSX desync detected, it's probably random");
                     }
                     if (!knownFatal)
-                        builder.AddField("Fatal Error", $"```\n{fatalError.Trim(1020)}\n```");
+                    {
+                        var sectionName = count == 0
+                            ? "Fatal Error"
+#if DEBUG
+                            : $"Fatal Error (x{count} [{similarity*100:0.00}%+])";
+#else
+                            : $"Fatal Error (x{count})";
+#endif
+                        builder.AddField(sectionName, $"```\n{fatalError.Trim(1020)}\n```");
+                    }
                 }
             }
             else if (items["unimplemented_syscall"] is string unimplementedSyscall)
@@ -521,12 +532,14 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
+            if (state.Error == LogParseState.ErrorCode.UnknownError)
+                notes.Add("ℹ There was an error during log processing");
 
             BuildWeirdSettingsSection(builder, state, notes);
             BuildMissingLicensesSection(builder, serial, multiItems, notes);
 
             var notesContent = new StringBuilder();
-            foreach (var line in SortLines(notes, pirateEmoji))
+            foreach (var line in SortLines(notes, pirateEmoji).Distinct())
                 notesContent.AppendLine(line);
             PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
