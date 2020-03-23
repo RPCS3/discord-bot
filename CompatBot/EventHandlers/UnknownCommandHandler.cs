@@ -138,24 +138,30 @@ namespace CompatBot.EventHandlers
             if (allKnownBotCommands != null)
                 return allKnownBotCommands;
 
-            static void dumpChildren(CommandGroup group, List<string> commandList)
+            static void dumpCmd(List<string> commandList, Command cmd, string qualifiedPrefix)
+            {
+                foreach (var alias in cmd.Aliases.Concat(new[] {cmd.Name}))
+                {
+                    var qualifiedAlias = qualifiedPrefix + alias;
+                    commandList.Add(qualifiedAlias);
+                    if (cmd is CommandGroup g)
+                        dumpChildren(g, commandList, qualifiedAlias + " ");
+                }
+            }
+
+            static void dumpChildren(CommandGroup group, List<string> commandList, string qualifiedPrefix)
             {
                 foreach (var cmd in group.Children)
-                {
-                    commandList.Add(cmd.QualifiedName);
-                    if (cmd is CommandGroup g)
-                        dumpChildren(g, commandList);
-                }
+                    dumpCmd(commandList, cmd, qualifiedPrefix);
             }
 
             var result = new List<string>();
             foreach (var cmd in ctx.CommandsNext.RegisteredCommands.Values)
-            {
-                result.Add(cmd.QualifiedName);
-                if (cmd is CommandGroup g)
-                    dumpChildren(g, result);
-            }
+                dumpCmd(result, cmd, "");
             allKnownBotCommands = result;
+#if DEBUG
+            Config.Log.Debug("Total command alias permutations: " + allKnownBotCommands.Count);
+#endif
             return allKnownBotCommands;
         }
 
