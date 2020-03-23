@@ -208,8 +208,6 @@ namespace CompatBot.Utils.ResultFormatters
             state.CompleteCollection ??= state.WipCollection;
             state.CompleteMultiValueCollection ??= state.WipMultiValueCollection;
             var collection = state.CompleteCollection;
-            var multiValueCollection = state.CompleteMultiValueCollection;
-
             if (collection?.Count > 0)
             {
                 var ldrGameSerial = collection["ldr_game_serial"] ?? collection["ldr_path_serial"];

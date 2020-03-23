@@ -1,5 +1,6 @@
 ﻿using CompatBot.Utils;
 using NUnit.Framework;
+// ReSharper disable RedundantRangeBound
 
 namespace Tests
 {
@@ -44,7 +45,6 @@ namespace Tests
 			Assert.That(list[..^1], Is.EqualTo(testValue[..^1]));
 			Assert.That(list[..^4], Is.EqualTo(testValue[..^4]));
 			Assert.That(list[..^5], Is.EqualTo(testValue[..^5]));
-			
 		}
 	}
 }
