@@ -436,11 +436,23 @@ namespace CompatBot.Commands
         [Description("Find games to download")]
         public Task Download(CommandContext ctx, [RemainingText] string game)
         {
-            var invariantTitle = game?.ToUpperInvariant();
-            if (invariantTitle == "RPCS3")
+            var invariantTitle = game?.ToLowerInvariant() ?? "";
+            if (invariantTitle == "rpcs3")
                 return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
 
-            if (invariantTitle == "UNNAMED")
+            if (invariantTitle == "ps3updat.dat" || invariantTitle == "firmware" || invariantTitle == "fw")
+                return Psn.Check.GetFirmwareAsync(ctx);
+
+            if (invariantTitle.StartsWith("update")
+                && ProductCodeLookup.ProductCode.Match(invariantTitle) is Match m
+                && m.Success)
+            {
+                var checkUpdateCmd = ctx.CommandsNext.FindCommand("psn check update", out _);
+                var checkUpdateCtx = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, checkUpdateCmd, m.Groups[0].Value);
+                return checkUpdateCmd.ExecuteAsync(checkUpdateCtx);
+            }
+
+            if (invariantTitle == "unnamed")
                 game = "Persona 5";
             else if (invariantTitle == "KOT")
                 game = invariantTitle;
