@@ -49,9 +49,9 @@ namespace CompatBot.EventHandlers
                         }
                     }
                     catch
-			  {
-				  lastCheck = DateTime.UtcNow;
-			  }
+		    {
+			lastCheck = DateTime.UtcNow;
+		    }
                     await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
                 }
             }
