@@ -177,7 +177,7 @@ namespace CompatBot.Utils.ResultFormatters
             => client.GetEmoji(githubLogin switch
             {
 #if DEBUG
-                _ => client.Guilds.Values.First().Emojis.Values.ToList().RandomElement(githubLogin.GetHashCode())?.GetDiscordName(),
+                _ => client.Guilds.Values.FirstOrDefault()?.Emojis.Values.ToList().RandomElement(githubLogin.GetHashCode())?.GetDiscordName(),
 #else
                 "Nekotekina" => ":nekotekina:",
                 "kd-11" => ":kd11:",
