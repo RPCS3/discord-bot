@@ -43,12 +43,15 @@ namespace CompatBot.EventHandlers
                         if (DateTime.UtcNow - lastCheck > CheckInterval)
                         {
                             await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
+                            lastCheck = DateTime.UtcNow;
                             if (DateTime.UtcNow - resetThreshold > RapidStart)
                                 Reset();
                         }
                     }
-                    catch { }
-                    lastCheck = DateTime.UtcNow;
+                    catch
+                        {
+                            lastCheck = DateTime.UtcNow;
+                        }
                     await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
                 }
             }
