@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
@@ -531,6 +532,8 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (state.Error == LogParseState.ErrorCode.SizeLimit)
                 notes.Add("ℹ The log was too large, so only the last processed run is shown");
+            if (state.Error == LogParseState.ErrorCode.UnknownError)
+                notes.Add("ℹ There was an error during log processing");
 
             BuildWeirdSettingsSection(builder, state, notes);
             BuildMissingLicensesSection(builder, serial, multiItems, notes);

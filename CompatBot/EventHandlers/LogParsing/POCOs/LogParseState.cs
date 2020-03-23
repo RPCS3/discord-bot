@@ -32,6 +32,7 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
             None = 0,
             PiracyDetected = 1,
             SizeLimit = 2,
+            UnknownError = 3,
         }
     }
 }

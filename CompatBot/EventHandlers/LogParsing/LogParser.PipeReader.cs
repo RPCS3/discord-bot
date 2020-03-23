@@ -25,56 +25,66 @@ namespace CompatBot.EventHandlers.LogParsing
             ReadResult result;
             do
             {
-                result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-                var buffer = result.Buffer;
-                if (!skippedBom)
+                try
                 {
-                    if (buffer.Length < 3)
-                        continue;
+                    result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                    var buffer = result.Buffer;
+                    if (!skippedBom)
+                    {
+                        if (buffer.Length < 3)
+                            continue;
 
-                    var potentialBom = buffer.Slice(0, 3);
-                    if (potentialBom.ToArray().SequenceEqual(Bom))
-                    {
-                        reader.AdvanceTo(potentialBom.End);
-                        totalReadBytes += potentialBom.Length;
-                        skippedBom = true;
-                        continue;
-                    }
-                    skippedBom = true;
-                }
-                SequencePosition? lineEnd;
-                do
-                {
-                    if (currentSectionLines.Count > 0)
-                        buffer = buffer.Slice(buffer.GetPosition(1, currentSectionLines.Last.Value.End));
-                    lineEnd = buffer.PositionOf((byte)'\n');
-                    if (lineEnd != null)
-                    {
-                        await OnNewLineAsync(buffer.Slice(0, lineEnd.Value), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
-                        if (state.Error != LogParseState.ErrorCode.None)
+                        var potentialBom = buffer.Slice(0, 3);
+                        if (potentialBom.ToArray().SequenceEqual(Bom))
                         {
-                            reader.Complete();
-                            return state;
+                            reader.AdvanceTo(potentialBom.End);
+                            totalReadBytes += potentialBom.Length;
+                            skippedBom = true;
+                            continue;
                         }
-
-                        buffer = buffer.Slice(buffer.GetPosition(1, lineEnd.Value));
+                        skippedBom = true;
                     }
-                } while (lineEnd != null);
+                    SequencePosition? lineEnd;
+                    do
+                    {
+                        if (currentSectionLines.Count > 0)
+                            buffer = buffer.Slice(buffer.GetPosition(1, currentSectionLines.Last.Value.End));
+                        lineEnd = buffer.PositionOf((byte)'\n');
+                        if (lineEnd != null)
+                        {
+                            await OnNewLineAsync(buffer.Slice(0, lineEnd.Value), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
+                            if (state.Error != LogParseState.ErrorCode.None)
+                            {
+                                reader.Complete();
+                                return state;
+                            }
 
-                if (result.IsCanceled || cancellationToken.IsCancellationRequested)
+                            buffer = buffer.Slice(buffer.GetPosition(1, lineEnd.Value));
+                        }
+                    } while (lineEnd != null);
+
+                    if (result.IsCanceled || cancellationToken.IsCancellationRequested)
+                    {
+                        if (state.Error == LogParseState.ErrorCode.None)
+                            state.Error = LogParseState.ErrorCode.SizeLimit;
+                    }
+                    else if (result.IsCompleted)
+                    {
+                        if (!buffer.End.Equals(currentSectionLines.Last.Value.End))
+                            await OnNewLineAsync(buffer.Slice(0), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
+                        await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
+                    }
+                    var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;
+                    totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
+                    reader.AdvanceTo(sectionStart.Start);
+                }
+                catch (Exception e)
                 {
+                    Config.Log.Warn(e, "Aborted log parsing due to exception");
                     if (state.Error == LogParseState.ErrorCode.None)
-                        state.Error = LogParseState.ErrorCode.SizeLimit;
+                        state.Error = LogParseState.ErrorCode.UnknownError;
+                    break;
                 }
-                else if (result.IsCompleted)
-                {
-                    if (!buffer.End.Equals(currentSectionLines.Last.Value.End))
-                        await OnNewLineAsync(buffer.Slice(0), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
-                    await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
-                }
-                var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;
-                totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
-                reader.AdvanceTo(sectionStart.Start);
             } while (!(result.IsCompleted || result.IsCanceled || cancellationToken.IsCancellationRequested));
             await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
             state.ReadBytes = totalReadBytes;
