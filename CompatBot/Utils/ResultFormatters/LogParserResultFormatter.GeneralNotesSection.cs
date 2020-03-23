@@ -89,7 +89,7 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                     if (!knownFatal)
                     {
-                        var sectionName = count == 0
+                        var sectionName = count == 1
                             ? "Fatal Error"
 #if DEBUG
                             : $"Fatal Error (x{count} [{similarity*100:0.00}%+])";

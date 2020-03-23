@@ -5,11 +5,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
@@ -215,6 +217,43 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             else
                 await ctx.RespondAsync(result).ConfigureAwait(false);
+        }
+
+        [Command("random"), Aliases("rng"), Hidden]
+        [Description("Provides random stuff")]
+        public async Task RandomShit(CommandContext ctx, string stuff)
+        {
+            stuff = stuff?.ToLowerInvariant() ?? "";
+            switch (stuff)
+            {
+                    case "game":
+                    case "serial":
+                    case "productcode":
+                    case "product code":
+                    {
+                        using var db = new ThumbnailDb();
+                        var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
+                        if (count == 0)
+                        {
+                            await ctx.RespondAsync("Sorry, I have no information about a single game yet").ConfigureAwait(false);
+                            return;
+                        }
+
+                        var rng = new Random().Next(count);
+                        var productCode = await db.Thumbnail.Skip(rng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
+                        if (productCode == null)
+                        {
+                            await ctx.RespondAsync("Sorry, there's something with my brains today. Try again or something").ConfigureAwait(false);
+                            return;
+                        }
+
+                        await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, new List<string> {productCode.ProductCode}).ConfigureAwait(false);
+                        break;
+                    }
+                    default:
+                        await Roll(ctx, comment: stuff).ConfigureAwait(false);
+                        break;
+            }
         }
 
         [Command("8ball"), Cooldown(20, 60, CooldownBucketType.Channel)]
@@ -436,11 +475,23 @@ namespace CompatBot.Commands
         [Description("Find games to download")]
         public Task Download(CommandContext ctx, [RemainingText] string game)
         {
-            var invariantTitle = game?.ToUpperInvariant();
-            if (invariantTitle == "RPCS3")
+            var invariantTitle = game?.ToLowerInvariant() ?? "";
+            if (invariantTitle == "rpcs3")
                 return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
 
-            if (invariantTitle == "UNNAMED")
+            if (invariantTitle == "ps3updat.dat" || invariantTitle == "firmware" || invariantTitle == "fw")
+                return Psn.Check.GetFirmwareAsync(ctx);
+
+            if (invariantTitle.StartsWith("update")
+                && ProductCodeLookup.ProductCode.Match(invariantTitle) is Match m
+                && m.Success)
+            {
+                var checkUpdateCmd = ctx.CommandsNext.FindCommand("psn check update", out _);
+                var checkUpdateCtx = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, checkUpdateCmd, m.Groups[0].Value);
+                return checkUpdateCmd.ExecuteAsync(checkUpdateCtx);
+            }
+
+            if (invariantTitle == "unnamed")
                 game = "Persona 5";
             else if (invariantTitle == "KOT")
                 game = invariantTitle;
