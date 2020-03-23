@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CompatBot.Utils
 {
@@ -95,5 +96,18 @@ namespace CompatBot.Utils
 			get => list[index];
 			set => throw new NotSupportedException();
 		}
+
+		public IEnumerable<T> this[Range range]
+		{
+			get
+			{
+				var (offset, count) = range.GetOffsetAndLength(list.Count);
+				return list.Skip(offset).Take(count);
+			}
+		}
+
+		public int Length => list.Count;
+
+		T GetAt(int index) => list[index];
 	}
 }

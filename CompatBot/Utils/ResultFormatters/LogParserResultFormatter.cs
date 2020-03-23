@@ -785,5 +785,39 @@ namespace CompatBot.Utils.ResultFormatters
             }
             return a;
         }
+
+        private static List<(string fatalError, int count, double similarity)> GroupSimilar(UniqueList<string> fatalErrors)
+        {
+            var result = new List<(string fatalError, int count, double similarity)>(fatalErrors.Count);
+            if (fatalErrors.Count == 0)
+                return result;
+
+            result.Add((fatalErrors[0], 1, 1.0));
+            if (fatalErrors.Count < 2)
+                return result;
+
+            foreach (var error in fatalErrors[1..])
+            {
+                int idx = -1;
+                double similarity = 0.0;
+                for (var i = 0; i < result.Count; i++)
+                {
+                    similarity = result[i].fatalError.GetFuzzyCoefficientCached(error);
+                    if (similarity > 0.95)
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+                if (idx == -1)
+                    result.Add((error, 1, 1.0));
+                else
+                {
+                    var (e, c, s) = result[idx];
+                    result[idx] = (e, c + 1, Math.Min(s, similarity));
+                }
+            }
+            return result;
+        }
     }
 }
