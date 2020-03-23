@@ -232,6 +232,8 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     notes.Add("⚠ `Resolution Scaling Threshold` below `16x16` may result in corrupted visuals and game crash");
                 }
+                if (resScaleFactor > 300)
+                    notes.Add("⚠ Excessive `Resolution Scale` may impact performance");
             }
             var allPpuHashes = GetPatches(multiItems["ppu_patch"], false);
             var ppuPatches = allPpuHashes.Where(kvp => kvp.Value > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
