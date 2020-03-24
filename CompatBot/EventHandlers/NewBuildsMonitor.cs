@@ -34,28 +34,29 @@ namespace CompatBot.EventHandlers
         {
             var lastCheck = DateTime.UtcNow.AddDays(-1);
             var resetThreshold = TimeSpan.FromMinutes(10);
-            try
+            Exception lastException = null;
+            while (!Config.Cts.IsCancellationRequested)
             {
-                while (!Config.Cts.IsCancellationRequested)
+                if (DateTime.UtcNow - lastCheck > CheckInterval)
                 {
                     try
                     {
-                        if (DateTime.UtcNow - lastCheck > CheckInterval)
+                        await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        if (e.GetType() != lastException?.GetType())
                         {
-                            await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
-                            lastCheck = DateTime.UtcNow;
-                            if (DateTime.UtcNow - resetThreshold > RapidStart)
-                                Reset();
+                            Config.Log.Debug(e);
+                            lastException = e;
                         }
                     }
-                    catch
-                        {
-                            lastCheck = DateTime.UtcNow;
-                        }
-                    await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
+                    lastCheck = DateTime.UtcNow;
+                    if (DateTime.UtcNow - resetThreshold > RapidStart)
+                        Reset();
                 }
+                await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
             }
-            catch (Exception e) { Config.Log.Error(e); }
         }
 
         public static void Reset()
