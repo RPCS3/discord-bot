@@ -270,7 +270,7 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ AMD CPUs before Ryzen are too weak for PS3 emulation");
                 }
 
-                if (cpu.StartsWith("Intel"))
+                if (cpu.StartsWith("Intel") || cpu.StartsWith("Pentium"))
                 {
                     if (!items["cpu_extensions"].Contains("TSX")
                         && (cpu.Contains("Core2")
