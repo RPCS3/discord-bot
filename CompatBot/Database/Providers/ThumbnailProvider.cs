@@ -113,23 +113,10 @@ namespace CompatBot.Database.Providers
             contentId = contentId.ToUpperInvariant();
             using var db = new ThumbnailDb();
             var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
-            if (info == null)
-            {
-                info = new Thumbnail
-                {
-                    ProductCode = contentId[7..16],
-                    ContentId = contentId,
-                    Url = url,
-                    Timestamp = DateTime.UtcNow.Ticks
-                };
-                var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ContentId == contentId).ConfigureAwait(false);
-                if (thumb?.EmbeddableUrl is string eUrl
-                    && thumb.Url is string thumbUrl
-                    && thumbUrl == url)
-                    info.EmbeddableUrl = eUrl;
-                info = db.Thumbnail.Add(info).Entity;
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-            }
+            info ??= new Thumbnail{Url = url};
+            if (info.Url == null)
+                return (null, defaultColor);
+
             DiscordColor? analyzedColor = null;
             if (string.IsNullOrEmpty(info.EmbeddableUrl))
             {
