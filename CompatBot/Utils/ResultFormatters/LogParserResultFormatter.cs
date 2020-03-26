@@ -258,9 +258,11 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 builder = new DiscordEmbedBuilder
                 {
-                    Description = "Log analysis failed, most likely cause is an empty log. Please try again.",
+                    Description = "Log analysis failed. Please try again.",
                     Color = Config.Colors.LogResultFailed,
                 };
+                if (state.TotalBytes < 2048 || state.ReadBytes < 2048)
+                    builder.Description = "Log analysis failed, most likely cause is an empty log. Please try again.";
             }
             builder.AddAuthor(client, message, source, state);
             return builder;

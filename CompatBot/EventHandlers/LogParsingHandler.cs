@@ -262,7 +262,6 @@ namespace CompatBot.EventHandlers
                     } while (!readPipeTask.IsCompleted && !cancellationToken.IsCancellationRequested);
                     result = await readPipeTask.ConfigureAwait(false);
                     await fillPipeTask.ConfigureAwait(false);
-                    result.TotalBytes = source.LogFileSize;
                 }
                 catch (Exception pre)
                 {
@@ -272,6 +271,7 @@ namespace CompatBot.EventHandlers
                         throw pre;
                 }
 
+                result.TotalBytes = source.LogFileSize;
                 if (result.FilterTriggers.Any())
                 {
                     var (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.IssueWarning));
@@ -284,18 +284,22 @@ namespace CompatBot.EventHandlers
                 }
 #if DEBUG
                 Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
-                Config.Log.Debug("Extractor hit stats:");
-                foreach (var stat in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value))
-                    if (stat.Value > 100000)
-                        Config.Log.Fatal($"{stat.Value}: {stat.Key}");
-                    else if (stat.Value > 10000)
-                        Config.Log.Error($"{stat.Value}: {stat.Key}");
-                    else if (stat.Value > 1000)
-                        Config.Log.Warn($"{stat.Value}: {stat.Key}");
-                    else if (stat.Value > 100)
-                        Config.Log.Info($"{stat.Value}: {stat.Key}");
+                Config.Log.Debug("Extractor hit stats (CPU time, s / total hits):");
+                foreach (var (key, (count, time)) in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value.regexTime))
+                {
+                    var ttime = TimeSpan.FromTicks(time).TotalSeconds;
+                    var msg = $"{ttime:0.000}/{count} ({ttime/count:0.000000}): {key}";
+                    if (count > 100000 || ttime > 20)
+                        Config.Log.Fatal(msg);
+                    else if (count > 10000 || ttime > 10)
+                        Config.Log.Error(msg);
+                    else if (count > 1000 || ttime > 5)
+                        Config.Log.Warn(msg);
+                    else if (count > 100 || ttime > 1)
+                        Config.Log.Info(msg);
                     else
-                        Config.Log.Debug($"{stat.Value}: {stat.Key}");
+                        Config.Log.Debug(msg);
+                }
 
                 Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
                 Config.Log.Debug("Syscall stats:");

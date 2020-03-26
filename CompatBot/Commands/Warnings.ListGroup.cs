@@ -59,7 +59,7 @@ namespace CompatBot.Commands
                     );
                     using (var db = new BotDb())
                     {
-                        var query = from warn in db.Warning
+                        var query = from warn in db.Warning.AsEnumerable()
                             group warn by warn.DiscordId
                             into userGroup
                             let row = new {discordId = userGroup.Key, count = userGroup.Count(w => !w.Retracted), total = userGroup.Count()}

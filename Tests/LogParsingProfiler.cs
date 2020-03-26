@@ -21,7 +21,7 @@ namespace Tests
         };
 
         [Explicit("For performance profiling only")]
-        [TestCase(@"C:\Users\13xforever\Downloads\RPCS3_2.log")]
+        [TestCase(@"C:\Documents\Downloads\RPCS3(206)_perf_problem.log")]
         public async Task Analyze(string path)
         {
             var cts = new CancellationTokenSource();
