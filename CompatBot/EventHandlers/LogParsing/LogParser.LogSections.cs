@@ -32,7 +32,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["RPCS3"] = new Regex(@"(^|.+0:00:00\.000000)\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n\xC2\xB7|$)", DefaultSingleLineOptions),
+                    ["RPCS3 v"] = new Regex(@"(^|.+0:00:00\.000000)\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n\xC2\xB7|$)", DefaultSingleLineOptions),
                     ["Operating system:"] = LogParserResult.OsInfoInLog,
                     ["Physical device intialized"] = new Regex(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Found vulkan-compatible GPU:"] = new Regex(@"Found vulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
@@ -42,9 +42,12 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Title:"] = new Regex(@"Title: (?<game_title>.*)?\r?$", DefaultOptions),
                     ["Serial:"] = new Regex(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
                     ["Category:"] = new Regex(@"Category: (?<game_category>.*)?\r?$", DefaultOptions),
-                    ["Version:"] = new Regex(@"Version: (?<disc_app_version>\S+) / (?<disc_package_version>\S+).*?\r?$", DefaultOptions),
-                    ["LDR:"] = new Regex(@"(Path|Cache): ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
-                    ["SYS:"] = new Regex(@"(Path|Cache): ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
+                    ["LDR: Version:"] = new Regex(@"Version: (?<disc_app_version>\S+) / (?<disc_package_version>\S+).*?\r?$", DefaultOptions),
+                    ["SYS: Version:"] = new Regex(@"Version: (?<disc_app_version>\S+) / (?<disc_package_version>\S+).*?\r?$", DefaultOptions),
+                    ["LDR: Cache"] = new Regex(@"Cache: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
+                    ["SYS: Cache"] = new Regex(@"Cache: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
+                    ["LDR: Path"] = new Regex(@"Path: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
+                    ["SYS: Path"] = new Regex(@"Path: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
                     ["LDR: Path:"] = new Regex(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
                     ["SYS: Path:"] = new Regex(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
                     ["custom config:"] = new Regex(@"custom config: (?<custom_config>.*?)\r?$", DefaultOptions),

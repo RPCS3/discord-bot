@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -36,13 +37,18 @@ namespace CompatBot.EventHandlers.LogParsing
                             (buffer, state) =>
                             {
 #if DEBUG
+                                var timer = Stopwatch.StartNew();
+#endif
+                                OnExtractorHit(buffer, extractorPair.Key, extractorPair.Value, state);
+
+#if DEBUG
+                                timer.Stop();
                                 lock (state.ExtractorHitStats)
                                 {
                                     state.ExtractorHitStats.TryGetValue(extractorPair.Key, out var stat);
-                                    state.ExtractorHitStats[extractorPair.Key] = stat + 1;
+                                    state.ExtractorHitStats[extractorPair.Key] = (stat.count + 1, stat.regexTime + timer.ElapsedTicks);
                                 }
 #endif
-                                OnExtractorHit(buffer, extractorPair.Key, extractorPair.Value, state);
                             })
                     ), true);
                     parser.OnExtract = (line, buffer, state) => { act.ParseText(line, h => { h.Value(buffer, state); }); };

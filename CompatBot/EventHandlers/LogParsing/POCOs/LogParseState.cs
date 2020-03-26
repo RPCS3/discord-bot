@@ -24,7 +24,7 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
         public int LinesAfterConfig;
         public TimeSpan ParsingTime;
 #if DEBUG
-        public readonly Dictionary<string, int> ExtractorHitStats = new Dictionary<string, int>();
+        public readonly Dictionary<string, (int count, long regexTime)> ExtractorHitStats = new Dictionary<string, (int, long)>();
 #endif
 
         public enum ErrorCode
