@@ -219,7 +219,7 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync(result).ConfigureAwait(false);
         }
 
-        [Command("random"), Aliases("rng"), Hidden]
+        [Command("random"), Aliases("rng"), Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
         [Description("Provides random stuff")]
         public async Task RandomShit(CommandContext ctx, string stuff)
         {
