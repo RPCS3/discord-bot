@@ -39,6 +39,21 @@ namespace CompatBot.Commands
         {
             using var db = new BotDb();
             lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+            if (lastUpdateInfo is string strPr
+                && int.TryParse(strPr, out var pr))
+            {
+                try
+                {
+                    var prInfo = githubClient.GetPrInfoAsync(pr, Config.Cts.Token).GetAwaiter().GetResult();
+                    CachedUpdateInfo = client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).GetAwaiter().GetResult();
+                    if (CachedUpdateInfo.CurrentBuild != null)
+                    {
+                        CachedUpdateInfo.LatestBuild = CachedUpdateInfo.CurrentBuild;
+                        CachedUpdateInfo.CurrentBuild = null;
+                    }
+                }
+                catch { }
+            }
         }
 
         [Command("compat"), Aliases("c", "compatibility")]
@@ -221,50 +236,51 @@ Example usage:
                 }
 
                 var latestUpdatePr = info?.LatestBuild?.Pr?.ToString();
-                if (!string.IsNullOrEmpty(latestUpdatePr)
-                    && lastUpdateInfo != latestUpdatePr
-                    && await updateCheck.WaitAsync(0).ConfigureAwait(false))
-                    try
+                if (string.IsNullOrEmpty(latestUpdatePr)
+                    || lastUpdateInfo == latestUpdatePr
+                    || !await updateCheck.WaitAsync(0).ConfigureAwait(false))
+                    return false;
+
+                try
+                {
+                    var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
+                    var botMember = discordClient.GetMember(compatChannel.Guild, discordClient.CurrentUser);
+                    if (botMember == null)
+                        return false;
+
+                    if (!compatChannel.PermissionsFor(botMember).HasPermission(Permissions.SendMessages))
                     {
-                        var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
-                        var botMember = discordClient.GetMember(compatChannel.Guild, discordClient.CurrentUser);
-                        if (botMember == null)
-                            return false;
-
-                        if (!compatChannel.PermissionsFor(botMember).HasPermission(Permissions.SendMessages))
-                        {
-                            NewBuildsMonitor.Reset();
-                            return false;
-                        }
-
-                        if (!updateAnnouncement)
-                            embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
-                        if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
-                            return false;
-
-                        await CheckMissedBuildsBetween(discordClient, compatChannel, lastUpdateInfo, latestUpdatePr, Config.Cts.Token).ConfigureAwait(false);
-
-                        //embed.Title = $"[New Update] {embed.Title}";
-                        await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                        lastUpdateInfo = latestUpdatePr;
-                        using var db = new BotDb();
-                        var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
-                        if (currentState == null)
-                            db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr});
-                        else
-                            currentState.Value = latestUpdatePr;
-                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                         NewBuildsMonitor.Reset();
-                        return true;
+                        return false;
                     }
-                    catch (Exception e)
-                    {
-                        Config.Log.Warn(e, "Failed to check for RPCS3 update info");
-                    }
-                    finally
-                    {
-                        updateCheck.Release();
-                    }
+
+                    if (!updateAnnouncement)
+                        embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
+                    if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
+                        return false;
+
+                    await CheckMissedBuildsBetween(discordClient, compatChannel, lastUpdateInfo, latestUpdatePr, Config.Cts.Token).ConfigureAwait(false);
+
+                    await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                    lastUpdateInfo = latestUpdatePr;
+                    using var db = new BotDb();
+                    var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
+                    if (currentState == null)
+                        db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr});
+                    else
+                        currentState.Value = latestUpdatePr;
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    NewBuildsMonitor.Reset();
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to check for RPCS3 update info");
+                }
+                finally
+                {
+                    updateCheck.Release();
+                }
                 return false;
             }
 
