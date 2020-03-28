@@ -59,7 +59,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Clients\AppveyorClient\AppveyorClient.csproj" />
     <ProjectReference Include="..\Clients\CompatApiClient\CompatApiClient.csproj" />
     <ProjectReference Include="..\Clients\GithubClient\GithubClient.csproj" />
     <ProjectReference Include="..\Clients\OneDriveClient\OneDriveClient.csproj" />

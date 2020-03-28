@@ -27,7 +27,6 @@ namespace CompatBot.Commands
     internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client client = new Client();
-        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
         private static string lastUpdateInfo = null;

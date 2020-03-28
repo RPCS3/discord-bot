@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using AppveyorClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
@@ -25,7 +24,6 @@ namespace CompatBot.Commands
     internal sealed class Pr: BaseCommandModuleCustom
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
         private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30); // it's 20, but on merge we have pr + master builds
         private const string appveyorContext = "continuous-integration/appveyor/pr";
@@ -110,24 +108,7 @@ namespace CompatBot.Commands
                 string linuxDownloadText = null;
 
                 // windows build
-                if (prInfo.StatusesUrl is string statusesUrl)
-                {
-                    if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
-                    {
-                        if (artifactInfo.Artifact.Created is DateTime buildTime)
-                            downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
-                        var name = artifactInfo.Artifact.FileName;
-                        name = name.Replace("rpcs3-", "").Replace("_win64", "");
-                        downloadText = $"[⏬ {name}]({artifactInfo.DownloadUrl})";
-                    }
-                    else
-                    {
-                        var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
-                        statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
-                        downloadText = statuses?.FirstOrDefault()?.Description ?? downloadText;
-                    }
-                }
-                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
+                if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
                 {
                     if (artifactInfo.Artifact.Created is DateTime buildTime)
                         downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime.ToUniversalTime()).AsTimeDeltaDescription()} ago)";

@@ -16,7 +16,6 @@ namespace CompatBot.Utils.ResultFormatters
     internal static class UpdateInfoFormatter
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder builder = null)
         {

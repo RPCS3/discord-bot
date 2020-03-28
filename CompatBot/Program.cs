@@ -111,7 +111,6 @@ namespace CompatBot
                     new PsnScraper().RunAsync(Config.Cts.Token),
                     GameTdbScraper.RunAsync(Config.Cts.Token),
 #endif
-                    new AppveyorClient.Client().GetBuildAsync(Guid.NewGuid().ToString(), Config.Cts.Token),
                     StatsStorage.BackgroundSaveAsync(),
                     MediaScreenshotMonitor.ProcessWorkQueue()
                 );
@@ -226,7 +225,6 @@ namespace CompatBot
                 client.MessageCreated += DiscordInviteFilter.OnMessageCreated;
                 client.MessageCreated += PostLogHelpHandler.OnMessageCreated;
                 client.MessageCreated += BotReactionsHandler.OnMessageCreated;
-                client.MessageCreated += AppveyorLinksHandler.OnMessageCreated;
                 client.MessageCreated += GithubLinksHandler.OnMessageCreated;
                 client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
                 client.MessageCreated += TableFlipMonitor.OnMessageCreated;
