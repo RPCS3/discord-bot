@@ -265,6 +265,10 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         if (threadCount < 12)
                             notes.Add("⚠ Six cores or more is recommended for Ryzen CPUs");
+                        if (cpu.EndsWith('U')
+                            || cpu.EndsWith('H')
+                            || cpu.EndsWith("HS"))
+                            notes.Add("⚠ Mobile Ryzen CPUs are only recommended for lighter games.");
                     }
                     else
                         notes.Add("⚠ AMD CPUs before Ryzen are too weak for PS3 emulation");
@@ -282,7 +286,7 @@ namespace CompatBot.Utils.ResultFormatters
                             || cpu.Contains('Y')
                             || cpu[^2] == 'G'
                             || threadCount < 6))
-                        notes.Add("⚠ This CPU is too old and/or too weak for PS3 emulation");
+                        notes.Add("⚠ This CPU is too weak and/or too old for PS3 emulation");
                 }
             }
 
