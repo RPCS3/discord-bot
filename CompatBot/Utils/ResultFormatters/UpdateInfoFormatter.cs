@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using GithubClient.POCOs;
@@ -126,14 +127,11 @@ namespace CompatBot.Utils.ResultFormatters
             var currentCommit = currentPrInfo?.MergeCommitSha;
             var latestCommit = latestPrInfo?.MergeCommitSha;
             var buildTimestampKind = "Built";
-            /*
-            var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var latestAppveyorBuild = await appveyorClient.GetMasterBuildAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var latestBuildTimestamp = latestAppveyorBuild?.Finished?.ToUniversalTime();
-            var currentBuildTimestamp = currentAppveyorBuild?.Finished?.ToUniversalTime();
-            */
-            DateTime? latestBuildTimestamp = null;
-            DateTime? currentBuildTimestamp = null;
+            var azureClient = Config.GetAzureDevOpsClient();
+            var currentAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+            var latestAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+            var latestBuildTimestamp = latestAppveyorBuild?.FinishTime;
+            var currentBuildTimestamp = currentAppveyorBuild?.FinishTime;
             if (!latestBuildTimestamp.HasValue)
             {
                 buildTimestampKind = "Merged";
