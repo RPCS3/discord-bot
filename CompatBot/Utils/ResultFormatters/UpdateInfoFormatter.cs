@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using GithubClient.POCOs;
@@ -16,7 +17,6 @@ namespace CompatBot.Utils.ResultFormatters
     internal static class UpdateInfoFormatter
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder builder = null)
         {
@@ -126,11 +126,12 @@ namespace CompatBot.Utils.ResultFormatters
             builder ??= new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
             var currentCommit = currentPrInfo?.MergeCommitSha;
             var latestCommit = latestPrInfo?.MergeCommitSha;
-            var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var latestAppveyorBuild = await appveyorClient.GetMasterBuildAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
             var buildTimestampKind = "Built";
-            var latestBuildTimestamp = latestAppveyorBuild?.Finished?.ToUniversalTime();
-            var currentBuildTimestamp = currentAppveyorBuild?.Finished?.ToUniversalTime();
+            var azureClient = Config.GetAzureDevOpsClient();
+            var currentAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+            var latestAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+            var latestBuildTimestamp = latestAppveyorBuild?.FinishTime;
+            var currentBuildTimestamp = currentAppveyorBuild?.FinishTime;
             if (!latestBuildTimestamp.HasValue)
             {
                 buildTimestampKind = "Merged";

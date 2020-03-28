@@ -12,6 +12,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -20,6 +21,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Newtonsoft.Json;
 
 namespace CompatBot.Commands
@@ -27,7 +29,6 @@ namespace CompatBot.Commands
     internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client client = new Client();
-        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
         private static string lastUpdateInfo = null;
@@ -279,7 +280,12 @@ Example usage:
                 if (mergedPrs.Count == 0)
                     return;
 
-                var failedBuilds = await appveyorClient.GetMasterBuildsAsync(oldestPrCommit.MergeCommitSha, newestPrCommit.MergeCommitSha, oldestPrCommit.MergedAt, cancellationToken).ConfigureAwait(false);
+                var failedBuilds = await Config.GetAzureDevOpsClient().GetMasterBuildsAsync(
+                    oldestPrCommit.MergeCommitSha,
+                    newestPrCommit.MergeCommitSha,
+                    oldestPrCommit.MergedAt,
+                    cancellationToken
+                ).ConfigureAwait(false);
                 foreach (var mergedPr in mergedPrs)
                 {
                     var updateInfo = await client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false);
@@ -292,11 +298,11 @@ Example usage:
                     }
                     else if (updateInfo.ReturnCode == -1) // unknown build
                     {
-                        var masterBuildInfo = failedBuilds.FirstOrDefault(b => b.CommitId.Equals(mergedPr.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase));
+                        var masterBuildInfo = failedBuilds.FirstOrDefault(b => b.Commit.Equals(mergedPr.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase));
                         if (masterBuildInfo == null)
                             continue;
 
-                        var buildTime = (masterBuildInfo.Finished ?? masterBuildInfo.Updated ?? masterBuildInfo.Started ?? masterBuildInfo.Created)?.ToUniversalTime();
+                        var buildTime = masterBuildInfo.FinishTime;
                         updateInfo = new UpdateInfo
                         {
                             ReturnCode = 1,
@@ -306,18 +312,26 @@ Example usage:
                                 Pr = mergedPr.Number,
                                 Windows = new BuildLink
                                 {
-                                    Download = "https://ci.appveyor.com/project/rpcs3/rpcs3/builds/" + masterBuildInfo.BuildId,
+                                    Download = masterBuildInfo.WindowsBuildDownloadLink,
+                                },
+                                Linux = new BuildLink
+                                {
+                                    Download = masterBuildInfo.LinuxBuildDownloadLink,
                                 },
                             },
                         };
                         var embed = await updateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
                         embed.Color = Config.Colors.PrClosed;
                         embed.ClearFields();
-                        var reason = masterBuildInfo.Status ?? "Failed to build";
-                        if (reason == "failed")
-                            reason = "Failed to build";
-                        reason = char.ToUpperInvariant(reason[0]) + reason[1..];
-                        if (buildTime.HasValue)
+                        var reason = masterBuildInfo.Result switch
+                        {
+                            BuildResult.Succeeded => "Built",
+                            BuildResult.PartiallySucceeded => "Built",
+                            BuildResult.Failed => "Failed to build",
+                            BuildResult.Canceled => "Cancelled",
+                            _ => null,
+                        };
+                        if (buildTime.HasValue && reason != null)
                             embed.WithFooter($"{reason} on {buildTime:u} ({(DateTime.UtcNow - buildTime.Value).AsTimeDeltaDescription()} ago)");
                         else
                             embed.WithFooter(reason);
@@ -337,7 +351,7 @@ Example usage:
             }
             catch
             {
-                await ctx.RespondAsync(embed: CompatApiClient.POCOs.TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
                 return;
             }
 

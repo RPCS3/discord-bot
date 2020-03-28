@@ -4,10 +4,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using AppveyorClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -25,7 +25,6 @@ namespace CompatBot.Commands
     internal sealed class Pr: BaseCommandModuleCustom
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly AppveyorClient.Client appveyorClient = new AppveyorClient.Client();
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
         private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30); // it's 20, but on merge we have pr + master builds
         private const string appveyorContext = "continuous-integration/appveyor/pr";
@@ -104,94 +103,36 @@ namespace CompatBot.Commands
             var embed = prInfo.AsEmbed();
             if (prState.state == "Open" || prState.state == "Closed")
             {
-                var downloadHeader = "Windows PR Build";
-                var downloadText = "⏳ Pending...";
+                var windowsDownloadHeader = "Windows PR Build";
                 var linuxDownloadHeader = "Linux PR Build";
+                string windowsDownloadText = null;
                 string linuxDownloadText = null;
+                string buildTime = null;
 
-                // windows build
-                if (prInfo.StatusesUrl is string statusesUrl)
-                {
-                    if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
-                    {
-                        if (artifactInfo.Artifact.Created is DateTime buildTime)
-                            downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
-                        var name = artifactInfo.Artifact.FileName;
-                        name = name.Replace("rpcs3-", "").Replace("_win64", "");
-                        downloadText = $"[⏬ {name}]({artifactInfo.DownloadUrl})";
-                    }
-                    else
-                    {
-                        var statuses = await githubClient.GetStatusesAsync(statusesUrl, Config.Cts.Token).ConfigureAwait(false);
-                        statuses = statuses?.Where(s => s.Context == appveyorContext).ToList();
-                        downloadText = statuses?.FirstOrDefault()?.Description ?? downloadText;
-                    }
-                }
-                else if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
-                {
-                    if (artifactInfo.Artifact.Created is DateTime buildTime)
-                        downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
-                    var name = artifactInfo.Artifact.FileName;
-                    name = name.Replace("rpcs3-", "").Replace("_win64", "");
-                    downloadText = $"[⏬ {name}]({artifactInfo.DownloadUrl})";
-                }
-
-                // linux build
-                var personalAccessToken = Config.AzureDevOpsToken;
-                if (!string.IsNullOrEmpty(personalAccessToken))
+                var azureClient = Config.GetAzureDevOpsClient();
+                if (azureClient != null && prInfo.Head?.Sha is string commit)
                     try
                     {
+                        windowsDownloadText = "⏳ Pending...";
                         linuxDownloadText = "⏳ Pending...";
-                        var azureCreds = new VssBasicCredential("bot", personalAccessToken);
-                        var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
-                        var azurePipelinesClient = azureConnection.GetClient<BuildHttpClient>();
-                        var projectId = new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de");
-                        var builds = await azurePipelinesClient.GetBuildsAsync(
-                            projectId,
-                            repositoryId: "RPCS3/rpcs3",
-                            repositoryType: "GitHub",
-                            reasonFilter: BuildReason.PullRequest,
-                            cancellationToken: Config.Cts.Token
-                        ).ConfigureAwait(false);
-                        var filterBranch = $"refs/pull/{pr}/merge";
-                        builds = builds
-                            .Where(b => b.SourceBranch == filterBranch && b.TriggerInfo.TryGetValue("pr.sourceSha", out var trc) && trc.Equals(prInfo.Head?.Sha, StringComparison.InvariantCultureIgnoreCase))
-                            .OrderByDescending(b => b.StartTime)
-                            .ToList();
-                        var latestBuild = builds.FirstOrDefault();
+                        var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild != null)
                         {
-                            if (latestBuild.Status == BuildStatus.Completed && latestBuild.FinishTime.HasValue)
-                                linuxDownloadHeader = $"{linuxDownloadHeader} ({(DateTime.UtcNow - latestBuild.FinishTime.Value.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
-                            var artifacts = await azurePipelinesClient.GetArtifactsAsync(projectId, latestBuild.Id, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                            var buildArtifact = artifacts.FirstOrDefault(a => a.Name.EndsWith(".GCC"));
-                            var linuxBuild = buildArtifact?.Resource;
-                            if (linuxBuild?.DownloadUrl is string downloadUrl)
-                            {
-                                var name = buildArtifact.Name ?? $"Linux build {latestBuild.Id}.zip";
-                                if (linuxBuild.DownloadUrl.Contains("format=zip", StringComparison.InvariantCultureIgnoreCase))
-                                    try
-                                    {
-                                        using var httpClient = HttpClientFactory.Create();
-                                        using var stream = await httpClient.GetStreamAsync(downloadUrl).ConfigureAwait(false);
-                                        using var zipStream = ReaderFactory.Open(stream);
-                                        while (zipStream.MoveToNextEntry())
-                                        {
-                                            if (zipStream.Entry.Key.EndsWith(".AppImage", StringComparison.InvariantCultureIgnoreCase))
-                                            {
-                                                name = Path.GetFileName(zipStream.Entry.Key);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    catch (Exception e2)
-                                    {
-                                        Config.Log.Error(e2, "Failed to get linux build filename");
-                                    }
-                                name = name.Replace("rpcs3-", "").Replace("_linux64", "");
-                                linuxDownloadText = $"[⏬ {name}]({downloadUrl})";
-                            }
-                            //var linuxBuildSize = linuxBuild?.Properties.TryGetValue("artifactsize", out var artifactSizeStr) && int.TryParse(artifactSizeStr, out var linuxBuildSize);
+                            if (latestBuild.Status == BuildStatus.Completed
+                                && (latestBuild.Result == BuildResult.Succeeded || latestBuild.Result == BuildResult.PartiallySucceeded)
+                                && latestBuild.FinishTime.HasValue)
+                                buildTime = $"Built {(DateTime.UtcNow - latestBuild.FinishTime.Value.ToUniversalTime()).AsTimeDeltaDescription()} ago";
+                            // windows build
+                            var name = latestBuild.WindowsFilename ?? "Windows PR Build";
+                            name = name.Replace("rpcs3-", "").Replace("_win64", "");
+                            if (!string.IsNullOrEmpty(latestBuild.WindowsBuildDownloadLink))
+                                windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuildDownloadLink})";
+
+                            // linux build
+                            name = latestBuild.LinuxFilename ?? "Linux PR Build";
+                            name = name.Replace("rpcs3-", "").Replace("_linux64", "");
+                            if (!string.IsNullOrEmpty(latestBuild.LinuxBuildDownloadLink))
+                                linuxDownloadText = $"[⏬ {name}]({latestBuild.LinuxBuildDownloadLink})";
                         }
                     }
                     catch (Exception e)
@@ -200,10 +141,12 @@ namespace CompatBot.Commands
                         linuxDownloadText = null; // probably due to expired access token
                     }
 
-                if (!string.IsNullOrEmpty(downloadText))
-                    embed.AddField(downloadHeader, downloadText, true);
+                if (!string.IsNullOrEmpty(windowsDownloadText))
+                    embed.AddField(windowsDownloadHeader, windowsDownloadText, true);
                 if (!string.IsNullOrEmpty(linuxDownloadText))
                     embed.AddField(linuxDownloadHeader, linuxDownloadText, true);
+                if (!string.IsNullOrEmpty(buildTime))
+                    embed.WithFooter(buildTime);
             }
             else if (prState.state == "Merged")
             {

@@ -11,6 +11,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.Logging;
 using Microsoft.IO;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 using NLog;
 using NLog.Extensions.Logging;
 using NLog.Filters;
@@ -62,6 +65,7 @@ namespace CompatBot
         public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
         public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");
         public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/");
+        public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
 
@@ -238,6 +242,16 @@ namespace CompatBot
                 rule.Filters.Add(filter);
             LogManager.Configuration = config;
             return LogManager.GetLogger("default");
+        }
+
+        public static BuildHttpClient GetAzureDevOpsClient()
+        {
+            if (string.IsNullOrEmpty(AzureDevOpsToken))
+                return null;
+
+            var azureCreds = new VssBasicCredential("bot", AzureDevOpsToken);
+            var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
+            return azureConnection.GetClient<BuildHttpClient>();
         }
     }
 }
