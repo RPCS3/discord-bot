@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -16,12 +17,43 @@ namespace CompatBot.Utils.Extensions
 
         public class BuildInfo
         {
+            public string Commit;
             public string WindowsFilename;
             public string LinuxFilename;
             public string WindowsBuildDownloadLink;
             public string LinuxBuildDownloadLink;
             public DateTime? FinishTime;
             public BuildStatus? Status;
+            public BuildResult? Result { get; set; }
+        }
+
+        public static async Task<List<BuildInfo>> GetMasterBuildsAsync(this BuildHttpClient azureDevOpsClient, string oldestMergeCommit, string newestMergeCommit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
+        {
+            if (azureDevOpsClient == null || string.IsNullOrEmpty(oldestMergeCommit) || string.IsNullOrEmpty(newestMergeCommit))
+                return null;
+
+            oldestMergeCommit = oldestMergeCommit.ToLower();
+            newestMergeCommit = newestMergeCommit.ToLower();
+            var builds = await azureDevOpsClient.GetBuildsAsync(
+                Config.AzureDevOpsProjectId,
+                repositoryId: "RPCS3/rpcs3",
+                repositoryType: "GitHub",
+                reasonFilter: BuildReason.IndividualCI,
+                minFinishTime: oldestTimestamp,
+                cancellationToken: cancellationToken
+            ).ConfigureAwait(false);
+            builds = builds
+                .Where(b => b.SourceBranch == "refs/heads/master" && b.Status == BuildStatus.Completed)
+                .OrderByDescending(b => b.StartTime)
+                .ToList();
+            builds = builds
+                .SkipWhile(b => !newestMergeCommit.Equals(b.SourceVersion, StringComparison.InvariantCultureIgnoreCase))
+                .Skip(1)
+                .TakeWhile(b => !oldestMergeCommit.Equals(b.SourceVersion, StringComparison.InvariantCultureIgnoreCase))
+                .ToList();
+
+            await Task.WhenAll(builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken))).ConfigureAwait(false);
+            return builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceBranch, b, cancellationToken).GetAwaiter().GetResult()).ToList();
         }
 
         public static async Task<BuildInfo> GetMasterBuildInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
@@ -38,19 +70,22 @@ namespace CompatBot.Utils.Extensions
                 repositoryId: "RPCS3/rpcs3",
                 repositoryType: "GitHub",
                 reasonFilter: BuildReason.IndividualCI,
-                maxFinishTime: oldestTimestamp,
+                minFinishTime: oldestTimestamp,
                 cancellationToken: cancellationToken
            ).ConfigureAwait(false);
             builds = builds
-                .Where(b => b.SourceBranch == "refs/heads/master" && commit.Equals(b.SourceVersion, StringComparison.InvariantCultureIgnoreCase))
+                .Where(b => b.SourceBranch == "refs/heads/master"
+                            && commit.Equals(b.SourceVersion, StringComparison.InvariantCultureIgnoreCase)
+                            && b.Status == BuildStatus.Completed
+                )
                 .OrderByDescending(b => b.StartTime)
                 .ToList();
             var latestBuild = builds.FirstOrDefault();
             if (latestBuild == null)
                 return null;
 
-            result = await azureDevOpsClient.GetArtifactsInfoAsync(latestBuild, cancellationToken).ConfigureAwait(false);
-            if (result.Status == BuildStatus.Completed)
+            result = await azureDevOpsClient.GetArtifactsInfoAsync(commit, latestBuild, cancellationToken).ConfigureAwait(false);
+            if (result.Status == BuildStatus.Completed && (result.Result == BuildResult.Succeeded || result.Result == BuildResult.PartiallySucceeded))
                 BuildInfoCache.Set(commit, result, TimeSpan.FromDays(1));
             return result;
         }
@@ -69,7 +104,7 @@ namespace CompatBot.Utils.Extensions
                 repositoryId: "RPCS3/rpcs3",
                 repositoryType: "GitHub",
                 reasonFilter: BuildReason.PullRequest,
-                maxFinishTime: oldestTimestamp,
+                minFinishTime: oldestTimestamp,
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
             var filterBranch = $"refs/pull/{pr}/merge";
@@ -81,21 +116,23 @@ namespace CompatBot.Utils.Extensions
             if (latestBuild == null)
                 return null;
 
-            result = await azureDevOpsClient.GetArtifactsInfoAsync(latestBuild, cancellationToken).ConfigureAwait(false);
-            if (result.Status == BuildStatus.Completed)
+            result = await azureDevOpsClient.GetArtifactsInfoAsync(commit, latestBuild, cancellationToken).ConfigureAwait(false);
+            if (result.Status == BuildStatus.Completed && (result.Result == BuildResult.Succeeded || result.Result == BuildResult.PartiallySucceeded))
                 BuildInfoCache.Set(commit, result, TimeSpan.FromDays(1));
             return result;
         }
 
-        public static async Task<BuildInfo> GetArtifactsInfoAsync(this BuildHttpClient azureDevOpsClient, Build build, CancellationToken cancellationToken)
+        public static async Task<BuildInfo> GetArtifactsInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, Build build, CancellationToken cancellationToken)
         {
             if (azureDevOpsClient == null)
                 return null;
 
             var result = new BuildInfo
             {
+                Commit = commit,
                 FinishTime = build.FinishTime,
                 Status = build.Status,
+                Result = build.Result,
             };
             var artifacts = await azureDevOpsClient.GetArtifactsAsync(Config.AzureDevOpsProjectId, build.Id, cancellationToken: cancellationToken).ConfigureAwait(false);
             // windows build

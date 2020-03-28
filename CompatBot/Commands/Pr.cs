@@ -118,7 +118,9 @@ namespace CompatBot.Commands
                         var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild != null)
                         {
-                            if (latestBuild.Status == BuildStatus.Completed && latestBuild.FinishTime.HasValue)
+                            if (latestBuild.Status == BuildStatus.Completed
+                                && (latestBuild.Result == BuildResult.Succeeded || latestBuild.Result == BuildResult.PartiallySucceeded)
+                                && latestBuild.FinishTime.HasValue)
                                 buildTime = $"Built {(DateTime.UtcNow - latestBuild.FinishTime.Value.ToUniversalTime()).AsTimeDeltaDescription()} ago";
                             // windows build
                             var name = latestBuild.WindowsFilename ?? "Windows PR Build";
