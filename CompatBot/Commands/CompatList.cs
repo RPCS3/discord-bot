@@ -278,6 +278,7 @@ Example usage:
                 if (mergedPrs.Count == 0)
                     return;
 
+                /*
                 var failedBuilds = await appveyorClient.GetMasterBuildsAsync(oldestPrCommit.MergeCommitSha, newestPrCommit.MergeCommitSha, oldestPrCommit.MergedAt, cancellationToken).ConfigureAwait(false);
                 foreach (var mergedPr in mergedPrs)
                 {
@@ -323,6 +324,7 @@ Example usage:
                         await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                     }
                 }
+            */
             }
         }
 

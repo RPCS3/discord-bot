@@ -102,26 +102,17 @@ namespace CompatBot.Commands
             var embed = prInfo.AsEmbed();
             if (prState.state == "Open" || prState.state == "Closed")
             {
-                var downloadHeader = "Windows PR Build";
-                var downloadText = "⏳ Pending...";
+                var windowsDownloadHeader = "Windows PR Build";
                 var linuxDownloadHeader = "Linux PR Build";
+                string windowsDownloadText = null;
                 string linuxDownloadText = null;
+                string buildTime = null;
 
-                // windows build
-                if (await appveyorClient.GetPrDownloadAsync(prInfo.Number, prInfo.CreatedAt, Config.Cts.Token).ConfigureAwait(false) is ArtifactInfo artifactInfo)
-                {
-                    if (artifactInfo.Artifact.Created is DateTime buildTime)
-                        downloadHeader = $"{downloadHeader} ({(DateTime.UtcNow - buildTime.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
-                    var name = artifactInfo.Artifact.FileName;
-                    name = name.Replace("rpcs3-", "").Replace("_win64", "");
-                    downloadText = $"[⏬ {name}]({artifactInfo.DownloadUrl})";
-                }
-
-                // linux build
                 var personalAccessToken = Config.AzureDevOpsToken;
                 if (!string.IsNullOrEmpty(personalAccessToken))
                     try
                     {
+                        windowsDownloadText = "⏳ Pending...";
                         linuxDownloadText = "⏳ Pending...";
                         var azureCreds = new VssBasicCredential("bot", personalAccessToken);
                         var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
@@ -142,19 +133,54 @@ namespace CompatBot.Commands
                         var latestBuild = builds.FirstOrDefault();
                         if (latestBuild != null)
                         {
+
                             if (latestBuild.Status == BuildStatus.Completed && latestBuild.FinishTime.HasValue)
-                                linuxDownloadHeader = $"{linuxDownloadHeader} ({(DateTime.UtcNow - latestBuild.FinishTime.Value.ToUniversalTime()).AsTimeDeltaDescription()} ago)";
-                            var artifacts = await azurePipelinesClient.GetArtifactsAsync(projectId, latestBuild.Id, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                            var buildArtifact = artifacts.FirstOrDefault(a => a.Name.EndsWith(".GCC"));
-                            var linuxBuild = buildArtifact?.Resource;
-                            if (linuxBuild?.DownloadUrl is string downloadUrl)
                             {
-                                var name = buildArtifact.Name ?? $"Linux build {latestBuild.Id}.zip";
+                                windowsDownloadHeader = $"{windowsDownloadHeader}";
+                                linuxDownloadHeader = $"{linuxDownloadHeader}";
+                                buildTime = $"Built {(DateTime.UtcNow - latestBuild.FinishTime.Value.ToUniversalTime()).AsTimeDeltaDescription()} ago";
+                            }
+                            var artifacts = await azurePipelinesClient.GetArtifactsAsync(projectId, latestBuild.Id, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
+                            // windows build
+                            var windowsBuildArtifact = artifacts.FirstOrDefault(a => a.Name.StartsWith("Windows"));
+                            var windowsBuild = windowsBuildArtifact?.Resource;
+                            if (windowsBuild?.DownloadUrl is string winDownloadUrl)
+                            {
+                                var name = windowsBuildArtifact.Name ?? $"Windows build {latestBuild.Id}.zip";
+                                if (windowsBuild.DownloadUrl.Contains("format=zip", StringComparison.InvariantCultureIgnoreCase))
+                                    try
+                                    {
+                                        using var httpClient = HttpClientFactory.Create();
+                                        using var stream = await httpClient.GetStreamAsync(winDownloadUrl).ConfigureAwait(false);
+                                        using var zipStream = ReaderFactory.Open(stream);
+                                        while (zipStream.MoveToNextEntry())
+                                        {
+                                            if (zipStream.Entry.Key.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
+                                            {
+                                                name = Path.GetFileName(zipStream.Entry.Key);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    catch (Exception e2)
+                                    {
+                                        Config.Log.Error(e2, "Failed to get windows build filename");
+                                    }
+                                name = name.Replace("rpcs3-", "").Replace("_win64", "");
+                                windowsDownloadText = $"[⏬ {name}]({winDownloadUrl})";
+                            }
+
+                            // linux build
+                            var linuxBuildArtifact = artifacts.FirstOrDefault(a => a.Name.EndsWith(".GCC"));
+                            var linuxBuild = linuxBuildArtifact?.Resource;
+                            if (linuxBuild?.DownloadUrl is string linDownloadUrl)
+                            {
+                                var name = linuxBuildArtifact.Name ?? $"Linux build {latestBuild.Id}.zip";
                                 if (linuxBuild.DownloadUrl.Contains("format=zip", StringComparison.InvariantCultureIgnoreCase))
                                     try
                                     {
                                         using var httpClient = HttpClientFactory.Create();
-                                        using var stream = await httpClient.GetStreamAsync(downloadUrl).ConfigureAwait(false);
+                                        using var stream = await httpClient.GetStreamAsync(linDownloadUrl).ConfigureAwait(false);
                                         using var zipStream = ReaderFactory.Open(stream);
                                         while (zipStream.MoveToNextEntry())
                                         {
@@ -170,7 +196,7 @@ namespace CompatBot.Commands
                                         Config.Log.Error(e2, "Failed to get linux build filename");
                                     }
                                 name = name.Replace("rpcs3-", "").Replace("_linux64", "");
-                                linuxDownloadText = $"[⏬ {name}]({downloadUrl})";
+                                linuxDownloadText = $"[⏬ {name}]({linDownloadUrl})";
                             }
                             //var linuxBuildSize = linuxBuild?.Properties.TryGetValue("artifactsize", out var artifactSizeStr) && int.TryParse(artifactSizeStr, out var linuxBuildSize);
                         }
@@ -181,10 +207,12 @@ namespace CompatBot.Commands
                         linuxDownloadText = null; // probably due to expired access token
                     }
 
-                if (!string.IsNullOrEmpty(downloadText))
-                    embed.AddField(downloadHeader, downloadText, true);
+                if (!string.IsNullOrEmpty(windowsDownloadText))
+                    embed.AddField(windowsDownloadHeader, windowsDownloadText, true);
                 if (!string.IsNullOrEmpty(linuxDownloadText))
                     embed.AddField(linuxDownloadHeader, linuxDownloadText, true);
+                if (!string.IsNullOrEmpty(buildTime))
+                    embed.WithFooter(buildTime);
             }
             else if (prState.state == "Merged")
             {

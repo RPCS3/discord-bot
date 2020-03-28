@@ -125,11 +125,15 @@ namespace CompatBot.Utils.ResultFormatters
             builder ??= new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
             var currentCommit = currentPrInfo?.MergeCommitSha;
             var latestCommit = latestPrInfo?.MergeCommitSha;
+            var buildTimestampKind = "Built";
+            /*
             var currentAppveyorBuild = await appveyorClient.GetMasterBuildAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
             var latestAppveyorBuild = await appveyorClient.GetMasterBuildAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var buildTimestampKind = "Built";
             var latestBuildTimestamp = latestAppveyorBuild?.Finished?.ToUniversalTime();
             var currentBuildTimestamp = currentAppveyorBuild?.Finished?.ToUniversalTime();
+            */
+            DateTime? latestBuildTimestamp = null;
+            DateTime? currentBuildTimestamp = null;
             if (!latestBuildTimestamp.HasValue)
             {
                 buildTimestampKind = "Merged";
