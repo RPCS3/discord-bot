@@ -39,6 +39,21 @@ namespace CompatBot.Commands
         {
             using var db = new BotDb();
             lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+            if (lastUpdateInfo is string strPr
+                && int.TryParse(strPr, out var pr))
+            {
+                try
+                {
+                    var prInfo = githubClient.GetPrInfoAsync(pr, Config.Cts.Token).GetAwaiter().GetResult();
+                    CachedUpdateInfo = client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).GetAwaiter().GetResult();
+                    if (CachedUpdateInfo.CurrentBuild != null)
+                    {
+                        CachedUpdateInfo.LatestBuild = CachedUpdateInfo.CurrentBuild;
+                        CachedUpdateInfo.CurrentBuild = null;
+                    }
+                }
+                catch { }
+            }
         }
 
         [Command("compat"), Aliases("c", "compatibility")]
@@ -83,51 +98,6 @@ namespace CompatBot.Commands
             {
                 Config.Log.Error(e, "Failed to get compat list info");
             }
-        }
-
-        [Command("top"), Hidden]
-        [Description(@"
-Gets the x (default is 10 new) top games by specified criteria; order is flexible
-Example usage:
-    !top 10 new
-    !top 10 playable
-    !top 10 new ingame
-    !top 10 old loadable bluray")]
-        public async Task Top(CommandContext ctx, [Description("You can use game status or media (psn/blu-ray)")] params string[] filters)
-        {
-            var requestBuilder = RequestBuilder.Start();
-            var age = "new";
-            var amount = ApiConfig.ResultAmount[0];
-            foreach (var term in filters.Select(s => s.ToLowerInvariant()))
-            {
-                switch (term)
-                {
-                    case "old": case "new":
-                        age = term;
-                        break;
-                    case string status when ApiConfig.Statuses.ContainsKey(status):
-                        requestBuilder.SetStatus(status);
-                        break;
-                    case string rel when ApiConfig.ReverseReleaseTypes.ContainsKey(rel):
-                        requestBuilder.SetReleaseType(rel);
-                        break;
-                    case string num when int.TryParse(num, out var newAmount):
-                        amount = newAmount.Clamp(1, Config.TopLimit);
-                        break;
-                }
-            }
-            requestBuilder.SetAmount(amount);
-            if (age == "old")
-            {
-                requestBuilder.SetSort("date", "asc");
-                requestBuilder.SetHeader("{0} requested top {1} oldest {2} {3} updated games");
-            }
-            else
-            {
-                requestBuilder.SetSort("date", "desc");
-                requestBuilder.SetHeader("{0} requested top {1} newest {2} {3} updated games");
-            }
-            await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
         }
 
         [Group("latest"), TriggersTyping]
@@ -198,7 +168,16 @@ Example usage:
                     embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
                 }
                 else if (!updateAnnouncementRestore)
-                    CachedUpdateInfo = info;
+                {
+                    if (CachedUpdateInfo.LatestBuild?.Datetime is string previousBuildTimeStr
+                        && info.LatestBuild?.Datetime is string newBuildTimeStr
+                        && DateTime.TryParse(previousBuildTimeStr, out var previousBuildTime)
+                        && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
+                        && newBuildTime > previousBuildTime)
+                        CachedUpdateInfo = info;
+                    else
+                        return true;
+                }
                 if (!updateAnnouncement)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 else if (updateAnnouncementRestore)
@@ -212,50 +191,51 @@ Example usage:
                 }
 
                 var latestUpdatePr = info?.LatestBuild?.Pr?.ToString();
-                if (!string.IsNullOrEmpty(latestUpdatePr)
-                    && lastUpdateInfo != latestUpdatePr
-                    && await updateCheck.WaitAsync(0).ConfigureAwait(false))
-                    try
+                if (string.IsNullOrEmpty(latestUpdatePr)
+                    || lastUpdateInfo == latestUpdatePr
+                    || !await updateCheck.WaitAsync(0).ConfigureAwait(false))
+                    return false;
+
+                try
+                {
+                    var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
+                    var botMember = discordClient.GetMember(compatChannel.Guild, discordClient.CurrentUser);
+                    if (botMember == null)
+                        return false;
+
+                    if (!compatChannel.PermissionsFor(botMember).HasPermission(Permissions.SendMessages))
                     {
-                        var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
-                        var botMember = discordClient.GetMember(compatChannel.Guild, discordClient.CurrentUser);
-                        if (botMember == null)
-                            return false;
-
-                        if (!compatChannel.PermissionsFor(botMember).HasPermission(Permissions.SendMessages))
-                        {
-                            NewBuildsMonitor.Reset();
-                            return false;
-                        }
-
-                        if (!updateAnnouncement)
-                            embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
-                        if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
-                            return false;
-
-                        await CheckMissedBuildsBetween(discordClient, compatChannel, lastUpdateInfo, latestUpdatePr, Config.Cts.Token).ConfigureAwait(false);
-
-                        //embed.Title = $"[New Update] {embed.Title}";
-                        await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                        lastUpdateInfo = latestUpdatePr;
-                        using var db = new BotDb();
-                        var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
-                        if (currentState == null)
-                            db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr});
-                        else
-                            currentState.Value = latestUpdatePr;
-                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                         NewBuildsMonitor.Reset();
-                        return true;
+                        return false;
                     }
-                    catch (Exception e)
-                    {
-                        Config.Log.Warn(e, "Failed to check for RPCS3 update info");
-                    }
-                    finally
-                    {
-                        updateCheck.Release();
-                    }
+
+                    if (!updateAnnouncement)
+                        embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
+                    if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
+                        return false;
+
+                    await CheckMissedBuildsBetween(discordClient, compatChannel, lastUpdateInfo, latestUpdatePr, Config.Cts.Token).ConfigureAwait(false);
+
+                    await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                    lastUpdateInfo = latestUpdatePr;
+                    using var db = new BotDb();
+                    var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
+                    if (currentState == null)
+                        db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr});
+                    else
+                        currentState.Value = latestUpdatePr;
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                    NewBuildsMonitor.Reset();
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to check for RPCS3 update info");
+                }
+                finally
+                {
+                    updateCheck.Release();
+                }
                 return false;
             }
 

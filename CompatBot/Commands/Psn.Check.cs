@@ -88,7 +88,7 @@ namespace CompatBot.Commands
                     await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
                 }
                 if (embeds.Count > 1 || embeds[0].Fields?.Count > 0)
-                    embeds[^1] = embeds.Last().WithFooter("Note that you need to install all listed updates one by one");
+                    embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
                 foreach (var embed in embeds)
                     await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             }

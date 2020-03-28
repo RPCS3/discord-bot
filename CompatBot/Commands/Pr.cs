@@ -121,7 +121,7 @@ namespace CompatBot.Commands
                             if (latestBuild.Status == BuildStatus.Completed
                                 && (latestBuild.Result == BuildResult.Succeeded || latestBuild.Result == BuildResult.PartiallySucceeded)
                                 && latestBuild.FinishTime.HasValue)
-                                buildTime = $"Built {(DateTime.UtcNow - latestBuild.FinishTime.Value.ToUniversalTime()).AsTimeDeltaDescription()} ago";
+                                buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
                             // windows build
                             var name = latestBuild.WindowsFilename ?? "Windows PR Build";
                             name = name.Replace("rpcs3-", "").Replace("_win64", "");
