@@ -100,51 +100,6 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("top"), Hidden]
-        [Description(@"
-Gets the x (default is 10 new) top games by specified criteria; order is flexible
-Example usage:
-    !top 10 new
-    !top 10 playable
-    !top 10 new ingame
-    !top 10 old loadable bluray")]
-        public async Task Top(CommandContext ctx, [Description("You can use game status or media (psn/blu-ray)")] params string[] filters)
-        {
-            var requestBuilder = RequestBuilder.Start();
-            var age = "new";
-            var amount = ApiConfig.ResultAmount[0];
-            foreach (var term in filters.Select(s => s.ToLowerInvariant()))
-            {
-                switch (term)
-                {
-                    case "old": case "new":
-                        age = term;
-                        break;
-                    case string status when ApiConfig.Statuses.ContainsKey(status):
-                        requestBuilder.SetStatus(status);
-                        break;
-                    case string rel when ApiConfig.ReverseReleaseTypes.ContainsKey(rel):
-                        requestBuilder.SetReleaseType(rel);
-                        break;
-                    case string num when int.TryParse(num, out var newAmount):
-                        amount = newAmount.Clamp(1, Config.TopLimit);
-                        break;
-                }
-            }
-            requestBuilder.SetAmount(amount);
-            if (age == "old")
-            {
-                requestBuilder.SetSort("date", "asc");
-                requestBuilder.SetHeader("{0} requested top {1} oldest {2} {3} updated games");
-            }
-            else
-            {
-                requestBuilder.SetSort("date", "desc");
-                requestBuilder.SetHeader("{0} requested top {1} newest {2} {3} updated games");
-            }
-            await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
-        }
-
         [Group("latest"), TriggersTyping]
         [Description("Provides links to the latest RPCS3 build")]
         [Cooldown(1, 30, CooldownBucketType.Channel)]
