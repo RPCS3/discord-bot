@@ -198,7 +198,16 @@ Example usage:
                     embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
                 }
                 else if (!updateAnnouncementRestore)
-                    CachedUpdateInfo = info;
+                {
+                    if (CachedUpdateInfo.LatestBuild?.Datetime is string previousBuildTimeStr
+                        && info.LatestBuild?.Datetime is string newBuildTimeStr
+                        && DateTime.TryParse(previousBuildTimeStr, out var previousBuildTime)
+                        && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
+                        && newBuildTime > previousBuildTime)
+                        CachedUpdateInfo = info;
+                    else
+                        return true;
+                }
                 if (!updateAnnouncement)
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 else if (updateAnnouncementRestore)
