@@ -99,12 +99,15 @@ namespace CompatBot.EventHandlers
                             var prefix = $"[{item.evt.Message.Id % 100:00}]";
                             var ocrText = new StringBuilder($"OCR result of message <{item.evt.Message.JumpLink}>:").AppendLine();
                             Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
+                            var duplicates = new HashSet<string>();
                             foreach (var r in result.RecognitionResults)
                             foreach (var l in r.Lines)
                             {
                                 ocrText.AppendLine(l.Text.Sanitize());
                                 Config.Log.Debug($"{prefix} {l.Text}");
-                                if (cnt && await ContentFilter.FindTriggerAsync(FilterContext.Chat, l.Text).ConfigureAwait(false) is Piracystring hit)
+                                if (cnt
+                                    && await ContentFilter.FindTriggerAsync(FilterContext.Chat, l.Text).ConfigureAwait(false) is Piracystring hit
+                                    && duplicates.Add(hit.String))
                                 {
                                     FilterAction suppressFlags = 0;
                                     if ("media".Equals(item.evt.Channel.Name))
@@ -118,7 +121,7 @@ namespace CompatBot.EventHandlers
                                         "🖼 Screenshot of a pirated game",
                                         "Screenshot of a pirated game"
                                     ).ConfigureAwait(false);
-                                    cnt |= hit.Actions.HasFlag(FilterAction.RemoveContent) | hit.Actions.HasFlag(FilterAction.IssueWarning);
+                                    cnt &= !hit.Actions.HasFlag(FilterAction.RemoveContent) && !hit.Actions.HasFlag(FilterAction.IssueWarning);
                                 }
                             }
                             if (!cnt)
