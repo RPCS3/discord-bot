@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -14,9 +12,6 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi;
-using SharpCompress.Readers;
 
 namespace CompatBot.Commands
 {
@@ -26,8 +21,7 @@ namespace CompatBot.Commands
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
-        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30); // it's 20, but on merge we have pr + master builds
-        private const string appveyorContext = "continuous-integration/appveyor/pr";
+        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(20);
 
         [GroupCommand]
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
