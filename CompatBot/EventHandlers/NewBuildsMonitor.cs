@@ -1,16 +1,18 @@
 ﻿using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Utils.Extensions;
 using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
     internal static class NewBuildsMonitor
     {
-        private static readonly Regex BuildResult = new Regex("build (succeed|pass)ed", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        private static readonly Regex BuildResult = new Regex("[rpcs3] Build .+ succeeded", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
         private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromMinutes(20);
         private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(20);
         public static TimeSpan CheckInterval { get; private set; } = PassiveCheckInterval;
@@ -21,8 +23,9 @@ namespace CompatBot.EventHandlers
             if (args.Author.IsBotSafeCheck()
                 && !args.Author.IsCurrent
                 && "github".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
-                && !string.IsNullOrEmpty(args.Message.Content)
-                && BuildResult.IsMatch(args.Message.Content)
+                && args.Message.Embeds.FirstOrDefault() is DiscordEmbed embed
+                && !string.IsNullOrEmpty(embed.Title)
+                && BuildResult.IsMatch(embed.Title)
             )
             {
                 Activate();
