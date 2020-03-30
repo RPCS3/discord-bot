@@ -24,6 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\metacritic_ps3.json" Link="metacritic_ps3.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00670" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00670" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00670" />
