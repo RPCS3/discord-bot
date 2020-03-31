@@ -46,12 +46,12 @@ namespace CompatBot
         public static string AutoRemoveCommandPrefix => config.GetValue(nameof(AutoRemoveCommandPrefix), ".");
         public static ulong BotGuildId => config.GetValue(nameof(BotGuildId), 272035812277878785ul);                  // discord server where the bot is supposed to be
         public static ulong BotGeneralChannelId => config.GetValue(nameof(BotGeneralChannelId), 272035812277878785ul);// #rpcs3; main or general channel where noobs come first thing
-        public static ulong BotChannelId => config.GetValue(nameof(BotChannelId), 291679908067803136ul);              // #compatbot; this is used for !compat/!top results and new builds announcements
+        public static ulong BotChannelId => config.GetValue(nameof(BotChannelId), 291679908067803136ul);              // #build-updates; this is used for new build announcements
         public static ulong BotSpamId => config.GetValue(nameof(BotSpamId), 319224795785068545ul);                    // #bot-spam; this is a dedicated channel for bot abuse
         public static ulong BotLogId => config.GetValue(nameof(BotLogId), 436972161572536329ul);                      // #bot-log; a private channel for admin mod queue
         public static ulong BotRulesChannelId => config.GetValue(nameof(BotRulesChannelId), 311894275015049216ul);    // #rules-info; used to give links to rules
+        public static ulong ThumbnailSpamId => config.GetValue(nameof(ThumbnailSpamId), 475678410098606100ul);        // #bot-data; used for whatever bot needs to keep (cover embeds, etc)
         public static ulong BotAdminId => config.GetValue(nameof(BotAdminId), 267367850706993152ul);                  // discord user id for a bot admin
-        public static ulong ThumbnailSpamId => config.GetValue(nameof(ThumbnailSpamId), 475678410098606100ul);        // whatever private chat where bot can upload game covers for future embedding
         public static int ProductCodeLookupHistoryThrottle => config.GetValue(nameof(ProductCodeLookupHistoryThrottle), 7);
         public static int TopLimit => config.GetValue(nameof(TopLimit), 15);
         public static int AttachmentSizeLimit => config.GetValue(nameof(AttachmentSizeLimit), 8 * 1024 * 1024);
