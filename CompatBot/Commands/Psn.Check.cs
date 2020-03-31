@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using PsnClient.POCOs;
 
 namespace CompatBot.Commands
 {
@@ -20,6 +24,8 @@ namespace CompatBot.Commands
         [Description("Commands to check for various stuff on PSN")]
         public sealed class Check: BaseCommandModuleCustom
         {
+            private static string latestFwVersion = null;
+
             [Command("updates"), Aliases("update")]
             [Description("Checks if specified product has any updates")]
             public async Task Updates(CommandContext ctx, [RemainingText, Description("Product code such as `BLUS12345`")] string productCode)
@@ -127,6 +133,42 @@ namespace CompatBot.Commands
                 var fwList = await Client.GetHighestFwVersionAsync(Config.Cts.Token).ConfigureAwait(false);
                 var embed = fwList.ToEmbed();
                 await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+            }
+
+            internal static async Task CheckFwUpdateForAnnouncementAsync(DiscordClient client, List<FirmwareInfo> fwList = null)
+            {
+                fwList ??= await Client.GetHighestFwVersionAsync(Config.Cts.Token).ConfigureAwait(false);
+                if (fwList.Count == 0)
+                    return;
+
+                var newVersion = fwList[0].Version;
+                using var db = new BotDb();
+                var fwVersionState = db.BotState.FirstOrDefault(s => s.Key == "Latest-Firmware-Version");
+                latestFwVersion ??= fwVersionState?.Value;
+                if (latestFwVersion is null
+                    || (Version.TryParse(newVersion, out var newFw)
+                        && Version.TryParse(latestFwVersion, out var oldFw)
+                        && newFw > oldFw))
+                {
+                    var embed = fwList.ToEmbed().WithTitle("New PS3 Firmware Information");
+                    var announcementChannel = await client.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
+                    await announcementChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
+                    latestFwVersion = newVersion;
+                    if (fwVersionState == null)
+                        db.BotState.Add(new BotState {Key = "Latest-Firmware-Version", Value = latestFwVersion});
+                    else
+                        fwVersionState.Value = latestFwVersion;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                }
+            }
+
+            internal static async Task MonitorFwUpdates(DiscordClient client, CancellationToken cancellationToken)
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await CheckFwUpdateForAnnouncementAsync(client).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromHours(1), cancellationToken).ConfigureAwait(false);
+                }
             }
         }
     }
