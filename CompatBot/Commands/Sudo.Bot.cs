@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
@@ -152,6 +153,16 @@ namespace CompatBot.Commands
                 {
                     Config.Log.Error(e);
                 }
+            }
+
+            [Command("import_metacritic"), Aliases("importmc", "imc"), TriggersTyping]
+            [Description("Imports Metacritic database dump and links it to existing items")]
+            public async Task ImportMc(CommandContext ctx)
+            {
+                await CompatList.ImportMetacriticScoresAsync().ConfigureAwait(false);
+                using var db = new ThumbnailDb();
+                var linkedItems = await db.Thumbnail.CountAsync(i => i.MetacriticId != null).ConfigureAwait(false);
+                await ctx.RespondAsync($"Importing Metacritic info was successful, linked {linkedItems} items").ConfigureAwait(false);
             }
 
             internal static async Task<(bool updated, string stdout)> UpdateAsync()
