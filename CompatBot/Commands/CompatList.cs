@@ -467,6 +467,8 @@ namespace CompatBot.Commands
                 title = title.Replace("mgs4", "mgs4gotp", StringComparison.InvariantCultureIgnoreCase);
             else if (title.Contains("metal gear solid 4", StringComparison.InvariantCultureIgnoreCase))
                 title = title.Replace("metal gear solid 4", "mgs4gotp", StringComparison.InvariantCultureIgnoreCase);
+            else if (title.Contains("lbp", StringComparison.InvariantCultureIgnoreCase))
+                title = title.Replace("lbp", "littlebigplanet ", StringComparison.InvariantCultureIgnoreCase).TrimEnd();
             return title;
         }
 
