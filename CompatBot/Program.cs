@@ -112,7 +112,8 @@ namespace CompatBot
                     GameTdbScraper.RunAsync(Config.Cts.Token),
 #endif
                     StatsStorage.BackgroundSaveAsync(),
-                    MediaScreenshotMonitor.ProcessWorkQueue()
+                    MediaScreenshotMonitor.ProcessWorkQueue(),
+                    CompatList.ImportCompatListAsync()
                 );
 
                 try

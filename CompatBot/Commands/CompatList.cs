@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -422,6 +423,38 @@ namespace CompatBot.Commands
             else if (title.Contains("metal gear solid 4", StringComparison.InvariantCultureIgnoreCase))
                 title = title.Replace("metal gear solid 4", "mgs4gotp", StringComparison.InvariantCultureIgnoreCase);
             return title;
+        }
+
+        public static async Task ImportCompatListAsync()
+        {
+            var list = await client.GetCompatListSnapshotAsync(Config.Cts.Token).ConfigureAwait(false);
+            using var db = new ThumbnailDb();
+            foreach (var kvp in list.Results)
+            {
+                var (productCode, info) = kvp;
+                var dbItem = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
+                if (dbItem == null)
+                {
+                    var compatItemSearchResult = await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false);
+                    if (compatItemSearchResult.Results.TryGetValue(productCode, out var compatItem))
+                        dbItem = db.Thumbnail.Add(new Thumbnail
+                        {
+                            ProductCode = productCode,
+                            Name = compatItem.Title,
+                        }).Entity;
+                }
+                if (dbItem == null)
+                    Config.Log.Debug($"Missing product code {productCode} in {nameof(ThumbnailDb)}");
+                if (Enum.TryParse(info.Status, out CompatStatus status))
+                {
+                    dbItem.CompatibilityStatus = status;
+                    if (info.Date is string d && DateTime.TryParseExact(d, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date))
+                        dbItem.CompatibilityChangeDate = date.Ticks;
+                }
+                else
+                    Config.Log.Debug($"Failed to parse game compatibility status {info.Status}");
+            }
+            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         }
     }
 }

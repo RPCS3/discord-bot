@@ -59,8 +59,20 @@ namespace CompatBot.Database
         public string EmbeddableUrl { get; set; }
         public long Timestamp { get; set; }
         public int? EmbedColor { get; set; }
+        public CompatStatus? CompatibilityStatus { get; set; }
+        public long? CompatibilityChangeDate { get; set; }
 
         public List<SyscallToProductMap> SyscallToProductMap { get; set; }
+    }
+
+    public enum CompatStatus : byte
+    {
+        Unknown = 0,
+        Nothing = 10,
+        Loadable = 20,
+        Intro = 30,
+        Ingame = 40,
+        Playable = 50,
     }
 
     internal class SyscallInfo
