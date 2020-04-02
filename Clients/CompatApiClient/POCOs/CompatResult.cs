@@ -33,5 +33,6 @@ namespace CompatApiClient.POCOs
         public string Commit;
         public int? Pr;
         public bool? Network;
+        public string Update;
     }
 }

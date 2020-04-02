@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 
 namespace CompatApiClient
@@ -14,6 +15,7 @@ namespace CompatApiClient
     {
         private readonly HttpClient client;
         private readonly MediaTypeFormatterCollection formatters;
+        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
         public Client()
         {
@@ -44,6 +46,41 @@ namespace CompatApiClient
                         var result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
                         result.RequestBuilder = requestBuilder;
                         result.RequestDuration = DateTime.UtcNow - startTime;
+                        return result;
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response, false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    ApiConfig.Log.Warn(e);
+                }
+                tries++;
+            } while (tries < 3);
+            throw new HttpRequestException("Couldn't communicate with the API");
+        }
+
+        public async Task<CompatResult> GetCompatListSnapshotAsync(CancellationToken cancellationToken)
+        {
+            var url = "https://rpcs3.net/compatibility?api=v1&export";
+            if (ResponseCache.TryGetValue(url, out CompatResult result))
+                return result;
+
+            var tries = 0;
+            do
+            {
+                try
+                {
+                    using var message = new HttpRequestMessage(HttpMethod.Get, url);
+                    using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                        result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
+                        if (result != null)
+                            ResponseCache.Set(url, result, TimeSpan.FromDays(1));
                         return result;
                     }
                     catch (Exception e)
