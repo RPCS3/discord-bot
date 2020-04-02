@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using CompatBot.Database.Providers;
+using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 
 namespace CompatBot.Commands.Attributes
@@ -12,7 +12,7 @@ namespace CompatBot.Commands.Attributes
 
         protected override Task<bool> IsAllowed(CommandContext ctx, bool help)
         {
-            return Task.FromResult(ModProvider.IsSudoer(ctx.User.Id));
+            return Task.FromResult(ctx.User.IsModerator(ctx.Client, ctx.Guild));
         }
     }
 }

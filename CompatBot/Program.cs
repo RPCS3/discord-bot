@@ -211,7 +211,13 @@ namespace CompatBot
                     Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
                     return Task.CompletedTask;
                 };
-
+#if !DEBUG
+                client.GuildDownloadCompleted += async gdcArgs =>
+                                                 {
+                                                     foreach (var guild in gdcArgs.Guilds)
+                                                         await ModProvider.SyncRolesAsync(guild.Value).ConfigureAwait(false);
+                                                 };
+#endif
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 

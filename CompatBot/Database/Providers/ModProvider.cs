@@ -2,6 +2,8 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using DSharpPlus;
+using DSharpPlus.Entities;
 
 namespace CompatBot.Database.Providers
 {
@@ -71,6 +73,31 @@ namespace CompatBot.Database.Providers
             mod.Sudoer = false;
             await db.SaveChangesAsync().ConfigureAwait(false);
             return true;
+        }
+
+        public static async Task SyncRolesAsync(DiscordGuild guild)
+        {
+            Config.Log.Debug("Syncing moderator list to the sudoer role");
+            var modRoleList = guild.Roles.Where(kvp => kvp.Value.Name.Equals("Moderator")).ToList();
+            if (modRoleList.Count == 0)
+                return;
+
+            var modRole = modRoleList.First().Value;
+            var members = await guild.GetAllMembersAsync().ConfigureAwait(false);
+            var guildMods = members.Where(m => m.Roles.Any(r => r.Id == modRole.Id) && !m.IsBot && !m.IsCurrent).ToList();
+            foreach (var mod in guildMods)
+            {
+                if (!IsMod(mod.Id))
+                {
+                    Config.Log.Debug($"Making {mod.Username}#{mod.Discriminator} a bot mod");
+                    await AddAsync(mod.Id).ConfigureAwait(false);
+                }
+                if (!IsSudoer(mod.Id))
+                {
+                    Config.Log.Debug($"Making {mod.Username}#{mod.Discriminator} a bot sudoer");
+                    await MakeSudoerAsync(mod.Id).ConfigureAwait(false);
+                }
+            }
         }
     }
 }
