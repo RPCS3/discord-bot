@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -325,15 +326,30 @@ namespace CompatBot.Commands
         private async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
         {
             Config.Log.Info(requestBuilder.Build());
-            CompatResult result;
+            CompatResult result = null;
             try
             {
-                result = await client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
+                var remoteSearchTask = client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
+                var localResult = GetLocalCompatResult(requestBuilder);
+                result = localResult;
+                var remoteResult = await remoteSearchTask.ConfigureAwait(false);
+                if (remoteResult.Results?.Count > 0)
+                    foreach (var localItem in localResult.Results)
+                    {
+                        if (remoteResult.Results.ContainsKey(localItem.Key))
+                            continue;
+
+                        remoteResult.Results[localItem.Key] = localItem.Value;
+                    }
+                result = remoteResult;
             }
             catch
             {
-                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
-                return;
+                if (result == null)
+                {
+                    await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                    return;
+                }
             }
 
 #if DEBUG
@@ -345,6 +361,35 @@ namespace CompatBot.Commands
             else
                 foreach (var msg in FormatSearchResults(ctx, result))
                     await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
+        }
+
+        private CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
+        {
+            var timer = Stopwatch.StartNew();
+            var title = requestBuilder.search;
+            using var db = new ThumbnailDb();
+            var matches = db.Thumbnail
+                .AsNoTracking()
+                .AsEnumerable()
+                .Select(t => (thumb: t, coef: title.GetFuzzyCoefficientCached(t.Name)))
+                .OrderByDescending(i => i.coef)
+                .Take(requestBuilder.amountRequested)
+                .ToList();
+            var result = new CompatResult
+            {
+                RequestBuilder = requestBuilder,
+                ReturnCode = 0,
+                SearchTerm = requestBuilder.search,
+                Results = matches.ToDictionary(i => i.thumb.ProductCode, i => new TitleInfo
+                {
+                    Status = i.thumb.CompatibilityStatus?.ToString() ?? "Unknown",
+                    Title = i.thumb.Name,
+                    Date = i.thumb.CompatibilityChangeDate?.AsUtc().ToString("yyyy-MM-dd"),
+                })
+            };
+            timer.Stop();
+            Config.Log.Debug($"Local compat list search time: {timer.ElapsedMilliseconds} ms");
+            return result;
         }
 
         private IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)

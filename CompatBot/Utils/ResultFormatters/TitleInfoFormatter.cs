@@ -14,6 +14,7 @@ namespace CompatBot.Utils.ResultFormatters
 	{
 		private static readonly Dictionary<string, DiscordColor> StatusColors = new Dictionary<string, DiscordColor>(StringComparer.InvariantCultureIgnoreCase)
 		{
+			{"Unknown", Config.Colors.CompatStatusUnknown},
 			{"Nothing", Config.Colors.CompatStatusNothing},
 			{"Loadable", Config.Colors.CompatStatusLoadable},
 			{"Intro", Config.Colors.CompatStatusIntro},
@@ -22,9 +23,7 @@ namespace CompatBot.Utils.ResultFormatters
 		};
 
         public static string ToUpdated(this TitleInfo info)
-        {
-            return DateTime.TryParseExact(info.Date, ApiConfig.DateInputFormat, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeUniversal, out var date) ? date.ToString(ApiConfig.DateOutputFormat) : null;
-        }
+            => DateTime.TryParseExact(info.Date, ApiConfig.DateInputFormat, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeUniversal, out var date) ? date.ToString(ApiConfig.DateOutputFormat) : null;
 
         private static string ToPrString(this TitleInfo info, string defaultString, bool link = false)
         {
@@ -47,8 +46,16 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (StatusColors.TryGetValue(info.Status, out _))
             {
-                var title = info.Title.Trim(40);
-                return $"{StringUtils.InvisibleSpacer}`[{titleId,-9}] {title,-40} {info.Status,8} since {info.ToUpdated(),-10} (PR {info.ToPrString("#????"),-5})` <https://forums.rpcs3.net/thread-{info.Thread}.html>";
+                var title = info.Title.StripMarks().Trim(40);
+                var result = $"{StringUtils.InvisibleSpacer}`[{titleId,-9}] {title,-40} {info.Status,8}";
+                if (string.IsNullOrEmpty(info.Date))
+                    result += "                 ";
+                else
+                    result += $" since {info.ToUpdated(),-10}";
+                result += $" (PR {info.ToPrString("#????"),-5})`";
+                if (info.Thread > 0)
+                    result += $" <https://forums.rpcs3.net/thread-{info.Thread}.html>";
+                return result;
             }
 
             return $"Product code {titleId} was not found in compatibility database";
