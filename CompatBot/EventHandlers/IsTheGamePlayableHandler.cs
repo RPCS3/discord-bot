@@ -72,10 +72,18 @@ namespace CompatBot.EventHandlers
 
             var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
             var status = info.Status.ToLowerInvariant();
-            if (status != "playable")
-                status += " (not playable)";
-            var msg = $"{args.Message.Author.Mention} {gameTitle} is {status} since {info.ToUpdated()}\n" +
-                      $"for more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
+            string msg;
+            if (status == "unknown")
+                msg = $"{args.Message.Author.Mention} {gameTitle} status is {status}";
+            else
+            {
+                if (status != "playable")
+                    status += " (not playable)";
+                msg = $"{args.Message.Author.Mention} {gameTitle} is {status}";
+                if (!string.IsNullOrEmpty(info.Date))
+                      msg += $" since {info.ToUpdated()}";
+            }
+            msg += $"\nfor more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
             await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
             CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
         }
@@ -90,10 +98,21 @@ namespace CompatBot.EventHandlers
             try
             {
                 var requestBuilder = RequestBuilder.Start().SetSearch(gameTitle);
-                var status = await Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
+                var searchCompatListTask = Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
+                var localList = CompatList.GetLocalCompatResult(requestBuilder);
+                var status = await searchCompatListTask.ConfigureAwait(false);
+                status = status.Append(localList);
                 if ((status.ReturnCode == 0 || status.ReturnCode == 2) && status.Results.Any())
                 {
-                    var (code, info, score) = status.GetSortedList().First();
+                    var sortedList = status.GetSortedList();
+                    var bestMatch = sortedList.First();
+                    var listWithStatus = sortedList
+                        .TakeWhile(i => Math.Abs(i.score - bestMatch.score) < double.Epsilon)
+                        .Where(i => !string.IsNullOrEmpty(i.info.Status) && i.info.Status != "Unknown")
+                        .ToList();
+                    if (listWithStatus.Count > 0)
+                        bestMatch = listWithStatus.First();
+                    var (code, info, score) = bestMatch;
                     Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info?.Title}\" with score {score}");
                     if (score < 0.51)
                         return (null, null);

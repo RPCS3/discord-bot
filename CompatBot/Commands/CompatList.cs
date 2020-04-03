@@ -333,15 +333,7 @@ namespace CompatBot.Commands
                 var localResult = GetLocalCompatResult(requestBuilder);
                 result = localResult;
                 var remoteResult = await remoteSearchTask.ConfigureAwait(false);
-                if (remoteResult.Results?.Count > 0)
-                    foreach (var localItem in localResult.Results)
-                    {
-                        if (remoteResult.Results.ContainsKey(localItem.Key))
-                            continue;
-
-                        remoteResult.Results[localItem.Key] = localItem.Value;
-                    }
-                result = remoteResult;
+                result = remoteResult.Append(localResult);
             }
             catch
             {
