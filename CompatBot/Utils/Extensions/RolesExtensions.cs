@@ -8,6 +8,21 @@ namespace CompatBot.Utils
 {
     internal static class RolesExtensions
     {
+        public static bool IsModerator(this DiscordUser user, DiscordClient client, DiscordGuild guild = null)
+        {
+            if (user == null)
+                return false;
+
+            if (ModProvider.IsSudoer(user.Id))
+                return true;
+
+            if (client == null)
+                return false;
+
+            var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
+            return member?.Roles.IsModerator() ?? false;
+        }
+
         public static bool IsWhitelisted(this DiscordUser user, DiscordClient client, DiscordGuild guild = null)
         {
             if (user == null)
@@ -58,6 +73,11 @@ namespace CompatBot.Utils
         public static bool IsSmartlisted(this DiscordMember member)
         {
             return ModProvider.IsMod(member.Id) || member.Roles.IsSmartlisted();
+        }
+
+        public static bool IsModerator(this IEnumerable<DiscordRole> memberRoles)
+        {
+            return memberRoles?.Any(r => r.Name.Equals("Moderator")) ?? false;
         }
 
         public static bool IsWhitelisted(this IEnumerable<DiscordRole> memberRoles)

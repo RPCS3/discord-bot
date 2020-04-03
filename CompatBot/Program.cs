@@ -112,7 +112,8 @@ namespace CompatBot
                     GameTdbScraper.RunAsync(Config.Cts.Token),
 #endif
                     StatsStorage.BackgroundSaveAsync(),
-                    MediaScreenshotMonitor.ProcessWorkQueue()
+                    MediaScreenshotMonitor.ProcessWorkQueue(),
+                    CompatList.ImportCompatListAsync()
                 );
 
                 try
@@ -211,7 +212,15 @@ namespace CompatBot
                     Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
                     return Task.CompletedTask;
                 };
-
+#if !DEBUG
+/*
+                client.GuildDownloadCompleted += async gdcArgs =>
+                                                 {
+                                                     foreach (var guild in gdcArgs.Guilds)
+                                                         await ModProvider.SyncRolesAsync(guild.Value).ConfigureAwait(false);
+                                                 };
+*/
+#endif
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
@@ -260,6 +269,10 @@ namespace CompatBot
                         //logLevel = Config.Log.Info;
                         if (eventArgs.Message?.Contains("Session resumed") ?? false)
                             Watchdog.DisconnectTimestamps.Clear();
+                        else if (eventArgs.Message != null
+                                 && eventArgs.Message.StartsWith("Received OP")
+                                 && eventArgs.Message.EndsWith("Reconnect"))
+                            Sudo.Bot.Restart(InvalidChannelId, "Restarted due to issues with the new Discord gateway opcode issues");
                     }
                     else if (eventArgs.Level == LogLevel.Warning)
                     {

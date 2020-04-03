@@ -25,7 +25,8 @@ namespace Tests
 
         [Explicit("For performance profiling only")]
         [TestCase(@"C:\Documents\Downloads\RPCS3(7).rar")]
-        public async Task Analyze(string path)
+        [TestCase(@"C:\Documents\Downloads\RPCS3(208).log.gz")]
+        public async Task PerformanceTest(string path)
         {
             var cts = new CancellationTokenSource();
             var source = await FileSource.DetectArchiveHandlerAsync(path, archiveHandlers).ConfigureAwait(false);

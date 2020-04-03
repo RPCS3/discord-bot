@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -324,15 +326,22 @@ namespace CompatBot.Commands
         private async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
         {
             Config.Log.Info(requestBuilder.Build());
-            CompatResult result;
+            CompatResult result = null;
             try
             {
-                result = await client.GetCompatResultAsync(requestBuilder, Config.Cts.Token).ConfigureAwait(false);
+                var remoteSearchTask = client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
+                var localResult = GetLocalCompatResult(requestBuilder);
+                result = localResult;
+                var remoteResult = await remoteSearchTask.ConfigureAwait(false);
+                result = remoteResult.Append(localResult);
             }
             catch
             {
-                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
-                return;
+                if (result == null)
+                {
+                    await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                    return;
+                }
             }
 
 #if DEBUG
@@ -344,6 +353,35 @@ namespace CompatBot.Commands
             else
                 foreach (var msg in FormatSearchResults(ctx, result))
                     await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
+        }
+
+        internal static CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
+        {
+            var timer = Stopwatch.StartNew();
+            var title = requestBuilder.search;
+            using var db = new ThumbnailDb();
+            var matches = db.Thumbnail
+                .AsNoTracking()
+                .AsEnumerable()
+                .Select(t => (thumb: t, coef: title.GetFuzzyCoefficientCached(t.Name)))
+                .OrderByDescending(i => i.coef)
+                .Take(requestBuilder.amountRequested)
+                .ToList();
+            var result = new CompatResult
+            {
+                RequestBuilder = requestBuilder,
+                ReturnCode = 0,
+                SearchTerm = requestBuilder.search,
+                Results = matches.ToDictionary(i => i.thumb.ProductCode, i => new TitleInfo
+                {
+                    Status = i.thumb.CompatibilityStatus?.ToString() ?? "Unknown",
+                    Title = i.thumb.Name,
+                    Date = i.thumb.CompatibilityChangeDate?.AsUtc().ToString("yyyy-MM-dd"),
+                })
+            };
+            timer.Stop();
+            Config.Log.Debug($"Local compat list search time: {timer.ElapsedMilliseconds} ms");
+            return result;
         }
 
         private IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
@@ -421,7 +459,41 @@ namespace CompatBot.Commands
                 title = title.Replace("mgs4", "mgs4gotp", StringComparison.InvariantCultureIgnoreCase);
             else if (title.Contains("metal gear solid 4", StringComparison.InvariantCultureIgnoreCase))
                 title = title.Replace("metal gear solid 4", "mgs4gotp", StringComparison.InvariantCultureIgnoreCase);
+            else if (title.Contains("lbp", StringComparison.InvariantCultureIgnoreCase))
+                title = title.Replace("lbp", "littlebigplanet ", StringComparison.InvariantCultureIgnoreCase).TrimEnd();
             return title;
+        }
+
+        public static async Task ImportCompatListAsync()
+        {
+            var list = await client.GetCompatListSnapshotAsync(Config.Cts.Token).ConfigureAwait(false);
+            using var db = new ThumbnailDb();
+            foreach (var kvp in list.Results)
+            {
+                var (productCode, info) = kvp;
+                var dbItem = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
+                if (dbItem == null)
+                {
+                    var compatItemSearchResult = await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false);
+                    if (compatItemSearchResult.Results.TryGetValue(productCode, out var compatItem))
+                        dbItem = db.Thumbnail.Add(new Thumbnail
+                        {
+                            ProductCode = productCode,
+                            Name = compatItem.Title,
+                        }).Entity;
+                }
+                if (dbItem == null)
+                    Config.Log.Debug($"Missing product code {productCode} in {nameof(ThumbnailDb)}");
+                if (Enum.TryParse(info.Status, out CompatStatus status))
+                {
+                    dbItem.CompatibilityStatus = status;
+                    if (info.Date is string d && DateTime.TryParseExact(d, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date))
+                        dbItem.CompatibilityChangeDate = date.Ticks;
+                }
+                else
+                    Config.Log.Debug($"Failed to parse game compatibility status {info.Status}");
+            }
+            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         }
     }
 }
