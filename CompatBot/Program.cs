@@ -276,9 +276,8 @@ namespace CompatBot
                             Config.Log.Warn("Detected the new discord gateway opcode, restarting...");
                             var restartThread = new Thread(() => Sudo.Bot.Restart(InvalidChannelId, "Restarted due to issues with the new Discord gateway opcode issues"));
                             restartThread.Start();
-                            restartThread.Join(100);
-                            if (SandboxDetector.Detect() == SandboxType.Docker)
-                                Environment.Exit(-1);
+                            restartThread.Join(1000);
+                            Environment.Exit(-1);
                         }
                     }
                     else if (eventArgs.Level == LogLevel.Warning)

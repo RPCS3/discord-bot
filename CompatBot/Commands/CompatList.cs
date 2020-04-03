@@ -117,7 +117,7 @@ namespace CompatBot.Commands
             scoreType = scoreType.ToLowerInvariant();
 
             number = number.Clamp(1, 100);
-            if (!Enum.TryParse(status, out CompatStatus s))
+            if (!Enum.TryParse(status, true, out CompatStatus s))
                 s = CompatStatus.Playable;
 
             using var db = new ThumbnailDb();
@@ -128,7 +128,12 @@ namespace CompatBot.Commands
                 "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.UserScore.Value)),
                 _ => queryBase.AsEnumerable().Select(t => (title: t.Name, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0))),
             };
-            var resultList = query.Where(i => i.score > 0).OrderByDescending(i => i.score).Select(i => i.title).Distinct(StringComparer.InvariantCultureIgnoreCase).Take(number).ToList();
+            var resultList = query.Where(i => i.score > 0)
+                .OrderByDescending(i => i.score)
+                .Select(i => i.title)
+                .Distinct(StringComparer.InvariantCultureIgnoreCase)
+                .Take(number)
+                .ToList();
             if (resultList.Count > 0)
             {
                 var result = new StringBuilder($"Best {status} games:").AppendLine();
