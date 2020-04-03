@@ -110,18 +110,26 @@ namespace CompatBot.Commands
         [Description("Provides top game lists based on Metacritic and compatibility lists")]
         public async Task Top(CommandContext ctx,
             [Description("Number of entries in the list")] int number = 10,
-            [Description("One of `playable` or `ingame`")] string status = "playable",
+            [Description("One of `playable`, `ingame`, `intro`, `loadable`, or `<status>Only`")] string status = "playable",
             [Description("One of `both`, `critic`, or `user`")] string scoreType = "both")
         {
             status = status.ToLowerInvariant();
             scoreType = scoreType.ToLowerInvariant();
 
             number = number.Clamp(1, 100);
+            bool exactStatus = status.EndsWith("only");
+            if (exactStatus)
+                status = status[..^4];
             if (!Enum.TryParse(status, true, out CompatStatus s))
                 s = CompatStatus.Playable;
 
             using var db = new ThumbnailDb();
-            var queryBase = db.Thumbnail.AsNoTracking().Where(g => g.CompatibilityStatus >= s && g.Metacritic != null).Include(t => t.Metacritic);
+            var queryBase = db.Thumbnail.AsNoTracking();
+            if (exactStatus)
+                queryBase = queryBase.Where(g => g.CompatibilityStatus == s);
+            else
+                queryBase = queryBase.Where(g => g.CompatibilityStatus >= s);
+            queryBase = queryBase.Where(g => g.Metacritic != null).Include(t => t.Metacritic);
             var query = scoreType switch
             {
                 "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.CriticScore.Value)),
@@ -136,7 +144,13 @@ namespace CompatBot.Commands
                 .ToList();
             if (resultList.Count > 0)
             {
-                var result = new StringBuilder($"Best {status} games:").AppendLine();
+                var result = new StringBuilder($"Best {s.ToString().ToLower()}");
+                if (exactStatus)
+                    result.Append(" only");
+                result.Append(" games");
+                if (scoreType == "critic" || scoreType == "user")
+                    result.Append($" according to {scoreType}s");
+                result.AppendLine(":");
                 var c = 1;
                 foreach (var title in resultList)
                     result.AppendLine($"#{c++}: {title}");
@@ -572,6 +586,10 @@ namespace CompatBot.Commands
                 scoreList.Where(i => i.Title.Contains("A Telltale Game"))
                     .Select(i => i.WithTitle(i.Title.Substring(0, i.Title.IndexOf("A Telltale Game") - 1).TrimEnd(' ', '-', ':')))
             );
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.StartsWith("Ratchet & Clank Future"))
+                    .Select(i => i.WithTitle(i.Title.Replace("Ratchet & Clank Future", "Ratchet & Clank")))
+                );
             duplicates.AddRange(
                 scoreList.Where(i => i.Title.StartsWith("MLB "))
                     .Select(i => i.WithTitle($"Major League Baseball {i.Title[4..]}"))
