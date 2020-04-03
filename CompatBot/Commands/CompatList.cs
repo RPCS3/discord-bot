@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -25,6 +26,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CompatBot.Commands
 {
@@ -100,6 +102,41 @@ namespace CompatBot.Commands
             {
                 Config.Log.Error(e, "Failed to get compat list info");
             }
+        }
+
+        [Command("top"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
+        [Description("Provides top game lists based on Metacritic and compatibility lists")]
+        public async Task Top(CommandContext ctx,
+            [Description("Number of entries in the list")] int number = 10,
+            [Description("One of `playable` or `ingame`")] string status = "playable",
+            [Description("One of `both`, `critic`, or `user`")] string scoreType = "both")
+        {
+            status = status.ToLowerInvariant();
+            scoreType = scoreType.ToLowerInvariant();
+
+            number = number.Clamp(1, 100);
+            if (!Enum.TryParse(status, out CompatStatus s))
+                s = CompatStatus.Playable;
+
+            using var db = new ThumbnailDb();
+            var queryBase = db.Thumbnail.AsNoTracking().Where(g => g.CompatibilityStatus >= s && g.Metacritic != null).Include(t => t.Metacritic);
+            var query = scoreType switch
+            {
+                "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.CriticScore.Value)),
+                "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.UserScore.Value)),
+                _ => queryBase.AsEnumerable().Select(t => (title: t.Name, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0))),
+            };
+            var resultList = query.Where(i => i.score > 0).OrderByDescending(i => i.score).Select(i => i.title).Distinct(StringComparer.InvariantCultureIgnoreCase).Take(number).ToList();
+            if (resultList.Count > 0)
+            {
+                var result = new StringBuilder($"Best {status} games:").AppendLine();
+                var c = 1;
+                foreach (var title in resultList)
+                    result.AppendLine($"#{c++}: {title}");
+                await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+            }
+            else
+                await ctx.RespondAsync("Failed to generate lilst").ConfigureAwait(false);
         }
 
         [Group("latest"), TriggersTyping]
@@ -449,7 +486,7 @@ namespace CompatBot.Commands
 
         public static string FixGameTitleSearch(string title)
         {
-            title = title.Trim(40);
+            title = title.Trim(80);
             if (title.Equals("persona 5", StringComparison.InvariantCultureIgnoreCase)
                 || title.Equals("p5", StringComparison.InvariantCultureIgnoreCase))
                 title = "unnamed";
@@ -494,6 +531,128 @@ namespace CompatBot.Commands
                     Config.Log.Debug($"Failed to parse game compatibility status {info.Status}");
             }
             await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+        }
+
+        public static async Task ImportMetacriticScoresAsync()
+        {
+            var scoreJson = "metacritic_ps3.json";
+            if (!File.Exists(scoreJson))
+            {
+                Config.Log.Warn($"Missing {scoreJson}");
+                return;
+            }
+
+            var json = File.ReadAllText(scoreJson);
+            var scoreList = JsonConvert.DeserializeObject<List<Metacritic>>(json);
+            Config.Log.Debug($"Importing {scoreList.Count} Metacritic items");
+            var duplicates = new List<Metacritic>();
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.StartsWith("Disney") || i.Title.StartsWith("DreamWorks") || i.Title.StartsWith("PlayStation"))
+                .Select(i => i.WithTitle(i.Title.Split(' ', 2)[1]))
+            );
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.Contains("A Telltale Game"))
+                    .Select(i => i.WithTitle(i.Title.Substring(0, i.Title.IndexOf("A Telltale Game") - 1).TrimEnd(' ', '-', ':')))
+            );
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.StartsWith("MLB "))
+                    .Select(i => i.WithTitle($"Major League Baseball {i.Title[4..]}"))
+            );
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.Contains("HAWX"))
+                    .Select(i => i.WithTitle(i.Title.Replace("HAWX", "H.A.W.X")))
+                );
+
+            using var db = new ThumbnailDb();
+            foreach (var mcScore in scoreList.Where(s => s.CriticScore > 0 || s.UserScore > 0))
+            {
+                if (Config.Cts.IsCancellationRequested)
+                    return;
+
+                var item = db.Metacritic.FirstOrDefault(i => i.Title == mcScore.Title);
+                if (item == null)
+                    item = db.Metacritic.Add(mcScore).Entity;
+                else
+                {
+                    item.CriticScore = mcScore.CriticScore;
+                    item.UserScore = mcScore.UserScore;
+                    item.Notes = mcScore.Notes;
+                }
+                await db.SaveChangesAsync().ConfigureAwait(false);
+                
+                var title = mcScore.Title;
+                var matches = db.Thumbnail
+                    .Where(t => t.MetacriticId == null)
+                    .AsEnumerable()
+                    .Select(t => (thumb: t, coef: t.Name.GetFuzzyCoefficientCached(title)))
+                    .Where(i => i.coef > 0.90)
+                    .OrderByDescending(i => i.coef)
+                    .ToList();
+
+                if (Config.Cts.IsCancellationRequested)
+                    return;
+
+                if (matches.Any(m => m.coef > 0.99))
+                    matches = matches.Where(m => m.coef > 0.99).ToList();
+                else if (matches.Any(m => m.coef > 0.95))
+                    matches = matches.Where(m => m.coef > 0.95).ToList();
+
+                if (matches.Count == 0)
+                {
+                    try
+                    {
+                        var searchResult = await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(title), Config.Cts.Token).ConfigureAwait(false);
+                        var compatListMatches = searchResult.Results
+                            .Select(i => (productCode: i.Key, titleInfo: i.Value, coef: Math.Max(title.GetFuzzyCoefficientCached(i.Value.Title), title.GetFuzzyCoefficientCached(i.Value.AlternativeTitle))))
+                            .Where(i => i.coef > 0.85)
+                            .OrderByDescending(i => i.coef)
+                            .ToList();
+                        if (compatListMatches.Any(i => i.coef > 0.99))
+                            compatListMatches = compatListMatches.Where(i => i.coef > 0.99).ToList();
+                        else if (compatListMatches.Any(i => i.coef > 0.95))
+                            compatListMatches = compatListMatches.Where(i => i.coef > 0.95).ToList();
+                        else if (compatListMatches.Any(i => i.coef > 0.90))
+                            compatListMatches = compatListMatches.Where(i => i.coef > 0.90).ToList();
+                        foreach ((string productCode, TitleInfo titleInfo, double coef) in compatListMatches)
+                        {
+                            var dbItem = await db.Thumbnail.FirstOrDefaultAsync(i => i.ProductCode == productCode).ConfigureAwait(false);
+                            if (dbItem == null)
+                                dbItem = db.Thumbnail.Add(new Thumbnail
+                                {
+                                    ProductCode = productCode,
+                                    Name = titleInfo.Title,
+                                }).Entity;
+                            if (dbItem != null)
+                            {
+                                dbItem.Name = titleInfo.Title;
+                                if (Enum.TryParse(titleInfo.Status, out CompatStatus status))
+                                    dbItem.CompatibilityStatus = status;
+                                if (DateTime.TryParseExact(titleInfo.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date))
+                                    dbItem.CompatibilityChangeDate = date.Ticks;
+                                matches.Add((dbItem, coef));
+                            }
+                        }
+                        await db.SaveChangesAsync().ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e);
+                    }
+                }
+                //var bestMatch = matches.FirstOrDefault();
+                //Config.Log.Trace($"Best title match for [{item.Title}] is [{bestMatch.thumb.Name}] with score {bestMatch.coef:0.0000}");
+                if (matches.Count > 0)
+                {
+                    Config.Log.Trace($"Matched metacritic [{item.Title}] to compat titles: {string.Join(", ", matches.Select(m => $"[{m.thumb.Name}]"))}");
+                    foreach (var m in matches)
+                        m.thumb.Metacritic = item;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    Config.Log.Warn($"Failed to find a single match for metacritic [{item.Title}]");
+                }
+            }
         }
     }
 }

@@ -39,10 +39,13 @@ namespace CompatBot.Utils
 
         public static string StripMarks(this string str)
         {
-            return str?.Replace("(R)", "", StringComparison.InvariantCultureIgnoreCase)
-                .Replace("®", "")
-                .Replace("(TM)", "", StringComparison.InvariantCultureIgnoreCase)
-                .Replace("™", "");
+            return str?.Replace("(R)", " ", StringComparison.InvariantCultureIgnoreCase)
+                .Replace("®", " ")
+                .Replace("(TM)", " ", StringComparison.InvariantCultureIgnoreCase)
+                .Replace("™", " ")
+                .Replace("  ", " ")
+                .Replace(" : ", ": ")
+                .Trim();
         }
 
         public static string StripQuotes(this string str)

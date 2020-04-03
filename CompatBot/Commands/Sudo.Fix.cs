@@ -109,6 +109,25 @@ namespace CompatBot.Commands
                 }
             }
 
+            [Command("title_marks"), Aliases("trademarks", "tms")]
+            [Description("Strips trade marks and similar cruft from game titles in local database")]
+            public async Task TitleMarks(CommandContext ctx)
+            {
+                var changed = 0;
+                using var db = new ThumbnailDb();
+                foreach (var thumb in db.Thumbnail)
+                {
+                    var newTitle = thumb.Name.StripMarks();
+                    if (newTitle != thumb.Name)
+                    {
+                        changed++;
+                        thumb.Name = newTitle;
+                    }
+                }
+                await db.SaveChangesAsync();
+                await ctx.RespondAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
+            }
+
             public static async Task<string> FixChannelMentionAsync(CommandContext ctx, string msg)
             {
                 if (string.IsNullOrEmpty(msg))

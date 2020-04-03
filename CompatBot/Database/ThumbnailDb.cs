@@ -12,6 +12,7 @@ namespace CompatBot.Database
         public DbSet<Thumbnail> Thumbnail { get; set; }
         public DbSet<SyscallInfo> SyscallInfo { get; set; }
         public DbSet<SyscallToProductMap> SyscallToProductMap { get; set; }
+        public DbSet<Metacritic> Metacritic { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -62,6 +63,9 @@ namespace CompatBot.Database
         public CompatStatus? CompatibilityStatus { get; set; }
         public long? CompatibilityChangeDate { get; set; }
 
+        public int? MetacriticId { get; set; }
+        public Metacritic Metacritic { get; set; }
+
         public List<SyscallToProductMap> SyscallToProductMap { get; set; }
     }
 
@@ -91,5 +95,26 @@ namespace CompatBot.Database
 
         public int SyscallInfoId { get; set; }
         public SyscallInfo SyscallInfo { get; set; }
+    }
+
+    internal class Metacritic
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Title { get; set; }
+        public byte? CriticScore { get; set; }
+        public byte? UserScore { get; set; }
+        public string Notes { get; set; }
+
+        public Metacritic WithTitle(string title)
+        {
+            return new Metacritic
+            {
+                Title = title,
+                CriticScore = CriticScore,
+                UserScore = UserScore,
+                Notes = Notes,
+            };
+        }
     }
 }

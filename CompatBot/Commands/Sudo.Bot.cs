@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
@@ -17,6 +18,7 @@ namespace CompatBot.Commands
     internal partial class Sudo
     {
         private static readonly SemaphoreSlim lockObj = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim importLockObj = new SemaphoreSlim(1, 1);
 
         [Group("bot"), Aliases("kot")]
         [Description("Commands to manage the bot instance")]
@@ -152,6 +154,26 @@ namespace CompatBot.Commands
                 {
                     Config.Log.Error(e);
                 }
+            }
+
+            [Command("import_metacritic"), Aliases("importmc", "imc"), TriggersTyping]
+            [Description("Imports Metacritic database dump and links it to existing items")]
+            public async Task ImportMc(CommandContext ctx)
+            {
+                if (await importLockObj.WaitAsync(0).ConfigureAwait(false))
+                    try
+                    {
+                        await CompatList.ImportMetacriticScoresAsync().ConfigureAwait(false);
+                        using var db = new ThumbnailDb();
+                        var linkedItems = await db.Thumbnail.CountAsync(i => i.MetacriticId != null).ConfigureAwait(false);
+                        await ctx.RespondAsync($"Importing Metacritic info was successful, linked {linkedItems} items").ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        importLockObj.Release();
+                    }
+                else
+                    await ctx.RespondAsync("Another import operation is already in progress").ConfigureAwait(false);
             }
 
             internal static async Task<(bool updated, string stdout)> UpdateAsync()
