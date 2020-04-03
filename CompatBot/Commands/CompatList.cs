@@ -4,10 +4,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
+using CompatApiClient.Compression;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
@@ -536,13 +538,24 @@ namespace CompatBot.Commands
         public static async Task ImportMetacriticScoresAsync()
         {
             var scoreJson = "metacritic_ps3.json";
-            if (!File.Exists(scoreJson))
+            string json;
+            if (File.Exists(scoreJson))
+                json = File.ReadAllText(scoreJson);
+            else
             {
-                Config.Log.Warn($"Missing {scoreJson}");
-                return;
+                Config.Log.Warn($"Missing {scoreJson}, trying to get an online copy...");
+                using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
+                try
+                {
+                    json = await httpClient.GetStringAsync($"https://raw.githubusercontent.com/RPCS3/discord-bot/master/{scoreJson}").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Failed to get online copy of {scoreJson}");
+                    return;
+                }
             }
 
-            var json = File.ReadAllText(scoreJson);
             var scoreList = JsonConvert.DeserializeObject<List<Metacritic>>(json);
             Config.Log.Debug($"Importing {scoreList.Count} Metacritic items");
             var duplicates = new List<Metacritic>();
