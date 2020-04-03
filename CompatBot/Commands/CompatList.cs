@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -132,14 +133,16 @@ namespace CompatBot.Commands
             queryBase = queryBase.Where(g => g.Metacritic != null).Include(t => t.Metacritic);
             var query = scoreType switch
             {
-                "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.CriticScore.Value)),
-                "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.UserScore.Value)),
-                _ => queryBase.AsEnumerable().Select(t => (title: t.Name, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0))),
+                "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.CriticScore.Value, second: t.Metacritic.UserScore ?? t.Metacritic.CriticScore.Value)),
+                "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.UserScore.Value, second: t.Metacritic.CriticScore ?? t.Metacritic.UserScore.Value)),
+                _ => queryBase.AsEnumerable().Select(t => (title: t.Name, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0), second: (byte)0)),
             };
             var resultList = query.Where(i => i.score > 0)
                 .OrderByDescending(i => i.score)
+                .ThenByDescending(i => i.second)
                 .Select(i => i.title)
                 .Distinct(StringComparer.InvariantCultureIgnoreCase)
+                .Where(title => !Regex.IsMatch(title, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline))
                 .Take(number)
                 .ToList();
             if (resultList.Count > 0)
@@ -618,7 +621,7 @@ namespace CompatBot.Commands
                 
                 var title = mcScore.Title;
                 var matches = db.Thumbnail
-                    .Where(t => t.MetacriticId == null)
+                    //.Where(t => t.MetacriticId == null)
                     .AsEnumerable()
                     .Select(t => (thumb: t, coef: t.Name.GetFuzzyCoefficientCached(title)))
                     .Where(i => i.coef > 0.90)
@@ -675,6 +678,7 @@ namespace CompatBot.Commands
                         Config.Log.Warn(e);
                     }
                 }
+                matches = matches.Where(i => !Regex.IsMatch(i.thumb.Name, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline)).ToList();
                 //var bestMatch = matches.FirstOrDefault();
                 //Config.Log.Trace($"Best title match for [{item.Title}] is [{bestMatch.thumb.Name}] with score {bestMatch.coef:0.0000}");
                 if (matches.Count > 0)
