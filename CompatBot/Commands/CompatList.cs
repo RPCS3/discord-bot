@@ -363,7 +363,7 @@ namespace CompatBot.Commands
                     await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
 
-        private CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
+        internal static CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
         {
             var timer = Stopwatch.StartNew();
             var title = requestBuilder.search;
