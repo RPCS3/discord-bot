@@ -105,5 +105,16 @@ namespace CompatBot.Database
         public byte? CriticScore { get; set; }
         public byte? UserScore { get; set; }
         public string Notes { get; set; }
+
+        public Metacritic WithTitle(string title)
+        {
+            return new Metacritic
+            {
+                Title = title,
+                CriticScore = CriticScore,
+                UserScore = UserScore,
+                Notes = Notes,
+            };
+        }
     }
 }

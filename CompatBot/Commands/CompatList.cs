@@ -508,10 +508,28 @@ namespace CompatBot.Commands
             }
 
             var json = File.ReadAllText(scoreJson);
-            var scoreList = JsonConvert.DeserializeObject<Metacritic[]>(json);
-            Config.Log.Debug($"Importing {scoreList.Length} Metacritic items");
+            var scoreList = JsonConvert.DeserializeObject<List<Metacritic>>(json);
+            Config.Log.Debug($"Importing {scoreList.Count} Metacritic items");
+            var duplicates = new List<Metacritic>();
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.StartsWith("Disney") || i.Title.StartsWith("DreamWorks") || i.Title.StartsWith("PlayStation"))
+                .Select(i => i.WithTitle(i.Title.Split(' ', 2)[1]))
+            );
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.Contains("A Telltale Game"))
+                    .Select(i => i.WithTitle(i.Title.Substring(0, i.Title.IndexOf("A Telltale Game") - 1).TrimEnd(' ', '-', ':')))
+            );
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.StartsWith("MLB "))
+                    .Select(i => i.WithTitle($"Major League Baseball {i.Title[4..]}"))
+            );
+            duplicates.AddRange(
+                scoreList.Where(i => i.Title.Contains("HAWX"))
+                    .Select(i => i.WithTitle(i.Title.Replace("HAWX", "H.A.W.X")))
+                );
+
             using var db = new ThumbnailDb();
-            foreach (var mcScore in scoreList.Where(s => s.CriticScore.HasValue || s.UserScore.HasValue))
+            foreach (var mcScore in scoreList.Where(s => s.CriticScore > 0 || s.UserScore > 0))
             {
                 if (Config.Cts.IsCancellationRequested)
                     return;
@@ -526,13 +544,8 @@ namespace CompatBot.Commands
                     item.Notes = mcScore.Notes;
                 }
                 await db.SaveChangesAsync().ConfigureAwait(false);
-
+                
                 var title = mcScore.Title;
-                if (title.StartsWith("Disney*Pixar") || title.StartsWith("DreamWorks"))
-                    title = title.Split(' ', 2)[1];
-                else if (title.IndexOf("A Telltale Game") > 0)
-                    title = title.Substring(0, title.IndexOf("A Telltale Game") - 1).TrimEnd(' ', '-', ':');
-
                 var matches = db.Thumbnail
                     .Where(t => t.MetacriticId == null)
                     .AsEnumerable()

@@ -454,6 +454,11 @@
     "ReleaseDate": "2014-07-08"
   },
   {
+    "Title": "Another World",
+    "UserScore": 53,
+    "ReleaseDate": "2014-07-08"
+  },
+  {
     "Title": "Apache: Air Assault",
     "CriticScore": 66,
     "UserScore": 58,
@@ -906,6 +911,11 @@
   },
   {
     "Title": "Attack on Titan",
+    "UserScore": 79,
+    "ReleaseDate": "2016-08-30"
+  },
+  {
+    "Title": "Attack on Titan - Wings of Freedom",
     "UserScore": 79,
     "ReleaseDate": "2016-08-30"
   },
@@ -4731,6 +4741,11 @@
     "ReleaseDate": "2011-09-13"
   },
   {
+    "Title": "Elemental Monster: Online Card Game",
+    "UserScore": 70,
+    "ReleaseDate": "2011-09-13"
+  },
+  {
     "Title": "Elevator Action Deluxe",
     "CriticScore": 54,
     "UserScore": 60,
@@ -5172,6 +5187,11 @@
   },
   {
     "Title": "Fibbage: The Hilarious Bluffing Party Game",
+    "UserScore": 73,
+    "ReleaseDate": "2014-09-16"
+  },
+  {
+    "Title": "Fibbage",
     "UserScore": 73,
     "ReleaseDate": "2014-09-16"
   },
@@ -5629,6 +5649,7 @@
   },
   {
     "Title": "Geometry Wars 3: Dimensions Evolved",
+    "UserScore": 80,
     "ReleaseDate": "2015-03-31"
   },
   {
@@ -7071,6 +7092,11 @@
     "ReleaseDate": "2012-02-07"
   },
   {
+    "Title": "Jak 3",
+    "UserScore": 69,
+    "ReleaseDate": "2012-02-07"
+  },
+  {
     "Title": "Jak and Daxter Collection",
     "CriticScore": 81,
     "UserScore": 87,
@@ -7083,6 +7109,11 @@
   },
   {
     "Title": "Jak II HD",
+    "UserScore": 66,
+    "ReleaseDate": "2012-02-07"
+  },
+  {
+    "Title": "Jak II",
     "UserScore": 66,
     "ReleaseDate": "2012-02-07"
   },
@@ -7228,6 +7259,14 @@
   },
   {
     "Title": "Jurassic Park: The Game - Episode 1: The Intruder",
+    "CriticScore": 53,
+    "UserScore": 47,
+    "ReleaseDate": "2016-03-07"
+  },
+  {
+    "Title": "Jurassic Park: The Game - Episode 1",
+    "CriticScore": 53,
+    "UserScore": 47,
     "ReleaseDate": "2016-03-07"
   },
   {
@@ -8459,6 +8498,11 @@
     "ReleaseDate": "2011-03-25"
   },
   {
+    "Title": "Mayhem",
+    "CriticScore": 53,
+    "ReleaseDate": "2011-03-25"
+  },
+  {
     "Title": "Medal of Honor",
     "CriticScore": 75,
     "UserScore": 75,
@@ -8637,7 +8681,16 @@
     "ReleaseDate": "2010-12-21"
   },
   {
+    "Title": "NEOGEO STATION Metal Slug",
+    "UserScore": 68,
+    "ReleaseDate": "2010-12-21"
+  },
+  {
     "Title": "Metal Slug 3",
+    "ReleaseDate": "2015-03-24"
+  },
+  {
+    "Title": "NEOGEO STATION Metal Slug 3",
     "ReleaseDate": "2015-03-24"
   },
   {
@@ -9898,6 +9951,11 @@
     "ReleaseDate": "2015-04-22"
   },
   {
+    "Title": "Oddworld: New \u0027n\u0027 Tasty",
+    "UserScore": 79,
+    "ReleaseDate": "2015-04-22"
+  },
+  {
     "Title": "Oddworld: Munch\u0027s Oddysee HD",
     "UserScore": 70,
     "ReleaseDate": "2012-12-24"
@@ -10036,7 +10094,7 @@
     "ReleaseDate": "2010-11-23"
   },
   {
-    "Title": "Pac-Man Championship Edition DX \u002B",
+    "Title": "Pac-Man Championship Edition DX\u002B",
     "UserScore": 76,
     "ReleaseDate": "2013-09-25"
   },
@@ -10381,6 +10439,11 @@
     "ReleaseDate": "2013-09-02"
   },
   {
+    "Title": "Port Royale 3 Gold Edition",
+    "UserScore": 74,
+    "ReleaseDate": "2013-09-02"
+  },
+  {
     "Title": "Port Royale 3: Pirates and Merchants",
     "UserScore": 74,
     "ReleaseDate": "2012-10-09"
@@ -10626,6 +10689,12 @@
   },
   {
     "Title": "Pure Futbol",
+    "CriticScore": 46,
+    "UserScore": 75,
+    "ReleaseDate": "2010-06-01"
+  },
+  {
+    "Title": "Pure Football",
     "CriticScore": 46,
     "UserScore": 75,
     "ReleaseDate": "2010-06-01"
@@ -11063,6 +11132,11 @@
     "ReleaseDate": "2016-01-19"
   },
   {
+    "Title": "Resident Evil 0",
+    "UserScore": 82,
+    "ReleaseDate": "2016-01-19"
+  },
+  {
     "Title": "Resident Evil 4 HD",
     "CriticScore": 84,
     "UserScore": 86,
@@ -11147,6 +11221,11 @@
   },
   {
     "Title": "Resident Evil HD Remaster",
+    "UserScore": 81,
+    "ReleaseDate": "2015-01-20"
+  },
+  {
+    "Title": "Resident Evil",
     "UserScore": 81,
     "ReleaseDate": "2015-01-20"
   },
@@ -12177,6 +12256,11 @@
     "ReleaseDate": "2015-09-20"
   },
   {
+    "Title": "Skylanders SuperChargers Portal Owner's Pack",
+    "UserScore": 51,
+    "ReleaseDate": "2015-09-20"
+  },
+  {
     "Title": "Skylanders Swap Force",
     "CriticScore": 83,
     "UserScore": 55,
@@ -12341,6 +12425,16 @@
   },
   {
     "Title": "Sniper Elite III",
+    "UserScore": 69,
+    "ReleaseDate": "2014-07-01"
+  },
+  {
+    "Title": "Sniper Elite 3",
+    "UserScore": 69,
+    "ReleaseDate": "2014-07-01"
+  },
+  {
+    "Title": "Sniper Elite 3 Ultimate Edition",
     "UserScore": 69,
     "ReleaseDate": "2014-07-01"
   },
@@ -13066,6 +13160,12 @@
   },
   {
     "Title": "Super Rub a Dub",
+    "CriticScore": 49,
+    "UserScore": 72,
+    "ReleaseDate": "2007-05-02"
+  },
+  {
+    "Title": "Super Rub\u0027a\u0027Dub",
     "CriticScore": 49,
     "UserScore": 72,
     "ReleaseDate": "2007-05-02"
@@ -13834,6 +13934,11 @@
     "ReleaseDate": "2012-04-10"
   },
   {
+    "Title": "Pinball Arcade",
+    "UserScore": 73,
+    "ReleaseDate": "2012-04-10"
+  },
+  {
     "Title": "The Pinball Arcade: Table Pack 1 - Medieval Madness and The Machine: Bride of Pin-Bot",
     "ReleaseDate": "2012-06-12"
   },
@@ -14375,6 +14480,11 @@
   },
   {
     "Title": "ToeJam \u0026 Earl",
+    "UserScore": 71,
+    "ReleaseDate": "2012-11-06"
+  },
+  {
+    "Title": "ToeJam and Earl",
     "UserScore": 71,
     "ReleaseDate": "2012-11-06"
   },
@@ -14996,6 +15106,12 @@
     "ReleaseDate": "2012-11-28"
   },
   {
+    "Title": "Under Defeat HD: Deluxe Edition",
+    "CriticScore": 73,
+    "UserScore": 66,
+    "ReleaseDate": "2012-11-28"
+  },
+  {
     "Title": "Under Night In-Birth Exe:Late",
     "CriticScore": 80,
     "UserScore": 82,
@@ -15389,6 +15505,12 @@
   },
   {
     "Title": "Wheels of Destruction: World Tour",
+    "CriticScore": 49,
+    "UserScore": 43,
+    "ReleaseDate": "2012-04-03"
+  },
+  {
+    "Title": "Wheels of Destruction",
     "CriticScore": 49,
     "UserScore": 43,
     "ReleaseDate": "2012-04-03"
