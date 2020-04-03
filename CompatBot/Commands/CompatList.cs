@@ -104,6 +104,41 @@ namespace CompatBot.Commands
             }
         }
 
+        [Command("top"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
+        [Description("Provides top game lists based on Metacritic and compatibility lists")]
+        public async Task Top(CommandContext ctx,
+            [Description("Number of entries in the list")] int number = 10,
+            [Description("One of `playable` or `ingame`")] string status = "playable",
+            [Description("One of `both`, `critic`, or `user`")] string scoreType = "both")
+        {
+            status = status.ToLowerInvariant();
+            scoreType = scoreType.ToLowerInvariant();
+
+            number = number.Clamp(1, 100);
+            if (!Enum.TryParse(status, out CompatStatus s))
+                s = CompatStatus.Playable;
+
+            using var db = new ThumbnailDb();
+            var queryBase = db.Thumbnail.AsNoTracking().Where(g => g.CompatibilityStatus >= s && g.Metacritic != null).Include(t => t.Metacritic);
+            var query = scoreType switch
+            {
+                "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.CriticScore.Value)),
+                "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.UserScore.Value)),
+                _ => queryBase.AsEnumerable().Select(t => (title: t.Name, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0))),
+            };
+            var resultList = query.Where(i => i.score > 0).OrderByDescending(i => i.score).Select(i => i.title).Distinct(StringComparer.InvariantCultureIgnoreCase).Take(number).ToList();
+            if (resultList.Count > 0)
+            {
+                var result = new StringBuilder($"Best {status} games:").AppendLine();
+                var c = 1;
+                foreach (var title in resultList)
+                    result.AppendLine($"#{c++}: {title}");
+                await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+            }
+            else
+                await ctx.RespondAsync("Failed to generate lilst").ConfigureAwait(false);
+        }
+
         [Group("latest"), TriggersTyping]
         [Description("Provides links to the latest RPCS3 build")]
         [Cooldown(1, 30, CooldownBucketType.Channel)]
