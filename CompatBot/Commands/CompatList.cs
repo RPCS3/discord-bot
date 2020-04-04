@@ -140,9 +140,7 @@ namespace CompatBot.Commands
             var resultList = query.Where(i => i.score > 0)
                 .OrderByDescending(i => i.score)
                 .ThenByDescending(i => i.second)
-                .Select(i => i.title)
-                .Distinct(StringComparer.InvariantCultureIgnoreCase)
-                .Where(title => !Regex.IsMatch(title, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline))
+                .Distinct()
                 .Take(number)
                 .ToList();
             if (resultList.Count > 0)
@@ -155,8 +153,8 @@ namespace CompatBot.Commands
                     result.Append($" according to {scoreType}s");
                 result.AppendLine(":");
                 var c = 1;
-                foreach (var title in resultList)
-                    result.AppendLine($"#{c++}: {title}");
+                foreach (var (title, score, _) in resultList)
+                    result.AppendLine($"`{score:00}` {title}");
                 await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
             }
             else
@@ -486,6 +484,10 @@ namespace CompatBot.Commands
                 if (returnCode.displayResults)
                 {
                     var sortedList = compatResult.GetSortedList();
+                    var trimmedList = sortedList.Where(i => i.score > 0).ToList();
+                    if (trimmedList.Count > 0)
+                        sortedList = trimmedList;
+
                     var searchTerm = request.search ?? @"¯\_(ツ)_/¯";
                     var searchHits = sortedList.Where(t => t.score > 0.5
                                                            || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
