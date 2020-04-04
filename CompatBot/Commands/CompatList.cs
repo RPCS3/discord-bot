@@ -133,9 +133,9 @@ namespace CompatBot.Commands
             queryBase = queryBase.Where(g => g.Metacritic != null).Include(t => t.Metacritic);
             var query = scoreType switch
             {
-                "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.CriticScore.Value, second: t.Metacritic.UserScore ?? t.Metacritic.CriticScore.Value)),
-                "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Name, score: t.Metacritic.UserScore.Value, second: t.Metacritic.CriticScore ?? t.Metacritic.UserScore.Value)),
-                _ => queryBase.AsEnumerable().Select(t => (title: t.Name, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0), second: (byte)0)),
+                "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Metacritic.Title, score: t.Metacritic.CriticScore.Value, second: t.Metacritic.UserScore ?? t.Metacritic.CriticScore.Value)),
+                "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Metacritic.Title, score: t.Metacritic.UserScore.Value, second: t.Metacritic.CriticScore ?? t.Metacritic.UserScore.Value)),
+                _ => queryBase.AsEnumerable().Select(t => (title: t.Metacritic.Title, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0), second: (byte)0)),
             };
             var resultList = query.Where(i => i.score > 0)
                 .OrderByDescending(i => i.score)
