@@ -314,13 +314,13 @@ namespace CompatBot.Commands
                 if (newestPrCommit.MergedAt == null || oldestPrCommit.MergedAt == null)
                     return;
 
-                mergedPrs = mergedPrs.Where(pri => pri.MergedAt.HasValue)
+                mergedPrs = mergedPrs?.Where(pri => pri.MergedAt.HasValue)
                     .OrderBy(pri => pri.MergedAt.Value)
                     .SkipWhile(pri => pri.Number != oldestPr)
                     .Skip(1)
                     .TakeWhile(pri => pri.Number != newestPr)
                     .ToList();
-                if (mergedPrs.Count == 0)
+                if (mergedPrs is null || mergedPrs.Count == 0)
                     return;
 
                 var failedBuilds = await Config.GetAzureDevOpsClient().GetMasterBuildsAsync(
