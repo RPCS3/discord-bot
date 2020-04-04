@@ -486,6 +486,10 @@ namespace CompatBot.Commands
                 if (returnCode.displayResults)
                 {
                     var sortedList = compatResult.GetSortedList();
+                    var trimmedList = sortedList.Where(i => i.score > 0).ToList();
+                    if (trimmedList.Count > 0)
+                        sortedList = trimmedList;
+
                     var searchTerm = request.search ?? @"¯\_(ツ)_/¯";
                     var searchHits = sortedList.Where(t => t.score > 0.5
                                                            || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
