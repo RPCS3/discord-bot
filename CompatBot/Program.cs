@@ -269,16 +269,6 @@ namespace CompatBot
                         //logLevel = Config.Log.Info;
                         if (eventArgs.Message?.Contains("Session resumed") ?? false)
                             Watchdog.DisconnectTimestamps.Clear();
-                        else if (eventArgs.Message != null
-                                 && eventArgs.Message.Contains("Received OP")
-                                 && eventArgs.Message.Contains("Reconnect"))
-                        {
-                            Config.Log.Warn("Detected the new discord gateway opcode, restarting...");
-                            var restartThread = new Thread(() => Sudo.Bot.Restart(InvalidChannelId, "Restarted due to issues with the new Discord gateway opcode issues"));
-                            restartThread.Start();
-                            restartThread.Join(1000);
-                            Environment.Exit(-1);
-                        }
                     }
                     else if (eventArgs.Level == LogLevel.Warning)
                     {
