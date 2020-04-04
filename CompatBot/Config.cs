@@ -68,6 +68,7 @@ namespace CompatBot
         public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
+        public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
 
         internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
 

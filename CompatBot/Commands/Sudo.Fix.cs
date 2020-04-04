@@ -128,6 +128,22 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
             }
 
+            [Command("metacritic_links"), Aliases("mcl")]
+            [Description("Cleans up Metacritic links")]
+            public async Task MetacriticLinks(CommandContext ctx, [Description("Remove links for trial and demo versions only")] bool demosOnly = true)
+            {
+                var changed = 0;
+                using var db = new ThumbnailDb();
+                foreach (var thumb in db.Thumbnail.Where(t => t.MetacriticId != null))
+                {
+                    if (!demosOnly || Regex.IsMatch(thumb.Name, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline))
+                        thumb.MetacriticId = null;
+
+                }
+                await db.SaveChangesAsync();
+                await ctx.RespondAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
+            }
+
             public static async Task<string> FixChannelMentionAsync(CommandContext ctx, string msg)
             {
                 if (string.IsNullOrEmpty(msg))

@@ -211,7 +211,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Failed to bind device"] = new Regex(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
                     //["{PPU["] = new Regex(@"{PPU\[.+\]} (?<log_channel>[^ :]+)( TODO)?: (?!\xE2\x80\x9C)(?<syscall_name>[^ :]+?)\(.*\r?$", DefaultOptions),
                     ["⁂"] = new Regex(@"\xE2\x81\x82 (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
-                    ["undub"] =  new Regex(@"(\b|_)(?<game_mod>undub)(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
+                    ["undub"] =  new Regex(@"(\b|_)(?<game_mod>(undub|translation patch))(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
                 },
                 OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,

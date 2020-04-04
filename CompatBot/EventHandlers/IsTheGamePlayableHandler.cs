@@ -114,7 +114,7 @@ namespace CompatBot.EventHandlers
                         bestMatch = listWithStatus.First();
                     var (code, info, score) = bestMatch;
                     Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info?.Title}\" with score {score}");
-                    if (score < 0.51)
+                    if (score < Config.GameTitleMatchThreshold)
                         return (null, null);
 
                     if (!string.IsNullOrEmpty(info?.Title))
