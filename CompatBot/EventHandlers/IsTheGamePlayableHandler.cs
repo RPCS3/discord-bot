@@ -59,6 +59,9 @@ namespace CompatBot.EventHandlers
                 return;
 
             gameTitle = CompatList.FixGameTitleSearch(gameTitle);
+            if (gameTitle.Length < 4)
+                return;
+
             if (ProductCodeLookup.ProductCode.IsMatch(args.Message.Content))
                 return;
 

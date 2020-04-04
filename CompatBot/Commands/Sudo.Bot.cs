@@ -234,6 +234,7 @@ namespace CompatBot.Commands
                 self.Start();
                 Config.inMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
+                Environment.Exit(-1);
             }
         }
     }
