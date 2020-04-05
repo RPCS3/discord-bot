@@ -52,5 +52,8 @@ namespace Tests
             var productCode = "NPUB31848";
             Assert.That(contentId[7..16], Is.EqualTo(productCode));
         }
+
+        [TestCase("a grey and white cat sitting in front of a window", ExpectedResult = "a grey and white kot sitting in front of a window")]
+        public string FixKotTest(string input) => input.FixKot();
     }
 }

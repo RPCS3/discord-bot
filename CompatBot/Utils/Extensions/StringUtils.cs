@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using DuoVia.FuzzyStrings;
 using HomoglyphConverter;
 using Microsoft.Extensions.Caching.Memory;
@@ -55,6 +56,18 @@ namespace CompatBot.Utils
 
             if (str.StartsWith('"') && str.EndsWith('"'))
                 return str[1..^1];
+            return str;
+        }
+
+        public static string FixKot(this string str)
+        {
+            var matches = Regex.Matches(str, @"\b(?<cat>cat)s?\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
+            foreach (Match m in matches)
+            {
+                var idx = m.Index;
+                var end = idx + 3;
+                str = $"{str[..idx]}kot{str[end..]}";
+            }
             return str;
         }
 
