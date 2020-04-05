@@ -104,7 +104,7 @@ namespace CompatBot.Commands
                         double v when v > 0.5 => "I'm not very smart, so my best guess it's",
                         _ => "Ugh, idk? Might be",
                     };
-                    msg = $"{confidence} {captions[0].Text}";
+                    msg = $"{confidence} {captions[0].Text.FixKot()}";
 #if DEBUG
                     msg += $" [{captions[0].Confidence * 100:0.00}%]";
                     if (captions.Count > 1)
