@@ -236,12 +236,13 @@ namespace CompatBot.Commands
                         && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
                         && newBuildTime > previousBuildTime)
                         CachedUpdateInfo = info;
-                    else
-                        return true;
                 }
                 if (!updateAnnouncement)
+                {
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                else if (updateAnnouncementRestore)
+                    return true;
+                }
+                if (updateAnnouncementRestore)
                 {
                     if (embed.Title == "Error")
                         return false;
@@ -270,8 +271,6 @@ namespace CompatBot.Commands
                         return false;
                     }
 
-                    if (!updateAnnouncement)
-                        embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
                     if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                         return false;
 
