@@ -1,10 +1,12 @@
 {
   "profiles": {
     "default": {
-      "commandName": "Project"
-    },
-    "Docker": {
-      "commandName": "Docker"
+      "commandName": "Project",
+      "environmentVariables": {
+        "BotGuildId": "692137772944719872",
+        "BotAdminId": "330706378492608513",  // ",85603224790265856 "\",",
+        "Token": "Njk0MDU1NTg1NTgyMTUzNzI4.XoQJ9w.02NfSSoJTcY5-ckAg4jMNcfvDig"
+      }
     }
   }
 }
