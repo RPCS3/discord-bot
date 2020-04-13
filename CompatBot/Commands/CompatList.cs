@@ -46,6 +46,7 @@ namespace CompatBot.Commands
         {
             using var db = new BotDb();
             lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+            //lastUpdateInfo = "8022";
             if (lastUpdateInfo is string strPr
                 && int.TryParse(strPr, out var pr))
             {
@@ -152,7 +153,6 @@ namespace CompatBot.Commands
                 if (scoreType == "critic" || scoreType == "user")
                     result.Append($" according to {scoreType}s");
                 result.AppendLine(":");
-                var c = 1;
                 foreach (var (title, score, _) in resultList)
                     result.AppendLine($"`{score:00}` {title}");
                 await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
@@ -184,6 +184,14 @@ namespace CompatBot.Commands
             public Task Clear(CommandContext ctx)
             {
                 lastUpdateInfo = null;
+                return CheckForRpcs3Updates(ctx.Client, null);
+            }
+
+            [Command("set"), RequiresBotModRole]
+            [Description("Sets update info cache that is used to check if new updates are available")]
+            public Task Set(CommandContext ctx, string lastUpdatePr)
+            {
+                lastUpdateInfo = lastUpdatePr;
                 return CheckForRpcs3Updates(ctx.Client, null);
             }
 
@@ -236,12 +244,13 @@ namespace CompatBot.Commands
                         && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
                         && newBuildTime > previousBuildTime)
                         CachedUpdateInfo = info;
-                    else
-                        return true;
                 }
                 if (!updateAnnouncement)
+                {
                     await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                else if (updateAnnouncementRestore)
+                    return true;
+                }
+                if (updateAnnouncementRestore)
                 {
                     if (embed.Title == "Error")
                         return false;
@@ -270,8 +279,6 @@ namespace CompatBot.Commands
                         return false;
                     }
 
-                    if (!updateAnnouncement)
-                        embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
                     if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
                         return false;
 

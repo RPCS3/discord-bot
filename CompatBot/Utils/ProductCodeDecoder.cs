@@ -59,6 +59,12 @@ namespace CompatBot.Utils
                     DecodeMediaC(productCode.Slice(1), result);
                     return;
                 }
+                case char _ when productCode[..4] == "MRTC":
+                {
+                    result.Add("Media Replication and Transfer Code (or something completely different, no one knows for sure)");
+                    DecodeRegionNumbers(productCode.Slice(4), result);
+                    return;
+                }
                 default:
                 {
                     result.Add("Unknown or invalid product code");
@@ -409,6 +415,11 @@ namespace CompatBot.Utils
                 case 'O':
                 {
                     result.Add("Miscellaneous software (manuals, etc)");
+                    break;
+                }
+                case 'Q':
+                {
+                    result.Add("XMB Theme");
                     break;
                 }
                 case 'S':

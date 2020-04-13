@@ -34,7 +34,7 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "No images detected").ConfigureAwait(false);
         }
 
-        [Command("describe"), RequiresSupporterRole]
+        [Command("describe")]
         public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl)
         {
             try

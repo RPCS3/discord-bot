@@ -30,14 +30,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00679" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00679" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00679" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00683" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00683" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00683" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.45.0.1895" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.45.0.1911" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
-    <PackageReference Include="MegaApiClient" Version="1.7.1" />
+    <PackageReference Include="MegaApiClient" Version="1.8.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.13.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.13.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.13.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.ComputerVision" Version="5.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.3" />
