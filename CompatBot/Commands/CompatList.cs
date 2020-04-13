@@ -187,6 +187,14 @@ namespace CompatBot.Commands
                 return CheckForRpcs3Updates(ctx.Client, null);
             }
 
+            [Command("set"), RequiresBotModRole]
+            [Description("Sets update info cache that is used to check if new updates are available")]
+            public Task Set(CommandContext ctx, string lastUpdatePr)
+            {
+                lastUpdateInfo = lastUpdatePr;
+                return CheckForRpcs3Updates(ctx.Client, null);
+            }
+
             [Command("restore"), RequiresBotModRole]
             [Description("Regenerates update announcement for specified bot message and build hash")]
             public async Task Restore(CommandContext ctx, string botMsgLink, string updateCommitHash)
