@@ -53,7 +53,7 @@ namespace CompatBot.Utils.Extensions
                 .ToList();
 
             await Task.WhenAll(builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken))).ConfigureAwait(false);
-            return builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceBranch, b, cancellationToken).GetAwaiter().GetResult()).ToList();
+            return builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken).GetAwaiter().GetResult()).ToList();
         }
 
         public static async Task<BuildInfo> GetMasterBuildInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, DateTime? oldestTimestamp, CancellationToken cancellationToken)

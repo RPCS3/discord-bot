@@ -46,6 +46,7 @@ namespace CompatBot.Commands
         {
             using var db = new BotDb();
             lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+            //lastUpdateInfo = "8022";
             if (lastUpdateInfo is string strPr
                 && int.TryParse(strPr, out var pr))
             {
