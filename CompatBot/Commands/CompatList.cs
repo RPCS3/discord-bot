@@ -152,7 +152,6 @@ namespace CompatBot.Commands
                 if (scoreType == "critic" || scoreType == "user")
                     result.Append($" according to {scoreType}s");
                 result.AppendLine(":");
-                var c = 1;
                 foreach (var (title, score, _) in resultList)
                     result.AppendLine($"`{score:00}` {title}");
                 await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
