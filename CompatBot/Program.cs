@@ -31,6 +31,8 @@ namespace CompatBot
 
         internal static async Task Main(string[] args)
         {
+            Config.TelemetryClient?.TrackEvent("startup");
+
             Console.WriteLine("Confinement: " + SandboxDetector.Detect());
             if (args.Length > 0 && args[0] == "--dry-run")
             {
@@ -368,6 +370,7 @@ namespace CompatBot
             }
             finally
             {
+                Config.TelemetryClient?.Flush();
                 ShutdownCheck.Release();
                 if (singleInstanceCheckThread.IsAlive)
                     singleInstanceCheckThread.Join(100);

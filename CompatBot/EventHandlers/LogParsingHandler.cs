@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -73,10 +74,12 @@ namespace CompatBot.EventHandlers
 
         public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false)
         {
+            var start = DateTimeOffset.UtcNow;
             try
             {
                 if (!QueueLimiter.Wait(0))
                 {
+                    Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, TimeSpan.Zero, HttpStatusCode.TooManyRequests.ToString(), false);
                     await channel.SendMessageAsync("Log processing is rate limited, try again a bit later").ConfigureAwait(false);
                     return;
                 }
@@ -123,6 +126,7 @@ namespace CompatBot.EventHandlers
                                 .AddAuthor(client, message, source)
                                 .Build()
                             ).ConfigureAwait(false);
+                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
                         }
                         else
                         {
@@ -192,6 +196,7 @@ namespace CompatBot.EventHandlers
                                         embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
                                     ).ConfigureAwait(false);
                                 }
+                                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.OK.ToString(), true);
                             }
                             catch (Exception e)
                             {
@@ -203,12 +208,16 @@ namespace CompatBot.EventHandlers
                     else if (!string.IsNullOrEmpty(fail)
                              && ("help".Equals(channel.Name, StringComparison.InvariantCultureIgnoreCase) || LimitedToSpamChannel.IsSpamChannel(channel)))
                     {
+                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
                         await channel.SendMessageAsync($"{message.Author.Mention} {fail}").ConfigureAwait(false);
                         return;
                     }
 
                     if (!"help".Equals(channel.Name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
                         return;
+                    }
 
                     var potentialLogExtension = message.Attachments.Select(a => Path.GetExtension(a.FileName).ToUpperInvariant().TrimStart('.')).FirstOrDefault();
                     switch (potentialLogExtension)
@@ -216,19 +225,26 @@ namespace CompatBot.EventHandlers
                         case "TXT":
                         {
                             await channel.SendMessageAsync($"{message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of copying the logs from RPCS3's interface, as it doesn't contain all the required information.").ConfigureAwait(false);
+                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.BadRequest.ToString(), true);
                             return;
                         }
                     }
 
                     if (string.IsNullOrEmpty(message.Content))
+                    {
+                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
                         return;
+                    }
 
                     var linkStart = message.Content.IndexOf("http");
                     if (linkStart > -1)
                     {
                         var link = message.Content[linkStart..].Split(linkSeparator, 2)[0];
                         if (link.Contains(".log", StringComparison.InvariantCultureIgnoreCase) || link.Contains("rpcs3.zip", StringComparison.CurrentCultureIgnoreCase))
+                        {
                             await channel.SendMessageAsync("If you intended to upload a log file please re-upload it directly to discord").ConfigureAwait(false);
+                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.BadRequest.ToString(), true);
+                        }
                     }
                 }
                 finally
@@ -241,6 +257,8 @@ namespace CompatBot.EventHandlers
             catch (Exception e)
             {
                 Config.Log.Error(e, "Error parsing log");
+                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
+                Config.TelemetryClient?.TrackException(e);
             }
         }
 

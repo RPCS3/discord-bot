@@ -7,6 +7,10 @@ using System.Reflection;
 using System.Threading;
 using CompatBot.Utils;
 using DSharpPlus.Entities;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DependencyCollector;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.Logging;
@@ -27,6 +31,10 @@ namespace CompatBot
     internal static class Config
     {
         private static IConfigurationRoot config;
+        private static TelemetryClient telemetryClient;
+        private static readonly DependencyTrackingTelemetryModule dependencyTrackingTelemetryModule = new DependencyTrackingTelemetryModule();
+        private static readonly PerformanceCollectorModule performanceCollectorModule = new PerformanceCollectorModule();
+
         internal static readonly ILogger Log;
         internal static readonly ILoggerFactory LoggerFactory;
         internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new ConcurrentDictionary<string, string>();
@@ -66,6 +74,7 @@ namespace CompatBot
         public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");
         public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/");
         public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
+        public static string AzureAppInsightsKey => config.GetValue(nameof(AzureAppInsightsKey), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
         public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
@@ -253,6 +262,25 @@ namespace CompatBot
             var azureCreds = new VssBasicCredential("bot", AzureDevOpsToken);
             var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
             return azureConnection.GetClient<BuildHttpClient>();
+        }
+
+        public static TelemetryClient TelemetryClient
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(AzureAppInsightsKey))
+                    return null;
+
+                if (telemetryClient != null && telemetryClient.InstrumentationKey == AzureAppInsightsKey)
+                    return telemetryClient;
+
+                var telemetryConfig = TelemetryConfiguration.CreateDefault();
+                telemetryConfig.InstrumentationKey = AzureAppInsightsKey;
+                telemetryConfig.TelemetryInitializers.Add(new HttpDependenciesParsingTelemetryInitializer());
+                dependencyTrackingTelemetryModule.Initialize(telemetryConfig);
+                performanceCollectorModule.Initialize(telemetryConfig);
+                return telemetryClient = new TelemetryClient(telemetryConfig);
+            }
         }
     }
 }

@@ -38,6 +38,9 @@
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
     <PackageReference Include="MegaApiClient" Version="1.7.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.13.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.13.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.13.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.ComputerVision" Version="5.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.3" />
