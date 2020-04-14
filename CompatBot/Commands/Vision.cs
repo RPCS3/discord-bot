@@ -24,7 +24,7 @@ namespace CompatBot.Commands
                                              //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
-        [Command("describe"), RequiresSupporterRole]
+        [Command("describe")]
         [Description("Generates an image description from the attached image, or from the url")]
         public async Task Describe(CommandContext ctx)
         {
