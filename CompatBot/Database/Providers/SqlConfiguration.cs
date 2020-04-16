@@ -15,7 +15,7 @@ namespace CompatBot.Database.Providers
             if (setVars.Any())
             {
                 foreach (var v in setVars)
-                Config.inMemorySettings[v.Key[(ConfigVarPrefix.Length)..]] = v.Value;
+                Config.inMemorySettings[v.Key[ConfigVarPrefix.Length ..]] = v.Value;
                 Config.RebuildConfiguration();
             }
         }

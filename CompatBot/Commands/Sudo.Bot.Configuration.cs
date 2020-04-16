@@ -31,7 +31,7 @@ namespace CompatBot.Commands
                         foreach (var v in setVars)
                         {
 #if DEBUG
-                            result.Append(v.Key[(SqlConfiguration.ConfigVarPrefix.Length)..]).Append(" = ").AppendLine(v.Value);
+                            result.Append(v.Key[SqlConfiguration.ConfigVarPrefix.Length ..]).Append(" = ").AppendLine(v.Value);
 #else
                             result.AppendLine(v.Key[(SqlConfiguration.ConfigVarPrefix.Length)..]);
 #endif
