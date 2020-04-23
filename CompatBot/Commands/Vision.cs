@@ -101,7 +101,7 @@ namespace CompatBot.Commands
                         double v when v > 0.95 => "I'm pretty sure it is",
                         double v when v > 0.9 => "I'm quite sure it is",
                         double v when v > 0.8 => "I think it's",
-                        double v when v > 0.5 => "I'm not very smart, so my best guess it's",
+                        double v when v > 0.5 => "I'm not very smart, so my best guess is that it's",
                         _ => "Ugh, idk? Might be",
                     };
                     msg = $"{confidence} {captions[0].Text.FixKot()}";
