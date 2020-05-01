@@ -190,7 +190,7 @@ namespace CompatBot.Utils.ResultFormatters
                 $"Res Scale Threshold:{items["texture_scale_threshold"] ?? "N/A",ColumnWidth-19}",
                 $"Anti-Aliasing:{items["msaa"] ?? "N/A",ColumnWidth-13}",
                 $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
-                $"Enabled RSX Buffers:{enabledBuffers,ColumnWidth-15}",
+                $"RSX Buffers:{enabledBuffers,ColumnWidth-11}",
                 $"Shader Mode:{items["shader_mode"],ColumnWidth-11}",
                 $"ZCull:{items["zcull_status"],ColumnWidth-5}",
                 $"Frame Limit:{items["frame_limit_combined"],ColumnWidth-11}",
