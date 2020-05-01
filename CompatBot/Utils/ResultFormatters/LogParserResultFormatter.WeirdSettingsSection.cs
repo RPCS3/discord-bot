@@ -213,6 +213,13 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_decoder"] is string spuDecoder && spuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
                 notes.Add("⚠ Please set `SPU Decoder` to use recompiler for better performance");
 
+            if (items["accurate_getllar"] == EnabledMark)
+                notes.Add("ℹ `Accurate GETLLAR` is enabled");
+            if (items["accurate_putlluc"] == EnabledMark)
+                notes.Add("ℹ `Accurate PUTLLUC` is enabled");
+            if (items["accurate_rsx_reservation"] == EnabledMark)
+                notes.Add("ℹ `Accurate RSX Reservation Access` is enabled");
+
             if (items["approximate_xfloat"] is string approximateXfloat && approximateXfloat == DisabledMark)
             {
                 if (KnownNoApproximateXFloatIds.Contains(serial))
@@ -344,8 +351,10 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
 
-            if (items["async_shaders"] == EnabledMark)
-                notes.Add("❔ `Async Shader Compiler` is disabled");
+            if (items["shader_mode"] == "Interpreter only")
+                notes.Add("⚠ `Shader Interpreter Only` mode is not accurate and very demanding");
+            else if (!items["shader_mode"].StartsWith("Async"))
+                notes.Add("❔ Async shader compilation is disabled");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
                 && int.TryParse(driverRecoveryTimeout, out var drtValue)
                 && drtValue != 1000000)
@@ -366,6 +375,10 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     notes.Add($"ℹ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}");
             }
+            if (items["audio_buffering"] == EnabledMark
+                && int.TryParse(items["audio_buffer_duration"], out var duration)
+                && duration > 100)
+                notes.Add($"ℹ `Audio Buffer Duration` is set to {duration}ms, which may cause audio lag");
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
             {

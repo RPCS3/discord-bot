@@ -348,8 +348,32 @@ namespace CompatBot.Utils.ResultFormatters
                     items["lib_loader"] = "Manual selection";
                 else
                     items["lib_loader"] = "Liblv2.sprx only";
-
             }
+            items["frame_limit_combined"] = (items["frame_limit"], items["vsync"]) switch
+            {
+                ("Off", "true") => "VSync",
+                ("Off", _) => "Off",
+                (_, "true") => items["frame_limit"] + "+VSync",
+                _ => items["frame_limit"],
+            };
+            if (items["shader_mode"] is string sm)
+            {
+                var async = sm.Contains("async", StringComparison.InvariantCultureIgnoreCase);
+                var recompiler = sm.Contains("recompiler", StringComparison.InvariantCultureIgnoreCase);
+                var interpreter = sm.Contains("interpreter", StringComparison.InvariantCultureIgnoreCase);
+                items["shader_mode"] = (async, recompiler, interpreter) switch
+                {
+                    (true, true, false)  => "Async",
+                    (true, _, true)      => "Async+Interpreter",
+                    (false, true, false) => "Recompiler only",
+                    (false, _, true)     => "Interpreter only",
+                    _                    => items["shader_mode"],
+                };
+            }
+            else if (items["disable_async_shaders"] == DisabledMark)
+                items["shader_mode"] = "Async";
+            else
+                items["shader_mode"] = "Recompiler only";
 
             static string reformatDecoder(string dec)
             {

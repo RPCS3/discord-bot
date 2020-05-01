@@ -84,9 +84,12 @@ namespace CompatBot.Utils.ResultFormatters
                     StatsStorage.GameStatCache.TryGetValue(cacheTitle, out int stat);
                     StatsStorage.GameStatCache.Set(cacheTitle, ++stat, StatsStorage.CacheTime);
                 }
+                var title = $"{productCodePart}{cacheTitle.Trim(200)}{onlineOnlypart}";
+                if (string.IsNullOrEmpty(title))
+                    desc = "";
                 return new DiscordEmbedBuilder
                 {
-                    Title = $"{productCodePart}{cacheTitle.Trim(200)}{onlineOnlypart}",
+                    Title = title,
                     Url = info.Thread > 0 ? $"https://forums.rpcs3.net/thread-{info.Thread}.html" : null,
                     Description = desc,
                     Color = color,

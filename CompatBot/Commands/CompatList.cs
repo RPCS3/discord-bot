@@ -693,8 +693,8 @@ namespace CompatBot.Commands
                 if (matches.Count > 0)
                 {
                     Config.Log.Trace($"Matched metacritic [{item.Title}] to compat titles: {string.Join(", ", matches.Select(m => $"[{m.thumb.Name}]"))}");
-                    foreach (var m in matches)
-                        m.thumb.Metacritic = item;
+                    foreach (var (thumb, _) in matches)
+                        thumb.Metacritic = item;
                     await db.SaveChangesAsync().ConfigureAwait(false);
                 }
                 else
