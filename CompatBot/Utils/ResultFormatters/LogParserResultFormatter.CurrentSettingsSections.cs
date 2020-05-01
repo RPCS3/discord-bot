@@ -161,25 +161,25 @@ namespace CompatBot.Utils.ResultFormatters
 
             var enabledBuffers = (items["read_color_buffers"], items["write_color_buffers"], items["read_depth_buffer"], items["write_depth_buffer"]) switch
             {
-                (DisabledMark, DisabledMark, DisabledMark, DisabledMark) => "None",
-                (DisabledMark, DisabledMark, DisabledMark, EnabledMark)  => "WDB",
-                (DisabledMark, DisabledMark, EnabledMark, DisabledMark)  => "RDB",
-                (DisabledMark, DisabledMark, EnabledMark, EnabledMark)   => "RWDB",
+                (EnabledMark, EnabledMark, EnabledMark, EnabledMark) => "RWCB+RWDB",
+                (EnabledMark, EnabledMark, EnabledMark,           _) => "RWCB+RDB",
+                (EnabledMark, EnabledMark,           _, EnabledMark) => "RWCB+WDB",
+                (EnabledMark, EnabledMark,           _,           _) => "RWCB",
 
-                (DisabledMark, EnabledMark, DisabledMark, DisabledMark) => "WCB",
-                (DisabledMark, EnabledMark, DisabledMark, EnabledMark)  => "WCB+WDB",
-                (DisabledMark, EnabledMark, EnabledMark, DisabledMark)  => "WCB+RDB",
-                (DisabledMark, EnabledMark, EnabledMark, EnabledMark)   => "WCB+RWDB",
+                (EnabledMark,           _, EnabledMark, EnabledMark) => "RCB+RWDB",
+                (EnabledMark,           _, EnabledMark,           _) => "RCB+RDB",
+                (EnabledMark,           _,           _, EnabledMark) => "RCB+WDB",
+                (EnabledMark,           _,           _,           _) => "RCB",
 
-                (EnabledMark, DisabledMark, DisabledMark, DisabledMark) => "RCB",
-                (EnabledMark, DisabledMark, DisabledMark, EnabledMark)  => "RCB+WDB",
-                (EnabledMark, DisabledMark, EnabledMark, DisabledMark)  => "RCB+RDB",
-                (EnabledMark, DisabledMark, EnabledMark, EnabledMark)   => "RCB+RWDB",
+                (          _, EnabledMark, EnabledMark, EnabledMark) => "WCB+RWDB",
+                (          _, EnabledMark, EnabledMark,           _) => "WCB+RDB",
+                (          _, EnabledMark,           _, EnabledMark) => "WCB+WDB",
+                (          _, EnabledMark,           _,           _) => "WCB",
 
-                (EnabledMark, EnabledMark, DisabledMark, DisabledMark) => "RWCB",
-                (EnabledMark, EnabledMark, DisabledMark, EnabledMark)  => "RWCB+WDB",
-                (EnabledMark, EnabledMark, EnabledMark, DisabledMark)  => "RWCB+RDB",
-                (EnabledMark, EnabledMark, EnabledMark, EnabledMark)   => "RWCB+RWDB",
+                (          _,           _, EnabledMark, EnabledMark) => "RWDB",
+                (          _,           _, EnabledMark,           _) => "RDB",
+                (          _,           _,           _, EnabledMark) => "WDB",
+                _                                                    => "None",
             };
 
             var lines = new List<string>
