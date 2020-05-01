@@ -159,6 +159,29 @@ namespace CompatBot.Utils.ResultFormatters
             if (string.IsNullOrEmpty(items["renderer"]))
                 return (null, null);
 
+            var enabledBuffers = (items["read_color_buffers"], items["write_color_buffers"], items["read_depth_buffer"], items["write_depth_buffer"]) switch
+            {
+                (DisabledMark, DisabledMark, DisabledMark, DisabledMark) => "None",
+                (DisabledMark, DisabledMark, DisabledMark, EnabledMark)  => "WDB",
+                (DisabledMark, DisabledMark, EnabledMark, DisabledMark)  => "RDB",
+                (DisabledMark, DisabledMark, EnabledMark, EnabledMark)   => "RWDB",
+
+                (DisabledMark, EnabledMark, DisabledMark, DisabledMark) => "WCB",
+                (DisabledMark, EnabledMark, DisabledMark, EnabledMark)  => "WCB+WDB",
+                (DisabledMark, EnabledMark, EnabledMark, DisabledMark)  => "WCB+RDB",
+                (DisabledMark, EnabledMark, EnabledMark, EnabledMark)   => "WCB+RWDB",
+
+                (EnabledMark, DisabledMark, DisabledMark, DisabledMark) => "RCB",
+                (EnabledMark, DisabledMark, DisabledMark, EnabledMark)  => "RCB+WDB",
+                (EnabledMark, DisabledMark, EnabledMark, DisabledMark)  => "RCB+RDB",
+                (EnabledMark, DisabledMark, EnabledMark, EnabledMark)   => "RCB+RWDB",
+
+                (EnabledMark, EnabledMark, DisabledMark, DisabledMark) => "RWCB",
+                (EnabledMark, EnabledMark, DisabledMark, EnabledMark)  => "RWCB+WDB",
+                (EnabledMark, EnabledMark, EnabledMark, DisabledMark)  => "RWCB+RDB",
+                (EnabledMark, EnabledMark, EnabledMark, EnabledMark)   => "RWCB+RWDB",
+            };
+
             var lines = new List<string>
             {
                 $"Renderer:{items["renderer"],ColumnWidth-8}",
@@ -167,7 +190,7 @@ namespace CompatBot.Utils.ResultFormatters
                 $"Res Scale Threshold:{items["texture_scale_threshold"] ?? "N/A",ColumnWidth-19}",
                 $"Anti-Aliasing:{items["msaa"] ?? "N/A",ColumnWidth-13}",
                 $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
-                $"Write Color Buffers:{items["write_color_buffers"],ColumnWidth-19}",
+                $"Enabled RSX Buffers:{enabledBuffers,ColumnWidth-15}",
                 $"Shader Mode:{items["shader_mode"],ColumnWidth-11}",
                 $"ZCull:{items["zcull_status"],ColumnWidth-5}",
                 $"Frame Limit:{items["frame_limit_combined"],ColumnWidth-11}",
