@@ -545,7 +545,7 @@ namespace CompatBot.Commands
             var ln = 3;
             foreach (var c in StringUtils.SpaceCharacters)
                 result.AppendLine($"`{ln++,2}. {(int)c:x4}:{checkMark,width}`");
-            void addRandomStuff(DiscordEmbedBuilder emb)
+            static void addRandomStuff(DiscordEmbedBuilder emb)
             {
                 var txt = "😾 lasjdf wqoieyr osdf `Vreoh Sdab` wohe `270`\n" +
                           "🤔 salfhiosfhsero hskfh shufwei oufhwehw e wkihrwe h\n" +
