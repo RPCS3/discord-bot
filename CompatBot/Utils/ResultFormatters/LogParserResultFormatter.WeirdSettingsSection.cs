@@ -375,6 +375,10 @@ namespace CompatBot.Utils.ResultFormatters
                 else
                     notes.Add($"ℹ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}");
             }
+            if (items["audio_buffering"] == EnabledMark
+                && int.TryParse(items["audio_buffer_duration"], out var duration)
+                && duration > 100)
+                notes.Add($"ℹ `Audio Buffer Duration` is set to {duration}ms, which may cause audio lag");
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
             {
