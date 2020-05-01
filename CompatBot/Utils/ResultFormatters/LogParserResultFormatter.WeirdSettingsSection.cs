@@ -344,7 +344,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
             }
 
-            if (items["async_shaders"] == EnabledMark)
+            if (items["disable_async_shaders"] == EnabledMark)
                 notes.Add("❔ `Async Shader Compiler` is disabled");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
                 && int.TryParse(driverRecoveryTimeout, out var drtValue)

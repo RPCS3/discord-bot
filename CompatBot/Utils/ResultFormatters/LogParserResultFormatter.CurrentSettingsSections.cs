@@ -168,9 +168,9 @@ namespace CompatBot.Utils.ResultFormatters
                 $"Anti-Aliasing:{items["msaa"] ?? "N/A",ColumnWidth-13}",
                 $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
                 $"Write Color Buffers:{items["write_color_buffers"],ColumnWidth-19}",
+                $"Shader Mode:{items["shader_mode"],ColumnWidth-11}",
                 $"ZCull:{items["zcull_status"],ColumnWidth-5}",
-                $"Frame Limit:{items["frame_limit"],ColumnWidth-11}",
-                $"VSync:{items["vsync"] ?? "N/A",ColumnWidth-5}",
+                $"Frame Limit:{items["frame_limit_combined"],ColumnWidth-11}",
             };
             return ("GPU Settings", lines);
         }
