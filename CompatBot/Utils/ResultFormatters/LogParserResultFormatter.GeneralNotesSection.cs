@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
-using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
@@ -77,6 +76,16 @@ namespace CompatBot.Utils.ResultFormatters
                             knownFatal = true;
                             notes.Add("❌ SPU cache has issues; right-click on the game, then `Remove` → `SPU Cache`");
                         }
+                    }
+                    else if (fatalError.Contains("graphics-hook64.dll"))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ Please update or uninstall OBS to prevent crashes");
+                    }
+                    else if (fatalError.Contains("bdcamvk64.dll"))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ Please update or uninstall Bandicam to prevent crashes");
                     }
                     else if (fatalError.Contains("(e=0x17): file::read"))
                     {
