@@ -27,6 +27,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 items["build_version"] = buildInfo.Groups["version"].Value.Trim();
                 items["build_number"] = buildInfo.Groups["build"].Value.Trim();
+                items["build_full_version"] = $"{items["build_version"]}.{items["build_number"]}";
                 items["build_commit"] = buildInfo.Groups["commit"].Value.Trim();
                 items["build_branch"] = buildInfo.Groups["branch"].Value.Trim();
                 var fwVersion = buildInfo.Groups["fw_version_installed"].Value;
