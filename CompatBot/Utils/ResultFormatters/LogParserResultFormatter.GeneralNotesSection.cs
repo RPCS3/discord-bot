@@ -16,6 +16,8 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
+        private static readonly Version decompilerIssueStartVersion = new Version(0, 0, 9, 10307);
+
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
         {
             var items = state.CompleteCollection;
@@ -75,6 +77,16 @@ namespace CompatBot.Utils.ResultFormatters
                         {
                             knownFatal = true;
                             notes.Add("❌ SPU cache has issues; right-click on the game, then `Remove` → `SPU Cache`");
+                        }
+                    }
+                    else if (fatalError.Contains("RSX Decompiler Thread"))
+                    {
+                        if (items["build_branch"]?.ToLowerInvariant() == "head"
+                            && Version.TryParse(items["build_full_version"], out var v)
+                            && v >= decompilerIssueStartVersion)
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ This RPCS3 build has a known regression, please use [v0.0.9-10298](https://discordapp.com/channels/272035812277878785/291679908067803136/705115636573143090) for now");
                         }
                     }
                     else if (fatalError.Contains("graphics-hook64.dll"))
@@ -344,15 +356,8 @@ namespace CompatBot.Utils.ResultFormatters
                     if (driverVersionString.Contains('-'))
                         driverVersionString = driverVersionString.Split(new[] {' ', '-'}, StringSplitOptions.RemoveEmptyEntries).Last();
                     if (Version.TryParse(driverVersionString, out var driverVersion)
-                        && Version.TryParse(items["build_version"], out var buildVersion)
-                        && int.TryParse(items["build_number"], out var buildNumber))
+                        && Version.TryParse(items["build_full_version"], out var buildVersion))
                     {
-                        buildVersion = new Version(
-	                        Math.Max(buildVersion.Major, 0), 
-	                        Math.Max(buildVersion.Minor, 0),
-	                        Math.Max(buildVersion.Build, 0),
-	                        Math.Max(buildNumber, 0)
-	                    );
                         if (IsNvidia(gpuInfo))
                         {
                             if (driverVersion < NvidiaRecommendedOldWindowsVersion)
