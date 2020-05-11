@@ -17,6 +17,7 @@ namespace CompatBot.Utils.ResultFormatters
     internal static partial class LogParserResult
     {
         private static readonly Version decompilerIssueStartVersion = new Version(0, 0, 9, 10307);
+        private static readonly Version decompilerIssueEndVersion = new Version(0, 0, 10, 10346);
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
         {
@@ -83,10 +84,11 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         if (items["build_branch"]?.ToLowerInvariant() == "head"
                             && Version.TryParse(items["build_full_version"], out var v)
-                            && v >= decompilerIssueStartVersion)
+                            && v >= decompilerIssueStartVersion
+                            && v < decompilerIssueEndVersion)
                         {
                             knownFatal = true;
-                            notes.Add("❌ This RPCS3 build has a known regression, please use [v0.0.9-10298](https://discordapp.com/channels/272035812277878785/291679908067803136/705115636573143090) for now");
+                            notes.Add("❌ This RPCS3 build has a known regression, please update to the latest version");
                         }
                     }
                     else if (fatalError.Contains("graphics-hook64.dll"))
