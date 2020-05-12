@@ -132,6 +132,7 @@ namespace CompatBot
                 {
                     Token = Config.Token,
                     TokenType = TokenType.Bot,
+                    MessageCacheSize = Config.MessageCacheSize,
                 };
                 using var client = new DiscordClient(config);
                 var commands = client.UseCommandsNext(new CommandsNextConfiguration
@@ -246,6 +247,8 @@ namespace CompatBot
                 client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
                 client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
 
+                if (Config.DeletedMessagesLogChannelId > 0)
+                    client.MessageDeleted += DeletedMessagesMonitor.OnMessageDeleted;
                 client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
                 client.MessageDeleted += EmpathySimulationHandler.OnMessageDeleted;
 

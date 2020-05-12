@@ -60,11 +60,13 @@ namespace CompatBot
         public static ulong BotRulesChannelId => config.GetValue(nameof(BotRulesChannelId), 311894275015049216ul);    // #rules-info; used to give links to rules
         public static ulong ThumbnailSpamId => config.GetValue(nameof(ThumbnailSpamId), 475678410098606100ul);        // #bot-data; used for whatever bot needs to keep (cover embeds, etc)
         public static ulong BotAdminId => config.GetValue(nameof(BotAdminId), 267367850706993152ul);                  // discord user id for a bot admin
+        public static ulong DeletedMessagesLogChannelId => config.GetValue(nameof(DeletedMessagesLogChannelId), 0ul);
         public static int ProductCodeLookupHistoryThrottle => config.GetValue(nameof(ProductCodeLookupHistoryThrottle), 7);
         public static int TopLimit => config.GetValue(nameof(TopLimit), 15);
         public static int AttachmentSizeLimit => config.GetValue(nameof(AttachmentSizeLimit), 8 * 1024 * 1024);
         public static int LogSizeLimit => config.GetValue(nameof(LogSizeLimit), 64 * 1024 * 1024);
         public static int MinimumBufferSize => config.GetValue(nameof(MinimumBufferSize), 512);
+        public static int MessageCacheSize => config.GetValue(nameof(MessageCacheSize), 1024);
         public static int BuildNumberDifferenceForOutdatedBuilds => config.GetValue(nameof(BuildNumberDifferenceForOutdatedBuilds), 10);
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
         public static int MaxSyscallResultLines => config.GetValue(nameof(MaxSyscallResultLines), 13);
