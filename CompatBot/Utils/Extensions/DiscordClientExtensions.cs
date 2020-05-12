@@ -112,14 +112,29 @@ namespace CompatBot.Utils
 
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, ReportSeverity severity, string actionList = null)
         {
-            var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
+            var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
+            if (logChannel == null)
+                return null;
+
             var embedBuilder = MakeReportTemplate(client, infraction, message, severity, actionList);
             var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
             embedBuilder.Description = reportText + embedBuilder.Description;
-            var logChannel = await getLogChannelTask.ConfigureAwait(false);
-            return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+            var (conents, _) = await message.DownloadAttachmentsAsync().ConfigureAwait(false);
+            try
+            {
+                if (conents?.Count > 0)
+                    return await logChannel.SendMultipleFilesAsync(conents, embed: embedBuilder.Build()).ConfigureAwait(false);
+                else
+                    return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (conents?.Count > 0)
+                    foreach (var f in conents.Values)
+                        f.Dispose();
+            }
         }
 
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember> reporters, string comment, ReportSeverity severity)
