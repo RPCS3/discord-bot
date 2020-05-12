@@ -55,7 +55,7 @@ namespace CompatBot.EventHandlers.LogParsing
                             await OnNewLineAsync(buffer.Slice(0, lineEnd.Value), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                             if (state.Error != LogParseState.ErrorCode.None)
                             {
-                                reader.Complete();
+                                await reader.CompleteAsync();
                                 return state;
                             }
 
@@ -88,7 +88,7 @@ namespace CompatBot.EventHandlers.LogParsing
             } while (!(result.IsCompleted || result.IsCanceled || cancellationToken.IsCancellationRequested));
             await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
             state.ReadBytes = totalReadBytes;
-            reader.Complete();
+            await reader.CompleteAsync();
             return state;
         }
 

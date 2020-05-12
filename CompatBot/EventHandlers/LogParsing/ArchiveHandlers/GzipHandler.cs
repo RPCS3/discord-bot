@@ -54,10 +54,10 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             catch (Exception e)
             {
                 Config.Log.Error(e, "Error filling the log pipe");
-                writer.Complete(e);
+                await writer.CompleteAsync(e);
                 return;
             }
-            writer.Complete();
+            await writer.CompleteAsync();
         }
     }
 }

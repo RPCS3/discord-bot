@@ -54,7 +54,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                             writer.Advance(read);
                             flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                         } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
-                        writer.Complete();
+                        await writer.CompleteAsync();
                         return;
                     }
                 Config.Log.Warn("No 7z entries that match the log criteria");
@@ -63,7 +63,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             {
                 Config.Log.Error(e, "Error filling the log pipe");
             }
-            writer.Complete();
+            await writer.CompleteAsync();
         }
     }
 }

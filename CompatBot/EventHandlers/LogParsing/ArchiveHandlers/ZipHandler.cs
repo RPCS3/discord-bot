@@ -57,7 +57,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                             flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                             SourcePosition = statsStream.Position;
                         } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
-                        writer.Complete();
+                        await writer.CompleteAsync();
                         return;
                     }
                     SourcePosition = statsStream.Position;
@@ -68,8 +68,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
             {
                 Config.Log.Error(e, "Error filling the log pipe");
             }
-            writer.Complete();
-
+            await writer.CompleteAsync();
         }
     }
 }
