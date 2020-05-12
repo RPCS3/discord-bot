@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -23,7 +24,10 @@ namespace CompatBot.Commands
             try
             {
                 if (ctx.Prefix == Config.AutoRemoveCommandPrefix && ModProvider.IsMod(ctx.User.Id))
+                {
+                    DeletedMessagesMonitor.RemovedByBotCache.Set(ctx.Message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                     await ctx.Message.DeleteAsync().ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {

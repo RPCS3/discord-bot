@@ -114,6 +114,7 @@ namespace CompatBot.EventHandlers
             {
                 try
                 {
+                    DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                     await message.DeleteAsync("Not a white-listed discord invite link").ConfigureAwait(false);
                     await client.ReportAsync("🛃 An unapproved discord invite", message, "In invalid or expired invite", null, ReportSeverity.Low).ConfigureAwait(false);
                     await message.Channel.SendMessageAsync($"{message.Author.Mention} please refrain from posting invites that were not approved by a moderator, especially expired or invalid.").ConfigureAwait(false);
@@ -141,6 +142,7 @@ namespace CompatBot.EventHandlers
                     var removed = false;
                     try
                     {
+                        DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                         await message.DeleteAsync("Not a white-listed discord invite").ConfigureAwait(false);
                         removed = true;
                     }

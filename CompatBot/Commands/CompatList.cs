@@ -80,6 +80,7 @@ namespace CompatBot.Commands
                     return;
                 }
 
+                DeletedMessagesMonitor.RemovedByBotCache.Set(prompt.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                 await prompt.DeleteAsync().ConfigureAwait(false);
                 title = response.Result.Content.TrimEager().Truncate(40);
             }
