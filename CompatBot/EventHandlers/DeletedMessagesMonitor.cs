@@ -1,20 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using CompatApiClient.Compression;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
 	internal static class DeletedMessagesMonitor
 	{
+		public static readonly MemoryCache RemovedByBotCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
+		public static readonly TimeSpan CacheRetainTime = TimeSpan.FromMinutes(1);
+
 		public static async Task OnMessageDeleted(MessageDeleteEventArgs e)
 		{
 			if (e.Channel.IsPrivate)
@@ -25,6 +25,9 @@ namespace CompatBot.EventHandlers
 				return;
 
 			if (msg.Author.IsCurrent || msg.Author.IsBotSafeCheck())
+				return;
+
+			if (RemovedByBotCache.TryGetValue(msg.Id, out _))
 				return;
 
 			var usernameWithNickname = msg.Author.GetUsernameWithNickname(e.Client, e.Guild);

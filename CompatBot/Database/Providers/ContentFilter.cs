@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -135,6 +136,7 @@ namespace CompatBot.Database.Providers
             {
                 try
                 {
+                    DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                     await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
                     completedActions.Add(FilterAction.RemoveContent);
                 }
