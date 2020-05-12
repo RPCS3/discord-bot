@@ -112,14 +112,29 @@ namespace CompatBot.Utils
 
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, ReportSeverity severity, string actionList = null)
         {
-            var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
+            var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
+            if (logChannel == null)
+                return null;
+
             var embedBuilder = MakeReportTemplate(client, infraction, message, severity, actionList);
             var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
             embedBuilder.Description = reportText + embedBuilder.Description;
-            var logChannel = await getLogChannelTask.ConfigureAwait(false);
-            return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+            var (conents, _) = await message.DownloadAttachmentsAsync().ConfigureAwait(false);
+            try
+            {
+                if (conents?.Count > 0)
+                    return await logChannel.SendMultipleFilesAsync(conents, embed: embedBuilder.Build()).ConfigureAwait(false);
+                else
+                    return await logChannel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (conents?.Count > 0)
+                    foreach (var f in conents.Values)
+                        f.Dispose();
+            }
         }
 
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember> reporters, string comment, ReportSeverity severity)
@@ -156,12 +171,21 @@ namespace CompatBot.Utils
             return string.IsNullOrEmpty(member.Nickname) ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
         }
 
+        public static string GetUsernameWithNickname(this DiscordUser user, DiscordClient client, DiscordGuild guild = null)
+        {
+            if (user == null)
+                return null;
+
+            return client.GetMember(guild, user).GetUsernameWithNickname()
+                ?? $"`{user.Username.Sanitize()}#{user.Discriminator}`";
+        }
+
         public static string GetUsernameWithNickname(this DiscordMember member)
         {
             if (member == null)
                 return null;
 
-            return string.IsNullOrEmpty(member.Nickname) ? $"`{member.Username.Sanitize()}`" : $"`{member.Username.Sanitize()}` (shown as `{member.Nickname.Sanitize()}`)";
+            return string.IsNullOrEmpty(member.Nickname) ? $"`{member.Username.Sanitize()}#{member.Discriminator}`" : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
         }
 
         public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, string fallbackEmoji = null)
