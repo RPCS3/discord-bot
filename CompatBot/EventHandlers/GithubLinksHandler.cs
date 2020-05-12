@@ -24,6 +24,9 @@ namespace CompatBot.EventHandlers
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
+            if ("media".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
+                return;
+
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
             foreach (var msg in lastBotMessages)
                 if (BotReactionsHandler.NeedToSilence(msg).needToChill)
