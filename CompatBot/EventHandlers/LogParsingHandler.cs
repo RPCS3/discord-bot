@@ -21,6 +21,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
@@ -149,6 +150,7 @@ namespace CompatBot.EventHandlers
                                         var severity = ReportSeverity.Low;
                                         try
                                         {
+                                            DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                                             await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
                                         }
                                         catch (Exception e)

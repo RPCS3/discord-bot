@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatBot.EventHandlers;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Utils
 {
@@ -59,6 +61,7 @@ namespace CompatBot.Utils
                 if (text != null)
                     try
                     {
+                        DeletedMessagesMonitor.RemovedByBotCache.Set(text.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                         await text.DeleteAsync().ConfigureAwait(false);
                     }
                     catch {}

@@ -45,7 +45,7 @@ namespace CompatBot.Commands
                     await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
             }
 
-            [Command("update"), Aliases("upgrade", "pull")]
+            [Command("update"), Aliases("upgrade", "pull", "pet")]
             [Description("Updates the bot, and then restarts it")]
             public async Task Update(CommandContext ctx)
             {
