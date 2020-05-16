@@ -21,7 +21,7 @@ namespace CompatBot.Commands
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
-        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(20);
+        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30);
 
         [GroupCommand]
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
@@ -116,6 +116,17 @@ namespace CompatBot.Commands
                                 && (latestBuild.Result == BuildResult.Succeeded || latestBuild.Result == BuildResult.PartiallySucceeded)
                                 && latestBuild.FinishTime.HasValue)
                                 buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
+                            else if (latestBuild.Result == BuildResult.Failed || latestBuild.Result == BuildResult.Canceled)
+                                windowsDownloadText = $"❌ {latestBuild.Result}";
+                            else if (latestBuild.Status == BuildStatus.InProgress && latestBuild.StartTime != null)
+                            {
+                                var estimatedCompletionTime = latestBuild.StartTime.Value + AvgBuildTime;
+                                var estimatedTime = TimeSpan.FromMinutes(1);
+                                if (estimatedCompletionTime > DateTime.UtcNow)
+                                    estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
+                                windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                linuxDownloadText = windowsDownloadText;
+                            }
                             // windows build
                             var name = latestBuild.WindowsFilename ?? "Windows PR Build";
                             name = name.Replace("rpcs3-", "").Replace("_win64", "");
