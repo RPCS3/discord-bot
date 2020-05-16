@@ -22,6 +22,7 @@ namespace CompatBot.Utils.Extensions
             public string LinuxFilename;
             public string WindowsBuildDownloadLink;
             public string LinuxBuildDownloadLink;
+            public DateTime? StartTime;
             public DateTime? FinishTime;
             public BuildStatus? Status;
             public BuildResult? Result { get; set; }
@@ -130,6 +131,7 @@ namespace CompatBot.Utils.Extensions
             var result = new BuildInfo
             {
                 Commit = commit,
+                StartTime = build.StartTime,
                 FinishTime = build.FinishTime,
                 Status = build.Status,
                 Result = build.Result,
