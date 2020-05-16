@@ -116,6 +116,8 @@ namespace CompatBot.Commands
                                 && (latestBuild.Result == BuildResult.Succeeded || latestBuild.Result == BuildResult.PartiallySucceeded)
                                 && latestBuild.FinishTime.HasValue)
                                 buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
+                            else if (latestBuild.Result == BuildResult.Failed || latestBuild.Result == BuildResult.Canceled)
+                                windowsDownloadText = $"❌ {latestBuild.Result}";
                             else if (latestBuild.Status == BuildStatus.InProgress && latestBuild.StartTime != null)
                             {
                                 var estimatedCompletionTime = latestBuild.StartTime.Value + AvgBuildTime;
