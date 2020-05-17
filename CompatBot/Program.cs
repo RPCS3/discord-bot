@@ -282,7 +282,12 @@ namespace CompatBot
                             BotStatusMonitor.RefreshAsync(client).ConfigureAwait(false).GetAwaiter().GetResult();
                     }
                     else if (eventArgs.Level == LogLevel.Error)
+                    {
+                        if (eventArgs.Message?.StartsWith("DSharpPlus.CommandsNext.Exceptions.ChecksFailedException: One or more pre-execution checks failed.") ?? false)
+                            return;
+
                         logLevel = Config.Log.Error;
+                    }
                     else if (eventArgs.Level == LogLevel.Critical)
                     {
                         logLevel = Config.Log.Fatal;
