@@ -9,6 +9,7 @@ using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Database.Providers
 {
@@ -16,6 +17,7 @@ namespace CompatBot.Database.Providers
     {
         private static readonly HttpClient HttpClient = HttpClientFactory.Create();
         private static readonly PsnClient.Client PsnClient = new PsnClient.Client();
+        private static readonly MemoryCache ColorCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
         public static async Task<string> GetThumbnailUrlAsync(this DiscordClient client, string productCode)
         {
@@ -176,12 +178,15 @@ namespace CompatBot.Database.Providers
             return (null, null);
         }
 
-        private static async Task<DiscordColor?> GetImageColorAsync(string url, DiscordColor defaultColor)
+        public static async Task<DiscordColor?> GetImageColorAsync(string url, DiscordColor? defaultColor = null)
         {
             try
             {
                 if (string.IsNullOrEmpty(url))
                     return null;
+
+                if (ColorCache.TryGetValue(url, out DiscordColor? result))
+                    return result;
 
                 using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
                 using var memStream = Config.MemoryStreamManager.GetStream();
@@ -193,7 +198,9 @@ namespace CompatBot.Database.Providers
                 memStream.Seek(0, SeekOrigin.Begin);
 
                 Config.Log.Trace("Getting dominant color for " + url);
-                return ColorGetter.Analyze(memStream.ToArray(), defaultColor);
+                result = ColorGetter.Analyze(memStream.ToArray(), defaultColor);
+                ColorCache.Set(url, result);
+                return result;
             }
             catch (Exception e)
             {

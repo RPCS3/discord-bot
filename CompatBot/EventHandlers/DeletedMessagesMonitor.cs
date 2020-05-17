@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
@@ -14,6 +16,7 @@ namespace CompatBot.EventHandlers
 	{
 		public static readonly MemoryCache RemovedByBotCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
 		public static readonly TimeSpan CacheRetainTime = TimeSpan.FromMinutes(1);
+		private static readonly SemaphoreSlim postLock = new SemaphoreSlim(1);
 
 		public static async Task OnMessageDeleted(MessageDeleteEventArgs e)
 		{
@@ -44,15 +47,27 @@ namespace CompatBot.EventHandlers
 			try
 			{
 				var embed = new DiscordEmbedBuilder()
-					.WithAuthor($"Deleted message from {msg.Author.Username}#{msg.Author.Discriminator} in #{msg.Channel.Name}", iconUrl: msg.Author.AvatarUrl)
+					.WithAuthor($"{msg.Author.Username}#{msg.Author.Discriminator} in #{msg.Channel.Name}", iconUrl: msg.Author.AvatarUrl)
 					.WithDescription(msg.JumpLink.ToString())
 					.WithFooter($"Post date: {msg.Timestamp:yyyy-MM-dd HH:mm:ss} ({(DateTime.UtcNow - msg.Timestamp).AsTimeDeltaDescription()} ago)");
 				if (attachmentFilenames?.Count > 0)
 					embed.AddField("Deleted Attachments", string.Join('\n', msg.Attachments.Select(a => $"📎 {a.FileName}")));
-				if (attachmentContent?.Count > 0)
-					await logChannel.SendMultipleFilesAsync(attachmentContent, content: msg.Content, embed: embed).ConfigureAwait(false);
-				else
-					await logChannel.SendMessageAsync(msg.Content, embed: embed).ConfigureAwait(false);
+				var color = await ThumbnailProvider.GetImageColorAsync(msg.Author.AvatarUrl).ConfigureAwait(false);
+				if (color.HasValue)
+					embed.WithColor(color.Value);
+				await postLock.WaitAsync().ConfigureAwait(false);
+				try
+				{
+					await logChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
+					if (attachmentContent?.Count > 0)
+						await logChannel.SendMultipleFilesAsync(attachmentContent, msg.Content).ConfigureAwait(false);
+					else if (!string.IsNullOrEmpty(msg.Content))
+						await logChannel.SendMessageAsync(msg.Content).ConfigureAwait(false);
+				}
+				finally
+				{
+					postLock.Release();
+				}
 			}
 			finally
 			{

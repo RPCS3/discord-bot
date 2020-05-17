@@ -9,7 +9,7 @@ namespace CompatBot.Utils
 {
     internal static class ColorGetter
     {
-        public static DiscordColor Analyze(byte[] jpg, DiscordColor defaultColor)
+        public static DiscordColor? Analyze(byte[] jpg, DiscordColor? defaultColor)
         {
             try
             {

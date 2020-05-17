@@ -38,7 +38,8 @@ namespace PsnClient
         private static readonly Regex FwVersionInfo = new Regex(@"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-        private static readonly string[] KnownFwLocales = { "us", "eu", "uk", "au", "ru", "jp", "br", "cn", "hk", "mx", "sa", "tw", "kr", };
+        // directly from vsh.self
+        private static readonly string[] KnownFwLocales = { "jp", "us", "eu", "kr", "uk", "mx", "au", "sa", "tw", "ru", "cn", "br", };
 
         public Client()
         {
