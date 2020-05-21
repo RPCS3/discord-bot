@@ -35,6 +35,7 @@
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00697" />
     <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.45.0.1951" />
+    <PackageReference Include="ImageProcessor" Version="2.9.0" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
     <PackageReference Include="MegaApiClient" Version="1.8.1" />
