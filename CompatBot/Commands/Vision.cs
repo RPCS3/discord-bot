@@ -121,11 +121,11 @@ namespace CompatBot.Commands
                 var scale = Math.Max(1.0f, img.Image.Width / 400.0f);
                 if (objects.Count > 0)
                 {
-                    var analyzer = new ColorThief();
                     //List<Color> palette = new List<Color> {Color.DeepSkyBlue, Color.GreenYellow, Color.Magenta,};
+                    var analyzer = new ColorThief();
                     List<Color> palette;
                     using (var b = new Bitmap(img.Image))
-                        palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor()).ToList();
+                        palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor().GetComplementary()).ToList();
                     if (palette.Count == 0)
                         palette = new List<Color> {Color.DeepSkyBlue, Color.GreenYellow, Color.Magenta,};
                     for (var i = 0; i < objects.Count; i++)
@@ -133,15 +133,16 @@ namespace CompatBot.Commands
                         var obj = objects[i];
                         using var graphics = Graphics.FromImage(img.Image);
                         var color = palette[i % palette.Count];
-                        var pen = new Pen(color, scale);
+                        var pen = new Pen(color, 2 * scale);
                         var r = obj.Rectangle;
                         graphics.DrawRectangle(pen, r.X, r.Y, r.W, r.H);
                         var text = new TextLayer
                         {
                             DropShadow = false,
                             FontColor = color,
-                            FontSize = (int)(12 * scale),
-                            FontFamily = new FontFamily("Yu Gothic", new InstalledFontCollection()),
+                            FontSize = (int)(16 * scale),
+                            Style = FontStyle.Bold,
+                            //FontFamily = new FontFamily("Yu Gothic", new InstalledFontCollection()),
                             Text = $"{obj.ObjectProperty} ({obj.Confidence:P1})",
                             Position = new Point(r.X + 5, r.Y + 5),
                         };

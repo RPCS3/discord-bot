@@ -41,9 +41,9 @@ namespace CompatApiClient.Utils
         }
 
         public static int Clamp(this int amount, int low, int high)
-        {
-            return Math.Min(high, Math.Max(amount, low));
-        }
+            => Math.Min(high, Math.Max(amount, low));
+        public static double Clamp(this double amount, double low, double high)
+            => Math.Min(high, Math.Max(amount, low));
 
         public static string AsStorageUnit(this int bytes)
             => AsStorageUnit((long)bytes);
