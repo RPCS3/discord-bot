@@ -148,10 +148,12 @@ namespace CompatBot.Commands
                         };
                         img.Watermark(text);
                     }
+                    using var resultStream = new MemoryStream();
+                    img.Save(resultStream);
+                    await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream).ConfigureAwait(false);
                 }
-                using var resultStream = new MemoryStream();
-                img.Save(resultStream);
-                await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream).ConfigureAwait(false);
+                else
+                    await ctx.RespondAsync("No objects detected").ConfigureAwait(false);
             }
             catch (Exception e)
             {
