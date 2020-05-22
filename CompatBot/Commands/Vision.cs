@@ -178,11 +178,11 @@ namespace CompatBot.Commands
                     };
                     var bgGop = new GraphicsOptions
                     {
-                        ColorBlendingMode = PixelColorBlendingMode.Normal,
+                        ColorBlendingMode = PixelColorBlendingMode.Screen,
                     };
                     var fgGop = new GraphicsOptions
                     {
-                        ColorBlendingMode = PixelColorBlendingMode.Normal,
+                        ColorBlendingMode = PixelColorBlendingMode.Multiply,
                     };
                     var shapeOptions = new ShapeOptions();
                     var shapeGraphicsOptions = new ShapeGraphicsOptions(graphicsOptions, shapeOptions);
@@ -205,19 +205,19 @@ namespace CompatBot.Commands
                         //var pen = Pens.Solid(color, 2);
                         //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5)));
                         var textBox = TextMeasurer.Measure(label, textRendererOptions);
-                        var textHeightScale = (int)Math.Ceiling(textBox.Width / (img.Width - r.X - 10 - 2 * scale));
+                        var textHeightScale = (int)Math.Ceiling(textBox.Width / Math.Min(img.Width - r.X - 10 - 4 * scale, r.W - 4 * scale));
                         // object bounding box
                         img.Mutate(i => i.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
                         img.Mutate(i => i.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
                         // label bounding box
-                        var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, textBox.Width + 10 + 2 * scale, textBox.Height * textHeightScale + 10 + 2 * scale);
+                        var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, Math.Min(textBox.Width + 10 + 2 * scale, r.W - 4 * scale), textBox.Height * textHeightScale + 10 + 2 * scale);
                         while (drawnBoxes.Any(b => b.IntersectsWith(bgBox)))
                         {
                             var pb = drawnBoxes.First(b => b.IntersectsWith(bgBox));
                             bgBox.Y = pb.Bottom;
                         }
                         drawnBoxes.Add(bgBox);
-                        img.Mutate(i => i.Fill(bgSgo, color, bgBox));
+                        img.Mutate(i => i.Fill(bgSgo, complementaryColor, bgBox));
                         img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
                         // label text
                         img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + 5, bgBox.Y + 5)));
