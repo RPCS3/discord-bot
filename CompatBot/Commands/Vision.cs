@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -9,16 +8,30 @@ using System.Threading.Tasks;
 using ColorThiefDotNet;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
+using DiscUtils.Streams;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using ImageProcessor.Imaging;
-using ImageProcessor.Imaging.Formats;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
-using Color = System.Drawing.Color;
-using ImageFormat = System.Drawing.Imaging.ImageFormat;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using Brushes = SixLabors.ImageSharp.Drawing.Processing.Brushes;
+using Color = SixLabors.ImageSharp.Color;
+using FontFamily = SixLabors.Fonts.FontFamily;
+using FontStyle = SixLabors.Fonts.FontStyle;
+using Image = SixLabors.ImageSharp.Image;
+using Pens = SixLabors.ImageSharp.Drawing.Processing.Pens;
+using PointF = SixLabors.ImageSharp.PointF;
+using Rectangle = SixLabors.ImageSharp.Rectangle;
+using RectangleF = SixLabors.ImageSharp.RectangleF;
+using Size = SixLabors.ImageSharp.Size;
+using SystemFonts = SixLabors.Fonts.SystemFonts;
 
 namespace CompatBot.Commands
 {
@@ -89,68 +102,135 @@ namespace CompatBot.Commands
                 if (string.IsNullOrEmpty(imageUrl))
                     return;
 
-                using var imageStream = new MemoryStream();
+                using var imageStream = Config.MemoryStreamManager.GetStream();
                 using (var httpClient = HttpClientFactory.Create())
                 using (var stream = await httpClient.GetStreamAsync(imageUrl).ConfigureAwait(false))
                     await stream.CopyToAsync(imageStream).ConfigureAwait(false);
                 imageStream.Seek(0, SeekOrigin.Begin);
-                using var imgFactory = new ImageProcessor.ImageFactory();
-                using var img = imgFactory.Load(imageStream);
+                using var img = Image.Load(imageStream, out var imgFormat);
                 imageStream.Seek(0, SeekOrigin.Begin);
-                if (!ImageFormat.Jpeg.Equals(img.CurrentImageFormat.ImageFormat))
-                    img.Format(new JpegFormat {Quality = 90});
 
                 //resize and shrink file size to get under azure limits
-                if (img.Image.Width > 4000 || img.Image.Height > 4000)
+                var quality = 90;
+                var resized = false;
+                if (img.Width > 4000 || img.Height > 4000)
                 {
-                    img.Resize(new ResizeLayer(new Size(3840, 2160), ResizeMode.Min));
+                    img.Mutate(i => i.Resize(new ResizeOptions {Size = new Size(3840, 2160), Mode = ResizeMode.Min,}));
+                    resized = true;
+                }
+                if (resized || imgFormat.Name != JpegFormat.Instance.Name)
+                {
                     imageStream.SetLength(0);
-                    img.Save(imageStream);
+                    img.Save(imageStream, new JpegEncoder { Quality = 90 });
                     imageStream.Seek(0, SeekOrigin.Begin);
+                }
+                else
+                {
+                    try
+                    {
+                        quality = img.Metadata.GetJpegMetadata().Quality;
+                    }
+                    catch(Exception ex)
+                    {
+                        Config.Log.Warn(ex);
+                    }
                 }
                 if (imageStream.Length > 4 * 1024 * 1024)
                 {
+                    quality -= 5;
                     imageStream.SetLength(0);
-                    img.Quality(85).Save(imageStream);
+                    img.Save(imageStream, new JpegEncoder {Quality = quality});
                     imageStream.Seek(0, SeekOrigin.Begin);
                 }
 
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) { Endpoint = Config.AzureComputerVisionEndpoint };
                 var result = await client.AnalyzeImageInStreamAsync(imageStream, new List<VisualFeatureTypes> {VisualFeatureTypes.Objects}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                var objects = result.Objects.OrderByDescending(c => c.Confidence).ToList();
-                var scale = Math.Max(1.0f, img.Image.Width / 400.0f);
+                var objects = result.Objects.OrderBy(c => c.Confidence).ToList();
+                var scale = Math.Max(1.0f, img.Width / 400.0f);
                 if (objects.Count > 0)
                 {
-                    //List<Color> palette = new List<Color> {Color.DeepSkyBlue, Color.GreenYellow, Color.Magenta,};
+                    //List<Color> palette = new List<Color> { Color.DeepSkyBlue, Color.Magenta, Color.GreenYellow, };
+                    
                     var analyzer = new ColorThief();
                     List<Color> palette;
-                    using (var b = new Bitmap(img.Image))
-                        palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor().GetComplementary()).ToList();
+                    using (var tmpStream = Config.MemoryStreamManager.GetStream())
+                    {
+                        img.SaveAsBmp(tmpStream);
+                        tmpStream.Seek(0, SeekOrigin.Begin);
+                        using (var b = new Bitmap(tmpStream))
+                            palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor()).ToList();
+                    }
                     if (palette.Count == 0)
                         palette = new List<Color> {Color.DeepSkyBlue, Color.GreenYellow, Color.Magenta,};
+                    var complementaryPalette = palette.Select(c => c.GetComplementary()).ToList();
+                    
+                    if (!SystemFonts.TryFind("roboto", out var fontFamily)
+                        && !SystemFonts.TryFind("sans serif", out fontFamily)
+                        && !SystemFonts.TryFind("calibri", out fontFamily)
+                        && !SystemFonts.TryFind("verdana", out fontFamily))
+                        fontFamily = SystemFonts.Families.First();
+                    var font = fontFamily.CreateFont(16 * scale, FontStyle.Bold);
+                    var textRendererOptions = new RendererOptions(font);
+                    var graphicsOptions = new GraphicsOptions
+                    {
+                        Antialias = true,
+                        ColorBlendingMode = PixelColorBlendingMode.Normal,
+                    };
+                    var bgGop = new GraphicsOptions
+                    {
+                        ColorBlendingMode = PixelColorBlendingMode.Normal,
+                    };
+                    var fgGop = new GraphicsOptions
+                    {
+                        ColorBlendingMode = PixelColorBlendingMode.Normal,
+                    };
+                    var shapeOptions = new ShapeOptions();
+                    var shapeGraphicsOptions = new ShapeGraphicsOptions(graphicsOptions, shapeOptions);
+                    var bgSgo = new ShapeGraphicsOptions(bgGop, shapeOptions);
+                    var drawnBoxes = new List<RectangleF>(objects.Count);
                     for (var i = 0; i < objects.Count; i++)
                     {
                         var obj = objects[i];
-                        using var graphics = Graphics.FromImage(img.Image);
-                        var color = palette[i % palette.Count];
-                        var pen = new Pen(color, 2 * scale);
+                        var label = $"{obj.ObjectProperty} ({obj.Confidence:P1})";
                         var r = obj.Rectangle;
-                        graphics.DrawRectangle(pen, r.X, r.Y, r.W, r.H);
-                        var text = new TextLayer
+                        var color = palette[i % palette.Count];
+                        var complementaryColor = complementaryPalette[i % complementaryPalette.Count];
+                        var textOptions = new TextOptions
                         {
-                            DropShadow = false,
-                            FontColor = color,
-                            FontSize = (int)(16 * scale),
-                            Style = FontStyle.Bold,
-                            //FontFamily = new FontFamily("Yu Gothic", new InstalledFontCollection()),
-                            Text = $"{obj.ObjectProperty} ({obj.Confidence:P1})",
-                            Position = new Point(r.X + 5, r.Y + 5),
-                            
+                            ApplyKerning = true,
+                            WrapTextWidth = r.W - 10,
                         };
-                        img.Watermark(text);
+                        var textGraphicsOptions = new TextGraphicsOptions(fgGop, textOptions);
+                        //var brush = Brushes.Solid(Color.Black);
+                        //var pen = Pens.Solid(color, 2);
+                        //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5)));
+                        var textBox = TextMeasurer.Measure(label, textRendererOptions);
+                        var textHeightScale = (int)Math.Ceiling(textBox.Width / (img.Width - r.X - 10 - 2 * scale));
+                        // object bounding box
+                        img.Mutate(i => i.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
+                        img.Mutate(i => i.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
+                        // label bounding box
+                        var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, textBox.Width + 10 + 2 * scale, textBox.Height * textHeightScale + 10 + 2 * scale);
+                        while (drawnBoxes.Any(b => b.IntersectsWith(bgBox)))
+                        {
+                            var pb = drawnBoxes.First(b => b.IntersectsWith(bgBox));
+                            bgBox.Y = pb.Bottom;
+                        }
+                        drawnBoxes.Add(bgBox);
+                        img.Mutate(i => i.Fill(bgSgo, color, bgBox));
+                        img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
+                        // label text
+                        img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + 5, bgBox.Y + 5)));
                     }
-                    using var resultStream = new MemoryStream();
-                    img.Save(resultStream);
+                    using var resultStream = Config.MemoryStreamManager.GetStream();
+                    quality = 95;
+                    do
+                    {
+                        resultStream.SetLength(0);
+                        img.Save(resultStream, new JpegEncoder {Quality = 95});
+                        resultStream.Seek(0, SeekOrigin.Begin);
+                        quality--;
+                    } while (resultStream.Length > Config.AttachmentSizeLimit);
                     await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream).ConfigureAwait(false);
                 }
                 else
