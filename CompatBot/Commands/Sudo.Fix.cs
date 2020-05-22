@@ -117,7 +117,15 @@ namespace CompatBot.Commands
                 using var db = new ThumbnailDb();
                 foreach (var thumb in db.Thumbnail)
                 {
+                    if (string.IsNullOrEmpty(thumb.Name))
+                        continue;
+
                     var newTitle = thumb.Name.StripMarks();
+                    if (newTitle.EndsWith("full game", StringComparison.OrdinalIgnoreCase))
+                        newTitle = newTitle[..^10];
+                    if (newTitle.EndsWith("full game unlock", StringComparison.OrdinalIgnoreCase))
+                        newTitle = newTitle[..^17];
+                    newTitle.TrimEnd();
                     if (newTitle != thumb.Name)
                     {
                         changed++;
