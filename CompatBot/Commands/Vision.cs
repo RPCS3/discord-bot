@@ -145,6 +145,7 @@ namespace CompatBot.Commands
                             //FontFamily = new FontFamily("Yu Gothic", new InstalledFontCollection()),
                             Text = $"{obj.ObjectProperty} ({obj.Confidence:P1})",
                             Position = new Point(r.X + 5, r.Y + 5),
+                            
                         };
                         img.Watermark(text);
                     }
