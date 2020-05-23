@@ -36,6 +36,32 @@ namespace CompatBot.Commands
     {
         private static readonly Color[] DefaultColors = {Color.DeepSkyBlue, Color.DarkOliveGreen, Color.OrangeRed, };
 
+        private static readonly Dictionary<string, string[]> Reactions = new Dictionary<string, string[]>
+        {
+            ["cat"] = BotStats.GoodKot,
+            ["dog"] = BotStats.GoodDog,
+            ["hedgehog"] = new[] {"🦔"},
+            ["flower"] = new[] {"🌷", "🌸", "🌹", "🌺", "🌼", "🥀", "💐", "🌻", "💮",},
+            ["lizard"] = new[] {"🦎",},
+            ["bird"] = new[] {"🐦", "🕊", "🦜", "🦆", "🦅", "🐓", "🐤", "🦩",},
+            ["duck"] = new[] {"🦆",},
+            ["eagle"] = new[] {"🦅",},
+            ["turkey"] = new[] {"🦃",},
+            ["turtle"] = new[] {"🐢",},
+            ["bear"] = new[] {"🐻", "🐼",},
+            ["panda"] = new[] {"🐼",},
+            ["fox"] = new[] {"🦊",},
+            ["pig"] = new[] {"🐷", "🐖", "🐽", "🐗",},
+            ["primate"] = new[] {"🐵", "🐒", "🙊", "🙉", "🙈",},
+            ["fish"] = new[] {"🐟", "🐠", "🐡", "🦈",},
+            ["car"] = new[] {"🚗", "🏎", "🚙", "🚓", "🚘", "🚔",},
+            ["banana"] = new[] {"🍌"},
+            ["fruit"] = new[] {"🍇", "🍈", "🍉", "🍊", "🍍", "🍑", "🍒", "🍓", "🍋", "🍐", "🍎", "🍏", "🥑", "🥝", "🥭", "🍅",},
+            ["vegetable"] = new[] {"🍠", "🍅", "🍆", "🥔", "🥕", "🥒",},
+            ["watermelon"] = new[] {"🍉",},
+            ["strawberry"] = new[] {"🍓",},
+        };
+
         [Command("describe")]
         [Description("Generates an image description from the attached image, or from the url")]
         public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
@@ -54,9 +80,8 @@ namespace CompatBot.Commands
 
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
                 var result = await client.AnalyzeImageAsync(imageUrl, new List<VisualFeatureTypes> {VisualFeatureTypes.Description}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                var description = await GetDescriptionAsync(ctx, result.Description).ConfigureAwait(false);
+                var description = await GetDescriptionAsync(ctx, result.Description, result.Description.Tags).ConfigureAwait(false);
                 await ctx.RespondAsync(description).ConfigureAwait(false);
-
             }
             catch (Exception e)
             {
@@ -126,7 +151,7 @@ namespace CompatBot.Commands
                     },
                     cancellationToken: Config.Cts.Token
                 ).ConfigureAwait(false);
-                var description = await GetDescriptionAsync(ctx, result.Description).ConfigureAwait(false);
+                var description = await GetDescriptionAsync(ctx, result.Description, result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags)).ConfigureAwait(false);
                 var objects = result.Objects.OrderBy(c => c.Confidence).ToList();
                 var scale = Math.Max(1.0f, img.Width / 400.0f);
                 if (objects.Count > 0)
@@ -274,7 +299,7 @@ namespace CompatBot.Commands
                 //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
-        private static async Task<string> GetDescriptionAsync(CommandContext ctx, ImageDescriptionDetails description)
+        private static async Task<string> GetDescriptionAsync(CommandContext ctx, ImageDescriptionDetails description, IEnumerable<string> tags)
         {
             var captions = description.Captions.OrderByDescending(c => c.Confidence).ToList();
             string msg;
@@ -301,13 +326,9 @@ namespace CompatBot.Commands
             }
             else
                 msg = "An image so weird, I have no words to describe it";
-            if (description.Tags.Count > 0)
-            {
-                if (description.Tags.Any(t => t == "cat"))
-                    await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodKot[new Random().Next(BotStats.GoodKot.Length)])).ConfigureAwait(false);
-                if (description.Tags.Any(t => t == "dog"))
-                    await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodDog[new Random().Next(BotStats.GoodDog.Length)])).ConfigureAwait(false);
-            }
+            foreach (var t in tags)
+                if (Reactions.TryGetValue(t, out var emojiList))
+                    await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(emojiList[new Random().Next(emojiList.Length)])).ConfigureAwait(false);
             return msg;
         }
 
