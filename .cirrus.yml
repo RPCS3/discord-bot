@@ -1,0 +1,6 @@
+task:
+    name: Dummy
+    container:
+        image: alpine:latest
+    script:
+        - echo "wtf is this shit and why should I configure this to prevent it executing Dockerfile"

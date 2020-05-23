@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using ColorThiefDotNet;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DiscUtils.Streams;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -21,12 +20,9 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Brushes = SixLabors.ImageSharp.Drawing.Processing.Brushes;
 using Color = SixLabors.ImageSharp.Color;
-using FontFamily = SixLabors.Fonts.FontFamily;
 using FontStyle = SixLabors.Fonts.FontStyle;
 using Image = SixLabors.ImageSharp.Image;
-using Pens = SixLabors.ImageSharp.Drawing.Processing.Pens;
 using PointF = SixLabors.ImageSharp.PointF;
 using Rectangle = SixLabors.ImageSharp.Rectangle;
 using RectangleF = SixLabors.ImageSharp.RectangleF;
@@ -36,54 +32,57 @@ using SystemFonts = SixLabors.Fonts.SystemFonts;
 namespace CompatBot.Commands
 {
     [Cooldown(1, 5, CooldownBucketType.Channel)]
-    [Group("describe")]
-    [Description("Generates an image description from the attached image, or from the url")]
     internal sealed class Vision: BaseCommandModuleCustom
     {
-        [GroupCommand]
+        private static readonly Color[] DefaultColors = {Color.DeepSkyBlue, Color.DarkOliveGreen, Color.OrangeRed, };
+
+        private static readonly Dictionary<string, string[]> Reactions = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["cat"] = BotStats.GoodKot,
+            ["dog"] = BotStats.GoodDog,
+            ["hedgehog"] = new[] {"🦔"},
+            ["flower"] = new[] {"🌷", "🌸", "🌹", "🌺", "🌼", "🥀", "💐", "🌻", "💮",},
+            ["lizard"] = new[] {"🦎",},
+            ["bird"] = new[] {"🐦", "🕊", "🦜", "🦆", "🦅", "🐓", "🐤", "🦩",},
+            ["duck"] = new[] {"🦆",},
+            ["eagle"] = new[] {"🦅",},
+            ["turkey"] = new[] {"🦃",},
+            ["turtle"] = new[] {"🐢",},
+            ["bear"] = new[] {"🐻", "🐼",},
+            ["panda"] = new[] {"🐼",},
+            ["fox"] = new[] {"🦊",},
+            ["pig"] = new[] {"🐷", "🐖", "🐽", "🐗",},
+            ["primate"] = new[] {"🐵", "🐒", "🙊", "🙉", "🙈",},
+            ["fish"] = new[] {"🐟", "🐠", "🐡", "🦈",},
+            ["car"] = new[] {"🚗", "🏎", "🚙", "🚓", "🚘", "🚔",},
+            ["banana"] = new[] {"🍌"},
+            ["fruit"] = new[] {"🍇", "🍈", "🍉", "🍊", "🍍", "🍑", "🍒", "🍓", "🍋", "🍐", "🍎", "🍏", "🥑", "🥝", "🥭", "🍅",},
+            ["vegetable"] = new[] {"🍠", "🍅", "🍆", "🥔", "🥕", "🥒",},
+            ["watermelon"] = new[] {"🍉",},
+            ["strawberry"] = new[] {"🍓",},
+        };
+
+        [Command("describe")]
+        [Description("Generates an image description from the attached image, or from the url")]
         public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
         {
             try
             {
+                if (imageUrl?.StartsWith("tag") ?? false)
+                {
+                    await Tag(ctx, imageUrl[4..].TrimStart()).ConfigureAwait(false);
+                    return;
+                }
+
                 imageUrl = await GetImageUrlAsync(ctx, imageUrl).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(imageUrl))
                     return;
 
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
                 var result = await client.AnalyzeImageAsync(imageUrl, new List<VisualFeatureTypes> {VisualFeatureTypes.Description}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                var captions = result.Description.Captions.OrderByDescending(c => c.Confidence).ToList();
-                string msg;
-                if (captions.Any())
-                {
-                    var confidence = captions[0].Confidence switch
-                    {
-                        double v when v > 0.98 => "It is",
-                        double v when v > 0.95 => "I'm pretty sure it is",
-                        double v when v > 0.9 => "I'm quite sure it is",
-                        double v when v > 0.8 => "I think it's",
-                        double v when v > 0.5 => "I'm not very smart, so my best guess is that it's",
-                        _ => "Ugh, idk? Might be",
-                    };
-                    msg = $"{confidence} {captions[0].Text.FixKot()}";
-#if DEBUG
-                    msg += $" [{captions[0].Confidence * 100:0.00}%]";
-                    if (captions.Count > 1)
-                    {
-                        msg += "\nHowever, here are more guesses:\n";
-                        msg += string.Join('\n', captions.Skip(1).Select(c => $"{c.Text} [{c.Confidence*100:0.00}%]"));
-                    }
-#endif
-                }
-                else
-                    msg = "An image so weird, I have no words to describe it";
-                await ctx.RespondAsync(msg).ConfigureAwait(false);
-                if (result.Description.Tags.Count > 0)
-                {
-                    if (result.Description.Tags.Any(t => t == "cat"))
-                        await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodKot[new Random().Next(BotStats.GoodKot.Length)])).ConfigureAwait(false);
-                    if (result.Description.Tags.Any(t => t == "dog"))
-                        await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodDog[new Random().Next(BotStats.GoodDog.Length)])).ConfigureAwait(false);
-                }
+                var description = GetDescription(result.Description);
+                await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
+                await ctx.RespondAsync(description).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -144,7 +143,16 @@ namespace CompatBot.Commands
                 }
 
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) { Endpoint = Config.AzureComputerVisionEndpoint };
-                var result = await client.AnalyzeImageInStreamAsync(imageStream, new List<VisualFeatureTypes> {VisualFeatureTypes.Objects}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
+                var result = await client.AnalyzeImageInStreamAsync(
+                    imageStream,
+                    new List<VisualFeatureTypes>
+                    {
+                        VisualFeatureTypes.Objects,
+                        VisualFeatureTypes.Description
+                    },
+                    cancellationToken: Config.Cts.Token
+                ).ConfigureAwait(false);
+                var description = GetDescription(result.Description);
                 var objects = result.Objects.OrderBy(c => c.Confidence).ToList();
                 var scale = Math.Max(1.0f, img.Width / 400.0f);
                 if (objects.Count > 0)
@@ -160,15 +168,35 @@ namespace CompatBot.Commands
                         using (var b = new Bitmap(tmpStream))
                             palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor()).ToList();
                     }
-                    if (palette.Count == 0)
-                        palette = new List<Color> {Color.DeepSkyBlue, Color.GreenYellow, Color.Magenta,};
+                    palette.AddRange(DefaultColors);
                     var complementaryPalette = palette.Select(c => c.GetComplementary()).ToList();
-                    
-                    if (!SystemFonts.TryFind("roboto", out var fontFamily)
-                        && !SystemFonts.TryFind("sans serif", out fontFamily)
-                        && !SystemFonts.TryFind("calibri", out fontFamily)
-                        && !SystemFonts.TryFind("verdana", out fontFamily))
-                        fontFamily = SystemFonts.Families.First();
+                    var tmpP = new List<Color>();
+                    var tmpCp = new List<Color>();
+                    var uniqueCp = new HashSet<Color>();
+                    for (var i=0; i<complementaryPalette.Count; i++)
+                        if (uniqueCp.Add(complementaryPalette[i]))
+                        {
+                            tmpP.Add(palette[i]);
+                            tmpCp.Add(complementaryPalette[i]);
+                        }
+                    palette = tmpP;
+                    complementaryPalette = tmpCp;
+
+                    Config.Log.Debug($"Palette      : {string.Join(' ', palette.Select(c => $"#{c.ToHex()}"))}");
+                    Config.Log.Debug($"Complementary: {string.Join(' ', complementaryPalette.Select(c => $"#{c.ToHex()}"))}");
+
+                    if (!SystemFonts.TryFind("Roboto", out var fontFamily)
+                        && !SystemFonts.TryFind("Droid Sans", out fontFamily)
+                        && !SystemFonts.TryFind("DejaVu Sans", out fontFamily)
+                        && !SystemFonts.TryFind("Sans Serif", out fontFamily)
+                        && !SystemFonts.TryFind("Calibri", out fontFamily)
+                        && !SystemFonts.TryFind("Verdana", out fontFamily))
+                    {
+                        Config.Log.Warn("Failed to find any suitable font. Available system fonts:\n" + string.Join(Environment.NewLine, SystemFonts.Families.Select(f => f.Name)));
+                        fontFamily = SystemFonts.Families.FirstOrDefault(f => f.Name.Contains("sans", StringComparison.OrdinalIgnoreCase))
+                                  ?? SystemFonts.Families.First();
+
+                    }
                     var font = fontFamily.CreateFont(16 * scale, FontStyle.Bold);
                     var textRendererOptions = new RendererOptions(font);
                     var graphicsOptions = new GraphicsOptions
@@ -203,12 +231,20 @@ namespace CompatBot.Commands
                         var textGraphicsOptions = new TextGraphicsOptions(fgGop, textOptions);
                         //var brush = Brushes.Solid(Color.Black);
                         //var pen = Pens.Solid(color, 2);
-                        //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5)));
                         var textBox = TextMeasurer.Measure(label, textRendererOptions);
                         var textHeightScale = (int)Math.Ceiling(textBox.Width / Math.Min(img.Width - r.X - 10 - 4 * scale, r.W - 4 * scale));
+
                         // object bounding box
-                        img.Mutate(i => i.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
-                        img.Mutate(i => i.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
+                        try
+                        {
+                            img.Mutate(i => i.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
+                            img.Mutate(i => i.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Error(ex, "Failed to draw object bounding box");
+                        }
+
                         // label bounding box
                         var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, Math.Min(textBox.Width + 10 + 2 * scale, r.W - 4 * scale), textBox.Height * textHeightScale + 10 + 2 * scale);
                         while (drawnBoxes.Any(b => b.IntersectsWith(bgBox)))
@@ -216,11 +252,31 @@ namespace CompatBot.Commands
                             var pb = drawnBoxes.First(b => b.IntersectsWith(bgBox));
                             bgBox.Y = pb.Bottom;
                         }
+                        if (bgBox.Width < 20)
+                            bgBox.Width = 20 * scale;
+                        if (bgBox.Height < 20)
+                            bgBox.Height = 20 * scale;
                         drawnBoxes.Add(bgBox);
-                        img.Mutate(i => i.Fill(bgSgo, complementaryColor, bgBox));
-                        img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
+                        try
+                        {
+                            img.Mutate(i => i.Fill(bgSgo, complementaryColor, bgBox));
+                            img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Error(ex, "Failed to draw label bounding box");
+                        }
+
                         // label text
-                        img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + 5, bgBox.Y + 5)));
+                        try
+                        {
+                            img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + 5, bgBox.Y + 5)));
+                            //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5))); // throws exception
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Error(ex, "Failed to generate tag label");
+                        }
                     }
                     using var resultStream = Config.MemoryStreamManager.GetStream();
                     quality = 95;
@@ -231,15 +287,19 @@ namespace CompatBot.Commands
                         resultStream.Seek(0, SeekOrigin.Begin);
                         quality--;
                     } while (resultStream.Length > Config.AttachmentSizeLimit);
-                    await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream).ConfigureAwait(false);
+                    var respondMsg = await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream, description).ConfigureAwait(false);
+                    await ReactToTagsAsync(respondMsg, result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags)).ConfigureAwait(false);
                 }
                 else
-                    await ctx.RespondAsync("No objects detected").ConfigureAwait(false);
+                {
+                    await ctx.RespondAsync(description).ConfigureAwait(false);
+                    await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
                 Config.Log.Error(e, "Failed to tag objects in an image");
-                await ctx.RespondAsync("Failed to tag objects in the image").ConfigureAwait(false);
+                await ctx.RespondAsync("Can't doo anything with this image").ConfigureAwait(false);
             }
         }
 
@@ -251,18 +311,61 @@ namespace CompatBot.Commands
                 //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
+        private static string GetDescription(ImageDescriptionDetails description)
+        {
+            var captions = description.Captions.OrderByDescending(c => c.Confidence).ToList();
+            string msg;
+            if (captions.Any())
+            {
+                var confidence = captions[0].Confidence switch
+                {
+                    double v when v > 0.98 => "It is",
+                    double v when v > 0.95 => "I'm pretty sure it is",
+                    double v when v > 0.9 => "I'm quite sure it is",
+                    double v when v > 0.8 => "I think it's",
+                    double v when v > 0.5 => "I'm not very smart, so my best guess is that it's",
+                    _ => "Ugh, idk? Might be",
+                };
+                msg = $"{confidence} {captions[0].Text.FixKot()}";
+#if DEBUG
+                msg += $" [{captions[0].Confidence * 100:0.00}%]";
+                if (captions.Count > 1)
+                {
+                    msg += "\nHowever, here are more guesses:\n";
+                    msg += string.Join('\n', captions.Skip(1).Select(c => $"{c.Text} [{c.Confidence * 100:0.00}%]"));
+                }
+#endif
+            }
+            else
+                msg = "An image so weird, I have no words to describe it";
+            return msg;
+        }
+
+        private static async Task ReactToTagsAsync(DiscordMessage reactMsg, IEnumerable<string> tags)
+        {
+            foreach (var t in tags)
+                if (Reactions.TryGetValue(t, out var emojiList))
+                    await reactMsg.ReactWithAsync(DiscordEmoji.FromUnicode(emojiList[new Random().Next(emojiList.Length)])).ConfigureAwait(false);
+        }
+
         private static async Task<string> GetImageUrlAsync(CommandContext ctx, string imageUrl)
         {
             var reactMsg = ctx.Message;
             if (GetImageAttachment(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
                 imageUrl = attachment.Url;
+            imageUrl = imageUrl?.Trim();
+            if (!string.IsNullOrEmpty(imageUrl)
+                && imageUrl.StartsWith('<')
+                && imageUrl.EndsWith('>'))
+                imageUrl = imageUrl[1..^1];
             if (!Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute))
             {
                 var str = imageUrl.ToLowerInvariant();
                 if ((str.StartsWith("this")
                      || str.StartsWith("that")
                      || str.StartsWith("last")
-                     || str.StartsWith("previous"))
+                     || str.StartsWith("previous")
+                     || str.StartsWith("^"))
                     && ctx.Channel.PermissionsFor(ctx.Client.GetMember(ctx.Guild, ctx.Client.CurrentUser)).HasPermission(Permissions.ReadMessageHistory))
                     try
                     {

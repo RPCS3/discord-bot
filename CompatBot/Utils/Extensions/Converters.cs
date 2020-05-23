@@ -27,9 +27,9 @@ namespace CompatBot.Utils.Extensions
 			if (dR < 20 && dG < 20 && dB < 20) //The color is a shade of gray
 			{
 				if (avgColorValue < 123) //color is dark
-					c = new Rgba32(220, 230, 50, a);
+					c = new Rgba32(220, 230, 50, a); // #dce632
 				else
-					c = new Rgba32(255, 255, 50, a);
+					c = new Rgba32(255, 255, 50, a); // #ffff32
 			}
 			if (!preserveOpacity)
 				a = Math.Max(a, (byte)127); //We don't want contrast color to be more than 50% transparent ever.
