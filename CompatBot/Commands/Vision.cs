@@ -185,10 +185,13 @@ namespace CompatBot.Commands
                     Config.Log.Debug($"Complementary: {string.Join(' ', complementaryPalette.Select(c => $"#{c.ToHex()}"))}");
                     
                     if (!SystemFonts.TryFind("roboto", out var fontFamily)
+                        && !SystemFonts.TryFind("droid", out fontFamily)
+                        && !SystemFonts.TryFind("noto", out fontFamily)
+                        && !SystemFonts.TryFind("dejavu", out fontFamily)
                         && !SystemFonts.TryFind("sans serif", out fontFamily)
                         && !SystemFonts.TryFind("calibri", out fontFamily)
                         && !SystemFonts.TryFind("verdana", out fontFamily))
-                        fontFamily = SystemFonts.Families.First();
+                        fontFamily = SystemFonts.Families.First(f => f.Name.Contains("sans"));
                     var font = fontFamily.CreateFont(16 * scale, FontStyle.Bold);
                     var textRendererOptions = new RendererOptions(font);
                     var graphicsOptions = new GraphicsOptions
