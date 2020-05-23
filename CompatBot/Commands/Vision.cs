@@ -34,6 +34,8 @@ namespace CompatBot.Commands
     [Cooldown(1, 5, CooldownBucketType.Channel)]
     internal sealed class Vision: BaseCommandModuleCustom
     {
+        private static readonly Color[] DefaultColors = {Color.DeepSkyBlue, Color.DarkOliveGreen, Color.OrangeRed, };
+
         [Command("describe")]
         [Description("Generates an image description from the attached image, or from the url")]
         public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
@@ -155,12 +157,22 @@ namespace CompatBot.Commands
                         using (var b = new Bitmap(tmpStream))
                             palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor()).ToList();
                     }
-                    if (palette.Count == 0)
-                    {
-                        Config.Log.Warn("Failed to generate image palette, using default");
-                        palette = new List<Color> {Color.DeepSkyBlue, Color.GreenYellow, Color.Magenta,};
-                    }
+                    palette.AddRange(DefaultColors);
                     var complementaryPalette = palette.Select(c => c.GetComplementary()).ToList();
+                    var tmpP = new List<Color>();
+                    var tmpCp = new List<Color>();
+                    var uniqueCp = new HashSet<Color>();
+                    for (var i=0; i<complementaryPalette.Count; i++)
+                        if (uniqueCp.Add(complementaryPalette[i]))
+                        {
+                            tmpP.Add(palette[i]);
+                            tmpCp.Add(complementaryPalette[i]);
+                        }
+                    palette = tmpP;
+                    complementaryPalette = tmpCp;
+
+                    Config.Log.Debug($"Palette      : {string.Join(' ', palette.Select(c => $"#{c.ToHex()}"))}");
+                    Config.Log.Debug($"Complementary: {string.Join(' ', complementaryPalette.Select(c => $"#{c.ToHex()}"))}");
                     
                     if (!SystemFonts.TryFind("roboto", out var fontFamily)
                         && !SystemFonts.TryFind("sans serif", out fontFamily)
