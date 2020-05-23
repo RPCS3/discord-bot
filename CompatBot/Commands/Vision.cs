@@ -80,7 +80,8 @@ namespace CompatBot.Commands
 
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
                 var result = await client.AnalyzeImageAsync(imageUrl, new List<VisualFeatureTypes> {VisualFeatureTypes.Description}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                var description = await GetDescriptionAsync(ctx, result.Description, result.Description.Tags).ConfigureAwait(false);
+                var description = GetDescription(result.Description);
+                await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
                 await ctx.RespondAsync(description).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -151,7 +152,7 @@ namespace CompatBot.Commands
                     },
                     cancellationToken: Config.Cts.Token
                 ).ConfigureAwait(false);
-                var description = await GetDescriptionAsync(ctx, result.Description, result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags)).ConfigureAwait(false);
+                var description = GetDescription(result.Description);
                 var objects = result.Objects.OrderBy(c => c.Confidence).ToList();
                 var scale = Math.Max(1.0f, img.Width / 400.0f);
                 if (objects.Count > 0)
@@ -286,10 +287,14 @@ namespace CompatBot.Commands
                         resultStream.Seek(0, SeekOrigin.Begin);
                         quality--;
                     } while (resultStream.Length > Config.AttachmentSizeLimit);
-                    await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream, description).ConfigureAwait(false);
+                    var respondMsg = await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream, description).ConfigureAwait(false);
+                    await ReactToTagsAsync(respondMsg, result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags)).ConfigureAwait(false);
                 }
                 else
+                {
                     await ctx.RespondAsync(description).ConfigureAwait(false);
+                    await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
@@ -306,7 +311,7 @@ namespace CompatBot.Commands
                 //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
-        private static async Task<string> GetDescriptionAsync(CommandContext ctx, ImageDescriptionDetails description, IEnumerable<string> tags)
+        private static string GetDescription(ImageDescriptionDetails description)
         {
             var captions = description.Captions.OrderByDescending(c => c.Confidence).ToList();
             string msg;
@@ -333,10 +338,14 @@ namespace CompatBot.Commands
             }
             else
                 msg = "An image so weird, I have no words to describe it";
+            return msg;
+        }
+
+        private static async Task ReactToTagsAsync(DiscordMessage reactMsg, IEnumerable<string> tags)
+        {
             foreach (var t in tags)
                 if (Reactions.TryGetValue(t, out var emojiList))
-                    await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(emojiList[new Random().Next(emojiList.Length)])).ConfigureAwait(false);
-            return msg;
+                    await reactMsg.ReactWithAsync(DiscordEmoji.FromUnicode(emojiList[new Random().Next(emojiList.Length)])).ConfigureAwait(false);
         }
 
         private static async Task<string> GetImageUrlAsync(CommandContext ctx, string imageUrl)
