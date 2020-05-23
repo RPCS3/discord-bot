@@ -305,7 +305,8 @@ namespace CompatBot.Commands
                 if ((str.StartsWith("this")
                      || str.StartsWith("that")
                      || str.StartsWith("last")
-                     || str.StartsWith("previous"))
+                     || str.StartsWith("previous")
+                     || str.StartsWith("^"))
                     && ctx.Channel.PermissionsFor(ctx.Client.GetMember(ctx.Guild, ctx.Client.CurrentUser)).HasPermission(Permissions.ReadMessageHistory))
                     try
                     {
