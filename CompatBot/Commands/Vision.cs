@@ -70,7 +70,7 @@ namespace CompatBot.Commands
             {
                 if (imageUrl?.StartsWith("tag") ?? false)
                 {
-                    await Tag(ctx, imageUrl[4..].TrimStart()).ConfigureAwait(false);
+                    await Tag(ctx, imageUrl[3..].TrimStart()).ConfigureAwait(false);
                     return;
                 }
 
@@ -153,7 +153,10 @@ namespace CompatBot.Commands
                     cancellationToken: Config.Cts.Token
                 ).ConfigureAwait(false);
                 var description = GetDescription(result.Description);
-                var objects = result.Objects.OrderBy(c => c.Confidence).ToList();
+                var objects = result.Objects
+                    .OrderBy(c => c.Rectangle.Y)
+                    .ThenBy(c => c.Confidence)
+                    .ToList();
                 var scale = Math.Max(1.0f, img.Width / 400.0f);
                 if (objects.Count > 0)
                 {
@@ -197,7 +200,7 @@ namespace CompatBot.Commands
                                   ?? SystemFonts.Families.First();
 
                     }
-                    var font = fontFamily.CreateFont(16 * scale, FontStyle.Bold);
+                    var font = fontFamily.CreateFont(10 * scale, FontStyle.Regular);
                     var textRendererOptions = new RendererOptions(font);
                     var graphicsOptions = new GraphicsOptions
                     {
@@ -219,21 +222,26 @@ namespace CompatBot.Commands
                     for (var i = 0; i < objects.Count; i++)
                     {
                         var obj = objects[i];
-                        var label = $"{obj.ObjectProperty} ({obj.Confidence:P1})";
+                        var label = $"{obj.ObjectProperty.FixKot()} ({obj.Confidence:P1})";
                         var r = obj.Rectangle;
                         var color = palette[i % palette.Count];
                         var complementaryColor = complementaryPalette[i % complementaryPalette.Count];
                         var textOptions = new TextOptions
                         {
                             ApplyKerning = true,
+#if LABELS_INSIDE
                             WrapTextWidth = r.W - 10,
+#endif
                         };
                         var textGraphicsOptions = new TextGraphicsOptions(fgGop, textOptions);
                         //var brush = Brushes.Solid(Color.Black);
                         //var pen = Pens.Solid(color, 2);
                         var textBox = TextMeasurer.Measure(label, textRendererOptions);
+#if LABELS_INSIDE
                         var textHeightScale = (int)Math.Ceiling(textBox.Width / Math.Min(img.Width - r.X - 10 - 4 * scale, r.W - 4 * scale));
-
+#else
+                        var textHeightScale = 1;
+#endif
                         // object bounding box
                         try
                         {
@@ -246,7 +254,13 @@ namespace CompatBot.Commands
                         }
 
                         // label bounding box
-                        var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, Math.Min(textBox.Width + 10 + 2 * scale, r.W - 4 * scale), textBox.Height * textHeightScale + 10 + 2 * scale);
+                        var bboxBorder = scale;
+
+#if LABELS_INSIDE
+                        var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, Math.Min(textBox.Width + 2 * (bboxBorder + scale), r.W - 4 * scale), textBox.Height * textHeightScale + 2 * (bboxBorder + scale));
+#else
+                        var bgBox = new RectangleF(r.X, r.Y - textBox.Height - 2 * bboxBorder - scale, textBox.Width + 2 * bboxBorder, textBox.Height + 2 * bboxBorder);
+#endif
                         while (drawnBoxes.Any(b => b.IntersectsWith(bgBox)))
                         {
                             var pb = drawnBoxes.First(b => b.IntersectsWith(bgBox));
@@ -270,7 +284,7 @@ namespace CompatBot.Commands
                         // label text
                         try
                         {
-                            img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + 5, bgBox.Y + 5)));
+                            img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + bboxBorder, bgBox.Y + bboxBorder)));
                             //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5))); // throws exception
                         }
                         catch (Exception ex)
@@ -343,7 +357,7 @@ namespace CompatBot.Commands
 
         private static async Task ReactToTagsAsync(DiscordMessage reactMsg, IEnumerable<string> tags)
         {
-            foreach (var t in tags)
+            foreach (var t in tags.Distinct(StringComparer.OrdinalIgnoreCase))
                 if (Reactions.TryGetValue(t, out var emojiList))
                     await reactMsg.ReactWithAsync(DiscordEmoji.FromUnicode(emojiList[new Random().Next(emojiList.Length)])).ConfigureAwait(false);
         }
