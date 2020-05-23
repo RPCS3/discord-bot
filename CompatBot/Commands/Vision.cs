@@ -184,16 +184,15 @@ namespace CompatBot.Commands
                     Config.Log.Debug($"Palette      : {string.Join(' ', palette.Select(c => $"#{c.ToHex()}"))}");
                     Config.Log.Debug($"Complementary: {string.Join(' ', complementaryPalette.Select(c => $"#{c.ToHex()}"))}");
 
-                    if (!SystemFonts.TryFind("roboto", out var fontFamily)
-                        && !SystemFonts.TryFind("droid", out fontFamily)
-                        && !SystemFonts.TryFind("noto", out fontFamily)
-                        && !SystemFonts.TryFind("dejavu", out fontFamily)
-                        && !SystemFonts.TryFind("sans serif", out fontFamily)
-                        && !SystemFonts.TryFind("calibri", out fontFamily)
-                        && !SystemFonts.TryFind("verdana", out fontFamily))
+                    if (!SystemFonts.TryFind("Roboto", out var fontFamily)
+                        && !SystemFonts.TryFind("Droid Sans", out fontFamily)
+                        && !SystemFonts.TryFind("DejaVu Sans", out fontFamily)
+                        && !SystemFonts.TryFind("Sans Serif", out fontFamily)
+                        && !SystemFonts.TryFind("Calibri", out fontFamily)
+                        && !SystemFonts.TryFind("Verdana", out fontFamily))
                     {
                         Config.Log.Warn("Failed to find any suitable font. Available system fonts:\n" + string.Join(Environment.NewLine, SystemFonts.Families.Select(f => f.Name)));
-                        fontFamily = SystemFonts.Families.FirstOrDefault(f => f.Name.Contains("sans"))
+                        fontFamily = SystemFonts.Families.FirstOrDefault(f => f.Name.Contains("sans", StringComparison.OrdinalIgnoreCase))
                                   ?? SystemFonts.Families.First();
 
                     }
