@@ -222,7 +222,7 @@ namespace CompatBot.Commands
                     for (var i = 0; i < objects.Count; i++)
                     {
                         var obj = objects[i];
-                        var label = $"{obj.ObjectProperty} ({obj.Confidence:P1})";
+                        var label = $"{obj.ObjectProperty.FixKot()} ({obj.Confidence:P1})";
                         var r = obj.Rectangle;
                         var color = palette[i % palette.Count];
                         var complementaryColor = complementaryPalette[i % complementaryPalette.Count];
