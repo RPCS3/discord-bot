@@ -183,7 +183,7 @@ namespace CompatBot.Commands
 
                     Config.Log.Debug($"Palette      : {string.Join(' ', palette.Select(c => $"#{c.ToHex()}"))}");
                     Config.Log.Debug($"Complementary: {string.Join(' ', complementaryPalette.Select(c => $"#{c.ToHex()}"))}");
-                    
+
                     if (!SystemFonts.TryFind("roboto", out var fontFamily)
                         && !SystemFonts.TryFind("droid", out fontFamily)
                         && !SystemFonts.TryFind("noto", out fontFamily)
@@ -191,7 +191,12 @@ namespace CompatBot.Commands
                         && !SystemFonts.TryFind("sans serif", out fontFamily)
                         && !SystemFonts.TryFind("calibri", out fontFamily)
                         && !SystemFonts.TryFind("verdana", out fontFamily))
-                        fontFamily = SystemFonts.Families.First(f => f.Name.Contains("sans"));
+                    {
+                        Config.Log.Warn("Failed to find any suitable font. Available system fonts:\n" + string.Join(Environment.NewLine, SystemFonts.Families.Select(f => f.Name)));
+                        fontFamily = SystemFonts.Families.FirstOrDefault(f => f.Name.Contains("sans"))
+                                  ?? SystemFonts.Families.First();
+
+                    }
                     var font = fontFamily.CreateFont(16 * scale, FontStyle.Bold);
                     var textRendererOptions = new RendererOptions(font);
                     var graphicsOptions = new GraphicsOptions
