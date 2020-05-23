@@ -36,7 +36,7 @@ namespace CompatBot.Commands
     {
         private static readonly Color[] DefaultColors = {Color.DeepSkyBlue, Color.DarkOliveGreen, Color.OrangeRed, };
 
-        private static readonly Dictionary<string, string[]> Reactions = new Dictionary<string, string[]>
+        private static readonly Dictionary<string, string[]> Reactions = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
             ["cat"] = BotStats.GoodKot,
             ["dog"] = BotStats.GoodDog,
