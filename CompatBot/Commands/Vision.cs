@@ -313,7 +313,7 @@ namespace CompatBot.Commands
             catch (Exception e)
             {
                 Config.Log.Error(e, "Failed to tag objects in an image");
-                await ctx.RespondAsync("Can't doo anything with this image").ConfigureAwait(false);
+                await ctx.RespondAsync("Can't do anything with this image").ConfigureAwait(false);
             }
         }
 
