@@ -54,39 +54,9 @@ namespace CompatBot.Commands
 
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
                 var result = await client.AnalyzeImageAsync(imageUrl, new List<VisualFeatureTypes> {VisualFeatureTypes.Description}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                var captions = result.Description.Captions.OrderByDescending(c => c.Confidence).ToList();
-                string msg;
-                if (captions.Any())
-                {
-                    var confidence = captions[0].Confidence switch
-                    {
-                        double v when v > 0.98 => "It is",
-                        double v when v > 0.95 => "I'm pretty sure it is",
-                        double v when v > 0.9 => "I'm quite sure it is",
-                        double v when v > 0.8 => "I think it's",
-                        double v when v > 0.5 => "I'm not very smart, so my best guess is that it's",
-                        _ => "Ugh, idk? Might be",
-                    };
-                    msg = $"{confidence} {captions[0].Text.FixKot()}";
-#if DEBUG
-                    msg += $" [{captions[0].Confidence * 100:0.00}%]";
-                    if (captions.Count > 1)
-                    {
-                        msg += "\nHowever, here are more guesses:\n";
-                        msg += string.Join('\n', captions.Skip(1).Select(c => $"{c.Text} [{c.Confidence*100:0.00}%]"));
-                    }
-#endif
-                }
-                else
-                    msg = "An image so weird, I have no words to describe it";
-                await ctx.RespondAsync(msg).ConfigureAwait(false);
-                if (result.Description.Tags.Count > 0)
-                {
-                    if (result.Description.Tags.Any(t => t == "cat"))
-                        await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodKot[new Random().Next(BotStats.GoodKot.Length)])).ConfigureAwait(false);
-                    if (result.Description.Tags.Any(t => t == "dog"))
-                        await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodDog[new Random().Next(BotStats.GoodDog.Length)])).ConfigureAwait(false);
-                }
+                var description = await GetDescriptionAsync(ctx, result.Description).ConfigureAwait(false);
+                await ctx.RespondAsync(description).ConfigureAwait(false);
+
             }
             catch (Exception e)
             {
@@ -147,7 +117,16 @@ namespace CompatBot.Commands
                 }
 
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) { Endpoint = Config.AzureComputerVisionEndpoint };
-                var result = await client.AnalyzeImageInStreamAsync(imageStream, new List<VisualFeatureTypes> {VisualFeatureTypes.Objects}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
+                var result = await client.AnalyzeImageInStreamAsync(
+                    imageStream,
+                    new List<VisualFeatureTypes>
+                    {
+                        VisualFeatureTypes.Objects,
+                        VisualFeatureTypes.Description
+                    },
+                    cancellationToken: Config.Cts.Token
+                ).ConfigureAwait(false);
+                var description = await GetDescriptionAsync(ctx, result.Description).ConfigureAwait(false);
                 var objects = result.Objects.OrderBy(c => c.Confidence).ToList();
                 var scale = Math.Max(1.0f, img.Width / 400.0f);
                 if (objects.Count > 0)
@@ -275,15 +254,15 @@ namespace CompatBot.Commands
                         resultStream.Seek(0, SeekOrigin.Begin);
                         quality--;
                     } while (resultStream.Length > Config.AttachmentSizeLimit);
-                    await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream).ConfigureAwait(false);
+                    await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream, description).ConfigureAwait(false);
                 }
                 else
-                    await ctx.RespondAsync("No objects detected").ConfigureAwait(false);
+                    await ctx.RespondAsync(description).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Error(e, "Failed to tag objects in an image");
-                await ctx.RespondAsync("Failed to tag objects in the image").ConfigureAwait(false);
+                await ctx.RespondAsync("Can't doo anything with this image").ConfigureAwait(false);
             }
         }
 
@@ -294,6 +273,43 @@ namespace CompatBot.Commands
                                              || a.FileName.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase)
                 //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
+
+        private static async Task<string> GetDescriptionAsync(CommandContext ctx, ImageDescriptionDetails description)
+        {
+            var captions = description.Captions.OrderByDescending(c => c.Confidence).ToList();
+            string msg;
+            if (captions.Any())
+            {
+                var confidence = captions[0].Confidence switch
+                {
+                    double v when v > 0.98 => "It is",
+                    double v when v > 0.95 => "I'm pretty sure it is",
+                    double v when v > 0.9 => "I'm quite sure it is",
+                    double v when v > 0.8 => "I think it's",
+                    double v when v > 0.5 => "I'm not very smart, so my best guess is that it's",
+                    _ => "Ugh, idk? Might be",
+                };
+                msg = $"{confidence} {captions[0].Text.FixKot()}";
+#if DEBUG
+                msg += $" [{captions[0].Confidence * 100:0.00}%]";
+                if (captions.Count > 1)
+                {
+                    msg += "\nHowever, here are more guesses:\n";
+                    msg += string.Join('\n', captions.Skip(1).Select(c => $"{c.Text} [{c.Confidence * 100:0.00}%]"));
+                }
+#endif
+            }
+            else
+                msg = "An image so weird, I have no words to describe it";
+            if (description.Tags.Count > 0)
+            {
+                if (description.Tags.Any(t => t == "cat"))
+                    await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodKot[new Random().Next(BotStats.GoodKot.Length)])).ConfigureAwait(false);
+                if (description.Tags.Any(t => t == "dog"))
+                    await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode(BotStats.GoodDog[new Random().Next(BotStats.GoodDog.Length)])).ConfigureAwait(false);
+            }
+            return msg;
+        }
 
         private static async Task<string> GetImageUrlAsync(CommandContext ctx, string imageUrl)
         {
