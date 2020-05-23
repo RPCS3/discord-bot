@@ -283,7 +283,7 @@ namespace CompatBot
                     }
                     else if (eventArgs.Level == LogLevel.Error)
                     {
-                        if (eventArgs.Message?.StartsWith("DSharpPlus.CommandsNext.Exceptions.ChecksFailedException: One or more pre-execution checks failed.") ?? false)
+                        if (eventArgs.Message?.Contains("DSharpPlus.CommandsNext.Exceptions.ChecksFailedException: One or more pre-execution checks failed.") ?? false)
                             return;
 
                         logLevel = Config.Log.Error;

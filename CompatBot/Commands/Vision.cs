@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using ColorThiefDotNet;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DiscUtils.Streams;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -21,12 +20,9 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Brushes = SixLabors.ImageSharp.Drawing.Processing.Brushes;
 using Color = SixLabors.ImageSharp.Color;
-using FontFamily = SixLabors.Fonts.FontFamily;
 using FontStyle = SixLabors.Fonts.FontStyle;
 using Image = SixLabors.ImageSharp.Image;
-using Pens = SixLabors.ImageSharp.Drawing.Processing.Pens;
 using PointF = SixLabors.ImageSharp.PointF;
 using Rectangle = SixLabors.ImageSharp.Rectangle;
 using RectangleF = SixLabors.ImageSharp.RectangleF;
@@ -36,11 +32,10 @@ using SystemFonts = SixLabors.Fonts.SystemFonts;
 namespace CompatBot.Commands
 {
     [Cooldown(1, 5, CooldownBucketType.Channel)]
-    [Group("describe")]
-    [Description("Generates an image description from the attached image, or from the url")]
     internal sealed class Vision: BaseCommandModuleCustom
     {
-        [GroupCommand]
+        [Command("describe")]
+        [Description("Generates an image description from the attached image, or from the url")]
         public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
         {
             try
@@ -161,7 +156,10 @@ namespace CompatBot.Commands
                             palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor()).ToList();
                     }
                     if (palette.Count == 0)
+                    {
+                        Config.Log.Warn("Failed to generate image palette, using default");
                         palette = new List<Color> {Color.DeepSkyBlue, Color.GreenYellow, Color.Magenta,};
+                    }
                     var complementaryPalette = palette.Select(c => c.GetComplementary()).ToList();
                     
                     if (!SystemFonts.TryFind("roboto", out var fontFamily)
@@ -203,12 +201,20 @@ namespace CompatBot.Commands
                         var textGraphicsOptions = new TextGraphicsOptions(fgGop, textOptions);
                         //var brush = Brushes.Solid(Color.Black);
                         //var pen = Pens.Solid(color, 2);
-                        //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5)));
                         var textBox = TextMeasurer.Measure(label, textRendererOptions);
                         var textHeightScale = (int)Math.Ceiling(textBox.Width / Math.Min(img.Width - r.X - 10 - 4 * scale, r.W - 4 * scale));
+
                         // object bounding box
-                        img.Mutate(i => i.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
-                        img.Mutate(i => i.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
+                        try
+                        {
+                            img.Mutate(i => i.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
+                            img.Mutate(i => i.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Error(ex, "Failed to draw object bounding box");
+                        }
+
                         // label bounding box
                         var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, Math.Min(textBox.Width + 10 + 2 * scale, r.W - 4 * scale), textBox.Height * textHeightScale + 10 + 2 * scale);
                         while (drawnBoxes.Any(b => b.IntersectsWith(bgBox)))
@@ -216,11 +222,31 @@ namespace CompatBot.Commands
                             var pb = drawnBoxes.First(b => b.IntersectsWith(bgBox));
                             bgBox.Y = pb.Bottom;
                         }
+                        if (bgBox.Width < 20)
+                            bgBox.Width = 20 * scale;
+                        if (bgBox.Height < 20)
+                            bgBox.Height = 20 * scale;
                         drawnBoxes.Add(bgBox);
-                        img.Mutate(i => i.Fill(bgSgo, complementaryColor, bgBox));
-                        img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
+                        try
+                        {
+                            img.Mutate(i => i.Fill(bgSgo, complementaryColor, bgBox));
+                            img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Error(ex, "Failed to draw label bounding box");
+                        }
+
                         // label text
-                        img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + 5, bgBox.Y + 5)));
+                        try
+                        {
+                            img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + 5, bgBox.Y + 5)));
+                            //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5))); // throws exception
+                        }
+                        catch (Exception ex)
+                        {
+                            Config.Log.Error(ex, "Failed to generate tag label");
+                        }
                     }
                     using var resultStream = Config.MemoryStreamManager.GetStream();
                     quality = 95;
@@ -256,6 +282,11 @@ namespace CompatBot.Commands
             var reactMsg = ctx.Message;
             if (GetImageAttachment(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
                 imageUrl = attachment.Url;
+            imageUrl = imageUrl?.Trim();
+            if (!string.IsNullOrEmpty(imageUrl)
+                && imageUrl.StartsWith('<')
+                && imageUrl.EndsWith('>'))
+                imageUrl = imageUrl[1..^1];
             if (!Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute))
             {
                 var str = imageUrl.ToLowerInvariant();
