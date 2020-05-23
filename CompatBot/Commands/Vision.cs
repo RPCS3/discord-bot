@@ -70,7 +70,7 @@ namespace CompatBot.Commands
             {
                 if (imageUrl?.StartsWith("tag") ?? false)
                 {
-                    await Tag(ctx, imageUrl[4..].TrimStart()).ConfigureAwait(false);
+                    await Tag(ctx, imageUrl[3..].TrimStart()).ConfigureAwait(false);
                     return;
                 }
 
@@ -343,7 +343,7 @@ namespace CompatBot.Commands
 
         private static async Task ReactToTagsAsync(DiscordMessage reactMsg, IEnumerable<string> tags)
         {
-            foreach (var t in tags)
+            foreach (var t in tags.Distinct(StringComparer.OrdinalIgnoreCase))
                 if (Reactions.TryGetValue(t, out var emojiList))
                     await reactMsg.ReactWithAsync(DiscordEmoji.FromUnicode(emojiList[new Random().Next(emojiList.Length)])).ConfigureAwait(false);
         }
