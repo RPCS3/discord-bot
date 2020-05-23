@@ -42,6 +42,12 @@ namespace CompatBot.Commands
         {
             try
             {
+                if (imageUrl?.StartsWith("tag") ?? false)
+                {
+                    await Tag(ctx, imageUrl[4..].TrimStart()).ConfigureAwait(false);
+                    return;
+                }
+
                 imageUrl = await GetImageUrlAsync(ctx, imageUrl).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(imageUrl))
                     return;
