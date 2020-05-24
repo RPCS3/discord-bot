@@ -117,6 +117,7 @@ namespace CompatBot.Commands
                     img.Mutate(i => i.Resize(new ResizeOptions {Size = new Size(3840, 2160), Mode = ResizeMode.Min,}));
                     resized = true;
                 }
+                img.Mutate(i => i.AutoOrient());
                 if (resized || imgFormat.Name != JpegFormat.Instance.Name)
                 {
                     imageStream.SetLength(0);
