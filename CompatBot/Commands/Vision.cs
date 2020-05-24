@@ -270,6 +270,14 @@ namespace CompatBot.Commands
                             bgBox.Width = 20 * scale;
                         if (bgBox.Height < 20)
                             bgBox.Height = 20 * scale;
+                        if (bgBox.X < 0)
+                            bgBox.X = 0;
+                        if (bgBox.Y < 0)
+                            bgBox.Y = 0;
+                        if (bgBox.X + bgBox.Width > img.Width)
+                            bgBox.X = img.Width - bgBox.Width;
+                        if (bgBox.Y + bgBox.Height > img.Height)
+                            bgBox.Y = img.Height - bgBox.Height;
                         drawnBoxes.Add(bgBox);
                         try
                         {
