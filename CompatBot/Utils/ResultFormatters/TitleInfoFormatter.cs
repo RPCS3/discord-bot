@@ -93,8 +93,7 @@ namespace CompatBot.Utils.ResultFormatters
                     Url = info.Thread > 0 ? $"https://forums.rpcs3.net/thread-{info.Thread}.html" : null,
                     Description = desc,
                     Color = color,
-                    ThumbnailUrl = thumbnailUrl
-                };
+                }.WithThumbnail(thumbnailUrl);
             }
             else
             {
@@ -114,8 +113,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     Description = desc,
                     Color = embedColor,
-                    ThumbnailUrl = thumbnailUrl,
-                };
+                }.WithThumbnail(thumbnailUrl);
                 if (gameTitle == null
                     && ThumbnailProvider.GetTitleNameAsync(titleId, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult() is string titleName
                     && !string.IsNullOrEmpty(titleName))

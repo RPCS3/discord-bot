@@ -26,8 +26,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 Title = title,
                 Color = Config.Colors.DownloadLinks,
-                ThumbnailUrl = thumbnailUrl,
-            };
+            }.WithThumbnail(thumbnailUrl);
             if (pkgs?.Length > 1)
             {
                 var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
@@ -46,8 +45,7 @@ namespace CompatBot.Utils.ResultFormatters
                         {
                             Title = $"{title} [Part {i / EmbedPager.MaxFields + 1} of {pages}]".Trim(EmbedPager.MaxFieldTitleLength),
                             Color = Config.Colors.DownloadLinks,
-                            ThumbnailUrl = thumbnailUrl,
-                        };
+                        }.WithThumbnail(thumbnailUrl);
                     }
                 } while (i < pkgs.Length);
             }

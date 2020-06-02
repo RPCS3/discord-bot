@@ -198,8 +198,7 @@ namespace CompatBot.Commands
                         Url = $"https://store.playstation.com/{locale}/product/{g.Id}",
                         Description = $"Rating: {score}\n" +
                                       "[Instructions](https://rpcs3.net/quickstart#software_distribution)",
-                        ThumbnailUrl = url,
-                    };
+                    }.WithThumbnail(url);
                     await ProductCodeLookup.FixAfrikaAsync(ctx.Client, ctx.Message, result).ConfigureAwait(false);
 #if DEBUG
                     result.WithFooter("Test instance");

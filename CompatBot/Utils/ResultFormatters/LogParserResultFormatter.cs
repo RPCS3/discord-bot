@@ -230,7 +230,7 @@ namespace CompatBot.Utils.ResultFormatters
 
                 }
                 catch {}
-                builder = new DiscordEmbedBuilder(gameInfo) {ThumbnailUrl = null}; // or this will fuck up all formatting
+                builder = new DiscordEmbedBuilder(gameInfo) {Thumbnail = null}; // or this will fuck up all formatting
                 collection["embed_title"] = builder.Title ?? "";
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {

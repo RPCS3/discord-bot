@@ -169,8 +169,8 @@ namespace CompatBot.EventHandlers
             {
                 var sqvat = client.GetEmoji(":sqvat:", Config.Reactions.No);
                 titleInfoEmbed.Title = "How about no (๑•ิཬ•ั๑)";
-                if (!string.IsNullOrEmpty(titleInfoEmbed.ThumbnailUrl))
-                    titleInfoEmbed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
+                if (!string.IsNullOrEmpty(titleInfoEmbed.Thumbnail?.Url))
+                    titleInfoEmbed.WithThumbnail("https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png");
                 await message.ReactWithAsync(sqvat).ConfigureAwait(false);
             }
         }

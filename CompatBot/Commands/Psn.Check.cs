@@ -87,8 +87,8 @@ namespace CompatBot.Commands
                         if (partStart > -1)
                             newTitle += embed.Title[partStart..];
                         embed.Title = newTitle;
-                        if (!string.IsNullOrEmpty(embed.ThumbnailUrl))
-                            embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png";
+                        if (!string.IsNullOrEmpty(embed.Thumbnail?.Url))
+                            embed.WithThumbnail("https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png");
                     }
                     var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
                     await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
