@@ -318,7 +318,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckScottPilgrimSettings(serial, items, notes, generalNotes);
                 CheckGoWSettings(serial, items, notes, generalNotes);
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-                CheckTlouSettings(serial, items, notes, ppuPatches, ppuHashes);
+                CheckTlouSettings(serial, items, notes, ppuPatches);
                 CheckRdrSettings(serial, items, notes);
                 CheckMgs4Settings(serial, items, notes, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
