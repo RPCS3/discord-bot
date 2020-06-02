@@ -389,6 +389,8 @@ namespace CompatBot.Utils.ResultFormatters
                 && int.TryParse(items["audio_buffer_duration"], out var duration)
                 && duration > 100)
                 notes.Add($"ℹ `Audio Buffer Duration` is set to {duration}ms, which may cause audio lag");
+            if (items["audio_stretching"] == EnabledMark)
+                notes.Add("ℹ `Audio Time Stretching` is `Enabled`");
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
             {
