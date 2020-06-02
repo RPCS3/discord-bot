@@ -261,7 +261,7 @@ namespace CompatBot.Utils
                 }.AddField("Violator", author == null ? message.Author.Mention : GetMentionWithNickname(author), true)
                 .AddField("Channel",  message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true)
                 //.AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
-                .AddField("Content of the offending item", content);
+                .AddField("Content of the offending item", content.Trim(EmbedPager.MaxFieldLength));
             if (!string.IsNullOrEmpty(actionList))
                 result.AddField("Filter Actions", actionList, true);
             if (needsAttention && !message.Channel.IsPrivate)

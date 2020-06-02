@@ -119,7 +119,7 @@ namespace CompatBot.Utils.ResultFormatters
 #else
                             : $"Fatal Error (x{count})";
 #endif
-                        builder.AddField(sectionName, $"```\n{fatalError.Trim(1020)}\n```");
+                        builder.AddField(sectionName, $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
                     }
                 }
             }
@@ -128,7 +128,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (unimplementedSyscall.Contains("syscall_988"))
                 {
                     var fatalError = "Unimplemented syscall " + unimplementedSyscall;
-                    builder.AddField("Fatal Error", $"```{fatalError.Trim(1022)}```");
+                    builder.AddField("Fatal Error", $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
                     if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
                         notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
                     else

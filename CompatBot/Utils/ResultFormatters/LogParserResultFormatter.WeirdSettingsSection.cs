@@ -318,7 +318,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckScottPilgrimSettings(serial, items, notes, generalNotes);
                 CheckGoWSettings(serial, items, notes, generalNotes);
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-                CheckTlouSettings(serial, items, notes);
+                CheckTlouSettings(serial, items, notes, ppuPatches);
                 CheckRdrSettings(serial, items, notes);
                 CheckMgs4Settings(serial, items, notes, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
@@ -389,6 +389,8 @@ namespace CompatBot.Utils.ResultFormatters
                 && int.TryParse(items["audio_buffer_duration"], out var duration)
                 && duration > 100)
                 notes.Add($"ℹ `Audio Buffer Duration` is set to {duration}ms, which may cause audio lag");
+            if (items["audio_stretching"] == EnabledMark)
+                notes.Add("ℹ `Audio Time Stretching` is `Enabled`");
 
             if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
             {
@@ -828,31 +830,36 @@ namespace CompatBot.Utils.ResultFormatters
             "NPHA80206", "NPHA80279",
         };
 
-        private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
         {
             if (!TlouIds.Contains(serial))
                 return;
 
             if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
                 notes.Add("ℹ Please set `SPU Block Size` to `Safe` to reduce crash rate");
-
             if (items["write_color_buffers"] == EnabledMark)
                 notes.Add("⚠ `Write Color Buffers` is not required anymore");
-
-            if (items["read_color_buffers"] == DisabledMark)
-                notes.Add("⚠ Please enable `Read Color Buffers`");
-
-            if (items["read_depth_buffer"] == DisabledMark)
-                notes.Add("⚠ Please enable `Read Depth Buffer`");
-
+            if (ppuPatches.Any())
+            {
+                if (items["read_color_buffers"] == EnabledMark)
+                    notes.Add("ℹ `Read Color Buffers` may not be required depending on applied patches");
+                if (items["read_depth_buffer"] == EnabledMark)
+                    notes.Add("⚠ P`Read Depth Buffer` may not be required depending on applied patches");
+            }
+            else
+            {
+                if (items["read_color_buffers"] == DisabledMark)
+                    notes.Add("⚠ Please enable `Read Color Buffers`");
+                if (items["read_depth_buffer"] == DisabledMark)
+                    notes.Add("⚠ Please enable `Read Depth Buffer`");
+                if (items["resolution_scale"] is string resFactor
+                    && int.TryParse(resFactor, out var resolutionScale)
+                    && resolutionScale > 100
+                    && items["strict_rendering_mode"] != EnabledMark)
+                    notes.Add("⚠ Please set `Resolution Scale` to 100%");
+            }
             if (items["cpu_blit"] == EnabledMark)
                 notes.Add("⚠ Please disable `Force CPU Blit`");
-
-            if (items["resolution_scale"] is string resFactor
-                && int.TryParse(resFactor, out var resolutionScale)
-                && resolutionScale > 100
-                && items["strict_rendering_mode"] != EnabledMark)
-                notes.Add("⚠ Please set `Resolution Scale` to 100%");
         }
 
         private static readonly HashSet<string> RdrIds = new HashSet<string>

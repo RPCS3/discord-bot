@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using ColorThiefDotNet;
 using CompatBot.Utils;
@@ -35,6 +36,14 @@ namespace CompatBot.Commands
     internal sealed class Vision: BaseCommandModuleCustom
     {
         private static readonly Color[] DefaultColors = {Color.DeepSkyBlue, Color.DarkOliveGreen, Color.OrangeRed, };
+
+        static Vision()
+        {
+            var list = new StringBuilder("Available system fonts:");
+            foreach (var fontFamily in SystemFonts.Families)
+                list.AppendLine(fontFamily.Name);
+            Config.Log.Debug(list.ToString());
+        }
 
         private static readonly Dictionary<string, string[]> Reactions = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
@@ -189,7 +198,8 @@ namespace CompatBot.Commands
                     Config.Log.Debug($"Palette      : {string.Join(' ', palette.Select(c => $"#{c.ToHex()}"))}");
                     Config.Log.Debug($"Complementary: {string.Join(' ', complementaryPalette.Select(c => $"#{c.ToHex()}"))}");
 
-                    if (!SystemFonts.TryFind("Roboto", out var fontFamily)
+                    if ((string.IsNullOrEmpty(Config.PreferredFontFamily) || !SystemFonts.TryFind(Config.PreferredFontFamily, out var fontFamily))
+                        && !SystemFonts.TryFind("Roboto", out fontFamily)
                         && !SystemFonts.TryFind("Droid Sans", out fontFamily)
                         && !SystemFonts.TryFind("DejaVu Sans", out fontFamily)
                         && !SystemFonts.TryFind("Sans Serif", out fontFamily)
@@ -198,9 +208,10 @@ namespace CompatBot.Commands
                     {
                         Config.Log.Warn("Failed to find any suitable font. Available system fonts:\n" + string.Join(Environment.NewLine, SystemFonts.Families.Select(f => f.Name)));
                         fontFamily = SystemFonts.Families.FirstOrDefault(f => f.Name.Contains("sans", StringComparison.OrdinalIgnoreCase))
-                                  ?? SystemFonts.Families.First();
+                                     ?? SystemFonts.Families.First();
 
                     }
+                    Config.Log.Debug($"Selected font: {fontFamily.Name}");
                     var font = fontFamily.CreateFont(10 * scale, FontStyle.Regular);
                     var textRendererOptions = new RendererOptions(font);
                     var graphicsOptions = new GraphicsOptions
