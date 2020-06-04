@@ -340,17 +340,18 @@ namespace CompatBot.Utils.ResultFormatters
                 if (IntelGpuModel.Match(gpuInfo) is Match intelMatch
                     && intelMatch.Success)
                 {
+                    var family = intelMatch.Groups["gpu_family"].Value.TrimEnd();
                     var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
                     if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
                         modelNumber = modelNumber[1..];
                     int.TryParse(modelNumber, out var modelNumberInt);
-                    if (modelNumberInt < 500 || modelNumberInt > 1000)
+                    if (family == "UHD" || family == "Iris Plus" || modelNumberInt > 500 && modelNumberInt < 1000)
+                        notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
+                    else
                     {
                         notes.Add("⚠ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
                         supportedGpu = false;
                     }
-                    else
-                        notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
                 }
 
                 if (items["driver_version_info"] is string driverVersionString)
