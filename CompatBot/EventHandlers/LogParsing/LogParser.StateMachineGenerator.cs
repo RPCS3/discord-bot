@@ -24,7 +24,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 var parser = new LogSectionParser
                 {
-                    OnLineCheckAsync = sectionDescription.OnNewLineAsync ?? ((l, s) => Task.CompletedTask),
+                    //OnLineCheckAsync = sectionDescription.OnNewLineAsync ?? ((l, s) => Task.CompletedTask),
                     OnSectionEnd = sectionDescription.OnSectionEnd,
                     EndTrigger = sectionDescription.EndTrigger.Select(s => s.ToLatin8BitEncoding()).ToArray(),
                 };
@@ -112,7 +112,7 @@ namespace CompatBot.EventHandlers.LogParsing
         private class LogSectionParser
         {
             public OnNewLineDelegate OnExtract;
-            public Func<string, LogParseState, Task> OnLineCheckAsync;
+            //public Func<string, LogParseState, Task> OnLineCheckAsync;
             public Action<LogParseState> OnSectionEnd;
             public string[] EndTrigger;
         }

@@ -118,7 +118,8 @@ namespace CompatBot.EventHandlers.LogParsing
         {
             var currentProcessor = SectionParsers[state.Id];
             var firstSectionLine = sectionLines.First.Value.AsString();
-            await currentProcessor.OnLineCheckAsync(firstSectionLine, state).ConfigureAwait(false);
+            await PiracyCheckAsync(firstSectionLine, state).ConfigureAwait(false);
+            //await currentProcessor.OnLineCheckAsync(firstSectionLine, state).ConfigureAwait(false);
             if (state.Error != LogParseState.ErrorCode.None)
                 return;
 
