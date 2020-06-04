@@ -53,7 +53,6 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["custom config:"] = new Regex(@"custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
                     ["patch_log: Failed to load patch file"] = new Regex(@"patch_log: Failed to load patch file (?<patch_error_file>\S*)\r?\n.* line (?<patch_error_line>\d+), column (?<patch_error_column>\d+): (?<patch_error_text>.*?)$", DefaultOptions),
                 },
-                OnNewLineAsync = PiracyCheckAsync,
                 EndTrigger = new[] {"Used configuration:"},
             },
             new LogSection
@@ -218,7 +217,6 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["⁂"] = new Regex(@"\xE2\x81\x82 (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
                     ["undub"] =  new Regex(@"(\b|_)(?<game_mod>(undub|translation patch))(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
                 },
-                OnNewLineAsync = LimitedPiracyCheckAsync,
                 OnSectionEnd = MarkAsCompleteAndReset,
                 EndTrigger = new[] { "Stopping emulator...", "All threads stopped...", "LDR: Booting from"},
             }

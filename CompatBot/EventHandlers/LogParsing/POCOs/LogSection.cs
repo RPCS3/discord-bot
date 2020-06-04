@@ -9,7 +9,7 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
     {
         public string[] EndTrigger;
         public Dictionary<string, Regex> Extractors;
-        public Func<string, LogParseState, Task> OnNewLineAsync;
+        //public Func<string, LogParseState, Task> OnNewLineAsync;
         public Action<LogParseState> OnSectionEnd;
     }
 }

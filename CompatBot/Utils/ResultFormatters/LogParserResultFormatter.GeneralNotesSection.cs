@@ -337,8 +337,7 @@ namespace CompatBot.Utils.ResultFormatters
             var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
             if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
             {
-                if (IntelGpuModel.Match(gpuInfo) is Match intelMatch
-                    && intelMatch.Success)
+                if (IntelGpuModel.Match(gpuInfo) is Match intelMatch && intelMatch.Success)
                 {
                     var family = intelMatch.Groups["gpu_family"].Value.TrimEnd();
                     var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
