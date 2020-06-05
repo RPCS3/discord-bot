@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
@@ -20,7 +21,7 @@ namespace CompatBot.EventHandlers
     internal static class DiscordInviteFilter
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline;
-        private static readonly Regex InviteLink = new Regex(@"(https?://)?discord(((app\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|$))", DefaultOptions);
+        private static readonly Regex InviteLink = new Regex(@"(https?://)?discord(((app\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|>|$))", DefaultOptions);
         private static readonly Regex DiscordInviteLink = new Regex(@"(https?://)?discord(app\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+)", DefaultOptions);
         private static readonly Regex DiscordMeLink = new Regex(@"(https?://)?discord\.me/(?<me_id>.*?)(\s|$)", DefaultOptions);
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
@@ -200,27 +201,69 @@ namespace CompatBot.EventHandlers
             var hasInvalidInvites = false;
             foreach (var meLink in discordMeLinks)
             {
+                /*
+                 * discord.me is a fucking joke and so far they were unwilling to provide any kind of sane api
+                 * here's their current flow:
+                 * 1. get vanity page (e.g. https://discord.me/rpcs3)
+                 * 2. POST web form with csrf token and server EID to https://discord.me/server/join
+                 * 3. this will return a 302 redirect (Location header value) to https://discord.me/server/join/protected/_some_id_
+                 * 4. this page will have a "refresh" meta tag in its body to ttps://discord.me/server/join/redirect/_same_id_
+                 * 5. this one will return a 302 redirect to an actual https://discord.gg/_invite_id_
+                 */
                 try
                 {
+                    using var handler = new HttpClientHandler {AllowAutoRedirect = false}; // needed to store cloudflare session cookies
+                    using var httpClient = HttpClientFactory.Create(handler, new CompressionMessageHandler());
                     using var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/" + meLink);
                     request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
                     request.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
                     request.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
-                    using var response = await HttpClient.SendAsync(request);
+                    using var response = await httpClient.SendAsync(request).ConfigureAwait(false);
                     var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     if (response.IsSuccessStatusCode)
                     {
                         if (string.IsNullOrEmpty(html))
                             continue;
 
-                        foreach (Match match in DiscordInviteLink.Matches(html))
-                            inviteCodes.Add(match.Groups["invite_id"].Value);
+                        hasInvalidInvites = true;
+                        var csrfTokenMatch = Regex.Match(html, @"name=""csrf-token"" content=""(?<csrf_token>\w+)""");
+                        var serverEidMatch = Regex.Match(html, @"name=""serverEid"" value=""(?<server_eid>\w+)""");
+                        if (csrfTokenMatch.Success && serverEidMatch.Success)
+                        {
+                            using var postRequest = new HttpRequestMessage(HttpMethod.Post, "https://discord.me/server/join")
+                            {
+                                Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                                {
+                                    ["_token"] = csrfTokenMatch.Groups["csrf_token"].Value,
+                                    ["serverEid"] = serverEidMatch.Groups["server_eid"].Value,
+                                }),
+                            };
+                            postRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+                            postRequest.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                            using var postResponse = await httpClient.SendAsync(postRequest).ConfigureAwait(false);
+                            if (postResponse.StatusCode == HttpStatusCode.Redirect)
+                            {
+                                var redirectId = postResponse.Headers.Location.Segments.Last();
+                                using var getDiscordRequest = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/server/join/redirect/" + redirectId);
+                                getDiscordRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
+                                getDiscordRequest.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                                using var discordRedirect = await httpClient.SendAsync(getDiscordRequest).ConfigureAwait(false);
+                                if (discordRedirect.StatusCode == HttpStatusCode.Redirect)
+                                {
+                                    inviteCodes.Add(discordRedirect.Headers.Location.Segments.Last());
+                                    hasInvalidInvites = false;
+                                }
+                                else
+                                    Config.Log.Warn($"Unexpected response code from GET discord redirect: {discordRedirect.StatusCode}");
+                            }
+                            else
+                                Config.Log.Warn($"Unexpected response code from POST: {postResponse.StatusCode}");
+                        }
+                        else
+                            Config.Log.Warn($"Failed to get POST arguments from discord.me: {html}");
                     }
                     else
-                    {
-                        hasInvalidInvites = true;
                         Config.Log.Warn($"Got {response.StatusCode} from discord.me: {html}");
-                    }
                 }
                 catch (Exception e)
                 {
