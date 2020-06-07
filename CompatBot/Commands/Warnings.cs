@@ -223,17 +223,19 @@ namespace CompatBot.Commands
                         else
                             isDoggo = false;
                     }
-                    var msg = (removed, isKot, isDoggo) switch
+                    var msg = (removed, isPrivate, isKot, isDoggo) switch
                     {
-                        (0, true, false) => $"{userName} has no warnings, is an upstanding kot, and a paw bean of this community",
-                        (0, false, true) => $"{userName} has no warnings, is a good boy, and a wiggling tail of this community",
-                        (0, _, _) => $"{userName} has no warnings, is an upstanding citizen, and a pillar of this community",
-                        (_, true, false) => $"{userName} has no warnings{(isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")}), but are they a good kot?" : "")}",
-                        (_, false, true) => $"{userName} has no warnings{(isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")}), but are they a good boy?" : "")}",
-                        _ => $"{userName} has no warnings{(isPrivate ? $" ({removed} retracted warning{(removed == 1 ? "" : "s")})" : "")}",
+                        (0, _, true, false) => $"{userName} has no warnings, is an upstanding kot, and a paw bean of this community",
+                        (0, _, false, true) => $"{userName} has no warnings, is a good boy, and a wiggling tail of this community",
+                        (0, _,  _, _) => $"{userName} has no warnings, is an upstanding citizen, and a pillar of this community",
+                        (_, true, _, _) => $"{userName} has no warnings ({removed} retracted warning{(removed == 1 ? "" : "s")})",
+                        (_, _, true, false) => $"{userName} has no warnings, but are they a good kot?",
+                        (_, _, false, true) => $"{userName} has no warnings, but are they a good boy?",
+                        _ => $"{userName} has no warnings",
                     };
                     await message.RespondAsync(msg).ConfigureAwait(false);
-                    return;
+                    if (!isPrivate || removed == 0)
+                        return;
                 }
 
                 if (count == 1 && skipIfOne)
