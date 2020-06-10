@@ -125,6 +125,8 @@ namespace CompatBot.Commands
                         newTitle = newTitle[..^10];
                     if (newTitle.EndsWith("full game unlock", StringComparison.OrdinalIgnoreCase))
                         newTitle = newTitle[..^17];
+                    if (newTitle.EndsWith("downloadable game", StringComparison.OrdinalIgnoreCase))
+                        newTitle = newTitle[..^18];
                     newTitle.TrimEnd();
                     if (newTitle != thumb.Name)
                     {
