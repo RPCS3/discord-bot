@@ -110,7 +110,9 @@ namespace CompatBot.Utils.Extensions
             ).ConfigureAwait(false);
             var filterBranch = $"refs/pull/{pr}/merge";
             builds = builds
-                .Where(b => b.SourceBranch == filterBranch && b.TriggerInfo.TryGetValue("pr.sourceSha", out var trc) && trc.Equals(commit, StringComparison.InvariantCultureIgnoreCase))
+                .Where(b => b.SourceBranch == filterBranch
+                            && b.TriggerInfo.TryGetValue("pr.sourceSha", out var trc)
+                            && trc.Equals(commit, StringComparison.InvariantCultureIgnoreCase))
                 .OrderByDescending(b => b.StartTime)
                 .ToList();
             var latestBuild = builds.FirstOrDefault();
@@ -138,7 +140,7 @@ namespace CompatBot.Utils.Extensions
             };
             var artifacts = await azureDevOpsClient.GetArtifactsAsync(Config.AzureDevOpsProjectId, build.Id, cancellationToken: cancellationToken).ConfigureAwait(false);
             // windows build
-            var windowsBuildArtifact = artifacts.FirstOrDefault(a => a.Name.StartsWith("Windows"));
+            var windowsBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Windows"));
             var windowsBuild = windowsBuildArtifact?.Resource;
             if (windowsBuild?.DownloadUrl is string winDownloadUrl)
             {
@@ -165,7 +167,7 @@ namespace CompatBot.Utils.Extensions
             }
 
             // linux build
-            var linuxBuildArtifact = artifacts.FirstOrDefault(a => a.Name.EndsWith(".GCC"));
+            var linuxBuildArtifact = artifacts.FirstOrDefault(a => a.Name.EndsWith(".GCC") || a.Name.EndsWith("Linux"));
             var linuxBuild = linuxBuildArtifact?.Resource;
             if (linuxBuild?.DownloadUrl is string linDownloadUrl)
             {
