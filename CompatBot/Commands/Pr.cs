@@ -110,7 +110,14 @@ namespace CompatBot.Commands
                         windowsDownloadText = "⏳ Pending...";
                         linuxDownloadText = "⏳ Pending...";
                         var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
-                        if (latestBuild != null)
+                        if (latestBuild == null)
+                        {
+                            if (prState.state == "Opened")
+                                embed.WithFooter($"Opened on {prInfo.CreatedAt:u} ({(DateTime.UtcNow - prInfo.CreatedAt).AsTimeDeltaDescription()} ago)");
+                            windowsDownloadText = null;
+                            linuxDownloadText = null;
+                        }
+                        else
                         {
                             bool shouldHaveArtifacts = false;
                             if (latestBuild.Status == BuildStatus.Completed
