@@ -39,7 +39,7 @@ namespace CompatBot.Commands
 
         static Vision()
         {
-            var list = new StringBuilder("Available system fonts:");
+            var list = new StringBuilder("Available system fonts:").AppendLine();
             foreach (var fontFamily in SystemFonts.Families)
                 list.AppendLine(fontFamily.Name);
             Config.Log.Debug(list.ToString());

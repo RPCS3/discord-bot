@@ -112,7 +112,7 @@ namespace CompatBot.Commands
                         var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild == null)
                         {
-                            if (prState.state == "Opened")
+                            if (prState.state == "Open")
                                 embed.WithFooter($"Opened on {prInfo.CreatedAt:u} ({(DateTime.UtcNow - prInfo.CreatedAt).AsTimeDeltaDescription()} ago)");
                             windowsDownloadText = null;
                             linuxDownloadText = null;
