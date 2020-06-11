@@ -1,7 +1,7 @@
 RPCS3 Compatibility Bot
 =======================
 
-[![Build Status](https://dev.azure.com/rpcs3-bot/RPCS3%20Bot/_apis/build/status/RPCS3.discord-bot?branchName=master)](https://dev.azure.com/rpcs3-bot/RPCS3%20Bot/_build/latest?definitionId=1&branchName=master) [![RPCS3 discord server](https://discordapp.com/api/guilds/272035812277878785/widget.png)](https://discord.me/rpcs3)
+[![Build Status](https://dev.azure.com/rpcs3-bot/RPCS3%20Bot/_apis/build/status/RPCS3.discord-bot?branchName=master)](https://dev.azure.com/rpcs3-bot/RPCS3%20Bot/_build?definitionId=1&branchName=master) [![RPCS3 discord server](https://discordapp.com/api/guilds/272035812277878785/widget.png)](https://discord.me/rpcs3)
 
 This is a tech support / moderation / crowd entertainment bot for the [RPCS3 discord server](https://discord.me/rpcs3).
 
