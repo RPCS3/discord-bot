@@ -112,10 +112,14 @@ namespace CompatBot.Commands
                         var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild != null)
                         {
+                            bool shouldHaveArtifacts = false;
                             if (latestBuild.Status == BuildStatus.Completed
                                 && (latestBuild.Result == BuildResult.Succeeded || latestBuild.Result == BuildResult.PartiallySucceeded)
                                 && latestBuild.FinishTime.HasValue)
+                            {
                                 buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
+                                shouldHaveArtifacts = true;
+                            }
                             else if (latestBuild.Result == BuildResult.Failed || latestBuild.Result == BuildResult.Canceled)
                                 windowsDownloadText = $"❌ {latestBuild.Result}";
                             else if (latestBuild.Status == BuildStatus.InProgress && latestBuild.StartTime != null)
@@ -132,18 +136,33 @@ namespace CompatBot.Commands
                             name = name.Replace("rpcs3-", "").Replace("_win64", "");
                             if (!string.IsNullOrEmpty(latestBuild.WindowsBuildDownloadLink))
                                 windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuildDownloadLink})";
+                            else if (shouldHaveArtifacts)
+                            {
+                                if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
+                                    windowsDownloadText = "No longer available";
+                                else
+                                    windowsDownloadText = null;
+                            }
 
                             // linux build
                             name = latestBuild.LinuxFilename ?? "Linux PR Build";
                             name = name.Replace("rpcs3-", "").Replace("_linux64", "");
                             if (!string.IsNullOrEmpty(latestBuild.LinuxBuildDownloadLink))
                                 linuxDownloadText = $"[⏬ {name}]({latestBuild.LinuxBuildDownloadLink})";
+                            else if (shouldHaveArtifacts)
+                            {
+                                if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
+                                    linuxDownloadText = "No longer available";
+                                else
+                                    linuxDownloadText = null;
+                            }
                         }
                     }
                     catch (Exception e)
                     {
                         Config.Log.Error(e, "Failed to get Azure DevOps build info");
-                        linuxDownloadText = null; // probably due to expired access token
+                        windowsDownloadText = null; // probably due to expired access token
+                        linuxDownloadText = null;
                     }
 
                 if (!string.IsNullOrEmpty(windowsDownloadText))
