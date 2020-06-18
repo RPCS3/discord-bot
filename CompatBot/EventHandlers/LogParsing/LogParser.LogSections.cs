@@ -262,8 +262,16 @@ namespace CompatBot.EventHandlers.LogParsing
                     };
                 if (state.FilterTriggers.TryGetValue(m.Id, out var fh))
                 {
+                    var updatedActions = fh.filter.Actions | m.Actions;
                     if (fh.context.Length > line.Length)
+                    {
+                        m.Actions = updatedActions;
                         state.FilterTriggers[m.Id] = (m, line.ToUtf8());
+                    }
+                    else
+                        fh.filter.Actions = updatedActions;
+                    if (updatedActions.HasFlag(FilterAction.IssueWarning))
+                        state.Error = LogParseState.ErrorCode.PiracyDetected;
                 }
                 else
                 {
