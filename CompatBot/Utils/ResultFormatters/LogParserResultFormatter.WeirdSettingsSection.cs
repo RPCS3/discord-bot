@@ -844,7 +844,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["read_color_buffers"] == EnabledMark)
                     notes.Add("ℹ `Read Color Buffers` may not be required depending on applied patches");
                 if (items["read_depth_buffer"] == EnabledMark)
-                    notes.Add("⚠ P`Read Depth Buffer` may not be required depending on applied patches");
+                    notes.Add("⚠ `Read Depth Buffer` may not be required depending on applied patches");
             }
             else
             {
