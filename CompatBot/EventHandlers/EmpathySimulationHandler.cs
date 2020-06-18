@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Utils;
 using DSharpPlus.Entities;
@@ -41,21 +42,22 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(content))
                 return;
 
-            if (Throttling.TryGetValue(args.Channel.Id, out List<DiscordMessage> mark) && content.Equals(mark.FirstOrDefault()?.Content, StringComparison.InvariantCultureIgnoreCase))
+            if (Throttling.TryGetValue(args.Channel.Id, out List<DiscordMessage> mark) && content.Equals(mark.FirstOrDefault()?.Content, StringComparison.OrdinalIgnoreCase))
             {
                 mark.Add(args.Message);
                 Config.Log.Debug($"Bailed out of repeating '{content}' due to throttling");
                 return;
             }
 
-            var similarList = queue.Where(msg => content.Equals(msg.Content, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            var similarList = queue.Where(msg => content.Equals(msg.Content, StringComparison.OrdinalIgnoreCase)).ToList();
             if (similarList.Count > 2)
             {
                 var uniqueUsers = similarList.Select(msg => msg.Author.Id).Distinct().Count();
                 if (uniqueUsers > 2)
                 {
                     Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
-                    var botMsg = await args.Channel.SendMessageAsync(content.ToLowerInvariant()).ConfigureAwait(false);
+                    var msgContent = GetAvgContent(similarList.Select(m => m.Content).ToList());
+                    var botMsg = await args.Channel.SendMessageAsync(msgContent).ConfigureAwait(false);
                     similarList.Add(botMsg);
                 }
                 else
@@ -94,6 +96,15 @@ namespace CompatBot.EventHandlers
                 }
                 catch { }
             }
+        }
+
+        private static string GetAvgContent(List<string> samples)
+        {
+            var rng = new Random();
+            var result = new StringBuilder(samples[0].Length);
+            for (var i = 0; i < samples[0].Length; i++)
+                result.Append(samples[rng.Next(samples.Count)][i]);
+            return result.ToString();
         }
     }
 }
