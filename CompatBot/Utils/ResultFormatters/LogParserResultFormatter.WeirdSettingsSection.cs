@@ -277,7 +277,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && wcb == DisabledMark)
                 notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == EnabledMark)
-                notes.Add("⚠ `ZCull Occlusion Queries` are disabled, can result in visual artifacts");
+                notes.Add("⚠ `ZCull Occlusion Queries` are disabled, which can result in visual artifacts");
             else if (items["relaxed_zcull"] is string relaxedZcull)
             {
                 if (relaxedZcull == EnabledMark && !KnownGamesThatWorkWithRelaxedZcull.Contains(serial))

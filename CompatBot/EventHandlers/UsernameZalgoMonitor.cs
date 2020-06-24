@@ -104,7 +104,7 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static string StripZalgo(string displayName, int level = 2)
+        public static string StripZalgo(string displayName, int level = 0)
         {
             displayName = displayName?.Normalize().TrimEager();
             if (string.IsNullOrEmpty(displayName))
