@@ -117,7 +117,7 @@ namespace CompatBot.Commands
 
                 var utcNow = DateTime.UtcNow;
                 var yesterday = utcNow.AddDays(-1).Ticks;
-                var last24hWarnings = db.Warning.Where(w => w.Timestamp > yesterday).ToList();
+                var last24hWarnings = db.Warning.Where(w => w.Timestamp > yesterday && !w.Retracted).ToList();
                 var warnCount = last24hWarnings.Count;
                 if (warnCount > mostWarnings)
                 {
