@@ -19,6 +19,9 @@ namespace CompatBot.Database.Providers
     internal static class ContentFilter
     {
         private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>> filters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>>();
+        private static readonly MemoryCache ResponseAntispamCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
+        private static readonly MemoryCache ReportAntispamCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
+        private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(15);
 
         static ContentFilter()
         {
@@ -173,13 +176,19 @@ namespace CompatBot.Database.Providers
             {
                 try
                 {
-                    var msgContent = trigger.CustomMessage;
-                    if (string.IsNullOrEmpty(msgContent))
+                    ResponseAntispamCache.TryGetValue(message.Author.Id, out int counter);
+                    if (counter < 3)
                     {
-                        var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
-                        msgContent = $"Please follow the {rules.Mention} and do not discuss piracy on this server. Repeated offence may result in a ban.";
+
+                        var msgContent = trigger.CustomMessage;
+                        if (string.IsNullOrEmpty(msgContent))
+                        {
+                            var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
+                            msgContent = $"Please follow the {rules.Mention} and do not discuss piracy on this server. Repeated offence may result in a ban.";
+                        }
+                        await message.Channel.SendMessageAsync($"{message.Author.Mention} {msgContent}").ConfigureAwait(false);
                     }
-                    await message.Channel.SendMessageAsync($"{message.Author.Mention} {msgContent}").ConfigureAwait(false);
+                    ResponseAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
                     completedActions.Add(FilterAction.SendMessage);
                 }
                 catch (Exception e)
@@ -203,8 +212,12 @@ namespace CompatBot.Database.Providers
 
             try
             {
-                if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue))
+                ReportAntispamCache.TryGetValue(message.Author.Id, out int counter);
+                if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue) && counter < 3)
+                {
                     await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
+                    ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
+                }
             }
             catch (Exception e)
             {
