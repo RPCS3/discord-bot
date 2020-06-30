@@ -112,9 +112,15 @@ namespace CompatBot.Database.Providers
             if (message.Author.IsCurrent)
                 return true;
 
+            var suppressActions = FilterAction.None;
 #if !DEBUG
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
-                return true;
+            {
+                if (message.Content.StartsWith('>'))
+                    suppressActions = FilterAction.IssueWarning | FilterAction.RemoveContent;
+                else
+                    return true;
+            }
 #endif
 
             if (string.IsNullOrEmpty(message.Content))
@@ -124,8 +130,8 @@ namespace CompatBot.Database.Providers
             if (trigger == null)
                 return true;
 
-            await PerformFilterActions(client, message, trigger).ConfigureAwait(false);
-            return (trigger.Actions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
+            await PerformFilterActions(client, message, trigger, suppressActions).ConfigureAwait(false);
+            return (trigger.Actions & (~suppressActions) & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
         }
 
         public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string triggerContext = null, string infraction = null, string warningReason = null)
