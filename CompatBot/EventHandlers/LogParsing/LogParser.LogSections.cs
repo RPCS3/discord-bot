@@ -39,7 +39,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Finished reading database from file:"] = new Regex(@"Finished reading database from file: (?<compat_database_path>.*compat_database.dat) }.*\r?$", DefaultOptions),
                     ["Database file not found:"] = new Regex(@"Database file not found: (?<compat_database_path>.*compat_database.dat) }.*\r?$", DefaultOptions),
                     ["Successfully installed PS3 firmware"] = new Regex(@"(?<fw_installed_message>Successfully installed PS3 firmware) version (?<fw_version_installed>\d+\.\d+).*\r?$", DefaultOptions),
-                    ["Title:"] = new Regex(@"Title: (?<game_title>.*)?\r?$", DefaultOptions),
+                    ["Title:"] = new Regex(@"(?:LDR|SYS): Title: (?<game_title>.*)?\r?$", DefaultOptions),
                     ["Serial:"] = new Regex(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
                     ["Category:"] = new Regex(@"Category: (?<game_category>.*)?\r?$", DefaultOptions),
                     ["LDR: Version:"] = new Regex(@"Version: (?<disc_app_version>\S+) / (?<disc_package_version>\S+).*?\r?$", DefaultOptions),
