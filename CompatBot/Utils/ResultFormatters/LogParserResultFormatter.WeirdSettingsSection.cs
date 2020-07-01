@@ -326,6 +326,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckGt6Settings(serial, items, notes, generalNotes);
                 CheckSly4Settings(serial, items, notes);
                 CheckDragonsCrownSettings(serial, items, notes);
+                CheckLbpSettings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -1086,6 +1087,51 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_loop_detection"] == EnabledMark)
                 notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
         }
+
+        private static readonly HashSet<string> Lbp1Ids = new HashSet<string>
+        {
+            "BCAS20058", "BCAS20078", "BCAS20091", "BCES00611", "BCJS70009", "BCKS10059", "BCUS98148", "BCUS98199", "BCUS98208",
+            "NPEA00241", "NPHA80093", "NPUA80472", "NPUA80479",
+        };
+
+        private static readonly HashSet<string> Lbp2Ids = new HashSet<string>
+        {
+            "BCAS20201", "BCES00850", "BCES01086", "BCES01345", "BCES01346", "BCES01693", "BCES01694", "BCJS70024", "BCUS90260", "BCUS98249", "BCUS98372",
+            "NPEA00324", "NPHA80161", "NPUA80662",
+        };
+
+        private static readonly HashSet<string> Lbp3Ids = new HashSet<string>
+        {
+            "BCAS20322", "BCES01663", "BCES02068", "BCUS98245", "BCUS98362",
+            "NPEA00515", "NPHA80277", "NPUA81116",
+        };
+
+        private static readonly HashSet<string> AllLbpGames = new HashSet<string>(Lbp1Ids.Concat(Lbp2Ids).Concat(Lbp3Ids))
+        {
+            "NPEA00147", "NPJA90074", "NPJA90097", "NPUA70045", // lbp1 demos and betas
+            "NPUA70117", "NPHA80163", // lbp2 demo and beta
+        };
+
+        private static void CheckLbpSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!AllLbpGames.Contains(serial))
+                return;
+
+            if (items["gpu_info"] is string gpu
+                && (gpu.Contains("RTX ") || gpu.Contains("GTX 16")))
+                generalNotes.Add("⚠ LittleBigPlanet games may fail to boot on nVidia Turing GPUs ");
+
+            if (Lbp2Ids.Contains(serial))
+            {
+                if (items["game_version"] is string gameVer
+                    && Version.TryParse(gameVer, out var v))
+                {
+                    if (v < new Version(1, 24))
+                        generalNotes.Add("⚠ Please update the game to prevent hang on boot");
+                }
+            }
+        }
+
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
