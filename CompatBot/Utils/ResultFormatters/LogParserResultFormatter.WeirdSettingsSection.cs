@@ -1121,7 +1121,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && (gpu.Contains("RTX ") || gpu.Contains("GTX 16")))
                 generalNotes.Add("⚠ LittleBigPlanet games may fail to boot on nVidia Turing GPUs ");
 
-            if (Lbp2Ids.Contains(serial))
+            if (Lbp1Ids.Contains(serial))
             {
                 if (items["game_version"] is string gameVer
                     && Version.TryParse(gameVer, out var v))
