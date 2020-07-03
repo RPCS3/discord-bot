@@ -71,6 +71,7 @@ namespace CompatBot
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
         public static int MaxSyscallResultLines => config.GetValue(nameof(MaxSyscallResultLines), 13);
         public static TimeSpan IncomingMessageCheckIntervalInMinutes => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMinutes), 10));
+        public static TimeSpan MetricsIntervalInSeconds => TimeSpan.FromSeconds(config.GetValue(nameof(MetricsIntervalInSeconds), 10));
         public static string Token => config.GetValue(nameof(Token), "");
         public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
         public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");

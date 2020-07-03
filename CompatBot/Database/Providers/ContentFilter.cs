@@ -112,7 +112,7 @@ namespace CompatBot.Database.Providers
             if (message.Author.IsCurrent)
                 return true;
 
-            var suppressActions = FilterAction.None;
+            var suppressActions = (FilterAction)0;
 #if !DEBUG
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
             {
