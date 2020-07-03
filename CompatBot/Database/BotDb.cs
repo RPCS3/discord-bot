@@ -92,7 +92,7 @@ namespace CompatBot.Database
     [Flags]
     public enum FilterAction
     {
-        None          = 0b_0000_0000,
+        //None          = 0b_0000_0000, do NOT add this
         RemoveContent = 0b_0000_0001,
         IssueWarning  = 0b_0000_0010,
         ShowExplain   = 0b_0000_0100,
