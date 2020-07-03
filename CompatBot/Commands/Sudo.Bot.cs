@@ -226,6 +226,7 @@ namespace CompatBot.Commands
 
             private static void RestartNoSaving()
             {
+                Config.TelemetryClient?.TrackEvent("Restart");
                 Config.Log.Info("Restarting...");
                 using var self = new Process
                 {

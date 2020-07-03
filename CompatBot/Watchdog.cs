@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using DSharpPlus;
+using Microsoft.ApplicationInsights;
 
 namespace CompatBot
 {
@@ -40,6 +41,7 @@ namespace CompatBot
 
                 try
                 {
+                    Config.TelemetryClient?.TrackEvent("socket-deadlock-potential");
                     Config.Log.Warn("Potential socket deadlock detected, reconnecting...");
                     await client.ReconnectAsync(true).ConfigureAwait(false);
                     await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
@@ -49,12 +51,28 @@ namespace CompatBot
                         continue;
                     }
 
+                    Config.TelemetryClient?.TrackEvent("socket-deadlock-for-sure");
                     Config.Log.Error("Hard reconnect failed, restarting...");
                     Sudo.Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential socket deadlock (last incoming message event: {TimeSinceLastIncomingMessage.Elapsed:h\:mm\:ss} ago)");
                 }
                 catch (Exception e)
                 {
                     Config.Log.Error(e);
+                }
+            } while (!Config.Cts.IsCancellationRequested);
+        }
+
+        public static async Task SendMetrics(DiscordClient client)
+        {
+            do
+            {
+                await Task.Delay(Config.MetricsIntervalInSeconds).ConfigureAwait(false);
+                if (Config.TelemetryClient is TelemetryClient tc)
+                {
+                    tc.TrackMetric("gw-latency", client.Ping);
+                    tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
+                    tc.TrackMetric("gc-total-memory", GC.GetTotalMemory(false));
+                    tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
                 }
             } while (!Config.Cts.IsCancellationRequested);
         }
