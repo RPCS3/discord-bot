@@ -360,7 +360,8 @@ namespace CompatBot
                     Watchdog.Watch(client),
                     InviteWhitelistProvider.CleanupAsync(client),
                     UsernameValidationMonitor.MonitorAsync(client),
-                    Psn.Check.MonitorFwUpdates(client, Config.Cts.Token)
+                    Psn.Check.MonitorFwUpdates(client, Config.Cts.Token),
+                    Watchdog.SendMetrics(client)
                 );
 
                 while (!Config.Cts.IsCancellationRequested)
