@@ -5,7 +5,7 @@ using IrdLibraryClient.POCOs;
 
 namespace CompatBot.Utils.ResultFormatters
 {
-    public static class IrdSearchResultFormattercs
+    public static class IrdSearchResultFormatter
     {
         public static DiscordEmbedBuilder AsEmbed(this SearchResult searchResult)
         {
