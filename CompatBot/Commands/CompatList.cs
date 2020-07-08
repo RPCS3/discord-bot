@@ -109,7 +109,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("top"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
+        [Command("top"), LimitedToOfftopicChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
         [Description("Provides top game lists based on Metacritic and compatibility lists")]
         public async Task Top(CommandContext ctx,
             [Description("Number of entries in the list")] int number = 10,

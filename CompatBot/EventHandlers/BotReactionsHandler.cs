@@ -163,7 +163,10 @@ namespace CompatBot.EventHandlers
                 lock (theDoor)
                 {
                     emoji = ThankYouReactions[rng.Next(ThankYouReactions.Length)];
-                    thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel) ? ThankYouMessages[rng.Next(ThankYouMessages.Length)] : null;
+                    thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel)
+                                      || LimitedToOfftopicChannel.IsOfftopicChannel(args.Channel)
+                        ? ThankYouMessages[rng.Next(ThankYouMessages.Length)]
+                        : null;
                 }
                 await args.Message.ReactWithAsync(emoji, thankYouMessage).ConfigureAwait(false);
             }

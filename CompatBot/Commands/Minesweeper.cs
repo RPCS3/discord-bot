@@ -10,7 +10,7 @@ using DSharpPlus.CommandsNext.Attributes;
 namespace CompatBot.Commands
 {
 	[Group("minesweeper"), Aliases("msgen")]
-	[LimitedToSpamChannel, Cooldown(1, 30, CooldownBucketType.Channel)]
+	[LimitedToOfftopicChannel, Cooldown(1, 30, CooldownBucketType.Channel)]
 	[Description("Generates a minesweeper field with specified parameters")]
 	internal sealed class Minesweeper : BaseCommandModuleCustom
 	{
