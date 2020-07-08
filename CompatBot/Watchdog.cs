@@ -73,6 +73,7 @@ namespace CompatBot
                     tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
                     tc.TrackMetric("gc-total-memory", GC.GetTotalMemory(false));
                     tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
+                    tc.Flush();
                 }
             } while (!Config.Cts.IsCancellationRequested);
         }

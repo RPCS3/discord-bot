@@ -143,6 +143,14 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
         };
 
+        private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat = new HashSet<string>
+        {
+            "BLES00229", "BLES00258", "BLES00887", "BLES01128", // gta4 + efls
+            "BLJM55011", "BLJM60235", "BLJM60459", "BLJM60525", "BLJM61180", "BLKS20073", "BLKS20198", // gta4 + efls
+            "BLUS30127", "BLUS30149", "BLUS30524", "BLUS30682", // gta4 + efls
+            "NPEB00882", "NPUB30702", "NPUB30704", "NPEB00511", // gta4 + efls
+        };
+
         private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull = new HashSet<string>
         {
             "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758", //rdr

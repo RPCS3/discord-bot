@@ -220,6 +220,19 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["accurate_rsx_reservation"] == EnabledMark)
                 notes.Add("ℹ `Accurate RSX Reservation Access` is enabled");
 
+            if (items["accurate_xfloat"] is string accurateXfloat)
+            {
+                if (accurateXfloat == EnabledMark)
+                {
+                    if (!KnownGamesThatRequireAccurateXfloat.Contains(serial))
+                        notes.Add("ℹ `Accurate xfloat` is not required, and significantly impacts performance");
+                }
+                else
+                {
+                    if (KnownGamesThatRequireAccurateXfloat.Contains(serial))
+                        notes.Add("⚠ `Accurate xfloat` is required for this game, but it will significantly impact performance");
+                }
+            }
             if (items["approximate_xfloat"] is string approximateXfloat && approximateXfloat == DisabledMark)
             {
                 if (KnownNoApproximateXFloatIds.Contains(serial))
@@ -495,8 +508,6 @@ namespace CompatBot.Utils.ResultFormatters
                 }
                 if (items["spu_loop_detection"] == EnabledMark)
                     notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
-                if (items["accurate_xfloat"] is string accurateXfloat && accurateXfloat == EnabledMark)
-                    notes.Add("ℹ `Accurate xfloat` is not required, please disable");
                 if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                     notes.Add("⚠ `Frame Limiter` is not required, please disable");
                 if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
