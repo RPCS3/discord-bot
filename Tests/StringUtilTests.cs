@@ -1,5 +1,8 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using CompatBot.Utils;
+using DuoVia.FuzzyStrings;
 using HomoglyphConverter;
 using NUnit.Framework;
 
@@ -55,5 +58,37 @@ namespace Tests
 
         [TestCase("a grey and white cat sitting in front of a window", ExpectedResult = "a grey and white kot sitting in front of a window")]
         public string FixKotTest(string input) => input.FixKot();
+
+        [TestCase("minesweeeper", "minesweeper")]
+        [TestCase("minesweeeeeeeeeeeeeeeeeeper", "minesweeper")]
+        [TestCase("ee", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")]
+        [TestCase("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "ee")]
+        public void DiceCoefficientRangeTest(string strA, string strB)
+        {
+            var coef = DiceCoefficient(strA, strB);
+            if (strA.Length > strB.Length)
+            {
+                var tmp = strA;
+                strA = strB;
+                strB = tmp;
+            }
+            Assert.That(coef, Is.GreaterThanOrEqualTo(0.0).And.LessThanOrEqualTo(1.0));
+            Assert.That(coef, Is.EqualTo(strA.DiceCoefficient(strB)));
+        }
+
+        public static double DiceCoefficient(string input, string comparedTo)
+        {
+            var ngrams = input.ToBiGrams();
+            var compareToNgrams = comparedTo.ToBiGrams();
+            return DiceCoefficient(ngrams, compareToNgrams);
+        }
+
+        public static double DiceCoefficient(string[] nGrams, string[] compareToNGrams)
+        {
+            var matches = nGrams.Intersect(compareToNGrams).Count();
+            if (matches == 0) return 0.0d;
+            double totalBigrams = nGrams.Length + compareToNGrams.Length;
+            return (2 * matches) / totalBigrams;
+        }
     }
 }

@@ -372,6 +372,12 @@ namespace CompatBot.Utils
 
         private static double GetScoreWithAcronym(this string strA, string strB)
         {
+            if (strA.Length > strB.Length) //workaround for the library bug
+            {
+                var tmp = strA;
+                strA = strB;
+                strB = tmp;
+            }
             var fullMatch = strA.DiceCoefficient(strB);
             var acronymMatch = strA.DiceCoefficient(strB.GetAcronym().ToLowerInvariant());
             return Math.Max(fullMatch, acronymMatch);
