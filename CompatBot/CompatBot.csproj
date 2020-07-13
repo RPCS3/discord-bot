@@ -33,8 +33,8 @@
     <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00709" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00709" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00709" />
-    <PackageReference Include="DuoVia.FuzzyStrings" Version="2.0.1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.47.0.1995" />
+    <PackageReference Include="DuoVia.FuzzyStrings" Version="2.1.0" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.48.0.1995" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
     <PackageReference Include="MegaApiClient" Version="1.8.1" />
@@ -57,7 +57,7 @@
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.153.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
     <PackageReference Include="Microsoft.VisualStudio.Services.Client" Version="16.153.0" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.5.60" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.5.65" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="NLog" Version="4.7.2" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.6.4" />

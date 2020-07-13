@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
@@ -169,6 +170,15 @@ namespace CompatBot.Commands
                 Config.Log.Warn(e, "Failed to upload current Thumbs.db backup");
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send Thumbs.db backup", true).ConfigureAwait(false);
             }
+        }
+
+        [Command("gen-salt")]
+        [Description("Regenerates salt for data anonymization purposes")]
+        public Task ResetCryptoSalt(CommandContext ctx)
+        {
+            var salt = new byte[256 / 8];
+            System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
+            return new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt));
         }
     }
 }
