@@ -281,6 +281,8 @@ namespace CompatBot
                         logLevel = Config.Log.Warn;
                         if (eventArgs.Message?.Contains("Dispatch:PRESENCES_REPLACE") ?? false)
                             BotStatusMonitor.RefreshAsync(client).ConfigureAwait(false).GetAwaiter().GetResult();
+                        else if (eventArgs.Message?.Contains("Pre-emptive ratelimit triggered") ?? false)
+                            Config.TelemetryClient?.TrackEvent("preemptive-rate-limit");
                     }
                     else if (eventArgs.Level == LogLevel.Error)
                     {
