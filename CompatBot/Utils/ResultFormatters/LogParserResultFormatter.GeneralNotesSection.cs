@@ -271,7 +271,7 @@ namespace CompatBot.Utils.ResultFormatters
                 var pathSegments = PathUtils.GetSegments(compatDbPath);
                 var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.InvariantCultureIgnoreCase));
                 if (!string.IsNullOrEmpty(syncFolder))
-                    notes.Add($"⚠ RPCS3 installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
+                    notes.Add($"⚠ RPCS3 is installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
                 var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
                 if (!string.IsNullOrEmpty(rar))
                     notes.Add("❌ RPCS3 is launched from WinRAR; please extract all files instead");
