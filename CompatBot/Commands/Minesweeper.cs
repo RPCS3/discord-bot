@@ -69,7 +69,7 @@ namespace CompatBot.Commands
 			{
 				for (var x = 0; x < width; x++)
 				{
-					var c = field[y, x] == CellVal.Mine ? bomb : Numbers[(byte)field[y, x]];
+					var c = (CellVal)field[y, x] == CellVal.Mine ? bomb : Numbers[field[y, x]];
 					if (needOneOpenCell && field[y, x] == 0)
 					{
 						result.Append(c);
@@ -84,13 +84,13 @@ namespace CompatBot.Commands
 			await ctx.RespondAsync(result.ToString()).ConfigureAwait(false);
 		}
 
-		private CellVal[,] GenerateField(int width, int height, in int mineCount, in Random rng)
+		private byte[,] GenerateField(int width, int height, in int mineCount, in Random rng)
 		{
 			var len = width * height;
-			var cells = new CellVal[len];
+			var cells = new byte[len];
 			// put mines
 			for (var i = 0; i < mineCount; i++)
-				cells[i] = CellVal.Mine;
+				cells[i] = (byte)CellVal.Mine;
 
 			//shuffle the board
 			for (var i = 0; i < len - 1; i++)
@@ -100,26 +100,26 @@ namespace CompatBot.Commands
 				cells[i] = cells[j];
 				cells[j] = tmp;
 			}
-			var result = new CellVal[height, width];
+			var result = new byte[height, width];
 			Buffer.BlockCopy(cells, 0, result, 0, len);
 
 			//update mine indicators
-			CellVal get(int x, int y) => x < 0 || x >= width || y < 0 || y >= height ? 0 : result[y, x];
+			byte get(int x, int y) => x < 0 || x >= width || y < 0 || y >= height ? (byte)0 : result[y, x];
 
 			byte countMines(int x, int y)
 			{
 				byte c = 0;
 				for (var yy = y - 1; yy <= y + 1; yy++)
 				for (var xx = x - 1; xx <= x + 1; xx++)
-					if (get(xx, yy) == CellVal.Mine)
+					if ((CellVal)get(xx, yy) == CellVal.Mine)
 						c++;
 				return c;
 			}
 
 			for (var y = 0; y < height; y++)
 			for (var x = 0; x < width; x++)
-				if (result[y, x] != CellVal.Mine)
-					result[y, x] = (CellVal)countMines(x, y);
+				if ((CellVal)result[y, x] != CellVal.Mine)
+					result[y, x] = countMines(x, y);
 			return result;
 		}
 	}
