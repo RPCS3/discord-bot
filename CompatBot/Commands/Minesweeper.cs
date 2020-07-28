@@ -53,6 +53,13 @@ namespace CompatBot.Commands
 			}
 
 			var header = $"{mineCount}x💣\n";
+			var maxMineCount = (width - 1) * (height - 1) * 2 / 3;
+			if (mineCount > maxMineCount)
+			{
+				await ctx.ReactWithAsync(Config.Reactions.Failure, "Isn't this a bit too many mines 🤔").ConfigureAwait(false);
+				return;
+			}
+
 			var msgLen = (4 * width * height - 4) + (height - 1) + mineCount * MaxBombLength + (width * height - mineCount) * "0️⃣".Length + header.Length;
 			if (width * height > 198 || msgLen > 2000) // for some reason discord would cut everything beyond 198 cells even if the content length is well within the limits
 			{
