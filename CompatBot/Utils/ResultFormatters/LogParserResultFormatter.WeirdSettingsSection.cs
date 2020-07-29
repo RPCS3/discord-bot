@@ -1101,7 +1101,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly HashSet<string> Lbp1Ids = new HashSet<string>
         {
-            "BCAS20058", "BCAS20078", "BCAS20091", "BCES00611", "BCJS70009", "BCKS10059", "BCUS98148", "BCUS98199", "BCUS98208",
+            "BCAS20058", "BCAS20078", "BCAS20091", "BCES00611", "BCES00141", "BCJS70009", "BCKS10059", "BCUS98148", "BCUS98199", "BCUS98208",
             "NPEA00241", "NPHA80093", "NPUA80472", "NPUA80479",
         };
 
