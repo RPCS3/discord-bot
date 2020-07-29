@@ -835,7 +835,7 @@ namespace CompatBot.Utils.ResultFormatters
                 for (var i = 0; i < result.Count; i++)
                 {
                     similarity = result[i].fatalError.GetFuzzyCoefficientCached(error);
-                    if (similarity > 0.96) // spu worker X gives .9763 confidence, ppu thread XXXX gives about .9525
+                    if (similarity > 0.75) // spu worker X gives .9763 confidence, ppu thread XXXX gives about .9525
                     {
                         idx = i;
                         break;

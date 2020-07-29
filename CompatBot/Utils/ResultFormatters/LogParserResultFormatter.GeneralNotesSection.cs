@@ -115,7 +115,7 @@ namespace CompatBot.Utils.ResultFormatters
                         var sectionName = count == 1
                             ? "Fatal Error"
 #if DEBUG
-                            : $"Fatal Error (x{count} [{similarity*100:0.00}%+])";
+                            : $"Fatal Error (x{count}) [{similarity*100:0.00}%+]";
 #else
                             : $"Fatal Error (x{count})";
 #endif
