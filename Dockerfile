@@ -13,8 +13,9 @@ RUN git status
 # Build and test everything
 RUN dotnet build "CompatBot/CompatBot.csproj" -c Release
 ENV RUNNING_IN_DOCKER true
-# Limit server GC to 384 MB heap max
-ENV COMPlus_GCHeapHardLimit 0x18000000
+# Limit server GC to 512 MB heap max
+ENV COMPlus_gcServer 1
+ENV COMPlus_GCHeapHardLimit 0x20000000
 WORKDIR /src/CompatBot
 RUN dotnet run -c Release --dry-run
 ENTRYPOINT ["dotnet", "run", "-c", "Release", "CompatBot.csproj"]
