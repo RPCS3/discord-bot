@@ -84,6 +84,8 @@ namespace CompatBot
         public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
         public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
 
+        internal static readonly IMention[] AllowedMentions = { UserMention.All };
+
         internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
 
         public static string GoogleApiConfigPath 
