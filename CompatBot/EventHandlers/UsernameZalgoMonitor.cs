@@ -106,7 +106,7 @@ namespace CompatBot.EventHandlers
 
         public static string StripZalgo(string displayName, int level = 0)
         {
-            displayName = displayName?.Normalize().TrimEager();
+            displayName = displayName?.Normalize(NormalizationForm.FormD).TrimEager();
             if (string.IsNullOrEmpty(displayName))
                 return "Mr Invisible Wannabe";
 

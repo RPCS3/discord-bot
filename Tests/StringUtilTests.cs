@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DuoVia.FuzzyStrings;
 using HomoglyphConverter;
@@ -43,9 +44,17 @@ namespace Tests
         [TestCase("соc͏katrice", "cockatrice")]
         [TestCase("çöćķåťřĩĉȅ", "cockatrice")]
         [TestCase("с⁪◌ck⁬åťřĩĉȅ", "cockatrice")]
+        [TestCase("jò̵͗s̷̑͠ẻ̵͝p̸̆̂h̸͐̿", "joseph")]
         public void HomoglyphDetectionTest(string strA, string strB)
         {
             Assert.That(strA.StripInvisibleAndDiacritics().ToCanonicalForm(), Is.EqualTo(strB));
+        }
+
+        [TestCase("jò̵͗s̷̑͠ẻ̵͝p̸̆̂h̸͐̿", "joseph")]
+        public void StripZalgoTest(string input, string expected)
+        {
+            var stripped = UsernameZalgoMonitor.StripZalgo(input);
+            Assert.That(stripped, Is.EqualTo(expected));
         }
 
         [Test]
