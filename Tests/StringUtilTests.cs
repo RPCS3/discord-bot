@@ -53,7 +53,7 @@ namespace Tests
         [TestCase("jò̵͗s̷̑͠ẻ̵͝p̸̆̂h̸͐̿", "joseph")]
         public void StripZalgoTest(string input, string expected)
         {
-            var stripped = UsernameZalgoMonitor.StripZalgo(input);
+            var stripped = UsernameZalgoMonitor.StripZalgo(input, 0ul);
             Assert.That(stripped, Is.EqualTo(expected));
         }
 
