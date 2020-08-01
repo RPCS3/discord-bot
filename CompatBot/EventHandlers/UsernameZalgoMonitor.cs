@@ -84,7 +84,7 @@ namespace CompatBot.EventHandlers
         public static bool NeedsRename(string displayName)
         {
             displayName = displayName?.Normalize().TrimEager();
-            return displayName != StripZalgo(displayName, 3);
+            return displayName != StripZalgo(displayName, 0ul, NormalizationForm.FormC, 3);
         }
 
         private static async Task DmAndRenameUserAsync(DiscordClient client, DiscordMember member, string suggestedName)
@@ -106,9 +106,9 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static string StripZalgo(string displayName, ulong userId, int level = 0)
+        public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
-            displayName = displayName?.Normalize(NormalizationForm.FormD).TrimEager();
+            displayName = displayName?.Normalize(normalizationForm).TrimEager();
             if (string.IsNullOrEmpty(displayName))
                 return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
 
