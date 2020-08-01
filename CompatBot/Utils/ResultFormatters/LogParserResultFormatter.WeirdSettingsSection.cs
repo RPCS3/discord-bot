@@ -248,9 +248,10 @@ namespace CompatBot.Utils.ResultFormatters
                 if (resScaleFactor != 100
                     && items["texture_scale_threshold"] is string thresholdStr
                     && int.TryParse(thresholdStr, out var threshold)
-                    && threshold < 16)
+                    && threshold < 16
+                    && !KnownResScaleThresholdIds.Contains(serial))
                 {
-                    notes.Add("⚠ `Resolution Scaling Threshold` below `16x16` may result in corrupted visuals and game crash");
+                    notes.Add("⚠ `Resolution Scale Threshold` below `16x16` may result in corrupted visuals and game crash");
                 }
                 if (resScaleFactor > 100
                     && items["msaa"] is string msaa
@@ -268,6 +269,7 @@ namespace CompatBot.Utils.ResultFormatters
             var allPpuHashes = GetPatches(multiItems["ppu_patch"], false);
             var ppuPatches = allPpuHashes.Where(kvp => kvp.Value > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             var ppuHashes = new HashSet<string>(allPpuHashes.Keys, StringComparer.InvariantCultureIgnoreCase);
+            var patchNames = multiItems["patch_desc"];
             if (items["write_color_buffers"] == DisabledMark
                 && !string.IsNullOrEmpty(serial)
                 && KnownWriteColorBuffersIds.Contains(serial))
@@ -322,7 +324,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(serial))
             {
-                CheckP5Settings(serial, items, notes, ppuPatches);
+                CheckP5Settings(serial, items, notes, ppuPatches, patchNames);
                 CheckAsurasWrathSettings(serial, items, notes);
                 CheckJojoSettings(serial, state, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckSimpsonsSettings(serial, generalNotes);
@@ -331,7 +333,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckScottPilgrimSettings(serial, items, notes, generalNotes);
                 CheckGoWSettings(serial, items, notes, generalNotes);
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-                CheckTlouSettings(serial, items, notes, ppuPatches);
+                CheckTlouSettings(serial, items, notes, ppuPatches, patchNames);
                 CheckRdrSettings(serial, items, notes);
                 CheckMgs4Settings(serial, items, notes, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
@@ -472,7 +474,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB02436", "NPUB31848", "NPJB00769",
         };
 
-        private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
+        private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
         {
             if (P5Ids.Contains(serial))
             {
@@ -842,36 +844,42 @@ namespace CompatBot.Utils.ResultFormatters
             "NPHA80206", "NPHA80279",
         };
 
-        private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches)
+        private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
         {
             if (!TlouIds.Contains(serial))
                 return;
 
             if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
                 notes.Add("ℹ Please set `SPU Block Size` to `Safe` to reduce crash rate");
-            if (items["write_color_buffers"] == EnabledMark)
-                notes.Add("⚠ `Write Color Buffers` is not required anymore");
-            if (ppuPatches.Any())
+            if (items["cpu_blit"] == EnabledMark)
+                notes.Add("⚠ Please disable `Force CPU Blit`");
+            if (items["read_color_buffers"] == DisabledMark)
+                notes.Add("⚠ Please enable `Read Color Buffers`");
+            if (ppuPatches.Any() && patchNames.Count(n => n.Contains("depth buffer", StringComparison.OrdinalIgnoreCase)) > 1) // when depth buffer patches are applied
             {
-                if (items["read_color_buffers"] == EnabledMark)
-                    notes.Add("ℹ `Read Color Buffers` may not be required depending on applied patches");
                 if (items["read_depth_buffer"] == EnabledMark)
-                    notes.Add("⚠ `Read Depth Buffer` may not be required depending on applied patches");
+                    notes.Add("⚠ `Read Depth Buffer` is not required with applied patches");
             }
             else
             {
-                if (items["read_color_buffers"] == DisabledMark)
-                    notes.Add("⚠ Please enable `Read Color Buffers`");
                 if (items["read_depth_buffer"] == DisabledMark)
-                    notes.Add("⚠ Please enable `Read Depth Buffer`");
-                if (items["resolution_scale"] is string resFactor
-                    && int.TryParse(resFactor, out var resolutionScale)
-                    && resolutionScale > 100
-                    && items["strict_rendering_mode"] != EnabledMark)
-                    notes.Add("⚠ Please set `Resolution Scale` to 100%");
+                    notes.Add("⚠ Please enable `Read Depth Buffer` or appropriate patches");
             }
-            if (items["cpu_blit"] == EnabledMark)
-                notes.Add("⚠ Please disable `Force CPU Blit`");
+            if (items["resolution_scale"] is string resFactor
+                && int.TryParse(resFactor, out var resolutionScale))
+            {
+                if (resolutionScale > 100 && items["strict_rendering_mode"] != EnabledMark)
+                {
+                    if (!patchNames.Any(n => n.Contains("MLAA")))
+                        notes.Add("⚠ Please set `Resolution Scale` to 100% or enable MLAA patch");
+                    if (items["texture_scale_threshold"] is string tst
+                        && int.TryParse(tst, out var scaleThreshold)
+                        && scaleThreshold > 1)
+                    {
+                        notes.Add("⚠ Please set `Resolution Scale Threshold` to 1x1");
+                    }
+                }
+            }
         }
 
         private static readonly HashSet<string> RdrIds = new HashSet<string>
