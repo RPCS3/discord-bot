@@ -426,25 +426,6 @@ namespace CompatBot.Utils.ResultFormatters
                     patchCount += "SPU: " + string.Join('/', spuPatches.Values);
                 notes.Add($"ℹ Game-specific patches were applied ({patchCount.TrimEnd(',', ' ')})");
             }
-            if (P5Ids.Contains(serial))
-            {
-                /*
-                 * mod support = 27
-                 * log access  = 39
-                 * intro skip  = 1
-                 * 60 fps v1   = 12
-                 * 60 fps v2   = 268
-                 * disable hud = 10
-                 * random music= 19
-                 * disable blur= 8
-                 * distortion  = 8
-                 * 100% dist   = 8
-                 */
-                if (ppuPatches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
-                    notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
-                if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
-                    notes.Add("⚠ An old version of the 60 fps patch is used");
-            }
             var mlaaHashes = KnownMlaaSpuHashes.Intersect(allSpuPatches.Keys).ToList();
             if (mlaaHashes.Count != 0)
             {

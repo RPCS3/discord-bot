@@ -476,54 +476,60 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
         {
-            if (P5Ids.Contains(serial))
-            {
-                if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
-                    notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
-                if (items["spu_decoder"] is string spuDecoder)
-                {
-                    if (spuDecoder.Contains("Interpreter"))
-                        notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
-                    else if (spuDecoder.Contains("ASMJIT"))
-                        notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
-                }
+            if (!P5Ids.Contains(serial))
+                return;
 
-                if (items["spu_threads"] is string spuThreads)
-                {
-                    if (items["has_tsx"] == EnabledMark)
-                    {
-                        if (spuThreads != "Auto")
-                            notes.Add("ℹ `SPU Thread Count` is best to set to `Auto`");
-                    }
-                    else if (spuThreads != "2")
-                    {
-                        if (int.TryParse(items["thread_count"], out var threadCount))
-                        {
-                            if (threadCount > 4)
-                                notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
-                            else if (spuThreads != "1")
-                                notes.Add("ℹ `SPU Thread Count` is best to set to `2` or `1`");
-                        }
-                        else
-                            notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
-                    }
-                }
-                if (items["spu_loop_detection"] == EnabledMark)
-                    notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
-                if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
-                    notes.Add("⚠ `Frame Limiter` is not required, please disable");
-                if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
-                    notes.Add("⚠ `Write Color Buffers` is not required, please disable");
-                if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
-                    notes.Add("⚠ `Force CPU Blit` is not required, please disable");
-                if (items["strict_rendering_mode"] is string srm && srm == EnabledMark)
-                    notes.Add("⚠ `Strict Rendering Mode` is not required, please disable");
-                if (ppuPatches.Count == 0
-                    && items["resolution_scale"] is string resScale
-                    && int.TryParse(resScale, out var scale)
-                    && scale > 100)
-                    notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+            if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
+                notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
+            if (items["spu_decoder"] is string spuDecoder)
+            {
+                if (spuDecoder.Contains("Interpreter"))
+                    notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
+                else if (spuDecoder.Contains("ASMJIT"))
+                    notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
             }
+
+            if (items["spu_threads"] is string spuThreads)
+            {
+                if (items["has_tsx"] == EnabledMark)
+                {
+                    if (spuThreads != "Auto")
+                        notes.Add("ℹ `SPU Thread Count` is best to set to `Auto`");
+                }
+                else if (spuThreads != "2")
+                {
+                    if (int.TryParse(items["thread_count"], out var threadCount))
+                    {
+                        if (threadCount > 4)
+                            notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                        else if (spuThreads != "1")
+                            notes.Add("ℹ `SPU Thread Count` is best to set to `2` or `1`");
+                    }
+                    else
+                        notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                }
+            }
+            if (items["spu_loop_detection"] == EnabledMark)
+                notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
+            if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+                notes.Add("⚠ `Frame Limiter` is not required, please disable");
+            if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
+                notes.Add("⚠ `Write Color Buffers` is not required, please disable");
+            if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
+                notes.Add("⚠ `Force CPU Blit` is not required, please disable");
+            if (items["strict_rendering_mode"] is string srm && srm == EnabledMark)
+                notes.Add("⚠ `Strict Rendering Mode` is not required, please disable");
+            if (ppuPatches.Count == 0
+                && items["resolution_scale"] is string resScale
+                && int.TryParse(resScale, out var scale)
+                && scale > 100)
+                notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+            /*
+             * 60 fps v1   = 12
+             * 60 fps v2   = 268
+             */
+            if (patchNames.Any(n => n.Contains("60")) || ppuPatches.Values.Any(n => n > 260))
+                notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
         }
 
         private static void CheckAsurasWrathSettings(string serial, NameValueCollection items, List<string> notes)
