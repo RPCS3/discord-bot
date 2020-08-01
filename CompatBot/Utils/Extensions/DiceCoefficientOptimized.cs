@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace CompatBot.Utils.Extensions
+﻿namespace CompatBot.Utils.Extensions
 {
 	public static class DiceCoefficientOptimized
 	{
@@ -12,43 +9,21 @@ namespace CompatBot.Utils.Extensions
 		/// <param name="input"></param>
 		/// <param name="comparedTo"></param>
 		/// <returns></returns>
-		public static double DiceCoefficient(this string input, in string comparedTo)
+		public static double DiceCoefficient(this string input, string comparedTo)
 		{
-			const int maxStackAllocSize = 256;
-			const int maxInputLengthToFit = maxStackAllocSize / 2 + 1;
-			Span<char> inputBiGrams = input.Length > maxStackAllocSize ? new char[2 * (input.Length - 1)] : stackalloc char[2 * (input.Length - 1)];
-			Span<char> compareToBiGrams = comparedTo.Length > maxStackAllocSize ? new char[2 * (comparedTo.Length - 1)] : stackalloc char[2 * (comparedTo.Length - 1)];
-			ToBiGrams(input, inputBiGrams);
-			ToBiGrams(comparedTo, compareToBiGrams);
-			return DiceCoefficient(inputBiGrams, compareToBiGrams);
-		}
-
-		/// <summary>
-		///     Dice Coefficient used to compare biGrams arrays produced in advance.
-		/// </summary>
-		/// <param name="biGrams"></param>
-		/// <param name="compareToBiGrams"></param>
-		/// <returns></returns>
-		private static double DiceCoefficient(in Span<char> biGrams, in Span<char> compareToBiGrams)
-		{
-			var bgCount1 = biGrams.Length / 2;
-			var bgCount2 = compareToBiGrams.Length / 2;
-			Span<char> smaller, larger;
-			if (biGrams.Length <= compareToBiGrams.Length)
+			var bgCount1 = input.Length-1;
+			var bgCount2 = comparedTo.Length-1;
+			if (comparedTo.Length < input.Length)
 			{
-				smaller = biGrams;
-				larger = compareToBiGrams;
-			}
-			else
-			{
-				smaller = compareToBiGrams;
-				larger = biGrams;
+				var tmp = input;
+				input = comparedTo;
+				comparedTo = tmp;
 			}
 			var matches = 0;
-			for (var i = 0; i < smaller.Length; i += 2)
-				for (var j = 0; j < larger.Length; j +=2)
+			for (var i = 0; i < input.Length-1; i++)
+				for (var j = 0; j < comparedTo.Length-1; j++)
 			{
-				if (smaller[i] == larger[j] && smaller[i + 1] == larger[j + 1])
+				if (input[i] == comparedTo[j] && input[i + 1] == comparedTo[j + 1])
 				{
 					matches++;
 					break;
@@ -58,16 +33,6 @@ namespace CompatBot.Utils.Extensions
 				return 0.0d;
 
 			return 2.0 * matches / (bgCount1 + bgCount2);
-		}
-
-		private static void ToBiGrams(in string input, Span<char> nGrams)
-		{
-			var str = input.AsSpan();
-			for (var i = 0; i < nGrams.Length; i++)
-			{
-				str.Slice(i, 2).CopyTo(nGrams);
-				nGrams = nGrams.Slice(2);
-			}
 		}
 	}
 }
