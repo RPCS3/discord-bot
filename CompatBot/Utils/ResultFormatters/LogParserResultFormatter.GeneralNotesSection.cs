@@ -451,7 +451,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (mlaaHashes.Any(h => allSpuPatches[h] != 0))
                     notes.Add("ℹ MLAA patch was applied");
                 else
-                    notes.Add("ℹ This game has MLAA disable patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#SPU_MLAA)");
+                    notes.Add("ℹ This game has MLAA disable patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Disable_SPU_MLAA)");
             }
 
             bool discInsideGame = false;

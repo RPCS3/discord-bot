@@ -1143,7 +1143,6 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-
         private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
             if (items["build_branch"] is string branch
