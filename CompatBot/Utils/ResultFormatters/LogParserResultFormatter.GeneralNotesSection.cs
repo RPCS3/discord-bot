@@ -538,6 +538,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             BuildWeirdSettingsSection(builder, state, notes);
             BuildMissingLicensesSection(builder, serial, multiItems, notes);
+            BuildAppliedPatchesSection(builder, multiItems);
 
             var notesContent = new StringBuilder();
             foreach (var line in SortLines(notes, pirateEmoji).Distinct())
@@ -545,6 +546,12 @@ namespace CompatBot.Utils.ResultFormatters
             PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
 
+        private static void BuildAppliedPatchesSection(DiscordEmbedBuilder builder, NameUniqueObjectCollection<string> items)
+        {
+            var patchNames = items["patch_desc"];
+            if (patchNames.Any())
+                builder.AddField("Applied Game Patches", string.Join(", ", patchNames));
+        }
         private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, string serial, NameUniqueObjectCollection<string> items, List<string> generalNotes)
         {
             if (items["rap_file"] is UniqueList<string> raps && raps.Any())
