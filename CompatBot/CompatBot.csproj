@@ -33,7 +33,6 @@
     <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00709" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00709" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00709" />
-    <PackageReference Include="DuoVia.FuzzyStrings" Version="2.1.0" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.48.0.2021" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />

@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DuoVia.FuzzyStrings;
 using HomoglyphConverter;
 using NUnit.Framework;
@@ -75,20 +74,23 @@ namespace Tests
         public void DiceCoefficientRangeTest(string strA, string strB)
         {
             var coef = DiceCoefficient(strA, strB);
-            if (strA.Length > strB.Length)
-            {
-                var tmp = strA;
-                strA = strB;
-                strB = tmp;
-            }
             Assert.That(coef, Is.GreaterThanOrEqualTo(0.0).And.LessThanOrEqualTo(1.0));
-            Assert.That(coef, Is.EqualTo(strA.DiceCoefficient(strB)));
+            Assert.That(DiceCoefficientExtensions.DiceCoefficient(strA, strB), Is.EqualTo(coef));
+            Assert.That(DiceCoefficient(strA, strB), Is.EqualTo(coef));
+
+            var tmp = strA;
+            strA = strB;
+            strB = tmp;
+            var coefB = DiceCoefficient(strA, strB);
+            Assert.That(coefB, Is.EqualTo(coef));
+            Assert.That(DiceCoefficientExtensions.DiceCoefficient(strA, strB), Is.EqualTo(coef));
+            Assert.That(DiceCoefficient(strA, strB), Is.EqualTo(coef));
         }
 
         public static double DiceCoefficient(string input, string comparedTo)
         {
-            var ngrams = input.ToBiGrams();
-            var compareToNgrams = comparedTo.ToBiGrams();
+            var ngrams = DiceCoefficientExtensions.ToBiGrams(input);
+            var compareToNgrams = DiceCoefficientExtensions.ToBiGrams(comparedTo);
             return DiceCoefficient(ngrams, compareToNgrams);
         }
 

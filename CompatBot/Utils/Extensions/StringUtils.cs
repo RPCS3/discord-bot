@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using DuoVia.FuzzyStrings;
+using CompatBot.Utils.Extensions;
 using HomoglyphConverter;
 using Microsoft.Extensions.Caching.Memory;
 
