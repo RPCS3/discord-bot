@@ -76,7 +76,7 @@ namespace Tests
             var coef = DiceCoefficient(strA, strB);
             Assert.That(coef, Is.GreaterThanOrEqualTo(0.0).And.LessThanOrEqualTo(1.0));
             Assert.That(DiceCoefficientExtensions.DiceCoefficient(strA, strB), Is.EqualTo(coef));
-            Assert.That(DiceCoefficient(strA, strB), Is.EqualTo(coef));
+            Assert.That(DiceCoefficientOptimized.DiceCoefficient(strA, strB), Is.LessThanOrEqualTo(coef));
 
             var tmp = strA;
             strA = strB;
@@ -84,20 +84,22 @@ namespace Tests
             var coefB = DiceCoefficient(strA, strB);
             Assert.That(coefB, Is.EqualTo(coef));
             Assert.That(DiceCoefficientExtensions.DiceCoefficient(strA, strB), Is.EqualTo(coef));
-            Assert.That(DiceCoefficient(strA, strB), Is.EqualTo(coef));
+            Assert.That(DiceCoefficientOptimized.DiceCoefficient(strA, strB), Is.LessThanOrEqualTo(coef));
         }
 
         public static double DiceCoefficient(string input, string comparedTo)
         {
-            var ngrams = DiceCoefficientExtensions.ToBiGrams(input);
-            var compareToNgrams = DiceCoefficientExtensions.ToBiGrams(comparedTo);
+            var ngrams = input.ToBiGrams();
+            var compareToNgrams = comparedTo.ToBiGrams();
             return DiceCoefficient(ngrams, compareToNgrams);
         }
 
         public static double DiceCoefficient(string[] nGrams, string[] compareToNGrams)
         {
             var matches = nGrams.Intersect(compareToNGrams).Count();
-            if (matches == 0) return 0.0d;
+            if (matches == 0)
+                return 0.0d;
+
             double totalBigrams = nGrams.Length + compareToNGrams.Length;
             return (2 * matches) / totalBigrams;
         }
