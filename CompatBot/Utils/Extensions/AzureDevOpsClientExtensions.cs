@@ -87,7 +87,7 @@ namespace CompatBot.Utils.Extensions
 
             result = await azureDevOpsClient.GetArtifactsInfoAsync(commit, latestBuild, cancellationToken).ConfigureAwait(false);
             if (result.Status == BuildStatus.Completed && (result.Result == BuildResult.Succeeded || result.Result == BuildResult.PartiallySucceeded))
-                BuildInfoCache.Set(commit, result, TimeSpan.FromDays(1));
+                BuildInfoCache.Set(commit, result, TimeSpan.FromHours(1));
             return result;
         }
 
@@ -121,7 +121,7 @@ namespace CompatBot.Utils.Extensions
 
             result = await azureDevOpsClient.GetArtifactsInfoAsync(commit, latestBuild, cancellationToken).ConfigureAwait(false);
             if (result.Status == BuildStatus.Completed && (result.Result == BuildResult.Succeeded || result.Result == BuildResult.PartiallySucceeded))
-                BuildInfoCache.Set(commit, result, TimeSpan.FromDays(1));
+                BuildInfoCache.Set(commit, result, TimeSpan.FromHours(1));
             return result;
         }
 

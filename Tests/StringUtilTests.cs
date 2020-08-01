@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DuoVia.FuzzyStrings;
 using HomoglyphConverter;
 using NUnit.Framework;
@@ -43,9 +43,17 @@ namespace Tests
         [TestCase("соc͏katrice", "cockatrice")]
         [TestCase("çöćķåťřĩĉȅ", "cockatrice")]
         [TestCase("с⁪◌ck⁬åťřĩĉȅ", "cockatrice")]
+        [TestCase("jò̵͗s̷̑͠ẻ̵͝p̸̆̂h̸͐̿", "joseph")]
         public void HomoglyphDetectionTest(string strA, string strB)
         {
             Assert.That(strA.StripInvisibleAndDiacritics().ToCanonicalForm(), Is.EqualTo(strB));
+        }
+
+        [TestCase("jò̵͗s̷̑͠ẻ̵͝p̸̆̂h̸͐̿", "joseph")]
+        public void StripZalgoTest(string input, string expected)
+        {
+            var stripped = UsernameZalgoMonitor.StripZalgo(input, 0ul);
+            Assert.That(stripped, Is.EqualTo(expected));
         }
 
         [Test]
@@ -66,14 +74,17 @@ namespace Tests
         public void DiceCoefficientRangeTest(string strA, string strB)
         {
             var coef = DiceCoefficient(strA, strB);
-            if (strA.Length > strB.Length)
-            {
-                var tmp = strA;
-                strA = strB;
-                strB = tmp;
-            }
             Assert.That(coef, Is.GreaterThanOrEqualTo(0.0).And.LessThanOrEqualTo(1.0));
-            Assert.That(coef, Is.EqualTo(strA.DiceCoefficient(strB)));
+            Assert.That(DiceCoefficientExtensions.DiceCoefficient(strA, strB), Is.EqualTo(coef));
+            Assert.That(DiceCoefficientOptimized.DiceCoefficient(strA, strB), Is.LessThanOrEqualTo(coef));
+
+            var tmp = strA;
+            strA = strB;
+            strB = tmp;
+            var coefB = DiceCoefficient(strA, strB);
+            Assert.That(coefB, Is.EqualTo(coef));
+            Assert.That(DiceCoefficientExtensions.DiceCoefficient(strA, strB), Is.EqualTo(coef));
+            Assert.That(DiceCoefficientOptimized.DiceCoefficient(strA, strB), Is.LessThanOrEqualTo(coef));
         }
 
         public static double DiceCoefficient(string input, string comparedTo)
@@ -86,7 +97,9 @@ namespace Tests
         public static double DiceCoefficient(string[] nGrams, string[] compareToNGrams)
         {
             var matches = nGrams.Intersect(compareToNGrams).Count();
-            if (matches == 0) return 0.0d;
+            if (matches == 0)
+                return 0.0d;
+
             double totalBigrams = nGrams.Length + compareToNGrams.Length;
             return (2 * matches) / totalBigrams;
         }

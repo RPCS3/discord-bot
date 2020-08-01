@@ -25,6 +25,7 @@ namespace PsnClient
         private readonly MediaTypeFormatterCollection underscoreFormatters;
         private readonly MediaTypeFormatterCollection xmlFormatters;
         private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+        private static readonly TimeSpan ResponseCacheDuration = TimeSpan.FromHours(1);
         private static readonly Regex ContainerIdLink = new Regex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
         private static readonly string[] KnownStoreLocales =
         {
@@ -251,7 +252,7 @@ namespace PsnClient
 
                 await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                 patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
-                ResponseCache.Set(productId, patchInfo);
+                ResponseCache.Set(productId, patchInfo, ResponseCacheDuration);
                 return patchInfo ?? new TitlePatch { Tag = new TitlePatchTag { Packages = new TitlePatchPackage[0], },  };
             }
             catch (Exception e)
@@ -279,7 +280,7 @@ namespace PsnClient
 
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                     meta = await response.Content.ReadAsAsync<TitleMeta>(xmlFormatters, cancellationToken).ConfigureAwait(false);
-                    ResponseCache.Set(id, meta);
+                    ResponseCache.Set(id, meta, ResponseCacheDuration);
                     return meta;
                 }
                 catch (Exception e)

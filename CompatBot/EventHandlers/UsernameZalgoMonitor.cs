@@ -25,12 +25,12 @@ namespace CompatBot.EventHandlers
                 var m = args.Client.GetMember(args.UserAfter);
                 if (NeedsRename(m.DisplayName))
                 {
-                    var suggestedName = StripZalgo(m.DisplayName).Sanitize();
+                    var suggestedName = StripZalgo(m.DisplayName, m.Id).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
                         $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmUser(args.Client, args.Client.GetMember(args.UserAfter), suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(args.Client, args.Client.GetMember(args.UserAfter), suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -46,12 +46,12 @@ namespace CompatBot.EventHandlers
                 var name = args.Member.DisplayName;
                 if (NeedsRename(name))
                 {
-                    var suggestedName = StripZalgo(name).Sanitize();
+                    var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
                         $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmUser(args.Client, args.Member, suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(args.Client, args.Member, suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -67,12 +67,12 @@ namespace CompatBot.EventHandlers
                 var name = args.Member.DisplayName;
                 if (NeedsRename(name))
                 {
-                    var suggestedName = StripZalgo(name).Sanitize();
+                    var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
                         $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmUser(args.Client, args.Member, suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(args.Client, args.Member, suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -84,19 +84,22 @@ namespace CompatBot.EventHandlers
         public static bool NeedsRename(string displayName)
         {
             displayName = displayName?.Normalize().TrimEager();
-            return displayName != StripZalgo(displayName, 3);
+            return displayName != StripZalgo(displayName, 0ul, NormalizationForm.FormC, 3);
         }
 
-        private static async Task DmUser(DiscordClient client, DiscordMember member, string suggestedName)
+        private static async Task DmAndRenameUserAsync(DiscordClient client, DiscordMember member, string suggestedName)
         {
             try
             {
+                var renameTask = member.ModifyAsync(m => m.Nickname = suggestedName);
+                Config.Log.Info($"Renamed {member.Username}#{member.Discriminator} ({member.Id}) to {suggestedName}");
                 var rulesChannel = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
-                var msg = $"Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, please change it accordingly.\n" +
-                          $"I'd suggest using `{suggestedName}`, but I'm not perfect and can't clean all the junk in some cases, so change it at your discretion.\n" +
+                var msg = $"Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, so you have been renamed to `{suggestedName}.\n" +
+                          "I'm not perfect and can't clean all the junk in names in some cases, so change your nickname at your discretion.\n" +
                           "You can change your _display name_ by clicking on the server name at the top left and selecting **Change Nickname**.";
                 var dm = await member.CreateDmChannelAsync().ConfigureAwait(false);
                 await dm.SendMessageAsync(msg).ConfigureAwait(false);
+                await renameTask.ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -104,11 +107,11 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static string StripZalgo(string displayName, int level = 0)
+        public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
-            displayName = displayName?.Normalize().TrimEager();
+            displayName = displayName?.Normalize(normalizationForm).TrimEager();
             if (string.IsNullOrEmpty(displayName))
-                return "Mr Invisible Wannabe";
+                return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
 
             var builder = new StringBuilder();
             bool skipLowSurrogate = false;
@@ -145,7 +148,7 @@ namespace CompatBot.EventHandlers
             }
             var result = builder.ToString().TrimEager();
             if (string.IsNullOrEmpty(result))
-                return "Mr Fancy Unicode Pants";
+                return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
 
             return result;
         }

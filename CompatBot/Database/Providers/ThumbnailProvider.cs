@@ -199,7 +199,7 @@ namespace CompatBot.Database.Providers
 
                 Config.Log.Trace("Getting dominant color for " + url);
                 result = ColorGetter.Analyze(memStream.ToArray(), defaultColor);
-                ColorCache.Set(url, result);
+                ColorCache.Set(url, result, TimeSpan.FromHours(1));
                 return result;
             }
             catch (Exception e)

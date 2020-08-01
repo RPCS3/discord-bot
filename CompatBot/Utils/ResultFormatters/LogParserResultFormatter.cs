@@ -126,6 +126,20 @@ namespace CompatBot.Utils.ResultFormatters
             "BLJM60528", "NPJB00235", "NPHB00522", "NPJB90534", //E.X. Troopers / demo
             "BLES01987", "BLUS30964", "BLJS10160", // The Witch and the Hundred Knight
             "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
+            "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // tlou
+            "NPEA00435", "NPEA00521", "NPJA00096", "NPJA00129",// tlou
+            "NPUA30134", "NPUA70257", "NPUA80960", "NPUA81175",// tlou
+            "NPHA80206", "NPHA80279",// tlou
+
+        };
+
+        private static readonly HashSet<string> KnownResScaleThresholdIds = new HashSet<string>
+        {
+            "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // tlou
+            "NPEA00435", "NPEA00521", "NPJA00096", "NPJA00129",// tlou
+            "NPUA30134", "NPUA70257", "NPUA80960", "NPUA81175",// tlou
+            "NPHA80206", "NPHA80279",// tlou
+
         };
 
         private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
@@ -175,24 +189,24 @@ namespace CompatBot.Utils.ResultFormatters
             "UP2611-NPUB31848_00-PPERSONA5X000000.rap",
         };
 
-        // v1.5 https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#SPU_MLAA
+        // v1.5 https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Disable_SPU_MLAA
         private static readonly HashSet<string> KnownMlaaSpuHashes = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
-            "7b5ea49122ec7f023d4a72452dc7a9208d9d6dbf",
-            "7cd211ff1cbd33163eb0711440dccbb3c1dbcf6c",
-            "45f98378f0837fc6821f63576f65d47d10f9bbcb",
-            "82b3399c8e6533ba991eedb0e139bf20c7783bac",
+            "1549476fe258150ff9f902229ffaed69a932a9c1",
             "191fe1c92c8360992b3240348e70ea37d50812d4",
+            "2239af4827b17317522bd6323c646b45b34ebf14",
+            "45f98378f0837fc6821f63576f65d47d10f9bbcb",
+            "5177cbc4bf45c8a0a6968c2a722da3a9e6cfb28b",
             "530c255936b07b25467a58e24ceff5fd4e2960b7",
             "702d0205a89d445d15dc0f96548546c4e2e7a59f",
+            "794795c449beef176d076816284849d266f55f99",
+            "7b5ea49122ec7f023d4a72452dc7a9208d9d6dbf",
+            "7cd211ff1cbd33163eb0711440dccbb3c1dbcf6c",
+            "82b3399c8e6533ba991eedb0e139bf20c7783bac",
+            "9001b44fd7278b5a6fa5385939fe928a0e549394",
+            "931132fd48a40bce0bec28e21f760b1fc6ca4364",
             "969cf3e9db75f52a6b41074ccbff74106b709854",
             "976d2128f08c362731413b75c934101b76c3d73b",
-            "2239af4827b17317522bd6323c646b45b34ebf14",
-            "5177cbc4bf45c8a0a6968c2a722da3a9e6cfb28b",
-            "9001b44fd7278b5a6fa5385939fe928a0e549394",
-            "794795c449beef176d076816284849d266f55f99",
-            "931132fd48a40bce0bec28e21f760b1fc6ca4364",
-            "1549476fe258150ff9f902229ffaed69a932a9c1",
             "a129a01a270246c85df18eee0e959ef4263b6510",
             "ac189d7f87091160a94e69803ac0cff0a8bb7813",
             "df5b1c3353cc36bb2f0fb59197d849bb99c3fecd",
@@ -657,8 +671,9 @@ namespace CompatBot.Utils.ResultFormatters
                     18363 => "10 1909",
                     int v when v < 19041 => ("10 20H1 Build " + v),
                     19041 => "10 2004",
+                    19042 => "10 2009",
                     int v when v < 20000 => ("10 20H2 Build " + v),
-                    _ => ("10 ??? Build " + windowsVersion.Build)
+                    _ => ("10 Dev Build " + windowsVersion.Build)
                 },
                 _ => null,
             };

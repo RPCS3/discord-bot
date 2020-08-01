@@ -426,32 +426,13 @@ namespace CompatBot.Utils.ResultFormatters
                     patchCount += "SPU: " + string.Join('/', spuPatches.Values);
                 notes.Add($"ℹ Game-specific patches were applied ({patchCount.TrimEnd(',', ' ')})");
             }
-            if (P5Ids.Contains(serial))
-            {
-                /*
-                 * mod support = 27
-                 * log access  = 39
-                 * intro skip  = 1
-                 * 60 fps v1   = 12
-                 * 60 fps v2   = 268
-                 * disable hud = 10
-                 * random music= 19
-                 * disable blur= 8
-                 * distortion  = 8
-                 * 100% dist   = 8
-                 */
-                if (ppuPatches.Values.Any(n => n > 260 || n == 27+12 || n == 12))
-                    notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
-                if (ppuPatches.Values.Any(n => n == 12 || n == 12+27))
-                    notes.Add("⚠ An old version of the 60 fps patch is used");
-            }
             var mlaaHashes = KnownMlaaSpuHashes.Intersect(allSpuPatches.Keys).ToList();
             if (mlaaHashes.Count != 0)
             {
                 if (mlaaHashes.Any(h => allSpuPatches[h] != 0))
                     notes.Add("ℹ MLAA patch was applied");
                 else
-                    notes.Add("ℹ This game has MLAA disable patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#SPU_MLAA)");
+                    notes.Add("ℹ This game has MLAA disable patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Disable_SPU_MLAA)");
             }
 
             bool discInsideGame = false;
@@ -557,6 +538,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             BuildWeirdSettingsSection(builder, state, notes);
             BuildMissingLicensesSection(builder, serial, multiItems, notes);
+            BuildAppliedPatchesSection(builder, multiItems);
 
             var notesContent = new StringBuilder();
             foreach (var line in SortLines(notes, pirateEmoji).Distinct())
@@ -564,6 +546,12 @@ namespace CompatBot.Utils.ResultFormatters
             PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
 
+        private static void BuildAppliedPatchesSection(DiscordEmbedBuilder builder, NameUniqueObjectCollection<string> items)
+        {
+            var patchNames = items["patch_desc"];
+            if (patchNames.Any())
+                builder.AddField("Applied Game Patches", string.Join(", ", patchNames));
+        }
         private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, string serial, NameUniqueObjectCollection<string> items, List<string> generalNotes)
         {
             if (items["rap_file"] is UniqueList<string> raps && raps.Any())
