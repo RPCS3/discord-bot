@@ -46,9 +46,9 @@ namespace CompatBot.Commands
 			[Description("Height of the field")] int height = 14,
 			[Description("Number of mines")] int mineCount = 30)
 		{
-			if (width < 2 || height < 2 || mineCount < 1)
+			if (width < 3 || height < 3 || mineCount < 1)
 			{
-				await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid generation parameters").ConfigureAwait(false);
+				await ctx.RespondAsync("Invalid generation parameters").ConfigureAwait(false);
 				return;
 			}
 
@@ -56,14 +56,20 @@ namespace CompatBot.Commands
 			var maxMineCount = (width - 1) * (height - 1) * 2 / 3;
 			if (mineCount > maxMineCount)
 			{
-				await ctx.ReactWithAsync(Config.Reactions.Failure, "Isn't this a bit too many mines 🤔").ConfigureAwait(false);
+				await ctx.RespondAsync("Isn't this a bit too many mines 🤔").ConfigureAwait(false);
+				return;
+			}
+
+			if (height > 98)
+			{
+				await ctx.RespondAsync("Too many lines for one message, Discord would truncate the result randomly").ConfigureAwait(false);
 				return;
 			}
 
 			var msgLen = (4 * width * height - 4) + (height - 1) + mineCount * MaxBombLength + (width * height - mineCount) * "0️⃣".Length + header.Length;
 			if (width * height > 198 || msgLen > 2000) // for some reason discord would cut everything beyond 198 cells even if the content length is well within the limits
 			{
-				await ctx.ReactWithAsync(Config.Reactions.Failure, "Requested field size is too large for one message", true).ConfigureAwait(false);
+				await ctx.RespondAsync("Requested field size is too large for one message", true).ConfigureAwait(false);
 				return;
 			}
 
