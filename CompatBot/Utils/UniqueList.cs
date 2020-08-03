@@ -14,16 +14,19 @@ namespace CompatBot.Utils
 		{
 			list = new List<T>();
 			set = new HashSet<T>(comparer);
+			this.Comparer = comparer;
 		}
 
 		public UniqueList(int count, IEqualityComparer<T> comparer = null)
 		{
 			list = new List<T>(count);
 			set = new HashSet<T>(count, comparer);
+			this.Comparer = comparer;
 		}
 
 		public UniqueList(IEnumerable<T> collection, IEqualityComparer<T> comparer = null)
 		{
+			this.Comparer = comparer;
 			if (collection is ICollection c)
 			{
 				list = new List<T>(c.Count);
@@ -107,6 +110,7 @@ namespace CompatBot.Utils
 		}
 
 		public int Length => list.Count;
+		public IEqualityComparer<T> Comparer { get; }
 
 		T GetAt(int index) => list[index];
 	}

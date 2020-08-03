@@ -434,6 +434,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["game_update_version"] is string gameUpVer && gameUpVer.StartsWith("0"))
                 items["game_update_version"] = gameUpVer[1..];
 
+            if (multiItems["fatal_error"] is UniqueList<string> fatalErrors && fatalErrors.Any())
+                multiItems["fatal_error"] = new UniqueList<string>(fatalErrors.Select(str => str.Contains("'tex00'") ? str.Split('\n', 2)[0] : str), fatalErrors.Comparer);
+
             foreach (var key in items.AllKeys)
             {
                 var value = items[key];

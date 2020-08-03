@@ -550,7 +550,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var patchNames = items["patch_desc"];
             if (patchNames.Any())
-                builder.AddField("Applied Game Patches", string.Join(", ", patchNames));
+                builder.AddField("Applied Game Patch" + (patchNames.Length == 1 ? "" : "es"), string.Join(", ", patchNames));
         }
         private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, string serial, NameUniqueObjectCollection<string> items, List<string> generalNotes)
         {
