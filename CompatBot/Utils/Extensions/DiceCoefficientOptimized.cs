@@ -11,8 +11,8 @@
 		/// <returns></returns>
 		public static double DiceCoefficient(this string input, string comparedTo)
 		{
-			var bgCount1 = input.Length-1;
-			var bgCount2 = comparedTo.Length-1;
+			var bgCount1 = input.Length - 1;
+			var bgCount2 = comparedTo.Length - 1;
 			if (comparedTo.Length < input.Length)
 			{
 				var tmp = input;
@@ -20,8 +20,8 @@
 				comparedTo = tmp;
 			}
 			var matches = 0;
-			for (var i = 0; i < input.Length-1; i++)
-				for (var j = 0; j < comparedTo.Length-1; j++)
+			for (var i = 0; i < input.Length - 1; i++)
+			for (var j = 0; j < comparedTo.Length - 1; j++)
 			{
 				if (input[i] == comparedTo[j] && input[i + 1] == comparedTo[j + 1])
 				{
