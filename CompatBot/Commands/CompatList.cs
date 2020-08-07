@@ -54,7 +54,7 @@ namespace CompatBot.Commands
                 {
                     var prInfo = githubClient.GetPrInfoAsync(pr, Config.Cts.Token).GetAwaiter().GetResult();
                     CachedUpdateInfo = client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).GetAwaiter().GetResult();
-                    if (CachedUpdateInfo.CurrentBuild != null)
+                    if (CachedUpdateInfo?.CurrentBuild != null)
                     {
                         CachedUpdateInfo.LatestBuild = CachedUpdateInfo.CurrentBuild;
                         CachedUpdateInfo.CurrentBuild = null;
@@ -239,7 +239,7 @@ namespace CompatBot.Commands
                 }
                 else if (!updateAnnouncementRestore)
                 {
-                    if (CachedUpdateInfo.LatestBuild?.Datetime is string previousBuildTimeStr
+                    if (CachedUpdateInfo?.LatestBuild?.Datetime is string previousBuildTimeStr
                         && info.LatestBuild?.Datetime is string newBuildTimeStr
                         && DateTime.TryParse(previousBuildTimeStr, out var previousBuildTime)
                         && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
@@ -337,7 +337,8 @@ namespace CompatBot.Commands
                 ).ConfigureAwait(false);
                 foreach (var mergedPr in mergedPrs)
                 {
-                    var updateInfo = await client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false);
+                    var updateInfo = await client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false)
+                                     ?? new UpdateInfo {ReturnCode = -1};
                     if (updateInfo.ReturnCode == 0 || updateInfo.ReturnCode == 1) // latest or known build
                     {
                         updateInfo.LatestBuild = updateInfo.CurrentBuild;
@@ -348,31 +349,38 @@ namespace CompatBot.Commands
                     else if (updateInfo.ReturnCode == -1) // unknown build
                     {
                         var masterBuildInfo = failedBuilds.FirstOrDefault(b => b.Commit.Equals(mergedPr.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase));
-                        if (masterBuildInfo == null)
-                            continue;
-
-                        var buildTime = masterBuildInfo.FinishTime;
-                        updateInfo = new UpdateInfo
+                        var buildTime = masterBuildInfo?.FinishTime;
+                        if (masterBuildInfo != null)
                         {
-                            ReturnCode = 1,
-                            LatestBuild = new BuildInfo
+                            updateInfo = new UpdateInfo
                             {
-                                Datetime = buildTime?.ToString("yyyy-MM-dd HH:mm:ss"),
-                                Pr = mergedPr.Number,
-                                Windows = new BuildLink
+                                ReturnCode = 1,
+                                LatestBuild = new BuildInfo
                                 {
-                                    Download = masterBuildInfo.WindowsBuildDownloadLink,
+                                    Datetime = buildTime?.ToString("yyyy-MM-dd HH:mm:ss"),
+                                    Pr = mergedPr.Number,
+                                    Windows = new BuildLink {Download = masterBuildInfo.WindowsBuildDownloadLink},
+                                    Linux = new BuildLink {Download = masterBuildInfo.LinuxBuildDownloadLink},
                                 },
-                                Linux = new BuildLink
+                            };
+                        }
+                        else
+                        {
+                            updateInfo = new UpdateInfo
+                            {
+                                ReturnCode = 1,
+                                LatestBuild = new BuildInfo
                                 {
-                                    Download = masterBuildInfo.LinuxBuildDownloadLink,
+                                    Pr = mergedPr.Number,
+                                    Windows = new BuildLink {Download = ""},
+                                    Linux = new BuildLink {Download = ""},
                                 },
-                            },
-                        };
+                            };
+                        }
                         var embed = await updateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
                         embed.Color = Config.Colors.PrClosed;
                         embed.ClearFields();
-                        var reason = masterBuildInfo.Result switch
+                        var reason = masterBuildInfo?.Result switch
                         {
                             BuildResult.Succeeded => "Built",
                             BuildResult.PartiallySucceeded => "Built",
@@ -383,7 +391,7 @@ namespace CompatBot.Commands
                         if (buildTime.HasValue && reason != null)
                             embed.WithFooter($"{reason} on {buildTime:u} ({(DateTime.UtcNow - buildTime.Value).AsTimeDeltaDescription()} ago)");
                         else
-                            embed.WithFooter(reason);
+                            embed.WithFooter(reason ?? "Never built");
                         await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                     }
                 }

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace GithubClient.POCOs
 {
+    [DebuggerDisplay("{Body}", Name = "#{Number}")]
     public class PrInfo
     {
         public string HtmlUrl;
