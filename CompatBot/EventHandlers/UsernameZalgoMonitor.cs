@@ -27,7 +27,7 @@ namespace CompatBot.EventHandlers
                 {
                     var suggestedName = StripZalgo(m.DisplayName, m.Id).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
-                        $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
+                        $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
                     await DmAndRenameUserAsync(args.Client, args.Client.GetMember(args.UserAfter), suggestedName).ConfigureAwait(false);
@@ -43,15 +43,17 @@ namespace CompatBot.EventHandlers
         {
             try
             {
-                var name = args.Member.DisplayName;
+                //member object most likely will not be updated in client cache at this moment
+                var name = args.NicknameAfter ?? args.Member.Username;
+                var member = await args.Guild.GetMemberAsync(args.Member.Id).ConfigureAwait(false) ?? args.Member;
                 if (NeedsRename(name))
                 {
                     var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
-                        $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
+                        $"Member {member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmAndRenameUserAsync(args.Client, args.Member, suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(args.Client, member, suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -69,7 +71,7 @@ namespace CompatBot.EventHandlers
                 {
                     var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
                     await args.Client.ReportAsync("🔣 Potential display name issue",
-                        $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nSuggestion to rename: **{suggestedName}**",
+                        $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
                     await DmAndRenameUserAsync(args.Client, args.Member, suggestedName).ConfigureAwait(false);
