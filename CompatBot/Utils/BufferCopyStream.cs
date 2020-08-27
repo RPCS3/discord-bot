@@ -37,10 +37,18 @@ namespace CompatBot.Utils
             if (usedForWrites)
                 throw new InvalidOperationException("Stream was used for writes before");
 
-            var result = baseStream.Read(buffer, offset, count);
-            position += result;
-            CopyToBuf(buffer, offset, result);
-            return result;
+            try
+            {
+                var result = baseStream.Read(buffer, offset, count);
+                position += result;
+                CopyToBuf(buffer, offset, result);
+                return result;
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, $"Failed to read from the base stream: {nameof(buffer)}.Length={buffer.Length}, {nameof(offset)}={offset}, {nameof(count)}={count}");
+                throw;
+            }
         }
 
         public override long Seek(long offset, SeekOrigin origin)
