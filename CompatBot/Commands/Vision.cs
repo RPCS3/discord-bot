@@ -73,31 +73,11 @@ namespace CompatBot.Commands
 
         [Command("describe")]
         [Description("Generates an image description from the attached image, or from the url")]
-        public async Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
+        public Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
         {
-            try
-            {
-                if (imageUrl?.StartsWith("tag") ?? false)
-                {
-                    await Tag(ctx, imageUrl[3..].TrimStart()).ConfigureAwait(false);
-                    return;
-                }
-
-                imageUrl = await GetImageUrlAsync(ctx, imageUrl).ConfigureAwait(false);
-                if (string.IsNullOrEmpty(imageUrl))
-                    return;
-
-                var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
-                var result = await client.AnalyzeImageAsync(imageUrl, new List<VisualFeatureTypes> {VisualFeatureTypes.Description}, cancellationToken: Config.Cts.Token).ConfigureAwait(false);
-                var description = GetDescription(result.Description);
-                await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
-                await ctx.RespondAsync(description).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e, "Failed to get image description");
-                await ctx.RespondAsync("Failed to generate image description, probably because image is too large (dimensions or file size)").ConfigureAwait(false);
-            }
+            if (imageUrl?.StartsWith("tag") ?? false)
+                return Tag(ctx, imageUrl[3..].TrimStart());
+            return Tag(ctx, imageUrl);
         }
 
         [Command("tag")]
@@ -170,18 +150,20 @@ namespace CompatBot.Commands
                 var scale = Math.Max(1.0f, img.Width / 400.0f);
                 if (objects.Count > 0)
                 {
-                    //List<Color> palette = new List<Color> { Color.DeepSkyBlue, Color.Magenta, Color.GreenYellow, };
-                    
                     var analyzer = new ColorThief();
-                    List<Color> palette;
-                    using (var tmpStream = Config.MemoryStreamManager.GetStream())
+                    List<Color> palette = new List<Color>(objects.Count);
+                    var dcc = 0;
+                    foreach (var obj in objects)
                     {
-                        img.SaveAsBmp(tmpStream);
+                        var r = obj.Rectangle;
+                        using var tmpStream = Config.MemoryStreamManager.GetStream();
+                        using var boxCopy = img.Clone(i => i.Crop(new Rectangle(r.X, r.Y, r.W, r.H)));
+                        await boxCopy.SaveAsBmpAsync(tmpStream).ConfigureAwait(false);
                         tmpStream.Seek(0, SeekOrigin.Begin);
-                        using (var b = new Bitmap(tmpStream))
-                            palette = analyzer.GetPalette(b, Math.Max(objects.Count, 5), ignoreWhite: false).Select(c => c.Color.ToStandardColor()).ToList();
+                        using var b = new Bitmap(tmpStream);
+                        var dominantColor = analyzer.GetColor(b, 1, false);
+                        palette.Add(dominantColor.Color.ToStandardColor());
                     }
-                    palette.AddRange(DefaultColors);
                     var complementaryPalette = palette.Select(c => c.GetComplementary()).ToList();
                     var tmpP = new List<Color>();
                     var tmpCp = new List<Color>();
@@ -291,9 +273,11 @@ namespace CompatBot.Commands
                         if (bgBox.Y + bgBox.Height > img.Height)
                             bgBox.Y = img.Height - bgBox.Height;
                         drawnBoxes.Add(bgBox);
+                        var textboxColor = complementaryColor;
+                        var textColor = color;
                         try
                         {
-                            img.Mutate(i => i.Fill(bgSgo, complementaryColor, bgBox));
+                            img.Mutate(i => i.Fill(bgSgo, textboxColor, bgBox));
                             img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
                         }
                         catch (Exception ex)
@@ -304,7 +288,7 @@ namespace CompatBot.Commands
                         // label text
                         try
                         {
-                            img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, complementaryColor, new PointF(bgBox.X + bboxBorder, bgBox.Y + bboxBorder)));
+                            img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, textColor, new PointF(bgBox.X + bboxBorder, bgBox.Y + bboxBorder)));
                             //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5))); // throws exception
                         }
                         catch (Exception ex)
