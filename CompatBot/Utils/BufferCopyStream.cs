@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 
 namespace CompatBot.Utils
@@ -10,8 +11,11 @@ namespace CompatBot.Utils
         private bool usedForWrites;
         private long position;
         private readonly int bufSize;
-        private readonly byte[] buf;
+        private readonly byte[] writeBuf;
+        private readonly byte[] readBuf;
         private int bufStart, bufLength;
+        private readonly object sync = new object();
+        private bool disposed;
 
         public BufferCopyStream(Stream baseStream, int bufferSize = 4096)
         {
@@ -23,7 +27,8 @@ namespace CompatBot.Utils
 
             this.baseStream = baseStream;
             bufSize = bufferSize;
-            buf = new byte[bufSize];
+            writeBuf = ArrayPool<byte>.Shared.Rent(bufSize);
+            readBuf = ArrayPool<byte>.Shared.Rent(16);
         }
 
         public override void Flush()
@@ -37,9 +42,18 @@ namespace CompatBot.Utils
             if (usedForWrites)
                 throw new InvalidOperationException("Stream was used for writes before");
 
+            var useTempBuf = count < 16;
+            const int mask = ~0b1111;
             try
             {
-                var result = baseStream.Read(buffer, offset, count);
+                int result;  
+                if (useTempBuf)
+                {
+                    result = baseStream.Read(readBuf, 0, count);
+                    Buffer.BlockCopy(readBuf, 0, buffer, offset, result);
+                }
+                else
+                    result = baseStream.Read(buffer, offset, count & mask); // make count divisible by 16 to workaround mega client issues
                 position += result;
                 CopyToBuf(buffer, offset, result);
                 return result;
@@ -74,12 +88,32 @@ namespace CompatBot.Utils
 
         protected override void Dispose(bool disposing)
         {
+            if (!disposed)
+                lock (sync)
+                {
+                    if (!disposed)
+                    {
+                        ArrayPool<byte>.Shared.Return(writeBuf);
+                        ArrayPool<byte>.Shared.Return(readBuf);
+                        disposed = true;
+                    }
+                }
             baseStream?.Dispose();
             base.Dispose(disposing);
         }
 
         void IDisposable.Dispose()
         {
+            if (!disposed)
+                lock (sync)
+                {
+                    if (!disposed)
+                    {
+                        ArrayPool<byte>.Shared.Return(writeBuf);
+                        ArrayPool<byte>.Shared.Return(readBuf);
+                        disposed = true;
+                    }
+                }
             baseStream?.Dispose();
             base.Dispose();
         }
@@ -90,18 +124,18 @@ namespace CompatBot.Utils
             {
                 bufStart = 0;
                 bufLength = bufSize;
-                Buffer.BlockCopy(buffer, offset + count - bufSize, buf, bufStart, bufLength);
+                Buffer.BlockCopy(buffer, offset + count - bufSize, writeBuf, bufStart, bufLength);
             }
             else
             {
                 // copy as much data as we can to the end of the buffer
                 bufStart = (bufStart + bufLength) % bufSize;
                 bufLength = Math.Min(bufSize - bufStart, count);
-                Buffer.BlockCopy(buffer, offset, buf, bufStart, bufLength);
+                Buffer.BlockCopy(buffer, offset, writeBuf, bufStart, bufLength);
                 // if there's still more data, loop it around to the beginning
                 if (bufLength < count)
                 {
-                    Buffer.BlockCopy(buffer, offset + bufLength, buf, 0, count-bufLength);
+                    Buffer.BlockCopy(buffer, offset + bufLength, writeBuf, 0, count-bufLength);
                     bufLength = count;
                 }
             }
@@ -111,9 +145,9 @@ namespace CompatBot.Utils
         {
             var result = new byte[bufLength];
             var partLength = Math.Min(bufSize - bufStart, bufLength);
-            Buffer.BlockCopy(buf, bufStart, result, 0, partLength);
+            Buffer.BlockCopy(writeBuf, bufStart, result, 0, partLength);
             if (partLength < bufLength)
-                Buffer.BlockCopy(buf, 0, result, partLength, bufLength - partLength);
+                Buffer.BlockCopy(writeBuf, 0, result, partLength, bufLength - partLength);
             return result;
         }
 
