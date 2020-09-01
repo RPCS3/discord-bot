@@ -191,8 +191,9 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Renderer initialized on device"] = new Regex(@"Renderer initialized on device '(?<vulkan_initialized_device>.+)'\r?$", DefaultOptions),
                     ["RSX: Failed to compile shader"] = new Regex(@"RSX: Failed to compile shader: ERROR: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
                     ["RSX: Compilation failed"] = new Regex(@"RSX: Compilation failed: ERROR: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
-                    ["RSX: Your GPU does not support"] = new Regex(@"RSX: Your GPU does not support (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
-                    ["RSX: GPU/driver lacks support"] = new Regex(@"RSX: GPU/driver lacks support for (?<rsx_not_supported>.+)\..+?\r?$", DefaultOptions),
+                    ["RSX: Unsupported device"] = new Regex(@"RSX: Unsupported device: (?<rsx_unsupported_gpu>.+)\..+?\r?$", DefaultOptions),
+                    ["RSX: Your GPU does not support"] = new Regex(@"RSX: Your GPU does not support (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
+                    ["RSX: GPU/driver lacks support"] = new Regex(@"RSX: GPU/driver lacks support for (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: Swapchain:"] = new Regex(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
                     ["F "] = new Regex(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7)", DefaultSingleLineOptions),
                     ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
@@ -239,7 +240,7 @@ namespace CompatBot.EventHandlers.LogParsing
             "broken_directory",
             "edat_block_offset",
             "failed_to_verify",
-            "rsx_not_supported",
+            "rsx_not_supported_feature",
         };
 
         public static readonly string[] CountValueItems = {"enqueue_buffer_error"};
