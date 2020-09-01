@@ -313,7 +313,7 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
 
-            var supportedGpu = true;
+            var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]);
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
                 Version.TryParse(oglVersionString, out oglVersion);

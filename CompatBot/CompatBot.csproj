@@ -30,9 +30,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00712" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00712" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00712" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00720" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00720" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00720" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.49.0.2030" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
@@ -59,7 +59,7 @@
     <PackageReference Include="Nerdbank.Streams" Version="2.5.76" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="NLog" Version="4.7.4" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="1.6.4" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="1.6.5" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.2" />
     <PackageReference Include="SharpCompress" Version="0.26.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.1" />

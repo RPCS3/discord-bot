@@ -246,21 +246,36 @@ namespace CompatBot
                 OverflowAction = AsyncTargetWrapperOverflowAction.Block,
                 BatchSize = 500,
             };
-            var logTarget = new ColoredConsoleTarget("logconsole") {
+            var consoleTarget = new ColoredConsoleTarget("logconsole") {
                 Layout = "${longdate} ${level:uppercase=true:padding=-5} ${message} ${onexception:" +
                             "${newline}${exception:format=Message}" +
                             ":when=not contains('${exception:format=ShortType}','TaskCanceledException')}",
             };
+            var watchdogTarget = new MethodCallTarget("watchdog")
+            {
+                ClassName = typeof(Watchdog).AssemblyQualifiedName,
+                MethodName = nameof(Watchdog.OnLogHandler),
+            };
+            watchdogTarget.Parameters.AddRange(new[]
+            {
+                new MethodCallParameter("${level}"),
+                new MethodCallParameter("${message}"),
+            });
 #if DEBUG
-            config.AddRule(LogLevel.Trace, LogLevel.Fatal, logTarget, "default"); // only echo messages from default logger to the console
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
 #else
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, logTarget, "default");
+            config.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
 #endif
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
+            config.AddRule(LogLevel.Info, LogLevel.Fatal, watchdogTarget);
 
-            var filter = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')", Action = FilterResult.Ignore, };
+            var ignoreFilter1 = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')", Action = FilterResult.Ignore, };
+            var ignoreFilter2 = new ConditionBasedFilter { Condition = "contains('${message}','One or more pre-execution checks failed')", Action = FilterResult.Ignore, };
             foreach (var rule in config.LoggingRules)
-                rule.Filters.Add(filter);
+            {
+                rule.Filters.Add(ignoreFilter1);
+                rule.Filters.Add(ignoreFilter2);
+            }
             LogManager.Configuration = config;
             return LogManager.GetLogger("default");
         }

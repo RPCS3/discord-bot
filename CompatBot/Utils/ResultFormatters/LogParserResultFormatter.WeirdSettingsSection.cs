@@ -64,6 +64,9 @@ namespace CompatBot.Utils.ResultFormatters
                 && items["supported_gpu"] == EnabledMark
                 && !GowHDIds.Contains(serial))
                 notes.Add("⚠ `Vulkan` is the recommended `Renderer`");
+            if (items["renderer"] == "Vulkan"
+                && items["supported_gpu"] == DisabledMark)
+                notes.Add("❌ Selected `Vulkan` device is not supported, please use `OpenGL` instead");
             if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
             {
                 if (items["game_category"] != "1P"
@@ -139,7 +142,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (KnownDisableVertexCacheIds.Contains(serial) && !vertexCacheDisabled)
                 notes.Add("⚠ This game requires disabling `Vertex Cache` option");
 
-            if (multiItems["rsx_not_supported"].Contains("alpha-to-one for multisampling"))
+            if (multiItems["rsx_not_supported_feature"].Contains("alpha-to-one for multisampling"))
             {
                 if (items["msaa"] is string msaa && msaa != "Disabled")
                     generalNotes.Add("ℹ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");

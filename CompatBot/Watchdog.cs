@@ -5,8 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
+using CompatBot.EventHandlers;
 using DSharpPlus;
 using Microsoft.ApplicationInsights;
+using NLog;
 
 namespace CompatBot
 {
@@ -16,9 +18,11 @@ namespace CompatBot
         public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new ConcurrentQueue<DateTime>();
         public static readonly Stopwatch TimeSinceLastIncomingMessage = Stopwatch.StartNew();
         private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < Config.IncomingMessageCheckIntervalInMinutes;
+        private static DiscordClient discordClient = null;
 
         public static async Task Watch(DiscordClient client)
         {
+            discordClient = client;
             do
             {
                 await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
@@ -60,6 +64,28 @@ namespace CompatBot
                     Config.Log.Error(e);
                 }
             } while (!Config.Cts.IsCancellationRequested);
+        }
+
+        public static void OnLogHandler(string level, string message)
+        {
+            if (level == nameof(LogLevel.Info))
+            {
+                if (message?.Contains("Session resumed") ?? false)
+                    DisconnectTimestamps.Clear();
+            }
+            else if (level == nameof(LogLevel.Warn))
+            {
+                if (message?.Contains("Dispatch:PRESENCES_REPLACE") ?? false)
+                    BotStatusMonitor.RefreshAsync(discordClient).ConfigureAwait(false).GetAwaiter().GetResult();
+                else if (message?.Contains("Pre-emptive ratelimit triggered") ?? false)
+                    Config.TelemetryClient?.TrackEvent("preemptive-rate-limit");
+            }
+            else if (level == nameof(LogLevel.Fatal))
+            {
+                if ((message?.Contains("Socket connection terminated") ?? false)
+                    || (message?.Contains("heartbeats were skipped. Issuing reconnect.") ?? false))
+                    DisconnectTimestamps.Enqueue(DateTime.UtcNow);
+            }
         }
 
         public static async Task SendMetrics(DiscordClient client)
