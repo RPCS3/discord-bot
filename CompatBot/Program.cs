@@ -133,6 +133,7 @@ namespace CompatBot
                     Token = Config.Token,
                     TokenType = TokenType.Bot,
                     MessageCacheSize = Config.MessageCacheSize,
+                    LoggerFactory = Config.LoggerFactory,
                 };
                 using var client = new DiscordClient(config);
                 var commands = client.UseCommandsNext(new CommandsNextConfiguration
@@ -265,41 +266,6 @@ namespace CompatBot
                 client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
                 client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
 
-                client.DebugLogger.LogMessageReceived += (sender, eventArgs) =>
-                {
-                    Action<Exception, string> logLevel = Config.Log.Info;
-                    if (eventArgs.Level == LogLevel.Debug)
-                        logLevel = Config.Log.Debug;
-                    else if (eventArgs.Level == LogLevel.Info)
-                    {
-                        //logLevel = Config.Log.Info;
-                        if (eventArgs.Message?.Contains("Session resumed") ?? false)
-                            Watchdog.DisconnectTimestamps.Clear();
-                    }
-                    else if (eventArgs.Level == LogLevel.Warning)
-                    {
-                        logLevel = Config.Log.Warn;
-                        if (eventArgs.Message?.Contains("Dispatch:PRESENCES_REPLACE") ?? false)
-                            BotStatusMonitor.RefreshAsync(client).ConfigureAwait(false).GetAwaiter().GetResult();
-                        else if (eventArgs.Message?.Contains("Pre-emptive ratelimit triggered") ?? false)
-                            Config.TelemetryClient?.TrackEvent("preemptive-rate-limit");
-                    }
-                    else if (eventArgs.Level == LogLevel.Error)
-                    {
-                        if (eventArgs.Message?.Contains("DSharpPlus.CommandsNext.Exceptions.ChecksFailedException: One or more pre-execution checks failed.") ?? false)
-                            return;
-
-                        logLevel = Config.Log.Error;
-                    }
-                    else if (eventArgs.Level == LogLevel.Critical)
-                    {
-                        logLevel = Config.Log.Fatal;
-                        if ((eventArgs.Message?.Contains("Socket connection terminated") ?? false)
-                            || (eventArgs.Message?.Contains("heartbeats were skipped. Issuing reconnect.") ?? false))
-                            Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
-                    }
-                    logLevel(eventArgs.Exception, eventArgs.Message);
-                };
                 Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
 
                 try
