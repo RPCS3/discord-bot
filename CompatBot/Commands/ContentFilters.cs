@@ -156,7 +156,7 @@ namespace CompatBot.Commands
         }
 
         [Command("remove"), Aliases("delete", "del")]
-        [Description("Removes a piracy filter trigger")]
+        [Description("Removes a content filter trigger")]
         public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
         {
             int removedFilters;
@@ -181,7 +181,7 @@ namespace CompatBot.Commands
                 var filterList = removedTriggers.ToString();
                 if (removedFilters == 1)
                     filterList = filterList.TrimStart();
-                await ctx.Client.ReportAsync($"📴 Piracy filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters} piracy filter{s}: {filterList}".Trim(EmbedPager.MaxDescriptionLength), null, ReportSeverity.Medium).ConfigureAwait(false);
+                await ctx.Client.ReportAsync($"📴 Content filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters} content filter{s}: {filterList}".Trim(EmbedPager.MaxDescriptionLength), null, ReportSeverity.Medium).ConfigureAwait(false);
             }
             ContentFilter.RebuildMatcher();
         }
@@ -210,7 +210,7 @@ namespace CompatBot.Commands
 
             await ctx.ReactWithAsync(Config.Reactions.Success, "Trigger was removed").ConfigureAwait(false);
             var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-            await ctx.Client.ReportAsync("📴 Piracy filter removed", $"{member.GetMentionWithNickname()} removed 1 piracy filter: `{trigger.Sanitize()}`", null, ReportSeverity.Medium).ConfigureAwait(false);
+            await ctx.Client.ReportAsync("📴 Content filter removed", $"{member.GetMentionWithNickname()} removed 1 content filter: `{trigger.Sanitize()}`", null, ReportSeverity.Medium).ConfigureAwait(false);
             ContentFilter.RebuildMatcher();
         }
 
