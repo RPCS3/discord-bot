@@ -54,7 +54,7 @@ namespace CompatBot.EventHandlers
                     }
                 }
 
-                var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
+                var after = DateTime.UtcNow - Config.ModerationBacklogThresholdInHours;
                 foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
                 {
                     var permissions = channel.PermissionsFor(botMember);

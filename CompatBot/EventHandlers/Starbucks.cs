@@ -93,7 +93,7 @@ namespace CompatBot.EventHandlers
         {
             try
             {
-                var after = DateTime.UtcNow - Config.ModerationTimeThreshold;
+                var after = DateTime.UtcNow - Config.ModerationBacklogThresholdInHours;
                 var checkTasks = new List<Task>();
                 foreach (var channel in guild.Channels.Values.Where(ch => Config.Moderation.Channels.Contains(ch.Id)))
                 {
@@ -146,7 +146,7 @@ namespace CompatBot.EventHandlers
                 return;
 
             // message.Timestamp throws if it's not in the cache AND is in local time zone
-            if (DateTime.UtcNow - message.CreationTimestamp > Config.ModerationTimeThreshold)
+            if (DateTime.UtcNow - message.CreationTimestamp > Config.ModerationBacklogThresholdInHours)
                 return;
 
             if (message.Reactions.Any(r => r.Emoji == emoji && (r.IsMe || r.Count < Config.Moderation.StarbucksThreshold)))
@@ -182,7 +182,7 @@ namespace CompatBot.EventHandlers
             if (!message.Author.IsCurrent)
                 return Task.CompletedTask;
 
-            if (message.CreationTimestamp.Add(Config.ShutupTimeLimit) < DateTime.UtcNow)
+            if (message.CreationTimestamp.Add(Config.ShutupTimeLimitInMin) < DateTime.UtcNow)
                 return Task.CompletedTask;
 
             if (!user.IsWhitelisted(client, message.Channel.Guild))
