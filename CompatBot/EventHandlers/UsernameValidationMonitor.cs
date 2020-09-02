@@ -49,7 +49,7 @@ namespace CompatBot.EventHandlers
             do
             {
                 if (!once)
-                    await Task.Delay(Config.ForcedNicknamesRecheckTime, Config.Cts.Token).ConfigureAwait(false);
+                    await Task.Delay(Config.ForcedNicknamesRecheckTimeInHours, Config.Cts.Token).ConfigureAwait(false);
                 if (await Moderation.Audit.CheckLock.WaitAsync(0).ConfigureAwait(false))
                     try
                     {

@@ -101,7 +101,7 @@ namespace CompatBot.EventHandlers
                         parsedLog = true;
 
                         LogParseState result = null, tmpResult = null;
-                        using (var timeout = new CancellationTokenSource(Config.LogParsingTimeout))
+                        using (var timeout = new CancellationTokenSource(Config.LogParsingTimeoutInSec))
                         {
                             using var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
                             var tries = 0;

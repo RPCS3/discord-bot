@@ -41,12 +41,6 @@ namespace CompatBot
         internal static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
 
         public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
-        public static readonly TimeSpan ModerationTimeThreshold = TimeSpan.FromHours(12);
-        public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
-        public static readonly TimeSpan LogParsingTimeout = TimeSpan.FromSeconds(30);
-        public static readonly TimeSpan BuildTimeDifferenceForOutdatedBuilds = TimeSpan.FromDays(3);
-        public static readonly TimeSpan ShutupTimeLimit = TimeSpan.FromMinutes(5);
-        public static readonly TimeSpan ForcedNicknamesRecheckTime = TimeSpan.FromHours(3);
         public static readonly Stopwatch Uptime = Stopwatch.StartNew();
 
         // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
@@ -61,6 +55,16 @@ namespace CompatBot
         public static ulong ThumbnailSpamId => config.GetValue(nameof(ThumbnailSpamId), 475678410098606100ul);        // #bot-data; used for whatever bot needs to keep (cover embeds, etc)
         public static ulong BotAdminId => config.GetValue(nameof(BotAdminId), 267367850706993152ul);                  // discord user id for a bot admin
         public static ulong DeletedMessagesLogChannelId => config.GetValue(nameof(DeletedMessagesLogChannelId), 0ul);
+
+        public static TimeSpan ModerationBacklogThresholdInHours => TimeSpan.FromHours(config.GetValue(nameof(ModerationBacklogThresholdInHours), 1));
+        public static TimeSpan DefaultTimeoutInSec => TimeSpan.FromSeconds(config.GetValue(nameof(DefaultTimeoutInSec), 30));
+        public static TimeSpan LogParsingTimeoutInSec => TimeSpan.FromSeconds(config.GetValue(nameof(LogParsingTimeoutInSec), 30));
+        public static TimeSpan BuildTimeDifferenceForOutdatedBuildsInDays => TimeSpan.FromDays(config.GetValue(nameof(BuildTimeDifferenceForOutdatedBuildsInDays), 3));
+        public static TimeSpan ShutupTimeLimitInMin => TimeSpan.FromMinutes(config.GetValue(nameof(ShutupTimeLimitInMin), 5));
+        public static TimeSpan ForcedNicknamesRecheckTimeInHours => TimeSpan.FromHours(config.GetValue(nameof(ForcedNicknamesRecheckTimeInHours), 3));
+        public static TimeSpan IncomingMessageCheckIntervalInMin => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMin), 10));
+        public static TimeSpan MetricsIntervalInSec => TimeSpan.FromSeconds(config.GetValue(nameof(MetricsIntervalInSec), 10));
+
         public static int ProductCodeLookupHistoryThrottle => config.GetValue(nameof(ProductCodeLookupHistoryThrottle), 7);
         public static int TopLimit => config.GetValue(nameof(TopLimit), 15);
         public static int AttachmentSizeLimit => config.GetValue(nameof(AttachmentSizeLimit), 8 * 1024 * 1024);
@@ -70,8 +74,6 @@ namespace CompatBot
         public static int BuildNumberDifferenceForOutdatedBuilds => config.GetValue(nameof(BuildNumberDifferenceForOutdatedBuilds), 10);
         public static int MinimumPiracyTriggerLength => config.GetValue(nameof(MinimumPiracyTriggerLength), 4);
         public static int MaxSyscallResultLines => config.GetValue(nameof(MaxSyscallResultLines), 13);
-        public static TimeSpan IncomingMessageCheckIntervalInMinutes => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMinutes), 10));
-        public static TimeSpan MetricsIntervalInSeconds => TimeSpan.FromSeconds(config.GetValue(nameof(MetricsIntervalInSeconds), 10));
         public static string Token => config.GetValue(nameof(Token), "");
         public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
         public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");

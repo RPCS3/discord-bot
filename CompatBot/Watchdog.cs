@@ -17,7 +17,7 @@ namespace CompatBot
         private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
         public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new ConcurrentQueue<DateTime>();
         public static readonly Stopwatch TimeSinceLastIncomingMessage = Stopwatch.StartNew();
-        private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < Config.IncomingMessageCheckIntervalInMinutes;
+        private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < Config.IncomingMessageCheckIntervalInMin;
         private static DiscordClient discordClient = null;
 
         public static async Task Watch(DiscordClient client)
@@ -92,7 +92,7 @@ namespace CompatBot
         {
             do
             {
-                await Task.Delay(Config.MetricsIntervalInSeconds).ConfigureAwait(false);
+                await Task.Delay(Config.MetricsIntervalInSec).ConfigureAwait(false);
                 if (Config.TelemetryClient is TelemetryClient tc)
                 {
                     tc.TrackMetric("gw-latency", client.Ping);
