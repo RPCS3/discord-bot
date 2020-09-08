@@ -417,6 +417,11 @@ namespace CompatBot.Utils
                     result.Add("Miscellaneous software (manuals, etc)");
                     break;
                 }
+                case 'P':
+                {
+                    result.Add("Applications (dynamic themes, streaming services, etc)");
+                    break;
+                }
                 case 'Q':
                 {
                     result.Add("XMB Theme");
