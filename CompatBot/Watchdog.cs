@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime;
 using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
@@ -93,13 +94,31 @@ namespace CompatBot
             do
             {
                 await Task.Delay(Config.MetricsIntervalInSec).ConfigureAwait(false);
+                using var process = Process.GetCurrentProcess();
                 if (Config.TelemetryClient is TelemetryClient tc)
                 {
                     tc.TrackMetric("gw-latency", client.Ping);
                     tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
                     tc.TrackMetric("gc-total-memory", GC.GetTotalMemory(false));
+                    tc.TrackMetric("process-total-memory", process.PrivateMemorySize64);
                     tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
                     tc.Flush();
+                }
+            } while (!Config.Cts.IsCancellationRequested);
+        }
+
+        public static async Task CheckGCStats()
+        {
+            do
+            {
+                await Task.Delay(TimeSpan.FromHours(1)).ConfigureAwait(false);
+                using var process = Process.GetCurrentProcess();
+                var processMemory = process.PrivateMemorySize64;
+                var gcMemory = GC.GetTotalMemory(false);
+                if (processMemory / (double)gcMemory > 2)
+                {
+                    GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                    GC.Collect(2, GCCollectionMode.Optimized, true, true); // force LOH compaction
                 }
             } while (!Config.Cts.IsCancellationRequested);
         }
