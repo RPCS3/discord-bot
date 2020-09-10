@@ -111,8 +111,14 @@ namespace CompatBot
         {
             do
             {
-                await Task.Delay(TimeSpan.FromHours(1)).ConfigureAwait(false);
                 using var process = Process.GetCurrentProcess();
+                Config.Log.Info($"Process memory stats:\n" +
+                                $"Private: {process.PrivateMemorySize64}\n" +
+                                $"Working set: {process.WorkingSet64}\n" +
+                                $"Virtual: {process.VirtualMemorySize64}\n" +
+                                $"Paged: {process.PagedMemorySize64}\n" +
+                                $"Paged sytem: {process.PagedSystemMemorySize64}\n" +
+                                $"Non-pated system: {process.NonpagedSystemMemorySize64}");
                 var processMemory = process.PrivateMemorySize64;
                 var gcMemory = GC.GetTotalMemory(false);
                 if (processMemory / (double)gcMemory > 2)
@@ -120,6 +126,7 @@ namespace CompatBot
                     GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
                     GC.Collect(2, GCCollectionMode.Optimized, true, true); // force LOH compaction
                 }
+                await Task.Delay(TimeSpan.FromHours(1)).ConfigureAwait(false);
             } while (!Config.Cts.IsCancellationRequested);
         }
     }
