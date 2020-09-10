@@ -99,8 +99,9 @@ namespace CompatBot
                 {
                     tc.TrackMetric("gw-latency", client.Ping);
                     tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
-                    tc.TrackMetric("gc-total-memory", GC.GetTotalMemory(false));
-                    tc.TrackMetric("process-total-memory", process.PrivateMemorySize64);
+                    tc.TrackMetric("memory-gc-total", GC.GetTotalMemory(false));
+                    tc.TrackMetric("memory-process-private", process.PrivateMemorySize64);
+                    tc.TrackMetric("memory-process-ws", process.WorkingSet64);
                     tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
                     tc.Flush();
                 }
@@ -113,6 +114,7 @@ namespace CompatBot
             {
                 using var process = Process.GetCurrentProcess();
                 Config.Log.Info($"Process memory stats:\n" +
+                                $"GC: {GC.GetTotalMemory(false)}\n" +
                                 $"Private: {process.PrivateMemorySize64}\n" +
                                 $"Working set: {process.WorkingSet64}\n" +
                                 $"Virtual: {process.VirtualMemorySize64}\n" +
