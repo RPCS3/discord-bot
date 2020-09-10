@@ -113,6 +113,7 @@ namespace CompatBot
             {
                 using var process = Process.GetCurrentProcess();
                 Config.Log.Info($"Process memory stats:\n" +
+                                $"GC: {GC.GetTotalMemory(false)}\n" +
                                 $"Private: {process.PrivateMemorySize64}\n" +
                                 $"Working set: {process.WorkingSet64}\n" +
                                 $"Virtual: {process.VirtualMemorySize64}\n" +
