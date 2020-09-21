@@ -28,19 +28,17 @@ namespace CompatBot.Commands
         [Description("Reset thumbnail cache for specified product")]
         public async Task Fix(CommandContext ctx, [Description("Product ID to reset")] string productId)
         {
-            var linksToRemove = new List<(string contentId, string link)>();
+            var count = 0;
             using (var db = new ThumbnailDb())
             {
                 var items = db.Thumbnail.Where(i => i.ProductCode == productId && !string.IsNullOrEmpty(i.EmbeddableUrl));
                 foreach (var thumb in items)
                 {
-                    linksToRemove.Add((thumb.ContentId, thumb.EmbeddableUrl));
                     thumb.EmbeddableUrl = null;
                 }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                count = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
-            await TryDeleteThumbnailCache(ctx, linksToRemove).ConfigureAwait(false);
-            await ctx.RespondAsync($"Removed {linksToRemove.Count} cached links").ConfigureAwait(false);
+            await ctx.RespondAsync($"Removed {count} cached links").ConfigureAwait(false);
         }
 
         [Command("rescan"), RequiresBotModRole]
@@ -256,32 +254,6 @@ namespace CompatBot.Commands
                       && i.Attributes.ThumbnailUrlBase != null
                 select i
             ).ToList();
-        }
-
-        private static async Task TryDeleteThumbnailCache(CommandContext ctx, List<(string contentId, string link)> linksToRemove)
-        {
-            var contentIds = linksToRemove.ToDictionary(l => l.contentId, l => l.link);
-            try
-            {
-                var channel = await ctx.Client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                var messages = await channel.GetMessagesAsync(1000).ConfigureAwait(false);
-                foreach (var msg in messages)
-                    if (contentIds.TryGetValue(msg.Content, out var lnk) && msg.Attachments.Any(a => a.Url == lnk))
-                    {
-                        try
-                        {
-                            await msg.DeleteAsync().ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            Config.Log.Warn(e, "Couldn't delete cached thumbnail image");
-                        }
-                    }
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e);
-            }
         }
     }
 }

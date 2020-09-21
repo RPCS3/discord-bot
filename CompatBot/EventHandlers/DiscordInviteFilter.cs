@@ -72,7 +72,7 @@ namespace CompatBot.EventHandlers
 
                     try
                     {
-                        var messages = await channel.GetMessagesAsync(500).ConfigureAwait(false);
+                        var messages = await channel.GetMessagesAsync(100).ConfigureAwait(false);
                         var messagesToCheck = from msg in messages
                             where msg.CreationTimestamp > after
                             select msg;
