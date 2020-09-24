@@ -29,7 +29,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace CompatBot.Commands
 {
@@ -359,8 +358,8 @@ namespace CompatBot.Commands
                                 {
                                     Datetime = buildTime?.ToString("yyyy-MM-dd HH:mm:ss"),
                                     Pr = mergedPr.Number,
-                                    Windows = new BuildLink {Download = masterBuildInfo.WindowsBuildDownloadLink},
-                                    Linux = new BuildLink {Download = masterBuildInfo.LinuxBuildDownloadLink},
+                                    Windows = new BuildLink {Download = masterBuildInfo.WindowsBuildDownloadLink ?? ""},
+                                    Linux = new BuildLink {Download = masterBuildInfo.LinuxBuildDownloadLink ?? ""},
                                 },
                             };
                         }
