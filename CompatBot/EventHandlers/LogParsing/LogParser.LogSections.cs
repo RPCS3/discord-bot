@@ -166,7 +166,6 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new Dictionary<string, Regex>
                 {
-                    ["Version:"] = new Regex(@"Version: (?<app_version>\S+) / (?<package_version>\S+).*?\r?$", DefaultOptions),
                     ["LDR: Game:"] = new Regex(@"Game: (?<ldr_game_full>.*(?<ldr_game>/dev_hdd0/game/(?<ldr_game_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
                     ["LDR: Disc"]  = new Regex(@"Disc( path)?: (?<ldr_disc_full>.*(?<ldr_disc>/dev_hdd0/game/(?<ldr_disc_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
                     ["LDR: Path:"] = new Regex(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
@@ -177,6 +176,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Elf path:"] = new Regex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path_full>(?<elf_boot_path>/dev_hdd0/game/(?<elf_boot_path_serial>[^/\r\n]+)/USRDIR/EBOOT\.BIN|.*?))\r?$", DefaultOptions),
                     ["Invalid or unsupported file format:"] = new Regex(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new Regex(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
+                    ["SYS: Version:"] = new Regex(@"Version: (APP_VER=)?(?<disc_app_version>\S+) (/ |VERSION=)(?<disc_package_version>\S+).*?\r?$", DefaultOptions),
                     ["sceNp: npDrmIsAvailable(): Failed to verify"] = new Regex(@"Failed to verify (?<failed_to_verify>(sce|npd)) file.*\r?$", DefaultOptions),
                     ["{rsx::thread} RSX: 4"] = new Regex(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
                                          @"RSX: [^\n]+\r?\n[^\n]*?" +
