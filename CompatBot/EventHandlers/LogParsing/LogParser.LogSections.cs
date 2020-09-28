@@ -205,7 +205,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["PPU executable hash:"] = new Regex(@"PPU executable hash: PPU-(?<ppu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
                     ["OVL executable hash:"] = new Regex(@"OVL executable hash: OVL-(?<ovl_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
                     ["SPU executable hash:"] = new Regex(@"SPU executable hash: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                    ["patch_log: Applied patch"] = new Regex(@"Applied patch \(hash='(?:\w{3}-[0-9a-f]+)', description='(?<patch_desc>.+?)', author='(?:.+?)', patch_version='(?:.+?)', file_version='(?:.+?)'\) \(<- (?:[1-9]\d*)\).*\r?$", DefaultOptions),
+                    [": Applied patch"] = new Regex(@"Applied patch \(hash='(?:\w{3}-[0-9a-f]+)', description='(?<patch_desc>.+?)', author='(?:.+?)', patch_version='(?:.+?)', file_version='(?:.+?)'\) \(<- (?:[1-9]\d*)\).*\r?$", DefaultOptions),
                     ["Loaded SPU image:"] = new Regex(@"Loaded SPU image: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
                     ["'sys_fs_open' failed"] = new Regex(@"'sys_fs_open' failed (?!with 0x8001002c).+\xE2\x80\x9C(/dev_bdvd/(?<broken_filename>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))\xE2\x80\x9D.*?\r?$", DefaultOptions),
                     ["'sys_fs_opendir' failed"] = new Regex(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
