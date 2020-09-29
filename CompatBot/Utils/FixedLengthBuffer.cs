@@ -60,9 +60,7 @@ namespace CompatBot.Utils
         }
 
         public List<TValue> GetOldItems(int count)
-        {
-            return keyList.Take(Math.Min(Count, count)).Select(k => lookup[k]).ToList();
-        }
+            => keyList.Take(Math.Min(Count, count)).Select(k => lookup[k]).ToList();
 
         public List<TValue> GetExcess()
         {

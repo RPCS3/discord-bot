@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.EventHandlers;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -106,7 +107,7 @@ namespace CompatBot.Utils
                 throw new ArgumentException(nameof(timeLimit));
 
             var afterTime = timeLimit ?? DateTime.UtcNow.AddSeconds(-30);
-            var messages = await channel.GetMessagesBeforeAsync(beforeMessageId, limit).ConfigureAwait(false);
+            var messages = await channel.GetMessagesBeforeCachedAsync(beforeMessageId, limit).ConfigureAwait(false);
             return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
         }
 

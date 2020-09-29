@@ -46,7 +46,7 @@ namespace CompatBot.EventHandlers
             try
             {
                 var explanation = await GetExplanationAsync(string.IsNullOrEmpty(match.Groups["vulkan"].Value) ? "log" : "vulkan-1").ConfigureAwait(false);
-                var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 10).ConfigureAwait(false);
+                var lastBotMessages = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id, 10).ConfigureAwait(false);
                 foreach (var msg in lastBotMessages)
                     if (BotReactionsHandler.NeedToSilence(msg).needToChill
                         || (msg.Author.IsCurrent && msg.Content == explanation.Text))

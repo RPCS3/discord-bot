@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ColorThiefDotNet;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus;
@@ -387,7 +388,7 @@ namespace CompatBot.Commands
                     && ctx.Channel.PermissionsFor(ctx.Client.GetMember(ctx.Guild, ctx.Client.CurrentUser)).HasPermission(Permissions.ReadMessageHistory))
                     try
                     {
-                        var previousMessages = await ctx.Channel.GetMessagesBeforeAsync(ctx.Message.Id, 10).ConfigureAwait(false);
+                        var previousMessages = await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false);
                         var (selectedMsg, selectedAttachment) = (
                             from m in previousMessages
                             where m.Attachments?.Count > 0

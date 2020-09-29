@@ -97,7 +97,7 @@ namespace CompatBot.EventHandlers
                 var checkTasks = new List<Task>();
                 foreach (var channel in guild.Channels.Values.Where(ch => Config.Moderation.Channels.Contains(ch.Id)))
                 {
-                    var messages = await channel.GetMessagesAsync().ConfigureAwait(false);
+                    var messages = await channel.GetMessagesCachedAsync().ConfigureAwait(false);
                     var messagesToCheck = from msg in messages
                         where msg.CreationTimestamp > after && msg.Reactions.Any(r => r.Emoji == Config.Reactions.Starbucks && r.Count >= Config.Moderation.StarbucksThreshold)
                         select msg;
