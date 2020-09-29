@@ -87,10 +87,19 @@ namespace CompatBot.Utils
             return true;
         }
 
+        public void CopyTo(TValue[] array, int arrayIndex)
+        {
+            var available = array.Length-arrayIndex;
+            if (available < Count)
+                throw new ArgumentException($"Insufficient lenght of the destination array: available={available}, required={Count}");
+
+            for (var i = 0; i < Count; i++)
+                array[arrayIndex + i] = lookup[keyList[i]];
+        }
+
         public bool Contains(TKey key) => lookup.ContainsKey(key);
         public bool Contains(TValue item) => Contains(makeKey(item));
-
-        public void CopyTo(TValue[] array, int arrayIndex) => throw new NotSupportedException();
+        
         public int IndexOf(TValue item) => throw new NotSupportedException();
         public void Insert(int index, TValue item) => throw new NotSupportedException();
         public void RemoveAt(int index) => throw new NotSupportedException();
