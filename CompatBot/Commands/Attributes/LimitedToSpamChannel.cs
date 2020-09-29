@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -18,7 +19,7 @@ namespace CompatBot.Commands.Attributes
 
             try
             {
-                var msgList = await ctx.Channel.GetMessagesAsync(10).ConfigureAwait(false);
+                var msgList = await ctx.Channel.GetMessagesCachedAsync(10).ConfigureAwait(false);
                 if (msgList.Any(m => m.Author.IsCurrent
                                      && m.Content is string s
                                      && s.Contains(ctx.Command.QualifiedName, StringComparison.InvariantCultureIgnoreCase)))

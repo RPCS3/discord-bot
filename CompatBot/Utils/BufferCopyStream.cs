@@ -4,7 +4,7 @@ using System.IO;
 
 namespace CompatBot.Utils
 {
-    internal class BufferCopyStream : Stream, IDisposable
+	internal class BufferCopyStream : Stream, IDisposable
     {
         private readonly Stream baseStream;
         private bool usedForReads;

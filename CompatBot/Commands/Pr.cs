@@ -21,7 +21,7 @@ namespace CompatBot.Commands
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
-        private static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30);
+        internal static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30);
 
         [GroupCommand]
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);

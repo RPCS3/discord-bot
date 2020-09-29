@@ -32,7 +32,7 @@ namespace CompatBot.EventHandlers
                 if (BotReactionsHandler.NeedToSilence(msg).needToChill)
                     return;
 
-            lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
+            lastBotMessages = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
             StringBuilder previousRepliesBuilder = null;
             foreach (var msg in lastBotMessages)
             {

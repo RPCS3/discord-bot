@@ -34,7 +34,7 @@ namespace CompatBot.Commands
             var sourceTerm = term;
             if (string.IsNullOrEmpty(term))
             {
-                var lastBotMessages = await ctx.Channel.GetMessagesBeforeAsync(ctx.Message.Id, 10).ConfigureAwait(false);
+                var lastBotMessages = await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false);
                 var showList = true;
                 foreach (var pastMsg in lastBotMessages)
                     if (pastMsg.Embeds.FirstOrDefault() is DiscordEmbed pastEmbed

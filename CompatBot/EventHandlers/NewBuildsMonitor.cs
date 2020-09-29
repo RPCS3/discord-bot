@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,11 +13,11 @@ namespace CompatBot.EventHandlers
 {
     internal static class NewBuildsMonitor
     {
-        private static readonly Regex BuildResult = new Regex("[rpcs3] Build .+ succeeded", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        private static readonly Regex BuildResult = new Regex(@"\[rpcs3:master\] \d+ new commit", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
         private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromMinutes(20);
         private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(20);
-        public static TimeSpan CheckInterval { get; private set; } = PassiveCheckInterval;
-        public static DateTime? RapidStart { get; private set; }
+        private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
+        private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new ConcurrentQueue<(DateTime start, DateTime end)>();
 
         public static Task OnMessageCreated(MessageCreateEventArgs args)
         {
@@ -28,7 +29,10 @@ namespace CompatBot.EventHandlers
                 && BuildResult.IsMatch(embed.Title)
             )
             {
-                Activate();
+                Config.Log.Info("Found new PR merge message");
+                var start = DateTime.UtcNow + Pr.AvgBuildTime;
+                var end = start + ActiveCheckResetThreshold;
+                ExpectedNewBuildTimeFrames.Enqueue((start, end));
             }
             return Task.CompletedTask;
         }
@@ -36,11 +40,20 @@ namespace CompatBot.EventHandlers
         public static async Task MonitorAsync(DiscordClient client)
         {
             var lastCheck = DateTime.UtcNow.AddDays(-1);
-            var resetThreshold = TimeSpan.FromMinutes(10);
             Exception lastException = null;
             while (!Config.Cts.IsCancellationRequested)
             {
-                if (DateTime.UtcNow - lastCheck > CheckInterval)
+                var now = DateTime.UtcNow;
+                var checkInterval = PassiveCheckInterval;
+                (DateTime start, DateTime end) nearestBuildCheckInterval;
+                while (ExpectedNewBuildTimeFrames.TryPeek(out nearestBuildCheckInterval)
+                       && nearestBuildCheckInterval.end < now)
+                {
+                    ExpectedNewBuildTimeFrames.TryDequeue(out _);
+                }
+                if (nearestBuildCheckInterval.start < now && now < nearestBuildCheckInterval.end)
+                    checkInterval = ActiveCheckInterval;
+                if (lastCheck + checkInterval < now)
                 {
                     try
                     {
@@ -55,23 +68,19 @@ namespace CompatBot.EventHandlers
                         }
                     }
                     lastCheck = DateTime.UtcNow;
-                    if (DateTime.UtcNow - resetThreshold > RapidStart)
-                        Reset();
                 }
                 await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
             }
         }
 
-        public static void Reset()
+        internal static void Reset()
         {
-            CheckInterval = PassiveCheckInterval;
-            RapidStart = null;
-        }
-
-        private static void Activate()
-        {
-            CheckInterval = ActiveCheckInterval;
-            RapidStart = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            if (ExpectedNewBuildTimeFrames.TryPeek(out var ebci)
+                && ebci.start <= now && now <= ebci.end)
+            {
+                ExpectedNewBuildTimeFrames.TryDequeue(out _);
+            }
         }
     }
 }
