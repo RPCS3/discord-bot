@@ -27,7 +27,13 @@ namespace CompatBot.Commands
             {
                 if (expectedNickname.Length < 2 || expectedNickname.Length > 32)
                 {
-                    await ctx.ReactWithAsync( Config.Reactions.Failure, "Nickname must be between 2 and 32 characters long").ConfigureAwait(false);
+                    await ctx.ReactWithAsync( Config.Reactions.Failure, "Nickname must be between 2 and 32 characters long", true).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!expectedNickname.All(char.IsLetterOrDigit))
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Nickname must follow Rule 7", true).ConfigureAwait(false);
                     return;
                 }
 
