@@ -208,26 +208,32 @@ namespace CompatBot.EventHandlers
         }
 
 
-        private static Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
+        private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
         {
             var bot = client.GetMember(channel.Guild, client.CurrentUser);
             var ch = channel.IsPrivate ? channel.Users.FirstOrDefault(u => u.Id != client.CurrentUser.Id)?.Username + "'s DM" : "#" + channel.Name;
             if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
             {
                 Config.Log.Debug($"No permissions to react in {ch}");
-                return Task.CompletedTask;
+                return;
             }
 
             var mood = client.GetEmoji(":sqvat:", "😒");
             if (message.Reactions.Any(r => r.Emoji == mood && r.IsMe))
-                return Task.CompletedTask;
+                return;
 
             var reactionMsg = string.Concat(message.Reactions.Select(r => TextMap.TryGetValue(r.Emoji, out var txt) ? txt : " ")).Trim();
             if (string.IsNullOrEmpty(reactionMsg))
-                return Task.CompletedTask;
+                return;
 
             Config.Log.Debug($"Emoji text: {reactionMsg} (in {ch})");
-            return Task.CompletedTask;
+
+            if (reactionMsg.Contains("UFC"))
+            {
+                await message.CreateReactionAsync(mood).ConfigureAwait(false);
+                await message.CreateReactionAsync(DiscordEmoji.FromUnicode("🇳")).ConfigureAwait(false);
+                await message.CreateReactionAsync(DiscordEmoji.FromUnicode("🇴")).ConfigureAwait(false);
+            }
         }
     }
 }
