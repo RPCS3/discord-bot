@@ -231,6 +231,7 @@ namespace CompatBot
 
                 client.MessageCreated += _ => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
+                client.MessageCreated += GlobalMessageCache.OnMessageCreated;
                 if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                     client.MessageCreated += MediaScreenshotMonitor.OnMessageCreated;
                 client.MessageCreated += ProductCodeLookup.OnMessageCreated;
@@ -245,15 +246,19 @@ namespace CompatBot
                 client.MessageCreated += IsTheGamePlayableHandler.OnMessageCreated;
                 client.MessageCreated += EmpathySimulationHandler.OnMessageCreated;
 
+                client.MessageUpdated += GlobalMessageCache.OnMessageUpdated;
                 client.MessageUpdated += ContentFilterMonitor.OnMessageUpdated;
                 client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
                 client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
 
+                client.MessageDeleted += GlobalMessageCache.OnMessageDeleted;
                 if (Config.DeletedMessagesLogChannelId > 0)
                     client.MessageDeleted += DeletedMessagesMonitor.OnMessageDeleted;
                 client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
                 client.MessageDeleted += EmpathySimulationHandler.OnMessageDeleted;
 
+                client.MessagesBulkDeleted += GlobalMessageCache.OnMessagesBulkDeleted;
+                
                 client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
                 client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
 
