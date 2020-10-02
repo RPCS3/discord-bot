@@ -362,10 +362,11 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         if (IsNvidia(gpuInfo))
                         {
-                            if (driverVersion < NvidiaRecommendedOldWindowsVersion)
-                                notes.Add($"❗ Please update your nVidia GPU driver to at least version {NvidiaRecommendedOldWindowsVersion}");
-                            if (items["os_type"] is string os
-                                && os != "Linux"
+                            var isWindows = items["os_type"] is string os && os != "Linux";
+                            var minVersion = isWindows ? NvidiaRecommendedWindowsVersion : NvidiaRecommendedLinuxVersion;
+                            if (driverVersion < minVersion)
+                                notes.Add($"❗ Please update your nVidia GPU driver to at least version {minVersion}");
+                            if (isWindows
                                 && buildVersion < NvidiaFullscreenBugFixed
                                 && items["build_branch"] == "HEAD")
                             {

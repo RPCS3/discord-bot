@@ -52,7 +52,8 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
         private static readonly Version NvidiaFullscreenBugMinVersion = new Version(400, 0);
         private static readonly Version NvidiaFullscreenBugMaxVersion = new Version(499, 99);
-        private static readonly Version NvidiaRecommendedOldWindowsVersion = new Version(435, 21); // linux is lagging
+        private static readonly Version NvidiaRecommendedWindowsVersion = new Version(452, 28);
+        private static readonly Version NvidiaRecommendedLinuxVersion = new Version(450, 56);
         private static readonly Version AmdRecommendedOldWindowsVersion = new Version(20, 1, 4);
         private static readonly Version AmdLastGoodOpenGLWindowsVersion = new Version(20, 1, 4);
         private static readonly Version NvidiaFullscreenBugFixed = new Version(0, 0, 6, 8204);
