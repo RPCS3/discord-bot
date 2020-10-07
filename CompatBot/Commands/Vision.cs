@@ -153,7 +153,6 @@ namespace CompatBot.Commands
                 {
                     var analyzer = new ColorThief();
                     List<Color> palette = new List<Color>(objects.Count);
-                    var dcc = 0;
                     foreach (var obj in objects)
                     {
                         var r = obj.Rectangle;
@@ -234,8 +233,6 @@ namespace CompatBot.Commands
                         var textBox = TextMeasurer.Measure(label, textRendererOptions);
 #if LABELS_INSIDE
                         var textHeightScale = (int)Math.Ceiling(textBox.Width / Math.Min(img.Width - r.X - 10 - 4 * scale, r.W - 4 * scale));
-#else
-                        var textHeightScale = 1;
 #endif
                         // object bounding box
                         try

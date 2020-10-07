@@ -51,8 +51,8 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    var prInfo = githubClient.GetPrInfoAsync(pr, Config.Cts.Token).GetAwaiter().GetResult();
-                    CachedUpdateInfo = client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).GetAwaiter().GetResult();
+                    var prInfo = githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
+                    CachedUpdateInfo = client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).ConfigureAwait(false).GetAwaiter().GetResult();
                     if (CachedUpdateInfo?.CurrentBuild != null)
                     {
                         CachedUpdateInfo.LatestBuild = CachedUpdateInfo.CurrentBuild;
