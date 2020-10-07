@@ -56,7 +56,7 @@ namespace CompatBot.EventHandlers
             OnNewLog += EnqueueLogProcessing;
         }
 
-        public static Task OnMessageCreated(MessageCreateEventArgs args)
+        public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
             var message = args.Message;
             if (message.Author.IsBotSafeCheck())
@@ -69,7 +69,7 @@ namespace CompatBot.EventHandlers
 
             var checkExternalLinks = "help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
                                      || LimitedToSpamChannel.IsSpamChannel(args.Channel);
-            OnNewLog(args.Client, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
+            OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
             return Task.CompletedTask;
         }
 

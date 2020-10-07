@@ -84,9 +84,9 @@ namespace CompatBot.EventHandlers
             [DiscordEmoji.FromUnicode("〰")] = "W",
         };
 
-        public static Task Handler(MessageReactionAddEventArgs args)
+        public static Task Handler(DiscordClient c, MessageReactionAddEventArgs args)
         {
-            return CheckMessageAsync(args.Client, args.Channel, args.User, args.Message, args.Emoji, false);
+            return CheckMessageAsync(c, args.Channel, args.User, args.Message, args.Emoji, false);
         }
 
         public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)

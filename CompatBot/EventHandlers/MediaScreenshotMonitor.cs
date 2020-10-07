@@ -11,6 +11,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
@@ -20,12 +21,18 @@ namespace CompatBot.EventHandlers
 {
     internal sealed class MediaScreenshotMonitor
     {
-        private static readonly ComputerVisionClient client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
-        private static readonly SemaphoreSlim workSemaphore = new SemaphoreSlim(0);
-        private static readonly ConcurrentQueue<(MessageCreateEventArgs evt, string readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, string readOperationId)>();
-        public static int MaxQueueLength = 0;
+        private readonly DiscordClient client;
+        private readonly ComputerVisionClient cvClient = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
+        private readonly SemaphoreSlim workSemaphore = new SemaphoreSlim(0);
+        private readonly ConcurrentQueue<(MessageCreateEventArgs evt, string readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, string readOperationId)>();
+        public static int MaxQueueLength { get; private set; } = 0;
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs evt)
+        internal MediaScreenshotMonitor(DiscordClient client)
+        {
+            this.client = client;
+        }
+
+        public async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs evt)
         {
             var message = evt.Message;
             if (message == null)
@@ -38,7 +45,7 @@ namespace CompatBot.EventHandlers
             if (message.Author.IsBotSafeCheck())
                 return;
 
-            if (message.Author.IsSmartlisted(evt.Client))
+            if (message.Author.IsSmartlisted(client))
                 return;
 #endif
 
@@ -48,7 +55,7 @@ namespace CompatBot.EventHandlers
             var images = Vision.GetImageAttachment(message).ToList();
             var tasks = new List<Task<BatchReadFileHeaders>>(images.Count);
             foreach (var img in images)
-                tasks.Add(client.BatchReadFileAsync(img.Url, Config.Cts.Token));
+                tasks.Add(cvClient.BatchReadFileAsync(img.Url, Config.Cts.Token));
             foreach (var t in tasks)
             {
                 try
@@ -64,7 +71,7 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task ProcessWorkQueue()
+        public async Task ProcessWorkQueue()
         {
             if (string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                 return;
@@ -90,7 +97,7 @@ namespace CompatBot.EventHandlers
 
                 try
                 {
-                    var result = await client.GetReadOperationResultAsync(item.readOperationId, Config.Cts.Token).ConfigureAwait(false);
+                    var result = await cvClient.GetReadOperationResultAsync(item.readOperationId, Config.Cts.Token).ConfigureAwait(false);
                     if (result.Status == TextOperationStatusCodes.Succeeded)
                     {
                         if (result.RecognitionResults.SelectMany(r => r.Lines).Any())
@@ -113,7 +120,7 @@ namespace CompatBot.EventHandlers
                                     if ("media".Equals(item.evt.Channel.Name))
                                         suppressFlags = FilterAction.SendMessage | FilterAction.ShowExplain;
                                     await ContentFilter.PerformFilterActions(
-                                        item.evt.Client,
+                                        client,
                                         item.evt.Message,
                                         hit,
                                         suppressFlags,
@@ -127,7 +134,7 @@ namespace CompatBot.EventHandlers
                             if (!cnt)
                                 try
                                 {
-                                    var botSpamCh = await item.evt.Client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                                    var botSpamCh = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
                                     await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
                                 }
                                 catch (Exception ex)

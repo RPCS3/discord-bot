@@ -18,19 +18,19 @@ namespace CompatBot.EventHandlers
             '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞',
         };
 
-        public static async Task OnUserUpdated(UserUpdateEventArgs args)
+        public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
         {
             try
             {
-                var m = args.Client.GetMember(args.UserAfter);
+                var m = c.GetMember(args.UserAfter);
                 if (NeedsRename(m.DisplayName))
                 {
                     var suggestedName = StripZalgo(m.DisplayName, m.Id).Sanitize();
-                    await args.Client.ReportAsync("🔣 Potential display name issue",
+                    await c.ReportAsync("🔣 Potential display name issue",
                         $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmAndRenameUserAsync(args.Client, args.Client.GetMember(args.UserAfter), suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(c, c.GetMember(args.UserAfter), suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -39,7 +39,7 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task OnMemberUpdated(GuildMemberUpdateEventArgs args)
+        public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdateEventArgs args)
         {
             try
             {
@@ -49,11 +49,11 @@ namespace CompatBot.EventHandlers
                 if (NeedsRename(name))
                 {
                     var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
-                    await args.Client.ReportAsync("🔣 Potential display name issue",
+                    await c.ReportAsync("🔣 Potential display name issue",
                         $"Member {member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmAndRenameUserAsync(args.Client, member, suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(c, member, suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -62,7 +62,7 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task OnMemberAdded(GuildMemberAddEventArgs args)
+        public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddEventArgs args)
         {
             try
             {
@@ -70,11 +70,11 @@ namespace CompatBot.EventHandlers
                 if (NeedsRename(name))
                 {
                     var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
-                    await args.Client.ReportAsync("🔣 Potential display name issue",
+                    await c.ReportAsync("🔣 Potential display name issue",
                         $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmAndRenameUserAsync(args.Client, args.Member, suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(c, args.Member, suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)

@@ -21,20 +21,20 @@ namespace CompatBot.EventHandlers
         private static readonly MemoryCache SpoofingReportThrottlingCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
         private static readonly TimeSpan SnoozeDuration = TimeSpan.FromHours(1);
 
-        public static async Task OnUserUpdated(UserUpdateEventArgs args)
+        public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
         {
             if (args.UserBefore.Username == args.UserAfter.Username)
                 return;
 
-            var potentialTargets = GetPotentialVictims(args.Client, args.Client.GetMember(args.UserAfter), true, false);
+            var potentialTargets = GetPotentialVictims(c, c.GetMember(args.UserAfter), true, false);
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
-            var m = args.Client.GetMember(args.UserAfter);
-            await args.Client.ReportAsync("🕵️ Potential user impersonation",
+            var m = c.GetMember(args.UserAfter);
+            await c.ReportAsync("🕵️ Potential user impersonation",
                 $"User {m.GetMentionWithNickname()} has changed their __username__ from " +
                 $"**{args.UserBefore.Username.Sanitize()}#{args.UserBefore.Discriminator}** to " +
                 $"**{args.UserAfter.Username.Sanitize()}#{args.UserAfter.Discriminator}**",
@@ -42,19 +42,19 @@ namespace CompatBot.EventHandlers
                 ReportSeverity.Medium);
         }
 
-        public static async Task OnMemberUpdated(GuildMemberUpdateEventArgs args)
+        public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdateEventArgs args)
         {
             if (args.NicknameBefore == args.NicknameAfter)
                 return;
 
-            var potentialTargets = GetPotentialVictims(args.Client, args.Member, false, true);
+            var potentialTargets = GetPotentialVictims(c, args.Member, false, true);
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
-            await args.Client.ReportAsync("🕵️ Potential user impersonation",
+            await c.ReportAsync("🕵️ Potential user impersonation",
                 $"Member {args.Member.GetMentionWithNickname()} has changed their __display name__ from " +
                 $"**{(args.NicknameBefore ?? args.Member.Username).Sanitize()}** to " +
                 $"**{args.Member.DisplayName.Sanitize()}**",
@@ -62,16 +62,16 @@ namespace CompatBot.EventHandlers
                 ReportSeverity.Medium);
         }
 
-        public static async Task OnMemberAdded(GuildMemberAddEventArgs args)
+        public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddEventArgs args)
         {
-            var potentialTargets = GetPotentialVictims(args.Client, args.Member, true, true);
+            var potentialTargets = GetPotentialVictims(c, args.Member, true, true);
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(args.Client, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
-            await args.Client.ReportAsync("🕵️ Potential user impersonation",
+            await c.ReportAsync("🕵️ Potential user impersonation",
                 $"New member joined the server: {args.Member.GetMentionWithNickname()}",
                 potentialTargets,
                 ReportSeverity.Medium);

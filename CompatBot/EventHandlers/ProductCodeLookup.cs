@@ -21,7 +21,7 @@ namespace CompatBot.EventHandlers
         public static readonly Regex ProductCode = new Regex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABJKLMPQRS]|MRTC)[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Client CompatClient = new Client();
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
@@ -54,7 +54,7 @@ namespace CompatBot.EventHandlers
             if (codesToLookup.Count == 0)
                 return;
 
-            await LookupAndPostProductCodeEmbedAsync(args.Client, args.Message, codesToLookup).ConfigureAwait(false);
+            await LookupAndPostProductCodeEmbedAsync(c, args.Message, codesToLookup).ConfigureAwait(false);
         }
 
         public static async Task LookupAndPostProductCodeEmbedAsync(DiscordClient client, DiscordMessage message, List<string> codesToLookup)

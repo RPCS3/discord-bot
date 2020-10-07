@@ -114,7 +114,6 @@ namespace CompatBot
                     GameTdbScraper.RunAsync(Config.Cts.Token),
 #endif
                     StatsStorage.BackgroundSaveAsync(),
-                    MediaScreenshotMonitor.ProcessWorkQueue(),
                     CompatList.ImportCompatListAsync()
                 );
 
@@ -171,18 +170,18 @@ namespace CompatBot
 
                 client.UseInteractivity(new InteractivityConfiguration());
 
-                client.Ready += async r =>
+                client.Ready += async (c, _) =>
                                 {
-                                    var admin = await r.Client.GetUserAsync(Config.BotAdminId).ConfigureAwait(false);
+                                    var admin = await c.GetUserAsync(Config.BotAdminId).ConfigureAwait(false);
                                     Config.Log.Info("Bot is ready to serve!");
                                     Config.Log.Info("");
-                                    Config.Log.Info($"Bot user id : {r.Client.CurrentUser.Id} ({r.Client.CurrentUser.Username})");
+                                    Config.Log.Info($"Bot user id : {c.CurrentUser.Id} ({c.CurrentUser.Username})");
                                     Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({admin.Username ?? "???"}#{admin.Discriminator ?? "????"})");
                                     Config.Log.Info("");
                                 };
-                client.GuildAvailable += async gaArgs =>
+                client.GuildAvailable += async (c, gaArgs) =>
                 {
-                    await BotStatusMonitor.RefreshAsync(gaArgs.Client).ConfigureAwait(false);
+                    await BotStatusMonitor.RefreshAsync(c).ConfigureAwait(false);
                     Watchdog.DisconnectTimestamps.Clear();
                     Watchdog.TimeSinceLastIncomingMessage.Restart();
                     if (gaArgs.Guild.Id != Config.BotGuildId)
@@ -201,8 +200,8 @@ namespace CompatBot
                     try
                     {
                         await Task.WhenAll(
-                            Starbucks.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default),
-                            DiscordInviteFilter.CheckBacklogAsync(gaArgs.Client, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)
+                            Starbucks.CheckBacklogAsync(c, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default),
+                            DiscordInviteFilter.CheckBacklogAsync(c, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)
                         ).ConfigureAwait(false);
                     }
                     catch (Exception e)
@@ -211,8 +210,8 @@ namespace CompatBot
                     }
                     Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
                 };
-                client.GuildAvailable += gaArgs => UsernameValidationMonitor.MonitorAsync(gaArgs.Client, true);
-                client.GuildUnavailable += guArgs =>
+                client.GuildAvailable += (c, _) => UsernameValidationMonitor.MonitorAsync(c, true);
+                client.GuildUnavailable += (_, guArgs) =>
                 {
                     Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
                     return Task.CompletedTask;
@@ -229,11 +228,12 @@ namespace CompatBot
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
-                client.MessageCreated += _ => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
+                client.MessageCreated += (_, __) => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
                 client.MessageCreated += GlobalMessageCache.OnMessageCreated;
+                var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
                 if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
-                    client.MessageCreated += MediaScreenshotMonitor.OnMessageCreated;
+                    client.MessageCreated += mediaScreenshotMonitor.OnMessageCreated;
                 client.MessageCreated += ProductCodeLookup.OnMessageCreated;
                 client.MessageCreated += LogParsingHandler.OnMessageCreated;
                 client.MessageCreated += LogAsTextMonitor.OnMessageCreated;
@@ -336,7 +336,8 @@ namespace CompatBot
                     UsernameValidationMonitor.MonitorAsync(client),
                     Psn.Check.MonitorFwUpdates(client, Config.Cts.Token),
                     Watchdog.SendMetrics(client),
-                    Watchdog.CheckGCStats()
+                    Watchdog.CheckGCStats(),
+                    mediaScreenshotMonitor.ProcessWorkQueue()
                 );
 
                 while (!Config.Cts.IsCancellationRequested)

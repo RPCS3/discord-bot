@@ -127,7 +127,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     if (result.Status != DownloadStatus.Completed)
                         Config.Log.Error(result.Exception, "Failed to download file from Google Drive: " + result.Status);
                     await pipe.Writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                    pipe.Writer.Complete();
+                    await pipe.Writer.CompleteAsync().ConfigureAwait(false);
                     await pipingTask.ConfigureAwait(false);
                 }
                 catch (Exception e)

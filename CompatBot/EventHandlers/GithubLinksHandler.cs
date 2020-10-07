@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -19,7 +20,7 @@ namespace CompatBot.EventHandlers
         private static readonly Regex IssueLink = new Regex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
         private static readonly GithubClient.Client Client = new GithubClient.Client();
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
@@ -59,7 +60,7 @@ namespace CompatBot.EventHandlers
             if (GithubClient.Client.RateLimitRemaining - issuesToLookup.Count >= 10)
             {
                 foreach (var issueId in issuesToLookup)
-                    await Pr.LinkIssue(args.Client, args.Message, issueId).ConfigureAwait(false);
+                    await Pr.LinkIssue(c, args.Message, issueId).ConfigureAwait(false);
             }
             else
             {

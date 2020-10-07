@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
@@ -19,7 +20,7 @@ namespace CompatBot.EventHandlers
         private static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
         private static readonly MemoryCache Throttling = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient _c, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
@@ -65,8 +66,8 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static Task OnMessageUpdated(MessageUpdateEventArgs e) => Backtrack(e.Channel, e.MessageBefore, false);
-        public static Task OnMessageDeleted(MessageDeleteEventArgs e) => Backtrack(e.Channel, e.Message, true);
+        public static Task OnMessageUpdated(DiscordClient _, MessageUpdateEventArgs e) => Backtrack(e.Channel, e.MessageBefore, false);
+        public static Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs e) => Backtrack(e.Channel, e.Message, true);
 
         private static async Task Backtrack(DiscordChannel channel, DiscordMessage message, bool removeFromQueue)
         {

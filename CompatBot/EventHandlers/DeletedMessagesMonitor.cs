@@ -6,6 +6,7 @@ using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
@@ -18,7 +19,7 @@ namespace CompatBot.EventHandlers
 		public static readonly TimeSpan CacheRetainTime = TimeSpan.FromMinutes(1);
 		private static readonly SemaphoreSlim postLock = new SemaphoreSlim(1);
 
-		public static async Task OnMessageDeleted(MessageDeleteEventArgs e)
+		public static async Task OnMessageDeleted(DiscordClient c, MessageDeleteEventArgs e)
 		{
 			if (e.Channel.IsPrivate)
 				return;
@@ -33,13 +34,13 @@ namespace CompatBot.EventHandlers
 			if (RemovedByBotCache.TryGetValue(msg.Id, out _))
 				return;
 
-			var usernameWithNickname = msg.Author.GetUsernameWithNickname(e.Client, e.Guild);
+			var usernameWithNickname = msg.Author.GetUsernameWithNickname(c, e.Guild);
 			var logMsg = msg.Content;
 			if (msg.Attachments.Any())
 				logMsg += Environment.NewLine + Environment.NewLine + string.Join(Environment.NewLine, msg.Attachments.Select(a => $"📎 {a.FileName}"));
 			Config.Log.Info($"Deleted message from {usernameWithNickname} ({msg.JumpLink}):{Environment.NewLine}{logMsg.TrimStart()}");
 
-			var logChannel = await e.Client.GetChannelAsync(Config.DeletedMessagesLogChannelId).ConfigureAwait(false);
+			var logChannel = await c.GetChannelAsync(Config.DeletedMessagesLogChannelId).ConfigureAwait(false);
 			if (logChannel == null)
 				return;
 

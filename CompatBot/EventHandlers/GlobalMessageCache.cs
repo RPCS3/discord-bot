@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.VisualStudio.Services.Common;
@@ -17,7 +18,7 @@ namespace CompatBot.EventHandlers
         private static readonly TCache MessageQueue = new TCache();
         private static readonly Func<DiscordMessage, ulong> KeyGen = m => m.Id;
 
-        public static Task OnMessageCreated(MessageCreateEventArgs args)
+        public static Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
             if (args.Channel.IsPrivate)
                 return Task.CompletedTask;
@@ -37,7 +38,7 @@ namespace CompatBot.EventHandlers
             return Task.CompletedTask;
         }
 
-        public static Task OnMessageDeleted(MessageDeleteEventArgs args)
+        public static Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs args)
         {
             if (args.Channel.IsPrivate)
                 return Task.CompletedTask;
@@ -50,7 +51,7 @@ namespace CompatBot.EventHandlers
             return Task.CompletedTask;
         }
 
-        public static Task OnMessagesBulkDeleted(MessageBulkDeleteEventArgs args)
+        public static Task OnMessagesBulkDeleted(DiscordClient _, MessageBulkDeleteEventArgs args)
         {
             if (args.Channel.IsPrivate)
                 return Task.CompletedTask;
@@ -64,7 +65,7 @@ namespace CompatBot.EventHandlers
             return Task.CompletedTask;
         }
 
-        public static Task OnMessageUpdated(MessageUpdateEventArgs args)
+        public static Task OnMessageUpdated(DiscordClient _, MessageUpdateEventArgs args)
         {
             if (args.Channel.IsPrivate)
                 return Task.CompletedTask;
