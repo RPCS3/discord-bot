@@ -16,7 +16,7 @@ namespace CompatBot.EventHandlers
 {
     internal static class UnknownCommandHandler
     {
-        public static async Task OnError(CommandErrorEventArgs e)
+        public static async Task OnError(CommandsNextExtension _, CommandErrorEventArgs e)
         {
             if (e.Context.User.IsBotSafeCheck())
                 return;

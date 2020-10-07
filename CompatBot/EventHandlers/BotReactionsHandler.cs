@@ -76,7 +76,7 @@ namespace CompatBot.EventHandlers
         public static DiscordEmoji RandomNegativeReaction { get { lock (theDoor) return SadReactions[rng.Next(SadReactions.Length)]; } }
         public static DiscordEmoji RandomPositiveReaction { get { lock (theDoor) return ThankYouReactions[rng.Next(ThankYouReactions.Length)]; } }
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
@@ -181,9 +181,9 @@ namespace CompatBot.EventHandlers
                 }
                 await args.Message.ReactWithAsync(emoji, sadMessage).ConfigureAwait(false);
 
-                if (args.Author.IsSmartlisted(args.Client, args.Message.Channel.Guild))
+                if (args.Author.IsSmartlisted(c, args.Message.Channel.Guild))
                 {
-                    var botMember = args.Guild?.CurrentMember ?? args.Client.GetMember(args.Client.CurrentUser);
+                    var botMember = args.Guild?.CurrentMember ?? c.GetMember(c.CurrentUser);
                     if (args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
                     {
                         var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.Add(-Config.ShutupTimeLimitInMin)).ConfigureAwait(false);

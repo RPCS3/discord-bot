@@ -10,6 +10,7 @@ using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
@@ -29,7 +30,7 @@ namespace CompatBot.EventHandlers
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
         private static readonly Client Client = new Client();
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args?.Message))
                 return;
@@ -43,7 +44,7 @@ namespace CompatBot.EventHandlers
                 && DateTime.UtcNow - lastCheck < CooldownThreshold)
                 return;
 
-            if (args.Author.IsSmartlisted(args.Client, args.Guild))
+            if (args.Author.IsSmartlisted(c, args.Guild))
                 return;
 #endif
 
@@ -73,7 +74,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(gameTitle))
                 return;
 
-            var botSpamChannel = await args.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+            var botSpamChannel = await c.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
             var status = info.Status.ToLowerInvariant();
             string msg;
             if (status == "unknown")

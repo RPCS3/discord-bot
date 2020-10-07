@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers
         private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
         private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new ConcurrentQueue<(DateTime start, DateTime end)>();
 
-        public static Task OnMessageCreated(MessageCreateEventArgs args)
+        public static Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
             if (args.Author.IsBotSafeCheck()
                 && !args.Author.IsCurrent

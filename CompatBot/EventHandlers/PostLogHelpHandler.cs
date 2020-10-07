@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Database;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ namespace CompatBot.EventHandlers
         };
         private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args?.Message))
                 return;

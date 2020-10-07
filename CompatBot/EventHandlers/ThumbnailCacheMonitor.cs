@@ -1,13 +1,14 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Database;
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
 {
     internal static class ThumbnailCacheMonitor
     {
-        public static async Task OnMessageDeleted(MessageDeleteEventArgs args)
+        public static async Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs args)
         {
             if (args.Channel.Id != Config.ThumbnailSpamId)
                 return;

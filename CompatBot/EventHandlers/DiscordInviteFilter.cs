@@ -28,14 +28,14 @@ namespace CompatBot.EventHandlers
         private static readonly MemoryCache InviteCodeCache = new MemoryCache(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
         private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
-        public static async Task OnMessageCreated(MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
-            args.Handled = !await CheckMessageForInvitesAsync(args.Client, args.Message).ConfigureAwait(false);
+            args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
         }
 
-        public static async Task OnMessageUpdated(MessageUpdateEventArgs args)
+        public static async Task OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args)
         {
-            args.Handled = !await CheckMessageForInvitesAsync(args.Client, args.Message).ConfigureAwait(false);
+            args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
         }
 
         public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)

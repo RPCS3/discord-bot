@@ -14,8 +14,8 @@ namespace CompatBot.EventHandlers
 {
     public static class UsernameValidationMonitor
     {
-        public static Task OnMemberUpdated(GuildMemberUpdateEventArgs args) => UpdateDisplayName(args.Guild, args.Member);
-        public static Task OnMemberAdded(GuildMemberAddEventArgs args) => UpdateDisplayName(args.Guild, args.Member);
+        public static Task OnMemberUpdated(DiscordClient _, GuildMemberUpdateEventArgs args) => UpdateDisplayName(args.Guild, args.Member);
+        public static Task OnMemberAdded(DiscordClient _, GuildMemberAddEventArgs args) => UpdateDisplayName(args.Guild, args.Member);
 
         private static async Task UpdateDisplayName(DiscordGuild guild, DiscordMember guildMember)
         {
