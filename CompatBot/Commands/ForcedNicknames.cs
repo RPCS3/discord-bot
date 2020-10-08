@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
+using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -144,6 +145,25 @@ namespace CompatBot.Commands
             }
         }
 
+        [Command("cleanup"), Aliases("fix")]
+        [Description("Removes zalgo from specified user nickname")]
+        public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordMember discordUser)
+        {
+            var name = discordUser.DisplayName;
+            var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Id);
+            if (name != newName)
+                try
+                {
+                    await ctx.Client.UpdateCurrentUserAsync(username: newName).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn($"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);
+                }
+        }
+        
         [Command("list")]
         [Description("Lists all users who has restricted nickname.")]
         public async Task List(CommandContext ctx)
