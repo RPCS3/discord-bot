@@ -157,14 +157,17 @@ namespace CompatBot.Commands
                 .AsEnumerable()
                 .OrderBy(sci => sci.Function.TrimStart('_'))
                 .ToList();
-            if (ctx.User.Id == 216724245957312512UL)
-                sysInfoList = sysInfoList.Where(i => i.Function.StartsWith("sys_") || i.Function.StartsWith("_sys_")).ToList();
             if (sysInfoList.Any())
             {
-                var result = new StringBuilder($"List of syscalls used by `{title}`:```").AppendLine();
+                var result = new StringBuilder();
                 foreach (var sci in sysInfoList)
                     result.AppendLine(sci.Function);
-                await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+                using var memoryStream = Config.MemoryStreamManager.GetStream();
+                using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
+                await streamWriter.WriteAsync(result).ConfigureAwait(false);
+                await streamWriter.FlushAsync().ConfigureAwait(false);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                await ctx.RespondWithFileAsync($"{productId} syscalls.txt", memoryStream, $"List of syscalls used by `{title}`").ConfigureAwait(false);
             }
             else
                 await ctx.RespondAsync($"No information available for `{title}`").ConfigureAwait(false);

@@ -184,13 +184,13 @@ namespace CompatBot
                 "Lead Core Developer",
                 "Developers",
                 "Affiliated",
-                "Contributors",
             };
 
             public static readonly IReadOnlyCollection<string> RoleSmartList = new HashSet<string>(RoleWhiteList, StringComparer.InvariantCultureIgnoreCase)
             {
                 "Testers",
-                "Helpers"
+                "Helpers",
+                "Contributors",
             };
 
             public static readonly IReadOnlyCollection<string> SupporterRoleList = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
