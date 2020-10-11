@@ -343,6 +343,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckSly4Settings(serial, items, notes);
                 CheckDragonsCrownSettings(serial, items, notes);
                 CheckLbpSettings(serial, items, notes, generalNotes);
+                CheckKillzone3Settings(serial, items, notes, generalNotes);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -898,6 +899,28 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
         }
+
+        private static readonly HashSet<string> Killzone3Ids = new HashSet<string>
+        {
+            "BCAS20066", "BCES00081", "BCUS98116", "NPUA98116", "NPUA70034",
+            "NPJA90092", "NPEA90034", "NPUA70034",
+        };
+
+        private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes)
+        {
+            if (!Killzone3Ids.Contains(serial))
+                return;
+
+            if (ppuPatches.Any() && patchNames.Count(n => n.Contains("Disable MLAA", StringComparison.OrdinalIgnoreCase)) > 1) // when MLAA patch is applied
+            {
+                if (items["write_color_buffers"] == EnabledMark)
+                    notes.Add("⚠ `Write Color Buffers` is not required with applied MLAA patch");
+            }
+            else
+            {
+                if (items["write_color_buffers"] == DisabledMark)
+                    notes.Add("⚠ Please enable MLAA patch (Recommended) or `Write Color Buffers`");
+            }
 
         private static readonly HashSet<string> RdrIds = new HashSet<string>
         {
