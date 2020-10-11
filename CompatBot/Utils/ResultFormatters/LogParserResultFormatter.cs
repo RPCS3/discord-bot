@@ -57,6 +57,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version AmdRecommendedOldWindowsVersion = new Version(20, 1, 4);
         private static readonly Version AmdLastGoodOpenGLWindowsVersion = new Version(20, 1, 4);
         private static readonly Version NvidiaFullscreenBugFixed = new Version(0, 0, 6, 8204);
+        private static readonly Version TsxFaFixedVersion  = new Version(0, 0, 12, 10995);
 
         private static readonly Dictionary<string, string> RsxPresentModeMap = new Dictionary<string, string>
         {
@@ -120,17 +121,21 @@ namespace CompatBot.Utils.ResultFormatters
             "BLES00932", "BLUS30443", "BCJS70013", "BCJS30022", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
             "BCAS25003", "BCES00510", "BCES00516", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003", "NPUA70080", // God of War 3 / Demo
+            "BCUS98167", "BCJS30041", "BCES00701", "NPUA80535", "NPEA00291", // Modnation Racers
+            "NPUA70096", "NPEA90062", // Modnation Racers demos
+            "NPUA70074", // Modnation Racers beta
+            "BCES01422", "BCUS98254", "NPUA80848", "NPEA00421", "NPHA80239", // LittleBigPlanet Karting
+            "NPJA90244", "NPEA90117", "NPUA70249", // LittleBigPlanet Karting demo
+            "BCAS20066", "BCES00081", "BCUS98116", "NPUA98116", "NPUA70034", // Killzone 2
+            "NPJA90092", "NPEA90034", "NPUA70034", // Killzone 2 demo
             "BCES00006", "BCUS98137", "NPEA00333", "NPUA80499", // Motorstorm
             "BCES00484", "BCUS98242", "NPEA00315", "NPUA80661", // Motorstorm Apocalypse
             "BCES00129", "BCUS98155", // Motorstorm Pacific Rift
             "NPEA90090", "NPUA70140", "NPEA90033", // Motorstorm demos
             "BLJM60528", "NPJB00235", "NPHB00522", "NPJB90534", //E.X. Troopers / demo
+            "BLES01702", "BLJS10187", "BLUS31002", "NPEB01140", "NPJB00236", "NPUB30899", // Tekken Tag Tournament 2
             "BLES01987", "BLUS30964", "BLJS10160", // The Witch and the Hundred Knight
             "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
-            "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // tlou
-            "NPEA00435", "NPEA00521", "NPJA00096", "NPJA00129",// tlou
-            "NPUA30134", "NPUA70257", "NPUA80960", "NPUA81175",// tlou
-            "NPHA80206", "NPHA80279",// tlou
 
         };
 
