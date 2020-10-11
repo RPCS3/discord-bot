@@ -31,7 +31,7 @@ namespace CompatBot.Utils.ResultFormatters
             items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
             if (items["enable_tsx"] == "Disabled" && hasTsx && TsxFaFixedVersion && !hasTsxFa)
                 notes.Add("ℹ TSX support is disabled");
-            else if (items["enable_tsx"] == "Enabled" && hasTsxFa)
+            else if (items["enable_tsx"] == "Enabled" && hasTsxFa && !TsxFaFixedVersion)
                 notes.Add("⚠ Disable TSX support if you experience performance issues");
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && threadCount > 4)
