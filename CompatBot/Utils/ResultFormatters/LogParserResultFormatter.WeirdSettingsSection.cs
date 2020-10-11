@@ -872,6 +872,16 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["read_depth_buffer"] == DisabledMark)
                     notes.Add("⚠ Please enable `Read Depth Buffer` or appropriate patches");
             }
+            if (ppuPatches.Any() && patchNames.Count(n => n.Contains("Disable in-built MLAA", StringComparison.OrdinalIgnoreCase)) > 1) // when MLAA patch is applied
+            {
+                if (items["write_color_buffers"] == EnabledMark)
+                    notes.Add("⚠ `Write Color Buffers` is not required with applied MLAA patch");
+            }
+            else
+            {
+                if (items["write_color_buffers"] == DisabledMark)
+                    notes.Add("⚠ Please enable MLAA patch (Recommended) or `Write Color Buffers`");
+            }
             if (items["resolution_scale"] is string resFactor
                 && int.TryParse(resFactor, out var resolutionScale))
             {
