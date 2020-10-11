@@ -903,7 +903,9 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly HashSet<string> Killzone3Ids = new HashSet<string>
         {
             "BCAS20066", "BCES00081", "BCUS98116", "NPUA98116", "NPUA70034",
-            "NPJA90092", "NPEA90034", "NPUA70034",
+            "BCES01007", "BCAS25008", "BCJS30066", "BCJS37003", "BCJS75002",
+            "BCUS98234", "NPJA90092", "NPEA90034", "NPUA70034", "NPEA90084",
+            "NPJA90178", "NPUA70133", "NPHA80140", "NPEA90085",
         };
 
         private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes)
@@ -921,7 +923,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["write_color_buffers"] == DisabledMark)
                     notes.Add("⚠ Please enable MLAA patch (Recommended) or `Write Color Buffers`");
             }
-
+        }
         private static readonly HashSet<string> RdrIds = new HashSet<string>
         {
             "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758",
