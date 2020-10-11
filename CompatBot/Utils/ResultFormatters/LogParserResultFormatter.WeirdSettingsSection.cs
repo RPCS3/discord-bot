@@ -29,10 +29,20 @@ namespace CompatBot.Utils.ResultFormatters
             var hasTsxFa = items["cpu_extensions"]?.Contains("TSX-FA") ?? false;
             items["has_tsx"] = hasTsx ? EnabledMark : DisabledMark;
             items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
-            if (items["enable_tsx"] == "Disabled" && hasTsx && TsxFaFixedVersion && !hasTsxFa)
-                notes.Add("ℹ TSX support is disabled");
-            else if (items["enable_tsx"] == "Enabled" && hasTsxFa && !TsxFaFixedVersion)
-                notes.Add("⚠ Disable TSX support if you experience performance issues");
+            if (items["build_branch"] == "HEAD"
+                && Version.TryParse(items["build_full_version"], out var buildVersion)
+                && buildVersion < TsxFaFixedVersion)
+            {
+                if (items["enable_tsx"] == "Disabled" && hasTsx && !hasTsxFa)
+                    notes.Add("ℹ TSX support is disabled");
+                else if (items["enable_tsx"] == "Enabled" && hasTsxFa)
+                    notes.Add("⚠ Disable TSX support if you experience performance issues");
+            }
+            else
+            {
+                if (items["enable_tsx"] == "Disabled" && hasTsx)
+                    notes.Add("ℹ TSX support is disabled");
+            }
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
@@ -345,7 +355,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckSly4Settings(serial, items, notes);
                 CheckDragonsCrownSettings(serial, items, notes);
                 CheckLbpSettings(serial, items, notes, generalNotes);
-                CheckKillzone3Settings(serial, items, notes, generalNotes);
+                CheckKillzone3Settings(serial, items, notes, ppuPatches, patchNames);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -910,12 +920,12 @@ namespace CompatBot.Utils.ResultFormatters
             "NPJA90178", "NPUA70133", "NPHA80140", "NPEA90085",
         };
 
-        private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes)
+        private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
         {
             if (!Killzone3Ids.Contains(serial))
                 return;
 
-            if (ppuPatches.Any() && patchNames.Count(n => n.Contains("Disable MLAA", StringComparison.OrdinalIgnoreCase)) > 1) // when MLAA patch is applied
+            if (patchNames.Any(n => n.Contains("MLAA", StringComparison.OrdinalIgnoreCase)))
             {
                 if (items["write_color_buffers"] == EnabledMark)
                     notes.Add("⚠ `Write Color Buffers` is not required with applied MLAA patch");
@@ -923,7 +933,7 @@ namespace CompatBot.Utils.ResultFormatters
             else
             {
                 if (items["write_color_buffers"] == DisabledMark)
-                    notes.Add("⚠ Please enable MLAA patch (Recommended) or `Write Color Buffers`");
+                    notes.Add("⚠ Please enable MLAA patch (recommended) or `Write Color Buffers`");
             }
         }
         private static readonly HashSet<string> RdrIds = new HashSet<string>
