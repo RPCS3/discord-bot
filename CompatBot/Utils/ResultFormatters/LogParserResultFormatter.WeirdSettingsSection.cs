@@ -29,8 +29,10 @@ namespace CompatBot.Utils.ResultFormatters
             var hasTsxFa = items["cpu_extensions"]?.Contains("TSX-FA") ?? false;
             items["has_tsx"] = hasTsx ? EnabledMark : DisabledMark;
             items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
-            if (items["enable_tsx"] == "Disabled" && hasTsx && !hasTsxFa)
+            if (items["enable_tsx"] == "Disabled" && hasTsx && TsxFaFixedVersion && !hasTsxFa)
                 notes.Add("ℹ TSX support is disabled");
+            else if (items["enable_tsx"] == "Enabled" && hasTsxFa)
+                notes.Add("⚠ Disable TSX support if you experience performance issues");
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
