@@ -151,7 +151,12 @@ namespace CompatBot.Commands
         {
             var name = discordUser.DisplayName;
             var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Id);
-            if (name != newName)
+            if (name == newName)
+            {
+                await ctx.RespondAsync("Failed to remove any extra symbols").ConfigureAwait(false);
+            }
+            else
+            {
                 try
                 {
                     await ctx.Client.UpdateCurrentUserAsync(username: newName).ConfigureAwait(false);
@@ -162,6 +167,7 @@ namespace CompatBot.Commands
                     Config.Log.Warn($"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);
                 }
+            }
         }
         
         [Command("list")]
