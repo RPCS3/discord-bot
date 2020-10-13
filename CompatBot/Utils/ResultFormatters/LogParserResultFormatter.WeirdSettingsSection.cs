@@ -434,10 +434,12 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("ℹ `Multithreaded RSX` is enabled");
             }
 
+            if (items["failed_pad"] is string failedPad)
+                notes.Add($"⚠ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
+
             if (!string.IsNullOrEmpty(serial)
                 && KnownMotionControlsIds.Contains(serial)
-                && items["pad_handler"] is string padHandler
-                && !padHandler.StartsWith("DualShock"))
+                && !multiItems["pad_handler"].Any(h => h.StartsWith("DualShock")))
                 notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3 or DualShock 4 controller");
 
             if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
