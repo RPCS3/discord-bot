@@ -503,9 +503,6 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add($"😱 `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
             }
 
-            if (items["failed_pad"] is string failedPad)
-                notes.Add($"⚠ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
-
             if (DesIds.Contains(serial))
                 notes.Add("ℹ If you experience infinite load screen, clear game cache via `File` → `All games` → `Remove Disk Cache`");
 

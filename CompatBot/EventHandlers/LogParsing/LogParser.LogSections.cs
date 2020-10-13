@@ -199,6 +199,8 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Failed to load RAP file:"] = new Regex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
                     ["Rap file not found:"] = new Regex(@"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?)(\xE2\x80\x9D)?\r?$", DefaultOptions),
                     ["Pad handler expected but none initialized"] = new Regex(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
+                    ["Failed to bind device"] = new Regex(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
+                    ["Input:"] = new Regex(@"Input: (?<pad_handler>.*?) device .+ connected\r?$", DefaultOptions),
                     ["XAudio2Thread"] = new Regex(@"XAudio2Thread\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["cellAudio Thread"] = new Regex(@"XAudio2Backend\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["using a Null renderer instead"] = new Regex(@"Audio renderer (?<audio_backend_init_error>.+) could not be initialized\r?$", DefaultOptions),
@@ -214,7 +216,6 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["do you have the PS3 firmware installed"] = new Regex(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
                     ["Unimplemented syscall"] = new Regex(@"U \d+:\d+:\d+\.\d+ ({(?<unimplemented_syscall_context>.+?)} )?.*Unimplemented syscall (?<unimplemented_syscall>.*)\r?$", DefaultOptions),
                     ["Could not enqueue"] = new Regex(@"cellAudio: Could not enqueue buffer onto audio backend(?<enqueue_buffer_error>.).*\r?$", DefaultOptions),
-                    ["Failed to bind device"] = new Regex(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
                     ["{PPU["] = new Regex(@"{PPU\[.+\]} (?<log_channel>[^ :]+)( TODO)?: (?!\xE2\x80\x9C)(?<syscall_name>[^ :]+?)\(.*\r?$", DefaultOptions),
                     ["⁂"] = new Regex(@"\xE2\x81\x82 (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
                     ["undub"] =  new Regex(@"(\b|_)(?<game_mod>(undub|translation patch))(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
@@ -226,6 +227,7 @@ namespace CompatBot.EventHandlers.LogParsing
 
         public static readonly HashSet<string> MultiValueItems = new HashSet<string>
         {
+            "pad_handler",
             "fatal_error_context",
             "fatal_error",
             "rap_file",
