@@ -18,7 +18,7 @@ namespace CompatBot.Utils.ResultFormatters
     {
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
 
-        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder builder = null)
+        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder builder = null, PrInfo currentPrInfo = null)
         {
             if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download) == null)
                 return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
@@ -29,7 +29,6 @@ namespace CompatBot.Utils.ResultFormatters
             var currentPr = info.CurrentBuild?.Pr;
             string url = null;
             PrInfo latestPrInfo = null;
-            PrInfo currentPrInfo = null;
 
             string prDesc = "";
             if (!justAppend)
@@ -48,7 +47,7 @@ namespace CompatBot.Utils.ResultFormatters
                     prDesc = "PR #???";
 
                 if (currentPr > 0 && currentPr != latestPr)
-                    currentPrInfo = await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    currentPrInfo ??= await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
             }
             var desc = latestPrInfo?.Title;
             if (includePrBody
@@ -135,8 +134,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (!latestBuildTimestamp.HasValue)
             {
                 buildTimestampKind = "Merged";
-                latestBuildTimestamp = latestPrInfo?.MergedAt;
-                currentBuildTimestamp = currentPrInfo?.MergedAt;
+                latestBuildTimestamp = currentPrInfo?.MergedAt;
             }
 
             if (!string.IsNullOrEmpty(latestBuild?.Datetime))

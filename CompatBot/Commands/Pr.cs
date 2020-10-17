@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
@@ -187,7 +188,7 @@ namespace CompatBot.Commands
                 if (updateInfo != null)
                 {
                     if (DateTime.TryParse(updateInfo.LatestBuild?.Datetime, out var masterBuildTime) && masterBuildTime.Ticks >= mergeTime.Ticks)
-                        embed = await updateInfo.AsEmbedAsync(client, false, embed).ConfigureAwait(false);
+                        embed = await updateInfo.AsEmbedAsync(client, false, embed, prInfo).ConfigureAwait(false);
                     else
                     {
                         var waitTime = TimeSpan.FromMinutes(5);
