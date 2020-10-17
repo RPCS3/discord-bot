@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ColorThiefDotNet;
+using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
@@ -72,7 +73,7 @@ namespace CompatBot.Commands
             ["strawberry"] = new[] {"🍓",},
         };
 
-        [Command("describe")]
+        [Command("describe"), TriggersTyping]
         [Description("Generates an image description from the attached image, or from the url")]
         public Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
         {
@@ -81,7 +82,7 @@ namespace CompatBot.Commands
             return Tag(ctx, imageUrl);
         }
 
-        [Command("tag")]
+        [Command("tag"), TriggersTyping]
         [Description("Tags recognized objects in the image")]
         public async Task Tag(CommandContext ctx, string imageUrl = null)
         {

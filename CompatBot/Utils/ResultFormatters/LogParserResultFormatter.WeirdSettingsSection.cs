@@ -877,7 +877,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ Please disable `Force CPU Blit`");
             if (items["read_color_buffers"] == DisabledMark)
                 notes.Add("⚠ Please enable `Read Color Buffers`");
-            if (ppuPatches.Any() && patchNames.Count(n => n.Contains("depth buffer", StringComparison.OrdinalIgnoreCase)) > 1) // when depth buffer patches are applied
+            if (ppuPatches.Any() && patchNames.Count(n => n.Contains("depth buffer", StringComparison.OrdinalIgnoreCase)) > 1) // when all (two) depth buffer patches are applied
             {
                 if (items["read_depth_buffer"] == EnabledMark)
                     notes.Add("⚠ `Read Depth Buffer` is not required with applied patches");
@@ -887,7 +887,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["read_depth_buffer"] == DisabledMark)
                     notes.Add("⚠ Please enable `Read Depth Buffer` or appropriate patches");
             }
-            if (ppuPatches.Any() && patchNames.Count(n => n.Contains("Disable in-built MLAA", StringComparison.OrdinalIgnoreCase)) > 1) // when MLAA patch is applied
+            if (ppuPatches.Any() && patchNames.Any(n => n.Contains("MLAA", StringComparison.OrdinalIgnoreCase))) // when MLAA patch is applied
             {
                 if (items["write_color_buffers"] == EnabledMark)
                     notes.Add("⚠ `Write Color Buffers` is not required with applied MLAA patch");
