@@ -26,6 +26,8 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new List<string>();
             var (_, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
             brokenDump |= multiItems["edat_block_offset"].Any();
+            var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]);
+            var unsupportedGpuDriver = false;
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
@@ -78,6 +80,14 @@ namespace CompatBot.Utils.ResultFormatters
                         {
                             knownFatal = true;
                             notes.Add("❌ SPU cache has issues; right-click on the game, then `Remove` → `SPU Cache`");
+                        }
+                    }
+                    else if (fatalError.Contains("no matching overloaded function found"))
+                    {
+                        if (fatalError.Contains("'mov'"))
+                        {
+                            knownFatal = true;
+                            unsupportedGpuDriver = true;
                         }
                     }
                     else if (fatalError.Contains("RSX Decompiler Thread"))
@@ -313,7 +323,6 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
 
-            var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]);
             Version oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
                 Version.TryParse(oglVersionString, out oglVersion);
@@ -393,7 +402,9 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(items["shader_compile_error"]))
             {
-                if (supportedGpu)
+                if (unsupportedGpuDriver)
+                    notes.Add("❌ Shader compilation error on unsupported GPU driver");
+                else if (supportedGpu)
                     notes.Add("❌ Shader compilation error might indicate shader cache corruption");
                 else
                     notes.Add("❌ Shader compilation error on unsupported GPU");
