@@ -141,11 +141,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly HashSet<string> KnownResScaleThresholdIds = new HashSet<string>
         {
-            "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // tlou
-            "NPEA00435", "NPEA00521", "NPJA00096", "NPJA00129",// tlou
-            "NPUA30134", "NPUA70257", "NPUA80960", "NPUA81175",// tlou
-            "NPHA80206", "NPHA80279",// tlou
-
+            "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // The Last of Us
+            "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175", 
         };
 
         private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
