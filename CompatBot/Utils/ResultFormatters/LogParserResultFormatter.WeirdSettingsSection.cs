@@ -861,9 +861,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly HashSet<string> TlouIds = new HashSet<string>
         {
             "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174",
-            "NPEA00435", "NPEA00521", "NPJA00096", "NPJA00129",
-            "NPUA30134", "NPUA70257", "NPUA80960", "NPUA81175",
-            "NPHA80206", "NPHA80279",
+            "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175", 
         };
 
         private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
@@ -916,10 +914,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static readonly HashSet<string> Killzone3Ids = new HashSet<string>
         {
-            "BCAS20066", "BCES00081", "BCUS98116", "NPUA98116", "NPUA70034",
-            "BCES01007", "BCAS25008", "BCJS30066", "BCJS37003", "BCJS75002",
-            "BCUS98234", "NPJA90092", "NPEA90034", "NPUA70034", "NPEA90084",
-            "NPJA90178", "NPUA70133", "NPHA80140", "NPEA90085",
+            "BCAS20157", "BCAS25008", "BCES01007", "BCJS30066", "BCJS37003", "BCJS70016", "BCJS75002", "BCUS98234",
+            "NPEA00321", "NPEA90084", "NPEA90085", "NPEA90086", "NPHA80140", "NPJA90178", "NPUA70133",
         };
 
         private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
