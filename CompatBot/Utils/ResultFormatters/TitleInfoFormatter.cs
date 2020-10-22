@@ -65,10 +65,10 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (string.IsNullOrWhiteSpace(gameTitle))
                 gameTitle = null;
+            var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
-                var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
                 var onlineOnlypart = info.Network == true ? " 🌐" : "";
                 var pr = info.ToPrString(null, true);
                 var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
@@ -122,7 +122,6 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     StatsStorage.GameStatCache.TryGetValue(gameTitle, out int stat);
                     StatsStorage.GameStatCache.Set(gameTitle, ++stat, StatsStorage.CacheTime);
-                    var productCodePart = string.IsNullOrEmpty(titleId) ? "" : $"[{titleId}] ";
                     result.Title = $"{productCodePart}{gameTitle.Sanitize().Trim(200)}";
                 }
                 return result;

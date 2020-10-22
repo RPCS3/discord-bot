@@ -115,10 +115,10 @@ namespace CompatBot.EventHandlers
             {
                 var result = await CompatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
                 if (result?.ReturnCode == -2)
-                    return TitleInfo.Maintenance.AsEmbed(null);
+                    return TitleInfo.Maintenance.AsEmbed(code);
 
                 if (result?.ReturnCode == -1)
-                    return TitleInfo.CommunicationError.AsEmbed(null);
+                    return TitleInfo.CommunicationError.AsEmbed(code);
 
                 var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
 

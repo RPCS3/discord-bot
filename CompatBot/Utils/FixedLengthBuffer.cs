@@ -71,7 +71,9 @@ namespace CompatBot.Utils
 
         public TValue Evict(TKey key)
         {
-            var result = lookup[key];
+            if (!lookup.TryGetValue(key, out var result))
+                return default;
+            
             lookup.Remove(key);
             keyList.Remove(key);
             return result;
