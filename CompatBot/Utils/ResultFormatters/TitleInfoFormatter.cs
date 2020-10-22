@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatApiClient.POCOs;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Caching.Memory;
@@ -65,7 +67,24 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (string.IsNullOrWhiteSpace(gameTitle))
                 gameTitle = null;
+            titleId = titleId?.ToUpperInvariant();
             var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
+            if (!StatusColors.TryGetValue(info.Status, out _) && !string.IsNullOrEmpty(titleId))
+            {
+                using var db = new ThumbnailDb();
+                var thumb = db.Thumbnail.FirstOrDefault(t => t.ProductCode == titleId);
+                if (thumb?.CompatibilityStatus != null)
+                {
+                    info = new TitleInfo
+                    {
+                        Date = thumb.CompatibilityChangeDate?.AsUtc().ToString("yyyy-MM-dd"),
+                        Status = thumb.CompatibilityStatus.ToString(),
+                        Title = thumb.Name,
+                        UsingLocalCache = true,
+                    };
+                    
+                }
+            }
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
@@ -78,6 +97,8 @@ namespace CompatBot.Utils.ResultFormatters
                     desc = info.AlternativeTitle + Environment.NewLine + desc;
                 if (!string.IsNullOrEmpty(info.WikiTitle))
                     desc += $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={info.WikiTitle})";
+                if (info.UsingLocalCache == true)
+                    desc += " (cached)";
                 var cacheTitle = info.Title ?? gameTitle;
                 if (!string.IsNullOrEmpty(cacheTitle))
                 {
@@ -115,6 +136,7 @@ namespace CompatBot.Utils.ResultFormatters
                     Color = embedColor,
                 }.WithThumbnail(thumbnailUrl);
                 if (gameTitle == null
+                    && !string.IsNullOrEmpty(titleId)
                     && ThumbnailProvider.GetTitleNameAsync(titleId, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult() is string titleName
                     && !string.IsNullOrEmpty(titleName))
                     gameTitle = titleName;

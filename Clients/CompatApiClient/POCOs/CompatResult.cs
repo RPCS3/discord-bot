@@ -34,5 +34,6 @@ namespace CompatApiClient.POCOs
         public int? Pr;
         public bool? Network;
         public string Update;
+        public bool? UsingLocalCache;
     }
 }
