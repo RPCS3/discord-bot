@@ -24,7 +24,7 @@ namespace CompatBot.EventHandlers
         private readonly DiscordClient client;
         private readonly ComputerVisionClient cvClient = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
         private readonly SemaphoreSlim workSemaphore = new SemaphoreSlim(0);
-        private readonly ConcurrentQueue<(MessageCreateEventArgs evt, string readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, string readOperationId)>();
+        private readonly ConcurrentQueue<(MessageCreateEventArgs evt, Guid readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, Guid readOperationId)>();
         public static int MaxQueueLength { get; private set; } = 0;
 
         internal MediaScreenshotMonitor(DiscordClient client)
@@ -53,15 +53,15 @@ namespace CompatBot.EventHandlers
                 return;
 
             var images = Vision.GetImageAttachment(message).ToList();
-            var tasks = new List<Task<BatchReadFileHeaders>>(images.Count);
+            var tasks = new List<Task<ReadHeaders>>(images.Count);
             foreach (var img in images)
-                tasks.Add(cvClient.BatchReadFileAsync(img.Url, Config.Cts.Token));
+                tasks.Add(cvClient.ReadAsync(img.Url, null, Config.Cts.Token));
             foreach (var t in tasks)
             {
                 try
                 {
                     var headers = await t.ConfigureAwait(false);
-                    workQueue.Enqueue((evt, new Uri(headers.OperationLocation).Segments.Last()));
+                    workQueue.Enqueue((evt, new Guid(new Uri(headers.OperationLocation).Segments.Last())));
                     workSemaphore.Release();
                 }
                 catch (Exception ex)
@@ -76,7 +76,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                 return;
 
-            string reEnqueId = null;
+            Guid? reEnqueId = null;
             do
             {
                 await workSemaphore.WaitAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -97,17 +97,17 @@ namespace CompatBot.EventHandlers
 
                 try
                 {
-                    var result = await cvClient.GetReadOperationResultAsync(item.readOperationId, Config.Cts.Token).ConfigureAwait(false);
-                    if (result.Status == TextOperationStatusCodes.Succeeded)
+                    var result = await cvClient.GetReadResultAsync(item.readOperationId, Config.Cts.Token).ConfigureAwait(false);
+                    if (result.Status == OperationStatusCodes.Succeeded)
                     {
-                        if (result.RecognitionResults.SelectMany(r => r.Lines).Any())
+                        if (result.AnalyzeResult?.ReadResults?.SelectMany(r => r.Lines).Any() ?? false)
                         {
                             var cnt = true;
                             var prefix = $"[{item.evt.Message.Id % 100:00}]";
                             var ocrText = new StringBuilder($"OCR result of message <{item.evt.Message.JumpLink}>:").AppendLine();
                             Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
                             var duplicates = new HashSet<string>();
-                            foreach (var r in result.RecognitionResults)
+                            foreach (var r in result.AnalyzeResult.ReadResults)
                             foreach (var l in r.Lines)
                             {
                                 ocrText.AppendLine(l.Text.Sanitize());
@@ -143,7 +143,7 @@ namespace CompatBot.EventHandlers
                                 }
                         }
                     }
-                    else if (result.Status == TextOperationStatusCodes.NotStarted || result.Status == TextOperationStatusCodes.Running)
+                    else if (result.Status == OperationStatusCodes.NotStarted || result.Status == OperationStatusCodes.Running)
                     {
                         workQueue.Enqueue(item);
                         reEnqueId ??= item.readOperationId;

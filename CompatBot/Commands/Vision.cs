@@ -139,10 +139,10 @@ namespace CompatBot.Commands
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) { Endpoint = Config.AzureComputerVisionEndpoint };
                 var result = await client.AnalyzeImageInStreamAsync(
                     imageStream,
-                    new List<VisualFeatureTypes>
+                    new List<VisualFeatureTypes?>
                     {
                         VisualFeatureTypes.Objects,
-                        VisualFeatureTypes.Description
+                        VisualFeatureTypes.Description,
                     },
                     cancellationToken: Config.Cts.Token
                 ).ConfigureAwait(false);
