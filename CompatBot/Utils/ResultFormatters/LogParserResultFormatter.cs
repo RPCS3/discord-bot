@@ -566,10 +566,19 @@ namespace CompatBot.Utils.ResultFormatters
                 return new Version(ver.Major, minor, build).ToString();
             }
 
-            if (result.EndsWith(".0.0"))
-                result = result[..^4];
-            if (result.Length > 3 && result[^2] == '.')
-                result = result[..^1] + "0" + result[^1];
+            if (Version.TryParse(result, out var nvVer))
+            {
+                result = $"{nvVer.Major}.{nvVer.Minor:00}";
+                if (nvVer.Build > 0)
+                    result += $".{nvVer.Build}";
+            }
+            else
+            {
+                if (result.EndsWith(".0.0"))
+                    result = result[..^4];
+                if (result.Length > 3 && result[^2] == '.')
+                    result = result[..^1] + "0" + result[^1];
+            }
             return result;
         }
 

@@ -162,7 +162,7 @@ namespace CompatBot.Commands
                     await ctx.Client.UpdateCurrentUserAsync(username: newName).ConfigureAwait(false);
                     await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     Config.Log.Warn($"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);

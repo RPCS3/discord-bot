@@ -13,7 +13,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using PsnClient.POCOs;
 
 namespace CompatBot.Commands
@@ -99,7 +99,7 @@ namespace CompatBot.Commands
                     await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             }
 
-            [Command("content")]
+            [Command("content"), Hidden]
             [Description("Adds PSN content id to the scraping queue")]
             public async Task Content(CommandContext ctx, [RemainingText, Description("Content IDs to scrape, such as `UP0006-NPUB30592_00-MONOPOLYPSNNA000`")] string contentIds)
             {

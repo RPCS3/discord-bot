@@ -97,7 +97,9 @@ namespace CompatBot.Commands
                 using (var stream = await httpClient.GetStreamAsync(imageUrl).ConfigureAwait(false))
                     await stream.CopyToAsync(imageStream).ConfigureAwait(false);
                 imageStream.Seek(0, SeekOrigin.Begin);
+#pragma warning disable VSTHRD103
                 using var img = Image.Load(imageStream, out var imgFormat);
+#pragma warning restore VSTHRD103
                 imageStream.Seek(0, SeekOrigin.Begin);
 
                 //resize and shrink file size to get under azure limits
@@ -137,10 +139,10 @@ namespace CompatBot.Commands
                 var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) { Endpoint = Config.AzureComputerVisionEndpoint };
                 var result = await client.AnalyzeImageInStreamAsync(
                     imageStream,
-                    new List<VisualFeatureTypes>
+                    new List<VisualFeatureTypes?>
                     {
                         VisualFeatureTypes.Objects,
-                        VisualFeatureTypes.Description
+                        VisualFeatureTypes.Description,
                     },
                     cancellationToken: Config.Cts.Token
                 ).ConfigureAwait(false);

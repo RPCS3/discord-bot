@@ -10,12 +10,12 @@ using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using CompatBot.ThumbScrapper;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -110,8 +110,7 @@ namespace CompatBot
                 var backgroundTasks = Task.WhenAll(
                     AmdDriverVersionProvider.RefreshAsync(),
 #if !DEBUG
-                    new PsnScraper().RunAsync(Config.Cts.Token),
-                    GameTdbScraper.RunAsync(Config.Cts.Token),
+                    ThumbScrapper.GameTdbScraper.RunAsync(Config.Cts.Token),
 #endif
                     StatsStorage.BackgroundSaveAsync(),
                     CompatList.ImportCompatListAsync()

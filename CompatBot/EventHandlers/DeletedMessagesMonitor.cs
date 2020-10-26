@@ -74,7 +74,9 @@ namespace CompatBot.EventHandlers
 			{
 				if (attachmentContent?.Count > 0)
 					foreach (var f in attachmentContent.Values)
+#pragma warning disable VSTHRD103
 						f.Dispose();
+#pragma warning restore VSTHRD103
 			}
 		}
 	}

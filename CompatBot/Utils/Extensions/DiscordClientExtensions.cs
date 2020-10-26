@@ -134,7 +134,9 @@ namespace CompatBot.Utils
             {
                 if (conents?.Count > 0)
                     foreach (var f in conents.Values)
+#pragma warning disable VSTHRD103
                         f.Dispose();
+#pragma warning restore VSTHRD103
             }
         }
 
