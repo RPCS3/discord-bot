@@ -471,33 +471,6 @@ namespace CompatBot.Commands
             await ch.SendMessageAsync($"{ctx.User.Mention} congratulations, you're the meme").ConfigureAwait(false);
         }
 
-        [Command("download"), Cooldown(1, 10, CooldownBucketType.Channel)]
-        [Description("Find games to download")]
-        public Task Download(CommandContext ctx, [RemainingText] string game)
-        {
-            var invariantTitle = game?.ToLowerInvariant() ?? "";
-            if (invariantTitle == "rpcs3")
-                return CompatList.UpdatesCheck.CheckForRpcs3Updates(ctx.Client, ctx.Channel);
-
-            if (invariantTitle == "ps3updat.dat" || invariantTitle == "firmware" || invariantTitle == "fw")
-                return Psn.Check.GetFirmwareAsync(ctx);
-
-            if (invariantTitle.StartsWith("update")
-                && ProductCodeLookup.ProductCode.Match(invariantTitle) is Match m
-                && m.Success)
-            {
-                var checkUpdateCmd = ctx.CommandsNext.FindCommand("psn check update", out _);
-                var checkUpdateCtx = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, checkUpdateCmd, m.Groups[0].Value);
-                return checkUpdateCmd.ExecuteAsync(checkUpdateCtx);
-            }
-
-            if (invariantTitle == "unnamed")
-                game = "Persona 5";
-            else if (invariantTitle == "KOT")
-                game = invariantTitle;
-            return Psn.SearchForGame(ctx, game, 3);
-        }
-
         [Command("firmware"), Aliases("fw"), Cooldown(1, 10, CooldownBucketType.Channel)]
         [Description("Checks for latest PS3 firmware version")]
         public Task Firmware(CommandContext ctx) => Psn.Check.GetFirmwareAsync(ctx);

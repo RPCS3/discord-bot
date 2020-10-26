@@ -110,7 +110,6 @@ namespace CompatBot
                 var backgroundTasks = Task.WhenAll(
                     AmdDriverVersionProvider.RefreshAsync(),
 #if !DEBUG
-                    new PsnScraper().RunAsync(Config.Cts.Token),
                     GameTdbScraper.RunAsync(Config.Cts.Token),
 #endif
                     StatsStorage.BackgroundSaveAsync(),
