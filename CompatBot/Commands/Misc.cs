@@ -518,6 +518,7 @@ namespace CompatBot.Commands
             var ln = 3;
             foreach (var c in StringUtils.SpaceCharacters)
                 result.AppendLine($"`{ln++,2}. {(int)c:x4}:{checkMark,width}`");
+#pragma warning disable 8321
             static void addRandomStuff(DiscordEmbedBuilder emb)
             {
                 var txt = "😾 lasjdf wqoieyr osdf `Vreoh Sdab` wohe `270`\n" +
@@ -527,6 +528,7 @@ namespace CompatBot.Commands
 
                 emb.AddField("Random section", txt, false);
             }
+#pragma warning restore 8321
             var embed = new DiscordEmbedBuilder()
                 .WithTitle("Whitespace embed test")
                 .WithDescription("In a perfect world all these lines would look the same, with perfectly formed columns");
