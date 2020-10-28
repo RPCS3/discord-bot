@@ -644,10 +644,8 @@ namespace CompatBot.Utils.ResultFormatters
                 && !multiItems["broken_filename"].Any())
                 return (false, false, longestPath);
 
-            var missingDirs = items["broken_directory"]?.Split(Environment.NewLine).Distinct().ToList() ??
-                              new List<string>(0);
-            var missingFiles = items["broken_filename"]?.Split(Environment.NewLine).Distinct().ToList() ??
-                               new List<string>(0);
+            var missingDirs = multiItems["broken_directory"];
+            var missingFiles = multiItems["broken_filename"];
 
             var broken = missingFiles.Where(knownFiles.Contains).ToList();
             if (broken.Count > 0)

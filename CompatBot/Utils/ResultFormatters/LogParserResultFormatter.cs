@@ -441,6 +441,9 @@ namespace CompatBot.Utils.ResultFormatters
             if (multiItems["fatal_error"] is UniqueList<string> fatalErrors && fatalErrors.Any())
                 multiItems["fatal_error"] = new UniqueList<string>(fatalErrors.Select(str => str.Contains("'tex00'") ? str.Split('\n', 2)[0] : str), fatalErrors.Comparer);
 
+            multiItems["broken_filename"].AddRange(multiItems["broken_filename_or_dir"]);
+            multiItems["broken_directory"].AddRange(multiItems["broken_filename_or_dir"]);
+            
             foreach (var key in items.AllKeys)
             {
                 var value = items[key];
