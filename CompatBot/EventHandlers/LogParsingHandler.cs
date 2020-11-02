@@ -51,26 +51,52 @@ namespace CompatBot.EventHandlers
         private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false);
         private static event OnLog OnNewLog;
 
-        static LogParsingHandler()
-        {
-            OnNewLog += EnqueueLogProcessing;
-        }
+        static LogParsingHandler() => OnNewLog += EnqueueLogProcessing;
 
-        public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
             var message = args.Message;
             if (message.Author.IsBotSafeCheck())
-                return Task.CompletedTask;
+                return;
 
             if (!string.IsNullOrEmpty(message.Content)
                 && (message.Content.StartsWith(Config.CommandPrefix)
                     || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
-                return Task.CompletedTask;
+                return;
 
-            var checkExternalLinks = "help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
-                                     || LimitedToSpamChannel.IsSpamChannel(args.Channel);
+            var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
+            var isHelpChannel = "help".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase)
+                                || "donors".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrEmpty(args.Message.Content)
+                && !isSpamChannel)
+            {
+                var previousMessage = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id).ConfigureAwait(false);
+                var threshold = DateTime.UtcNow.AddMinutes(10);
+                if (!previousMessage.Any(m => m.Author == args.Message.Author
+                                              && m.Timestamp.UtcDateTime > threshold
+                                              && !string.IsNullOrEmpty(m.Content)))
+                {
+                    var botSpamChannel = await c.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                    if (isHelpChannel)
+                        await args.Channel.SendMessageAsync(
+                            $"{args.Author.Mention} please describe the issue if you require help, " +
+                            $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
+                        ).ConfigureAwait(false);
+                    else
+                    {
+                        var helpChannel = args.Guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "help".Equals(ch.Name));
+                        if (helpChannel != null)
+                            await args.Channel.SendMessageAsync(
+                                $"{args.Author.Mention} if you require help, please ask in {helpChannel.Mention}, and describe your issue first, " +
+                                $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
+                            ).ConfigureAwait(false);
+                    }
+                    return;
+                }
+            }
+            var checkExternalLinks = isHelpChannel
+                                     || isSpamChannel;
             OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
-            return Task.CompletedTask;
         }
 
         public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false)
@@ -78,6 +104,7 @@ namespace CompatBot.EventHandlers
             var start = DateTimeOffset.UtcNow;
             try
             {
+                // ReSharper disable once MethodHasAsyncOverload
                 if (!QueueLimiter.Wait(0))
                 {
                     Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, TimeSpan.Zero, HttpStatusCode.TooManyRequests.ToString(), false);
