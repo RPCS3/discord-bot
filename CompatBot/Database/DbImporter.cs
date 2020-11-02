@@ -38,11 +38,6 @@ namespace CompatBot.Database
                     return false;
                 }
             }
-            if (dbContext is BotDb botDb2 && !await botDb2.Moderator.AnyAsync(m => m.DiscordId == Config.BotAdminId, cancellationToken).ConfigureAwait(false))
-            {
-                await botDb2.Moderator.AddAsync(new Moderator {DiscordId = Config.BotAdminId, Sudoer = true}, cancellationToken).ConfigureAwait(false);
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
             Config.Log.Info("Database is ready.");
             return true;
         }
