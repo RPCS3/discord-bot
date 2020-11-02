@@ -34,7 +34,7 @@ namespace CompatBot.Commands
             [Description("Removes a moderator")]
             public async Task Remove(CommandContext ctx, [Description("Discord user to remove from the bot mod list")] DiscordMember user)
             {
-                if (user.Id == Config.BotAdminId)
+                if (ctx.Client.CurrentApplication.Owners.Any(u => u.Id == user.Id))
                 {
                     var dm = await user.CreateDmChannelAsync().ConfigureAwait(false);
                     await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your mod role ¯\\_(ツ)_/¯").ConfigureAwait(false);
@@ -78,7 +78,7 @@ namespace CompatBot.Commands
             [Description("Makes a sudoer a regular moderator")]
             public async Task Unsudo(CommandContext ctx, [Description("Discord user on the moderator list to strip the sudoer rights from")] DiscordMember sudoer)
             {
-                if (sudoer.Id == Config.BotAdminId)
+                if (ctx.Client.CurrentApplication.Owners.Any(u => u.Id == sudoer.Id))
                 {
                     var dm = await sudoer.CreateDmChannelAsync().ConfigureAwait(false);
                     await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your sudo permissions ¯\\_(ツ)_/¯").ConfigureAwait(false);

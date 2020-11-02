@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands;
@@ -16,6 +17,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -171,11 +173,22 @@ namespace CompatBot
 
                 client.Ready += async (c, _) =>
                                 {
-                                    var admin = await c.GetUserAsync(Config.BotAdminId).ConfigureAwait(false);
                                     Config.Log.Info("Bot is ready to serve!");
                                     Config.Log.Info("");
                                     Config.Log.Info($"Bot user id : {c.CurrentUser.Id} ({c.CurrentUser.Username})");
-                                    Config.Log.Info($"Bot admin id : {Config.BotAdminId} ({admin.Username ?? "???"}#{admin.Discriminator ?? "????"})");
+                                    var owners = c.CurrentApplication.Owners.ToList();
+                                    var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
+                                    if (owners.Count > 1)
+                                        msg.AppendLine();
+                                    using var db = new BotDb();
+                                    foreach (var owner in owners)
+                                    {
+                                        msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
+                                        if (!await db.Moderator.AnyAsync(m => m.DiscordId == owner.Id, Config.Cts.Token).ConfigureAwait(false))
+                                            await db.Moderator.AddAsync(new Moderator {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
+                                    }
+                                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                                    Config.Log.Info(msg.ToString().TrimEnd);
                                     Config.Log.Info("");
                                 };
                 client.GuildAvailable += async (c, gaArgs) =>

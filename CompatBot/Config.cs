@@ -53,7 +53,6 @@ namespace CompatBot
         public static ulong BotLogId => config.GetValue(nameof(BotLogId), 436972161572536329ul);                      // #bot-log; a private channel for admin mod queue
         public static ulong BotRulesChannelId => config.GetValue(nameof(BotRulesChannelId), 311894275015049216ul);    // #rules-info; used to give links to rules
         public static ulong ThumbnailSpamId => config.GetValue(nameof(ThumbnailSpamId), 475678410098606100ul);        // #bot-data; used for whatever bot needs to keep (cover embeds, etc)
-        public static ulong BotAdminId => config.GetValue(nameof(BotAdminId), 267367850706993152ul);                  // discord user id for a bot admin
         public static ulong DeletedMessagesLogChannelId => config.GetValue(nameof(DeletedMessagesLogChannelId), 0ul);
 
         public static TimeSpan ModerationBacklogThresholdInHours => TimeSpan.FromHours(config.GetValue(nameof(ModerationBacklogThresholdInHours), 1));
