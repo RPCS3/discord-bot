@@ -187,6 +187,7 @@ namespace CompatBot.Commands
             public Task Clear(CommandContext ctx)
             {
                 lastUpdateInfo = null;
+                lastFullBuildNumber = null;
                 return CheckForRpcs3Updates(ctx.Client, null);
             }
 
@@ -195,27 +196,8 @@ namespace CompatBot.Commands
             public Task Set(CommandContext ctx, string lastUpdatePr)
             {
                 lastUpdateInfo = lastUpdatePr;
+                lastFullBuildNumber = null;
                 return CheckForRpcs3Updates(ctx.Client, null);
-            }
-
-            [Command("restore"), RequiresBotModRole]
-            [Description("Regenerates update announcement for specified bot message and build hash")]
-            public async Task Restore(CommandContext ctx, string botMsgLink, string updateCommitHash)
-            {
-                var botMsg = await ctx.GetMessageAsync(botMsgLink).ConfigureAwait(false);
-                if (botMsg?.Author == null || !botMsg.Author.IsCurrent || !string.IsNullOrEmpty(botMsg.Content) || botMsg.Embeds.Any())
-                {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid source message link").ConfigureAwait(false);
-                    return;
-                }
-
-                if (!await CheckForRpcs3Updates(ctx.Client, null, updateCommitHash, botMsg).ConfigureAwait(false))
-                {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to fetch update info").ConfigureAwait(false);
-                    return;
-                }
-
-                await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             }
 
             public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null, DiscordMessage emptyBotMsg = null)
