@@ -71,7 +71,7 @@ namespace CompatBot.EventHandlers
                 && !isSpamChannel)
             {
                 var previousMessage = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id).ConfigureAwait(false);
-                var threshold = DateTime.UtcNow.AddMinutes(10);
+                var threshold = DateTime.UtcNow.AddMinutes(-10);
                 if (!previousMessage.Any(m => m.Author == args.Message.Author
                                               && m.Timestamp.UtcDateTime > threshold
                                               && !string.IsNullOrEmpty(m.Content)))
