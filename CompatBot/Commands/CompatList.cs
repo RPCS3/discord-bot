@@ -37,14 +37,17 @@ namespace CompatBot.Commands
         private static readonly Client client = new Client();
         private static readonly GithubClient.Client githubClient = new GithubClient.Client();
         private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
-        private static string lastUpdateInfo = null;
+        private static string lastUpdateInfo = null, lastFullBuildNumber = null;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
+        private const string Rpcs3UpdateBuildKey = "Rpcs3UpdateBuild";
         private static UpdateInfo CachedUpdateInfo = null;
+        private static readonly Regex UpdateVersionRegex = new Regex(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
         static CompatList()
         {
             using var db = new BotDb();
             lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+            lastFullBuildNumber = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateBuildKey)?.Value;
             //lastUpdateInfo = "8022";
             if (lastUpdateInfo is string strPr
                 && int.TryParse(strPr, out var pr))
@@ -261,9 +264,24 @@ namespace CompatBot.Commands
                 }
 
                 var latestUpdatePr = info?.LatestBuild?.Pr?.ToString();
+                var match = (
+                    from field in embed.Fields
+                    let m = UpdateVersionRegex.Match(field.Value)
+                    where m.Success
+                    select m
+                ).FirstOrDefault();
+                var latestUpdateBuild = match?.Groups["build"].Value;
+
                 if (string.IsNullOrEmpty(latestUpdatePr)
                     || lastUpdateInfo == latestUpdatePr
                     || !await updateCheck.WaitAsync(0).ConfigureAwait(false))
+                    return false;
+
+                if (!string.IsNullOrEmpty(lastFullBuildNumber)
+                    && !string.IsNullOrEmpty(latestUpdateBuild)
+                    && int.TryParse(lastFullBuildNumber, out var lastSaveBuild)
+                    && int.TryParse(latestUpdateBuild, out var latestBuild)
+                    && latestBuild <= lastSaveBuild)
                     return false;
 
                 try
@@ -286,12 +304,18 @@ namespace CompatBot.Commands
 
                     await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                     lastUpdateInfo = latestUpdatePr;
+                    lastFullBuildNumber = latestUpdateBuild;
                     using var db = new BotDb();
                     var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
                     if (currentState == null)
                         db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr});
                     else
                         currentState.Value = latestUpdatePr;
+                    var savedLastBuild = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateBuildKey).ConfigureAwait(false);
+                    if (savedLastBuild == null)
+                        db.BotState.Add(new BotState {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild});
+                    else
+                        savedLastBuild.Value = latestUpdateBuild;
                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                     NewBuildsMonitor.Reset();
                     return true;

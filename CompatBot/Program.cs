@@ -178,15 +178,17 @@ namespace CompatBot
                                     Config.Log.Info($"Bot user id : {c.CurrentUser.Id} ({c.CurrentUser.Username})");
                                     var owners = c.CurrentApplication.Owners.ToList();
                                     var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
+                                    if (owners.Count > 1)
+                                        msg.AppendLine();
                                     using var db = new BotDb();
                                     foreach (var owner in owners)
                                     {
-                                        msg.AppendLine().Append($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
+                                        msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
                                         if (!await db.Moderator.AnyAsync(m => m.DiscordId == owner.Id, Config.Cts.Token).ConfigureAwait(false))
                                             await db.Moderator.AddAsync(new Moderator {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
                                     }
                                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-                                    Config.Log.Info(msg);
+                                    Config.Log.Info(msg.ToString().TrimEnd);
                                     Config.Log.Info("");
                                 };
                 client.GuildAvailable += async (c, gaArgs) =>
