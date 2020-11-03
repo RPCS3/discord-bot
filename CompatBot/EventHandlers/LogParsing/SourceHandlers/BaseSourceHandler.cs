@@ -10,7 +10,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     internal abstract class BaseSourceHandler: ISourceHandler
     {
         protected const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
-        internal static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(1024, 64);
+        protected const int SnoopBufferSize = 4096;
+        internal static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(SnoopBufferSize, 64);
 
         public abstract Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
     }

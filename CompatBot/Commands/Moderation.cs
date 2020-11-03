@@ -52,7 +52,7 @@ namespace CompatBot.Commands
                 if (msg == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                 else
-                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, msg, ctx.Member, true);
+                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, msg, ctx.Member, true, true);
             }
             catch
             {
@@ -69,7 +69,7 @@ namespace CompatBot.Commands
                 if (msg == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                 else
-                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, msg, ctx.Member, true);
+                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, msg, ctx.Member, true, true);
             }
             catch (Exception e)
             {

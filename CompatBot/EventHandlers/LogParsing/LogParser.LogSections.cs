@@ -316,6 +316,7 @@ namespace CompatBot.EventHandlers.LogParsing
             state.WipMultiValueCollection = new NameUniqueObjectCollection<string>();
             Copy(
                 "build_and_specs", "fw_version_installed",
+                "first_unicode_dot",
                 "vulkan_gpu", "d3d_gpu",
                 "driver_version", "driver_manuf",
                 "driver_manuf_new", "driver_version_new",

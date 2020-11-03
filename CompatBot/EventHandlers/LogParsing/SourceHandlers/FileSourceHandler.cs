@@ -37,7 +37,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         public static async Task<ISource> DetectArchiveHandlerAsync(string path, ICollection<IArchiveHandler> handlers)
         {
-            var buf = new byte[1024];
+            var buf = new byte[4096];
             using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
             var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
             foreach (var handler in handlers)

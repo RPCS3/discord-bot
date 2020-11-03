@@ -47,13 +47,13 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         var fileMeta = await fileInfoRequest.ExecuteAsync(Config.Cts.Token).ConfigureAwait(false);
                         if (fileMeta.Kind == "drive#file")
                         {
-                            var buf = bufferPool.Rent(1024);
+                            var buf = bufferPool.Rent(SnoopBufferSize);
                             try
                             {
                                 int read;
                                 using (var stream = new MemoryStream(buf, true))
                                 {
-                                    var limit = Math.Min(1024, (int)fileMeta.Size) - 1;
+                                    var limit = Math.Min(SnoopBufferSize, (int)fileMeta.Size) - 1;
                                     var progress = await fileInfoRequest.DownloadRangeAsync(stream, new RangeHeaderValue(0, limit), Config.Cts.Token).ConfigureAwait(false);
                                     if (progress.Status != DownloadStatus.Completed)
                                         continue;

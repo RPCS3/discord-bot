@@ -20,7 +20,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 try
                 {
                     using var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false);
-                    var buf = bufferPool.Rent(1024);
+                    var buf = bufferPool.Rent(SnoopBufferSize);
                     try
                     {
                         var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
