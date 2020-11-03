@@ -48,7 +48,7 @@ namespace CompatBot.EventHandlers
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
-        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false);
+        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false, bool force = false);
         private static event OnLog OnNewLog;
 
         static LogParsingHandler() => OnNewLog += EnqueueLogProcessing;
@@ -72,7 +72,7 @@ namespace CompatBot.EventHandlers
             return Task.CompletedTask;
         }
 
-        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false)
+        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false, bool force = false)
         {
             var start = DateTimeOffset.UtcNow;
             try
@@ -98,7 +98,7 @@ namespace CompatBot.EventHandlers
                     var isHelpChannel = "help".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
                                         || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase);
                     
-                    if (source != null && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
+                    if (!force && source != null && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
                     {
                         var previousMessage = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
                         var threshold = DateTime.UtcNow.AddMinutes(-10);
