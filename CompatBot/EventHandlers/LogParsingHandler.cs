@@ -72,6 +72,7 @@ namespace CompatBot.EventHandlers
             return Task.CompletedTask;
         }
 
+        // ReSharper disable once VSTHRD100
         public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false, bool force = false)
         {
             var start = DateTimeOffset.UtcNow;
