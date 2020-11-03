@@ -167,10 +167,12 @@ namespace CompatBot
 
             public static readonly IReadOnlyCollection<ulong> OcrChannels = new HashSet<ulong>(Channels)
             {
-                272035812277878785,
-                277227681836302338,
-                564846659109126244,
-                534749301797158914,
+                272035812277878785, // #rpcs3
+                277227681836302338, // #help
+                272875751773306881, // #media
+                // test server
+                564846659109126244, // #media
+                534749301797158914, // private-spam
             };
 
             public static readonly IReadOnlyCollection<string> RoleWhiteList = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
