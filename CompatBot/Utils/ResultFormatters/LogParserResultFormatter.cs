@@ -690,7 +690,7 @@ namespace CompatBot.Utils.ResultFormatters
                     18363 => "10 1909",
                     int v when v < 19041 => ("10 20H1 Build " + v),
                     19041 => "10 2004",
-                    19042 => "10 2009",
+                    19042 => "10 20H2",
                     int v when v < 19536 => ("10 Beta Build " + v),
                     _ => ("10 21H1 Build " + windowsVersion.Build)
                 },
