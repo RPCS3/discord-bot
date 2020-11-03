@@ -40,7 +40,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         var node = await client.GetNodeFromLinkAsync(uri).ConfigureAwait(false);
                         if (node.Type == NodeType.File)
                         {
-                            var buf = bufferPool.Rent(1024);
+                            var buf = bufferPool.Rent(SnoopBufferSize);
                             try
                             {
                                 int read;

@@ -47,7 +47,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                             uri = new Uri(itemMeta.ContentDownloadUrl);
 
                             using var stream = await httpClient.GetStreamAsync(uri).ConfigureAwait(false);
-                            var buf = bufferPool.Rent(1024);
+                            var buf = bufferPool.Rent(SnoopBufferSize);
                             try
                             {
                                 var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
