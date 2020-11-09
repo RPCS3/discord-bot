@@ -99,34 +99,6 @@ namespace CompatBot.EventHandlers
                     var isHelpChannel = "help".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
                                         || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase);
                     
-                    if (!force && source != null && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
-                    {
-                        var previousMessage = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
-                        var threshold = DateTime.UtcNow.AddMinutes(-10);
-                        if (!previousMessage.Any(m => m.Author == message.Author
-                                                      && m.Timestamp.UtcDateTime > threshold
-                                                      && !string.IsNullOrEmpty(m.Content)))
-                        {
-                            var botSpamChannel = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-                            if (isHelpChannel)
-                                await channel.SendMessageAsync(
-                                    $"{message.Author.Mention} please describe the issue if you require help, " +
-                                    $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
-                                ).ConfigureAwait(false);
-                            else
-                            {
-                                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
-                                var helpChannel = channel.Guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "help".Equals(ch.Name));
-                                if (helpChannel != null)
-                                    await channel.SendMessageAsync(
-                                        $"{message.Author.Mention} if you require help, please ask in {helpChannel.Mention}, and describe your issue first, " +
-                                        $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
-                                    ).ConfigureAwait(false);
-                            }
-                            return;
-                        }
-                    }
-                    
                     if (source != null)
                     {
                         Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
@@ -227,6 +199,37 @@ namespace CompatBot.EventHandlers
                                         var ignoreFlags = FilterAction.IssueWarning | FilterAction.SendMessage | FilterAction.ShowExplain;
                                         await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext).ConfigureAwait(false);
                                     }
+
+                                    if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
+                                    {
+                                        var previousMessage = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
+                                        var threshold = DateTime.UtcNow.AddMinutes(-10);
+                                        if (!previousMessage.Any(m => m.Author == message.Author
+                                                                      && m.Timestamp.UtcDateTime > threshold
+                                                                      && !string.IsNullOrEmpty(m.Content)))
+                                        {
+                                            var botSpamChannel = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                                            if (isHelpChannel)
+                                                await botMsg.UpdateOrCreateMessageAsync(
+                                                    channel,
+                                                    $"{message.Author.Mention} please describe the issue if you require help, " +
+                                                    $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
+                                                ).ConfigureAwait(false);
+                                            else
+                                            {
+                                                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
+                                                var helpChannel = channel.Guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "help".Equals(ch.Name));
+                                                if (helpChannel != null)
+                                                    await botMsg.UpdateOrCreateMessageAsync(
+                                                        channel,
+                                                        $"{message.Author.Mention} if you require help, please ask in {helpChannel.Mention}, and describe your issue first, " +
+                                                        $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
+                                                    ).ConfigureAwait(false);
+                                            }
+                                            return;
+                                        }
+                                    }
+
                                     botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                         requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
                                         embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
