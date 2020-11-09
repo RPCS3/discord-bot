@@ -165,19 +165,6 @@ namespace CompatBot.Database.Providers
                 }
             }
 
-            if (trigger.Actions.HasFlag(FilterAction.IssueWarning) && !ignoreFlags.HasFlag(FilterAction.IssueWarning))
-            {
-                try
-                {
-                    await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, warningReason ?? "Mention of piracy", message.Content.Sanitize()).ConfigureAwait(false);
-                    completedActions.Add(FilterAction.IssueWarning);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, $"Couldn't issue warning in #{message.Channel.Name}");
-                }
-            }
-
             if (trigger.Actions.HasFlag(FilterAction.SendMessage) && !ignoreFlags.HasFlag(FilterAction.SendMessage))
             {
                 try
@@ -200,6 +187,19 @@ namespace CompatBot.Database.Providers
                 catch (Exception e)
                 {
                     Config.Log.Warn(e, $"Failed to send message in #{message.Channel.Name}");
+                }
+            }
+
+            if (trigger.Actions.HasFlag(FilterAction.IssueWarning) && !ignoreFlags.HasFlag(FilterAction.IssueWarning))
+            {
+                try
+                {
+                    await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, warningReason ?? "Mention of piracy", message.Content.Sanitize()).ConfigureAwait(false);
+                    completedActions.Add(FilterAction.IssueWarning);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Couldn't issue warning in #{message.Channel.Name}");
                 }
             }
 
