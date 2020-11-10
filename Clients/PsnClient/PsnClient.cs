@@ -258,7 +258,7 @@ namespace PsnClient
             catch (Exception e)
             {
                 ConsoleLogger.PrintError(e, response);
-                throw e;
+                throw;
             }
         }
 
