@@ -26,12 +26,12 @@ namespace CompatBot.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //configure indices
-            modelBuilder.Entity<State>().HasIndex(s => s.Locale).IsUnique().HasName("state_locale");
-            modelBuilder.Entity<State>().HasIndex(s => s.Timestamp).HasName("state_timestamp");
-            modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ProductCode).IsUnique().HasName("thumbnail_product_code");
-            modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ContentId).IsUnique().HasName("thumbnail_content_id");
-            modelBuilder.Entity<Thumbnail>().HasIndex(m => m.Timestamp).HasName("thumbnail_timestamp");
-            modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Function).HasName("syscall_info_function");
+            modelBuilder.Entity<State>().HasIndex(s => s.Locale).IsUnique().HasDatabaseName("state_locale");
+            modelBuilder.Entity<State>().HasIndex(s => s.Timestamp).HasDatabaseName("state_timestamp");
+            modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ProductCode).IsUnique().HasDatabaseName("thumbnail_product_code");
+            modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ContentId).IsUnique().HasDatabaseName("thumbnail_content_id");
+            modelBuilder.Entity<Thumbnail>().HasIndex(m => m.Timestamp).HasDatabaseName("thumbnail_timestamp");
+            modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Function).HasDatabaseName("syscall_info_function");
             modelBuilder.Entity<SyscallToProductMap>().HasKey(m => new {m.ProductId, m.SyscallInfoId});
 
             //configure default policy of Id being the primary key

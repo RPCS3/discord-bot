@@ -32,20 +32,20 @@ namespace CompatBot.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //configure indices
-            modelBuilder.Entity<BotState>().HasIndex(m => m.Key).IsUnique().HasName("bot_state_key");
-            modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasName("moderator_discord_id");
+            modelBuilder.Entity<BotState>().HasIndex(m => m.Key).IsUnique().HasDatabaseName("bot_state_key");
+            modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasDatabaseName("moderator_discord_id");
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Context).HasDefaultValue(FilterContext.Chat | FilterContext.Log);
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Actions).HasDefaultValue(FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage);
-            modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).HasName("piracystring_string");
-            modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasName("warning_discord_id");
-            modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasName("explanation_keyword");
-            modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasName("disabled_command_command");
-            modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasName("whitelisted_invite_guild_id");
-            modelBuilder.Entity<EventSchedule>().HasIndex(e => new {e.Year, e.EventName}).HasName("event_schedule_year_event_name");
-            modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasName("stats_category_key");
-            modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasName("kot_user_id");
-            modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasName("doggo_user_id");
-            modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasName("forced_nickname_guild_id_user_id");
+            modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).HasDatabaseName("piracystring_string");
+            modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasDatabaseName("warning_discord_id");
+            modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasDatabaseName("explanation_keyword");
+            modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasDatabaseName("disabled_command_command");
+            modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasDatabaseName("whitelisted_invite_guild_id");
+            modelBuilder.Entity<EventSchedule>().HasIndex(e => new {e.Year, e.EventName}).HasDatabaseName("event_schedule_year_event_name");
+            modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasDatabaseName("stats_category_key");
+            modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasDatabaseName("kot_user_id");
+            modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasDatabaseName("doggo_user_id");
+            modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasDatabaseName("forced_nickname_guild_id_user_id");
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
