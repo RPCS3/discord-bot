@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Net.Http;
-using System.Net.Http.Formatting;
+using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
-using Newtonsoft.Json;
+using System.Text.Json;
 using OneDriveClient.POCOs;
-using JsonContractResolver = CompatApiClient.JsonContractResolver;
 
 namespace OneDriveClient
 {
@@ -16,21 +15,21 @@ namespace OneDriveClient
     {
         private readonly HttpClient client;
         private readonly HttpClient noRedirectsClient;
-        private readonly MediaTypeFormatterCollection formatters;
+        private readonly JsonSerializerOptions jsonOptions;
 
         public Client()
         {
             client = HttpClientFactory.Create(new CompressionMessageHandler());
             noRedirectsClient = HttpClientFactory.Create(new HttpClientHandler {AllowAutoRedirect = false});
-            var settings = new JsonSerializerSettings
+            jsonOptions = new JsonSerializerOptions
             {
-                ContractResolver = new JsonContractResolver(NamingStyles.CamelCase),
-                NullValueHandling = NullValueHandling.Ignore
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                IgnoreNullValues = true,
+                IncludeFields = true,
             };
-            formatters = new MediaTypeFormatterCollection(new[] { new JsonMediaTypeFormatter { SerializerSettings = settings } });
         }
 
-        private async Task<Uri> ResolveShortLink(Uri shortLink, CancellationToken cancellationToken)
+        private async Task<Uri?> ResolveShortLink(Uri shortLink, CancellationToken cancellationToken)
         {
             try
             {
@@ -48,11 +47,11 @@ namespace OneDriveClient
 
         // https://1drv.ms/u/s!AruI8iDXabVJ1ShAMIqxgU2tiHZ3 redirects to https://onedrive.live.com/redir?resid=49B569D720F288BB!10920&authkey=!AEAwirGBTa2Idnc
         // https://onedrive.live.com/?authkey=!AEAwirGBTa2Idnc&cid=49B569D720F288BB&id=49B569D720F288BB!10920&parId=49B569D720F288BB!4371&o=OneUp
-        public async Task<DriveItemMeta> ResolveContentLinkAsync(Uri shareLink, CancellationToken cancellationToken)
+        public async Task<DriveItemMeta?> ResolveContentLinkAsync(Uri? shareLink, CancellationToken cancellationToken)
         {
             if (shareLink?.Host == "1drv.ms")
                 shareLink = await ResolveShortLink(shareLink, cancellationToken).ConfigureAwait(false);
-            if (shareLink == null)
+            if (shareLink is null)
                 return null;
 
             var queryParams = shareLink.ParseQueryString();
@@ -77,19 +76,18 @@ namespace OneDriveClient
             try
             {
                 var resourceMetaUri = new Uri($"https://api.onedrive.com/v1.0/drives/{itemId}/items/{resourceId}")
-                    .SetQueryParameters(new (string name, string value)[]
-                    {
+                    .SetQueryParameters(
                         ("authkey", authKey),
-                        ("select", "id,@content.downloadUrl,name,size"),
-                    });
+                        ("select", "id,@content.downloadUrl,name,size")
+                    );
                 using var message = new HttpRequestMessage(HttpMethod.Get, resourceMetaUri);
                 message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    var meta = await response.Content.ReadAsAsync<DriveItemMeta>(formatters, cancellationToken).ConfigureAwait(false);
-                    if (meta.ContentDownloadUrl == null)
+                    var meta = await response.Content.ReadFromJsonAsync<DriveItemMeta>(jsonOptions, cancellationToken).ConfigureAwait(false);
+                    if (meta?.ContentDownloadUrl is null)
                         throw new InvalidOperationException("Failed to properly deserialize response body");
 
                     return meta;
