@@ -319,7 +319,7 @@ namespace CompatBot.EventHandlers
                     if (!(pre is OperationCanceledException))
                         Config.Log.Error(pre);
                     if (result == null)
-                        throw pre;
+                        throw;
                 }
 
                 result.TotalBytes = source.LogFileSize;

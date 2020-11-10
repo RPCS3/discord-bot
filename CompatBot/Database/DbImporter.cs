@@ -100,7 +100,7 @@ namespace CompatBot.Database
             {
                 //tx.Rollback();
                 tx.Commit();
-                throw e;
+                throw;
             }
         }
 
@@ -145,7 +145,7 @@ namespace CompatBot.Database
                 catch (Exception e)
                 {
                     Config.Log.Error(e, $"Failed to move local {dbName} to {dbPath}");
-                    throw e;
+                    throw;
                 }
             return dbPath;
         }

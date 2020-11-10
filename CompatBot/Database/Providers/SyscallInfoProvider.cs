@@ -86,7 +86,7 @@ namespace CompatBot.Database.Providers
                 catch (Exception e)
                 {
                     Config.Log.Warn(e, "Failed to build fixed syscall mappings");
-                    throw e;
+                    throw;
                 }
                 await SaveAsync(syscallStats).ConfigureAwait(false);
                 if (await Limiter.WaitAsync(1000, Config.Cts.Token))
@@ -99,7 +99,7 @@ namespace CompatBot.Database.Providers
                     catch (Exception e)
                     {
                         Config.Log.Warn(e, "Failed to remove broken syscall mappings");
-                        throw e;
+                        throw;
                     }
                     finally
                     {
