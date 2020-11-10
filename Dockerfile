@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS base
+FROM mcr.microsoft.com/dotnet/core/sdk:5.0 AS base
 # Native libgdiplus dependencies
 RUN apt-get update
 RUN apt-get install -y --allow-unauthenticated libc6-dev libgdiplus libx11-dev fonts-roboto
@@ -15,7 +15,7 @@ RUN dotnet build "CompatBot/CompatBot.csproj" -c Release
 ENV RUNNING_IN_DOCKER true
 # Limit server GC to 512 MB heap max
 ENV COMPlus_gcServer 1
-ENV COMPlus_GCHeapHardLimit 0x20000000
+# ENV COMPlus_GCHeapHardLimit 0x20000000
 WORKDIR /src/CompatBot
 RUN dotnet run -c Release --dry-run
 ENTRYPOINT ["dotnet", "run", "-c", "Release", "CompatBot.csproj"]
