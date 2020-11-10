@@ -20,7 +20,13 @@ namespace IrdLibraryClient.IrdFormat
 
             decompressedStream.Seek(0, SeekOrigin.Begin);
             var reader = new CDReader(decompressedStream, true, true);
-            return reader.GetFiles(reader.Root.FullName, "*.*", SearchOption.AllDirectories).Distinct().Select(n => n.TrimStart('\\').Replace('\\', '/').TrimEnd('.')).ToList();
+            return reader.GetFiles(reader.Root.FullName, "*.*", SearchOption.AllDirectories)
+                .Distinct()
+                .Select(n => n
+                    .TrimStart('\\')
+                    .Replace('\\', '/')
+                    .TrimEnd('.')
+                ).ToList();
         }
     }
 }

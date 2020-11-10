@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Formatting;
+using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,8 +14,6 @@ using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using IrdLibraryClient.IrdFormat;
 using IrdLibraryClient.POCOs;
-using Newtonsoft.Json;
-using JsonContractResolver = CompatApiClient.JsonContractResolver;
 
 namespace IrdLibraryClient
 {
@@ -24,70 +22,71 @@ namespace IrdLibraryClient
         public static readonly string BaseUrl = "http://jonnysp.bplaced.net";
 
         private readonly HttpClient client;
-        private readonly MediaTypeFormatterCollection underscoreFormatters;
+        private readonly JsonSerializerOptions jsonOptions;
         private static readonly Regex IrdFilename = new Regex(@"ird/(?<filename>\w{4}\d{5}-[A-F0-9]+\.ird)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
 
         public IrdClient()
         {
             client = HttpClientFactory.Create(new CompressionMessageHandler());
-            var underscoreSettings = new JsonSerializerSettings
+            jsonOptions = new JsonSerializerOptions
             {
-                ContractResolver = new JsonContractResolver(NamingStyles.Underscore),
-                NullValueHandling = NullValueHandling.Ignore
+                PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
+                IgnoreNullValues = true,
+                IncludeFields = true,
             };
+            /*
             var mediaTypeFormatter = new JsonMediaTypeFormatter { SerializerSettings = underscoreSettings };
             mediaTypeFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/html"));
-            underscoreFormatters = new MediaTypeFormatterCollection(new[] { mediaTypeFormatter });
+        */
         }
 
         public static string GetDownloadLink(string irdFilename) => $"{BaseUrl}/ird/{irdFilename}";
         public static string GetInfoLink(string irdFilename) => $"{BaseUrl}/info.php?file=ird/{irdFilename}";
 
-        public async Task<SearchResult> SearchAsync(string query, CancellationToken cancellationToken)
+        public async Task<SearchResult?> SearchAsync(string query, CancellationToken cancellationToken)
         {
             try
             {
                 var requestUri = new Uri(BaseUrl + "/data.php")
-                    .SetQueryParameters(new Dictionary<string, string>
-                    {
-                        ["draw"] = query.Length.ToString(),
+                    .SetQueryParameters(
+                        ("draw", query.Length.ToString()),
 
-                        ["columns[0][data]"] = "id",
-                        ["columns[0][name]"] = "",
-                        ["columns[0][searchable]"] = "true",
-                        ["columns[0][orderable]"] = "true",
-                        ["columns[0][search][value]"] = "",
-                        ["columns[0][search][regex]"] = "false",
+                        ("columns[0][data]", "id"),
+                        ("columns[0][name]", ""),
+                        ("columns[0][searchable]", "true"),
+                        ("columns[0][orderable]", "true"),
+                        ("columns[0][search][value]", ""),
+                        ("columns[0][search][regex]", "false"),
 
-                        ["columns[1][data]"] = "title",
-                        ["columns[1][name]"] = "",
-                        ["columns[1][searchable]"] = "true",
-                        ["columns[1][orderable]"] = "true",
-                        ["columns[1][search][value]"] = "",
-                        ["columns[1][search][regex]"] = "false",
+                        ("columns[1][data]", "title"),
+                        ("columns[1][name]", ""),
+                        ("columns[1][searchable]", "true"),
+                        ("columns[1][orderable]", "true"),
+                        ("columns[1][search][value]", ""),
+                        ("columns[1][search][regex]", "false"),
 
-                        ["order[0][column]"] = "0",
-                        ["order[0][dir]"] = "asc",
+                        ("order[0][column]", "0"),
+                        ("order[0][dir]", "asc"),
 
-                        ["start"] = "0",
-                        ["length"] = "10",
+                        ("start", "0"),
+                        ("length", "10"),
 
-                        ["search[value]"] = query.Trim(100),
+                        ("search[value]", query.Trim(100)),
 
-                        ["_"] = DateTime.UtcNow.Ticks.ToString(),
-                    });
+                        ("_", DateTime.UtcNow.Ticks.ToString())
+                    );
                 using var getMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
                 using var response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false);
                 try
                 {
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    var result = await response.Content.ReadAsAsync<SearchResult>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
-                    result.Data ??= new List<SearchResultItem>(0);
-                    foreach (var item in result.Data)
-                    {
-                        item.Filename = GetIrdFilename(item.Filename);
-                        item.Title = GetTitle(item.Title);
-                    }
+                    var result = await response.Content.ReadFromJsonAsync<SearchResult>(jsonOptions, cancellationToken).ConfigureAwait(false);
+                    if (result?.Data?.Count > 0)
+                        foreach (var item in result.Data)
+                        {
+                            item.Filename = GetIrdFilename(item.Filename);
+                            item.Title = GetTitle(item.Title);
+                        }
                     return result;
                 }
                 catch (Exception e)
@@ -112,12 +111,17 @@ namespace IrdLibraryClient
                 var localCacheItems = new List<string>();
                 try
                 {
-                    var tmpCacheItemList = Directory.GetFiles(localCachePath, productCode + "*.ird", SearchOption.TopDirectoryOnly).Select(Path.GetFileName).ToList();
+                    var tmpCacheItemList = Directory.GetFiles(localCachePath, productCode + "*.ird", SearchOption.TopDirectoryOnly)
+                        .Select(Path.GetFileName)
+                        .ToList();
                     foreach (var item in tmpCacheItemList)
                     {
+                        if (string.IsNullOrEmpty(item))
+                            continue;
+                        
                         try
                         {
-                            result.Add(IrdParser.Parse(File.ReadAllBytes(Path.Combine(localCachePath, item))));
+                            result.Add(IrdParser.Parse(await File.ReadAllBytesAsync(Path.Combine(localCachePath, item), cancellationToken).ConfigureAwait(false)));
                             localCacheItems.Add(item);
                         }
                         catch (Exception ex)
@@ -131,7 +135,7 @@ namespace IrdLibraryClient
                     ApiConfig.Log.Warn(e, "Error accessing local IRD cache: " + e.Message);
                 }
                 ApiConfig.Log.Debug($"Found {localCacheItems.Count} cached items for {productCode}");
-                SearchResult searchResult = null;
+                SearchResult? searchResult = null;
 
                 // then try to do IRD Library search
                 try
@@ -142,20 +146,26 @@ namespace IrdLibraryClient
                 {
                     ApiConfig.Log.Error(e);
                 }
-                var tmpFilesToGet = searchResult?.Data.Select(i => i.Filename).Except(localCacheItems, StringComparer.InvariantCultureIgnoreCase).ToList();
-                if ((tmpFilesToGet?.Count ?? 0) == 0)
+                var tmpFilesToGet = searchResult?.Data?
+                    .Select(i => i.Filename)
+                    .Except(localCacheItems, StringComparer.InvariantCultureIgnoreCase)
+                    .ToList();
+                if (tmpFilesToGet is null or {Count: 0})
                     return result;
 
                 // as IRD Library could return more data than we found, try to check for all the items locally
                 var filesToDownload = new List<string>();
                 foreach (var item in tmpFilesToGet)
                 {
+                    if (string.IsNullOrEmpty(item))
+                        continue;
+                    
                     try
                     {
                         var localItemPath = Path.Combine(localCachePath, item);
                         if (File.Exists(localItemPath))
                         {
-                            result.Add(IrdParser.Parse(File.ReadAllBytes(localItemPath)));
+                            result.Add(IrdParser.Parse(await File.ReadAllBytesAsync(localItemPath, cancellationToken).ConfigureAwait(false)));
                             localCacheItems.Add(item);
                         }
                         else
@@ -176,11 +186,11 @@ namespace IrdLibraryClient
                 {
                         try
                         {
-                            var resultBytes = await client.GetByteArrayAsync(GetDownloadLink(item)).ConfigureAwait(false);
+                            var resultBytes = await client.GetByteArrayAsync(GetDownloadLink(item), cancellationToken).ConfigureAwait(false);
                             result.Add(IrdParser.Parse(resultBytes));
                             try
                             {
-                                File.WriteAllBytes(Path.Combine(localCachePath, item), resultBytes);
+                                await File.WriteAllBytesAsync(Path.Combine(localCachePath, item), resultBytes, cancellationToken).ConfigureAwait(false);
                             }
                             catch (Exception ex)
                             {
@@ -202,27 +212,26 @@ namespace IrdLibraryClient
             }
         }
 
-        private static string GetIrdFilename(string html)
+        private static string? GetIrdFilename(string? html)
         {
             if (string.IsNullOrEmpty(html))
                 return null;
 
             var matches = IrdFilename.Matches(html);
-            if (matches.Count == 0)
-            {
-                ApiConfig.Log.Warn("Couldn't parse IRD filename from " + html);
-                return null;
-            }
+            if (matches.Count > 0)
+                return matches[0].Groups["filename"]?.Value;
+            
+            ApiConfig.Log.Warn("Couldn't parse IRD filename from " + html);
+            return null;
 
-            return matches[0].Groups["filename"]?.Value;
         }
 
-        private static string GetTitle(string html)
+        private static string? GetTitle(string? html)
         {
             if (string.IsNullOrEmpty(html))
                 return null;
 
-            var idx = html.LastIndexOf("</span>");
+            var idx = html.LastIndexOf("</span>", StringComparison.Ordinal);
             var result = html[(idx + 7)..].Trim();
             if (string.IsNullOrEmpty(result))
                 return null;
