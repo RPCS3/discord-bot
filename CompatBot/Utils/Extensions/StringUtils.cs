@@ -168,10 +168,19 @@ namespace CompatBot.Utils
             while (e.MoveNext())
             {
                 var strEl = e.GetTextElement();
-                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format || strEl[0] == StrikeThroughChar)
-                    continue;
-
-                c++;
+                foreach (var chr in strEl)
+                {
+                    var category = char.GetUnicodeCategory(chr);
+                    if (char.IsControl(chr)
+                        || category == UnicodeCategory.Format
+                        || category == UnicodeCategory.ModifierSymbol
+                        || category == UnicodeCategory.NonSpacingMark
+                        || char.IsHighSurrogate(chr)
+                        || chr == StrikeThroughChar)
+                        continue;
+                    
+                    c++;
+                }
             }
             return c;
         }

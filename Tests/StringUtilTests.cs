@@ -11,15 +11,12 @@ namespace Tests
     [TestFixture]
     public class StringUtilTests
     {
-        [Test]
-        public void VisibleLengthTest()
-        {
-            Assert.That("🇭🇷".GetVisibleLength(), Is.EqualTo(2));
-            Assert.That("\u200d".GetVisibleLength(), Is.EqualTo(0));
-            Assert.That("㌀".GetVisibleLength(), Is.EqualTo(1));
-            Assert.That("a\u0304\u0308bc\u0327".GetVisibleLength(), Is.EqualTo(3));
-            Assert.That("Megamouse".GetVisibleLength(), Is.EqualTo(9));
-        }
+        [TestCase("🇭🇷", ExpectedResult = 2)]
+        [TestCase("\u200d", ExpectedResult = 0)]
+        [TestCase("㌀", ExpectedResult = 1)]
+        [TestCase("a\u0304\u0308bc\u0327", ExpectedResult = 3)]
+        [TestCase("Megamouse", ExpectedResult = 9)]
+        public int VisibleLengthTest(string input) => input.GetVisibleLength();
 
         [Test]
         public void VisibleTrimTest()
