@@ -96,9 +96,8 @@ namespace CompatBot.Database
                 await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `explanation_keyword` ON `explanation` (`keyword`)", cancellationToken);
                 tx.Commit();
             }
-            catch (Exception e)
+            catch
             {
-                //tx.Rollback();
                 tx.Commit();
                 throw;
             }
