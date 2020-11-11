@@ -61,7 +61,7 @@ namespace PsnClient
             xmlFormatters = new MediaTypeFormatterCollection(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
         }
 
-        public string[] GetLocales()
+        public static string[] GetLocales()
         {
             // Sony removed the ability to get the full store list, now relying on geolocation service instead
             return KnownStoreLocales;
@@ -126,7 +126,7 @@ namespace PsnClient
                     try
                     {
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                         var matches = ContainerIdLink.Matches(html);
                         var result = new List<string>();
                         foreach (Match m in matches)
@@ -151,8 +151,8 @@ namespace PsnClient
         {
             try
             {
-                var loc = locale.AsLocaleData();
-                var baseUrl = $"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/storefront/{containerId}";
+                var (language, country) = locale.AsLocaleData();
+                var baseUrl = $"https://store.playstation.com/valkyrie-api/{language}/{country}/999/storefront/{containerId}";
                 using var message = new HttpRequestMessage(HttpMethod.Get, baseUrl);
                 using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
                 try
@@ -180,8 +180,8 @@ namespace PsnClient
         {
             try
             {
-                var loc = locale.AsLocaleData();
-                var url = new Uri($"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/container/{containerId}");
+                var (language, country) = locale.AsLocaleData();
+                var url = new Uri($"https://store.playstation.com/valkyrie-api/{language}/{country}/999/container/{containerId}");
                 filters ??= new Dictionary<string, string>();
                 filters["start"] = start.ToString();
                 filters["size"] = take.ToString();
@@ -214,8 +214,8 @@ namespace PsnClient
         {
             try
             {
-                var loc = locale.AsLocaleData();
-                using var message = new HttpRequestMessage(HttpMethod.Get, $"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/resolve/{contentId}?depth={depth}");
+                var (language, country) = locale.AsLocaleData();
+                using var message = new HttpRequestMessage(HttpMethod.Get, $"https://store.playstation.com/valkyrie-api/{language}/{country}/999/resolve/{contentId}?depth={depth}");
                 using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
                 try
                 {
@@ -253,7 +253,7 @@ namespace PsnClient
                 await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                 patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
                 ResponseCache.Set(productId, patchInfo, ResponseCacheDuration);
-                return patchInfo ?? new TitlePatch { Tag = new TitlePatchTag { Packages = new TitlePatchPackage[0], },  };
+                return patchInfo ?? new TitlePatch { Tag = new TitlePatchTag { Packages = Array.Empty<TitlePatchPackage>(), },  };
             }
             catch (Exception e)
             {
@@ -300,10 +300,10 @@ namespace PsnClient
         {
             try
             {
-                var loc = locale.AsLocaleData();
+                var (language, country) = locale.AsLocaleData();
                 var searchId = Uri.EscapeUriString(search);
                 var queryId = Uri.EscapeDataString(searchId);
-                var uri = new Uri($"https://store.playstation.com/valkyrie-api/{loc.language}/{loc.country}/999/faceted-search/{searchId}?query={queryId}&game_content_type=games&size=30&bucket=games&platform=ps3&start=0");
+                var uri = new Uri($"https://store.playstation.com/valkyrie-api/{language}/{country}/999/faceted-search/{searchId}?query={queryId}&game_content_type=games&size=30&bucket=games&platform=ps3&start=0");
                 using var message = new HttpRequestMessage(HttpMethod.Get, uri);
                 using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
                 try
@@ -357,7 +357,7 @@ namespace PsnClient
 
         private async Task<string> GetSessionCookies(string locale, CancellationToken cancellationToken)
         {
-            var loc = locale.AsLocaleData();
+            var (language, country) = locale.AsLocaleData();
             var uri = new Uri("https://store.playstation.com/kamaji/api/valkyrie_storefront/00_09_000/user/session");
             var tries = 0;
             do
@@ -374,8 +374,8 @@ namespace PsnClient
                     {
                         Content = new FormUrlEncodedContent(new Dictionary<string, string>
                         {
-                            ["country_code"] = loc.country,
-                            ["language_code"] = loc.language,
+                            ["country_code"] = country,
+                            ["language_code"] = language,
                         })
                     };
                     using (authMessage)
@@ -418,7 +418,7 @@ namespace PsnClient
                         return null;
 
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    var data = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    var data = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                     if (string.IsNullOrEmpty(data))
                         return null;
 

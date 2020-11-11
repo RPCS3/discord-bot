@@ -21,7 +21,7 @@ namespace PsnClient.Utils
                 return null;
 
             if (hexString.Length == 0)
-                return new byte[0];
+                return Array.Empty<byte>();
 
             if (hexString.Length % 2 != 0)
                 throw new ArgumentException("Invalid hex string format: odd number of octets", nameof(hexString));

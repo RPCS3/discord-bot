@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace IrdLibraryClient.POCOs
 {
-    public class SearchResult
+    public sealed class SearchResult
     {
         public List<SearchResultItem>? Data;
         public int Draw;
@@ -15,7 +15,7 @@ namespace IrdLibraryClient.POCOs
         public int RecordsTotal;
     }
 
-    public class SearchResultItem
+    public sealed class SearchResultItem
     {
         public string? Id; // product code
         public string? AppVersion;
