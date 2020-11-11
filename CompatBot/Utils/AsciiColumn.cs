@@ -2,7 +2,7 @@
 {
     public sealed class AsciiColumn
     {
-        public AsciiColumn(string name = null, bool disabled = false, bool alignToRight = false, int maxWidth = 80)
+        public AsciiColumn(string? name = null, bool disabled = false, bool alignToRight = false, int maxWidth = 80)
         {
             Name = name;
             Disabled = disabled;
@@ -10,7 +10,7 @@
             MaxWidth = maxWidth;
         }
 
-        public string Name;
+        public string? Name;
         public bool Disabled;
         public bool AlignToRight;
         public int MaxWidth;

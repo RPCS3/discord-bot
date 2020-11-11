@@ -75,7 +75,7 @@ namespace CompatBot.Commands
 
         [Command("describe"), TriggersTyping]
         [Description("Generates an image description from the attached image, or from the url")]
-        public Task Describe(CommandContext ctx, [RemainingText] string imageUrl = null)
+        public Task Describe(CommandContext ctx, [RemainingText] string? imageUrl = null)
         {
             if (imageUrl?.StartsWith("tag") ?? false)
                 return Tag(ctx, imageUrl[3..].TrimStart());
@@ -84,7 +84,7 @@ namespace CompatBot.Commands
 
         [Command("tag"), TriggersTyping]
         [Description("Tags recognized objects in the image")]
-        public async Task Tag(CommandContext ctx, string imageUrl = null)
+        public async Task Tag(CommandContext ctx, string? imageUrl = null)
         {
             try
             {
@@ -92,9 +92,9 @@ namespace CompatBot.Commands
                 if (string.IsNullOrEmpty(imageUrl))
                     return;
 
-                using var imageStream = Config.MemoryStreamManager.GetStream();
+                await using var imageStream = Config.MemoryStreamManager.GetStream();
                 using (var httpClient = HttpClientFactory.Create())
-                using (var stream = await httpClient.GetStreamAsync(imageUrl).ConfigureAwait(false))
+                await using (var stream = await httpClient.GetStreamAsync(imageUrl).ConfigureAwait(false))
                     await stream.CopyToAsync(imageStream).ConfigureAwait(false);
                 imageStream.Seek(0, SeekOrigin.Begin);
 #pragma warning disable VSTHRD103
@@ -114,7 +114,7 @@ namespace CompatBot.Commands
                 if (resized || imgFormat.Name != JpegFormat.Instance.Name)
                 {
                     imageStream.SetLength(0);
-                    img.Save(imageStream, new JpegEncoder { Quality = 90 });
+                    await img.SaveAsync(imageStream, new JpegEncoder { Quality = 90 }).ConfigureAwait(false);
                     imageStream.Seek(0, SeekOrigin.Begin);
                 }
                 else
@@ -132,7 +132,7 @@ namespace CompatBot.Commands
                 {
                     quality -= 5;
                     imageStream.SetLength(0);
-                    img.Save(imageStream, new JpegEncoder {Quality = quality});
+                    await img.SaveAsync(imageStream, new JpegEncoder {Quality = quality}).ConfigureAwait(false);
                     imageStream.Seek(0, SeekOrigin.Begin);
                 }
 
@@ -159,7 +159,7 @@ namespace CompatBot.Commands
                     foreach (var obj in objects)
                     {
                         var r = obj.Rectangle;
-                        using var tmpStream = Config.MemoryStreamManager.GetStream();
+                        await using var tmpStream = Config.MemoryStreamManager.GetStream();
                         using var boxCopy = img.Clone(i => i.Crop(new Rectangle(r.X, r.Y, r.W, r.H)));
                         await boxCopy.SaveAsBmpAsync(tmpStream).ConfigureAwait(false);
                         tmpStream.Seek(0, SeekOrigin.Begin);
@@ -274,11 +274,11 @@ namespace CompatBot.Commands
                         if (bgBox.Y + bgBox.Height > img.Height)
                             bgBox.Y = img.Height - bgBox.Height;
                         drawnBoxes.Add(bgBox);
-                        var textboxColor = complementaryColor;
+                        var textBoxColor = complementaryColor;
                         var textColor = color;
                         try
                         {
-                            img.Mutate(i => i.Fill(bgSgo, textboxColor, bgBox));
+                            img.Mutate(i => i.Fill(bgSgo, textBoxColor, bgBox));
                             img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
                         }
                         catch (Exception ex)
@@ -297,12 +297,12 @@ namespace CompatBot.Commands
                             Config.Log.Error(ex, "Failed to generate tag label");
                         }
                     }
-                    using var resultStream = Config.MemoryStreamManager.GetStream();
+                    await using var resultStream = Config.MemoryStreamManager.GetStream();
                     quality = 95;
                     do
                     {
                         resultStream.SetLength(0);
-                        img.Save(resultStream, new JpegEncoder {Quality = 95});
+                        await img.SaveAsync(resultStream, new JpegEncoder {Quality = 95}).ConfigureAwait(false);
                         resultStream.Seek(0, SeekOrigin.Begin);
                         quality--;
                     } while (resultStream.Length > Config.AttachmentSizeLimit);
@@ -367,12 +367,12 @@ namespace CompatBot.Commands
                     await reactMsg.ReactWithAsync(DiscordEmoji.FromUnicode(emojiList[new Random().Next(emojiList.Length)])).ConfigureAwait(false);
         }
 
-        private static async Task<string> GetImageUrlAsync(CommandContext ctx, string imageUrl)
+        private static async Task<string?> GetImageUrlAsync(CommandContext ctx, string? imageUrl)
         {
             var reactMsg = ctx.Message;
             if (GetImageAttachment(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
                 imageUrl = attachment.Url;
-            imageUrl = imageUrl?.Trim();
+            imageUrl = imageUrl?.Trim() ?? "";
             if (!string.IsNullOrEmpty(imageUrl)
                 && imageUrl.StartsWith('<')
                 && imageUrl.EndsWith('>'))
@@ -388,28 +388,22 @@ namespace CompatBot.Commands
                     && ctx.Channel.PermissionsFor(ctx.Client.GetMember(ctx.Guild, ctx.Client.CurrentUser)).HasPermission(Permissions.ReadMessageHistory))
                     try
                     {
-                        var previousMessages = await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false);
-                        var (selectedMsg, selectedAttachment) = (
+                        var previousMessages = (await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false))!;
+                        imageUrl = (
                             from m in previousMessages
                             where m.Attachments?.Count > 0
                             from a in GetImageAttachment(m)
-                            select (m, a)
+                            select a.Url
                         ).FirstOrDefault();
-                        if (selectedMsg != null)
-                            reactMsg = selectedMsg;
-                        imageUrl = selectedAttachment?.Url;
                         if (string.IsNullOrEmpty(imageUrl))
                         {
-
-                            var (selectedMsg2, selectedUrl) = (
+                            var selectedUrl = (
                                 from m in previousMessages
                                 where m.Embeds?.Count > 0
                                 from e in m.Embeds
                                 let url = e.Image?.Url ?? e.Image?.ProxyUrl ?? e.Thumbnail?.Url ?? e.Thumbnail?.ProxyUrl
-                                select (m, url)
+                                select url
                             ).FirstOrDefault();
-                            if (selectedMsg2 != null)
-                                reactMsg = selectedMsg2;
                             imageUrl = selectedUrl?.ToString();
                         }
                     }

@@ -80,7 +80,7 @@ namespace CompatBot.Commands
                 var timestamps = db.Warning
                     .Where(w => w.Timestamp.HasValue && !w.Retracted)
                     .OrderBy(w => w.Timestamp)
-                    .Select(w => w.Timestamp.Value)
+                    .Select(w => w.Timestamp!.Value)
                     .ToList();
                 var firstWarnTimestamp = timestamps.FirstOrDefault();
                 var previousTimestamp = firstWarnTimestamp;
@@ -122,7 +122,7 @@ namespace CompatBot.Commands
                 if (warnCount > mostWarnings)
                 {
                     mostWarnings = warnCount;
-                    mostWarningsStart = last24hWarnings.Min(w => w.Timestamp.Value);
+                    mostWarningsStart = last24hWarnings.Min(w => w.Timestamp!.Value);
                     mostWarningsEnd = utcNow.Ticks;
                 }
                 var lastWarn = timestamps.Any() ? timestamps.Last() : (long?)null;
@@ -150,7 +150,7 @@ namespace CompatBot.Commands
                 {
                     statsBuilder.Append($"Warnings in the last 24h: **{warnCount}**");
                     if (warnCount == 0)
-                        statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
+                        statsBuilder.Append(' ').Append(BotReactionsHandler.RandomPositiveReaction);
                     statsBuilder.AppendLine();
                 }
                 if (lastWarn.HasValue)
@@ -173,15 +173,15 @@ namespace CompatBot.Commands
                 .ToList();
             var totalCalls = sortedCommandStats.Sum(c => c.stat);
             var top = sortedCommandStats.Take(5).ToList();
-            if (top.Any())
-            {
-                var statsBuilder = new StringBuilder();
-                var n = 1;
-                foreach (var cmdStat in top)
-                    statsBuilder.AppendLine($"{n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.##}%)");
-                statsBuilder.AppendLine($"Total commands executed: {totalCalls}");
-                embed.AddField($"Top {top.Count} Recent Commands", statsBuilder.ToString().TrimEnd(), true);
-            }
+            if (top.Count == 0)
+                return;
+            
+            var statsBuilder = new StringBuilder();
+            var n = 1;
+            foreach (var (name, stat) in top)
+                statsBuilder.AppendLine($"{n++}. {name} ({stat} call{(stat == 1 ? "" : "s")}, {stat * 100.0 / totalCalls:0.##}%)");
+            statsBuilder.AppendLine($"Total commands executed: {totalCalls}");
+            embed.AddField($"Top {top.Count} Recent Commands", statsBuilder.ToString().TrimEnd(), true);
         }
 
         private static void AppendExplainStats(DiscordEmbedBuilder embed)
@@ -194,15 +194,15 @@ namespace CompatBot.Commands
                 .ToList();
             var totalExplains = sortedTerms.Sum(t => t.stat);
             var top = sortedTerms.Take(5).ToList();
-            if (top.Any())
-            {
-                var statsBuilder = new StringBuilder();
-                var n = 1;
-                foreach (var explain in top)
-                    statsBuilder.AppendLine($"{n++}. {explain.term} ({explain.stat} display{(explain.stat == 1 ? "" : "s")}, {explain.stat * 100.0 / totalExplains:0.##}%)");
-                statsBuilder.AppendLine($"Total explanations shown: {totalExplains}");
-                embed.AddField($"Top {top.Count} Recent Explanations", statsBuilder.ToString().TrimEnd(), true);
-            }
+            if (top.Count == 0)
+                return;
+            
+            var statsBuilder = new StringBuilder();
+            var n = 1;
+            foreach (var (term, stat) in top)
+                statsBuilder.AppendLine($"{n++}. {term} ({stat} display{(stat == 1 ? "" : "s")}, {stat * 100.0 / totalExplains:0.##}%)");
+            statsBuilder.AppendLine($"Total explanations shown: {totalExplains}");
+            embed.AddField($"Top {top.Count} Recent Explanations", statsBuilder.ToString().TrimEnd(), true);
         }
 
         private static void AppendGameLookupStats(DiscordEmbedBuilder embed)
@@ -215,15 +215,15 @@ namespace CompatBot.Commands
                 .ToList();
             var totalLookups = sortedTitles.Sum(t => t.stat);
             var top = sortedTitles.Take(5).ToList();
-            if (top.Any())
-            {
-                var statsBuilder = new StringBuilder();
-                var n = 1;
-                foreach (var title in top)
-                    statsBuilder.AppendLine($"{n++}. {title.title.Trim(40)} ({title.stat} search{(title.stat == 1 ? "" : "es")}, {title.stat * 100.0 / totalLookups:0.##}%)");
-                statsBuilder.AppendLine($"Total game lookups: {totalLookups}");
-                embed.AddField($"Top {top.Count} Recent Game Lookups", statsBuilder.ToString().TrimEnd(), true);
-            }
+            if (top.Count == 0)
+                return;
+            
+            var statsBuilder = new StringBuilder();
+            var n = 1;
+            foreach (var (title, stat) in top)
+                statsBuilder.AppendLine($"{n++}. {title.Trim(40)} ({stat} search{(stat == 1 ? "" : "es")}, {stat * 100.0 / totalLookups:0.##}%)");
+            statsBuilder.AppendLine($"Total game lookups: {totalLookups}");
+            embed.AddField($"Top {top.Count} Recent Game Lookups", statsBuilder.ToString().TrimEnd(), true);
         }
 
         private void AppendSyscallsStats(DiscordEmbedBuilder embed)
@@ -259,7 +259,12 @@ namespace CompatBot.Commands
 
                 var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
                 var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
-                var kot = sign == ">" ? GoodKot[new Random().Next(GoodKot.Length)] : sign == ":" ? "🐱" : MeanKot[new Random().Next(MeanKot.Length)];
+                var kot = sign switch
+                {
+                    ">" => GoodKot[new Random().Next(GoodKot.Length)],
+                    ":" => "🐱",
+                    _ => MeanKot[new Random().Next(MeanKot.Length)]
+                };
                 embed.AddField("🐾 Stats", $"{kot} {kots - 1} {sign} {doggos - 1} 🐶", true);
             }
             catch (Exception e)

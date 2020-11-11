@@ -32,7 +32,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
-            if (DefaultHandlerFilter.IsFluff(args?.Message))
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
 #if !DEBUG
@@ -92,7 +92,7 @@ namespace CompatBot.EventHandlers
             CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
         }
 
-        public static async Task<(string productCode, TitleInfo info)> LookupGameAsync(DiscordChannel channel, DiscordMessage message, string gameTitle)
+        public static async Task<(string? productCode, TitleInfo? info)> LookupGameAsync(DiscordChannel channel, DiscordMessage message, string gameTitle)
         {
             var lastBotMessages = await channel.GetMessagesBeforeAsync(message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
             foreach (var msg in lastBotMessages)
@@ -105,36 +105,38 @@ namespace CompatBot.EventHandlers
                 var searchCompatListTask = Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
                 var localList = CompatList.GetLocalCompatResult(requestBuilder);
                 var status = await searchCompatListTask.ConfigureAwait(false);
-                status = status.Append(localList);
-                if ((status.ReturnCode == 0 || status.ReturnCode == 2) && status.Results.Any())
+                status = status?.Append(localList);
+                if (status is null
+                    || status.ReturnCode != 0 && status.ReturnCode != 2
+                    || !status.Results.Any())
+                    return (null, null);
+                
+                var sortedList = status.GetSortedList();
+                var bestMatch = sortedList.First();
+                var listWithStatus = sortedList
+                    .TakeWhile(i => Math.Abs(i.score - bestMatch.score) < double.Epsilon)
+                    .Where(i => !string.IsNullOrEmpty(i.info.Status) && i.info.Status != "Unknown")
+                    .ToList();
+                if (listWithStatus.Count > 0)
+                    bestMatch = listWithStatus.First();
+                var (code, info, score) = bestMatch;
+                Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info?.Title}\" with score {score}");
+                if (score < Config.GameTitleMatchThreshold)
+                    return (null, null);
+
+                if (!string.IsNullOrEmpty(info?.Title))
                 {
-                    var sortedList = status.GetSortedList();
-                    var bestMatch = sortedList.First();
-                    var listWithStatus = sortedList
-                        .TakeWhile(i => Math.Abs(i.score - bestMatch.score) < double.Epsilon)
-                        .Where(i => !string.IsNullOrEmpty(i.info.Status) && i.info.Status != "Unknown")
-                        .ToList();
-                    if (listWithStatus.Count > 0)
-                        bestMatch = listWithStatus.First();
-                    var (code, info, score) = bestMatch;
-                    Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info?.Title}\" with score {score}");
-                    if (score < Config.GameTitleMatchThreshold)
-                        return (null, null);
-
-                    if (!string.IsNullOrEmpty(info?.Title))
-                    {
-                        StatsStorage.GameStatCache.TryGetValue(info.Title, out int stat);
-                        StatsStorage.GameStatCache.Set(info.Title, ++stat, StatsStorage.CacheTime);
-                    }
-
-                    return (code, info);
+                    StatsStorage.GameStatCache.TryGetValue(info.Title, out int stat);
+                    StatsStorage.GameStatCache.Set(info.Title, ++stat, StatsStorage.CacheTime);
                 }
+
+                return (code, info);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e);
+                return (null, null);
             }
-            return (null, null);
         }
     }
 }

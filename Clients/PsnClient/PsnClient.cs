@@ -233,8 +233,11 @@ namespace PsnClient
             }
         }
 
-        public async Task<TitlePatch?> GetTitleUpdatesAsync(string productId, CancellationToken cancellationToken)
+        public async Task<TitlePatch?> GetTitleUpdatesAsync(string? productId, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(productId))
+                return null;
+            
             if (ResponseCache.TryGetValue(productId, out TitlePatch patchInfo))
                 return patchInfo;
 

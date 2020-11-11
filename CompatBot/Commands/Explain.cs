@@ -31,7 +31,6 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
         {
-            var sourceTerm = term;
             if (string.IsNullOrEmpty(term))
             {
                 var lastBotMessages = await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false);
@@ -55,8 +54,6 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                     return;
                 }
-
-                sourceTerm = term = newMessage.Result.Content;
             }
 
             if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
@@ -70,7 +67,7 @@ namespace CompatBot.Commands
             if (result.explanation == null || !string.IsNullOrEmpty(result.fuzzyMatch))
             {
                 term = term.StripQuotes();
-                var idx = term.LastIndexOf(" to ");
+                var idx = term.LastIndexOf(" to ", StringComparison.Ordinal);
                 if (idx > 0)
                 {
                     var potentialUserId = term[(idx + 4)..].Trim();
@@ -95,7 +92,7 @@ namespace CompatBot.Commands
             if (await SendExplanation(result, term, ctx.Message).ConfigureAwait(false))
                 return;
 
-            string inSpecificLocation = null;
+            string? inSpecificLocation = null;
             if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
             {
                 var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
@@ -114,8 +111,8 @@ namespace CompatBot.Commands
             try
             {
                 term = term.ToLowerInvariant().StripQuotes();
-                byte[] attachment = null;
-                string attachmentFilename = null;
+                byte[]? attachment = null;
+                string? attachmentFilename = null;
                 if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment att)
                 {
                     attachmentFilename = att.FileName;
@@ -134,7 +131,7 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "An explanation for the term must be provided").ConfigureAwait(false);
                 else
                 {
-                    using var db = new BotDb();
+                    await using var db = new BotDb();
                     if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
                         await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{term}` is already defined. Use `update` to update an existing term.").ConfigureAwait(false);
                     else
@@ -163,8 +160,8 @@ namespace CompatBot.Commands
             [RemainingText, Description("New explanation text")] string explanation)
         {
             term = term.ToLowerInvariant().StripQuotes();
-            byte[] attachment = null;
-            string attachmentFilename = null;
+            byte[]? attachment = null;
+            string? attachmentFilename = null;
             if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment att)
             {
                 attachmentFilename = att.FileName;
@@ -178,7 +175,7 @@ namespace CompatBot.Commands
                     Config.Log.Warn(e, "Failed to download explanation attachment " + ctx);
                 }
             }
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
             if (item == null)
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
@@ -203,7 +200,7 @@ namespace CompatBot.Commands
         {
             oldTerm = oldTerm.ToLowerInvariant().StripQuotes();
             newTerm = newTerm.ToLowerInvariant().StripQuotes();
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == oldTerm).ConfigureAwait(false);
             if (item == null)
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{oldTerm}` is not defined").ConfigureAwait(false);
@@ -235,7 +232,7 @@ namespace CompatBot.Commands
         public async Task List(CommandContext ctx)
         {
             var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
             if (keywords.Count == 0)
                 await ctx.RespondAsync("Nothing has been defined yet").ConfigureAwait(false);
@@ -259,7 +256,7 @@ namespace CompatBot.Commands
             public async Task RemoveExplanation(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
             {
                 term = term.ToLowerInvariant().StripQuotes();
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
                 if (item == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
@@ -276,7 +273,7 @@ namespace CompatBot.Commands
             public async Task Attachment(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
             {
                 term = term.ToLowerInvariant().StripQuotes();
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
                 if (item == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
@@ -298,7 +295,7 @@ namespace CompatBot.Commands
             public async Task Text(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
             {
                 term = term.ToLowerInvariant().StripQuotes();
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
                 if (item == null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
@@ -337,7 +334,7 @@ namespace CompatBot.Commands
                 return;
             }
 
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == termOrLink).ConfigureAwait(false);
             if (item == null)
             {
@@ -348,21 +345,21 @@ namespace CompatBot.Commands
             {
                 if (!string.IsNullOrEmpty(item.Text))
                 {
-                    using var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text));
+                    await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text));
                     await ctx.Channel.SendFileAsync($"{termOrLink}.txt", stream).ConfigureAwait(false);
                 }
-                if (!string.IsNullOrEmpty(item.AttachmentFilename))
+                if (!string.IsNullOrEmpty(item.AttachmentFilename) && item.Attachment?.Length > 0)
                 {
-                    using var stream = new MemoryStream(item.Attachment);
+                    await using var stream = new MemoryStream(item.Attachment);
                     await ctx.Channel.SendFileAsync(item.AttachmentFilename, stream).ConfigureAwait(false);
                 }
             }
         }
 
-        internal static async Task<(Explanation explanation, string fuzzyMatch, double score)> LookupTerm(string term)
+        internal static async Task<(Explanation? explanation, string? fuzzyMatch, double score)> LookupTerm(string term)
         {
-            using var db = new BotDb();
-            string fuzzyMatch = null;
+            await using var db = new BotDb();
+            string? fuzzyMatch = null;
             double coefficient;
             var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
             if (explanation == null)
@@ -378,7 +375,7 @@ namespace CompatBot.Commands
             return (explanation, fuzzyMatch, coefficient);
         }
 
-        internal static async Task<bool> SendExplanation((Explanation explanation, string fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage)
+        internal static async Task<bool> SendExplanation((Explanation? explanation, string? fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage)
         {
             try
             {
@@ -410,8 +407,8 @@ namespace CompatBot.Commands
 
         private static async Task DumpLink(CommandContext ctx, string messageLink)
         {
-            string explanation = null;
-            DiscordMessage msg = null;
+            string? explanation = null;
+            DiscordMessage? msg = null;
             try { msg = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false); } catch {}
             if (msg != null)
             {
@@ -425,7 +422,7 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't find any text in the specified message").ConfigureAwait(false);
             else
             {
-                using var stream = new MemoryStream(Encoding.UTF8.GetBytes(explanation));
+                await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(explanation));
                 await ctx.Channel.SendFileAsync("explanation.txt", stream).ConfigureAwait(false);
             }
         }

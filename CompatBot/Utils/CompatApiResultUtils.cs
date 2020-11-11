@@ -31,7 +31,7 @@ namespace CompatBot.Utils
             return sortedList;
         }
 
-        public static double GetScore(string search, TitleInfo titleInfo)
+        public static double GetScore(string? search, TitleInfo titleInfo)
         {
             var score = Math.Max(
                 search.GetFuzzyCoefficientCached(titleInfo.Title),

@@ -316,7 +316,7 @@ namespace CompatBot.Utils.ResultFormatters
                 items["gpu_info"] = items["driver_manuf"];
             if (!string.IsNullOrEmpty(items["gpu_info"]))
             {
-                items["gpu_info"] = items["gpu_info"].StripMarks();
+                items["gpu_info"] = items["gpu_info"]?.StripMarks();
                 items["driver_version_info"] = GetVulkanDriverVersion(items["vulkan_initialized_device"], multiItems["vulkan_found_device"]) ??
                                                GetVulkanDriverVersion(items["gpu_info"], multiItems["vulkan_found_device"]) ??
                                                GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
@@ -389,10 +389,10 @@ namespace CompatBot.Utils.ResultFormatters
                 var interpreter = sm.Contains("interpreter", StringComparison.InvariantCultureIgnoreCase);
                 items["shader_mode"] = (async, recompiler, interpreter) switch
                 {
-                    (true, true, false)  => "Async",
-                    (true, _, true)      => "Async+Interpreter",
+                    ( true, true, false) => "Async",
+                    ( true,    _,  true) => "Async+Interpreter",
                     (false, true, false) => "Recompiler only",
-                    (false, _, true)     => "Interpreter only",
+                    (false,    _,  true) => "Interpreter only",
                     _                    => items["shader_mode"],
                 };
             }
@@ -401,7 +401,7 @@ namespace CompatBot.Utils.ResultFormatters
             else
                 items["shader_mode"] = "Recompiler only";
 
-            static string reformatDecoder(string dec)
+            static string? reformatDecoder(string? dec)
             {
                 if (string.IsNullOrEmpty(dec))
                     return dec;
@@ -418,7 +418,7 @@ namespace CompatBot.Utils.ResultFormatters
                 items["os_type"] = "Windows";
             else if (items["lin_path"] != null)
                 items["os_type"] = "Linux";
-            if (items["os_type"] == "Windows" && GetWindowsVersion((items["driver_version_new"] ?? items["driver_version"])) is string winVersion)
+            if (items["os_type"] == "Windows" && GetWindowsVersion(items["driver_version_new"] ?? items["driver_version"]) is string winVersion)
                 items["os_windows_version"] = winVersion;
             if (items["library_list"] is string libs)
             {
@@ -451,7 +451,7 @@ namespace CompatBot.Utils.ResultFormatters
                     value = EnabledMark;
                 else if ("false".Equals(value, StringComparison.CurrentCultureIgnoreCase))
                     value = DisabledMark;
-                items[key] = value.Sanitize(false);
+                items[key] = value?.Sanitize(false);
             }
         }
 
@@ -468,7 +468,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static async Task<UpdateInfo> CheckForUpdateAsync(NameValueCollection items)
+        private static async Task<UpdateInfo?> CheckForUpdateAsync(NameValueCollection items)
         {
             if (string.IsNullOrEmpty(items["build_and_specs"]))
                 return null;
@@ -490,17 +490,20 @@ namespace CompatBot.Utils.ResultFormatters
             return null;
         }
 
-        private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo updateInfo)
+        private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo? updateInfo)
         {
-            if ((updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta) && (updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuildsInDays))
+            if (updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta
+                && updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuildsInDays)
                 return false;
 
-            if (Version.TryParse(items["build_version"], out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
+            if (Version.TryParse(items["build_version"], out var logVersion)
+                && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
             {
                 if (logVersion < updateVersion)
                     return true;
 
-                if (int.TryParse(items["build_number"], out var logBuild) && int.TryParse(update.Groups["build"].Value, out var updateBuild))
+                if (int.TryParse(items["build_number"], out var logBuild)
+                    && int.TryParse(update.Groups["build"].Value, out var updateBuild))
                 {
                     if (logBuild + Config.BuildNumberDifferenceForOutdatedBuilds < updateBuild)
                         return true;
@@ -510,7 +513,7 @@ namespace CompatBot.Utils.ResultFormatters
             return !SameCommits(items["build_commit"], update.Groups["commit"].Value);
         }
 
-        private static bool SameCommits(string commitA, string commitB)
+        private static bool SameCommits(string? commitA, string? commitB)
         {
             if (string.IsNullOrEmpty(commitA) && string.IsNullOrEmpty(commitB))
                 return true;
@@ -522,20 +525,21 @@ namespace CompatBot.Utils.ResultFormatters
             return commitA[..len] == commitB[..len];
         }
 
-        private static string GetOpenglDriverVersion(string gpuInfo, string version)
+        private static string? GetOpenglDriverVersion(string? gpuInfo, string? version)
         {
             if (string.IsNullOrEmpty(version))
                 return null;
 
-            if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
+            gpuInfo ??= "";
+            if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase)
+                || gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase)
+                || gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
                 return AmdDriverVersionProvider.GetFromOpenglAsync(version).ConfigureAwait(false).GetAwaiter().GetResult();
 
             return version;
         }
 
-        private static string GetVulkanDriverVersion(string gpu, UniqueList<string> foundDevices)
+        private static string? GetVulkanDriverVersion(string? gpu, UniqueList<string> foundDevices)
         {
             if (string.IsNullOrEmpty(gpu) || !foundDevices.Any())
                 return null;
@@ -585,11 +589,12 @@ namespace CompatBot.Utils.ResultFormatters
             return result;
         }
 
-        private static string GetVulkanDriverVersionRaw(string gpuInfo, string version)
+        private static string? GetVulkanDriverVersionRaw(string? gpuInfo, string? version)
         {
             if (string.IsNullOrEmpty(version))
                 return null;
 
+            gpuInfo ??= "";
             var ver = int.Parse(version);
             if (IsAmd(gpuInfo))
             {
@@ -621,7 +626,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static string GetWindowsVersion(string driverVersionString)
+        private static string? GetWindowsVersion(string? driverVersionString)
         {
             // see https://docs.microsoft.com/en-us/windows-hardware/drivers/display/wddm-2-1-features#driver-versioning
             if (string.IsNullOrEmpty(driverVersionString) || !Version.TryParse(driverVersionString, out var driverVer))
@@ -651,7 +656,7 @@ namespace CompatBot.Utils.ResultFormatters
             };
         }
 
-        private static string GetWindowsVersion(Version windowsVersion) =>
+        private static string? GetWindowsVersion(Version windowsVersion) =>
             windowsVersion.Major switch
             {
                 5 => windowsVersion.Minor switch
@@ -747,9 +752,9 @@ namespace CompatBot.Utils.ResultFormatters
             return $"{microseconds / 1_000_000.0:0.##} s";
         }
 
-        private static List<string> SortLines(List<string> notes, DiscordEmoji piracyEmoji = null)
+        private static List<string> SortLines(List<string> notes, DiscordEmoji? piracyEmoji = null)
         {
-            if (notes == null || notes.Count < 2)
+            if (notes.Count < 2)
                 return notes;
 
             var priorityList = new List<string>(EmojiPriority);
@@ -795,36 +800,33 @@ namespace CompatBot.Utils.ResultFormatters
             return new HashSet<string>(hashList.Split(Environment.NewLine), StringComparer.InvariantCultureIgnoreCase);
         }
 
-        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source, LogParseState state = null)
+        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage? message, ISource source, LogParseState? state = null)
         {
-            if (state?.Error == LogParseState.ErrorCode.PiracyDetected)
+            if (message == null || state?.Error == LogParseState.ErrorCode.PiracyDetected)
                 return builder;
 
-            if (message != null)
-            {
-                var author = message.Author;
-                var member = client.GetMember(message.Channel?.Guild, author);
-                string msg;
-                if (member == null)
-                    msg = $"Log from {author.Username.Sanitize()} | {author.Id}\n";
-                else
-                    msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
-                msg += " | " + (source?.SourceType ?? "Unknown source");
-                if (state?.ReadBytes > 0 && source?.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
-                    msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
-                else if (source?.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
-                    msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
-                else if (state?.ReadBytes > 0)
-                    msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
-                else if (source?.LogFileSize > 0)
-                    msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
+            var author = message.Author;
+            var member = client.GetMember(message.Channel?.Guild, author);
+            string msg;
+            if (member == null)
+                msg = $"Log from {author.Username.Sanitize()} | {author.Id}\n";
+            else
+                msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
+            msg += " | " + (source?.SourceType ?? "Unknown source");
+            if (state?.ReadBytes > 0 && source?.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
+                msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
+            else if (source?.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
+                msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
+            else if (state?.ReadBytes > 0)
+                msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
+            else if (source?.LogFileSize > 0)
+                msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
 #if DEBUG
-                if (state?.ParsingTime.TotalMilliseconds > 0)
-                    msg += $" | {state.ParsingTime.TotalSeconds:0.###}s";
-                msg += " | Test Bot Instance";
+            if (state?.ParsingTime.TotalMilliseconds > 0)
+                msg += $" | {state.ParsingTime.TotalSeconds:0.###}s";
+            msg += " | Test Bot Instance";
 #endif
-                builder.WithFooter(msg);
-            }
+            builder.WithFooter(msg);
             return builder;
         }
 
@@ -864,8 +866,8 @@ namespace CompatBot.Utils.ResultFormatters
 
             foreach (var error in fatalErrors[1..])
             {
-                int idx = -1;
-                double similarity = 0.0;
+                var idx = -1;
+                var similarity = 0.0;
                 for (var i = 0; i < result.Count; i++)
                 {
                     similarity = result[i].fatalError.GetFuzzyCoefficientCached(error);

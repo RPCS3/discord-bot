@@ -10,42 +10,37 @@ namespace CompatBot.Utils
     {
         public static List<T> GetCacheKeys<T>(this MemoryCache memoryCache)
         {
-            if (memoryCache == null)
-                return null;
-
             var field = memoryCache.GetType()
                 .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(fi => fi.Name == "_entries");
 
-            if (field == null)
+            if (field is null)
             {
                 Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed");
-                return new List<T>(0);
+                return new List<T>();
             }
 
-            var value = (IDictionary)field.GetValue(memoryCache);
-            return value.Keys.OfType<T>().ToList();
+            var value = (IDictionary?)field.GetValue(memoryCache);
+            return value?.Keys.OfType<T>().ToList() ?? new List<T>();
         }
 
-        public static Dictionary<TKey, ICacheEntry> GetCacheEntries<TKey>(this MemoryCache memoryCache)
+        public static Dictionary<TKey, ICacheEntry?> GetCacheEntries<TKey>(this MemoryCache memoryCache)
+            where TKey: notnull
         {
-            if (memoryCache == null)
-                return null;
-
             var field = memoryCache.GetType()
                 .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(fi => fi.Name == "_entries");
 
-            if (field == null)
+            var cacheEntries = (IDictionary?)field?.GetValue(memoryCache);
+            if (cacheEntries is null)
             {
                 Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed");
-                return new Dictionary<TKey, ICacheEntry>(0);
+                return new Dictionary<TKey, ICacheEntry?>(0);
             }
 
-            var cacheEntries = (IDictionary)field.GetValue(memoryCache);
-            var result = new Dictionary<TKey, ICacheEntry>(cacheEntries.Count);
+            var result = new Dictionary<TKey, ICacheEntry?>(cacheEntries.Count);
             foreach (DictionaryEntry e in cacheEntries)
-                result.Add((TKey)e.Key, (ICacheEntry)e.Value);
+                result.Add((TKey)e.Key, (ICacheEntry?)e.Value);
             return result;
         }
     }

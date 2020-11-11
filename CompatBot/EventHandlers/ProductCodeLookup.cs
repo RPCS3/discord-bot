@@ -27,28 +27,24 @@ namespace CompatBot.EventHandlers
                 return;
 
             var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
-            foreach (var msg in lastBotMessages)
-                if (BotReactionsHandler.NeedToSilence(msg).needToChill)
-                    return;
+            if (lastBotMessages.Any(msg => BotReactionsHandler.NeedToSilence(msg).needToChill))
+                return;
 
             lastBotMessages = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
-            StringBuilder previousRepliesBuilder = null;
-            foreach (var msg in lastBotMessages)
+            StringBuilder? previousRepliesBuilder = null;
+            foreach (var msg in lastBotMessages.Where(m => m.Author.IsCurrent))
             {
-                if (msg.Author.IsCurrent)
-                {
-                    previousRepliesBuilder ??= new StringBuilder();
-                    previousRepliesBuilder.AppendLine(msg.Content);
-                    var embeds = msg.Embeds;
-                    if (embeds?.Count > 0)
-                        foreach (var embed in embeds)
-                            previousRepliesBuilder.AppendLine(embed.Title).AppendLine(embed.Description);
-                }
+                previousRepliesBuilder ??= new StringBuilder();
+                previousRepliesBuilder.AppendLine(msg.Content);
+                var embeds = msg.Embeds;
+                if (embeds?.Count > 0)
+                    foreach (var embed in embeds)
+                        previousRepliesBuilder.AppendLine(embed.Title).AppendLine(embed.Description);
             }
             var previousReplies = previousRepliesBuilder?.ToString() ?? "";
 
             var codesToLookup = GetProductIds(args.Message.Content)
-                .Where(c => !previousReplies.Contains(c, StringComparison.InvariantCultureIgnoreCase))
+                .Where(pc => !previousReplies.Contains(pc, StringComparison.InvariantCultureIgnoreCase))
                 .Take(args.Channel.IsPrivate ? 50 : 5)
                 .ToList();
             if (codesToLookup.Count == 0)
@@ -95,7 +91,7 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static List<string> GetProductIds(string input)
+        public static List<string> GetProductIds(string? input)
         {
             if (string.IsNullOrEmpty(input))
                 return new List<string>(0);
@@ -106,7 +102,7 @@ namespace CompatBot.EventHandlers
                 .ToList();
         }
 
-        public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string code, string gameTitle = null, bool forLog = false, string category = null)
+        public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string? code, string? gameTitle = null, bool forLog = false, string? category = null)
         {
             if (string.IsNullOrEmpty(code))
                 return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog);
@@ -167,7 +163,7 @@ namespace CompatBot.EventHandlers
                     titleInfoEmbed.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
                 ))
             {
-                var sqvat = client.GetEmoji(":sqvat:", Config.Reactions.No);
+                var sqvat = client.GetEmoji(":sqvat:", Config.Reactions.No)!;
                 titleInfoEmbed.Title = "How about no (๑•ิཬ•ั๑)";
                 if (!string.IsNullOrEmpty(titleInfoEmbed.Thumbnail?.Url))
                     titleInfoEmbed.WithThumbnail("https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png");

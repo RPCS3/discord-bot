@@ -54,11 +54,12 @@ namespace CompatBot.EventHandlers
             if (cnfe.CommandName.Length < 3)
                 return;
 
-            var pos = e.Context.Message?.Content?.IndexOf(cnfe.CommandName) ?? -1;
+            var content = e.Context.Message.Content;
+            var pos = content?.IndexOf(cnfe.CommandName) ?? -1;
             if (pos < 0)
                 return;
 
-            var gameTitle = e.Context.Message.Content[pos..].TrimEager().Trim(40);
+            var gameTitle = content![pos..].TrimEager().Trim(40);
             if (string.IsNullOrEmpty(gameTitle) || char.IsPunctuation(gameTitle[0]))
                 return;
 
@@ -123,7 +124,6 @@ namespace CompatBot.EventHandlers
                 return;
             }
 
-
             var ch = await e.Context.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync(
                 $"I am not sure what you wanted me to do, please use one of the following commands:\n" +
@@ -165,6 +165,6 @@ namespace CompatBot.EventHandlers
             return allKnownBotCommands;
         }
 
-        private static List<string> allKnownBotCommands;
+        private static List<string>? allKnownBotCommands;
     }
 }

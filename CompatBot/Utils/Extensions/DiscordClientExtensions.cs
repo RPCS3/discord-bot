@@ -14,37 +14,33 @@ namespace CompatBot.Utils
 {
     public static class DiscordClientExtensions
     {
-        public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, ulong userId)
+        public static DiscordMember? GetMember(this DiscordClient client, DiscordGuild? guild, ulong userId)
         {
-            if (guild == null)
+            if (guild is null)
                 return GetMember(client, userId);
 
             return GetMember(client, guild.Id, userId);
         }
 
-        public static DiscordMember GetMember(this DiscordClient client, ulong guildId, ulong userId)
-        {
-            return (from g in client.Guilds
+        public static DiscordMember? GetMember(this DiscordClient client, ulong guildId, ulong userId)
+            => (from g in client.Guilds
                     where g.Key == guildId
                     from u in g.Value.Members.Values
                     where u.Id == userId
                     select u
                 ).FirstOrDefault();
-        }
 
-        public static DiscordMember GetMember(this DiscordClient client, ulong guildId, DiscordUser user) => GetMember(client, guildId, user.Id);
-        public static DiscordMember GetMember(this DiscordClient client, DiscordGuild guild, DiscordUser user) => GetMember(client, guild, user.Id);
+        public static DiscordMember? GetMember(this DiscordClient client, ulong guildId, DiscordUser user) => GetMember(client, guildId, user.Id);
+        public static DiscordMember? GetMember(this DiscordClient client, DiscordGuild? guild, DiscordUser user) => GetMember(client, guild, user.Id);
 
-        public static DiscordMember GetMember(this DiscordClient client, ulong userId)
-        {
-            return (from g in client.Guilds
+        public static DiscordMember? GetMember(this DiscordClient client, ulong userId)
+            => (from g in client.Guilds
                     from u in g.Value.Members.Values
                     where u.Id == userId
                     select u
                 ).FirstOrDefault();
-        }
 
-        public static DiscordMember GetMember(this DiscordClient client, DiscordUser user) => GetMember(client, user.Id);
+        public static DiscordMember? GetMember(this DiscordClient client, DiscordUser user) => GetMember(client, user.Id);
 
         public static async Task<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
         {
@@ -74,7 +70,7 @@ namespace CompatBot.Utils
             }
         }
 
-        public static async Task ReactWithAsync(this DiscordMessage message, DiscordEmoji emoji, string fallbackMessage = null, bool? showBoth = null)
+        public static async Task ReactWithAsync(this DiscordMessage message, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
         {
             try
             {
@@ -96,7 +92,7 @@ namespace CompatBot.Utils
             return RemoveReactionAsync(ctx.Message, emoji);
         }
 
-        public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string fallbackMessage = null, bool? showBoth = null)
+        public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
         {
             return ReactWithAsync(ctx.Message, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
         }
@@ -104,17 +100,17 @@ namespace CompatBot.Utils
         public static async Task<IReadOnlyCollection<DiscordMessage>> GetMessagesBeforeAsync(this DiscordChannel channel, ulong beforeMessageId, int limit = 100, DateTime? timeLimit = null)
         {
             if (timeLimit > DateTime.UtcNow)
-                throw new ArgumentException(nameof(timeLimit));
+                throw new ArgumentException("Time limit can't be set in the future", nameof(timeLimit));
 
             var afterTime = timeLimit ?? DateTime.UtcNow.AddSeconds(-30);
             var messages = await channel.GetMessagesBeforeCachedAsync(beforeMessageId, limit).ConfigureAwait(false);
             return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
         }
 
-        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string context, ReportSeverity severity, string actionList = null)
+        public static async Task<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? context, ReportSeverity severity, string? actionList = null)
         {
             var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-            if (logChannel == null)
+            if (logChannel is null)
                 return null;
 
             var embedBuilder = MakeReportTemplate(client, infraction, message, severity, actionList);
@@ -134,13 +130,11 @@ namespace CompatBot.Utils
             {
                 if (conents?.Count > 0)
                     foreach (var f in conents.Values)
-#pragma warning disable VSTHRD103
-                        f.Dispose();
-#pragma warning restore VSTHRD103
+                        await f.DisposeAsync();
             }
         }
 
-        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember> reporters, string comment, ReportSeverity severity)
+        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember> reporters, string? comment, ReportSeverity severity)
         {
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
             var embedBuilder = MakeReportTemplate(client, infraction, message, severity);
@@ -152,7 +146,7 @@ namespace CompatBot.Utils
             return await logChannel.SendMessageAsync(embed: embedBuilder.Build(), mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
         }
 
-        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember> potentialVictims, ReportSeverity severity)
+        public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember>? potentialVictims, ReportSeverity severity)
         {
             var result = new DiscordEmbedBuilder
             {
@@ -167,23 +161,15 @@ namespace CompatBot.Utils
         }
 
         public static string GetMentionWithNickname(this DiscordMember member)
+            => string.IsNullOrEmpty(member.Nickname) ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
+
+        public static string GetUsernameWithNickname(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
         {
-            if (member == null)
-                return null;
-
-            return string.IsNullOrEmpty(member.Nickname) ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
-        }
-
-        public static string GetUsernameWithNickname(this DiscordUser user, DiscordClient client, DiscordGuild guild = null)
-        {
-            if (user == null)
-                return null;
-
             return client.GetMember(guild, user).GetUsernameWithNickname()
-                ?? $"`{user.Username.Sanitize()}#{user.Discriminator}`";
+                   ?? $"`{user.Username.Sanitize()}#{user.Discriminator}`";
         }
 
-        public static string GetUsernameWithNickname(this DiscordMember member)
+        public static string? GetUsernameWithNickname(this DiscordMember? member)
         {
             if (member == null)
                 return null;
@@ -191,12 +177,10 @@ namespace CompatBot.Utils
             return string.IsNullOrEmpty(member.Nickname) ? $"`{member.Username.Sanitize()}#{member.Discriminator}`" : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
         }
 
-        public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, string fallbackEmoji = null)
-        {
-            return GetEmoji(client, emojiName, fallbackEmoji == null ? null : DiscordEmoji.FromUnicode(fallbackEmoji));
-        }
+        public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, string? fallbackEmoji = null)
+            => GetEmoji(client, emojiName, fallbackEmoji == null ? null : DiscordEmoji.FromUnicode(fallbackEmoji));
 
-        public static DiscordEmoji GetEmoji(this DiscordClient client, string emojiName, DiscordEmoji fallbackEmoji)
+        public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, DiscordEmoji? fallbackEmoji)
         {
             if (string.IsNullOrEmpty(emojiName))
                 return fallbackEmoji;
@@ -215,15 +199,14 @@ namespace CompatBot.Utils
             }
         }
 
-        public static Task SendMessageAsync(this DiscordChannel channel, string message, byte[] attachment, string filename)
+        public static Task SendMessageAsync(this DiscordChannel channel, string message, byte[]? attachment, string? filename)
         {
             if (!string.IsNullOrEmpty(filename) && attachment?.Length > 0)
                 return channel.SendFileAsync(filename, new MemoryStream(attachment), message);
-            else
-                return channel.SendMessageAsync(message);
+            return channel.SendMessageAsync(message);
         }
 
-        private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity, string actionList = null)
+        private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity, string? actionList = null)
         {
             var content = message.Content;
             if (message.Channel.IsPrivate)
@@ -248,7 +231,7 @@ namespace CompatBot.Utils
 
             if (string.IsNullOrEmpty(content))
                 content = "🤔 something fishy is going on here, there was no message or attachment";
-            DiscordMember author = null;
+            DiscordMember? author = null;
             try
             {
                 author = client.GetMember(message.Author);
@@ -261,7 +244,7 @@ namespace CompatBot.Utils
                 {
                     Title = infraction,
                     Color = GetColor(severity),
-                }.AddField("Violator", author == null ? message.Author.Mention : GetMentionWithNickname(author), true)
+                }.AddField("Violator", author is null ? message.Author.Mention : GetMentionWithNickname(author), true)
                 .AddField("Channel",  message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true)
                 //.AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
                 .AddField("Content of the offending item", content.Trim(EmbedPager.MaxFieldLength));

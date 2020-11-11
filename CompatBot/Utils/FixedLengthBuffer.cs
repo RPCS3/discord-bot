@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace CompatBot.Utils
 {
     internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
+        where TKey: notnull
     {
         internal readonly object syncObj = new object();
         
         public FixedLengthBuffer(Func<TValue, TKey> keyGenerator)
         {
-            makeKey = keyGenerator ?? throw new ArgumentNullException(nameof(keyGenerator));
+            makeKey = keyGenerator;
         }
 
         public FixedLengthBuffer<TKey, TValue> CloneShallow()
@@ -19,8 +21,8 @@ namespace CompatBot.Utils
             var result = new FixedLengthBuffer<TKey, TValue>(makeKey);
             foreach (var key in keyList)
                 result.keyList.Add(key);
-            foreach (var kvp in lookup)
-                result.lookup[kvp.Key] = kvp.Value;
+            foreach (var (key, value) in lookup)
+                result.lookup[key] = value;
             return result;
         }
 
@@ -29,7 +31,7 @@ namespace CompatBot.Utils
 
         public void Add(TValue item)
         {
-            TKey key = makeKey(item);
+            var key = makeKey(item);
             if (!lookup.ContainsKey(key))
                 keyList.Add(key);
             lookup[key] = item;
@@ -72,7 +74,7 @@ namespace CompatBot.Utils
         public TValue Evict(TKey key)
         {
             if (!lookup.TryGetValue(key, out var result))
-                return default;
+                return result;
             
             lookup.Remove(key);
             keyList.Remove(key);

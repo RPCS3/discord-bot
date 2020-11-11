@@ -28,7 +28,7 @@ namespace CompatBot.Commands
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
 
         [GroupCommand]
-        public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string searchStr = null)
+        public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string? searchStr = null)
         {
             var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
             if (openPrList == null)
@@ -45,7 +45,10 @@ namespace CompatBot.Commands
 
             if (!string.IsNullOrEmpty(searchStr))
             {
-                var filteredList = openPrList.Where(pr => pr.Title.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) || pr.User.Login.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                var filteredList = openPrList.Where(
+                    pr => pr.Title?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
+                          || pr.User?.Login?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
+                ).ToList();
                 if (filteredList.Count == 0)
                 {
                     var searchParts = searchStr.Split(' ', 2);
@@ -53,7 +56,10 @@ namespace CompatBot.Commands
                     {
                         var author = searchParts[0].Trim();
                         var substr = searchParts[1].Trim();
-                        openPrList = openPrList.Where(pr => pr.User.Login.Contains(author, StringComparison.InvariantCultureIgnoreCase) && pr.Title.Contains(substr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                        openPrList = openPrList.Where(
+                            pr => pr.User?.Login?.Contains(author, StringComparison.InvariantCultureIgnoreCase) is true
+                                  && pr.Title?.Contains(substr, StringComparison.InvariantCultureIgnoreCase) is true
+                        ).ToList();
                     }
                     else
                         openPrList = filteredList;
@@ -77,20 +83,20 @@ namespace CompatBot.Commands
             var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             const int maxTitleLength = 80;
             var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
-            var maxAuthor = openPrList.Max(pr => pr.User.Login.GetVisibleLength());
+            var maxAuthor = openPrList.Max(pr => (pr.User?.Login).GetVisibleLength());
             var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.GetVisibleLength()), maxTitleLength);
             var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
             foreach (var pr in openPrList)
-                result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRightVisible(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
+                result.Append('`').Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User?.Login?.PadRightVisible(maxAuthor)}: {pr.Title?.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
             await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
 
         public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)
         {
             var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
-            if (prInfo.Number == 0)
+            if (prInfo is null or {Number: 0})
             {
-                await message.ReactWithAsync(Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
+                await message.ReactWithAsync(Config.Reactions.Failure, prInfo?.Message ?? "PR not found").ConfigureAwait(false);
                 return;
             }
 
@@ -100,9 +106,9 @@ namespace CompatBot.Commands
             {
                 var windowsDownloadHeader = "Windows PR Build";
                 var linuxDownloadHeader = "Linux PR Build";
-                string windowsDownloadText = null;
-                string linuxDownloadText = null;
-                string buildTime = null;
+                string? windowsDownloadText = null;
+                string? linuxDownloadText = null;
+                string? buildTime = null;
 
                 var azureClient = Config.GetAzureDevOpsClient();
                 if (azureClient != null && prInfo.Head?.Sha is string commit)
@@ -204,7 +210,7 @@ namespace CompatBot.Commands
         public static async Task LinkIssue(DiscordClient client, DiscordMessage message, int issue)
         {
             var issueInfo = await githubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
-            if (issueInfo.Number == 0)
+            if (issueInfo is null or {Number: 0})
                 return;
 
             if (issueInfo.PullRequest != null)

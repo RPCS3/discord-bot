@@ -34,7 +34,7 @@ namespace CompatBot.EventHandlers
                     return;
 
             lastBotMessages = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
-            StringBuilder previousRepliesBuilder = null;
+            StringBuilder? previousRepliesBuilder = null;
             foreach (var msg in lastBotMessages)
             {
                 if (msg.Author.IsCurrent)

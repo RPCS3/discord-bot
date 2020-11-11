@@ -10,10 +10,10 @@ namespace CompatBot.Commands.Attributes
     {
         protected abstract Task<bool> IsAllowed(CommandContext ctx, bool help);
 
-        public DiscordEmoji ReactOnSuccess { get; }
-        public DiscordEmoji ReactOnFailure { get; }
+        public DiscordEmoji? ReactOnSuccess { get; }
+        public DiscordEmoji? ReactOnFailure { get; }
 
-        public CheckBaseAttributeWithReactions(DiscordEmoji reactOnSuccess = null, DiscordEmoji reactOnFailure = null)
+        public CheckBaseAttributeWithReactions(DiscordEmoji? reactOnSuccess = null, DiscordEmoji? reactOnFailure = null)
         {
             ReactOnSuccess = reactOnSuccess;
             ReactOnFailure = reactOnFailure;

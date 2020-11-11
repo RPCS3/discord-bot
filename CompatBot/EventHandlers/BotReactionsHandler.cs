@@ -127,7 +127,7 @@ namespace CompatBot.EventHandlers
 
             if (!string.IsNullOrEmpty(args.Message.Content) && Paws.Matches(args.Message.Content) is MatchCollection mc)
             {
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var matchedGroups = (from m in mc
                         from Group g in m.Groups
                         where g.Success && !string.IsNullOrEmpty(g.Value)
@@ -138,7 +138,7 @@ namespace CompatBot.EventHandlers
                 {
                     if (!db.Kot.Any(k => k.UserId == args.Author.Id))
                     {
-                        db.Kot.Add(new Kot {UserId = args.Author.Id});
+                        await db.Kot.AddAsync(new Kot {UserId = args.Author.Id}).ConfigureAwait(false);
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
@@ -146,7 +146,7 @@ namespace CompatBot.EventHandlers
                 {
                     if (!db.Doggo.Any(d => d.UserId == args.Author.Id))
                     {
-                        db.Doggo.Add(new Doggo {UserId = args.Author.Id});
+                        await db.Doggo.AddAsync(new Doggo {UserId = args.Author.Id}).ConfigureAwait(false);
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
@@ -159,7 +159,7 @@ namespace CompatBot.EventHandlers
             if (needToThank)
             {
                 DiscordEmoji emoji;
-                string thankYouMessage;
+                string? thankYouMessage;
                 lock (theDoor)
                 {
                     emoji = ThankYouReactions[rng.Next(ThankYouReactions.Length)];
@@ -198,7 +198,7 @@ namespace CompatBot.EventHandlers
 
         internal static (bool needToChill, bool needToThank) NeedToSilence(DiscordMessage msg)
         {
-            if (string.IsNullOrEmpty(msg?.Content))
+            if (string.IsNullOrEmpty(msg.Content))
                 return (false, false);
 
             var needToChill = false;
@@ -211,7 +211,7 @@ namespace CompatBot.EventHandlers
                                                   else
                                                       needToThank = true;
                                               });
-            var mentionsBot = msgContent.Contains("bot") || (msg.MentionedUsers?.Any(u => { try { return u.IsCurrent; } catch { return false; }}) ?? false);
+            var mentionsBot = msgContent.Contains("bot") || msg.MentionedUsers?.Any(u => { try { return u.IsCurrent; } catch { return false; }}) is true;
             return (needToChill && mentionsBot, needToThank && mentionsBot);
         }
     }

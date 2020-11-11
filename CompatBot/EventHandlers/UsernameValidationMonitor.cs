@@ -24,10 +24,10 @@ namespace CompatBot.EventHandlers
                 if (guildMember.IsWhitelisted())
                     return;
 
-                if (!(guild.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
+                if (guild.Permissions?.HasFlag(Permissions.ChangeNickname) is false)
                     return;
 
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var forcedNickname = await db.ForcedNicknames.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == guildMember.Id && x.GuildId == guildMember.Guild.Id).ConfigureAwait(false);
                 if (forcedNickname is null)
                     return;
@@ -51,46 +51,48 @@ namespace CompatBot.EventHandlers
             {
                 if (!once)
                     await Task.Delay(Config.ForcedNicknamesRecheckTimeInHours, Config.Cts.Token).ConfigureAwait(false);
-                if (await Moderation.Audit.CheckLock.WaitAsync(0).ConfigureAwait(false))
-                    try
-                    {
-                        foreach (var guild in client.Guilds.Values)
+                if (!await Moderation.Audit.CheckLock.WaitAsync(0).ConfigureAwait(false))
+                    continue;
+                
+                try
+                {
+                    foreach (var guild in client.Guilds.Values)
+                        try
                         {
-                            try
+                            if (guild.Permissions?.HasFlag(Permissions.ChangeNickname) is false)
+                                continue;
+
+                            await using var db = new BotDb();
+                            var forcedNicknames = await db.ForcedNicknames
+                                .Where(mem => mem.GuildId == guild.Id)
+                                .ToListAsync()
+                                .ConfigureAwait(false);
+                            if (forcedNicknames.Count == 0)
+                                continue;
+
+                            foreach (var forced in forcedNicknames)
                             {
-                                if (!(guild.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
+                                var member = client.GetMember(guild, forced.UserId);
+                                if (member is null || member.DisplayName == forced.Nickname)
                                     continue;
-
-                                using var db = new BotDb();
-                                var forcedNicknames = await db.ForcedNicknames
-                                    .Where(mem => mem.GuildId == guild.Id)
-                                    .ToListAsync()
-                                    .ConfigureAwait(false);
-                                if (forcedNicknames.Count == 0)
-                                    continue;
-
-                                foreach (var forced in forcedNicknames)
+                                
+                                try
                                 {
-                                    var member = client.GetMember(guild, forced.UserId);
-                                    if (member?.DisplayName != forced.Nickname)
-                                        try
-                                        {
-                                            await member.ModifyAsync(mem => mem.Nickname = forced.Nickname).ConfigureAwait(false);
-                                            Config.Log.Info($"Enforced nickname {forced.Nickname} for user {member.Id} ({member.Username}#{member.Discriminator})");
-                                        }
-                                        catch {}
+                                    await member.ModifyAsync(mem => mem.Nickname = forced.Nickname).ConfigureAwait(false);
+                                    Config.Log.Info($"Enforced nickname {forced.Nickname} for user {member.Id} ({member.Username}#{member.Discriminator})");
                                 }
-                            }
-                            catch (Exception e)
-                            {
-                                Config.Log.Error(e);
+                                catch { }
                             }
                         }
-                    }
-                    finally
-                    {
-                        Moderation.Audit.CheckLock.Release();
-                    }
+                        catch (Exception e)
+                        {
+                            Config.Log.Error(e);
+                        }
+                }
+                finally
+                {
+                    Moderation.Audit.CheckLock.Release();
+                }
             } while (!Config.Cts.IsCancellationRequested && !once);
         }
     }

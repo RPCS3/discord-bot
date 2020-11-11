@@ -48,7 +48,7 @@ namespace CompatBot.Utils
             width = new int[columns.Length];
             for (var i = 0; i < columns.Length; i++)
             {
-                this.columns[i] = columns[i].Name;
+                this.columns[i] = columns[i].Name ?? "";
                 disabled[i] = columns[i].Disabled;
                 maxWidth[i] = columns[i].MaxWidth;
                 width[i] = columns[i].Name.GetVisibleLength();

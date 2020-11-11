@@ -17,18 +17,18 @@ namespace CompatBot.Utils.Extensions
 
         public class BuildInfo
         {
-            public string Commit;
-            public string WindowsFilename;
-            public string LinuxFilename;
-            public string WindowsBuildDownloadLink;
-            public string LinuxBuildDownloadLink;
+            public string? Commit;
+            public string? WindowsFilename;
+            public string? LinuxFilename;
+            public string? WindowsBuildDownloadLink;
+            public string? LinuxBuildDownloadLink;
             public DateTime? StartTime;
             public DateTime? FinishTime;
             public BuildStatus? Status;
             public BuildResult? Result { get; set; }
         }
 
-        public static async Task<List<BuildInfo>> GetMasterBuildsAsync(this BuildHttpClient azureDevOpsClient, string oldestMergeCommit, string newestMergeCommit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
+        public static async Task<List<BuildInfo>?> GetMasterBuildsAsync(this BuildHttpClient? azureDevOpsClient, string? oldestMergeCommit, string? newestMergeCommit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
         {
             if (azureDevOpsClient == null || string.IsNullOrEmpty(oldestMergeCommit) || string.IsNullOrEmpty(newestMergeCommit))
                 return null;
@@ -57,7 +57,7 @@ namespace CompatBot.Utils.Extensions
             return builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken).GetAwaiter().GetResult()).ToList();
         }
 
-        public static async Task<BuildInfo> GetMasterBuildInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
+        public static async Task<BuildInfo?> GetMasterBuildInfoAsync(this BuildHttpClient? azureDevOpsClient, string? commit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
         {
             if (azureDevOpsClient == null || string.IsNullOrEmpty(commit))
                 return null;
@@ -91,7 +91,7 @@ namespace CompatBot.Utils.Extensions
             return result;
         }
 
-        public static async Task<BuildInfo> GetPrBuildInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, DateTime? oldestTimestamp, int pr, CancellationToken cancellationToken)
+        public static async Task<BuildInfo?> GetPrBuildInfoAsync(this BuildHttpClient? azureDevOpsClient, string? commit, DateTime? oldestTimestamp, int pr, CancellationToken cancellationToken)
         {
             if (azureDevOpsClient == null || string.IsNullOrEmpty(commit))
                 return null;
@@ -127,9 +127,6 @@ namespace CompatBot.Utils.Extensions
 
         public static async Task<BuildInfo> GetArtifactsInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, Build build, CancellationToken cancellationToken)
         {
-            if (azureDevOpsClient == null)
-                return null;
-
             var result = new BuildInfo
             {
                 Commit = commit,
@@ -149,7 +146,7 @@ namespace CompatBot.Utils.Extensions
                     try
                     {
                         using var httpClient = HttpClientFactory.Create();
-                        using var stream = await httpClient.GetStreamAsync(winDownloadUrl).ConfigureAwait(false);
+                        await using var stream = await httpClient.GetStreamAsync(winDownloadUrl, cancellationToken).ConfigureAwait(false);
                         using var zipStream = ReaderFactory.Open(stream);
                         while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                         {
@@ -176,7 +173,7 @@ namespace CompatBot.Utils.Extensions
                     try
                     {
                         using var httpClient = HttpClientFactory.Create();
-                        using var stream = await httpClient.GetStreamAsync(linDownloadUrl).ConfigureAwait(false);
+                        await using var stream = await httpClient.GetStreamAsync(linDownloadUrl, cancellationToken).ConfigureAwait(false);
                         using var zipStream = ReaderFactory.Open(stream);
                         while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                         {

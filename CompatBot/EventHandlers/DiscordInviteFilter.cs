@@ -183,7 +183,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(message))
                 return (false, false, new List<DiscordInvite>(0));
 
-            var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"]?.Value).Where(s => !string.IsNullOrEmpty(s)));
+            var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => !string.IsNullOrEmpty(s)));
             var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
             var attemptedWorkaround = false;
             if (author != null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string> recentInvites))
@@ -236,25 +236,34 @@ namespace CompatBot.EventHandlers
                                 {
                                     ["_token"] = csrfTokenMatch.Groups["csrf_token"].Value,
                                     ["serverEid"] = serverEidMatch.Groups["server_eid"].Value,
-                                }),
+                                }!),
                             };
                             postRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
                             postRequest.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
                             using var postResponse = await httpClient.SendAsync(postRequest).ConfigureAwait(false);
                             if (postResponse.StatusCode == HttpStatusCode.Redirect)
                             {
-                                var redirectId = postResponse.Headers.Location.Segments.Last();
-                                using var getDiscordRequest = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/server/join/redirect/" + redirectId);
-                                getDiscordRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                                getDiscordRequest.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
-                                using var discordRedirect = await httpClient.SendAsync(getDiscordRequest).ConfigureAwait(false);
-                                if (discordRedirect.StatusCode == HttpStatusCode.Redirect)
+                                var redirectId = postResponse.Headers.Location?.Segments.Last();
+                                if (redirectId != null)
                                 {
-                                    inviteCodes.Add(discordRedirect.Headers.Location.Segments.Last());
-                                    hasInvalidInvites = false;
+                                    using var getDiscordRequest = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/server/join/redirect/" + redirectId);
+                                    getDiscordRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
+                                    getDiscordRequest.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                                    using var discordRedirect = await httpClient.SendAsync(getDiscordRequest).ConfigureAwait(false);
+                                    if (discordRedirect.StatusCode == HttpStatusCode.Redirect)
+                                    {
+                                        var inviteCodeSegment = discordRedirect.Headers.Location?.Segments.Last();
+                                        if (inviteCodeSegment != null)
+                                        {
+                                            inviteCodes.Add(inviteCodeSegment);
+                                            hasInvalidInvites = false;
+                                        }
+                                    }
+                                    else
+                                        Config.Log.Warn($"Unexpected response code from GET discord redirect: {discordRedirect.StatusCode}");
                                 }
                                 else
-                                    Config.Log.Warn($"Unexpected response code from GET discord redirect: {discordRedirect.StatusCode}");
+                                    Config.Log.Warn($"Failed to get redirection URL from {postResponse.RequestMessage?.RequestUri}");
                             }
                             else
                                 Config.Log.Warn($"Unexpected response code from POST: {postResponse.StatusCode}");

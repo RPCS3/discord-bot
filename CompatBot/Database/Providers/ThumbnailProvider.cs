@@ -9,7 +9,9 @@ using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Caching.Memory;
+using PsnClient.POCOs;
 
 namespace CompatBot.Database.Providers
 {
@@ -19,8 +21,11 @@ namespace CompatBot.Database.Providers
         private static readonly PsnClient.Client PsnClient = new PsnClient.Client();
         private static readonly MemoryCache ColorCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
-        public static async Task<string> GetThumbnailUrlAsync(this DiscordClient client, string productCode)
+        public static async Task<string?> GetThumbnailUrlAsync(this DiscordClient client, string? productCode)
         {
+            if (string.IsNullOrEmpty(productCode))
+                return null;
+            
             productCode = productCode.ToUpperInvariant();
             var tmdbInfo = await PsnClient.GetTitleMetaAsync(productCode, Config.Cts.Token).ConfigureAwait(false);
             if (tmdbInfo?.Icon.Url is string tmdbIconUrl)
@@ -38,11 +43,8 @@ namespace CompatBot.Database.Providers
                     var gameTdbCoverUrl = await GameTdbScraper.GetThumbAsync(productCode).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(gameTdbCoverUrl))
                     {
-                        if (thumb == null)
-                        {
-                            var addResult = await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false);
-                            thumb = addResult.Entity;
-                        }
+                        if (thumb is null)
+                            thumb = (await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false)).Entity;
                         else
                             thumb.Url = gameTdbCoverUrl;
                         thumb.Timestamp = DateTime.UtcNow.Ticks;
@@ -53,47 +55,43 @@ namespace CompatBot.Database.Providers
                 if (thumb?.Url is string url && !string.IsNullOrEmpty(url))
                 {
                     var contentName = (thumb.ContentId ?? thumb.ProductCode);
-                    var embed = await GetEmbeddableUrlAsync(client, contentName, url).ConfigureAwait(false);
-
-                    if (embed.url != null)
+                    var (embedUrl, _) = await GetEmbeddableUrlAsync(client, contentName, url).ConfigureAwait(false);
+                    if (embedUrl != null)
                     {
-                        thumb.EmbeddableUrl = embed.url;
+                        thumb.EmbeddableUrl = embedUrl;
                         await db.SaveChangesAsync().ConfigureAwait(false);
-                        return embed.url;
+                        return embedUrl;
                     }
                 }
             }
             return null;
         }
 
-        public static async Task<string> GetTitleNameAsync(string productCode, CancellationToken cancellationToken)
+        public static async Task<string?> GetTitleNameAsync(string? productCode, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(productCode))
                 return null;
 
             productCode = productCode.ToUpperInvariant();
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             var thumb = await db.Thumbnail.FirstOrDefaultAsync(
                 t => t.ProductCode == productCode,
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
-            if (thumb?.Name is string title)
-                return title;
+            if (thumb?.Name is string result)
+                return result;
 
-            var meta = await PsnClient.GetTitleMetaAsync(productCode, cancellationToken).ConfigureAwait(false);
-            title = meta?.Name;
+            var title = (await PsnClient.GetTitleMetaAsync(productCode, cancellationToken).ConfigureAwait(false))?.Name;
             try
             {
                 if (!string.IsNullOrEmpty(title))
                 {
                     if (thumb == null)
-                        thumb = (
-                            await db.Thumbnail.AddAsync(new Thumbnail
-                            {
-                                ProductCode = productCode,
-                                Name = title,
-                            }, cancellationToken).ConfigureAwait(false)
-                        ).Entity;
+                        await db.Thumbnail.AddAsync(new Thumbnail
+                        {
+                            ProductCode = productCode,
+                            Name = title,
+                        }, cancellationToken).ConfigureAwait(false);
                     else
                         thumb.Name = title;
                     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -107,38 +105,38 @@ namespace CompatBot.Database.Providers
             return title;
         }
 
-        public static async Task<(string url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string url = null)
+        public static async Task<(string? url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string? url = null)
         {
             if (string.IsNullOrEmpty(contentId))
                 throw new ArgumentException("ContentID can't be empty", nameof(contentId));
 
             contentId = contentId.ToUpperInvariant();
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
             info ??= new Thumbnail{Url = url};
-            if (info.Url == null)
+            if (info.Url is null)
                 return (null, defaultColor);
 
             DiscordColor? analyzedColor = null;
             if (string.IsNullOrEmpty(info.EmbeddableUrl))
             {
-                var em = await GetEmbeddableUrlAsync(client, contentId, info.Url).ConfigureAwait(false);
-                if (em.url is string eUrl)
+                var (embedUrl, image) = await GetEmbeddableUrlAsync(client, contentId, info.Url).ConfigureAwait(false);
+                if (embedUrl is string eUrl)
                 {
                     info.EmbeddableUrl = eUrl;
-                    if (em.image is byte[] jpg)
+                    if (image is byte[] jpg)
                     {
                         Config.Log.Trace("Getting dominant color for " + eUrl);
                         analyzedColor = ColorGetter.Analyze(jpg, defaultColor);
-                        var c = analyzedColor.Value.Value;
-                        if (c != defaultColor.Value)
-                            info.EmbedColor = c;
+                        if (analyzedColor.HasValue
+                            && analyzedColor.Value.Value != defaultColor.Value)
+                            info.EmbedColor = analyzedColor.Value.Value;
                     }
                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                 }
             }
-            if ((!info.EmbedColor.HasValue && !analyzedColor.HasValue)
-                || (info.EmbedColor.HasValue && info.EmbedColor.Value == defaultColor.Value))
+            if (!info.EmbedColor.HasValue && !analyzedColor.HasValue
+                || info.EmbedColor.HasValue && info.EmbedColor.Value == defaultColor.Value)
             {
                 var c = await GetImageColorAsync(info.EmbeddableUrl, defaultColor).ConfigureAwait(false);
                 if (c.HasValue && c.Value.Value != defaultColor.Value)
@@ -151,15 +149,15 @@ namespace CompatBot.Database.Providers
             return (info.EmbeddableUrl, color);
         }
 
-        public static async Task<(string url, byte[] image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
+        public static async Task<(string? url, byte[]? image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
         {
             try
             {
                 if (!string.IsNullOrEmpty(Path.GetExtension(url)))
                     return (url, null);
 
-                using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
-                using var memStream = Config.MemoryStreamManager.GetStream();
+                await using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
+                await using var memStream = Config.MemoryStreamManager.GetStream();
                 await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
                 // minimum jpg size is 119 bytes, png is 67 bytes
                 if (memStream.Length < 64)
@@ -168,7 +166,7 @@ namespace CompatBot.Database.Providers
                 memStream.Seek(0, SeekOrigin.Begin);
                 var spam = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
                 var message = await spam.SendFileAsync(contentId + ".jpg", memStream, contentId).ConfigureAwait(false);
-                url = message.Attachments.First().Url;
+                url = message.Attachments[0].Url;
                 return (url, memStream.ToArray());
             }
             catch (Exception e)
@@ -178,7 +176,7 @@ namespace CompatBot.Database.Providers
             return (null, null);
         }
 
-        public static async Task<DiscordColor?> GetImageColorAsync(string url, DiscordColor? defaultColor = null)
+        public static async Task<DiscordColor?> GetImageColorAsync(string? url, DiscordColor? defaultColor = null)
         {
             try
             {
@@ -188,8 +186,8 @@ namespace CompatBot.Database.Providers
                 if (ColorCache.TryGetValue(url, out DiscordColor? result))
                     return result;
 
-                using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
-                using var memStream = Config.MemoryStreamManager.GetStream();
+                await using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
+                await using var memStream = Config.MemoryStreamManager.GetStream();
                 await imgStream.CopyToAsync(memStream).ConfigureAwait(false);
                 // minimum jpg size is 119 bytes, png is 67 bytes
                 if (memStream.Length < 64)

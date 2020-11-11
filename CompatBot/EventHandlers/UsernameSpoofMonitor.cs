@@ -26,14 +26,17 @@ namespace CompatBot.EventHandlers
             if (args.UserBefore.Username == args.UserAfter.Username)
                 return;
 
-            var potentialTargets = GetPotentialVictims(c, c.GetMember(args.UserAfter), true, false);
+            var m = c.GetMember(args.UserAfter);
+            if (m is null)
+                return;
+            
+            var potentialTargets = GetPotentialVictims(c, m, true, false);
             if (!potentialTargets.Any())
                 return;
 
             if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
-            var m = c.GetMember(args.UserAfter);
             await c.ReportAsync("🕵️ Potential user impersonation",
                 $"User {m.GetMentionWithNickname()} has changed their __username__ from " +
                 $"**{args.UserBefore.Username.Sanitize()}#{args.UserBefore.Discriminator}** to " +
@@ -77,7 +80,7 @@ namespace CompatBot.EventHandlers
                 ReportSeverity.Medium);
         }
 
-        internal static List<DiscordMember> GetPotentialVictims(DiscordClient client, DiscordMember newMember, bool checkUsername, bool checkNickname, List<DiscordMember> listToCheckAgainst = null)
+        internal static List<DiscordMember> GetPotentialVictims(DiscordClient client, DiscordMember newMember, bool checkUsername, bool checkNickname, List<DiscordMember>? listToCheckAgainst = null)
         {
             var membersWithRoles = listToCheckAgainst ??
                                    client.Guilds.SelectMany(guild => guild.Value.Members.Values)
@@ -125,28 +128,27 @@ namespace CompatBot.EventHandlers
 
         private static string GetCanonical(string name)
         {
-            string result;
             if (UsernameLock.Wait(0))
                 try
                 {
-                    if (UsernameMapping.TryGetValue(name, out result))
+                    if (UsernameMapping.TryGetValue(name, out var result))
                         return result;
                 }
                 finally
                 {
                     UsernameLock.Release();
                 }
-            result = name.ToCanonicalForm();
+            var canonicalName = name.ToCanonicalForm();
             if (UsernameLock.Wait(0))
                 try
                 {
-                    UsernameMapping[name] = result;
+                    UsernameMapping[name] = canonicalName;
                 }
                 finally
                 {
                     UsernameLock.Release();
                 }
-            return result;
+            return canonicalName;
         }
     }
 }

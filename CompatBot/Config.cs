@@ -30,8 +30,8 @@ namespace CompatBot
 {
     internal static class Config
     {
-        private static IConfigurationRoot config;
-        private static TelemetryClient telemetryClient;
+        private static IConfigurationRoot config = null!;
+        private static TelemetryClient? telemetryClient;
         private static readonly DependencyTrackingTelemetryModule dependencyTrackingTelemetryModule = new DependencyTrackingTelemetryModule();
         private static readonly PerformanceCollectorModule performanceCollectorModule = new PerformanceCollectorModule();
 
@@ -101,9 +101,9 @@ namespace CompatBot
                 if (SandboxDetector.Detect() == SandboxType.Docker)
                     return "/bot-config/credentials.json";
 
-                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
+                if (Assembly.GetEntryAssembly()?.GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute
+                    && Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId(attribute.UserSecretsId)) is string path)
                 {
-                    var path = Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId(attribute.UserSecretsId));
                     path = Path.Combine(path, "credentials.json");
                     if (File.Exists(path))
                         return path;
@@ -217,6 +217,7 @@ namespace CompatBot
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Error initializing settings: " + e.Message);
                 Console.ResetColor();
+                throw;
             }
         }
 
@@ -231,7 +232,7 @@ namespace CompatBot
 
         private static ILogger GetLog()
         {
-            var config = new NLog.Config.LoggingConfiguration();
+            var loggingConfig = new NLog.Config.LoggingConfiguration();
             var fileTarget = new FileTarget("logfile") {
                 FileName = CurrentLogPath,
                 ArchiveEvery = FileArchivePeriod.Day,
@@ -266,25 +267,25 @@ namespace CompatBot
                 new MethodCallParameter("${message}"),
             });
 #if DEBUG
-            config.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
+            loggingConfig.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
 #else
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
+            loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
 #endif
-            config.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, watchdogTarget);
+            loggingConfig.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
+            loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, watchdogTarget);
 
             var ignoreFilter1 = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')", Action = FilterResult.Ignore, };
             var ignoreFilter2 = new ConditionBasedFilter { Condition = "contains('${message}','One or more pre-execution checks failed')", Action = FilterResult.Ignore, };
-            foreach (var rule in config.LoggingRules)
+            foreach (var rule in loggingConfig.LoggingRules)
             {
                 rule.Filters.Add(ignoreFilter1);
                 rule.Filters.Add(ignoreFilter2);
             }
-            LogManager.Configuration = config;
+            LogManager.Configuration = loggingConfig;
             return LogManager.GetLogger("default");
         }
 
-        public static BuildHttpClient GetAzureDevOpsClient()
+        public static BuildHttpClient? GetAzureDevOpsClient()
         {
             if (string.IsNullOrEmpty(AzureDevOpsToken))
                 return null;
@@ -294,14 +295,14 @@ namespace CompatBot
             return azureConnection.GetClient<BuildHttpClient>();
         }
 
-        public static TelemetryClient TelemetryClient
+        public static TelemetryClient? TelemetryClient
         {
             get
             {
                 if (string.IsNullOrEmpty(AzureAppInsightsKey))
                     return null;
 
-                if (telemetryClient != null && telemetryClient.InstrumentationKey == AzureAppInsightsKey)
+                if (telemetryClient?.InstrumentationKey == AzureAppInsightsKey)
                     return telemetryClient;
 
                 var telemetryConfig = TelemetryConfiguration.CreateDefault();

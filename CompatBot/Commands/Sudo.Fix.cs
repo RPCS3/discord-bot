@@ -154,7 +154,7 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
             }
 
-            public static async Task<string> FixChannelMentionAsync(CommandContext ctx, string msg)
+            public static async Task<string?> FixChannelMentionAsync(CommandContext ctx, string? msg)
             {
                 if (string.IsNullOrEmpty(msg))
                     return msg;
