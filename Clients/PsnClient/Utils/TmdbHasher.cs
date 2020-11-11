@@ -17,9 +17,6 @@ namespace PsnClient.Utils
 
         public static byte[] FromHexString(this string hexString)
         {
-            if (hexString == null)
-                return null;
-
             if (hexString.Length == 0)
                 return Array.Empty<byte>();
 
@@ -34,9 +31,6 @@ namespace PsnClient.Utils
 
         public static string ToHexString(this byte[] array)
         {
-            if (array == null)
-                return null;
-
             if (array.Length == 0)
                 return "";
 

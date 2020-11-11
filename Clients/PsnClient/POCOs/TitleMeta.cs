@@ -2,6 +2,8 @@
 
 namespace PsnClient.POCOs
 {
+    #nullable disable
+    
     [XmlRoot("title-info")]
     public class TitleMeta
     {
@@ -32,4 +34,6 @@ namespace PsnClient.POCOs
         [XmlText]
         public string Url { get; set; }
     }
+    
+    #nullable restore
 }

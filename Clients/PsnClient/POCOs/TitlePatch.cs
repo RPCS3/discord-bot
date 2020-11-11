@@ -2,6 +2,8 @@
 
 namespace PsnClient.POCOs
 {
+    #nullable disable
+    
     [XmlRoot("titlepatch")]
     public class TitlePatch
     {
@@ -43,4 +45,6 @@ namespace PsnClient.POCOs
         [XmlElement("TITLE")]
         public string Title { get; set; }
     }
+    
+    #nullable restore
 }

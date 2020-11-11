@@ -7,19 +7,19 @@
     // this is item #6 in App array
     public sealed class AppLocales
     {
-        public string[] EnabledLocales; // "ar-AE",...
-        public AppLocaleOverride[] Overrides;
+        public string[]? EnabledLocales; // "ar-AE",...
+        public AppLocaleOverride[]? Overrides;
     }
 
     public sealed class AppLocaleOverride
     {
-        public AppLocaleOverrideCriteria Criteria;
-        public string GensenLocale; // "ar-AE"
+        public AppLocaleOverrideCriteria? Criteria;
+        public string? GensenLocale; // "ar-AE"
     }
 
     public sealed class AppLocaleOverrideCriteria
     {
-        public string Language; // "ar"
-        public string Country; // "AE|BH|KW|LB|OM|QA|SA"
+        public string? Language; // "ar"
+        public string? Country; // "AE|BH|KW|LB|OM|QA|SA"
     }
 }

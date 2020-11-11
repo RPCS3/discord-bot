@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,18 +13,16 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using Microsoft.Extensions.Caching.Memory;
-using Newtonsoft.Json;
 using PsnClient.POCOs;
 using PsnClient.Utils;
-using JsonContractResolver = CompatApiClient.JsonContractResolver;
 
 namespace PsnClient
 {
     public class Client
     {
         private readonly HttpClient client;
-        private readonly MediaTypeFormatterCollection dashedFormatters;
-        private readonly MediaTypeFormatterCollection underscoreFormatters;
+        private readonly JsonSerializerOptions dashedJson;
+        private readonly JsonSerializerOptions snakeJson;
         private readonly MediaTypeFormatterCollection xmlFormatters;
         private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
         private static readonly TimeSpan ResponseCacheDuration = TimeSpan.FromHours(1);
@@ -45,29 +45,24 @@ namespace PsnClient
         public Client()
         {
             client = HttpClientFactory.Create(new CustomTlsCertificatesHandler(), new CompressionMessageHandler());
-            var dashedSettings = new JsonSerializerSettings
+            dashedJson = new JsonSerializerOptions
             {
-                ContractResolver = new JsonContractResolver(NamingStyles.Dashed),
-                NullValueHandling = NullValueHandling.Ignore
+                PropertyNamingPolicy = SpecialJsonNamingPolicy.Dashed,
+                IgnoreNullValues = true,
+                IncludeFields = true,
             };
-            dashedFormatters = new MediaTypeFormatterCollection(new[] { new JsonMediaTypeFormatter { SerializerSettings = dashedSettings } });
-
-            var underscoreSettings = new JsonSerializerSettings
+            snakeJson = new JsonSerializerOptions
             {
-                ContractResolver = new JsonContractResolver(NamingStyles.Underscore),
-                NullValueHandling = NullValueHandling.Ignore
+                PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
+                IgnoreNullValues = true,
+                IncludeFields = true,
             };
-            underscoreFormatters = new MediaTypeFormatterCollection(new[] { new JsonMediaTypeFormatter { SerializerSettings = underscoreSettings } });
             xmlFormatters = new MediaTypeFormatterCollection(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
         }
 
-        public static string[] GetLocales()
-        {
-            // Sony removed the ability to get the full store list, now relying on geolocation service instead
-            return KnownStoreLocales;
-        }
+        public static string[] GetLocales() => KnownStoreLocales; // Sony removed the ability to get the full store list, now relying on geolocation service instead
 
-        public async Task<Stores> GetStoresAsync(string locale, CancellationToken cancellationToken)
+        public async Task<Stores?> GetStoresAsync(string locale, CancellationToken cancellationToken)
         {
             try
             {
@@ -78,7 +73,7 @@ namespace PsnClient
                 try
                 {
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    return await response.Content.ReadAsAsync<Stores>(underscoreFormatters, cancellationToken).ConfigureAwait(false);
+                    return await response.Content.ReadFromJsonAsync<Stores>(snakeJson, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -93,9 +88,9 @@ namespace PsnClient
             }
         }
 
-        public async Task<List<string>> GetMainPageNavigationContainerIdsAsync(string locale, CancellationToken cancellationToken)
+        public async Task<List<string>?> GetMainPageNavigationContainerIdsAsync(string locale, CancellationToken cancellationToken)
         {
-            HttpResponseMessage response = null;
+            HttpResponseMessage? response = null;
             try
             {
                 var baseUrl = $"https://store.playstation.com/{locale}/";
@@ -147,7 +142,7 @@ namespace PsnClient
             }
         }
 
-        public async Task<StoreNavigation> GetStoreNavigationAsync(string locale, string containerId, CancellationToken cancellationToken)
+        public async Task<StoreNavigation?> GetStoreNavigationAsync(string locale, string containerId, CancellationToken cancellationToken)
         {
             try
             {
@@ -161,7 +156,7 @@ namespace PsnClient
                         return null;
 
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    return await response.Content.ReadAsAsync<StoreNavigation>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                    return await response.Content.ReadFromJsonAsync<StoreNavigation>(dashedJson, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -176,7 +171,7 @@ namespace PsnClient
             }
         }
 
-        public async Task<Container> GetGameContainerAsync(string locale, string containerId, int start, int take, Dictionary<string, string> filters, CancellationToken cancellationToken)
+        public async Task<Container?> GetGameContainerAsync(string locale, string containerId, int start, int take, Dictionary<string, string> filters, CancellationToken cancellationToken)
         {
             try
             {
@@ -195,7 +190,7 @@ namespace PsnClient
                         return null;
 
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                    return await response.Content.ReadFromJsonAsync<Container>(dashedJson, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -210,7 +205,7 @@ namespace PsnClient
             }
         }
 
-        public async Task<Container> ResolveContentAsync(string locale, string contentId, int depth, CancellationToken cancellationToken)
+        public async Task<Container?> ResolveContentAsync(string locale, string contentId, int depth, CancellationToken cancellationToken)
         {
             try
             {
@@ -223,7 +218,7 @@ namespace PsnClient
                         return null;
 
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                    return await response.Content.ReadFromJsonAsync<Container>(dashedJson, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -238,7 +233,7 @@ namespace PsnClient
             }
         }
 
-        public async Task<TitlePatch> GetTitleUpdatesAsync(string productId, CancellationToken cancellationToken)
+        public async Task<TitlePatch?> GetTitleUpdatesAsync(string productId, CancellationToken cancellationToken)
         {
             if (ResponseCache.TryGetValue(productId, out TitlePatch patchInfo))
                 return patchInfo;
@@ -262,10 +257,10 @@ namespace PsnClient
             }
         }
 
-        public async Task<TitleMeta> GetTitleMetaAsync(string productId, CancellationToken cancellationToken)
+        public async Task<TitleMeta?> GetTitleMetaAsync(string productId, CancellationToken cancellationToken)
         {
             var id = productId + "_00";
-            if (ResponseCache.TryGetValue(id, out TitleMeta meta))
+            if (ResponseCache.TryGetValue(id, out TitleMeta? meta))
                 return meta;
 
             var hash = TmdbHasher.GetTitleHash(id);
@@ -296,7 +291,7 @@ namespace PsnClient
             }
         }
 
-        public async Task<Container> SearchAsync(string locale, string search, CancellationToken cancellationToken)
+        public async Task<Container?> SearchAsync(string locale, string search, CancellationToken cancellationToken)
         {
             try
             {
@@ -312,7 +307,7 @@ namespace PsnClient
                         return null;
 
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    return await response.Content.ReadAsAsync<Container>(dashedFormatters, cancellationToken).ConfigureAwait(false);
+                    return await response.Content.ReadFromJsonAsync<Container>(dashedJson, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -329,30 +324,25 @@ namespace PsnClient
 
         public async Task<List<FirmwareInfo>> GetHighestFwVersionAsync(CancellationToken cancellationToken)
         {
-            var tasks = new List<Task<FirmwareInfo>>(KnownFwLocales.Length);
+            var tasks = new List<Task<FirmwareInfo?>>(KnownFwLocales.Length);
             foreach (var fwLocale in KnownFwLocales)
                 tasks.Add(GetFwVersionAsync(fwLocale, cancellationToken));
             var allVersions = new List<FirmwareInfo>(KnownFwLocales.Length);
             foreach (var t in tasks)
                 try
                 {
-                    var ver = await t.ConfigureAwait(false);
-                    if (ver == null)
-                        continue;
-
-                    allVersions.Add(ver);
+                    if (await t.ConfigureAwait(false) is FirmwareInfo ver)
+                        allVersions.Add(ver);
                 }
                 catch { }
 
             allVersions = allVersions.OrderByDescending(fwi => fwi.Version).ToList();
-            if (allVersions.Any())
-            {
-                var maxFw = allVersions.First();
-                var result = allVersions.Where(fwi => fwi.Version == maxFw.Version).ToList();
-                return result;
-            }
+            if (allVersions.Count == 0)
+                return new List<FirmwareInfo>(0);
 
-            return new List<FirmwareInfo>(0);
+            var maxFw = allVersions.First();
+            var result = allVersions.Where(fwi => fwi.Version == maxFw.Version).ToList();
+            return result;
         }
 
         private async Task<string> GetSessionCookies(string locale, CancellationToken cancellationToken)
@@ -376,7 +366,7 @@ namespace PsnClient
                         {
                             ["country_code"] = country,
                             ["language_code"] = language,
-                        })
+                        }!)
                     };
                     using (authMessage)
                     using (response = await client.SendAsync(authMessage, cancellationToken).ConfigureAwait(false))
@@ -389,7 +379,7 @@ namespace PsnClient
                         }
                         catch (Exception e)
                         {
-                            ConsoleLogger.PrintError(e, response, tries > 2);
+                            ConsoleLogger.PrintError(e, response, tries > 1);
                             tries++;
                         }
                 }
@@ -405,7 +395,7 @@ namespace PsnClient
             throw new InvalidOperationException("Couldn't obtain web session");
         }
 
-        private async Task<FirmwareInfo> GetFwVersionAsync(string fwLocale, CancellationToken cancellationToken)
+        private async Task<FirmwareInfo?> GetFwVersionAsync(string fwLocale, CancellationToken cancellationToken)
         {
             var uri = new Uri($"http://f{fwLocale}01.ps3.update.playstation.net/update/ps3/list/{fwLocale}/ps3-updatelist.txt");
             try
@@ -422,20 +412,19 @@ namespace PsnClient
                     if (string.IsNullOrEmpty(data))
                         return null;
 
-                    if (FwVersionInfo.Match(data) is Match m && m.Success)
+                    if (FwVersionInfo.Match(data) is not Match m || !m.Success)
+                        return null;
+                    
+                    var ver = m.Groups["version"].Value;
+                    if (ver?.Length > 4)
                     {
-                        var ver = m.Groups["version"].Value;
-                        if (!string.IsNullOrEmpty(ver) && ver.Length > 4)
-                        {
-                            if (ver.EndsWith("00"))
-                                ver = ver[..4]; //4.85
-                            else
-                                ver = ver[..4] + "." + ver[4..].TrimEnd('0'); //4.851 -> 4.85.1
-                        }
-                        return new FirmwareInfo { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
+                        if (ver.EndsWith("00"))
+                            ver = ver[..4]; //4.85
+                        else
+                            ver = ver[..4] + "." + ver[4..].TrimEnd('0'); //4.851 -> 4.85.1
                     }
+                    return new FirmwareInfo { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
 
-                    return null;
                 }
                 catch (Exception e)
                 {

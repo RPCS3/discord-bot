@@ -1,5 +1,6 @@
 ﻿namespace PsnClient.POCOs
 {
+    #nullable disable
     public class StoreNavigation
     {
         public StoreNavigationData Data;
@@ -45,4 +46,5 @@
         public int? TemplateDefId;
         public bool IsSeparator;
     }
+    #nullable restore
 }

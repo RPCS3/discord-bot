@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Security;
@@ -12,7 +11,7 @@ namespace PsnClient
 {
     public class CustomTlsCertificatesHandler: HttpClientHandler
     {
-        private readonly Func<HttpRequestMessage, X509Certificate2, X509Chain, SslPolicyErrors, bool> defaultCertHandler;
+        private readonly Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool>? defaultCertHandler;
         private static readonly X509CertificateCollection CustomCACollecction = new X509Certificate2Collection();
         private static readonly ConcurrentDictionary<string, bool> ValidationCache = new ConcurrentDictionary<string, bool>(1, 5);
 
@@ -34,14 +33,18 @@ namespace PsnClient
                     using var stream = current.GetManifestResourceStream(resource);
                     using var memStream = ApiConfig.MemoryStreamManager.GetStream();
                     stream?.CopyTo(memStream);
-                    var cert = new X509Certificate2(memStream.ToArray());
+                    var certData = memStream.ToArray();
+                    if (certData.Length == 0)
+                        continue;
+                    
+                    var cert = new X509Certificate2(certData);
                     var cn = cert.GetNameInfo(X509NameType.SimpleName, false);
-                    if ((cn?.StartsWith("SCEI DNAS Root") ?? false))
-                    {
-                        CustomCACollecction.Add(cert);
-                        ApiConfig.Log.Debug($"Using Sony root CA with CN '{cn}' for custom certificate validation");
-                        importedCAs = true;
-                    }
+                    if (cn?.StartsWith("SCEI DNAS Root") is not true)
+                        continue;
+                    
+                    CustomCACollecction.Add(cert);
+                    ApiConfig.Log.Debug($"Using Sony root CA with CN '{cn}' for custom certificate validation");
+                    importedCAs = true;
                 }
             }
             catch (Exception e)
@@ -61,12 +64,12 @@ namespace PsnClient
             ServerCertificateCustomValidationCallback = IgnoreSonyRootCertificates;
         }
 
-        private bool IgnoreSonyRootCertificates(HttpRequestMessage requestMessage, X509Certificate2 certificate, X509Chain chain, SslPolicyErrors policyErrors)
+        private bool IgnoreSonyRootCertificates(HttpRequestMessage requestMessage, X509Certificate2? certificate, X509Chain? chain, SslPolicyErrors policyErrors)
         {
-            var issuer = certificate.GetNameInfo(X509NameType.SimpleName, true) ?? "unknown issuer";
+            var issuer = certificate?.GetNameInfo(X509NameType.SimpleName, true) ?? "unknown issuer";
             if (issuer.StartsWith("SCEI DNAS Root 0"))
             {
-                var thumbprint = certificate.GetCertHashString();
+                var thumbprint = certificate!.GetCertHashString();
                 if (ValidationCache.TryGetValue(thumbprint, out var result))
                     return result;
 
@@ -79,14 +82,14 @@ namespace PsnClient
                     policy.RevocationMode = X509RevocationMode.NoCheck;
                     if (customChain.Build(certificate) && customChain.ChainStatus.All(s => s.Status == X509ChainStatusFlags.NoError))
                     {
-                        ApiConfig.Log.Debug($"Successfully validated certificate {thumbprint} for {requestMessage.RequestUri.Host}");
+                        ApiConfig.Log.Debug($"Successfully validated certificate {thumbprint} for {requestMessage.RequestUri?.Host}");
                         result = true;
                     }
                     if (!result)
                         result = customChain.ChainStatus.All(s => s.Status == X509ChainStatusFlags.UntrustedRoot);
                     if (!result)
                     {
-                        ApiConfig.Log.Warn($"Failed to validate certificate {thumbprint} for {requestMessage.RequestUri.Host}");
+                        ApiConfig.Log.Warn($"Failed to validate certificate {thumbprint} for {requestMessage.RequestUri?.Host}");
                         foreach (var s in customChain.ChainStatus)
                             ApiConfig.Log.Debug($"{s.Status}: {s.StatusInformation}");
                     }
@@ -94,7 +97,7 @@ namespace PsnClient
                 }
                 catch (Exception e)
                 {
-                    ApiConfig.Log.Error(e, $"Failed to validate certificate {thumbprint} for {requestMessage.RequestUri.Host}");
+                    ApiConfig.Log.Error(e, $"Failed to validate certificate {thumbprint} for {requestMessage.RequestUri?.Host}");
                 }
                 return result;
             }
