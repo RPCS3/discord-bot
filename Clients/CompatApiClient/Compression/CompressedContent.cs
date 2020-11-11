@@ -13,12 +13,6 @@ namespace CompatApiClient.Compression
 
         public CompressedContent(HttpContent content, ICompressor compressor)
         {
-            if (content == null)
-                throw new ArgumentNullException(nameof(content));
-
-            if (compressor == null)
-                throw new ArgumentNullException(nameof(compressor));
-
             this.content = content;
             this.compressor = compressor;
             AddHeaders();
@@ -30,23 +24,17 @@ namespace CompatApiClient.Compression
             return false;
         }
 
-        protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
+        protected override async Task SerializeToStreamAsync(Stream stream, TransportContext? context)
         {
-            if (stream == null)
-                throw new ArgumentNullException(nameof(stream));
-
-            using (content)
-            {
-                var contentStream = await content.ReadAsStreamAsync().ConfigureAwait(false);
-                var compressedLength = await compressor.CompressAsync(contentStream, stream).ConfigureAwait(false);
-                Headers.ContentLength = compressedLength;
-            }
+            var contentStream = await content.ReadAsStreamAsync().ConfigureAwait(false);
+            var compressedLength = await compressor.CompressAsync(contentStream, stream).ConfigureAwait(false);
+            Headers.ContentLength = compressedLength;
         }
 
         private void AddHeaders()
         {
-            foreach (var header in content.Headers)
-                Headers.TryAddWithoutValidation(header.Key, header.Value);
+            foreach (var (key, value) in content.Headers)
+                Headers.TryAddWithoutValidation(key, value);
             Headers.ContentEncoding.Add(compressor.EncodingType);
             Headers.ContentLength = null;
         }

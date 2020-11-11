@@ -88,7 +88,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (StatusColors.TryGetValue(info.Status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
-                var onlineOnlypart = info.Network == true ? " 🌐" : "";
+                var onlineOnlypart = info.Network == 1 ? " 🌐" : "";
                 var pr = info.ToPrString(null, true);
                 var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
                 if (pr != null)

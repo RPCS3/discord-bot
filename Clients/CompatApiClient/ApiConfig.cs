@@ -64,6 +64,8 @@ namespace CompatApiClient
         public static readonly Dictionary<string, char> ReverseReleaseTypes;
 
         private static Dictionary<TV, TK> Reverse<TK, TV>(this Dictionary<TK, TV[]> dic, IEqualityComparer<TV> comparer)
+            where TK: notnull
+            where TV: notnull
         {
             return (
                 from kvp in dic
@@ -86,6 +88,8 @@ namespace CompatApiClient
             catch (Exception e)
             {
                 Log.Fatal(e);
+                ReverseDirections = new();
+                ReverseReleaseTypes = new();
             }
         }
     }

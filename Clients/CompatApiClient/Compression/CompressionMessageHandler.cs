@@ -14,12 +14,13 @@ namespace CompatApiClient.Compression
         public static readonly string[] DefaultContentEncodings = { "gzip", "deflate" };
         public static readonly string DefaultAcceptEncodings = "gzip, deflate";
 
-        private bool isServer;
-        private bool isClient => !isServer;
+        private readonly bool isServer;
+        private readonly bool isClient;
 
         public CompressionMessageHandler(bool isServer = false)
         {
             this.isServer = isServer;
+            isClient = !isServer;
             Compressors = new ICompressor[]
             {
                 new GZipCompressor(),
@@ -29,51 +30,37 @@ namespace CompatApiClient.Compression
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (isServer && request.Content?.Headers?.ContentEncoding != null)
+            if (isServer
+                && request.Content?.Headers.ContentEncoding != null
+                && request.Content.Headers.ContentEncoding.FirstOrDefault() is string serverEncoding
+                && Compressors.FirstOrDefault(c => c.EncodingType.Equals(serverEncoding, StringComparison.InvariantCultureIgnoreCase)) is ICompressor serverDecompressor)
             {
-                var encoding = request.Content.Headers.ContentEncoding.FirstOrDefault();
-                if (encoding != null)
-                {
-                    var compressor = Compressors.FirstOrDefault(c => c.EncodingType.Equals(encoding, StringComparison.InvariantCultureIgnoreCase));
-                    if (compressor != null)
-                        request.Content = new DecompressedContent(request.Content, compressor);
-                }
+                request.Content = new DecompressedContent(request.Content, serverDecompressor);
             }
-            if (isClient && (request.Method == HttpMethod.Post || request.Method == HttpMethod.Put) && request.Content != null && request.Headers != null && request.Headers.Contains(PostCompressionFlag))
+            else if (isClient
+                && (request.Method == HttpMethod.Post || request.Method == HttpMethod.Put)
+                && request.Content != null
+                && request.Headers.TryGetValues(PostCompressionFlag, out var compressionFlagValues)
+                && compressionFlagValues.FirstOrDefault() is string compressionFlag
+                && Compressors.FirstOrDefault(c => c.EncodingType.Equals(compressionFlag, StringComparison.InvariantCultureIgnoreCase)) is ICompressor clientCompressor)
             {
-                var encoding = request.Headers.GetValues(PostCompressionFlag).FirstOrDefault();
-                if (encoding != null)
-                {
-                    var compressor = Compressors.FirstOrDefault(c => c.EncodingType.Equals(encoding, StringComparison.InvariantCultureIgnoreCase));
-                    if (compressor != null)
-                        request.Content = new CompressedContent(request.Content, compressor);
-                }
+                request.Content = new CompressedContent(request.Content, clientCompressor);
             }
-            request.Headers?.Remove(PostCompressionFlag);
+            request.Headers.Remove(PostCompressionFlag);
             //ApiConfig.Log.Trace($"{request.Method} {request.RequestUri}");
             var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
             //ApiConfig.Log.Trace($"Response: {response.StatusCode} {request.RequestUri}");
-            if (isClient && response.Content?.Headers?.ContentEncoding != null)
+            if (isClient
+                && response.Content.Headers.ContentEncoding.FirstOrDefault() is string clientEncoding
+                && Compressors.FirstOrDefault(c => c.EncodingType.Equals(clientEncoding, StringComparison.InvariantCultureIgnoreCase)) is ICompressor clientDecompressor)
             {
-                var encoding = response.Content.Headers.ContentEncoding.FirstOrDefault();
-                if (encoding != null)
-                {
-                    var compressor = Compressors.FirstOrDefault(c => c.EncodingType.Equals(encoding, StringComparison.InvariantCultureIgnoreCase));
-                    if (compressor != null)
-                        response.Content = new DecompressedContent(response.Content, compressor);
-                }
+                response.Content = new DecompressedContent(response.Content, clientDecompressor);
             }
-            if (isServer && response.Content != null && request.Headers?.AcceptEncoding != null)
+            else if (isServer
+                && request.Headers.AcceptEncoding.FirstOrDefault() is {} acceptEncoding
+                && Compressors.FirstOrDefault(c => c.EncodingType.Equals(acceptEncoding.Value, StringComparison.InvariantCultureIgnoreCase)) is ICompressor serverCompressor)
             {
-                var encoding = request.Headers.AcceptEncoding.FirstOrDefault();
-                if (encoding == null)
-                    return response;
-
-                var compressor = Compressors.FirstOrDefault(c => c.EncodingType.Equals(encoding.Value, StringComparison.InvariantCultureIgnoreCase));
-                if (compressor == null)
-                    return response;
-
-                response.Content = new CompressedContent(response.Content, compressor);
+                response.Content = new CompressedContent(response.Content, serverCompressor);
             }
             return response;
         }

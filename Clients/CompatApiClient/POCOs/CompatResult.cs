@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace CompatApiClient.POCOs
 {
+    #nullable disable
+    
     public class CompatResult
     {
         public int ReturnCode;
@@ -23,17 +25,19 @@ namespace CompatApiClient.POCOs
         public static readonly TitleInfo Unknown = new TitleInfo { Status = "Unknown" };
 
         public string Title;
-        [JsonProperty(PropertyName = "alternative-title")]
+        [JsonPropertyName("alternative-title")]
         public string AlternativeTitle;
-        [JsonProperty(PropertyName = "wiki-title")]
+        [JsonPropertyName("wiki-title")]
         public string WikiTitle;
         public string Status;
         public string Date;
         public int Thread;
         public string Commit;
         public int? Pr;
-        public bool? Network;
+        public int? Network;
         public string Update;
         public bool? UsingLocalCache;
     }
+    
+    #nullable restore
 }

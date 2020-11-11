@@ -1,35 +1,35 @@
 ﻿using System;
 using System.Net.Http;
-using System.Net.Http.Formatting;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using Microsoft.Extensions.Caching.Memory;
-using Newtonsoft.Json;
 
 namespace CompatApiClient
 {
     public class Client: IDisposable
     {
         private readonly HttpClient client;
-        private readonly MediaTypeFormatterCollection formatters;
+        private readonly JsonSerializerOptions jsonOptions;
         private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
         public Client()
         {
             client = HttpClientFactory.Create(new CompressionMessageHandler());
-            var settings = new JsonSerializerSettings
+            jsonOptions = new JsonSerializerOptions
             {
-                ContractResolver = new JsonContractResolver(NamingStyles.Underscore),
-                NullValueHandling = NullValueHandling.Ignore
+                PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
+                IgnoreNullValues = true,
+                IncludeFields = true,
             };
-            formatters = new MediaTypeFormatterCollection(new[] {new JsonMediaTypeFormatter {SerializerSettings = settings}});
         }
 
         //todo: cache results
-        public async Task<CompatResult> GetCompatResultAsync(RequestBuilder requestBuilder, CancellationToken cancellationToken)
+        public async Task<CompatResult?> GetCompatResultAsync(RequestBuilder requestBuilder, CancellationToken cancellationToken)
         {
             var startTime = DateTime.UtcNow;
             var url = requestBuilder.Build();
@@ -43,9 +43,12 @@ namespace CompatApiClient
                     try
                     {
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        var result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
-                        result.RequestBuilder = requestBuilder;
-                        result.RequestDuration = DateTime.UtcNow - startTime;
+                        var result = await response.Content.ReadFromJsonAsync<CompatResult>(jsonOptions, cancellationToken).ConfigureAwait(false);
+                        if (result != null)
+                        {
+                            result.RequestBuilder = requestBuilder;
+                            result.RequestDuration = DateTime.UtcNow - startTime;
+                        }
                         return result;
                     }
                     catch (Exception e)
@@ -62,10 +65,10 @@ namespace CompatApiClient
             throw new HttpRequestException("Couldn't communicate with the API");
         }
 
-        public async Task<CompatResult> GetCompatListSnapshotAsync(CancellationToken cancellationToken)
+        public async Task<CompatResult?> GetCompatListSnapshotAsync(CancellationToken cancellationToken)
         {
             var url = "https://rpcs3.net/compatibility?api=v1&export";
-            if (ResponseCache.TryGetValue(url, out CompatResult result))
+            if (ResponseCache.TryGetValue(url, out CompatResult? result))
                 return result;
 
             var tries = 0;
@@ -78,7 +81,7 @@ namespace CompatApiClient
                     try
                     {
                         await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                        result = await response.Content.ReadAsAsync<CompatResult>(formatters, cancellationToken).ConfigureAwait(false);
+                        result = await response.Content.ReadFromJsonAsync<CompatResult>(jsonOptions, cancellationToken).ConfigureAwait(false);
                         if (result != null)
                             ResponseCache.Set(url, result, TimeSpan.FromDays(1));
                         return result;
@@ -97,7 +100,7 @@ namespace CompatApiClient
             throw new HttpRequestException("Couldn't communicate with the API");
         }
 
-        public async Task<UpdateInfo> GetUpdateAsync(CancellationToken cancellationToken, string commit = null)
+        public async Task<UpdateInfo?> GetUpdateAsync(CancellationToken cancellationToken, string? commit = null)
         {
             if (string.IsNullOrEmpty(commit))
                 commit = "somecommit";
@@ -110,7 +113,7 @@ namespace CompatApiClient
                     using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                     try
                     {
-                        return await response.Content.ReadAsAsync<UpdateInfo>(formatters, cancellationToken).ConfigureAwait(false);
+                        return await response.Content.ReadFromJsonAsync<UpdateInfo>(jsonOptions, cancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
@@ -128,7 +131,8 @@ namespace CompatApiClient
 
         public void Dispose()
         {
-            client?.Dispose();
+            GC.SuppressFinalize(this);
+            client.Dispose();
         }
     }
 }

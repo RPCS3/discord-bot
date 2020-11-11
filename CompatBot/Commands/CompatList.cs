@@ -438,20 +438,20 @@ namespace CompatBot.Commands
         internal static CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
         {
             var timer = Stopwatch.StartNew();
-            var title = requestBuilder.search;
+            var title = requestBuilder.Search;
             using var db = new ThumbnailDb();
             var matches = db.Thumbnail
                 .AsNoTracking()
                 .AsEnumerable()
                 .Select(t => (thumb: t, coef: title.GetFuzzyCoefficientCached(t.Name)))
                 .OrderByDescending(i => i.coef)
-                .Take(requestBuilder.amountRequested)
+                .Take(requestBuilder.AmountRequested)
                 .ToList();
             var result = new CompatResult
             {
                 RequestBuilder = requestBuilder,
                 ReturnCode = 0,
-                SearchTerm = requestBuilder.search,
+                SearchTerm = requestBuilder.Search,
                 Results = matches.ToDictionary(i => i.thumb.ProductCode, i => new TitleInfo
                 {
                     Status = i.thumb.CompatibilityStatus?.ToString() ?? "Unknown",
@@ -475,27 +475,19 @@ namespace CompatBot.Commands
             {
                 var authorMention = ctx.Channel.IsPrivate ? "You" : ctx.Message.Author.Mention;
                 var result = new StringBuilder();
-                if (string.IsNullOrEmpty(request.customHeader))
+                result.AppendLine($"{authorMention} searched for: ***{request.Search.Sanitize(replaceBackTicks: true)}***");
+                if (request.Search.Contains("persona", StringComparison.InvariantCultureIgnoreCase)
+                    || request.Search.Contains("p5", StringComparison.InvariantCultureIgnoreCase))
+                    result.AppendLine("Did you try searching for **__Unnamed__** instead?");
+                else if (!ctx.Channel.IsPrivate
+                         && ctx.Message.Author.Id == 197163728867688448
+                         && (compatResult.Results.Values.Any(i =>
+                             i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                             || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
+                )
                 {
-                    result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize(replaceBackTicks: true)}***");
-                    if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase)
-                        || request.search.Contains("p5", StringComparison.InvariantCultureIgnoreCase))
-                        result.AppendLine("Did you try searching for **__Unnamed__** instead?");
-                    else if (!ctx.Channel.IsPrivate
-                             && ctx.Message.Author.Id == 197163728867688448
-                             && (compatResult.Results.Values.Any(i =>
-                                 i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
-                                 || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
-                    )
-                    {
-                        var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
-                        result.AppendLine($"One day this meme will die {sqvat}");
-                    }
-                }
-                else
-                {
-                    var formattedHeader = string.Format(request.customHeader, authorMention, request.amountRequested, null, null);
-                    result.AppendLine(formattedHeader.Replace("   ", " ").Replace("  ", " "));
+                    var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
+                    result.AppendLine($"One day this meme will die {sqvat}");
                 }
                 result.AppendFormat(returnCode.info, compatResult.SearchTerm);
                 yield return result.ToString();
@@ -509,7 +501,7 @@ namespace CompatBot.Commands
                     if (trimmedList.Count > 0)
                         sortedList = trimmedList;
 
-                    var searchTerm = request.search ?? @"¯\_(ツ)_/¯";
+                    var searchTerm = request.Search ?? @"¯\_(ツ)_/¯";
                     var searchHits = sortedList.Where(t => t.score > 0.5
                                                            || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
                                                            || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
@@ -518,11 +510,11 @@ namespace CompatBot.Commands
                         StatsStorage.GameStatCache.TryGetValue(title, out int stat);
                         StatsStorage.GameStatCache.Set(title, ++stat, StatsStorage.CacheTime);
                     }
-                    foreach (var resultInfo in sortedList.Take(request.amountRequested))
+                    foreach (var resultInfo in sortedList.Take(request.AmountRequested))
                     {
                         var info = resultInfo.AsString();
 #if DEBUG
-                        info = $"{StringUtils.InvisibleSpacer}`{CompatApiResultUtils.GetScore(request.search, resultInfo.info):0.000000}` {info}";
+                        info = $"{StringUtils.InvisibleSpacer}`{CompatApiResultUtils.GetScore(request.Search, resultInfo.info):0.000000}` {info}";
 #endif
                         result.AppendLine(info);
                     }
