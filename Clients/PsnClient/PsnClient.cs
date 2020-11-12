@@ -171,17 +171,16 @@ namespace PsnClient
             }
         }
 
-        public async Task<Container?> GetGameContainerAsync(string locale, string containerId, int start, int take, Dictionary<string, string?>? filters, CancellationToken cancellationToken)
+        public async Task<Container?> GetGameContainerAsync(string locale, string containerId, int start, int take, Dictionary<string, string> filters, CancellationToken cancellationToken)
         {
             try
             {
                 var (language, country) = locale.AsLocaleData();
                 var url = new Uri($"https://store.playstation.com/valkyrie-api/{language}/{country}/999/container/{containerId}");
-                filters ??= new Dictionary<string, string?>();
                 filters["start"] = start.ToString();
                 filters["size"] = take.ToString();
                 filters["bucket"] = "games";
-                url = url.SetQueryParameters(filters);
+                url = url.SetQueryParameters(filters!);
                 using var message = new HttpRequestMessage(HttpMethod.Get, url);
                 using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
                 try

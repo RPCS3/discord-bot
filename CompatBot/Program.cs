@@ -39,12 +39,12 @@ namespace CompatBot
             if (args.Length > 0 && args[0] == "--dry-run")
             {
                 Console.WriteLine("Database path: " + Path.GetDirectoryName(Path.GetFullPath(DbImporter.GetDbPath("fake.db", Environment.SpecialFolder.ApplicationData))));
-                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() != null)
+                if (Assembly.GetEntryAssembly()?.GetCustomAttribute<UserSecretsIdAttribute>() != null)
                     Console.WriteLine("Bot config path: " + Path.GetDirectoryName(Path.GetFullPath(Config.GoogleApiConfigPath)));
                 return;
             }
 
-            if (Process.GetCurrentProcess().Id == 0)
+            if (Environment.ProcessId == 0)
                 Config.Log.Info("Well, this was unexpected");
             var singleInstanceCheckThread = new Thread(() =>
             {
@@ -95,11 +95,11 @@ namespace CompatBot
                     }
                 }
 
-                using (var db = new BotDb())
+                await using (var db = new BotDb())
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
-                using (var db = new ThumbnailDb())
+                await using (var db = new ThumbnailDb())
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
@@ -296,8 +296,8 @@ namespace CompatBot
                 }
 
                 ulong? channelId = null;
-                string restartMsg = null;
-                using (var db = new BotDb())
+                string? restartMsg = null;
+                await using (var db = new BotDb())
                 {
                     var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
                     if (chState != null)
@@ -312,7 +312,7 @@ namespace CompatBot
                         restartMsg = msgState.Value;
                         db.BotState.Remove(msgState);
                     }
-                    db.SaveChanges();
+                    await db.SaveChangesAsync().ConfigureAwait(false);
                 }
                 if (string.IsNullOrEmpty(restartMsg))
                     restartMsg = null;

@@ -15,11 +15,11 @@ namespace CompatBot.Utils.ResultFormatters
     {
         private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, LogParseState state, List<string> generalNotes)
         {
-            var items = state.CompleteCollection;
+            var items = state.CompletedCollection;
             var multiItems = state.CompleteMultiValueCollection;
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
-            int.TryParse(items["thread_count"], out var threadCount);
+            _ = int.TryParse(items["thread_count"], out var threadCount);
             if (items["disable_logs"] == EnabledMark)
                 notes.Add("❗ `Silence All Logs` is enabled, please disable and upload a new log");
             else if (!string.IsNullOrWhiteSpace(items["log_disabled_channels"])
@@ -83,8 +83,8 @@ namespace CompatBot.Utils.ResultFormatters
                     && !(items["resolution"] == "1920x1080"
                          && Known1080pIds.Contains(serial)))
                     notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
-                var dimensions = items["resolution"].Split("x");
-                if (dimensions.Length > 1
+                var dimensions = items["resolution"]?.Split("x");
+                if (dimensions?.Length > 1
                     && int.TryParse(dimensions[0], out var width)
                     && int.TryParse(dimensions[1], out var height))
                 {
@@ -172,7 +172,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var vsync = items["vsync"] == EnabledMark;
-            string vkPm;
+            string? vkPm;
             if (items["rsx_present_mode"] is string pm)
                 RsxPresentModeMap.TryGetValue(pm, out vkPm);
             else
@@ -354,8 +354,8 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckGt6Settings(serial, items, notes, generalNotes);
                 CheckSly4Settings(serial, items, notes);
                 CheckDragonsCrownSettings(serial, items, notes);
-                CheckLbpSettings(serial, items, notes, generalNotes);
-                CheckKillzone3Settings(serial, items, notes, ppuPatches, patchNames);
+                CheckLbpSettings(serial, items, generalNotes);
+                CheckKillzone3Settings(serial, items, notes, patchNames);
             }
             else if (items["game_title"] == "vsh.self")
                 CheckVshSettings(items, notes, generalNotes);
@@ -393,7 +393,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["shader_mode"] == "Interpreter only")
                 notes.Add("⚠ `Shader Interpreter Only` mode is not accurate and very demanding");
-            else if (!items["shader_mode"].StartsWith("Async"))
+            else if (items["shader_mode"]?.StartsWith("Async") is not true)
                 notes.Add("❔ Async shader compilation is disabled");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
                 && int.TryParse(driverRecoveryTimeout, out var drtValue)
@@ -579,7 +579,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckJojoSettings(string serial, LogParseState state, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
         {
-            var items = state.CompleteCollection;
+            var items = state.CompletedCollection;
             if (AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
             {
                 if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
@@ -733,7 +733,7 @@ namespace CompatBot.Utils.ResultFormatters
                     && items["spu_block_size"] is string blockSize
                     && blockSize != "Safe")
                     notes.Add("⚠ Please change `SPU Block Size` to `Safe` for this game");
-            */
+                */
             }
             else if (GowAscIds.Contains(serial))
                 generalNotes.Add("ℹ This game is known to be very unstable");
@@ -918,7 +918,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEA00321", "NPEA90084", "NPEA90085", "NPEA90086", "NPHA80140", "NPJA90178", "NPUA70133",
         };
 
-        private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
+        private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes, UniqueList<string> patchNames)
         {
             if (!Killzone3Ids.Contains(serial))
                 return;
@@ -1074,13 +1074,6 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ Please enable `Read Color Buffer`");
                         needChanges = true;
                     }
-/*
-                    if (items["write_depth_buffers"] == DisabledMark)
-                    {
-                        notes.Add("ℹ `Write Depth Buffers` might be required");
-                        needChanges = true;
-                    }
-*/
                     if (items["read_depth_buffer"] == DisabledMark)
                     {
                         notes.Add("ℹ `Read Depth Buffer` might be required");
@@ -1183,7 +1176,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPUA70117", "NPHA80163", // lbp2 demo and beta
         };
 
-        private static void CheckLbpSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        private static void CheckLbpSettings(string serial, NameValueCollection items, List<string> generalNotes)
         {
             if (!AllLbpGames.Contains(serial))
                 return;

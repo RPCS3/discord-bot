@@ -12,7 +12,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             LogSize = fileSize;
             if (fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
@@ -35,6 +35,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                     var memory = writer.GetMemory(Config.MinimumBufferSize);
                     read = await sourceStream.ReadAsync(memory, cancellationToken);
                     writer.Advance(read);
+                    SourcePosition = sourceStream.Position;
                     flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                 } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
             }

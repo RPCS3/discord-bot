@@ -21,7 +21,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
         {
-            var items = state.CompleteCollection;
+            var items = state.CompletedCollection;
             var multiItems = state.CompleteMultiValueCollection;
             var notes = new List<string>();
             var (_, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
@@ -35,8 +35,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (multiItems["fatal_error"] is UniqueList<string> fatalErrors && fatalErrors.Any())
             {
                 var contexts = multiItems["fatal_error_context"];
-                var reducedFatalErros = GroupSimilar(fatalErrors);
-                foreach (var (fatalError, count, similarity) in reducedFatalErros)
+                var reducedFatalErrors = GroupSimilar(fatalErrors);
+                foreach (var (fatalError, count, similarity) in reducedFatalErrors)
                 {
                     var knownFatal = false;
                     if (fatalError.Contains("psf.cpp", StringComparison.InvariantCultureIgnoreCase)
@@ -176,13 +176,13 @@ namespace CompatBot.Utils.ResultFormatters
                     items["ldr_disc_full"],
                     items["ldr_path_full"],
                     items["ldr_boot_path_full"],
-                    items["elf_boot_path_full"]
+                    items["elf_boot_path_full"],
                 }.Where(s => !string.IsNullOrEmpty(s));
                 const int maxPath = 260;
                 const int maxFolderPath = 260 - 1 - 8 - 3;
                 foreach (var p in knownPaths)
                 {
-                    if (p.Length > maxPath)
+                    if (p!.Length > maxPath)
                     {
                         notes.Add($"⚠ Some file paths are longer than {maxPath} characters");
                         break;
@@ -309,7 +309,7 @@ namespace CompatBot.Utils.ResultFormatters
 
                 if (cpu.StartsWith("Intel") || cpu.StartsWith("Pentium"))
                 {
-                    if (!items["cpu_extensions"].Contains("TSX")
+                    if (items["cpu_extensions"]?.Contains("TSX") is not true
                         && (cpu.Contains("Core2")
                             || cpu.Contains("Celeron")
                             || cpu.Contains("Atom")
@@ -323,9 +323,9 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
 
-            Version oglVersion = null;
+            Version? oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
-                Version.TryParse(oglVersionString, out oglVersion);
+                _ = Version.TryParse(oglVersionString, out oglVersion);
             if (items["glsl_version"] is string glslVersionString &&
                 Version.TryParse(glslVersionString, out var glslVersion))
             {
@@ -352,7 +352,7 @@ namespace CompatBot.Utils.ResultFormatters
                     var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
                     if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
                         modelNumber = modelNumber[1..];
-                    int.TryParse(modelNumber, out var modelNumberInt);
+                    _ = int.TryParse(modelNumber, out var modelNumberInt);
                     if (family == "UHD" || family == "Iris Plus" || modelNumberInt > 500 && modelNumberInt < 1000)
                         notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
                     else
@@ -566,12 +566,13 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["rap_file"] is UniqueList<string> raps && raps.Any())
             {
                 var limitTo = 5;
-                var licenseNames = raps
+                List<string> licenseNames = raps
                     .Select(Path.GetFileName)
+                    .Where(l => !string.IsNullOrEmpty(l))
                     .Distinct()
                     .Except(KnownBogusLicenses)
                     .OrderBy(l => l)
-                    .ToList();
+                    .ToList()!;
                 var formattedLicenseNames = licenseNames
                     .Select(p => $"{StringUtils.InvisibleSpacer}`{p}`")
                     .ToList();
@@ -591,7 +592,12 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.AddField("Missing Licenses", content);
 
                 var gameRegion = serial?.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
-                var dlcRegions = licenseNames.Select(n => n[9]).Concat(gameRegion).Distinct().ToArray();
+                var dlcRegions = licenseNames
+                    .Where(l => l.Length > 9)
+                    .Select(n => n[9])
+                    .Concat(gameRegion)
+                    .Distinct()
+                    .ToArray();
                 if (dlcRegions.Length > 1)
                     generalNotes.Add($"🤔 That is a very interesting DLC collection from {dlcRegions.Length} different regions");
                 if (KnownCustomLicenses.Overlaps(licenseNames))
@@ -602,10 +608,10 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static async Task<(bool irdChecked, bool broken, int longestPath)> HasBrokenFilesAsync(LogParseState state)
         {
-            var items = state.CompleteCollection;
+            var items = state.CompletedCollection;
             var multiItems = state.CompleteMultiValueCollection;
             var defaultLongestPath = "/PS3_GAME/USRDIR/".Length + (1+8+3)*2; // usually there's at least one more level for data files
-            if (!(items["serial"] is string productCode))
+            if (items["serial"] is not string productCode)
                 return (false, false, defaultLongestPath);
 
             if (!productCode.StartsWith("B") && !productCode.StartsWith("M"))
@@ -656,7 +662,10 @@ namespace CompatBot.Utils.ResultFormatters
                 return (true, true, longestPath);
             }
 
-            var knownDirs = new HashSet<string>(knownFiles.Select(f => Path.GetDirectoryName(f).Replace('\\', '/')),
+            var knownDirs = new HashSet<string>(
+                knownFiles
+                    .Select(f => Path.GetDirectoryName(f)?.Replace('\\', '/'))
+                    .Where(p => !string.IsNullOrEmpty(p))!,
                 StringComparer.InvariantCultureIgnoreCase);
             var brokenDirs = missingDirs.Where(knownDirs.Contains).ToList();
             if (brokenDirs.Count > 0)

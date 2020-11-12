@@ -21,7 +21,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         private static readonly Regex ExternalLink = new Regex(@"(?<onedrive_link>(https?://)?(1drv\.ms|onedrive\.live\.com)/[^>\s]+)", DefaultOptions);
         private static readonly Client client = new Client();
 
-        public async override Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public async override Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
                 return (null, null);
@@ -38,15 +38,16 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     if (m.Groups["onedrive_link"].Value is string lnk
                         && !string.IsNullOrEmpty(lnk)
                         && Uri.TryCreate(lnk, UriKind.Absolute, out var uri)
-                        && await client.ResolveContentLinkAsync(uri, Config.Cts.Token).ConfigureAwait(false) is DriveItemMeta itemMeta)
+                        && await client.ResolveContentLinkAsync(uri, Config.Cts.Token).ConfigureAwait(false) is DriveItemMeta itemMeta
+                        && itemMeta.ContentDownloadUrl is string downloadUrl)
                     {
                         try
                         {
-                            var filename = itemMeta.Name;
+                            var filename = itemMeta.Name ?? "";
                             var filesize = itemMeta.Size;
-                            uri = new Uri(itemMeta.ContentDownloadUrl);
+                            uri = new Uri(downloadUrl);
 
-                            using var stream = await httpClient.GetStreamAsync(uri).ConfigureAwait(false);
+                            await using var stream = await httpClient.GetStreamAsync(uri).ConfigureAwait(false);
                             var buf = bufferPool.Rent(SnoopBufferSize);
                             try
                             {
@@ -102,7 +103,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 using var client = HttpClientFactory.Create();
-                using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                await using var stream = await client.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
                 await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }

@@ -26,16 +26,14 @@ namespace CompatBot.EventHandlers
 
         public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
-            if (DefaultHandlerFilter.IsFluff(args?.Message))
+            if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
 
-#if !DEBUG
-            if (!"help".Equals(args?.Channel?.Name, StringComparison.InvariantCultureIgnoreCase))
+            if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
             if (DateTime.UtcNow - lastMention < ThrottlingThreshold)
                 return;
-#endif
 
             var match = UploadLogMention.Match(args.Message.Content);
             if (!match.Success || string.IsNullOrEmpty(match.Groups["help"].Value))
@@ -50,7 +48,7 @@ namespace CompatBot.EventHandlers
                 var lastBotMessages = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id, 10).ConfigureAwait(false);
                 foreach (var msg in lastBotMessages)
                     if (BotReactionsHandler.NeedToSilence(msg).needToChill
-                        || (msg.Author.IsCurrent && msg.Content == explanation.Text))
+                        || msg.Author.IsCurrent && msg.Content == explanation.Text)
                         return;
 
                 await args.Channel.SendMessageAsync(explanation.Text, explanation.Attachment, explanation.AttachmentFilename).ConfigureAwait(false);
@@ -64,7 +62,7 @@ namespace CompatBot.EventHandlers
 
         public static async Task<Explanation> GetExplanationAsync(string term)
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
             return result ?? DefaultExplanation[term];
         }

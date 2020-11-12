@@ -22,7 +22,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
         private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
 
-        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
                 return (null, null);
@@ -45,15 +45,15 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         var fileInfoRequest = client.Files.Get(fid);
                         fileInfoRequest.Fields = "name, size, kind";
                         var fileMeta = await fileInfoRequest.ExecuteAsync(Config.Cts.Token).ConfigureAwait(false);
-                        if (fileMeta.Kind == "drive#file")
+                        if (fileMeta.Kind == "drive#file" && fileMeta.Size > 0)
                         {
                             var buf = bufferPool.Rent(SnoopBufferSize);
                             try
                             {
                                 int read;
-                                using (var stream = new MemoryStream(buf, true))
+                                await using (var stream = new MemoryStream(buf, true))
                                 {
-                                    var limit = Math.Min(SnoopBufferSize, (int)fileMeta.Size) - 1;
+                                    var limit = Math.Min(SnoopBufferSize, fileMeta.Size.Value) - 1;
                                     var progress = await fileInfoRequest.DownloadRangeAsync(stream, new RangeHeaderValue(0, limit), Config.Cts.Token).ConfigureAwait(false);
                                     if (progress.Status != DownloadStatus.Completed)
                                         continue;
@@ -103,9 +103,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
-            private FilesResource.GetRequest fileInfoRequest;
-            private FileMeta fileMeta;
-            private IArchiveHandler handler;
+            private readonly FilesResource.GetRequest fileInfoRequest;
+            private readonly FileMeta fileMeta;
+            private readonly IArchiveHandler handler;
 
             public GoogleDriveSource(FilesResource.GetRequest fileInfoRequest, FileMeta fileMeta, IArchiveHandler handler)
             {
@@ -119,9 +119,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                 try
                 {
                     var pipe = new Pipe();
-                    using var pushStream = pipe.Writer.AsStream();
+                    await using var pushStream = pipe.Writer.AsStream();
                     var progressTask = fileInfoRequest.DownloadAsync(pushStream, cancellationToken);
-                    using var pullStream = pipe.Reader.AsStream();
+                    await using var pullStream = pipe.Reader.AsStream();
                     var pipingTask = handler.FillPipeAsync(pullStream, writer, cancellationToken);
                     var result = await progressTask.ConfigureAwait(false);
                     if (result.Status != DownloadStatus.Completed)

@@ -13,6 +13,6 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         protected const int SnoopBufferSize = 4096;
         internal static readonly ArrayPool<byte> bufferPool = ArrayPool<byte>.Create(SnoopBufferSize, 64);
 
-        public abstract Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
+        public abstract Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
     }
 }

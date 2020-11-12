@@ -38,12 +38,12 @@ namespace CompatBot.Commands
             );
             foreach (var item in whitelistedInvites)
             {
-                string guildName = null;
+                string? guildName = null;
                 if (!string.IsNullOrEmpty(item.InviteCode))
                     try
                     {
                         var invite = await ctx.Client.GetInviteByCodeAsync(item.InviteCode).ConfigureAwait(false);
-                        guildName = invite?.Guild.Name;
+                        guildName = invite.Guild.Name;
                     }
                     catch { }
                 if (string.IsNullOrEmpty(guildName))

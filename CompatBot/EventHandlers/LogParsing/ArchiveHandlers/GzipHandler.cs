@@ -15,7 +15,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (header.Length >= Header.Length)
             {
@@ -31,8 +31,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
 
         public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
         {
-            using var statsStream = new BufferCopyStream(sourceStream);
-            using var gzipStream = new GZipStream(statsStream, CompressionMode.Decompress);
+            await using var statsStream = new BufferCopyStream(sourceStream);
+            await using var gzipStream = new GZipStream(statsStream, CompressionMode.Decompress);
             try
             {
                 int read;
@@ -44,7 +44,6 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                     writer.Advance(read);
                     SourcePosition = statsStream.Position;
                     flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                    SourcePosition = statsStream.Position;
                 } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
 
                 var buf = statsStream.GetBufferedBytes();

@@ -40,7 +40,7 @@ namespace CompatBot.Commands
                 };
                 git.Start();
                 var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-                git.WaitForExit();
+                await git.WaitForExitAsync().ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(stdout))
                     await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
             }
@@ -51,7 +51,7 @@ namespace CompatBot.Commands
             {
                 if (await lockObj.WaitAsync(0).ConfigureAwait(false))
                 {
-                    DiscordMessage msg = null;
+                    DiscordMessage? msg = null;
                     try
                     {
                         Config.Log.Info("Checking for available updates...");
@@ -69,7 +69,7 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updating failed: " + e.Message).ConfigureAwait(false);
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updating failed: " + e.Message).ConfigureAwait(false);
                     }
                     finally
                     {
@@ -86,7 +86,7 @@ namespace CompatBot.Commands
             {
                 if (await lockObj.WaitAsync(0).ConfigureAwait(false))
                 {
-                    DiscordMessage msg = null;
+                    DiscordMessage? msg = null;
                     try
                     {
                         msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
@@ -96,7 +96,7 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting failed: " + e.Message).ConfigureAwait(false);
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting failed: " + e.Message).ConfigureAwait(false);
                     }
                     finally
                     {
@@ -126,7 +126,7 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    using var db = new BotDb();
+                    await using var db = new BotDb();
                     var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
                     var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
                     if (Enum.TryParse(activity, true, out ActivityType activityType)
@@ -164,7 +164,7 @@ namespace CompatBot.Commands
                     try
                     {
                         await CompatList.ImportMetacriticScoresAsync().ConfigureAwait(false);
-                        using var db = new ThumbnailDb();
+                        await using var db = new ThumbnailDb();
                         var linkedItems = await db.Thumbnail.CountAsync(i => i.MetacriticId != null).ConfigureAwait(false);
                         await ctx.RespondAsync($"Importing Metacritic info was successful, linked {linkedItems} items").ConfigureAwait(false);
                     }
@@ -190,7 +190,7 @@ namespace CompatBot.Commands
                 };
                 git.Start();
                 var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-                git.WaitForExit();
+                await git.WaitForExitAsync().ConfigureAwait(false);
                 if (string.IsNullOrEmpty(stdout))
                     return (false, stdout);
 
@@ -200,7 +200,7 @@ namespace CompatBot.Commands
                 return (true, stdout);
             }
 
-            internal static void Restart(ulong channelId, string restartMsg)
+            internal static void Restart(ulong channelId, string? restartMsg)
             {
                 Config.Log.Info($"Saving channelId {channelId} into settings...");
                 using var db = new BotDb();

@@ -212,7 +212,7 @@ namespace CompatBot.Commands
             ContentFilter.RebuildMatcher();
         }
 
-        private async Task EditFilterCmd(CommandContext ctx, BotDb db, Piracystring filter)
+        private static async Task EditFilterCmd(CommandContext ctx, BotDb db, Piracystring filter)
         {
             var (success, msg) = await EditFilterPropertiesAsync(ctx, db, filter).ConfigureAwait(false);
             if (success)
@@ -273,9 +273,10 @@ namespace CompatBot.Commands
                     "Any simple string that is used to flag potential content for a check using Validation regex.\n" +
                     "**Must** be sufficiently long to reduce the number of checks."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **trigger**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **trigger**", embed: embed).ConfigureAwait(false);
+            var tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -317,9 +318,10 @@ namespace CompatBot.Commands
                     $"**`L`** = **`{FilterContext.Log}`** will apply it during log parsing.\n" +
                     "Reactions will toggle the context, text message will set the specified flags."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **context(s)**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterC, letterL, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **context(s)**", embed: embed).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterC, letterL, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -388,9 +390,10 @@ namespace CompatBot.Commands
                     $"**`U`** = **`{FilterAction.MuteModQueue}`** mute mod queue reporting for this action.\n" +
                     "Reactions will toggle the action, text message will set the specified flags."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **action(s)**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterR, letterW, letterM, letterE, letterU, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **action(s)**", embed: embed).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterR, letterW, letterM, letterE, letterU, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -497,10 +500,11 @@ namespace CompatBot.Commands
                     "**Please [test](https://regex101.com/) your regex**. Following flags are enabled: Multiline, IgnoreCase.\n" +
                     "Additional validation can help reduce false positives of a plaintext trigger match."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             var next = (filter.Actions & (FilterAction.SendMessage | FilterAction.ShowExplain)) == 0 ? firstPage : nextPage;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (string.IsNullOrEmpty(filter.ValidatingRegex) ? null : trash), (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (string.IsNullOrEmpty(filter.ValidatingRegex) ? null : trash), (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -554,10 +558,11 @@ namespace CompatBot.Commands
                     "Optional custom message sent to the user.\n" +
                     "If left empty, default piracy warning message will be used."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             next = (filter.Actions.HasFlag(FilterAction.ShowExplain) ? nextPage : firstPage);
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -594,9 +599,10 @@ namespace CompatBot.Commands
                     "Explanation term that is used to show an explanation.\n" +
                     "**__Currently not implemented__**."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **explanation term**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **explanation term**", embed: embed).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -641,9 +647,10 @@ namespace CompatBot.Commands
             if (errorMsg == null && !filter.IsComplete())
                 errorMsg = "Some required properties are not defined";
             embed = FormatFilter(filter, errorMsg);
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)

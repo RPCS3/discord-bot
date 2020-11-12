@@ -15,7 +15,7 @@ namespace CompatBot.Utils
             this InteractivityExtension interactivity,
             DiscordMessage message,
             DiscordUser user,
-            params DiscordEmoji[] reactions)
+            params DiscordEmoji?[] reactions)
             => WaitForMessageOrReactionAsync(interactivity, message, user, null, reactions);
 
         public static async Task<(DiscordMessage? message, DiscordMessage? text, MessageReactionAddEventArgs? reaction)> WaitForMessageOrReactionAsync(

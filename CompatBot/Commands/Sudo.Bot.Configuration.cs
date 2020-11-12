@@ -23,17 +23,17 @@ namespace CompatBot.Commands
                 [Description("Lists set variable names")]
                 public async Task List(CommandContext ctx)
                 {
-                    using var db = new BotDb();
-                    var setVars = await db.BotState.AsNoTracking().Where(v => v.Key.StartsWith(SqlConfiguration.ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
+                    await using var db = new BotDb();
+                    var setVars = await db.BotState.AsNoTracking().Where(v => v.Key != null && v.Key.StartsWith(SqlConfiguration.ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
                     if (setVars.Any())
                     {
                         var result = new StringBuilder("Set variables:").AppendLine();
                         foreach (var v in setVars)
                         {
 #if DEBUG
-                            result.Append(v.Key[SqlConfiguration.ConfigVarPrefix.Length ..]).Append(" = ").AppendLine(v.Value);
+                            result.Append(v.Key![SqlConfiguration.ConfigVarPrefix.Length ..]).Append(" = ").AppendLine(v.Value);
 #else
-                            result.AppendLine(v.Key[(SqlConfiguration.ConfigVarPrefix.Length)..]);
+                            result.AppendLine(v.Key![(SqlConfiguration.ConfigVarPrefix.Length)..]);
 #endif
                         }
                         await ctx.RespondAsync(result.ToString()).ConfigureAwait(false);
@@ -49,12 +49,12 @@ namespace CompatBot.Commands
                     Config.inMemorySettings[key] = value;
                     Config.RebuildConfiguration();
                     key = SqlConfiguration.ConfigVarPrefix + key;
-                    using var db = new BotDb();
+                    await using var db = new BotDb();
                     var v = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
                     if (v == null)
                     {
                         v = new BotState {Key = key, Value = value};
-                        db.BotState.Add(v);
+                        await db.BotState.AddAsync(v).ConfigureAwait(false);
                     }
                     else
                         v.Value = value;
@@ -69,7 +69,7 @@ namespace CompatBot.Commands
                     Config.inMemorySettings.TryRemove(key, out _);
                     Config.RebuildConfiguration();
                     key = SqlConfiguration.ConfigVarPrefix + key;
-                    using var db = new BotDb();
+                    await using var db = new BotDb();
                     var v = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
                     if (v != null)
                     {

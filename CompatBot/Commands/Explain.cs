@@ -258,7 +258,7 @@ namespace CompatBot.Commands
                 term = term.ToLowerInvariant().StripQuotes();
                 await using var db = new BotDb();
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-                if (item == null)
+                if (item is null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
                 else
                 {
@@ -275,7 +275,7 @@ namespace CompatBot.Commands
                 term = term.ToLowerInvariant().StripQuotes();
                 await using var db = new BotDb();
                 var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-                if (item == null)
+                if (item is null)
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
                 else if (string.IsNullOrEmpty(item.AttachmentFilename))
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` doesn't have any attachments").ConfigureAwait(false);
@@ -314,7 +314,7 @@ namespace CompatBot.Commands
 
         [Command("dump"), Aliases("download")]
         [Description("Returns explanation text as a file attachment")]
-        public async Task Dump(CommandContext ctx, [RemainingText, Description("Term to dump **or** a link to a message containing the explanation")] string termOrLink = null)
+        public async Task Dump(CommandContext ctx, [RemainingText, Description("Term to dump **or** a link to a message containing the explanation")] string? termOrLink = null)
         {
             if (string.IsNullOrEmpty(termOrLink))
             {
@@ -336,7 +336,7 @@ namespace CompatBot.Commands
 
             await using var db = new BotDb();
             var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == termOrLink).ConfigureAwait(false);
-            if (item == null)
+            if (item is null)
             {
                 var term = ctx.Message.Content.Split(' ', 2).Last();
                 await ShowExplanation(ctx, term).ConfigureAwait(false);

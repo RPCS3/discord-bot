@@ -306,7 +306,7 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 foreach (var key in keys)
                 {
-                    if (state.CompleteCollection?[key] is string value)
+                    if (state.CompletedCollection?[key] is string value)
                         state.WipCollection[key] = value;
                     if (state.CompleteMultiValueCollection?[key] is UniqueList<string> collection)
                         state.WipMultiValueCollection[key] = collection;
@@ -329,7 +329,7 @@ namespace CompatBot.EventHandlers.LogParsing
 
         private static void MarkAsComplete(LogParseState state)
         {
-            state.CompleteCollection = state.WipCollection;
+            state.CompletedCollection = state.WipCollection;
             state.CompleteMultiValueCollection = state.WipMultiValueCollection;
             Config.Log.Trace("----- complete section");
         }

@@ -18,25 +18,22 @@ namespace CompatBot.Database.Providers
 {
     internal static class ContentFilter
     {
-        private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>> filters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>>();
+        private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?> filters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
         private static readonly MemoryCache ResponseAntispamCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
         private static readonly MemoryCache ReportAntispamCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
         private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(15);
 
-        static ContentFilter()
-        {
-            RebuildMatcher();
-        }
+        static ContentFilter() => RebuildMatcher();
 
-        public static Task<Piracystring> FindTriggerAsync(FilterContext ctx, string str)
+        public static Task<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
         {
             if (string.IsNullOrEmpty(str))
-                return Task.FromResult((Piracystring)null);
+                return Task.FromResult((Piracystring?)null);
 
             if (!filters.TryGetValue(ctx, out var matcher))
-                return Task.FromResult((Piracystring)null);
+                return Task.FromResult((Piracystring?)null);
 
-            Piracystring result = null;
+            Piracystring? result = null;
             matcher?.ParseText(str, h =>
             {
                 if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
@@ -66,7 +63,7 @@ namespace CompatBot.Database.Providers
 
         public static void RebuildMatcher()
         {
-            var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>>();
+            var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
             using (var db = new BotDb())
                 foreach (FilterContext ctx in Enum.GetValues(typeof(FilterContext)))
                 {
@@ -134,11 +131,8 @@ namespace CompatBot.Database.Providers
             return (trigger.Actions & (~suppressActions) & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
         }
 
-        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string triggerContext = null, string infraction = null, string warningReason = null)
+        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string? triggerContext = null, string? infraction = null, string? warningReason = null)
         {
-            if (trigger == null)
-                return;
-
             var severity = ReportSeverity.Low;
             var completedActions = new List<FilterAction>();
             if (trigger.Actions.HasFlag(FilterAction.RemoveContent) && !ignoreFlags.HasFlag(FilterAction.RemoveContent))
@@ -157,7 +151,8 @@ namespace CompatBot.Database.Providers
                 try
                 {
                     var author = client.GetMember(message.Author);
-                    Config.Log.Debug($"Removed message from {author.GetMentionWithNickname()} in #{message.Channel.Name}: {message.Content}");
+                    var username = author?.GetMentionWithNickname() ?? message.Author.GetUsernameWithNickname(client);
+                    Config.Log.Debug($"Removed message from {username} in #{message.Channel.Name}: {message.Content}");
                 }
                 catch (Exception e)
                 {
@@ -203,7 +198,9 @@ namespace CompatBot.Database.Providers
                 }
             }
 
-            if (trigger.Actions.HasFlag(FilterAction.ShowExplain) && !ignoreFlags.HasFlag(FilterAction.ShowExplain))
+            if (trigger.Actions.HasFlag(FilterAction.ShowExplain)
+                && !ignoreFlags.HasFlag(FilterAction.ShowExplain)
+                && !string.IsNullOrEmpty(trigger.ExplainTerm))
             {
                 var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
                 await Explain.SendExplanation(result, trigger.ExplainTerm, message).ConfigureAwait(false);

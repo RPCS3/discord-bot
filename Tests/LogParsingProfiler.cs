@@ -54,7 +54,7 @@ namespace Tests
                     Config.Log.Debug(msg);
             }
             Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
-            Assert.That(result.CompleteCollection, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.CompletedCollection, Is.Not.Null.And.Not.Empty);
         }
     }
 }

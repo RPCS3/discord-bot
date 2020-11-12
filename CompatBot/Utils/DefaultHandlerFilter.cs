@@ -5,9 +5,9 @@ namespace CompatBot.Utils
 {
     internal static class DefaultHandlerFilter
     {
-        internal static bool IsFluff(DiscordMessage message)
+        internal static bool IsFluff(DiscordMessage? message)
         {
-            if (message == null)
+            if (message is null)
                 return true;
 
             if (message.Author.IsBotSafeCheck())

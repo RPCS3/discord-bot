@@ -10,7 +10,7 @@ namespace CompatBot.Commands
     internal sealed class Events: EventsBaseCommand
     {
         [GroupCommand]
-        public Task NearestGenericEvent(CommandContext ctx, [Description("Optional event name"), RemainingText] string eventName = null)
+        public Task NearestGenericEvent(CommandContext ctx, [Description("Optional event name"), RemainingText] string? eventName = null)
             => NearestEvent(ctx, eventName);
 
         [Command("add"), RequiresBotModRole]
@@ -56,7 +56,7 @@ namespace CompatBot.Commands
 
         [Command("countdown")]
         [Description("Provides countdown for the nearest known event")]
-        public Task Countdown(CommandContext ctx, string eventName = null)
+        public Task Countdown(CommandContext ctx, string? eventName = null)
             => NearestEvent(ctx, eventName);
     }
 }

@@ -18,7 +18,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         private static readonly Regex ExternalLink = new Regex(@"(?<mega_link>(https?://)?mega(\.co)?\.nz/(#(?<mega_id>[^/>\s]+)|file/(?<new_mega_id>[^/>\s]+)))", DefaultOptions);
         private static readonly IProgress<double> doodad = new Progress<double>(_ => { });
 
-        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
                 return (null, null);
@@ -44,7 +44,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                             try
                             {
                                 int read;
-                                using (var stream = await client.DownloadAsync(uri, doodad, Config.Cts.Token).ConfigureAwait(false))
+                                await using (var stream = await client.DownloadAsync(uri, doodad, Config.Cts.Token).ConfigureAwait(false))
                                     read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                                 foreach (var handler in handlers)
                                 {
@@ -72,10 +72,10 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         private sealed class MegaSource : ISource
         {
-            private IMegaApiClient client;
-            private Uri uri;
-            private INodeInfo node;
-            private IArchiveHandler handler;
+            private readonly IMegaApiClient client;
+            private readonly Uri uri;
+            private readonly INodeInfo node;
+            private readonly IArchiveHandler handler;
 
             public string SourceType => "Mega";
             public string FileName => node.Name;
@@ -93,7 +93,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
-                using var stream = await client.DownloadAsync(uri, doodad, cancellationToken).ConfigureAwait(false);
+                await using var stream = await client.DownloadAsync(uri, doodad, cancellationToken).ConfigureAwait(false);
                 await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }

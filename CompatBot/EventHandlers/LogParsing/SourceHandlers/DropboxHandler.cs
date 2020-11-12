@@ -18,7 +18,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         //https://www.dropbox.com/s/62ls9lw5i52fuib/RPCS3.log.gz?dl=0
         private static readonly Regex ExternalLink = new Regex(@"(?<dropbox_link>(https?://)?(www\.)?dropbox\.com/s/(?<dropbox_id>[^/\s]+)/(?<filename>[^/\?\s])(/dl=[01])?)", DefaultOptions);
 
-        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
                 return (null, null);
@@ -43,14 +43,14 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
                         {
                             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Config.Cts.Token);
-                            if (response?.Content?.Headers?.ContentLength > 0)
+                            if (response.Content.Headers.ContentLength > 0)
                                 filesize = (int)response.Content.Headers.ContentLength.Value;
-                            if (response?.Content?.Headers?.ContentDisposition?.FileNameStar is string fname && !string.IsNullOrEmpty(fname))
+                            if (response.Content.Headers.ContentDisposition?.FileNameStar is string fname && !string.IsNullOrEmpty(fname))
                                 filename = fname;
-                            uri = response.RequestMessage.RequestUri;
+                            uri = response.RequestMessage?.RequestUri;
                         }
 
-                        using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                        await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
                         var buf = bufferPool.Rent(SnoopBufferSize);
                         try
                         {
@@ -81,7 +81,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         private sealed class DropboxSource : ISource
         {
-            private readonly Uri uri;
+            private readonly Uri? uri;
             private readonly IArchiveHandler handler;
 
             public string SourceType => "Dropbox";
@@ -90,7 +90,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
-            internal DropboxSource(Uri uri, IArchiveHandler handler, string fileName, int fileSize)
+            internal DropboxSource(Uri? uri, IArchiveHandler handler, string fileName, int fileSize)
             {
                 this.uri = uri;
                 this.handler = handler;
@@ -101,7 +101,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 using var client = HttpClientFactory.Create();
-                using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                await using var stream = await client.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
                 await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }

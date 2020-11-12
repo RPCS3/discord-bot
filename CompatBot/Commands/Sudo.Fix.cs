@@ -29,21 +29,19 @@ namespace CompatBot.Commands
                 try
                 {
                     var @fixed = 0;
-                    using (var db = new BotDb())
-                    {
-                        foreach (var warning in db.Warning)
-                            if (!string.IsNullOrEmpty(warning.FullReason))
+                    await using var db = new BotDb();
+                    foreach (var warning in db.Warning)
+                        if (!string.IsNullOrEmpty(warning.FullReason))
+                        {
+                            var match = Timestamp.Match(warning.FullReason);
+                            if (match.Success && DateTime.TryParse(match.Groups["date"].Value, out var timestamp))
                             {
-                                var match = Timestamp.Match(warning.FullReason);
-                                if (match.Success && DateTime.TryParse(match.Groups["date"].Value, out var timestamp))
-                                {
-                                    warning.Timestamp = timestamp.Ticks;
-                                    warning.FullReason = warning.FullReason[(match.Groups["cutout"].Value.Length)..];
-                                    @fixed++;
-                                }
+                                warning.Timestamp = timestamp.Ticks;
+                                warning.FullReason = warning.FullReason[(match.Groups["cutout"].Value.Length)..];
+                                @fixed++;
                             }
-                        await db.SaveChangesAsync().ConfigureAwait(false);
-                    }
+                        }
+                    await db.SaveChangesAsync().ConfigureAwait(false);
                     await ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -60,19 +58,17 @@ namespace CompatBot.Commands
                 try
                 {
                     var @fixed = 0;
-                    using (var db = new BotDb())
+                    await using var db = new BotDb();
+                    foreach (var warning in db.Warning)
                     {
-                        foreach (var warning in db.Warning)
+                        var newReason = await FixChannelMentionAsync(ctx, warning.Reason).ConfigureAwait(false);
+                        if (newReason != warning.Reason && newReason != null)
                         {
-                            var newReason = await FixChannelMentionAsync(ctx, warning.Reason).ConfigureAwait(false);
-                            if (newReason != warning.Reason)
-                            {
-                                warning.Reason = newReason;
-                                @fixed++;
-                            }
+                            warning.Reason = newReason;
+                            @fixed++;
                         }
-                        await db.SaveChangesAsync().ConfigureAwait(false);
                     }
+                    await db.SaveChangesAsync().ConfigureAwait(false);
                     await ctx.RespondAsync($"Fixed {@fixed} records").ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -114,7 +110,7 @@ namespace CompatBot.Commands
             public async Task TitleMarks(CommandContext ctx)
             {
                 var changed = 0;
-                using var db = new ThumbnailDb();
+                await using var db = new ThumbnailDb();
                 foreach (var thumb in db.Thumbnail)
                 {
                     if (string.IsNullOrEmpty(thumb.Name))
@@ -127,12 +123,12 @@ namespace CompatBot.Commands
                         newTitle = newTitle[..^17];
                     if (newTitle.EndsWith("downloadable game", StringComparison.OrdinalIgnoreCase))
                         newTitle = newTitle[..^18];
-                    newTitle.TrimEnd();
-                    if (newTitle != thumb.Name)
-                    {
-                        changed++;
-                        thumb.Name = newTitle;
-                    }
+                    newTitle = newTitle.TrimEnd();
+                    if (newTitle == thumb.Name)
+                        continue;
+                    
+                    changed++;
+                    thumb.Name = newTitle;
                 }
                 await db.SaveChangesAsync();
                 await ctx.RespondAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
@@ -143,12 +139,16 @@ namespace CompatBot.Commands
             public async Task MetacriticLinks(CommandContext ctx, [Description("Remove links for trial and demo versions only")] bool demosOnly = true)
             {
                 var changed = 0;
-                using var db = new ThumbnailDb();
+                await using var db = new ThumbnailDb();
                 foreach (var thumb in db.Thumbnail.Where(t => t.MetacriticId != null))
                 {
-                    if (!demosOnly || Regex.IsMatch(thumb.Name, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline))
-                        thumb.MetacriticId = null;
-
+                    if (demosOnly
+                        && thumb.Name != null
+                        && !Regex.IsMatch(thumb.Name, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline))
+                        continue;
+                    
+                    thumb.MetacriticId = null;
+                    changed++;
                 }
                 await db.SaveChangesAsync();
                 await ctx.RespondAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);

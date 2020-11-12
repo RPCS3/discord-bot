@@ -8,8 +8,8 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
 {
     public class LogParseState
     {
-        public NameValueCollection CompleteCollection = null;
-		public NameUniqueObjectCollection<string> CompleteMultiValueCollection = null;
+        public NameValueCollection? CompletedCollection;
+		public NameUniqueObjectCollection<string>? CompleteMultiValueCollection;
         public NameValueCollection WipCollection = new NameValueCollection();
         public NameUniqueObjectCollection<string> WipMultiValueCollection = new NameUniqueObjectCollection<string>();
         public readonly Dictionary<string, int> ValueHitStats = new Dictionary<string, int>();
@@ -17,8 +17,8 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
         public int Id = 0;
         public ErrorCode Error = ErrorCode.None;
         public readonly Dictionary<int, (Piracystring filter, string context)> FilterTriggers = new Dictionary<int, (Piracystring filter, string context)>();
-        public Piracystring SelectedFilter;
-        public string SelectedFilterContext;
+        public Piracystring? SelectedFilter;
+        public string? SelectedFilterContext;
         public long ReadBytes;
         public long TotalBytes;
         public int LinesAfterConfig;

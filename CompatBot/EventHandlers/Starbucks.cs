@@ -85,9 +85,7 @@ namespace CompatBot.EventHandlers
         };
 
         public static Task Handler(DiscordClient c, MessageReactionAddEventArgs args)
-        {
-            return CheckMessageAsync(c, args.Channel, args.User, args.Message, args.Emoji, false);
-        }
+            => CheckMessageAsync(c, args.Channel, args.User, args.Message, args.Emoji, false);
 
         public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
         {
@@ -163,12 +161,12 @@ namespace CompatBot.EventHandlers
                 .Distinct()
                 .Select(u => channel.Guild
                             .GetMemberAsync(u.Id)
-                            .ContinueWith(ct => ct.IsCompletedSuccessfully ? ct : Task.FromResult((DiscordMember)null), TaskScheduler.Default))
+                            .ContinueWith(ct => ct.IsCompletedSuccessfully ? ct : Task.FromResult((DiscordMember?)null), TaskScheduler.Default))
                 .ToList() //force eager task creation
                 .Select(t => t.Unwrap().ConfigureAwait(false).GetAwaiter().GetResult())
                 .Where(m => m != null)
                 .ToList();
-            var reporters = members.Where(m => m.Roles.Any()).ToList();
+            var reporters = members.Where(m => m!.Roles.Any()).ToList();
             if (reporters.Count < Config.Moderation.StarbucksThreshold)
                 return;
 

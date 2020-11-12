@@ -231,10 +231,10 @@ namespace CompatBot.Utils.ResultFormatters
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message, ISource source)
         {
             DiscordEmbedBuilder builder;
-            state.CompleteCollection ??= state.WipCollection;
+            state.CompletedCollection ??= state.WipCollection;
             state.CompleteMultiValueCollection ??= state.WipMultiValueCollection;
-            var collection = state.CompleteCollection;
-            if (collection?.Count > 0)
+            var collection = state.CompletedCollection;
+            if (collection.Count > 0)
             {
                 var ldrGameSerial = collection["ldr_game_serial"] ?? collection["ldr_path_serial"];
                 if (collection["serial"] is string serial
@@ -296,8 +296,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CleanupValues(LogParseState state)
         {
-            var items = state.CompleteCollection;
-            var multiItems = state.CompleteMultiValueCollection;
+            var items = state.CompletedCollection!;
+            var multiItems = state.CompleteMultiValueCollection!;
             if (items["strict_rendering_mode"] == "true")
                 items["resolution_scale"] = "Strict Mode";
             if (items["spu_threads"] == "0")
@@ -639,7 +639,7 @@ namespace CompatBot.Utils.ResultFormatters
                 8 => "7",
                 9 => "8",
                 10 => "8.1",
-                int v when v >= 20 && v < 30 => ((v % 10) switch
+                >= 20 and < 30 => (driverVer.Major % 10) switch
                 {
                     // see https://en.wikipedia.org/wiki/Windows_Display_Driver_Model#WDDM_2.0
                     0 => "10",
@@ -651,7 +651,7 @@ namespace CompatBot.Utils.ResultFormatters
                     6 => "10 1903",
                     7 => "10 2004",
                     _ => null,
-                }),
+                },
                 _ => null,
             };
         }
@@ -676,34 +676,37 @@ namespace CompatBot.Utils.ResultFormatters
                 },
                 10 => windowsVersion.Build switch
                 {
-                    int v when v < 10240 => ("10 TH1 Build " + v),
+                    < 10240 => "10 TH1 Build " + windowsVersion.Build,
                     10240 => "10 1507",
-                    int v when v < 10586 => ("10 TH2 Build " + v),
+                    < 10586 => "10 TH2 Build " + windowsVersion.Build,
                     10586 => "10 1511",
-                    int v when v < 14393 => ("10 RS1 Build " + v),
+                    < 14393 => "10 RS1 Build " + windowsVersion.Build,
                     14393 => "10 1607",
-                    int v when v < 15063 => ("10 RS2 Build " + v),
+                    < 15063 => "10 RS2 Build " + windowsVersion.Build,
                     15063 => "10 1703",
-                    int v when v < 16299 => ("10 RS3 Build " + v),
+                    < 16299 => "10 RS3 Build " + windowsVersion.Build,
                     16299 => "10 1709",
-                    int v when v < 17134 => ("10 RS4 Build " + v),
+                    < 17134 => "10 RS4 Build " + windowsVersion.Build,
                     17134 => "10 1803",
-                    int v when v < 17763 => ("10 RS5 Build " + v),
+                    < 17763 => "10 RS5 Build " + windowsVersion.Build,
                     17763 => "10 1809",
-                    int v when v < 18362 => ("10 19H1 Build " + v),
+                    < 18362 => "10 19H1 Build " + windowsVersion.Build,
                     18362 => "10 1903",
                     18363 => "10 1909",
-                    int v when v < 19041 => ("10 20H1 Build " + v),
+                    < 19041 => "10 20H1 Build " + windowsVersion.Build,
                     19041 => "10 2004",
                     19042 => "10 20H2",
-                    int v when v < 19536 => ("10 Beta Build " + v),
-                    _ => ("10 21H1 Build " + windowsVersion.Build)
+                    < 19536 => "10 Beta Build " + windowsVersion.Build,
+                    _ => "10 21H1 Build " + windowsVersion.Build
                 },
                 _ => null,
             };
 
-        private static string GetLinuxVersion(string release, string version)
+        private static string? GetLinuxVersion(string? release, string version)
         {
+            if (string.IsNullOrEmpty(release))
+                return null;
+            
             var kernelVersion = release;
             if (LinuxKernelVersion.Match(release) is Match m && m.Success)
                 kernelVersion = m.Groups["version"].Value;

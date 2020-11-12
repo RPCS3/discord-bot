@@ -48,7 +48,7 @@ namespace CompatBot.EventHandlers
         };
 
         private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
-        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false, bool force = false);
+        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);
         private static event OnLog OnNewLog;
 
         static LogParsingHandler() => OnNewLog += EnqueueLogProcessing;
@@ -72,12 +72,11 @@ namespace CompatBot.EventHandlers
             return Task.CompletedTask;
         }
 
-        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember requester = null, bool checkExternalLinks = false, bool force = false)
+        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false)
         {
             var start = DateTimeOffset.UtcNow;
             try
             {
-                // ReSharper disable once MethodHasAsyncOverload
                 if (!QueueLimiter.Wait(0))
                 {
                     Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, TimeSpan.Zero, HttpStatusCode.TooManyRequests.ToString(), false);
@@ -85,9 +84,9 @@ namespace CompatBot.EventHandlers
                     return;
                 }
 
-                bool parsedLog = false;
+                var parsedLog = false;
                 var startTime = Stopwatch.StartNew();
-                DiscordMessage botMsg = null;
+                DiscordMessage? botMsg = null;
                 try
                 {
                     var possibleHandlers = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
@@ -105,7 +104,7 @@ namespace CompatBot.EventHandlers
                         botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
                         parsedLog = true;
 
-                        LogParseState result = null, tmpResult = null;
+                        LogParseState? result = null, tmpResult;
                         using (var timeout = new CancellationTokenSource(Config.LogParsingTimeoutInSec))
                         {
                             using var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
@@ -196,7 +195,7 @@ namespace CompatBot.EventHandlers
                                     if (result.SelectedFilter != null)
                                     {
                                         var ignoreFlags = FilterAction.IssueWarning | FilterAction.SendMessage | FilterAction.ShowExplain;
-                                        await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext).ConfigureAwait(false);
+                                        await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext!).ConfigureAwait(false);
                                     }
 
                                     if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
@@ -268,7 +267,7 @@ namespace CompatBot.EventHandlers
                         return;
                     }
 
-                    var linkStart = message.Content.IndexOf("http");
+                    var linkStart = message.Content.IndexOf("http", StringComparison.Ordinal);
                     if (linkStart > -1)
                     {
                         var link = message.Content[linkStart..].Split(linkSeparator, 2)[0];
@@ -294,9 +293,9 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static async Task<LogParseState> ParseLogAsync(ISource source, Func<Task> onProgressAsync, CancellationToken cancellationToken)
+        public static async Task<LogParseState?> ParseLogAsync(ISource source, Func<Task> onProgressAsync, CancellationToken cancellationToken)
         {
-            LogParseState result = null;
+            LogParseState? result = null;
             try
             {
                 try

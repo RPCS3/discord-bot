@@ -40,7 +40,7 @@ namespace CompatBot.EventHandlers
         public static async Task MonitorAsync(DiscordClient client)
         {
             var lastCheck = DateTime.UtcNow.AddDays(-1);
-            Exception lastException = null;
+            Exception? lastException = null;
             while (!Config.Cts.IsCancellationRequested)
             {
                 var now = DateTime.UtcNow;

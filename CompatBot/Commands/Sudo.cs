@@ -46,9 +46,7 @@ namespace CompatBot.Commands
         [Command("say"), Priority(10)]
         [Description("Make bot say things, optionally in a specific channel")]
         public Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
-        {
-            return Say(ctx, ctx.Channel, message);
-        }
+            => Say(ctx, ctx.Channel, message);
 
         [Command("react")]
         [Description("Add reactions to the specified message")]
@@ -61,7 +59,7 @@ namespace CompatBot.Commands
             try
             {
                 var message = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false);
-                if (message == null)
+                if (message is null)
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't find the message").ConfigureAwait(false);
                     return;
@@ -83,7 +81,7 @@ namespace CompatBot.Commands
                                 var endIdx = emojis.IndexOf('>', i);
                                 if (endIdx < i)
                                     endIdx = emojis.Length;
-                                emoji = emojis.Substring(i, endIdx - i);
+                                emoji = emojis[i..endIdx];
                                 i = endIdx - 1;
                                 var emojiId = ulong.Parse(emoji[(emoji.LastIndexOf(':') + 1)..]);
                                 de = DiscordEmoji.FromGuildEmote(ctx.Client, emojiId);
@@ -94,9 +92,7 @@ namespace CompatBot.Commands
                             await message.ReactWithAsync(de).ConfigureAwait(false);
                         }
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 }
             }
             catch (Exception e)
@@ -113,20 +109,18 @@ namespace CompatBot.Commands
             {
                 var logPath = Config.CurrentLogPath;
                 var attachmentSizeLimit = Config.AttachmentSizeLimit;
-                using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                using var result = Config.MemoryStreamManager.GetStream();
-                using (var gzip = new GZipStream(result, CompressionLevel.Optimal, true))
-                {
-                    await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
-                    await gzip.FlushAsync().ConfigureAwait(false);
-                }
+                await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                await using var result = Config.MemoryStreamManager.GetStream();
+                await using var gzip = new GZipStream(result, CompressionLevel.Optimal, true);
+                await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
+                await gzip.FlushAsync().ConfigureAwait(false);
                 if (result.Length <= attachmentSizeLimit)
                 {
                     result.Seek(0, SeekOrigin.Begin);
                     await ctx.RespondWithFileAsync(Path.GetFileName(logPath) + ".gz", result).ConfigureAwait(false);
                 }
                 else
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask Nicba for help :(", true).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -142,28 +136,28 @@ namespace CompatBot.Commands
             try
             {
                 string dbPath;
-                using (var db = new ThumbnailDb())
-                using (var connection = db.Database.GetDbConnection())
+                await using (var db = new ThumbnailDb())
+                await using (var connection = db.Database.GetDbConnection())
                     dbPath = connection.DataSource;
                 var attachmentSizeLimit = Config.AttachmentSizeLimit;
-                var dbDir = Path.GetDirectoryName(dbPath);
+                var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
                 var dbName = Path.GetFileNameWithoutExtension(dbPath);
-                using var result = Config.MemoryStreamManager.GetStream();
-                using (var zip = new ZipArchive(result, ZipArchiveMode.Create, true))
-                    foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
-                    {
-                        using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                        using var entryStream = zip.CreateEntry(Path.GetFileName(fname), CompressionLevel.Optimal).Open();
-                        await dbData.CopyToAsync(entryStream, Config.Cts.Token).ConfigureAwait(false);
-                        await entryStream.FlushAsync().ConfigureAwait(false);
-                    }
+                await using var result = Config.MemoryStreamManager.GetStream();
+                using var zip = new ZipArchive(result, ZipArchiveMode.Create, true);
+                foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
+                {
+                    await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    await using var entryStream = zip.CreateEntry(Path.GetFileName(fname), CompressionLevel.Optimal).Open();
+                    await dbData.CopyToAsync(entryStream, Config.Cts.Token).ConfigureAwait(false);
+                    await entryStream.FlushAsync().ConfigureAwait(false);
+                }
                 if (result.Length <= attachmentSizeLimit)
                 {
                     result.Seek(0, SeekOrigin.Begin);
                     await ctx.RespondWithFileAsync(Path.GetFileName(dbName) + ".zip", result).ConfigureAwait(false);
                 }
                 else
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask Nicba for help :(", true).ConfigureAwait(false);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
             }
             catch (Exception e)
             {

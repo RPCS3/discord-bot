@@ -31,25 +31,24 @@ namespace CompatBot.Database.Providers
                 try
                 {
                     Config.Log.Debug("Got stats saving lock");
-                    using var db = new BotDb();
+                    await using var db = new BotDb();
                     db.Stats.RemoveRange(db.Stats);
                     await db.SaveChangesAsync().ConfigureAwait(false);
-                    foreach (var cache in AllCaches)
+                    foreach (var (category, cache) in AllCaches)
                     {
-                        var category = cache.name;
-                        var entries = cache.cache.GetCacheEntries<string>();
+                        var entries = cache.GetCacheEntries<string>();
                         var savedKeys = new HashSet<string>();
-                        foreach (var entry in entries)
-                            if (savedKeys.Add(entry.Key))
+                        foreach (var (key, value) in entries)
+                            if (savedKeys.Add(key))
                                 await db.Stats.AddAsync(new Stats
                                 {
                                     Category = category,
-                                    Key = entry.Key,
-                                    Value = ((int?) entry.Value.Value) ?? 0,
-                                    ExpirationTimestamp = entry.Value.AbsoluteExpiration?.ToUniversalTime().Ticks ?? 0
+                                    Key = key,
+                                    Value = (int?)value?.Value ?? 0,
+                                    ExpirationTimestamp = value?.AbsoluteExpiration?.ToUniversalTime().Ticks ?? 0
                                 }).ConfigureAwait(false);
                             else
-                                Config.Log.Warn($"Somehow there's another '{entry.Key}' in the {category} cache");
+                                Config.Log.Warn($"Somehow there's another '{key}' in the {category} cache");
                     }
                     await db.SaveChangesAsync().ConfigureAwait(false);
                 }
@@ -73,16 +72,15 @@ namespace CompatBot.Database.Providers
         public static async Task RestoreAsync()
         {
             var now = DateTime.UtcNow;
-            using var db = new BotDb();
-            foreach (var cache in AllCaches)
+            await using var db = new BotDb();
+            foreach (var (category, cache) in AllCaches)
             {
-                var category = cache.name;
                 var entries = await db.Stats.Where(e => e.Category == category).ToListAsync().ConfigureAwait(false);
                 foreach (var entry in entries)
                 {
                     var time = entry.ExpirationTimestamp.AsUtc();
                     if (time > now)
-                        cache.cache.Set(entry.Key, entry.Value, time);
+                        cache.Set(entry.Key, entry.Value, time);
                 }
             }
         }

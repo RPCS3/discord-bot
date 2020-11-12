@@ -145,9 +145,9 @@ namespace CompatBot.Commands
 
         [Command("roll")]
         [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
-        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string comment = null)
+        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)
         {
-            string result = null;
+            string? result = null;
             if (maxValue > 1)
                 lock (rng) result = (rng.Next(maxValue) + 1).ToString();
             if (string.IsNullOrEmpty(result))
@@ -177,8 +177,7 @@ namespace CompatBot.Commands
                         lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
                         var total = rolls.Sum();
                         var totalStr = total.ToString();
-                        int.TryParse(m.Groups["mod"].Value, out var mod);
-                        if (mod > 0)
+                        if (int.TryParse(m.Groups["mod"].Value, out var mod) && mod > 0)
                             totalStr += $" + {mod} = {total + mod}";
                         var rollsStr = string.Join(' ', rolls);
                         if (rolls.Count > 1)
@@ -322,8 +321,9 @@ namespace CompatBot.Commands
                 var kdUser = await ctx.Client.GetUserAsync(272631898877198337ul).ConfigureAwait(false);
                 var kdMember = ctx.Client.GetMember(kdUser);
                 var kdMatch = new HashSet<string>(new[] {kdUser.Id.ToString(), kdUser.Username, kdMember?.DisplayName ?? "kd-11", "kd", "kd-11", "kd11", });
-                var botMember = ctx.Client.GetMember(ctx.Client.CurrentUser);
-                var botMatch = new HashSet<string>(new[] {botMember.Id.ToString(), botMember.Username, botMember.DisplayName, "yourself", "urself", "yoself",});
+                var botUser = ctx.Client.CurrentUser;
+                var botMember = ctx.Client.GetMember(botUser);
+                var botMatch = new HashSet<string>(new[] {botUser.Id.ToString(), botUser.Username, botMember?.DisplayName ?? "RPCS3 bot", "yourself", "urself", "yoself",});
 
                 var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
                 var words = whatever.Split(Separators);
@@ -350,7 +350,7 @@ namespace CompatBot.Commands
                         word = word[..^2];
                     }
 
-                    void MakeCustomRoleRating(DiscordMember mem)
+                    void MakeCustomRoleRating(DiscordMember? mem)
                     {
                         if (mem != null && !choiceFlags.Contains('f'))
                         {
@@ -372,7 +372,7 @@ namespace CompatBot.Commands
                     }
 
                     var appended = false;
-                    DiscordMember member = null;
+                    DiscordMember? member = null;
                     if (Me.Contains(word))
                     {
                         member = ctx.Member;
@@ -401,7 +401,7 @@ namespace CompatBot.Commands
                         result.Clear();
                         appended = true;
                     }
-                    if (member == null && i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
+                    if (member is null && i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
                         member = m;
                     if (member != null)
                     {
@@ -435,7 +435,7 @@ namespace CompatBot.Commands
                     }
                     if (!appended)
                         result.Append(word);
-                    result.Append(suffix).Append(" ");
+                    result.Append(suffix).Append(' ');
                 }
                 whatever = result.ToString();
                 var cutIdx = whatever.LastIndexOf("never mind");
@@ -465,7 +465,7 @@ namespace CompatBot.Commands
 
         [Command("meme"), Aliases("memes"), Cooldown(1, 30, CooldownBucketType.Channel), Hidden]
         [Description("No, memes are not implemented yet")]
-        public async Task Memes(CommandContext ctx, [RemainingText] string _ = null)
+        public async Task Memes(CommandContext ctx, [RemainingText] string? _ = null)
         {
             var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync($"{ctx.User.Mention} congratulations, you're the meme").ConfigureAwait(false);
@@ -488,8 +488,8 @@ namespace CompatBot.Commands
         public async Task ProductCode(CommandContext ctx, [RemainingText, Description("Product code such as BLUS12345 or SCES")] string productCode)
         {
             productCode = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault() ?? productCode;
-            productCode = productCode?.ToUpperInvariant();
-            if (productCode?.Length > 3)
+            productCode = productCode.ToUpperInvariant();
+            if (productCode.Length > 3)
             {
                 var dsc = ProductCodeDecoder.Decode(productCode);
                 var info = string.Join('\n', dsc);

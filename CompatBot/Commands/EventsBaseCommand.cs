@@ -23,12 +23,12 @@ namespace CompatBot.Commands
         private static readonly Regex Duration = new Regex(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
-        protected async Task NearestEvent(CommandContext ctx, string eventName = null)
+        protected static async Task NearestEvent(CommandContext ctx, string? eventName = null)
         {
-            var originalEventName = eventName = eventName.Trim(40);
+            var originalEventName = eventName = eventName?.Trim(40);
             var current = DateTime.UtcNow;
             var currentTicks = current.Ticks;
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var currentEvents = await db.EventSchedule.OrderBy(e => e.End).Where(e => e.Start <= currentTicks && e.End >= currentTicks).ToListAsync().ConfigureAwait(false);
             var nextEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
             if (string.IsNullOrEmpty(eventName))
@@ -76,8 +76,8 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
-                if (eventName.Length > 10)
+                var noEventMsg = $"No information about the upcoming {eventName?.Sanitize(replaceBackTicks: true)} at the moment";
+                if (eventName?.Length > 10)
                     noEventMsg = "No information about such event at the moment";
                 else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
                 {
@@ -109,8 +109,8 @@ namespace CompatBot.Commands
                     firstNamedEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Year >= current.Year + 1 && e.EventName == eventName).ConfigureAwait(false);
                     if (firstNamedEvent == null)
                     {
-                        var noEventMsg = $"No information about the upcoming {eventName.Sanitize(replaceBackTicks: true)} at the moment";
-                        if (eventName.Length > 10)
+                        var noEventMsg = $"No information about the upcoming {eventName?.Sanitize(replaceBackTicks: true)} at the moment";
+                        if (eventName?.Length > 10)
                             noEventMsg = "No information about such event at the moment";
                         else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
                         {
@@ -149,17 +149,15 @@ namespace CompatBot.Commands
             await ctx.SendAutosplitMessageAsync(msg.TrimEnd(), blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
 
-        protected async Task Add(CommandContext ctx, string eventName = null)
+        protected static async Task Add(CommandContext ctx, string? eventName = null)
         {
             var evt = new EventSchedule();
             var (success, msg) = await EditEventPropertiesAsync(ctx, evt, eventName).ConfigureAwait(false);
             if (success)
             {
-                using (var db = new BotDb())
-                {
-                    await db.EventSchedule.AddAsync(evt).ConfigureAwait(false);
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                }
+                await using var db = new BotDb();
+                await db.EventSchedule.AddAsync(evt).ConfigureAwait(false);
+                await db.SaveChangesAsync().ConfigureAwait(false);
                 await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
                 if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Created new event schedule entry #" + evt.Id)).ConfigureAwait(false);
@@ -170,41 +168,35 @@ namespace CompatBot.Commands
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event creation aborted").ConfigureAwait(false);
         }
 
-        protected async Task Remove(CommandContext ctx, params int[] ids)
+        protected static async Task Remove(CommandContext ctx, params int[] ids)
         {
-            int removedCount;
-            using (var db = new BotDb())
-            {
-                var eventsToRemove = await db.EventSchedule.Where(e3e => ids.Contains(e3e.Id)).ToListAsync().ConfigureAwait(false);
-                db.EventSchedule.RemoveRange(eventsToRemove);
-                removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
-            }
+            await using var db = new BotDb();
+            var eventsToRemove = await db.EventSchedule.Where(e3e => ids.Contains(e3e.Id)).ToListAsync().ConfigureAwait(false);
+            db.EventSchedule.RemoveRange(eventsToRemove);
+            var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             if (removedCount == ids.Length)
                 await ctx.RespondAsync($"Event{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
             else
                 await ctx.RespondAsync($"Removed {removedCount} event{StringUtils.GetSuffix(removedCount)}, but was asked to remove {ids.Length}").ConfigureAwait(false);
         }
 
-        protected async Task Clear(CommandContext ctx, int? year = null)
+        protected static async Task Clear(CommandContext ctx, int? year = null)
         {
             var currentYear = DateTime.UtcNow.Year;
-            int removedCount;
-            using (var db = new BotDb())
-            {
-                var itemsToRemove = await db.EventSchedule.Where(e =>
-                    year.HasValue
-                        ? e.Year == year
-                        : e.Year < currentYear
-                ).ToListAsync().ConfigureAwait(false);
-                db.EventSchedule.RemoveRange(itemsToRemove);
-                removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
-            }
+            await using var db = new BotDb();
+            var itemsToRemove = await db.EventSchedule.Where(e =>
+                year.HasValue
+                    ? e.Year == year
+                    : e.Year < currentYear
+            ).ToListAsync().ConfigureAwait(false);
+            db.EventSchedule.RemoveRange(itemsToRemove);
+            var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             await ctx.RespondAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
-        protected async Task Update(CommandContext ctx, int id, string eventName = null)
+        protected static async Task Update(CommandContext ctx, int id, string? eventName = null)
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var evt = eventName == null
                 ? db.EventSchedule.FirstOrDefault(e => e.Id == id)
                 : db.EventSchedule.FirstOrDefault(e => e.Id == id && e.EventName == eventName);
@@ -224,36 +216,31 @@ namespace CompatBot.Commands
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);
             }
             else
-            {
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Event update aborted, changes weren't saved").ConfigureAwait(false);
-            }
         }
 
-        protected async Task List(CommandContext ctx, string eventName = null, int? year = null)
+        protected static async Task List(CommandContext ctx, string? eventName = null, int? year = null)
         {
             var showAll = "all".Equals(eventName, StringComparison.InvariantCultureIgnoreCase);
             var currentTicks = DateTime.UtcNow.Ticks;
-            List<EventSchedule> events;
-            using (var db = new BotDb())
+            await using var db = new BotDb();
+            IQueryable<EventSchedule> query = db.EventSchedule;
+            if (year.HasValue)
+                query = query.Where(e => e.Year == year);
+            else
             {
-                IQueryable<EventSchedule> query = db.EventSchedule;
-                if (year.HasValue)
-                    query = query.Where(e => e.Year == year);
-                else
-                {
-                    if (!ctx.Channel.IsPrivate && !showAll)
-                        query = query.Where(e => e.End > currentTicks);
-                }
-                if (!string.IsNullOrEmpty(eventName) && !showAll)
-                {
-                    eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
-                    query = query.Where(e => e.EventName == eventName);
-                }
-                events = await query
-                    .OrderBy(e => e.Start)
-                    .ToListAsync()
-                    .ConfigureAwait(false);
+                if (!ctx.Channel.IsPrivate && !showAll)
+                    query = query.Where(e => e.End > currentTicks);
             }
+            if (!string.IsNullOrEmpty(eventName) && !showAll)
+            {
+                eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);
+                query = query.Where(e => e.EventName == eventName);
+            }
+            List<EventSchedule> events = await query
+                .OrderBy(e => e.Start)
+                .ToListAsync()
+                .ConfigureAwait(false);
             if (events.Count == 0)
             {
                 await ctx.RespondAsync("There are no events to show").ConfigureAwait(false);
@@ -280,7 +267,7 @@ namespace CompatBot.Commands
                     var printName = string.IsNullOrEmpty(currentEvent) ? "Various independent events" : $"**{currentEvent} {currentYear} schedule**";
                     msg.AppendLine($"{printName} (UTC):");
                 }
-                msg.Append(StringUtils.InvisibleSpacer).Append("`");
+                msg.Append(StringUtils.InvisibleSpacer).Append('`');
                 if (ModProvider.IsMod(ctx.Message.Author.Id))
                     msg.Append($"[{evt.Id:0000}] ");
                 msg.Append($"{evt.Start.AsUtc():u}");
@@ -292,7 +279,7 @@ namespace CompatBot.Commands
             await ch.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
 
-        private async Task<(bool success, DiscordMessage message)> EditEventPropertiesAsync(CommandContext ctx, EventSchedule evt, string eventName = null)
+        private static async Task<(bool success, DiscordMessage? message)> EditEventPropertiesAsync(CommandContext ctx, EventSchedule evt, string? eventName = null)
         {
             var interact = ctx.Client.GetInteractivity();
             var abort = DiscordEmoji.FromUnicode("🛑");
@@ -304,17 +291,18 @@ namespace CompatBot.Commands
             var saveEdit = DiscordEmoji.FromUnicode("💾");
 
             var skipEventNameStep = !string.IsNullOrEmpty(eventName);
-            DiscordMessage msg = null;
-            string errorMsg = null;
-            DiscordMessage txt;
-            MessageReactionAddEventArgs emoji;
+            DiscordMessage? msg = null;
+            string? errorMsg = null;
+            DiscordMessage? txt;
+            MessageReactionAddEventArgs? emoji;
 
         step1:
             // step 1: get the new start date
             var embed = FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} PST`\nBy default all times use UTC, only limited number of time zones supported");
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
+            var tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; // nullability code analysis workaround
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -348,9 +336,10 @@ namespace CompatBot.Commands
         step2:
             // step 2: get the new duration
             embed = FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`");
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; // nullability code analysis workaround
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -382,9 +371,10 @@ namespace CompatBot.Commands
         step3:
             // step 3: get the new event name
             embed = FormatEvent(evt, errorMsg, 3);
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event name**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, (string.IsNullOrEmpty(evt.EventName) ? null : trash), nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event name**", embed: embed.Build()).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, (string.IsNullOrEmpty(evt.EventName) ? null : trash), nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; // nullability code analysis workaround
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -409,7 +399,8 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg, 4);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **schedule entry title**", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; // nullability code analysis workaround
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -448,7 +439,8 @@ namespace CompatBot.Commands
             embed = FormatEvent(evt, errorMsg);
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; // nullability code analysis workaround
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -497,7 +489,7 @@ namespace CompatBot.Commands
             return (false, msg);
         }
 
-        private static string NameWithoutLink(string name)
+        private static string? NameWithoutLink(string? name)
         {
             if (string.IsNullOrEmpty(name))
                 return name;
@@ -514,14 +506,14 @@ namespace CompatBot.Commands
             return name;
         }
 
-        private static async Task<string> FuzzyMatchEventName(BotDb db, string eventName)
+        private static async Task<string?> FuzzyMatchEventName(BotDb db, string? eventName)
         {
             var knownEventNames = await db.EventSchedule.Select(e => e.EventName).Distinct().ToListAsync().ConfigureAwait(false);
             var (score, name) = knownEventNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
             return score > 0.8 ? name : eventName;
         }
 
-        private static async Task<string> FuzzyMatchEntryName(BotDb db, string eventName)
+        private static async Task<string?> FuzzyMatchEntryName(BotDb db, string? eventName)
         {
             var now = DateTime.UtcNow.Ticks;
             var knownNames = await db.EventSchedule.Where(e => e.End > now).Select(e => e.Name).ToListAsync().ConfigureAwait(false);
@@ -539,9 +531,9 @@ namespace CompatBot.Commands
                 return null;
             }
 
-            int.TryParse(d.Groups["days"].Value, out var days);
-            int.TryParse(d.Groups["hours"].Value, out var hours);
-            int.TryParse(d.Groups["mins"].Value, out var mins);
+            _ = int.TryParse(d.Groups["days"].Value, out var days);
+            _ = int.TryParse(d.Groups["hours"].Value, out var hours);
+            _ = int.TryParse(d.Groups["mins"].Value, out var mins);
             if (days == 0 && hours == 0 && mins == 0)
             {
                 if (react)
@@ -575,7 +567,7 @@ namespace CompatBot.Commands
             return result;
         }
 
-        private static DiscordEmbedBuilder FormatEvent(EventSchedule evt, string error = null, int highlight = -1)
+        private static DiscordEmbedBuilder FormatEvent(EventSchedule evt, string? error = null, int highlight = -1)
         {
             var start = evt.Start.AsUtc();
             var field = 1;

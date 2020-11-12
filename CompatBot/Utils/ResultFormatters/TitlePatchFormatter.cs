@@ -14,7 +14,7 @@ namespace CompatBot.Utils.ResultFormatters
     internal static class TitlePatchFormatter
     {
         // thanks BCES00569
-        public static async Task<List<DiscordEmbedBuilder>> AsEmbedAsync(this TitlePatch patch, DiscordClient client, string productCode)
+        public static async Task<List<DiscordEmbedBuilder>> AsEmbedAsync(this TitlePatch? patch, DiscordClient client, string productCode)
         {
             var result = new List<DiscordEmbedBuilder>();
             var pkgs = patch?.Tag?.Packages;

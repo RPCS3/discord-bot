@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Utils;
-using SharpCompress.Archives.Rar;
 using SharpCompress.Readers.Rar;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
@@ -17,7 +16,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
                 || fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
@@ -36,7 +35,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         {
             try
             {
-                using var statsStream = new BufferCopyStream(sourceStream);
+                await using var statsStream = new BufferCopyStream(sourceStream);
                 using var rarReader = RarReader.Open(statsStream);
                 while (rarReader.MoveToNextEntry())
                 {
@@ -45,7 +44,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                         && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                     {
                         LogSize = rarReader.Entry.Size;
-                        using var rarStream = rarReader.OpenEntryStream();
+                        await using var rarStream = rarReader.OpenEntryStream();
                         int read;
                         FlushResult flushed;
                         do
