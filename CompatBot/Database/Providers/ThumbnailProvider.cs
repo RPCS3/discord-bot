@@ -31,40 +31,37 @@ namespace CompatBot.Database.Providers
             if (tmdbInfo?.Icon.Url is string tmdbIconUrl)
                 return tmdbIconUrl;
 
-            using (var db = new ThumbnailDb())
+            await using var db = new ThumbnailDb();
+            var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
+            //todo: add search task if not found
+            if (thumb?.EmbeddableUrl is string embeddableUrl && !string.IsNullOrEmpty(embeddableUrl))
+                return embeddableUrl;
+
+            if (string.IsNullOrEmpty(thumb?.Url) || !ScrapeStateProvider.IsFresh(thumb.Timestamp))
             {
-                var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
-                //todo: add search task if not found
-                if (thumb?.EmbeddableUrl is string embeddableUrl && !string.IsNullOrEmpty(embeddableUrl))
-                    return embeddableUrl;
-
-                if (string.IsNullOrEmpty(thumb?.Url) || !ScrapeStateProvider.IsFresh(thumb.Timestamp))
+                var gameTdbCoverUrl = await GameTdbScraper.GetThumbAsync(productCode).ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(gameTdbCoverUrl))
                 {
-                    var gameTdbCoverUrl = await GameTdbScraper.GetThumbAsync(productCode).ConfigureAwait(false);
-                    if (!string.IsNullOrEmpty(gameTdbCoverUrl))
-                    {
-                        if (thumb is null)
-                            thumb = (await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false)).Entity;
-                        else
-                            thumb.Url = gameTdbCoverUrl;
-                        thumb.Timestamp = DateTime.UtcNow.Ticks;
-                        await db.SaveChangesAsync().ConfigureAwait(false);
-                    }
-                }
-
-                if (thumb?.Url is string url && !string.IsNullOrEmpty(url))
-                {
-                    var contentName = (thumb.ContentId ?? thumb.ProductCode);
-                    var (embedUrl, _) = await GetEmbeddableUrlAsync(client, contentName, url).ConfigureAwait(false);
-                    if (embedUrl != null)
-                    {
-                        thumb.EmbeddableUrl = embedUrl;
-                        await db.SaveChangesAsync().ConfigureAwait(false);
-                        return embedUrl;
-                    }
+                    if (thumb is null)
+                        thumb = (await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false)).Entity;
+                    else
+                        thumb.Url = gameTdbCoverUrl;
+                    thumb.Timestamp = DateTime.UtcNow.Ticks;
+                    await db.SaveChangesAsync().ConfigureAwait(false);
                 }
             }
-            return null;
+
+            if (string.IsNullOrEmpty(thumb?.Url))
+                return null;
+            
+            var contentName = thumb.ContentId ?? thumb.ProductCode;
+            var (embedUrl, _) = await GetEmbeddableUrlAsync(client, contentName, thumb.Url).ConfigureAwait(false);
+            if (embedUrl is null)
+                return null;
+            
+            thumb.EmbeddableUrl = embedUrl;
+            await db.SaveChangesAsync().ConfigureAwait(false);
+            return embedUrl;
         }
 
         public static async Task<string?> GetTitleNameAsync(string? productCode, CancellationToken cancellationToken)
