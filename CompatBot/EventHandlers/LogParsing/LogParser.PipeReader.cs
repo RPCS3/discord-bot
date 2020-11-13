@@ -18,7 +18,6 @@ namespace CompatBot.EventHandlers.LogParsing
 
         public static async Task<LogParseState> ReadPipeAsync(PipeReader reader, CancellationToken cancellationToken)
         {
-            #warning benchmark other collections
             var currentSectionLines = new LinkedList<ReadOnlySequence<byte>>(); 
             var state = new LogParseState();
             var skippedBom = false;
