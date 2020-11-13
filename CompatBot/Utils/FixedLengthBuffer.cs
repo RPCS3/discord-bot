@@ -55,10 +55,10 @@ namespace CompatBot.Utils
 
         public void TrimExcess()
         {
-            if (Count <= MaxLength)
+            if (Count <= FixedLengthBuffer<TKey, TValue>.MaxLength)
                 return;
 
-            TrimOldItems(Count - MaxLength);
+            TrimOldItems(Count - FixedLengthBuffer<TKey, TValue>.MaxLength);
         }
 
         public List<TValue> GetOldItems(int count)
@@ -66,9 +66,9 @@ namespace CompatBot.Utils
 
         public List<TValue> GetExcess()
         {
-            if (Count <= MaxLength)
+            if (Count <= FixedLengthBuffer<TKey, TValue>.MaxLength)
                 return new List<TValue>(0);
-            return GetOldItems(Count - MaxLength);
+            return GetOldItems(Count - FixedLengthBuffer<TKey, TValue>.MaxLength);
         }
 
         public TValue? Evict(TKey key)
@@ -117,10 +117,10 @@ namespace CompatBot.Utils
         public int Count => lookup.Count;
         public bool IsReadOnly => false;
 
-        public bool NeedTrimming => Count > MaxLength + 20;
+        public bool NeedTrimming => Count > FixedLengthBuffer<TKey, TValue>.MaxLength + 20;
         public TValue this[TKey index] => lookup[index];
 
-        private int MaxLength => Config.ChannelMessageHistorySize;
+        private static int MaxLength => Config.ChannelMessageHistorySize;
         private readonly Func<TValue, TKey> makeKey;
         private readonly List<TKey> keyList = new List<TKey>();
         private readonly Dictionary<TKey, TValue> lookup = new Dictionary<TKey, TValue>();

@@ -226,7 +226,7 @@ namespace CompatBot.Commands
             embed.AddField($"Top {top.Count} Recent Game Lookups", statsBuilder.ToString().TrimEnd(), true);
         }
 
-        private void AppendSyscallsStats(DiscordEmbedBuilder embed)
+        private static void AppendSyscallsStats(DiscordEmbedBuilder embed)
         {
             try
             {
@@ -247,7 +247,7 @@ namespace CompatBot.Commands
             }
         }
 
-        private void AppendPawStats(DiscordEmbedBuilder embed)
+        private static void AppendPawStats(DiscordEmbedBuilder embed)
         {
             try
             {

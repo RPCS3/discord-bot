@@ -403,7 +403,7 @@ namespace CompatBot.Commands
             }
         }
 
-        private async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
+        private static async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
         {
             Config.Log.Info(requestBuilder.Build());
             CompatResult? result = null;
@@ -464,7 +464,7 @@ namespace CompatBot.Commands
             return result;
         }
 
-        private IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
+        private static IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
         {
             var returnCode = ApiConfig.ReturnCodes[compatResult.ReturnCode];
             var request = compatResult.RequestBuilder;

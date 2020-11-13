@@ -17,7 +17,7 @@ namespace CompatBot.Utils
         private readonly object sync = new object();
         private bool disposed;
 
-        public BufferCopyStream(Stream baseStream, int bufferSize = 4096)
+        public BufferCopyStream(Stream? baseStream, int bufferSize = 4096)
         {
             if (baseStream == null)
                 throw new ArgumentNullException(nameof(baseStream));

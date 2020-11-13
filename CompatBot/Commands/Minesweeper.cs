@@ -97,7 +97,7 @@ namespace CompatBot.Commands
 			await ctx.RespondAsync(result.ToString()).ConfigureAwait(false);
 		}
 
-		private byte[,] GenerateField(int width, int height, in int mineCount, in Random rng)
+		private static byte[,] GenerateField(int width, int height, in int mineCount, in Random rng)
 		{
 			var len = width * height;
 			var cells = new byte[len];

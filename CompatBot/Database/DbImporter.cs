@@ -22,7 +22,7 @@ namespace CompatBot.Database
             catch (SqliteException e)
             {
                 Config.Log.Warn(e, "Database upgrade failed, probably importing an unversioned one.");
-                if (!(dbContext is BotDb botDb))
+                if (dbContext is not BotDb botDb)
                     return false;
 
                 Config.Log.Info("Trying to apply a manual fixup...");

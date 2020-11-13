@@ -20,7 +20,7 @@ namespace CompatBot.EventHandlers
         private static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
         private static readonly MemoryCache Throttling = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
-        public static async Task OnMessageCreated(DiscordClient _c, MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
@@ -38,7 +38,7 @@ namespace CompatBot.EventHandlers
                 MessageQueue[args.Channel.Id] = queue = new ConcurrentQueue<DiscordMessage>();
             queue.Enqueue(args.Message);
             while (queue.Count > 10)
-                queue.TryDequeue(out _);
+                queue.TryDequeue(out var _i);
             var content = args.Message.Content;
             if (string.IsNullOrEmpty(content))
                 return;

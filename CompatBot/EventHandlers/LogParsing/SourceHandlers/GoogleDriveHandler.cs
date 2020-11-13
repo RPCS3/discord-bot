@@ -84,7 +84,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             return (null, null);
         }
 
-        private DriveService GetClient()
+        private static DriveService GetClient()
         {
             var credential = GoogleCredential.FromFile(Config.GoogleApiConfigPath).CreateScoped(Scopes);
             var service = new DriveService(new BaseClientService.Initializer()

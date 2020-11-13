@@ -158,7 +158,6 @@ namespace CompatBot
                 commands.RegisterCommands<Events>();
                 commands.RegisterCommands<E3>();
                 commands.RegisterCommands<Cyberpunk2077>();
-                commands.RegisterCommands<Rpcs3Ama>();
                 commands.RegisterCommands<BotStats>();
                 commands.RegisterCommands<Syscall>();
                 commands.RegisterCommands<ForcedNicknames>();
@@ -180,7 +179,7 @@ namespace CompatBot
                                     var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
                                     if (owners.Count > 1)
                                         msg.AppendLine();
-                                    using var db = new BotDb();
+                                    await using var db = new BotDb();
                                     foreach (var owner in owners)
                                     {
                                         msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");

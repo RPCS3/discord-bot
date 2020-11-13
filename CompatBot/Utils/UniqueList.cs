@@ -111,7 +111,5 @@ namespace CompatBot.Utils
 
 		public int Length => list.Count;
 		public IEqualityComparer<T>? Comparer { get; }
-
-		T GetAt(int index) => list[index];
 	}
 }

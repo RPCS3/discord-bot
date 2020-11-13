@@ -190,7 +190,7 @@ namespace CompatBot.Utils
                 if (!emojiName.StartsWith(":"))
                     emojiName = ":" + emojiName;
                 if (!emojiName.EndsWith(":"))
-                    emojiName = emojiName + ":";
+                    emojiName += ":";
                 return DiscordEmoji.FromName(client, emojiName);
             }
             catch

@@ -18,7 +18,6 @@ namespace CompatBot.EventHandlers
         public static readonly Regex CommitMention = new Regex(@"(?<commit_mention>(https?://)github.com/RPCS3/rpcs3/commit/(?<commit_hash>[0-9a-f]+))\b", DefaultOptions);
         public static readonly Regex ImageMarkup = new Regex(@"(?<img_markup>!\[(?<img_caption>[^\]]+)\]\((?<img_link>\w+://[^\)]+)\))", DefaultOptions);
         private static readonly Regex IssueLink = new Regex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
-        private static readonly GithubClient.Client Client = new GithubClient.Client();
 
         public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
@@ -77,7 +76,7 @@ namespace CompatBot.EventHandlers
                 .SelectMany(match => new[] {match.Groups["number"].Value, match.Groups["also_number"].Value})
                 .Distinct()
                 .Select(n => {
-                            int.TryParse(n, out var i);
+                            _ = int.TryParse(n, out var i);
                             return i;
                         })
                 .Where(n => n > 0)
@@ -89,7 +88,7 @@ namespace CompatBot.EventHandlers
                 IssueLink.Matches(input)
                     .Select(match =>
                             {
-                                int.TryParse(match.Groups["number"].Value, out var n);
+                                _ = int.TryParse(match.Groups["number"].Value, out var n);
                                 return n;
                             })
             );

@@ -166,7 +166,7 @@ namespace CompatBot.Commands
             }
             */
 
-            private List<DiscordMember> GetMembers(DiscordClient client)
+            private static List<DiscordMember> GetMembers(DiscordClient client)
             {
                 //owner -> white name
                 //newbs -> veterans
@@ -177,7 +177,7 @@ namespace CompatBot.Commands
                     .ToList();
             }
 
-            private async void SpoofingCheck(CommandContext ctx)
+            private static async void SpoofingCheck(CommandContext ctx)
             {
                 if (!CheckLock.Wait(0))
                 {

@@ -36,6 +36,7 @@ namespace Tests
             var result = await readPipeTask.ConfigureAwait(false);
             await fillPipeTask.ConfigureAwait(false);
             result.TotalBytes = source.LogFileSize;
+#if DEBUG
             Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
             Config.Log.Debug("Extractor hit stats (CPU time, s / total hits):");
             foreach (var (key, (count, time)) in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value.regexTime))
@@ -54,6 +55,7 @@ namespace Tests
                     Config.Log.Debug(msg);
             }
             Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
+#endif
             Assert.That(result.CompletedCollection, Is.Not.Null.And.Not.Empty);
         }
     }

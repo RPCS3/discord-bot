@@ -42,7 +42,7 @@ namespace CompatBot.EventHandlers
                 if (tableIdx < 0)
                     tableIdx = content.IndexOf("┻━┻");
                 var faceIdx = content[..tableIdx].LastIndexOfAny(OpenParen);
-                var face = content.Substring(faceIdx, tableIdx - faceIdx);
+                var face = content[faceIdx..tableIdx];
                 if (face.Length > 30)
                     return;
 

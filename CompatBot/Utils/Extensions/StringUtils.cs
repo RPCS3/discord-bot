@@ -128,7 +128,7 @@ namespace CompatBot.Utils
                 foreach (var segment in sequence)
                 {
                     encoding.GetChars(segment.Span, span);
-                    span = span.Slice(segment.Length);
+                    span = span[segment.Length ..];
                 }
             }
             return string.Create((int)buffer.Length, buffer, Splice);

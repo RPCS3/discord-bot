@@ -89,7 +89,7 @@ namespace CompatBot
         internal static class AllowedMentions
         {
             internal static readonly IMention[] UsersOnly = { UserMention.All };
-            internal static readonly IMention[] Nothing = { };
+            internal static readonly IMention[] Nothing = Array.Empty<IMention>();
         }
 
         internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
