@@ -31,10 +31,7 @@ namespace CompatBot.Utils
             readBuf = ArrayPool<byte>.Shared.Rent(16);
         }
 
-        public override void Flush()
-        {
-            baseStream.Flush();
-        }
+        public override void Flush() => baseStream.Flush();
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -65,15 +62,9 @@ namespace CompatBot.Utils
             }
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotImplementedException();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
 
-        public override void SetLength(long value)
-        {
-            throw new NotImplementedException();
-        }
+        public override void SetLength(long value) => throw new NotImplementedException();
 
         public override void Write(byte[] buffer, int offset, int count)
         {
@@ -98,7 +89,7 @@ namespace CompatBot.Utils
                         disposed = true;
                     }
                 }
-            baseStream?.Dispose();
+            baseStream.Dispose();
             base.Dispose(disposing);
         }
 
@@ -114,7 +105,7 @@ namespace CompatBot.Utils
                         disposed = true;
                     }
                 }
-            baseStream?.Dispose();
+            baseStream.Dispose();
             base.Dispose();
         }
 

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
@@ -24,10 +26,16 @@ namespace Tests
         };
 
         [Explicit("For performance profiling only")]
-        [TestCase(@"C:\Documents\Downloads\RPCS3(7).rar")]
-        [TestCase(@"C:\Documents\Downloads\RPCS3(208).log.gz")]
+        [TestCase(@"C:\Documents\Downloads\RPCS3_20.log", TestName = "Plaintext")]
+        [TestCase(@"C:\Documents\Downloads\RPCS3_20.log.gz", TestName = "gz")]
+        [TestCase(@"C:\Documents\Downloads\RPCS3_20.zip", TestName = "zip")]
+        [TestCase(@"C:\Documents\Downloads\RPCS3_20.rar", TestName = "rar")]
+        [TestCase(@"C:\Documents\Downloads\RPCS3_20.7z", TestName = "7z")]
         public async Task PerformanceTest(string path)
         {
+            Config.inMemorySettings[nameof(Config.AttachmentSizeLimit)] = int.MaxValue.ToString();
+            Config.RebuildConfiguration();
+            var timer = Stopwatch.StartNew();
             var cts = new CancellationTokenSource();
             var source = await FileSource.DetectArchiveHandlerAsync(path, archiveHandlers).ConfigureAwait(false);
             var pipe = new Pipe();
@@ -35,6 +43,8 @@ namespace Tests
             var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, cts.Token);
             var result = await readPipeTask.ConfigureAwait(false);
             await fillPipeTask.ConfigureAwait(false);
+            timer.Stop();
+            Config.Log.Info($"Total time {Path.GetExtension(path)}: {timer.Elapsed.TotalSeconds}s");
             result.TotalBytes = source.LogFileSize;
 #if DEBUG
             Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
