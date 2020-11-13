@@ -34,6 +34,12 @@ namespace CompatBot.Commands
             try
             {
                 var msg = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false);
+                if (msg is null)
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Can't find linked message").ConfigureAwait(false);
+                    return;
+                }
+                
                 await ReportMessage(ctx, comment, msg);
             }
             catch (Exception)

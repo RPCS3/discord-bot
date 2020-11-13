@@ -227,7 +227,7 @@ namespace CompatBot.EventHandlers.LogParsing
             }
         };
 
-        public static readonly HashSet<string> MultiValueItems = new HashSet<string>
+        private static readonly HashSet<string> MultiValueItems = new HashSet<string>
         {
             "pad_handler",
             "fatal_error_context",
@@ -248,7 +248,7 @@ namespace CompatBot.EventHandlers.LogParsing
             "rsx_not_supported_feature",
         };
 
-        public static readonly string[] CountValueItems = {"enqueue_buffer_error"};
+        private static readonly string[] CountValueItems = {"enqueue_buffer_error"};
 
         private static async Task PiracyCheckAsync(string line, LogParseState state)
         {
@@ -289,15 +289,6 @@ namespace CompatBot.EventHandlers.LogParsing
                         state.Error = LogParseState.ErrorCode.PiracyDetected;
                 }
             }
-        }
-
-        private static Task LimitedPiracyCheckAsync(string line, LogParseState state)
-        {
-            if (state.LinesAfterConfig > 10)
-                return Task.CompletedTask;
-
-            state.LinesAfterConfig++;
-            return PiracyCheckAsync(line, state);
         }
 
         private static void ClearResults(LogParseState state)

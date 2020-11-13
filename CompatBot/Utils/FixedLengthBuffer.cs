@@ -71,7 +71,7 @@ namespace CompatBot.Utils
             return GetOldItems(Count - MaxLength);
         }
 
-        public TValue Evict(TKey key)
+        public TValue? Evict(TKey key)
         {
             if (!lookup.TryGetValue(key, out var result))
                 return result;

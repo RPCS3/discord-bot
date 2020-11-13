@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 namespace CompatBot.Utils
 {
     internal class PoorMansTaskScheduler<T>
+        where T: notnull
     {
         private readonly int queueLimit;
         private readonly ConcurrentDictionary<Task, T> taskQueue = new ConcurrentDictionary<Task, T>();
@@ -14,16 +15,13 @@ namespace CompatBot.Utils
         public PoorMansTaskScheduler(int simultaneousTaskCountLimit)
         {
             if (simultaneousTaskCountLimit < 1)
-                throw new ArgumentException();
+                throw new ArgumentException("Task count can't be lower than 1", nameof(simultaneousTaskCountLimit));
 
             queueLimit = simultaneousTaskCountLimit;
         }
 
         public async Task AddAsync(T tag, Task task)
         {
-            if (task == null)
-                return;
-
             if (taskQueue.Count < queueLimit)
             {
                 taskQueue.TryAdd(task, tag);

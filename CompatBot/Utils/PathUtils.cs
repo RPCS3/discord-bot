@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace CompatBot.Utils
 {
     public static class PathUtils
     {
-        public static string[] GetSegments(string path)
+        public static string[] GetSegments(string? path)
         {
             if (string.IsNullOrEmpty(path))
-                return new string[0];
+                return Array.Empty<string>();
 
             var result = new List<string>();
             string segment;

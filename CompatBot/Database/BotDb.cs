@@ -58,7 +58,8 @@ namespace CompatBot.Database
     internal class BotState
     {
         public int Id { get; set; }
-        public string? Key { get; set; }
+        [Required]
+        public string Key { get; set; } = null!;
         public string? Value { get; set; }
     }
 

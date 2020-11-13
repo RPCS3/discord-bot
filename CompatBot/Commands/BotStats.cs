@@ -48,7 +48,7 @@ namespace CompatBot.Commands
                                           $"CPUs: {Environment.ProcessorCount}\n" +
                                           $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
             AppendPiracyStats(embed);
-            AppendCmdStats(ctx, embed);
+            AppendCmdStats(embed);
             AppendExplainStats(embed);
             AppendGameLookupStats(embed);
             AppendSyscallsStats(embed);
@@ -163,7 +163,7 @@ namespace CompatBot.Commands
             }
         }
 
-        private static void AppendCmdStats(CommandContext ctx, DiscordEmbedBuilder embed)
+        private static void AppendCmdStats(DiscordEmbedBuilder embed)
         {
             var commandStats = StatsStorage.CmdStatCache.GetCacheKeys<string>();
             var sortedCommandStats = commandStats

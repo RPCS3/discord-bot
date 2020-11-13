@@ -7,9 +7,9 @@ namespace CompatBot.Utils
 	public class NameUniqueObjectCollection<TValue>: IDictionary<string, UniqueList<TValue>>
 	{
 		private readonly Dictionary<string, UniqueList<TValue>> dict;
-		private readonly IEqualityComparer<TValue> valueComparer;
+		private readonly IEqualityComparer<TValue>? valueComparer;
 
-		public NameUniqueObjectCollection(IEqualityComparer<string> keyComparer = null, IEqualityComparer<TValue> valueComparer = null)
+		public NameUniqueObjectCollection(IEqualityComparer<string>? keyComparer = null, IEqualityComparer<TValue>? valueComparer = null)
 		{
 			dict = new Dictionary<string, UniqueList<TValue>>(keyComparer);
 			this.valueComparer = valueComparer;
@@ -23,7 +23,6 @@ namespace CompatBot.Utils
 
 		public void Add(string key, UniqueList<TValue> value)
 		{
-			value ??= new UniqueList<TValue>(valueComparer);
 			if (dict.TryGetValue(key, out var c))
 				c.AddRange(value);
 			else
@@ -57,21 +56,22 @@ namespace CompatBot.Utils
 		public bool Remove(string key) => dict.Remove(key);
 
 		public bool TryGetValue(string key, out UniqueList<TValue> value)
-		{
-			var result = dict.TryGetValue(key, out value);
-			if (!result)
-				dict[key] = value = new UniqueList<TValue>(valueComparer);
-			return result;
-		}
+        {
+            if (dict.TryGetValue(key, out value!))
+                return true;
 
-		public UniqueList<TValue> this[string key]
+            dict[key] = value = new UniqueList<TValue>(valueComparer);
+            return false;
+        }
+
+        public UniqueList<TValue> this[string key]
 		{
 			get
 			{
 				TryGetValue(key, out var value);
 				return value;
 			}
-			set => dict[key] = (value ?? new UniqueList<TValue>(valueComparer));
+			set => dict[key] = value;
 		}
 
 		public ICollection<string> Keys => dict.Keys;

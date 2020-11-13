@@ -24,7 +24,7 @@ namespace CompatBot.Commands
                 public async Task List(CommandContext ctx)
                 {
                     await using var db = new BotDb();
-                    var setVars = await db.BotState.AsNoTracking().Where(v => v.Key != null && v.Key.StartsWith(SqlConfiguration.ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
+                    var setVars = await db.BotState.AsNoTracking().Where(v => v.Key.StartsWith(SqlConfiguration.ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
                     if (setVars.Any())
                     {
                         var result = new StringBuilder("Set variables:").AppendLine();

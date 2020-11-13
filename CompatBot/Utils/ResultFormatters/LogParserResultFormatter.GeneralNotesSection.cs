@@ -21,8 +21,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
         {
-            var items = state.CompletedCollection;
-            var multiItems = state.CompleteMultiValueCollection;
+            var items = state.CompletedCollection!;
+            var multiItems = state.CompleteMultiValueCollection!;
             var notes = new List<string>();
             var (_, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
             brokenDump |= multiItems["edat_block_offset"].Any();
@@ -608,8 +608,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static async Task<(bool irdChecked, bool broken, int longestPath)> HasBrokenFilesAsync(LogParseState state)
         {
-            var items = state.CompletedCollection;
-            var multiItems = state.CompleteMultiValueCollection;
+            var items = state.CompletedCollection!;
+            var multiItems = state.CompleteMultiValueCollection!;
             var defaultLongestPath = "/PS3_GAME/USRDIR/".Length + (1+8+3)*2; // usually there's at least one more level for data files
             if (items["serial"] is not string productCode)
                 return (false, false, defaultLongestPath);

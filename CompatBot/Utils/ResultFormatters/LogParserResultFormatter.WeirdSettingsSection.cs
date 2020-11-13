@@ -15,8 +15,8 @@ namespace CompatBot.Utils.ResultFormatters
     {
         private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, LogParseState state, List<string> generalNotes)
         {
-            var items = state.CompletedCollection;
-            var multiItems = state.CompleteMultiValueCollection;
+            var items = state.CompletedCollection!;
+            var multiItems = state.CompleteMultiValueCollection!;
             var notes = new List<string>();
             var serial = items["serial"] ?? "";
             _ = int.TryParse(items["thread_count"], out var threadCount);
@@ -579,7 +579,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckJojoSettings(string serial, LogParseState state, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
         {
-            var items = state.CompletedCollection;
+            var items = state.CompletedCollection!;
             if (AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
             {
                 if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
@@ -615,7 +615,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (serial == "BLUS31405"
                     && items["compat_database_path"] is string compatDbPath
                     && compatDbPath.Contains("JoJo ASB Emulator v.04")
-                    && state.CompleteMultiValueCollection["rap_file"].Any())
+                    && state.CompleteMultiValueCollection!["rap_file"].Any())
                     generalNotes.Add("🤔 Very interesting version of the game you got there");
             }
         }

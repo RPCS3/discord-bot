@@ -140,6 +140,16 @@ namespace CompatBot.EventHandlers
                             {
                                 if (result.Error == LogParseState.ErrorCode.PiracyDetected)
                                 {
+                                    if (result.SelectedFilter is null)
+                                    {
+                                        Config.Log.Error("Piracy was detectedin log, but no trigger provided");
+                                        result.SelectedFilter = new Piracystring
+                                        {
+                                            String = "Unknown trigger, plz kick 13xforever",
+                                            Actions = FilterAction.IssueWarning | FilterAction.RemoveContent,
+                                            Context = FilterContext.Log,
+                                        };
+                                    }
                                     var yarr = client.GetEmoji(":piratethink:", "☠");
                                     result.ReadBytes = 0;
                                     if (message.Author.IsWhitelisted(client, channel.Guild))
@@ -147,7 +157,7 @@ namespace CompatBot.EventHandlers
                                         var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                         piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
-                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter?.String, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
+                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter.String, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
                                     }
                                     else
                                     {
@@ -180,14 +190,14 @@ namespace CompatBot.EventHandlers
                                         }
                                         try
                                         {
-                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter?.String, result.SelectedFilterContext, severity).ConfigureAwait(false);
+                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter.String, result.SelectedFilterContext, severity).ConfigureAwait(false);
                                         }
                                         catch (Exception e)
                                         {
                                             Config.Log.Error(e, "Failed to send piracy report");
                                         }
                                         if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
-                                            await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.SelectedFilter?.String} - {result.SelectedFilterContext?.Sanitize()}");
+                                            await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}");
                                     }
                                 }
                                 else

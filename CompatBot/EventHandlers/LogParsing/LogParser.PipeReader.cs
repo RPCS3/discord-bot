@@ -18,9 +18,10 @@ namespace CompatBot.EventHandlers.LogParsing
 
         public static async Task<LogParseState> ReadPipeAsync(PipeReader reader, CancellationToken cancellationToken)
         {
-            var currentSectionLines = new LinkedList<ReadOnlySequence<byte>>();
+            #warning benchmark other collections
+            var currentSectionLines = new LinkedList<ReadOnlySequence<byte>>(); 
             var state = new LogParseState();
-            bool skippedBom = false;
+            var skippedBom = false;
             long totalReadBytes = 0;
             ReadResult result;
             do
@@ -47,20 +48,20 @@ namespace CompatBot.EventHandlers.LogParsing
                     SequencePosition? lineEnd;
                     do
                     {
-                        if (currentSectionLines.Count > 0)
-                            buffer = buffer.Slice(buffer.GetPosition(1, currentSectionLines.Last.Value.End));
+                        if (currentSectionLines.Last is {} lastLine)
+                            buffer = buffer.Slice(buffer.GetPosition(1, lastLine.Value.End));
                         lineEnd = buffer.PositionOf((byte)'\n');
-                        if (lineEnd != null)
+                        if (lineEnd is null)
+                            continue;
+                        
+                        await OnNewLineAsync(buffer.Slice(0, lineEnd.Value), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
+                        if (state.Error != LogParseState.ErrorCode.None)
                         {
-                            await OnNewLineAsync(buffer.Slice(0, lineEnd.Value), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
-                            if (state.Error != LogParseState.ErrorCode.None)
-                            {
-                                await reader.CompleteAsync();
-                                return state;
-                            }
-
-                            buffer = buffer.Slice(buffer.GetPosition(1, lineEnd.Value));
+                            await reader.CompleteAsync();
+                            return state;
                         }
+
+                        buffer = buffer.Slice(buffer.GetPosition(1, lineEnd.Value));
                     } while (lineEnd != null);
 
                     if (result.IsCanceled || cancellationToken.IsCancellationRequested)
@@ -70,11 +71,11 @@ namespace CompatBot.EventHandlers.LogParsing
                     }
                     else if (result.IsCompleted)
                     {
-                        if (!buffer.End.Equals(currentSectionLines.Last.Value.End))
+                        if (!buffer.End.Equals(currentSectionLines.Last?.Value.End))
                             await OnNewLineAsync(buffer.Slice(0), result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                         await FlushAllLinesAsync(result.Buffer, currentSectionLines, state).ConfigureAwait(false);
                     }
-                    var sectionStart = currentSectionLines.Count == 0 ? buffer : currentSectionLines.First.Value;
+                    var sectionStart = currentSectionLines.First is {} firstLine ? firstLine.Value : buffer;
                     totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
                     reader.AdvanceTo(sectionStart.Start);
                 }
@@ -117,15 +118,16 @@ namespace CompatBot.EventHandlers.LogParsing
         private static async Task ProcessFirstLineInBufferAsync(ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
         {
             var currentProcessor = SectionParsers[state.Id];
+            if (sectionLines.First is null)
+                return;
+
             var firstSectionLine = sectionLines.First.Value.AsString();
             await PiracyCheckAsync(firstSectionLine, state).ConfigureAwait(false);
-            //await currentProcessor.OnLineCheckAsync(firstSectionLine, state).ConfigureAwait(false);
             if (state.Error != LogParseState.ErrorCode.None)
                 return;
 
-            var section = buffer.Slice(sectionLines.First.Value.Start, sectionLines.Last.Value.End).AsString();
-            if (currentProcessor.OnExtract != null)
-                await TaskScheduler.AddAsync(state, Task.Run(() => currentProcessor.OnExtract(firstSectionLine, section, state)));
+            var section = buffer.Slice(sectionLines.First.Value.Start, sectionLines.Last!.Value.End).AsString();
+            await TaskScheduler.AddAsync(state, Task.Run(() => currentProcessor.OnExtract(firstSectionLine, section, state)));
             sectionLines.RemoveFirst();
         }
     }
