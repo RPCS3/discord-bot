@@ -35,7 +35,7 @@ namespace CompatBot.Commands
             if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                 embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
             embed.AddField("API Tokens", GetConfiguredApiStats(), true)
-                .AddField("Memory Usage", $"GC: {GC.GetTotalMemory(false).AsStorageUnit()}\n" +
+                .AddField("Memory Usage", $"GC: {GC.GetGCMemoryInfo().HeapSizeBytes.AsStorageUnit()}/{GC.GetGCMemoryInfo().TotalAvailableMemoryBytes.AsStorageUnit()}\n" +
                                           $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
                                           $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
                                           $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
