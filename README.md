@@ -9,7 +9,7 @@ You can read the design and implementation notes by visiting the folders in the 
 
 Development Requirements
 ------------------------
-* [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download) or newer
+* [.NET 5.0 SDK](https://dotnet.microsoft.com/download) or newer
 * Any text editor, but here are some recommends:
   * [Visual Studio](https://visualstudio.microsoft.com/) (Windows and Mac only, has free Community edition)
   * [Visual Studio Code](https://code.visualstudio.com/) (cross-platform, free)
@@ -17,9 +17,8 @@ Development Requirements
 
 Runtime Requirements
 --------------------
-* [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
-  * needs `dotnet` command available (i.e. alias for the Snap package)
-* [.NET Core 3.1 Runtime for server apps](https://dotnet.microsoft.com/download) or newer for compiled version
+* [.NET 5.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
+  * bot needs `dotnet` command to be available (i.e. alias for the Snap package)
 * Optionally Google API credentials to access Google Drive:
   * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
   * Select the project and enable [Google Drive API](https://console.developers.google.com/apis/library/drive.googleapis.com)
@@ -31,7 +30,7 @@ Runtime Requirements
     * Role **Project > Viewer**
     * Key type **JSON**
     * **Create** will generate a configuration file
-  * Save said configuration file as `credentials.json` in [user secrets](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-3.0#how-the-secret-manager-tool-works) folder
+  * Save said configuration file as `credentials.json` in [user secrets](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-5.0#how-the-secret-manager-tool-works) folder
     * e.g on Linux this will be `~/.microsoft/usersecrets/c2e6548b-b215-4a18-a010-958ef294b310/credentials.json`
 
 How to Build
