@@ -11,9 +11,9 @@ namespace CompatBot.Database.Providers
 {
     internal static class AmdDriverVersionProvider
     {
-        private static readonly Dictionary<string, List<string>> VulkanToDriver = new Dictionary<string, List<string>>();
-        private static readonly Dictionary<string, string> OpenglToDriver = new Dictionary<string, string>();
-        private static readonly SemaphoreSlim SyncObj = new SemaphoreSlim(1, 1);
+        private static readonly Dictionary<string, List<string>> VulkanToDriver = new();
+        private static readonly Dictionary<string, string> OpenglToDriver = new();
+        private static readonly SemaphoreSlim SyncObj = new(1, 1);
 
         public static async Task RefreshAsync()
         {
@@ -38,7 +38,7 @@ namespace CompatBot.Database.Providers
                             continue;
 
                         if (!VulkanToDriver.TryGetValue(vkVer, out var verList))
-                            VulkanToDriver[vkVer] = verList = new();
+                            VulkanToDriver[vkVer] = verList = new List<string>();
                         if (string.IsNullOrEmpty(driverVer))
                             continue;
                         

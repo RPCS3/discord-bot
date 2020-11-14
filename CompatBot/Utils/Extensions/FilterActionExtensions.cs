@@ -8,7 +8,7 @@ namespace CompatBot.Utils.Extensions
 {
     internal static class FilterActionExtensions
     {
-        private static readonly Dictionary<FilterAction, char> ActionFlags = new Dictionary<FilterAction, char>
+        private static readonly Dictionary<FilterAction, char> ActionFlags = new()
         {
             [FilterAction.RemoveContent] = 'r',
             [FilterAction.IssueWarning] = 'w',

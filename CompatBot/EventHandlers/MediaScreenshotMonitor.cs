@@ -22,8 +22,8 @@ namespace CompatBot.EventHandlers
     internal sealed class MediaScreenshotMonitor
     {
         private readonly DiscordClient client;
-        private readonly ComputerVisionClient cvClient = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
-        private readonly SemaphoreSlim workSemaphore = new SemaphoreSlim(0);
+        private readonly ComputerVisionClient cvClient = new(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
+        private readonly SemaphoreSlim workSemaphore = new(0);
         private readonly ConcurrentQueue<(MessageCreateEventArgs evt, Guid readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, Guid readOperationId)>();
         public static int MaxQueueLength { get; private set; } = 0;
 

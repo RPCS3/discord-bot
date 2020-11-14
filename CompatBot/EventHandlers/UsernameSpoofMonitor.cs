@@ -16,9 +16,9 @@ namespace CompatBot.EventHandlers
 {
     internal static class UsernameSpoofMonitor
     {
-        private static readonly Dictionary<string, string> UsernameMapping = new Dictionary<string, string>();
-        private static readonly SemaphoreSlim UsernameLock = new SemaphoreSlim(1, 1);
-        private static readonly MemoryCache SpoofingReportThrottlingCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
+        private static readonly Dictionary<string, string> UsernameMapping = new();
+        private static readonly SemaphoreSlim UsernameLock = new(1, 1);
+        private static readonly MemoryCache SpoofingReportThrottlingCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
         private static readonly TimeSpan SnoozeDuration = TimeSpan.FromHours(1);
 
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)

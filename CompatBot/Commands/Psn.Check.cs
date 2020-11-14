@@ -64,7 +64,7 @@ namespace CompatBot.Commands
                     Config.Log.Warn(e, "Failed to get title update info");
                     embeds = new List<DiscordEmbedBuilder>
                     {
-                        new DiscordEmbedBuilder
+                        new()
                         {
                             Color = Config.Colors.Maintenance,
                             Title = "Service is unavailable",

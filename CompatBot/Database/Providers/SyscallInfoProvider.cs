@@ -12,7 +12,7 @@ namespace CompatBot.Database.Providers
 
     internal static class SyscallInfoProvider
     {
-        private static readonly SemaphoreSlim Limiter = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim Limiter = new(1, 1);
 
         public static async Task SaveAsync(TSyscallStats syscallInfo)
         {

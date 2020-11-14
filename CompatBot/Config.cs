@@ -32,15 +32,15 @@ namespace CompatBot
     {
         private static IConfigurationRoot config = null!;
         private static TelemetryClient? telemetryClient;
-        private static readonly DependencyTrackingTelemetryModule dependencyTrackingTelemetryModule = new DependencyTrackingTelemetryModule();
-        private static readonly PerformanceCollectorModule performanceCollectorModule = new PerformanceCollectorModule();
+        private static readonly DependencyTrackingTelemetryModule dependencyTrackingTelemetryModule = new();
+        private static readonly PerformanceCollectorModule performanceCollectorModule = new();
 
         internal static readonly ILogger Log;
         internal static readonly ILoggerFactory LoggerFactory;
-        internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new ConcurrentDictionary<string, string>();
-        internal static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
+        internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new();
+        internal static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
 
-        public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
+        public static readonly CancellationTokenSource Cts = new();
         public static readonly Stopwatch Uptime = Stopwatch.StartNew();
 
         // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
@@ -116,28 +116,28 @@ namespace CompatBot
         public static class Colors
         {
             public static readonly DiscordColor Help = DiscordColor.Azure;
-            public static readonly DiscordColor DownloadLinks = new DiscordColor(0x3b88c3);
-            public static readonly DiscordColor Maintenance = new DiscordColor(0xffff00);
+            public static readonly DiscordColor DownloadLinks = new(0x3b88c3);
+            public static readonly DiscordColor Maintenance = new(0xffff00);
 
-            public static readonly DiscordColor CompatStatusNothing = new DiscordColor(0x455556); // colors mimic compat list statuses
-            public static readonly DiscordColor CompatStatusLoadable = new DiscordColor(0xe74c3c);
-            public static readonly DiscordColor CompatStatusIntro = new DiscordColor(0xe08a1e);
-            public static readonly DiscordColor CompatStatusIngame = new DiscordColor(0xf9b32f);
-            public static readonly DiscordColor CompatStatusPlayable = new DiscordColor(0x1ebc61);
-            public static readonly DiscordColor CompatStatusUnknown = new DiscordColor(0x3198ff);
+            public static readonly DiscordColor CompatStatusNothing = new(0x455556); // colors mimic compat list statuses
+            public static readonly DiscordColor CompatStatusLoadable = new(0xe74c3c);
+            public static readonly DiscordColor CompatStatusIntro = new(0xe08a1e);
+            public static readonly DiscordColor CompatStatusIngame = new(0xf9b32f);
+            public static readonly DiscordColor CompatStatusPlayable = new(0x1ebc61);
+            public static readonly DiscordColor CompatStatusUnknown = new(0x3198ff);
 
             public static readonly DiscordColor LogResultFailed = DiscordColor.Gray;
 
-            public static readonly DiscordColor LogAlert = new DiscordColor(0xf04747); // colors mimic discord statuses
-            public static readonly DiscordColor LogNotice = new DiscordColor(0xfaa61a);
-            public static readonly DiscordColor LogInfo = new DiscordColor(0x43b581);
-            public static readonly DiscordColor LogUnknown = new DiscordColor(0x747f8d);
+            public static readonly DiscordColor LogAlert = new(0xf04747); // colors mimic discord statuses
+            public static readonly DiscordColor LogNotice = new(0xfaa61a);
+            public static readonly DiscordColor LogInfo = new(0x43b581);
+            public static readonly DiscordColor LogUnknown = new(0x747f8d);
 
-            public static readonly DiscordColor PrOpen = new DiscordColor(0x2cbe4e);
-            public static readonly DiscordColor PrMerged = new DiscordColor(0x6f42c1);
-            public static readonly DiscordColor PrClosed = new DiscordColor(0xcb2431);
+            public static readonly DiscordColor PrOpen = new(0x2cbe4e);
+            public static readonly DiscordColor PrMerged = new(0x6f42c1);
+            public static readonly DiscordColor PrClosed = new(0xcb2431);
 
-            public static readonly DiscordColor UpdateStatusGood = new DiscordColor(0x3b88c3);
+            public static readonly DiscordColor UpdateStatusGood = new(0x3b88c3);
             public static readonly DiscordColor UpdateStatusBad = DiscordColor.Yellow;
         }
 

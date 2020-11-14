@@ -34,14 +34,14 @@ namespace CompatBot.Commands
 {
     internal sealed class CompatList : BaseCommandModuleCustom
     {
-        private static readonly Client client = new Client();
-        private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
-        private static string? lastUpdateInfo = null, lastFullBuildNumber = null;
+        private static readonly Client client = new();
+        private static readonly GithubClient.Client githubClient = new();
+        private static readonly SemaphoreSlim updateCheck = new(1, 1);
+        private static string? lastUpdateInfo, lastFullBuildNumber;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
         private const string Rpcs3UpdateBuildKey = "Rpcs3UpdateBuild";
         private static UpdateInfo? CachedUpdateInfo = null;
-        private static readonly Regex UpdateVersionRegex = new Regex(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        private static readonly Regex UpdateVersionRegex = new(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
         static CompatList()
         {
@@ -564,7 +564,7 @@ namespace CompatBot.Commands
                 if (dbItem is null)
                 {
                     Config.Log.Debug($"Missing product code {productCode} in {nameof(ThumbnailDb)}");
-                    dbItem = new();
+                    dbItem = new Thumbnail();
                 }
                 if (Enum.TryParse(info.Status, out CompatStatus status))
                 {
@@ -669,7 +669,7 @@ namespace CompatBot.Commands
                             .Where(i => i.coef > 0.85)
                             .OrderByDescending(i => i.coef)
                             .ToList()
-                            ?? new();
+                            ?? new List<(string productCode, TitleInfo titleInfo, double coef)>();
                         if (compatListMatches.Any(i => i.coef > 0.99))
                             compatListMatches = compatListMatches.Where(i => i.coef > 0.99).ToList();
                         else if (compatListMatches.Any(i => i.coef > 0.95))

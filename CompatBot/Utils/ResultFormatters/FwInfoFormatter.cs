@@ -11,9 +11,9 @@ namespace CompatBot.Utils.ResultFormatters
     internal static class FwInfoFormatter
     {
         //2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP
-        private static readonly Regex fwLinkInfo = new Regex(@"(?<year>\d{4})_(?<month>\d\d)(?<day>\d\d)_(?<md5>[0-9a-f]+)",
+        private static readonly Regex fwLinkInfo = new(@"(?<year>\d{4})_(?<month>\d\d)(?<day>\d\d)_(?<md5>[0-9a-f]+)",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase);
-        private static readonly Dictionary<string, string> RegionToFlagMap = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly Dictionary<string, string> RegionToFlagMap = new(StringComparer.InvariantCultureIgnoreCase)
         {
             ["us"] = "🇺🇸",
             ["eu"] = "🇪🇺",

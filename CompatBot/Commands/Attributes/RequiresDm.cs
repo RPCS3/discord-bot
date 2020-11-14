@@ -11,7 +11,7 @@ namespace CompatBot.Commands.Attributes
     internal class RequiresDm: CheckBaseAttribute
     {
         private const string Source = "https://cdn.discordapp.com/attachments/417347469521715210/534798232858001418/24qx11.jpg";
-        private static readonly Lazy<byte[]> Poster = new Lazy<byte[]>(() =>
+        private static readonly Lazy<byte[]> Poster = new(() =>
         {
             using var client = HttpClientFactory.Create();
             return client.GetByteArrayAsync(Source).ConfigureAwait(true).GetAwaiter().GetResult();

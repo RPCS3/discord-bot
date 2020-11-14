@@ -15,8 +15,8 @@ namespace CompatBot.Commands
     {
         // '2018-06-09 08:20:44.968000 - '
         // '2018-07-19T12:19:06.7888609Z - '
-        private static readonly Regex Timestamp = new Regex(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
-        private static readonly Regex Channel = new Regex(@"(?<id><#\d+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex Timestamp = new(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex Channel = new(@"(?<id><#\d+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
         [Group("fix"), Hidden]
         [Description("Commands to fix various stuff")]

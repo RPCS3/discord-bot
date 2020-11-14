@@ -18,8 +18,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class OneDriveSourceHandler : BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<onedrive_link>(https?://)?(1drv\.ms|onedrive\.live\.com)/[^>\s]+)", DefaultOptions);
-        private static readonly Client client = new Client();
+        private static readonly Regex ExternalLink = new(@"(?<onedrive_link>(https?://)?(1drv\.ms|onedrive\.live\.com)/[^>\s]+)", DefaultOptions);
+        private static readonly Client client = new();
 
         public async override Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {

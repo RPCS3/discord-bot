@@ -16,12 +16,12 @@ namespace CompatBot.ThumbScrapper
 {
     internal sealed class PsnScraper
     {
-        private static readonly PsnClient.Client Client = new PsnClient.Client();
-        public static readonly Regex ContentIdMatcher = new Regex(@"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
-        private static readonly SemaphoreSlim LockObj = new SemaphoreSlim(1, 1);
-        private static List<string> PsnStores = new List<string>();
+        private static readonly PsnClient.Client Client = new();
+        public static readonly Regex ContentIdMatcher = new(@"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        private static readonly SemaphoreSlim LockObj = new(1, 1);
+        private static List<string> PsnStores = new();
         private static DateTime StoreRefreshTimestamp = DateTime.MinValue;
-        private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(32, 32);
+        private static readonly SemaphoreSlim QueueLimiter = new(32, 32);
 
         public static async Task RunAsync(CancellationToken cancellationToken)
         {

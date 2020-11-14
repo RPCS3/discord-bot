@@ -20,15 +20,15 @@ namespace CompatBot.EventHandlers
     internal static class IsTheGamePlayableHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex GameNameStatusMention1 = new Regex(
+        private static readonly Regex GameNameStatusMention1 = new(
             @"(\b((is|does|can I play|any(one|1) tr(y|ied)|how's|(wonder(ing)?|me|knows?) if)\s+)(?<game_title_1>.+?)\s+((now|currently|at all|possibly|fully|(on (this|the) )emu(lator))\s+)?((it?s )?playable|work(s|ing)?|runs?|doing))\b" +
             @"|(\b(((can I|possible to) (play|run)|any(one|1) tr(y|ied)|compat[ai]bility (with|of))\s+)(?<game_title_2>.+?)(\s+((now|currently|at all|possibly|fully)\s+)?((it?s )?playable|work(s|ing)?|on (it|this))\b|\?|$))" +
             @"|(^(?<game_title_3>.+?)\s+((is )?(playable|work(s|ing)?))\?)",
             DefaultOptions
         );
-        private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new ConcurrentDictionary<ulong, DateTime>();
+        private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new();
         private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
-        private static readonly Client Client = new Client();
+        private static readonly Client Client = new();
 
         public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {

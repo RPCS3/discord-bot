@@ -13,7 +13,7 @@ namespace CompatBot.EventHandlers
 {
     public static class UsernameZalgoMonitor
     {
-        private static readonly HashSet<char> OversizedChars = new HashSet<char>
+        private static readonly HashSet<char> OversizedChars = new()
         {
             '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞',
         };

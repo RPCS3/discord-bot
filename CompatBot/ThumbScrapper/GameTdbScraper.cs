@@ -20,8 +20,8 @@ namespace CompatBot.ThumbScrapper
     internal static class GameTdbScraper
     {
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
-        private static readonly Uri TitleDownloadLink = new Uri("https://www.gametdb.com/ps3tdb.zip?LANG=EN");
-        private static readonly Regex CoverArtLink = new Regex(@"(?<cover_link>https?://art\.gametdb\.com/ps3/cover(?!full)[/\w\d]+\.jpg(\?\d+)?)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture);
+        private static readonly Uri TitleDownloadLink = new("https://www.gametdb.com/ps3tdb.zip?LANG=EN");
+        private static readonly Regex CoverArtLink = new(@"(?<cover_link>https?://art\.gametdb\.com/ps3/cover(?!full)[/\w\d]+\.jpg(\?\d+)?)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture);
         //private static readonly List<string> PreferredOrder = new List<string>{"coverHQ", "coverM", "cover"};
 
         public static async Task RunAsync(CancellationToken cancellationToken)

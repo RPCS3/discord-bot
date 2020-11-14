@@ -14,7 +14,7 @@ namespace CompatBot.Utils
         private readonly byte[] writeBuf;
         private readonly byte[] readBuf;
         private int bufStart, bufLength;
-        private readonly object sync = new object();
+        private readonly object sync = new();
         private bool disposed;
 
         public BufferCopyStream(Stream? baseStream, int bufferSize = 4096)

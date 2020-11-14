@@ -8,7 +8,7 @@ namespace CompatBot.Utils
     {
         public static readonly Dictionary<string, TimeZoneInfo> TimeZoneMap;
         
-        public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new Dictionary<string, string[]>
+        public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new()
         {
             ["PT"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },
             ["PST"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },

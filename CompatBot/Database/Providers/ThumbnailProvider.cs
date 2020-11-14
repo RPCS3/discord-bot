@@ -18,8 +18,8 @@ namespace CompatBot.Database.Providers
     internal static class ThumbnailProvider
     {
         private static readonly HttpClient HttpClient = HttpClientFactory.Create();
-        private static readonly PsnClient.Client PsnClient = new PsnClient.Client();
-        private static readonly MemoryCache ColorCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromDays(1) });
+        private static readonly PsnClient.Client PsnClient = new();
+        private static readonly MemoryCache ColorCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
         public static async Task<string?> GetThumbnailUrlAsync(this DiscordClient client, string? productCode)
         {

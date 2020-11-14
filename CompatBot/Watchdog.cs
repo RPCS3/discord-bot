@@ -16,7 +16,7 @@ namespace CompatBot
     internal static class Watchdog
     {
         private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
-        public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new ConcurrentQueue<DateTime>();
+        public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new();
         public static readonly Stopwatch TimeSinceLastIncomingMessage = Stopwatch.StartNew();
         private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < Config.IncomingMessageCheckIntervalInMin;
         private static DiscordClient? discordClient = null;

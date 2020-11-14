@@ -20,9 +20,9 @@ namespace CompatApiClient.POCOs
 
     public class TitleInfo
     {
-        public static readonly TitleInfo Maintenance = new TitleInfo { Status = "Maintenance" };
-        public static readonly TitleInfo CommunicationError = new TitleInfo { Status = "Error" };
-        public static readonly TitleInfo Unknown = new TitleInfo { Status = "Unknown" };
+        public static readonly TitleInfo Maintenance = new() { Status = "Maintenance" };
+        public static readonly TitleInfo CommunicationError = new() { Status = "Error" };
+        public static readonly TitleInfo Unknown = new() { Status = "Unknown" };
 
         public string Title;
         [JsonPropertyName("alternative-title")]

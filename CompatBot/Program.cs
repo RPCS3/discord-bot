@@ -25,8 +25,8 @@ namespace CompatBot
 {
     internal static class Program
     {
-        private static readonly SemaphoreSlim InstanceCheck = new SemaphoreSlim(0, 1);
-        private static readonly SemaphoreSlim ShutdownCheck = new SemaphoreSlim(0, 1);
+        private static readonly SemaphoreSlim InstanceCheck = new(0, 1);
+        private static readonly SemaphoreSlim ShutdownCheck = new(0, 1);
         // pre-load the assembly so it won't fail after framework update while the process is still running
         private static readonly Assembly diagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
         internal const ulong InvalidChannelId = 13;

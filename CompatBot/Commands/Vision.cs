@@ -47,7 +47,7 @@ namespace CompatBot.Commands
             Config.Log.Debug(list.ToString());
         }
 
-        private static readonly Dictionary<string, string[]> Reactions = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, string[]> Reactions = new(StringComparer.OrdinalIgnoreCase)
         {
             ["cat"] = BotStats.GoodKot,
             ["dog"] = BotStats.GoodDog,
@@ -155,7 +155,7 @@ namespace CompatBot.Commands
                 if (objects.Count > 0)
                 {
                     var analyzer = new ColorThief();
-                    List<Color> palette = new List<Color>(objects.Count);
+                    List<Color> palette = new(objects.Count);
                     foreach (var obj in objects)
                     {
                         var r = obj.Rectangle;

@@ -9,7 +9,7 @@ namespace CompatBot.Utils
         where T: notnull
     {
         private readonly int queueLimit;
-        private readonly ConcurrentDictionary<Task, T> taskQueue = new ConcurrentDictionary<Task, T>();
+        private readonly ConcurrentDictionary<Task, T> taskQueue = new();
         public PoorMansTaskScheduler() : this(Math.Max(1, Environment.ProcessorCount / 2)) { }
 
         public PoorMansTaskScheduler(int simultaneousTaskCountLimit)

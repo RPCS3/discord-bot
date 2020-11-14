@@ -24,9 +24,9 @@ namespace PsnClient
         private readonly JsonSerializerOptions dashedJson;
         private readonly JsonSerializerOptions snakeJson;
         private readonly MediaTypeFormatterCollection xmlFormatters;
-        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+        private static readonly MemoryCache ResponseCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
         private static readonly TimeSpan ResponseCacheDuration = TimeSpan.FromHours(1);
-        private static readonly Regex ContainerIdLink = new Regex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
+        private static readonly Regex ContainerIdLink = new(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
         private static readonly string[] KnownStoreLocales =
         {
             "en-US", "en-GB", "en-AE", "en-AU", "en-BG", "en-BH", "en-CA", "en-CY", "en-CZ", "en-DK", "en-FI", "en-GR", "en-HK", "en-HR", "en-HU", "en-ID", "en-IE", "en-IL", "en-IN", "en-IS",
@@ -36,7 +36,7 @@ namespace PsnClient
             "pl-PL", "pt-BR", "pt-PT", "ru-RU", "ru-UA", "sv-SE", "tr-TR", "zh-Hans-CN", "zh-Hans-HK", "zh-Hant-HK", "zh-Hant-TW",
         };
         // Dest=87;ImageVersion=0001091d;SystemSoftwareVersion=4.8500;CDN=http://duk01.ps3.update.playstation.net/update/ps3/image/uk/2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP;CDN_Timeout=30;
-        private static readonly Regex FwVersionInfo = new Regex(@"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
+        private static readonly Regex FwVersionInfo = new(@"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
         // directly from vsh.self

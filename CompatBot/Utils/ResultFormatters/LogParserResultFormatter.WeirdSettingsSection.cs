@@ -484,7 +484,7 @@ namespace CompatBot.Utils.ResultFormatters
             PageSection(builder, notesContent.ToString().Trim(), "Important Settings to Review");
         }
 
-        private static readonly HashSet<string> P5Ids = new HashSet<string>
+        private static readonly HashSet<string> P5Ids = new()
         {
             "BLES02247", "BLUS31604", "BLJM61346",
             "NPEB02436", "NPUB31848", "NPJB00769",
@@ -565,13 +565,13 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> AllStarBattleIds = new HashSet<string>
+        private static readonly HashSet<string> AllStarBattleIds = new()
         {
             "BLES01986", "BLUS31405", "BLJS10217",
             "NPEB01922", "NPUB31391", "NPJB00331",
         };
 
-        private static readonly HashSet<string> KnownJojoPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownJojoPatches = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "6875682ab309df32307c5305c43bb132c4e261fa",
             "18cf9a4e8196684ed9ee816f82649561fd1bf182",
@@ -628,7 +628,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> KnownNierPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownNierPatches = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "13950b2e29e05a115fe317815d3da9d2b2baee65",
             "f098ee8410599c81c89f90d698340a078dc69a90",
@@ -696,18 +696,18 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> Gow3Ids = new HashSet<string>
+        private static readonly HashSet<string> Gow3Ids = new()
         {
             "BCAS25003", "BCES00510", "BCES00516", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003",
         };
 
-        private static readonly HashSet<string> GowHDIds = new HashSet<string>
+        private static readonly HashSet<string> GowHDIds = new()
         {
             "BCAS20102", "BCES00791", "BCES00800", "BLJM60200", "BCUS98229", // collection except volume II
             "NPUA80491", "NPUA80490", "NPEA00255", "NPEA00256", "NPJA00062", "NPJA00061", "NPJA00066",
         };
 
-        private static readonly HashSet<string> GowAscIds = new HashSet<string>
+        private static readonly HashSet<string> GowAscIds = new()
         {
             "BCAS25016", "BCES01741", "BCES01742", "BCUS98232",
             "NPEA00445", "NPEA90123", "NPUA70216", "NPUA70269", "NPUA80918",
@@ -739,13 +739,13 @@ namespace CompatBot.Utils.ResultFormatters
                 generalNotes.Add("ℹ This game is known to be very unstable");
         }
 
-        private static readonly HashSet<string> DesIds = new HashSet<string>
+        private static readonly HashSet<string> DesIds = new()
         {
             "BLES00932", "BLUS30443", "BCJS30022", "BCJS70013",
             "NPEB01202", "NPUB30910", "NPJA00102",
         };
 
-        private static readonly HashSet<string> KnownDesPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownDesPatches = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "83681f6110d33442329073b72b8dc88a2f677172",
             "5446a2645880eefa75f7e374abd6b7818511e2ef",
@@ -808,14 +808,14 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> Dod3Ids = new HashSet<string>
+        private static readonly HashSet<string> Dod3Ids = new()
         {
             "BLUS31197", "NPUB31251",
             "NPEB01407",
             "BLJM61043", "BCAS20311",
         };
 
-        private static readonly HashSet<string> KnownDod3Patches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownDod3Patches = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "f2f7f7ea0444353884bb715152147c3a29f4e790",
             "2b393f064786e5895d5a576621deb4c9107a8f0b",
@@ -858,7 +858,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> TlouIds = new HashSet<string>
+        private static readonly HashSet<string> TlouIds = new()
         {
             "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174",
             "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175", 
@@ -912,7 +912,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> Killzone3Ids = new HashSet<string>
+        private static readonly HashSet<string> Killzone3Ids = new()
         {
             "BCAS20157", "BCAS25008", "BCES01007", "BCJS30066", "BCJS37003", "BCJS70016", "BCJS75002", "BCUS98234",
             "NPEA00321", "NPEA90084", "NPEA90085", "NPEA90086", "NPHA80140", "NPJA90178", "NPUA70133",
@@ -934,7 +934,7 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("⚠ Please enable MLAA patch (recommended) or `Write Color Buffers`");
             }
         }
-        private static readonly HashSet<string> RdrIds = new HashSet<string>
+        private static readonly HashSet<string> RdrIds = new()
         {
             "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758",
             "BLJM60314", "BLJM60403", "BLJM61181", "BLKS20315",
@@ -951,7 +951,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ `Write Color Buffers` is required for proper visuals at night");
         }
 
-        private static readonly HashSet<string> Mgs4Ids = new HashSet<string>
+        private static readonly HashSet<string> Mgs4Ids = new()
         {
             "BLAS55005", "BLES00246", "BLJM57001", "BLJM67001", "BLKS25001", "BLUS30109", "BLUS30148",
             "NPEB00027", "NPEB02182", "NPEB90116", "NPJB00698", "NPJB90149", "NPUB31633",
@@ -976,27 +976,27 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> PdfIds = new HashSet<string>
+        private static readonly HashSet<string> PdfIds = new()
         {
             "BLJM60527", "BLUS31319", "BLAS50576",
             "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287"
         };
 
 
-        private static readonly HashSet<string> KnownPdfPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownPdfPatches = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "f3227f57ec001582b253035fd90de77f05ead470",
             "c02e3b52e3d75f52f76fb8f0fb5be7ca4d921949",
             "1105af0a4d6a4a1481930c6f3090c476cde06c4c",
         };
 
-        private static readonly HashSet<string> Pdf2ndIds = new HashSet<string>
+        private static readonly HashSet<string> Pdf2ndIds = new()
         {
             "BCAS50693", "BLAS50693", "BLES02029", "BLJM61079",
             "NPUB31488", "NPHB00671", "NPHB00662", "NPEB02013", "NPJB00435",
         };
 
-        private static readonly HashSet<string> KnownPdf2ndPatches = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownPdf2ndPatches = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "092c43e2bcacccfe3cdc22b0ab8062b91d4e1cf9",
             "67e0e7c9b2a7a340c914a0d078e25aac1047e4d4",
@@ -1024,7 +1024,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
         }
 
-        private static readonly HashSet<string> Gt5Ids = new HashSet<string>
+        private static readonly HashSet<string> Gt5Ids = new()
         {
             "BCAS20108", "BCAS20151", "BCAS20154", "BCAS20164", "BCAS20229", "BCAS20267",
             "BCES00569",
@@ -1043,7 +1043,7 @@ namespace CompatBot.Utils.ResultFormatters
                 generalNotes.Add("ℹ Game versions between 1.05 and 1.10 can fail to boot with HDD space error");
         }
 
-        private static readonly HashSet<string> Gt6Ids = new HashSet<string>
+        private static readonly HashSet<string> Gt6Ids = new()
         {
             "BCAS20519", "BCAS20520", "BCAS20521", "BCAS25018", "BCAS25019",
             "BCES01893", "BCES01905", "BCJS37016", "BCUS98296", "BCUS99247",
@@ -1115,7 +1115,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> Sly4Ids = new HashSet<string>
+        private static readonly HashSet<string> Sly4Ids = new()
         {
             "BCES01284", "BCUS98247", "BCUS99142",
             "NPEA00429", "NPUA80875",
@@ -1137,7 +1137,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static readonly HashSet<string> DragonsCrownIds = new HashSet<string>
+        private static readonly HashSet<string> DragonsCrownIds = new()
         {
             "BCAS20290", "BCAS20298", "BLES01950", "BLJM61041", "BLUS30767",
             "NPEB01836", "NPUB31235",
@@ -1152,25 +1152,25 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
         }
 
-        private static readonly HashSet<string> Lbp1Ids = new HashSet<string>
+        private static readonly HashSet<string> Lbp1Ids = new()
         {
             "BCAS20058", "BCAS20078", "BCAS20091", "BCES00611", "BCES00141", "BCJS70009", "BCKS10059", "BCUS98148", "BCUS98199", "BCUS98208",
             "NPEA00241", "NPHA80093", "NPUA80472", "NPUA80479",
         };
 
-        private static readonly HashSet<string> Lbp2Ids = new HashSet<string>
+        private static readonly HashSet<string> Lbp2Ids = new()
         {
             "BCAS20201", "BCES00850", "BCES01086", "BCES01345", "BCES01346", "BCES01693", "BCES01694", "BCJS70024", "BCUS90260", "BCUS98249", "BCUS98372",
             "NPEA00324", "NPHA80161", "NPUA80662",
         };
 
-        private static readonly HashSet<string> Lbp3Ids = new HashSet<string>
+        private static readonly HashSet<string> Lbp3Ids = new()
         {
             "BCAS20322", "BCES01663", "BCES02068", "BCUS98245", "BCUS98362",
             "NPEA00515", "NPHA80277", "NPUA81116",
         };
 
-        private static readonly HashSet<string> AllLbpGames = new HashSet<string>(Lbp1Ids.Concat(Lbp2Ids).Concat(Lbp3Ids))
+        private static readonly HashSet<string> AllLbpGames = new(Lbp1Ids.Concat(Lbp2Ids).Concat(Lbp3Ids))
         {
             "NPEA00147", "NPJA90074", "NPJA90097", "NPUA70045", // lbp1 demos and betas
             "NPUA70117", "NPHA80163", // lbp2 demo and beta

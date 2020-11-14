@@ -16,7 +16,7 @@ namespace CompatBot.Commands
     [Description("Commands related to PSN metadata")]
     internal sealed partial class Psn: BaseCommandModuleCustom
     {
-        private static readonly Client Client = new Client();
+        private static readonly Client Client = new();
 
         [Command("rename"), Aliases("setname", "settitle"), RequiresBotModRole]
         [Description("Command to set or change game title for specific product code")]

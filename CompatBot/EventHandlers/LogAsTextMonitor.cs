@@ -11,7 +11,7 @@ namespace CompatBot.EventHandlers
 {
     internal static class LogAsTextMonitor
     {
-        private static readonly Regex LogLine = new Regex(@"^[`""]?(·|(\w|!)) ({(rsx|PPU|SPU)|LDR:)|E LDR:", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private static readonly Regex LogLine = new(@"^[`""]?(·|(\w|!)) ({(rsx|PPU|SPU)|LDR:)|E LDR:", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {

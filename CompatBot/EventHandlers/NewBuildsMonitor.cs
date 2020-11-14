@@ -13,11 +13,11 @@ namespace CompatBot.EventHandlers
 {
     internal static class NewBuildsMonitor
     {
-        private static readonly Regex BuildResult = new Regex(@"\[rpcs3:master\] \d+ new commit", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        private static readonly Regex BuildResult = new(@"\[rpcs3:master\] \d+ new commit", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
         private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromMinutes(20);
         private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(20);
         private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
-        private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new ConcurrentQueue<(DateTime start, DateTime end)>();
+        private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new();
 
         public static Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {

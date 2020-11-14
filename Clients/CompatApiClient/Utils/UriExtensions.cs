@@ -9,7 +9,7 @@ namespace CompatApiClient
 {
     public static class UriExtensions
     {
-        private static readonly Uri FakeHost = new Uri("sc://q"); // s:// will be parsed as file:///s:// for some reason
+        private static readonly Uri FakeHost = new("sc://q"); // s:// will be parsed as file:///s:// for some reason
 
         public static NameValueCollection ParseQueryString(Uri uri)
         {

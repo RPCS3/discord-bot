@@ -8,7 +8,7 @@ namespace CompatBot.Utils.Extensions
 {
 	internal static class Converters
 	{
-		private static readonly ColorSpaceConverter colorSpaceConverter = new ColorSpaceConverter();
+		private static readonly ColorSpaceConverter colorSpaceConverter = new();
 
 		public static Color ToStandardColor(this ColorThiefDotNet.Color c)
 			=> new Rgba32(c.R, c.G, c.B, c.A);

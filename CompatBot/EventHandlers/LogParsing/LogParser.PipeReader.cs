@@ -14,7 +14,7 @@ namespace CompatBot.EventHandlers.LogParsing
     {
         private static readonly byte[] Bom = {0xEF, 0xBB, 0xBF};
 
-        private static readonly PoorMansTaskScheduler<LogParseState> TaskScheduler = new PoorMansTaskScheduler<LogParseState>();
+        private static readonly PoorMansTaskScheduler<LogParseState> TaskScheduler = new();
 
         public static async Task<LogParseState> ReadPipeAsync(PipeReader reader, CancellationToken cancellationToken)
         {

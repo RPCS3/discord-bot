@@ -16,7 +16,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
     internal sealed class DropboxHandler : BaseSourceHandler
     {
         //https://www.dropbox.com/s/62ls9lw5i52fuib/RPCS3.log.gz?dl=0
-        private static readonly Regex ExternalLink = new Regex(@"(?<dropbox_link>(https?://)?(www\.)?dropbox\.com/s/(?<dropbox_id>[^/\s]+)/(?<filename>[^/\?\s])(/dl=[01])?)", DefaultOptions);
+        private static readonly Regex ExternalLink = new(@"(?<dropbox_link>(https?://)?(www\.)?dropbox\.com/s/(?<dropbox_id>[^/\s]+)/(?<filename>[^/\?\s])(/dl=[01])?)", DefaultOptions);
 
         public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {

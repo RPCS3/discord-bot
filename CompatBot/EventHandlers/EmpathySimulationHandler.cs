@@ -16,9 +16,9 @@ namespace CompatBot.EventHandlers
 
     internal static class EmpathySimulationHandler
     {
-        private static readonly TCache MessageQueue = new TCache();
+        private static readonly TCache MessageQueue = new();
         private static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
-        private static readonly MemoryCache Throttling = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
+        private static readonly MemoryCache Throttling = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
         public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {

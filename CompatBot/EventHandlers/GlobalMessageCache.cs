@@ -15,7 +15,7 @@ namespace CompatBot.EventHandlers
 
     internal static class GlobalMessageCache
     {
-        private static readonly TCache MessageQueue = new TCache();
+        private static readonly TCache MessageQueue = new();
         private static readonly Func<DiscordMessage, ulong> KeyGen = m => m.Id;
 
         public static Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)

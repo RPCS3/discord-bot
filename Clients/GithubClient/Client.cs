@@ -22,8 +22,8 @@ namespace GithubClient
 
         private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(3);
         private static readonly TimeSpan IssueStatusCacheTime = TimeSpan.FromMinutes(30);
-        private static readonly MemoryCache StatusesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
-        private static readonly MemoryCache IssuesCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(30) });
+        private static readonly MemoryCache StatusesCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
+        private static readonly MemoryCache IssuesCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(30) });
 
         public static int RateLimit { get; private set; }
         public static int RateLimitRemaining { get; private set; }

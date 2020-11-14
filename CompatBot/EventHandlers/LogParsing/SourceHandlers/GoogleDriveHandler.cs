@@ -18,7 +18,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class GoogleDriveHandler: BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<gdrive_link>(https?://)?drive\.google\.com/(open\?id=|file/d/)(?<gdrive_id>[^/>\s]+))", DefaultOptions);
+        private static readonly Regex ExternalLink = new(@"(?<gdrive_link>(https?://)?drive\.google\.com/(open\?id=|file/d/)(?<gdrive_id>[^/>\s]+))", DefaultOptions);
         private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
         private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
 

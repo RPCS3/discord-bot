@@ -15,9 +15,9 @@ namespace CompatBot.EventHandlers
 {
 	internal static class DeletedMessagesMonitor
 	{
-		public static readonly MemoryCache RemovedByBotCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
+		public static readonly MemoryCache RemovedByBotCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
 		public static readonly TimeSpan CacheRetainTime = TimeSpan.FromMinutes(1);
-		private static readonly SemaphoreSlim postLock = new SemaphoreSlim(1);
+		private static readonly SemaphoreSlim postLock = new(1);
 
 		public static async Task OnMessageDeleted(DiscordClient c, MessageDeleteEventArgs e)
 		{

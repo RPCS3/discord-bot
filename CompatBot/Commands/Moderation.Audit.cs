@@ -22,7 +22,7 @@ namespace CompatBot.Commands
         [Description("Commands to audit server things")]
         public sealed class Audit: BaseCommandModuleCustom
         {
-            public static readonly SemaphoreSlim CheckLock = new SemaphoreSlim(1, 1);
+            public static readonly SemaphoreSlim CheckLock = new(1, 1);
 
             [Command("spoofing"), Aliases("impersonation"), RequireDirectMessage]
             [Description("Checks every user on the server for name spoofing")]

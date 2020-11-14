@@ -18,13 +18,13 @@ namespace CompatBot.Utils
                                                                  .GetEncoding()
                                                              ?? Encoding.ASCII;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
-        private static readonly MemoryCache FuzzyPairCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
+        private static readonly MemoryCache FuzzyPairCache = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
         private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(30);
         private const char StrikeThroughChar = '\u0336'; // 0x0335 = short dash, 0x0336 = long dash, 0x0337 = short slash, 0x0338 = long slash
         public const char InvisibleSpacer = '\u206a';
         public const char Nbsp = '\u00a0';
 
-        internal static readonly HashSet<char> SpaceCharacters = new HashSet<char>
+        internal static readonly HashSet<char> SpaceCharacters = new()
         {
             '\u00a0',
             '\u2002', '\u2003', '\u2004', '\u2005', '\u2006',

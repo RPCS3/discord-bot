@@ -11,7 +11,7 @@ namespace CompatBot.Utils
         private readonly bool[] disabled;
         private readonly int[] maxWidth;
         private readonly int[] width;
-        private readonly List<string[]> rows = new List<string[]>();
+        private readonly List<string[]> rows = new();
 
         public AsciiTable(params string[] columns)
         {

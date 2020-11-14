@@ -16,8 +16,8 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static readonly Version decompilerIssueStartVersion = new Version(0, 0, 9, 10307);
-        private static readonly Version decompilerIssueEndVersion = new Version(0, 0, 10, 10346);
+        private static readonly Version decompilerIssueStartVersion = new(0, 0, 9, 10307);
+        private static readonly Version decompilerIssueEndVersion = new(0, 0, 10, 10346);
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
         {

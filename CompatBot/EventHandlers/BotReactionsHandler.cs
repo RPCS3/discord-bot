@@ -15,7 +15,7 @@ namespace CompatBot.EventHandlers
 {
     internal static class BotReactionsHandler
     {
-        private static readonly AhoCorasickDoubleArrayTrie<bool> ChillCheck = new AhoCorasickDoubleArrayTrie<bool>(new[]
+        private static readonly AhoCorasickDoubleArrayTrie<bool> ChillCheck = new(new[]
         {
             "shut the fuck up", "shut up", "shutup", "shuddup", "hush", "chill", "bad bot",
             "no one asked you", "useless bot", "bot sux", "fuck this bot", "fuck bot",
@@ -66,12 +66,12 @@ namespace CompatBot.EventHandlers
             "Glad I could help", "I try my best", "Blessed day", "It is officially a good day today", "I will remember you when the uprising starts",
         };
 
-        private static readonly Regex Paws = new Regex(
+        private static readonly Regex Paws = new(
             @"\b((?<kot>kot(to)?)|(?<doggo>doggo|jarves))\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
         );
-        private static readonly Random rng = new Random();
-        private static readonly object theDoor = new object();
+        private static readonly Random rng = new();
+        private static readonly object theDoor = new();
 
         public static DiscordEmoji RandomNegativeReaction { get { lock (theDoor) return SadReactions[rng.Next(SadReactions.Length)]; } }
         public static DiscordEmoji RandomPositiveReaction { get { lock (theDoor) return ThankYouReactions[rng.Next(ThankYouReactions.Length)]; } }

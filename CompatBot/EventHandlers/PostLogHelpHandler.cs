@@ -14,10 +14,10 @@ namespace CompatBot.EventHandlers
     internal static class PostLogHelpHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        private static readonly Regex UploadLogMention = new Regex(@"\b((?<vulkan>(vul[ck][ae]n(-?1)?))|(?<help>(post|upload|send|give)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full|game)\s+)*\blogs?))\b", DefaultOptions);
-        private static readonly SemaphoreSlim TheDoor = new SemaphoreSlim(1, 1);
+        private static readonly Regex UploadLogMention = new(@"\b((?<vulkan>(vul[ck][ae]n(-?1)?))|(?<help>(post|upload|send|give)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full|game)\s+)*\blogs?))\b", DefaultOptions);
+        private static readonly SemaphoreSlim TheDoor = new(1, 1);
         private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
-        private static readonly Dictionary<string, Explanation> DefaultExplanation = new Dictionary<string, Explanation>
+        private static readonly Dictionary<string, Explanation> DefaultExplanation = new()
         {
             ["log"] = new Explanation { Text = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon." },
             ["vulkan-1"] = new Explanation { Text = "Please remove all the traces of video drivers using DDU, and then reinstall the latest driver version for your GPU." },

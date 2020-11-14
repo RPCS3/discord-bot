@@ -10,7 +10,7 @@ namespace HomoglyphConverter
         private static readonly Dictionary<uint, uint[]> Mapping = ConfusablesBuilder.Build();
         private static readonly Encoding Utf32 = new UTF32Encoding(false, false, true);
 
-        private static readonly Dictionary<string, string> HomoglyphSequences = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> HomoglyphSequences = new()
         {
             ["rn"] = "m",
             ["cl"] = "d",

@@ -18,9 +18,9 @@ namespace CompatBot.Database.Providers
 {
     internal static class ContentFilter
     {
-        private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?> filters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
-        private static readonly MemoryCache ResponseAntispamCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
-        private static readonly MemoryCache ReportAntispamCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
+        private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?> filters = new();
+        private static readonly MemoryCache ResponseAntispamCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
+        private static readonly MemoryCache ReportAntispamCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
         private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(15);
 
         static ContentFilter() => RebuildMatcher();

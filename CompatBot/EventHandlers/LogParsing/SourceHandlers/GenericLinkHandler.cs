@@ -14,7 +14,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class GenericLinkHandler : BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z|log)))", DefaultOptions);
+        private static readonly Regex ExternalLink = new(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z|log)))", DefaultOptions);
 
         public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {

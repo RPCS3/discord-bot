@@ -13,7 +13,7 @@ namespace CompatBot.Utils.Extensions
 {
     internal static class AzureDevOpsClientExtensions
     {
-        private static readonly MemoryCache BuildInfoCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+        private static readonly MemoryCache BuildInfoCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
         public class BuildInfo
         {

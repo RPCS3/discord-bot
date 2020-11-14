@@ -11,7 +11,7 @@ namespace CompatApiClient
 
         private RequestBuilder() {}
 
-        public static RequestBuilder Start() => new RequestBuilder();
+        public static RequestBuilder Start() => new();
 
         public RequestBuilder SetSearch(string search)
         {

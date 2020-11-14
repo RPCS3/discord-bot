@@ -13,7 +13,7 @@ namespace CompatBot.EventHandlers
 {
     internal static class Starbucks
     {
-        private static readonly Dictionary<DiscordEmoji, string> TextMap = new Dictionary<DiscordEmoji, string>
+        private static readonly Dictionary<DiscordEmoji, string> TextMap = new()
         {
             [DiscordEmoji.FromUnicode("Ⓜ")] = "M",
             [DiscordEmoji.FromUnicode("🅰")] = "A",

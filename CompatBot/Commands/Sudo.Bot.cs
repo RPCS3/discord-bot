@@ -17,8 +17,8 @@ namespace CompatBot.Commands
 {
     internal partial class Sudo
     {
-        private static readonly SemaphoreSlim lockObj = new SemaphoreSlim(1, 1);
-        private static readonly SemaphoreSlim importLockObj = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim lockObj = new(1, 1);
+        private static readonly SemaphoreSlim importLockObj = new(1, 1);
 
         [Group("bot"), Aliases("kot")]
         [Description("Commands to manage the bot instance")]

@@ -12,11 +12,11 @@ namespace CompatBot.Database.Providers
     internal static class StatsStorage
     {
         internal static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
-        internal static readonly MemoryCache CmdStatCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
-        internal static readonly MemoryCache ExplainStatCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
-        internal static readonly MemoryCache GameStatCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
+        internal static readonly MemoryCache CmdStatCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
+        internal static readonly MemoryCache ExplainStatCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
+        internal static readonly MemoryCache GameStatCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
-        private static readonly SemaphoreSlim barrier = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim barrier = new(1, 1);
         private static readonly (string name, MemoryCache cache)[] AllCaches =
         {
             (nameof(CmdStatCache), CmdStatCache),

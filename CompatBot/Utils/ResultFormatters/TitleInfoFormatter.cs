@@ -14,7 +14,7 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static class TitleInfoFormatter
 	{
-		private static readonly Dictionary<string, DiscordColor> StatusColors = new Dictionary<string, DiscordColor>(StringComparer.InvariantCultureIgnoreCase)
+		private static readonly Dictionary<string, DiscordColor> StatusColors = new(StringComparer.InvariantCultureIgnoreCase)
 		{
 			{"Unknown", Config.Colors.CompatStatusUnknown},
 			{"Nothing", Config.Colors.CompatStatusNothing},

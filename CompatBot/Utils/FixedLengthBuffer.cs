@@ -9,7 +9,7 @@ namespace CompatBot.Utils
     internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
         where TKey: notnull
     {
-        internal readonly object syncObj = new object();
+        internal readonly object syncObj = new();
         
         public FixedLengthBuffer(Func<TValue, TKey> keyGenerator)
         {
@@ -122,7 +122,7 @@ namespace CompatBot.Utils
 
         private static int MaxLength => Config.ChannelMessageHistorySize;
         private readonly Func<TValue, TKey> makeKey;
-        private readonly List<TKey> keyList = new List<TKey>();
-        private readonly Dictionary<TKey, TValue> lookup = new Dictionary<TKey, TValue>();
+        private readonly List<TKey> keyList = new();
+        private readonly Dictionary<TKey, TValue> lookup = new();
     }
 }

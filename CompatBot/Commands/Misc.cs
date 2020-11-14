@@ -17,9 +17,9 @@ namespace CompatBot.Commands
 {
     internal sealed class Misc: BaseCommandModuleCustom
     {
-        private readonly Random rng = new Random();
+        private readonly Random rng = new();
 
-        private static readonly List<string> EightBallAnswers = new List<string>
+        private static readonly List<string> EightBallAnswers = new()
         {
             // 45
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
@@ -49,7 +49,7 @@ namespace CompatBot.Commands
             "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means", "👎",
         };
 
-        private static readonly List<string> EightBallSnarkyComments = new List<string>
+        private static readonly List<string> EightBallSnarkyComments = new()
         {
             "Can't answer the question that wasn't asked",
             "Having issues with my mind reading attachment, you'll have to state your question explicitly",
@@ -61,13 +61,13 @@ namespace CompatBot.Commands
             "I'd say maybe, but I'd need to see your question first",
         };
 
-        private static readonly List<string> EightBallTimeUnits = new List<string>
+        private static readonly List<string> EightBallTimeUnits = new()
         {
             "second", "minute", "hour", "day", "week", "month", "year", "decade", "century", "millennium",
             "night", "moon cycle", "solar eclipse", "blood moon", "complete emulator rewrite",
         };
 
-        private static readonly List<string> RateAnswers = new List<string>
+        private static readonly List<string> RateAnswers = new()
         {
             // 60
             "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
@@ -107,19 +107,19 @@ namespace CompatBot.Commands
         private static readonly char[] Prefixes = {'@', '(', '{', '[', '<', '!', '`', '"', '\'', '#'};
         private static readonly char[] EveryTimable = Separators.Concat(Suffixes).Concat(Prefixes).Distinct().ToArray();
 
-        private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> Me = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "I", "me", "myself", "moi"
         };
 
-        private static readonly HashSet<string> Your = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> Your = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "your", "you're", "yor", "ur", "yours", "your's",
         };
 
-        private static readonly HashSet<char> Vowels = new HashSet<char> {'a', 'e', 'i', 'o', 'u'};
+        private static readonly HashSet<char> Vowels = new() {'a', 'e', 'i', 'o', 'u'};
 
-        private static readonly Regex Instead = new Regex("rate (?<instead>.+) instead", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex Instead = new("rate (?<instead>.+) instead", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]

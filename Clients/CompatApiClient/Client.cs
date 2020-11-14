@@ -15,7 +15,7 @@ namespace CompatApiClient
     {
         private readonly HttpClient client;
         private readonly JsonSerializerOptions jsonOptions;
-        private static readonly MemoryCache ResponseCache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+        private static readonly MemoryCache ResponseCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
         public Client()
         {

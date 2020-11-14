@@ -20,7 +20,7 @@ namespace CompatBot.Commands
     internal class EventsBaseCommand: BaseCommandModuleCustom
     {
         private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
-        private static readonly Regex Duration = new Regex(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?",
+        private static readonly Regex Duration = new(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
         protected static async Task NearestEvent(CommandContext ctx, string? eventName = null)

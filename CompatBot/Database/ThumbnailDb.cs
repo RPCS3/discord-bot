@@ -108,7 +108,7 @@ namespace CompatBot.Database
 
         public Metacritic WithTitle(string title)
         {
-            return new Metacritic
+            return new()
             {
                 Title = title,
                 CriticScore = CriticScore,

@@ -13,7 +13,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class PastebinHandler : BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions);
+        private static readonly Regex ExternalLink = new(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions);
 
         public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {

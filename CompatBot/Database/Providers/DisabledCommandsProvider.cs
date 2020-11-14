@@ -6,7 +6,7 @@ namespace CompatBot.Database.Providers
 {
     internal static class DisabledCommandsProvider
     {
-        private static readonly HashSet<string> DisabledCommands = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        private static readonly HashSet<string> DisabledCommands = new(StringComparer.InvariantCultureIgnoreCase);
 
         static DisabledCommandsProvider()
         {

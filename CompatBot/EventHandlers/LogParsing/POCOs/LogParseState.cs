@@ -10,20 +10,20 @@ namespace CompatBot.EventHandlers.LogParsing.POCOs
     {
         public NameValueCollection? CompletedCollection;
 		public NameUniqueObjectCollection<string>? CompleteMultiValueCollection;
-        public NameValueCollection WipCollection = new NameValueCollection();
-        public NameUniqueObjectCollection<string> WipMultiValueCollection = new NameUniqueObjectCollection<string>();
-        public readonly Dictionary<string, int> ValueHitStats = new Dictionary<string, int>();
-        public readonly Dictionary<string, HashSet<string>> Syscalls = new Dictionary<string, HashSet<string>>();
+        public NameValueCollection WipCollection = new();
+        public NameUniqueObjectCollection<string> WipMultiValueCollection = new();
+        public readonly Dictionary<string, int> ValueHitStats = new();
+        public readonly Dictionary<string, HashSet<string>> Syscalls = new();
         public int Id = 0;
         public ErrorCode Error = ErrorCode.None;
-        public readonly Dictionary<int, (Piracystring filter, string context)> FilterTriggers = new Dictionary<int, (Piracystring filter, string context)>();
+        public readonly Dictionary<int, (Piracystring filter, string context)> FilterTriggers = new();
         public Piracystring? SelectedFilter;
         public string? SelectedFilterContext;
         public long ReadBytes;
         public long TotalBytes;
         public TimeSpan ParsingTime;
 #if DEBUG
-        public readonly Dictionary<string, (int count, long regexTime)> ExtractorHitStats = new Dictionary<string, (int, long)>();
+        public readonly Dictionary<string, (int count, long regexTime)> ExtractorHitStats = new();
 #endif
 
         public enum ErrorCode

@@ -13,7 +13,7 @@ namespace PsnClient
     {
         private readonly Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool>? defaultCertHandler;
         private static readonly X509CertificateCollection CustomCACollecction = new X509Certificate2Collection();
-        private static readonly ConcurrentDictionary<string, bool> ValidationCache = new ConcurrentDictionary<string, bool>(1, 5);
+        private static readonly ConcurrentDictionary<string, bool> ValidationCache = new(1, 5);
 
         static CustomTlsCertificatesHandler()
         {

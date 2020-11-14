@@ -10,7 +10,7 @@ namespace CompatBot.Commands
 {
     internal sealed class Ird: BaseCommandModuleCustom
     {
-        private static readonly IrdClient Client = new IrdClient();
+        private static readonly IrdClient Client = new();
 
         [Command("ird"), TriggersTyping]
         [Description("Searches IRD Library for the matching .ird files")]

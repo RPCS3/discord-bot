@@ -20,8 +20,8 @@ namespace CompatBot.Commands
     [Description("Commands to list opened pull requests information")]
     internal sealed class Pr: BaseCommandModuleCustom
     {
-        private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
+        private static readonly GithubClient.Client githubClient = new();
+        private static readonly CompatApiClient.Client compatApiClient = new();
         internal static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30);
 
         [GroupCommand]

@@ -19,47 +19,47 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static readonly Client compatClient = new Client();
-        private static readonly IrdClient irdClient = new IrdClient();
-        private static readonly PsnClient.Client psnClient = new PsnClient.Client();
+        private static readonly Client compatClient = new();
+        private static readonly IrdClient irdClient = new();
+        private static readonly PsnClient.Client psnClient = new();
 
         private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
         // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
         // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
         // RPCS3 v0.0.5-42b4ce13a Alpha | minor
-        private static readonly Regex BuildInfoInLog = new Regex(
+        private static readonly Regex BuildInfoInLog = new(
             @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+|unknown)) (?<stage>\w+)( \| (?<branch>[^|]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+)( \| (?<unknown>.*))?)?\r?$",
             DefaultSingleLine);
-        private static readonly Regex CpuInfoInLog = new Regex(
+        private static readonly Regex CpuInfoInLog = new(
             @"(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU|(with )?Radeon) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$",
             DefaultSingleLine);
-        internal static readonly Regex OsInfoInLog = new Regex(
+        internal static readonly Regex OsInfoInLog = new(
             @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+))\r?$",
             DefaultSingleLine);
-        private static readonly Regex LinuxKernelVersion = new Regex(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
-        private static readonly Regex ProgramHashPatch = new Regex(@"(?<hash>\w+) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
+        private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
+        private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
         private static readonly char[] NewLineChars = {'\r', '\n'};
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
         // rpcs3-v0.0.5-7105-064d0619_linux64.AppImage
-        private static readonly Regex BuildInfoInUpdate = new Regex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
-        private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
-        private static readonly Regex IntelGpuModel = new Regex(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
-        private static readonly Regex InstallPath = new Regex(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine);
+        private static readonly Regex BuildInfoInUpdate = new(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
+        private static readonly Regex VulkanDeviceInfo = new(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
+        private static readonly Regex IntelGpuModel = new(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
+        private static readonly Regex InstallPath = new(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine);
 
-        private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
-        private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
-        private static readonly Version NvidiaFullscreenBugMinVersion = new Version(400, 0);
-        private static readonly Version NvidiaFullscreenBugMaxVersion = new Version(499, 99);
-        private static readonly Version NvidiaRecommendedWindowsVersion = new Version(452, 28);
-        private static readonly Version NvidiaRecommendedLinuxVersion = new Version(450, 56);
-        private static readonly Version AmdRecommendedOldWindowsVersion = new Version(20, 1, 4);
-        private static readonly Version AmdLastGoodOpenGLWindowsVersion = new Version(20, 1, 4);
-        private static readonly Version NvidiaFullscreenBugFixed = new Version(0, 0, 6, 8204);
-        private static readonly Version TsxFaFixedVersion  = new Version(0, 0, 12, 10995);
+        private static readonly Version MinimumOpenGLVersion = new(4, 3);
+        private static readonly Version MinimumFirmwareVersion = new(4, 80);
+        private static readonly Version NvidiaFullscreenBugMinVersion = new(400, 0);
+        private static readonly Version NvidiaFullscreenBugMaxVersion = new(499, 99);
+        private static readonly Version NvidiaRecommendedWindowsVersion = new(452, 28);
+        private static readonly Version NvidiaRecommendedLinuxVersion = new(450, 56);
+        private static readonly Version AmdRecommendedOldWindowsVersion = new(20, 1, 4);
+        private static readonly Version AmdLastGoodOpenGLWindowsVersion = new(20, 1, 4);
+        private static readonly Version NvidiaFullscreenBugFixed = new(0, 0, 6, 8204);
+        private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
 
-        private static readonly Dictionary<string, string> RsxPresentModeMap = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> RsxPresentModeMap = new()
         {
             ["0"] = "VK_PRESENT_MODE_IMMEDIATE_KHR",    // no vsync
             ["1"] = "VK_PRESENT_MODE_MAILBOX_KHR",      // fast sync
@@ -67,7 +67,7 @@ namespace CompatBot.Utils.ResultFormatters
             ["3"] = "VK_PRESENT_MODE_FIFO_RELAXED_KHR", // adaptive vsync
         };
 
-        private static readonly HashSet<string> KnownSyncFolders = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownSyncFolders = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "OneDrive",
             "MEGASync",
@@ -78,7 +78,7 @@ namespace CompatBot.Utils.ResultFormatters
             "Dropbox",
         };
 
-        private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new(StringComparer.InvariantCultureIgnoreCase)
         {
             // Demon's Souls
             {"BLES00932", "NPEB01202"},
@@ -101,13 +101,13 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
         };
 
-        private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
+        private static readonly HashSet<string> KnownNoApproximateXFloatIds = new()
         {
             "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
             "BLES00932", "BLUS30443", // DeS
         };
 
-        private static readonly HashSet<string> KnownFpsUnlockPatchIds = new HashSet<string>
+        private static readonly HashSet<string> KnownFpsUnlockPatchIds = new()
         {
             "BLES00932", "BLUS30443", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
@@ -116,7 +116,7 @@ namespace CompatBot.Utils.ResultFormatters
             "BLJS10318", // jojo eoh
         };
 
-        private static readonly HashSet<string> KnownWriteColorBuffersIds = new HashSet<string>
+        private static readonly HashSet<string> KnownWriteColorBuffersIds = new()
         {
             "BLES00932", "BLUS30443", "BCJS70013", "BCJS30022", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
@@ -139,13 +139,13 @@ namespace CompatBot.Utils.ResultFormatters
 
         };
 
-        private static readonly HashSet<string> KnownResScaleThresholdIds = new HashSet<string>
+        private static readonly HashSet<string> KnownResScaleThresholdIds = new()
         {
             "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // The Last of Us
             "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175", 
         };
 
-        private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
+        private static readonly HashSet<string> KnownMotionControlsIds = new()
         {
             "BCES00797", "BCES00802", "BCUS98164", "BCJS30040", "NPEA90053", "NPEA90076", "NPUA70088", "NPUA70112", // heavy rain
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
@@ -155,13 +155,13 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS20112", "BCAS20189", "BCKS10112", "BLES01101", "BLJS10072", "BLJS10114", "BLJS50026", "BLUS30652", "NPEB90321", // no more heroes
         };
 
-        private static readonly HashSet<string> KnownGamesThatRequireInterpreter = new HashSet<string>
+        private static readonly HashSet<string> KnownGamesThatRequireInterpreter = new()
         {
             "NPEB00630", "NPUB30493", "NPJB00161", // daytona usa
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
         };
 
-        private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat = new HashSet<string>
+        private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat = new()
         {
             "BLES00229", "BLES00258", "BLES00887", "BLES01128", // gta4 + efls
             "BLJM55011", "BLJM60235", "BLJM60459", "BLJM60525", "BLJM61180", "BLKS20073", "BLKS20198", // gta4 + efls
@@ -169,7 +169,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB00882", "NPUB30702", "NPUB30704", "NPEB00511", // gta4 + efls
         };
 
-        private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull = new HashSet<string>
+        private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull = new()
         {
             "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758", //rdr
             "BLJM60314", "BLJM60403", "BLJM61181", "BLKS20315",
@@ -181,20 +181,20 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
         };
 
-        private static readonly HashSet<string> KnownBogusLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownBogusLicenses = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "UP0700-NPUB30932_00-NNKDLFULLGAMEPTB.rap",
             "EP0700-NPEB01158_00-NNKDLFULLGAMEPTB.rap",
         };
 
-        private static readonly HashSet<string> KnownCustomLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownCustomLicenses = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "EP4062-NPEB02436_00-PPERSONA5X000000.rap",
             "UP2611-NPUB31848_00-PPERSONA5X000000.rap",
         };
 
         // v1.5 https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Disable_SPU_MLAA
-        private static readonly HashSet<string> KnownMlaaSpuHashes = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownMlaaSpuHashes = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "1549476fe258150ff9f902229ffaed69a932a9c1",
             "191fe1c92c8360992b3240348e70ea37d50812d4",

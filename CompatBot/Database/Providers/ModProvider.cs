@@ -10,8 +10,8 @@ namespace CompatBot.Database.Providers
     internal static class ModProvider
     {
         private static readonly Dictionary<ulong, Moderator> mods;
-        private static readonly BotDb db = new BotDb();
-        public static ReadOnlyDictionary<ulong, Moderator> Mods => new ReadOnlyDictionary<ulong, Moderator>(mods);
+        private static readonly BotDb db = new();
+        public static ReadOnlyDictionary<ulong, Moderator> Mods => new(mods);
 
         static ModProvider()
         {
