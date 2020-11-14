@@ -16,7 +16,7 @@ namespace Tests
     [TestFixture]
     public class LogParsingProfiler
     {
-        private static readonly IArchiveHandler[] archiveHandlers =
+        private static readonly IArchiveHandler[] ArchiveHandlers =
         {
             new GzipHandler(),
             new ZipHandler(),
@@ -37,7 +37,7 @@ namespace Tests
             Config.RebuildConfiguration();
             var timer = Stopwatch.StartNew();
             var cts = new CancellationTokenSource();
-            var source = await FileSource.DetectArchiveHandlerAsync(path, archiveHandlers).ConfigureAwait(false);
+            var source = await FileSource.DetectArchiveHandlerAsync(path, ArchiveHandlers).ConfigureAwait(false);
             var pipe = new Pipe();
             var fillPipeTask = source.FillPipeAsync(pipe.Writer, cts.Token);
             var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, cts.Token);

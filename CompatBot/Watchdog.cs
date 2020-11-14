@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime;
 using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
@@ -19,7 +18,7 @@ namespace CompatBot
         public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new();
         public static readonly Stopwatch TimeSinceLastIncomingMessage = Stopwatch.StartNew();
         private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < Config.IncomingMessageCheckIntervalInMin;
-        private static DiscordClient? discordClient = null;
+        private static DiscordClient? discordClient;
 
         public static async Task Watch(DiscordClient client)
         {

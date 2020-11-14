@@ -348,9 +348,9 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckTlouSettings(serial, items, notes, ppuPatches, patchNames);
                 CheckRdrSettings(serial, items, notes);
-                CheckMgs4Settings(serial, items, notes, generalNotes);
+                CheckMgs4Settings(serial, items, generalNotes);
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-                CheckGt5Settings(serial, items, notes, generalNotes);
+                CheckGt5Settings(serial, items, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
                 CheckSly4Settings(serial, items, notes);
                 CheckDragonsCrownSettings(serial, items, notes);
@@ -958,7 +958,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPHB00065", "NPHB00067",
         };
 
-        private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> _, List<string> generalNotes)
+        private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> generalNotes)
         {
             if (!Mgs4Ids.Contains(serial))
                 return;
@@ -1032,7 +1032,7 @@ namespace CompatBot.Utils.ResultFormatters
             "BCUS98114", "BCUS98272", "BCUS98394",
         };
 
-        private static void CheckGt5Settings(string serial, NameValueCollection items, List<string> _, List<string> generalNotes)
+        private static void CheckGt5Settings(string serial, NameValueCollection items, List<string> generalNotes)
         {
             if (!Gt5Ids.Contains(serial))
                 return;

@@ -191,7 +191,7 @@ namespace CompatBot.EventHandlers
 
         private static async Task BadUpdateAsync(DiscordClient client, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
         {
-            if (message?.Channel.Id != Config.BotChannelId)
+            if (message.Channel.Id != Config.BotChannelId)
                 return;
 
             if (!user.IsSmartlisted(client, message.Channel.Guild))

@@ -181,7 +181,7 @@ namespace CompatBot.EventHandlers
                 return (false, false, new List<DiscordInvite>(0));
 
             var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => !string.IsNullOrEmpty(s)));
-            var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"]?.Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+            var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
             var attemptedWorkaround = false;
             if (author != null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string> recentInvites))
             {

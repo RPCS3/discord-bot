@@ -8,7 +8,7 @@ namespace CompatBot.Utils.Extensions
 {
 	internal static class Converters
 	{
-		private static readonly ColorSpaceConverter colorSpaceConverter = new();
+		private static readonly ColorSpaceConverter ColorSpaceConverter = new();
 
 		public static Color ToStandardColor(this ColorThiefDotNet.Color c)
 			=> new Rgba32(c.R, c.G, c.B, c.A);
@@ -33,10 +33,10 @@ namespace CompatBot.Utils.Extensions
 			}
 			if (!preserveOpacity)
 				a = Math.Max(a, (byte)127); //We don't want contrast color to be more than 50% transparent ever.
-			var hsb = colorSpaceConverter.ToHsv(new Rgb24(c.R, c.G, c.B));
+			var hsb = ColorSpaceConverter.ToHsv(new Rgb24(c.R, c.G, c.B));
 			var h = hsb.H;
 			h = h < 180 ? h + 180 : h - 180;
-			var r = colorSpaceConverter.ToRgb(new Hsv(h, hsb.S, hsb.V));
+			var r = ColorSpaceConverter.ToRgb(new Hsv(h, hsb.S, hsb.V));
 			return new Rgba32(r.R, r.G, r.B, a);
 		}
 	}

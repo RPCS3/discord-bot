@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace CompatBot.Utils
@@ -9,7 +8,7 @@ namespace CompatBot.Utils
     internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
         where TKey: notnull
     {
-        internal readonly object syncObj = new();
+        internal readonly object SyncObj = new();
         
         public FixedLengthBuffer(Func<TValue, TKey> keyGenerator)
         {

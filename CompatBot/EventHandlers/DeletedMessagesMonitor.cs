@@ -17,7 +17,7 @@ namespace CompatBot.EventHandlers
 	{
 		public static readonly MemoryCache RemovedByBotCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
 		public static readonly TimeSpan CacheRetainTime = TimeSpan.FromMinutes(1);
-		private static readonly SemaphoreSlim postLock = new(1);
+		private static readonly SemaphoreSlim PostLock = new(1);
 
 		public static async Task OnMessageDeleted(DiscordClient c, MessageDeleteEventArgs e)
 		{
@@ -56,7 +56,7 @@ namespace CompatBot.EventHandlers
 				var color = await ThumbnailProvider.GetImageColorAsync(msg.Author.AvatarUrl).ConfigureAwait(false);
 				if (color.HasValue)
 					embed.WithColor(color.Value);
-				await postLock.WaitAsync().ConfigureAwait(false);
+				await PostLock.WaitAsync().ConfigureAwait(false);
 				try
 				{
 					await logChannel.SendMessageAsync(embed: embed, mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
@@ -67,7 +67,7 @@ namespace CompatBot.EventHandlers
 				}
 				finally
 				{
-					postLock.Release();
+					PostLock.Release();
 				}
 			}
 			finally

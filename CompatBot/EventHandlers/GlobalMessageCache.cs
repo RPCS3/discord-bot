@@ -29,11 +29,11 @@ namespace CompatBot.EventHandlers
                     if (!MessageQueue.TryGetValue(args.Channel.Id, out queue))
                         MessageQueue[args.Channel.Id] = queue = new FixedLengthBuffer<ulong, DiscordMessage>(KeyGen);
                 }
-            lock(queue.syncObj)
+            lock(queue.SyncObj)
                 queue.Add(args.Message);
 
             while (queue.Count > Config.ChannelMessageHistorySize)
-                lock(queue.syncObj)
+                lock(queue.SyncObj)
                     queue.TrimExcess();
             return Task.CompletedTask;
         }
@@ -46,7 +46,7 @@ namespace CompatBot.EventHandlers
             if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
                 return Task.CompletedTask;
 
-            lock (queue.syncObj)
+            lock (queue.SyncObj)
                 queue.Evict(args.Message.Id);
             return Task.CompletedTask;
         }
@@ -59,7 +59,7 @@ namespace CompatBot.EventHandlers
             if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
                 return Task.CompletedTask;
 
-            lock (queue.syncObj)
+            lock (queue.SyncObj)
                 foreach (var m in args.Messages)
                     queue.Evict(m.Id);
             return Task.CompletedTask;
@@ -73,7 +73,7 @@ namespace CompatBot.EventHandlers
             if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
                 return Task.CompletedTask;
             
-            lock(queue.syncObj)
+            lock(queue.SyncObj)
                 queue.AddOrReplace(args.Message);
             return Task.CompletedTask;
         }
@@ -85,7 +85,7 @@ namespace CompatBot.EventHandlers
                     if (!MessageQueue.TryGetValue(ch.Id, out queue))
                         MessageQueue[ch.Id] = queue = new FixedLengthBuffer<ulong, DiscordMessage>(KeyGen);
             List<DiscordMessage> result;
-            lock(queue.syncObj)
+            lock(queue.SyncObj)
                 result = queue.Reverse().Take(count).ToList();
             var cacheCount = result.Count;
             var fetchCount = Math.Max(count - cacheCount, 0);
@@ -98,7 +98,7 @@ namespace CompatBot.EventHandlers
                     fetchedList = ch.GetMessagesAsync(fetchCount).ConfigureAwait(false).GetAwaiter().GetResult();
                 result.AddRange(fetchedList);
                 if (queue.Count < Config.ChannelMessageHistorySize)
-                    lock (queue.syncObj)
+                    lock (queue.SyncObj)
                     {
                         // items in queue might've changed since the previous check at the beginning of this method
                         var freshCopy = queue.Reverse().ToList();
@@ -116,7 +116,7 @@ namespace CompatBot.EventHandlers
                     if (!MessageQueue.TryGetValue(ch.Id, out queue))
                         MessageQueue[ch.Id] = queue = new FixedLengthBuffer<ulong, DiscordMessage>(KeyGen);
             List<DiscordMessage> result;
-            lock(queue.syncObj)
+            lock(queue.SyncObj)
                 result = queue.Reverse().SkipWhile(m => m.Id >= msgId).Take(count).ToList();
             var cacheCount = result.Count;
             var fetchCount = Math.Max(count - cacheCount, 0);
@@ -127,7 +127,7 @@ namespace CompatBot.EventHandlers
                 {
                     fetchedList = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ConfigureAwait(false).GetAwaiter().GetResult();
                     if (queue.Count < Config.ChannelMessageHistorySize)
-                        lock (queue.syncObj)
+                        lock (queue.SyncObj)
                         {
                             // items in queue might've changed since the previous check at the beginning of this method
                             var freshCopy = queue.Reverse().ToList();

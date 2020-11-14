@@ -47,7 +47,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         var fileMeta = await fileInfoRequest.ExecuteAsync(Config.Cts.Token).ConfigureAwait(false);
                         if (fileMeta.Kind == "drive#file" && fileMeta.Size > 0)
                         {
-                            var buf = bufferPool.Rent(SnoopBufferSize);
+                            var buf = BufferPool.Rent(SnoopBufferSize);
                             try
                             {
                                 int read;
@@ -71,7 +71,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                             }
                             finally
                             {
-                                bufferPool.Return(buf);
+                                BufferPool.Return(buf);
                             }
                         }
                     }

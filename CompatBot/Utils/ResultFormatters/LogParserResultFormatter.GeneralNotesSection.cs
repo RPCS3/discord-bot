@@ -16,8 +16,8 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static readonly Version decompilerIssueStartVersion = new(0, 0, 9, 10307);
-        private static readonly Version decompilerIssueEndVersion = new(0, 0, 10, 10346);
+        private static readonly Version DecompilerIssueStartVersion = new(0, 0, 9, 10307);
+        private static readonly Version DecompilerIssueEndVersion = new(0, 0, 10, 10346);
 
         private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
         {
@@ -94,8 +94,8 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         if (items["build_branch"]?.ToLowerInvariant() == "head"
                             && Version.TryParse(items["build_full_version"], out var v)
-                            && v >= decompilerIssueStartVersion
-                            && v < decompilerIssueEndVersion)
+                            && v >= DecompilerIssueStartVersion
+                            && v < DecompilerIssueEndVersion)
                         {
                             knownFatal = true;
                             notes.Add("❌ This RPCS3 build has a known regression, please update to the latest version");
@@ -591,7 +591,7 @@ namespace CompatBot.Utils.ResultFormatters
 
                 builder.AddField("Missing Licenses", content);
 
-                var gameRegion = serial?.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
+                var gameRegion = serial.Length > 3 ? new[] {serial[2]} : Enumerable.Empty<char>();
                 var dlcRegions = licenseNames
                     .Where(l => l.Length > 9)
                     .Select(n => n[9])
@@ -629,7 +629,7 @@ namespace CompatBot.Utils.ResultFormatters
             HashSet<string> knownFiles;
             try
             {
-                var irdFiles = await irdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token).ConfigureAwait(false);
+                var irdFiles = await IrdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token).ConfigureAwait(false);
                 knownFiles = new HashSet<string>(
                     from ird in irdFiles
                     from name in ird.GetFilenames()

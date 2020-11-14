@@ -383,7 +383,7 @@ namespace CompatBot.Utils
 
         private static (long, int) GetFuzzyCacheKey(string strA, string strB)
         {
-            var hashPair = (((long) (strA.GetHashCode())) << (sizeof(int) * 8)) | (((long) strB.GetHashCode()) & ((long) uint.MaxValue));
+            var hashPair = (((long)strA.GetHashCode()) << (sizeof(int) * 8)) | (strB.GetHashCode() & uint.MaxValue);
             var lengthPair = (strA.Length << (sizeof(short) * 8)) | (strB.Length & ushort.MaxValue);
             return (hashPair, lengthPair);
         }

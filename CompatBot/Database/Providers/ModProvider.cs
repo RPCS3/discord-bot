@@ -8,46 +8,46 @@ namespace CompatBot.Database.Providers
 {
     internal static class ModProvider
     {
-        private static readonly Dictionary<ulong, Moderator> mods;
-        private static readonly BotDb db = new();
-        public static ReadOnlyDictionary<ulong, Moderator> Mods => new(mods);
+        private static readonly Dictionary<ulong, Moderator> Moderators;
+        private static readonly BotDb Db = new();
+        public static ReadOnlyDictionary<ulong, Moderator> Mods => new(Moderators);
 
         static ModProvider()
         {
-            mods = db.Moderator.ToDictionary(m => m.DiscordId, m => m);
+            Moderators = Db.Moderator.ToDictionary(m => m.DiscordId, m => m);
         }
 
-        public static bool IsMod(ulong userId) => mods.ContainsKey(userId);
+        public static bool IsMod(ulong userId) => Moderators.ContainsKey(userId);
 
-        public static bool IsSudoer(ulong userId) => mods.TryGetValue(userId, out var mod) && mod.Sudoer;
+        public static bool IsSudoer(ulong userId) => Moderators.TryGetValue(userId, out var mod) && mod.Sudoer;
 
         public static async Task<bool> AddAsync(ulong userId)
         {
             if (IsMod(userId))
                 return false;
 
-            var result = await db.Moderator.AddAsync(new Moderator {DiscordId = userId}).ConfigureAwait(false);
-            await db.SaveChangesAsync().ConfigureAwait(false);
-            lock (mods)
+            var result = await Db.Moderator.AddAsync(new Moderator {DiscordId = userId}).ConfigureAwait(false);
+            await Db.SaveChangesAsync().ConfigureAwait(false);
+            lock (Moderators)
             {
                 if (IsMod(userId))
                     return false;
-                mods[userId] = result.Entity;
+                Moderators[userId] = result.Entity;
             }
             return true;
         }
 
         public static async Task<bool> RemoveAsync(ulong userId)
         {
-            if (!mods.TryGetValue(userId, out var mod))
+            if (!Moderators.TryGetValue(userId, out var mod))
                 return false;
 
-            db.Moderator.Remove(mod);
-            await db.SaveChangesAsync().ConfigureAwait(false);
-            lock (mods)
+            Db.Moderator.Remove(mod);
+            await Db.SaveChangesAsync().ConfigureAwait(false);
+            lock (Moderators)
             {
                 if (IsMod(userId))
-                    mods.Remove(userId);
+                    Moderators.Remove(userId);
                 else
                     return false;
             }
@@ -56,21 +56,21 @@ namespace CompatBot.Database.Providers
 
         public static async Task<bool> MakeSudoerAsync(ulong userId)
         {
-            if (!mods.TryGetValue(userId, out var mod) || mod.Sudoer)
+            if (!Moderators.TryGetValue(userId, out var mod) || mod.Sudoer)
                 return false;
 
             mod.Sudoer = true;
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await Db.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 
         public static async Task<bool> UnmakeSudoerAsync(ulong userId)
         {
-            if (!mods.TryGetValue(userId, out var mod) || !mod.Sudoer)
+            if (!Moderators.TryGetValue(userId, out var mod) || !mod.Sudoer)
                 return false;
 
             mod.Sudoer = false;
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await Db.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 

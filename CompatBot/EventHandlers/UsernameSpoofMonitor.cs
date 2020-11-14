@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
-using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -34,7 +33,7 @@ namespace CompatBot.EventHandlers
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashMobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
             await c.ReportAsync("🕵️ Potential user impersonation",
@@ -54,7 +53,7 @@ namespace CompatBot.EventHandlers
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashMobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
             await c.ReportAsync("🕵️ Potential user impersonation",
@@ -71,7 +70,7 @@ namespace CompatBot.EventHandlers
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashMobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
             await c.ReportAsync("🕵️ Potential user impersonation",
@@ -99,30 +98,32 @@ namespace CompatBot.EventHandlers
             return potentialTargets;
         }
 
-        private static async Task<bool> IsFlashmobAsync(DiscordClient client, List<DiscordMember> potentialVictims)
+        private static async Task<bool> IsFlashMobAsync(DiscordClient client, List<DiscordMember> potentialVictims)
         {
-            if (potentialVictims?.Count > 0)
-                try
+            if (potentialVictims.Count == 0)
+                return false;
+            
+            try
+            {
+                var displayName = GetCanonical(potentialVictims[0].DisplayName);
+                if (SpoofingReportThrottlingCache.TryGetValue(displayName, out string s) && !string.IsNullOrEmpty(s))
                 {
-                    var displayName = GetCanonical(potentialVictims[0].DisplayName);
-                    if (SpoofingReportThrottlingCache.TryGetValue(displayName, out string s) && !string.IsNullOrEmpty(s))
-                    {
-                        SpoofingReportThrottlingCache.Set(displayName, s, SnoozeDuration);
-                        return true;
-                    }
+                    SpoofingReportThrottlingCache.Set(displayName, s, SnoozeDuration);
+                    return true;
+                }
 
-                    if (potentialVictims.Count > 3)
-                    {
-                        SpoofingReportThrottlingCache.Set(displayName, "y", SnoozeDuration);
-                        var channel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-                        await channel.SendMessageAsync($"`{displayName.Sanitize()}` is a popular member! Snoozing notifications for an hour").ConfigureAwait(false);
-                        return true;
-                    }
-                }
-                catch (Exception e)
+                if (potentialVictims.Count > 3)
                 {
-                    Config.Log.Debug(e);
+                    SpoofingReportThrottlingCache.Set(displayName, "y", SnoozeDuration);
+                    var channel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
+                    await channel.SendMessageAsync($"`{displayName.Sanitize()}` is a popular member! Snoozing notifications for an hour").ConfigureAwait(false);
+                    return true;
                 }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Debug(e);
+            }
             return false;
         }
 

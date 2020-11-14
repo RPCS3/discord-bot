@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace CompatBot.Database
 {

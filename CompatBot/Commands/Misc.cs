@@ -277,7 +277,7 @@ namespace CompatBot.Commands
         [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
         public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string whatever = "")
         {
-            var question = whatever?.Trim().TrimEnd('?').ToLowerInvariant() ?? "";
+            var question = whatever.Trim().TrimEnd('?').ToLowerInvariant();
             var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
             var crng = new Random((prefix + question).GetHashCode());
             var number = crng.Next(100) + 1;
@@ -436,7 +436,7 @@ namespace CompatBot.Commands
                     result.Append(suffix).Append(' ');
                 }
                 whatever = result.ToString();
-                var cutIdx = whatever.LastIndexOf("never mind");
+                var cutIdx = whatever.LastIndexOf("never mind", StringComparison.Ordinal);
                 if (cutIdx > -1)
                     whatever = whatever[cutIdx..];
                 whatever = whatever.Replace("'s's", "'s").TrimStart(EveryTimable).Trim();

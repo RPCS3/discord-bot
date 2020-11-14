@@ -38,7 +38,7 @@ namespace CompatBot.EventHandlers
                 MessageQueue[args.Channel.Id] = queue = new ConcurrentQueue<DiscordMessage>();
             queue.Enqueue(args.Message);
             while (queue.Count > 10)
-                queue.TryDequeue(out var _i);
+                queue.TryDequeue(out var _);
             var content = args.Message.Content;
             if (string.IsNullOrEmpty(content))
                 return;
@@ -74,7 +74,7 @@ namespace CompatBot.EventHandlers
             if (channel.IsPrivate)
                 return;
 
-            if (message?.Author == null)
+            if (message.Author == null)
                 return;
 
             if (message.Author.IsCurrent)

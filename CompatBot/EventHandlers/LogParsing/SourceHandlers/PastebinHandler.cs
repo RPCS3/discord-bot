@@ -34,7 +34,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     {
                         var uri = new Uri("https://pastebin.com/raw/" + pid);
                         await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
-                        var buf = bufferPool.Rent(SnoopBufferSize);
+                        var buf = BufferPool.Rent(SnoopBufferSize);
                         try
                         {
                             var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
@@ -51,7 +51,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         }
                         finally
                         {
-                            bufferPool.Return(buf);
+                            BufferPool.Return(buf);
                         }
                     }
                 }

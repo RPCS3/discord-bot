@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,9 +8,7 @@ using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Caching.Memory;
-using PsnClient.POCOs;
 
 namespace CompatBot.Database.Providers
 {

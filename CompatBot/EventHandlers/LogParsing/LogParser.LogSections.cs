@@ -283,8 +283,8 @@ namespace CompatBot.EventHandlers.LogParsing
                 }
                 else
                 {
-                    var utf8line = line.ToUtf8();
-                    state.FilterTriggers[m.Id] = (m, utf8line);
+                    var utf8Line = line.ToUtf8();
+                    state.FilterTriggers[m.Id] = (m, utf8Line);
                     if (m.Actions.HasFlag(FilterAction.IssueWarning))
                         state.Error = LogParseState.ErrorCode.PiracyDetected;
                 }

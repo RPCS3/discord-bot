@@ -120,16 +120,15 @@ namespace CompatBot.EventHandlers
                 if (listWithStatus.Count > 0)
                     bestMatch = listWithStatus.First();
                 var (code, info, score) = bestMatch;
-                Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info?.Title}\" with score {score}");
+                Config.Log.Debug($"Looked up \"{gameTitle}\", got \"{info.Title}\" with score {score}");
                 if (score < Config.GameTitleMatchThreshold)
                     return (null, null);
 
-                if (!string.IsNullOrEmpty(info?.Title))
+                if (!string.IsNullOrEmpty(info.Title))
                 {
                     StatsStorage.GameStatCache.TryGetValue(info.Title, out int stat);
                     StatsStorage.GameStatCache.Set(info.Title, ++stat, StatsStorage.CacheTime);
                 }
-
                 return (code, info);
             }
             catch (Exception e)

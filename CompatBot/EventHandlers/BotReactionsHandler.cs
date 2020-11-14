@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -10,6 +9,9 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using NReco.Text;
+#if DEBUG
+using System.Collections.Generic;
+#endif
 
 namespace CompatBot.EventHandlers
 {
@@ -70,11 +72,11 @@ namespace CompatBot.EventHandlers
             @"\b((?<kot>kot(to)?)|(?<doggo>doggo|jarves))\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
         );
-        private static readonly Random rng = new();
-        private static readonly object theDoor = new();
+        private static readonly Random Rng = new();
+        private static readonly object TheDoor = new();
 
-        public static DiscordEmoji RandomNegativeReaction { get { lock (theDoor) return SadReactions[rng.Next(SadReactions.Length)]; } }
-        public static DiscordEmoji RandomPositiveReaction { get { lock (theDoor) return ThankYouReactions[rng.Next(ThankYouReactions.Length)]; } }
+        public static DiscordEmoji RandomNegativeReaction { get { lock (TheDoor) return SadReactions[Rng.Next(SadReactions.Length)]; } }
+        public static DiscordEmoji RandomPositiveReaction { get { lock (TheDoor) return ThankYouReactions[Rng.Next(ThankYouReactions.Length)]; } }
 
         public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
@@ -160,12 +162,12 @@ namespace CompatBot.EventHandlers
             {
                 DiscordEmoji emoji;
                 string? thankYouMessage;
-                lock (theDoor)
+                lock (TheDoor)
                 {
-                    emoji = ThankYouReactions[rng.Next(ThankYouReactions.Length)];
+                    emoji = ThankYouReactions[Rng.Next(ThankYouReactions.Length)];
                     thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel)
                                       || LimitedToOfftopicChannel.IsOfftopicChannel(args.Channel)
-                        ? ThankYouMessages[rng.Next(ThankYouMessages.Length)]
+                        ? ThankYouMessages[Rng.Next(ThankYouMessages.Length)]
                         : null;
                 }
                 await args.Message.ReactWithAsync(emoji, thankYouMessage).ConfigureAwait(false);
@@ -174,10 +176,10 @@ namespace CompatBot.EventHandlers
             {
                 DiscordEmoji emoji;
                 string sadMessage;
-                lock (theDoor)
+                lock (TheDoor)
                 {
-                    emoji = SadReactions[rng.Next(SadReactions.Length)];
-                    sadMessage = SadMessages[rng.Next(SadMessages.Length)];
+                    emoji = SadReactions[Rng.Next(SadReactions.Length)];
+                    sadMessage = SadMessages[Rng.Next(SadMessages.Length)];
                 }
                 await args.Message.ReactWithAsync(emoji, sadMessage).ConfigureAwait(false);
 

@@ -13,7 +13,6 @@ using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
-using DSharpPlus.Interactivity;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
@@ -25,7 +24,7 @@ namespace CompatBot.EventHandlers
         private readonly ComputerVisionClient cvClient = new(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
         private readonly SemaphoreSlim workSemaphore = new(0);
         private readonly ConcurrentQueue<(MessageCreateEventArgs evt, Guid readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, Guid readOperationId)>();
-        public static int MaxQueueLength { get; private set; } = 0;
+        public static int MaxQueueLength { get; private set; }
 
         internal MediaScreenshotMonitor(DiscordClient client)
         {

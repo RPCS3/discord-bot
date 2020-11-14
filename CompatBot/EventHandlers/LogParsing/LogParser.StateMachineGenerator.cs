@@ -26,7 +26,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     EndTrigger = sectionDescription.EndTrigger.Select(s => s.ToLatin8BitEncoding()).ToArray(),
                 };
                 // the idea here is to construct Aho-Corasick parser that will look for any data marker and run the associated regex to extract the data into state
-                if (sectionDescription.Extractors?.Count > 0)
+                if (sectionDescription.Extractors.Count > 0)
                 {
                     var act = new AhoCorasickDoubleArrayTrie<Action<string, LogParseState>>(sectionDescription.Extractors.Select(extractorPair =>
                         new SectionAction(

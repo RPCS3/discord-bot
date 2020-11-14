@@ -19,9 +19,9 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static readonly Client compatClient = new();
-        private static readonly IrdClient irdClient = new();
-        private static readonly PsnClient.Client psnClient = new();
+        private static readonly Client CompatClient = new();
+        private static readonly IrdClient IrdClient = new();
+        private static readonly PsnClient.Client PsnClient = new();
 
         private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
@@ -246,7 +246,7 @@ namespace CompatBot.Utils.ResultFormatters
                     collection["serial"] = psnSerial;
                     collection["game_category"] = "HG";
                 }
-                var titleUpdateInfoTask = psnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
+                var titleUpdateInfoTask = PsnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
                 var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true, category: collection["game_category"]).ConfigureAwait(false);
                 try
                 {
@@ -476,9 +476,9 @@ namespace CompatBot.Utils.ResultFormatters
             var currentBuildCommit = items["build_commit"];
             if (string.IsNullOrEmpty(currentBuildCommit))
                 currentBuildCommit = null;
-            var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
+            var updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
             if (updateInfo?.ReturnCode != 1 && currentBuildCommit != null)
-                updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
             var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download;
             if (string.IsNullOrEmpty(link))
                 return null;
@@ -795,14 +795,6 @@ namespace CompatBot.Utils.ResultFormatters
             return result;
         }
 
-        private static HashSet<string> GetHashes(string hashList)
-        {
-            if (string.IsNullOrEmpty(hashList))
-                return new HashSet<string>(0, StringComparer.InvariantCultureIgnoreCase);
-
-            return new HashSet<string>(hashList.Split(Environment.NewLine), StringComparer.InvariantCultureIgnoreCase);
-        }
-
         internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage? message, ISource source, LogParseState? state = null)
         {
             if (message == null || state?.Error == LogParseState.ErrorCode.PiracyDetected)
@@ -815,14 +807,14 @@ namespace CompatBot.Utils.ResultFormatters
                 msg = $"Log from {author.Username.Sanitize()} | {author.Id}\n";
             else
                 msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
-            msg += " | " + (source?.SourceType ?? "Unknown source");
-            if (state?.ReadBytes > 0 && source?.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
+            msg += " | " + source.SourceType;
+            if (state?.ReadBytes > 0 && source.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
                 msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
-            else if (source?.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
+            else if (source.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
                 msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
             else if (state?.ReadBytes > 0)
                 msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
-            else if (source?.LogFileSize > 0)
+            else if (source.LogFileSize > 0)
                 msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
 #if DEBUG
             if (state?.ParsingTime.TotalMilliseconds > 0)

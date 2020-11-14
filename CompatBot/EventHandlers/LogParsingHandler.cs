@@ -27,8 +27,8 @@ namespace CompatBot.EventHandlers
 {
     public static class LogParsingHandler
     {
-        private static readonly char[] linkSeparator = { ' ', '>', '\r', '\n' };
-        private static readonly ISourceHandler[] sourceHandlers =
+        private static readonly char[] LinkSeparator = { ' ', '>', '\r', '\n' };
+        private static readonly ISourceHandler[] SourceHandlers =
         {
             new DiscordAttachmentHandler(),
             new GoogleDriveHandler(),
@@ -38,7 +38,7 @@ namespace CompatBot.EventHandlers
             new GenericLinkHandler(),
             new PastebinHandler(),
         };
-        private static readonly IArchiveHandler[] archiveHandlers =
+        private static readonly IArchiveHandler[] ArchiveHandlers =
         {
             new GzipHandler(),
             new ZipHandler(),
@@ -49,9 +49,7 @@ namespace CompatBot.EventHandlers
 
         private static readonly SemaphoreSlim QueueLimiter = new(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
         private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);
-        private static event OnLog OnNewLog;
-
-        static LogParsingHandler() => OnNewLog += EnqueueLogProcessing;
+        private static event OnLog OnNewLog = EnqueueLogProcessing;
 
         public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
@@ -89,7 +87,7 @@ namespace CompatBot.EventHandlers
                 DiscordMessage? botMsg = null;
                 try
                 {
-                    var possibleHandlers = sourceHandlers.Select(h => h.FindHandlerAsync(message, archiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
+                    var possibleHandlers = SourceHandlers.Select(h => h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
                     var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
                     var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
                     
@@ -280,7 +278,7 @@ namespace CompatBot.EventHandlers
                     var linkStart = message.Content.IndexOf("http", StringComparison.Ordinal);
                     if (linkStart > -1)
                     {
-                        var link = message.Content[linkStart..].Split(linkSeparator, 2)[0];
+                        var link = message.Content[linkStart..].Split(LinkSeparator, 2)[0];
                         if (link.Contains(".log", StringComparison.InvariantCultureIgnoreCase) || link.Contains("rpcs3.zip", StringComparison.CurrentCultureIgnoreCase))
                         {
                             await channel.SendMessageAsync("If you intended to upload a log file please re-upload it directly to discord").ConfigureAwait(false);

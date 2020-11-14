@@ -28,7 +28,7 @@ namespace CompatBot
         private static readonly SemaphoreSlim InstanceCheck = new(0, 1);
         private static readonly SemaphoreSlim ShutdownCheck = new(0, 1);
         // pre-load the assembly so it won't fail after framework update while the process is still running
-        private static readonly Assembly diagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
+        private static readonly Assembly DiagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
         internal const ulong InvalidChannelId = 13;
 
         internal static async Task Main(string[] args)
@@ -239,7 +239,7 @@ namespace CompatBot
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
-                client.MessageCreated += (_, __) => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
+                client.MessageCreated += (_, _) => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
                 client.MessageCreated += GlobalMessageCache.OnMessageCreated;
                 var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
@@ -355,7 +355,7 @@ namespace CompatBot
                 {
                     if (client.Ping > 1000)
                         Config.Log.Warn($"High ping detected: {client.Ping}");
-                    await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(_ => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
                 }
                 await backgroundTasks.ConfigureAwait(false);
             }

@@ -16,7 +16,7 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static class UpdateInfoFormatter
     {
-        private static readonly GithubClient.Client githubClient = new();
+        private static readonly GithubClient.Client GithubClient = new();
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, PrInfo? currentPrInfo = null)
         {
@@ -35,7 +35,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 if (latestPr > 0)
                 {
-                    latestPrInfo = await githubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    latestPrInfo = await GithubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
                     url = latestPrInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + latestPr;
                     var userName = latestPrInfo?.User?.Login ?? "???";
                     if (GetUserNameEmoji(client, userName) is DiscordEmoji emoji)
@@ -46,7 +46,7 @@ namespace CompatBot.Utils.ResultFormatters
                     prDesc = "PR #???";
 
                 if (currentPr > 0 && currentPr != latestPr)
-                    currentPrInfo ??= await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    currentPrInfo ??= await GithubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
             }
             var desc = latestPrInfo?.Title;
             if (includePrBody
@@ -61,7 +61,7 @@ namespace CompatBot.Utils.ResultFormatters
                     var uniqueLinks = new HashSet<string>(10);
                     foreach (Match m in issueMatches)
                     {
-                        if (m.Groups["issue_mention"]?.Value is string str
+                        if (m.Groups["issue_mention"].Value is string str
                             && !string.IsNullOrEmpty(str)
                             && uniqueLinks.Add(str))
                         {
@@ -165,7 +165,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (string.IsNullOrEmpty(link))
                 return "No link available";
 
-            var text = new Uri(link).Segments?.Last() ?? "";
+            var text = new Uri(link).Segments.Last();
             if (simpleName && text.StartsWith("rpcs3-"))
                 text = text[6..];
             if (simpleName && text.Contains('_'))
