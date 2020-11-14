@@ -2,7 +2,6 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using DSharpPlus;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Database.Providers

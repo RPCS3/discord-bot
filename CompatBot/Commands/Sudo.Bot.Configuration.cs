@@ -17,7 +17,7 @@ namespace CompatBot.Commands
         {
             [Group("config"), RequiresBotSudoerRole]
             [Description("Commands to set or clear bot configuration variables")]
-            public sealed partial class Configuration : BaseCommandModule
+            public sealed class Configuration : BaseCommandModule
             {
                 [Command("list"), Aliases("show")]
                 [Description("Lists set variable names")]
@@ -46,18 +46,18 @@ namespace CompatBot.Commands
                 [Description("Sets configuration variable")]
                 public async Task Set(CommandContext ctx, string key, [RemainingText] string value)
                 {
-                    Config.inMemorySettings[key] = value;
+                    Config.InMemorySettings[key] = value;
                     Config.RebuildConfiguration();
                     key = SqlConfiguration.ConfigVarPrefix + key;
                     await using var db = new BotDb();
-                    var v = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
-                    if (v == null)
+                    var stateValue = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
+                    if (stateValue == null)
                     {
-                        v = new BotState {Key = key, Value = value};
-                        await db.BotState.AddAsync(v).ConfigureAwait(false);
+                        stateValue = new BotState {Key = key, Value = value};
+                        await db.BotState.AddAsync(stateValue).ConfigureAwait(false);
                     }
                     else
-                        v.Value = value;
+                        stateValue.Value = value;
                     await db.SaveChangesAsync().ConfigureAwait(false);
                     await ctx.ReactWithAsync(Config.Reactions.Success, "Set variable successfully").ConfigureAwait(false);
                 }
@@ -66,14 +66,14 @@ namespace CompatBot.Commands
                 [Description("Removes configuration variable")]
                 public async Task Clear(CommandContext ctx, string key)
                 {
-                    Config.inMemorySettings.TryRemove(key, out _);
+                    Config.InMemorySettings.TryRemove(key, out _);
                     Config.RebuildConfiguration();
                     key = SqlConfiguration.ConfigVarPrefix + key;
                     await using var db = new BotDb();
-                    var v = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
-                    if (v != null)
+                    var stateValue = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
+                    if (stateValue != null)
                     {
-                        db.BotState.Remove(v);
+                        db.BotState.Remove(stateValue);
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                     await ctx.ReactWithAsync(Config.Reactions.Success, "Removed variable successfully").ConfigureAwait(false);

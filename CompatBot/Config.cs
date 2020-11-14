@@ -32,12 +32,12 @@ namespace CompatBot
     {
         private static IConfigurationRoot config = null!;
         private static TelemetryClient? telemetryClient;
-        private static readonly DependencyTrackingTelemetryModule dependencyTrackingTelemetryModule = new();
-        private static readonly PerformanceCollectorModule performanceCollectorModule = new();
+        private static readonly DependencyTrackingTelemetryModule DependencyTrackingTelemetryModule = new();
+        private static readonly PerformanceCollectorModule PerformanceCollectorModule = new();
 
         internal static readonly ILogger Log;
         internal static readonly ILoggerFactory LoggerFactory;
-        internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new();
+        internal static readonly ConcurrentDictionary<string, string> InMemorySettings = new();
         internal static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
 
         public static readonly CancellationTokenSource Cts = new();
@@ -226,7 +226,7 @@ namespace CompatBot
             config = new ConfigurationBuilder()
                 .AddUserSecrets(Assembly.GetExecutingAssembly()) // lower priority
                 .AddEnvironmentVariables()
-                .AddInMemoryCollection(inMemorySettings)     // higher priority
+                .AddInMemoryCollection(InMemorySettings)     // higher priority
                 .Build();
         }
 
@@ -308,8 +308,8 @@ namespace CompatBot
                 var telemetryConfig = TelemetryConfiguration.CreateDefault();
                 telemetryConfig.InstrumentationKey = AzureAppInsightsKey;
                 telemetryConfig.TelemetryInitializers.Add(new HttpDependenciesParsingTelemetryInitializer());
-                dependencyTrackingTelemetryModule.Initialize(telemetryConfig);
-                performanceCollectorModule.Initialize(telemetryConfig);
+                DependencyTrackingTelemetryModule.Initialize(telemetryConfig);
+                PerformanceCollectorModule.Initialize(telemetryConfig);
                 return telemetryClient = new TelemetryClient(telemetryConfig);
             }
         }

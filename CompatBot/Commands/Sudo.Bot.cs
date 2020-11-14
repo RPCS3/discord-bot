@@ -17,8 +17,8 @@ namespace CompatBot.Commands
 {
     internal partial class Sudo
     {
-        private static readonly SemaphoreSlim lockObj = new(1, 1);
-        private static readonly SemaphoreSlim importLockObj = new(1, 1);
+        private static readonly SemaphoreSlim LockObj = new(1, 1);
+        private static readonly SemaphoreSlim ImportLockObj = new(1, 1);
 
         [Group("bot"), Aliases("kot")]
         [Description("Commands to manage the bot instance")]
@@ -49,7 +49,7 @@ namespace CompatBot.Commands
             [Description("Updates the bot, and then restarts it")]
             public async Task Update(CommandContext ctx)
             {
-                if (await lockObj.WaitAsync(0).ConfigureAwait(false))
+                if (await LockObj.WaitAsync(0).ConfigureAwait(false))
                 {
                     DiscordMessage? msg = null;
                     try
@@ -73,7 +73,7 @@ namespace CompatBot.Commands
                     }
                     finally
                     {
-                        lockObj.Release();
+                        LockObj.Release();
                     }
                 }
                 else
@@ -84,7 +84,7 @@ namespace CompatBot.Commands
             [Description("Restarts the bot")]
             public async Task Restart(CommandContext ctx)
             {
-                if (await lockObj.WaitAsync(0).ConfigureAwait(false))
+                if (await LockObj.WaitAsync(0).ConfigureAwait(false))
                 {
                     DiscordMessage? msg = null;
                     try
@@ -100,7 +100,7 @@ namespace CompatBot.Commands
                     }
                     finally
                     {
-                        lockObj.Release();
+                        LockObj.Release();
                     }
                 }
                 else
@@ -116,7 +116,7 @@ namespace CompatBot.Commands
                     : "Shutting down the bot..."
                 ).ConfigureAwait(false);
                 Config.Log.Info($"Shutting down by request from {ctx.User.Username}#{ctx.User.Discriminator}");
-                Config.inMemorySettings["shutdown"] = "true";
+                Config.InMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
             }
 
@@ -160,7 +160,7 @@ namespace CompatBot.Commands
             [Description("Imports Metacritic database dump and links it to existing items")]
             public async Task ImportMc(CommandContext ctx)
             {
-                if (await importLockObj.WaitAsync(0).ConfigureAwait(false))
+                if (await ImportLockObj.WaitAsync(0).ConfigureAwait(false))
                     try
                     {
                         await CompatList.ImportMetacriticScoresAsync().ConfigureAwait(false);
@@ -170,7 +170,7 @@ namespace CompatBot.Commands
                     }
                     finally
                     {
-                        importLockObj.Release();
+                        ImportLockObj.Release();
                     }
                 else
                     await ctx.RespondAsync("Another import operation is already in progress").ConfigureAwait(false);
@@ -233,7 +233,7 @@ namespace CompatBot.Commands
                     StartInfo = new ProcessStartInfo("dotnet", $"run -c Release")
                 };
                 self.Start();
-                Config.inMemorySettings["shutdown"] = "true";
+                Config.InMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
                 Environment.Exit(-1);
             }

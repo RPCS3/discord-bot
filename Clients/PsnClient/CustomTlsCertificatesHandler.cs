@@ -12,7 +12,7 @@ namespace PsnClient
     public class CustomTlsCertificatesHandler: HttpClientHandler
     {
         private readonly Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool>? defaultCertHandler;
-        private static readonly X509CertificateCollection CustomCACollecction = new X509Certificate2Collection();
+        private static readonly X509CertificateCollection CustomCaCollection = new X509Certificate2Collection();
         private static readonly ConcurrentDictionary<string, bool> ValidationCache = new(1, 5);
 
         static CustomTlsCertificatesHandler()
@@ -39,10 +39,10 @@ namespace PsnClient
                     
                     var cert = new X509Certificate2(certData);
                     var cn = cert.GetNameInfo(X509NameType.SimpleName, false);
-                    if (cn?.StartsWith("SCEI DNAS Root") is not true)
+                    if (!cn.StartsWith("SCEI DNAS Root"))
                         continue;
                     
-                    CustomCACollecction.Add(cert);
+                    CustomCaCollection.Add(cert);
                     ApiConfig.Log.Debug($"Using Sony root CA with CN '{cn}' for custom certificate validation");
                     importedCAs = true;
                 }
@@ -78,7 +78,7 @@ namespace PsnClient
                 {
                     using var customChain = new X509Chain(false);
                     var policy = customChain.ChainPolicy;
-                    policy.ExtraStore.AddRange(CustomCACollecction);
+                    policy.ExtraStore.AddRange(CustomCaCollection);
                     policy.RevocationMode = X509RevocationMode.NoCheck;
                     if (customChain.Build(certificate) && customChain.ChainStatus.All(s => s.Status == X509ChainStatusFlags.NoError))
                     {

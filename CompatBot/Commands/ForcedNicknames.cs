@@ -48,21 +48,20 @@ namespace CompatBot.Commands
                 else
                     guilds = new List<DiscordGuild> {ctx.Guild};
 
-                int changed = 0, noPermissions = 0, skipped = 0, failed = 0;
-                using var db = new BotDb();
+                int changed = 0, noPermissions = 0, failed = 0;
+                await using var db = new BotDb();
                 foreach (var guild in guilds)
                 {
                     var enforceRules = db.ForcedNicknames.FirstOrDefault(mem => mem.UserId == discordUser.Id && mem.GuildId == guild.Id);
                     if (enforceRules is null)
                     {
                         enforceRules = new ForcedNickname {UserId = discordUser.Id, GuildId = guild.Id, Nickname = expectedNickname};
-                        db.ForcedNicknames.Add(enforceRules);
+                        await db.ForcedNicknames.AddAsync(enforceRules).ConfigureAwait(false);
                     }
                     else
                     {
                         if (enforceRules.Nickname == expectedNickname)
                         {
-                            skipped++;
                             continue;
                         }
                         enforceRules.Nickname = expectedNickname;
@@ -116,7 +115,7 @@ namespace CompatBot.Commands
         {
             try
             {
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var enforcedRules = ctx.Guild == null
                     ? await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id).ToListAsync().ConfigureAwait(false)
                     : await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id && mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
@@ -174,7 +173,7 @@ namespace CompatBot.Commands
         [Description("Lists all users who has restricted nickname.")]
         public async Task List(CommandContext ctx)
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var selectExpr = db.ForcedNicknames.AsNoTracking();
             if (ctx.Guild != null)
                 selectExpr = selectExpr.Where(mem => mem.GuildId == ctx.Guild.Id);

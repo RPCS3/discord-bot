@@ -361,7 +361,7 @@ namespace CompatBot
             }
             catch (Exception e)
             {
-                if (!Config.inMemorySettings.ContainsKey("shutdown"))
+                if (!Config.InMemorySettings.ContainsKey("shutdown"))
                     Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
             }
             finally
@@ -371,7 +371,7 @@ namespace CompatBot
                 if (singleInstanceCheckThread.IsAlive)
                     singleInstanceCheckThread.Join(100);
             }
-            if (!Config.inMemorySettings.ContainsKey("shutdown"))
+            if (!Config.InMemorySettings.ContainsKey("shutdown"))
                 Sudo.Bot.Restart(InvalidChannelId, null);
         }
     }

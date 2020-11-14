@@ -16,7 +16,7 @@ namespace CompatBot.Database.Providers
         internal static readonly MemoryCache ExplainStatCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
         internal static readonly MemoryCache GameStatCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
-        private static readonly SemaphoreSlim barrier = new(1, 1);
+        private static readonly SemaphoreSlim Barrier = new(1, 1);
         private static readonly (string name, MemoryCache cache)[] AllCaches =
         {
             (nameof(CmdStatCache), CmdStatCache),
@@ -26,7 +26,7 @@ namespace CompatBot.Database.Providers
 
         public static async Task SaveAsync(bool wait = false)
         {
-            if (await barrier.WaitAsync(0).ConfigureAwait(false))
+            if (await Barrier.WaitAsync(0).ConfigureAwait(false))
             {
                 try
                 {
@@ -58,14 +58,14 @@ namespace CompatBot.Database.Providers
                 }
                 finally
                 {
-                    barrier.Release();
+                    Barrier.Release();
                     Config.Log.Debug("Released stats saving lock");
                 }
             }
             else if (wait)
             {
-                await barrier.WaitAsync().ConfigureAwait(false);
-                barrier.Release();
+                await Barrier.WaitAsync().ConfigureAwait(false);
+                Barrier.Release();
             }
         }
 

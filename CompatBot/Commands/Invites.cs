@@ -22,7 +22,7 @@ namespace CompatBot.Commands
         public async Task List(CommandContext ctx)
         {
             const string linkPrefix = "discord.gg/";
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
             if (whitelistedInvites.Count == 0)
             {
@@ -140,18 +140,16 @@ namespace CompatBot.Commands
                 return;
             }
 
-            using (var db = new BotDb())
+            await using var db = new BotDb();
+            var invite = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
+            if (invite == null)
             {
-                var invite = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
-                if (invite == null)
-                {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid filter ID").ConfigureAwait(false);
-                    return;
-                }
-
-                invite.Name = name;
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid filter ID").ConfigureAwait(false);
+                return;
             }
+
+            invite.Name = name;
+            await db.SaveChangesAsync().ConfigureAwait(false);
             await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             await List(ctx).ConfigureAwait(false);
         }

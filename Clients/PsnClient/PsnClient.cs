@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
+using CompatApiClient.Formatters;
 using CompatApiClient.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using PsnClient.POCOs;
@@ -250,7 +251,7 @@ namespace PsnClient
                 await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                 patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
                 ResponseCache.Set(productId, patchInfo, ResponseCacheDuration);
-                return patchInfo ?? new TitlePatch { Tag = new TitlePatchTag { Packages = Array.Empty<TitlePatchPackage>(), },  };
+                return patchInfo;
             }
             catch (Exception e)
             {
@@ -418,7 +419,7 @@ namespace PsnClient
                         return null;
                     
                     var ver = m.Groups["version"].Value;
-                    if (ver?.Length > 4)
+                    if (ver.Length > 4)
                     {
                         if (ver.EndsWith("00"))
                             ver = ver[..4]; //4.85

@@ -97,18 +97,18 @@ namespace CompatBot
                 await Task.Delay(Config.MetricsIntervalInSec).ConfigureAwait(false);
                 var gcMemInfo = GC.GetGCMemoryInfo();
                 using var process = Process.GetCurrentProcess();
-                if (Config.TelemetryClient is TelemetryClient tc)
-                {
-                    tc.TrackMetric("gw-latency", client.Ping);
-                    tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
-                    tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
-                    tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
-                    tc.TrackMetric("memory-gc-commited", gcMemInfo.TotalCommittedBytes);
-                    tc.TrackMetric("memory-process-private", process.PrivateMemorySize64);
-                    tc.TrackMetric("memory-process-ws", process.WorkingSet64);
-                    tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
-                    tc.Flush();
-                }
+                if (Config.TelemetryClient is not TelemetryClient tc)
+                    continue;
+                
+                tc.TrackMetric("gw-latency", client.Ping);
+                tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
+                tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
+                tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
+                tc.TrackMetric("memory-gc-commited", gcMemInfo.TotalCommittedBytes);
+                tc.TrackMetric("memory-process-private", process.PrivateMemorySize64);
+                tc.TrackMetric("memory-process-ws", process.WorkingSet64);
+                tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
+                tc.Flush();
             } while (!Config.Cts.IsCancellationRequested);
         }
 

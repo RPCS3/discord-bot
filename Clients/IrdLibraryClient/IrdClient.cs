@@ -4,13 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
+using CompatApiClient.Formatters;
 using CompatApiClient.Utils;
 using IrdLibraryClient.IrdFormat;
 using IrdLibraryClient.POCOs;
@@ -34,10 +34,6 @@ namespace IrdLibraryClient
                 IgnoreNullValues = true,
                 IncludeFields = true,
             };
-            /*
-            var mediaTypeFormatter = new JsonMediaTypeFormatter { SerializerSettings = underscoreSettings };
-            mediaTypeFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/html"));
-        */
         }
 
         public static string GetDownloadLink(string irdFilename) => $"{BaseUrl}/ird/{irdFilename}";
@@ -219,7 +215,7 @@ namespace IrdLibraryClient
 
             var matches = IrdFilename.Matches(html);
             if (matches.Count > 0)
-                return matches[0].Groups["filename"]?.Value;
+                return matches[0].Groups["filename"].Value;
             
             ApiConfig.Log.Warn("Couldn't parse IRD filename from " + html);
             return null;

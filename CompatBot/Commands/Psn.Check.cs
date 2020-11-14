@@ -24,7 +24,7 @@ namespace CompatBot.Commands
         [Description("Commands to check for various stuff on PSN")]
         public sealed class Check: BaseCommandModuleCustom
         {
-            private static string? latestFwVersion = null;
+            private static string? latestFwVersion;
 
             [Command("updates"), Aliases("update")]
             [Description("Checks if specified product has any updates")]
@@ -81,7 +81,7 @@ namespace CompatBot.Commands
                     foreach (var embed in embeds)
                     {
                         var newTitle = "(๑•ิཬ•ั๑)";
-                        var partStart = embed.Title.IndexOf(" [Part");
+                        var partStart = embed.Title.IndexOf(" [Part", StringComparison.Ordinal);
                         if (partStart > -1)
                             newTitle += embed.Title[partStart..];
                         embed.Title = newTitle;
@@ -140,7 +140,7 @@ namespace CompatBot.Commands
                     return;
 
                 var newVersion = fwList[0].Version;
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var fwVersionState = db.BotState.FirstOrDefault(s => s.Key == "Latest-Firmware-Version");
                 latestFwVersion ??= fwVersionState?.Value;
                 if (latestFwVersion is null
@@ -153,7 +153,7 @@ namespace CompatBot.Commands
                     await announcementChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                     latestFwVersion = newVersion;
                     if (fwVersionState == null)
-                        db.BotState.Add(new BotState {Key = "Latest-Firmware-Version", Value = latestFwVersion});
+                        await db.BotState.AddAsync(new BotState {Key = "Latest-Firmware-Version", Value = latestFwVersion}).ConfigureAwait(false);
                     else
                         fwVersionState.Value = latestFwVersion;
                     await db.SaveChangesAsync().ConfigureAwait(false);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using DSharpPlus.CommandsNext;
@@ -31,7 +32,7 @@ namespace CompatBot.Commands
             try
             {
                 var expr = new Expression(expression);
-                result = expr.calculate().ToString();
+                result = expr.calculate().ToString(CultureInfo.InvariantCulture);
             }
             catch (Exception e)
             {

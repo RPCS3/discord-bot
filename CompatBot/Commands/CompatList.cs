@@ -34,13 +34,13 @@ namespace CompatBot.Commands
 {
     internal sealed class CompatList : BaseCommandModuleCustom
     {
-        private static readonly Client client = new();
-        private static readonly GithubClient.Client githubClient = new();
-        private static readonly SemaphoreSlim updateCheck = new(1, 1);
+        private static readonly Client Client = new();
+        private static readonly GithubClient.Client GithubClient = new();
+        private static readonly SemaphoreSlim UpdateCheck = new(1, 1);
         private static string? lastUpdateInfo, lastFullBuildNumber;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
         private const string Rpcs3UpdateBuildKey = "Rpcs3UpdateBuild";
-        private static UpdateInfo? CachedUpdateInfo = null;
+        private static UpdateInfo? cachedUpdateInfo;
         private static readonly Regex UpdateVersionRegex = new(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
         static CompatList()
@@ -54,12 +54,12 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    var prInfo = githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
-                    CachedUpdateInfo = client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).ConfigureAwait(false).GetAwaiter().GetResult();
-                    if (CachedUpdateInfo?.CurrentBuild != null)
+                    var prInfo = GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
+                    cachedUpdateInfo = Client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).ConfigureAwait(false).GetAwaiter().GetResult();
+                    if (cachedUpdateInfo?.CurrentBuild != null)
                     {
-                        CachedUpdateInfo.LatestBuild = CachedUpdateInfo.CurrentBuild;
-                        CachedUpdateInfo.CurrentBuild = null;
+                        cachedUpdateInfo.LatestBuild = cachedUpdateInfo.CurrentBuild;
+                        cachedUpdateInfo.CurrentBuild = null;
                     }
                 }
                 catch { }
@@ -204,9 +204,9 @@ namespace CompatBot.Commands
             {
                 var updateAnnouncement = channel is null;
                 var updateAnnouncementRestore = emptyBotMsg != null;
-                var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
+                var info = await Client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
                 if (info?.ReturnCode != 1 && sinceCommit != null)
-                    info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                    info = await Client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
 
                 if (updateAnnouncementRestore && info?.CurrentBuild != null)
                     info.LatestBuild = info.CurrentBuild;
@@ -219,16 +219,16 @@ namespace CompatBot.Commands
                         return false;
                     }
 
-                    embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
+                    embed = await cachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
                 }
                 else if (!updateAnnouncementRestore)
                 {
-                    if (CachedUpdateInfo?.LatestBuild?.Datetime is string previousBuildTimeStr
+                    if (cachedUpdateInfo?.LatestBuild?.Datetime is string previousBuildTimeStr
                         && info.LatestBuild?.Datetime is string newBuildTimeStr
                         && DateTime.TryParse(previousBuildTimeStr, out var previousBuildTime)
                         && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
                         && newBuildTime > previousBuildTime)
-                        CachedUpdateInfo = info;
+                        cachedUpdateInfo = info;
                 }
                 if (!updateAnnouncement)
                 {
@@ -256,7 +256,7 @@ namespace CompatBot.Commands
 
                 if (string.IsNullOrEmpty(latestUpdatePr)
                     || lastUpdateInfo == latestUpdatePr
-                    || !await updateCheck.WaitAsync(0).ConfigureAwait(false))
+                    || !await UpdateCheck.WaitAsync(0).ConfigureAwait(false))
                     return false;
 
                 if (!string.IsNullOrEmpty(lastFullBuildNumber)
@@ -308,7 +308,7 @@ namespace CompatBot.Commands
                 }
                 finally
                 {
-                    updateCheck.Release();
+                    UpdateCheck.Release();
                 }
                 return false;
             }
@@ -319,9 +319,9 @@ namespace CompatBot.Commands
                     || !int.TryParse(latestUpdatePr, out var newestPr))
                     return;
 
-                var mergedPrs = await githubClient.GetClosedPrsAsync(cancellationToken).ConfigureAwait(false); // this will cache 30 latest PRs
-                var newestPrCommit = await githubClient.GetPrInfoAsync(newestPr, cancellationToken).ConfigureAwait(false);
-                var oldestPrCommit = await githubClient.GetPrInfoAsync(oldestPr, cancellationToken).ConfigureAwait(false);
+                var mergedPrs = await GithubClient.GetClosedPrsAsync(cancellationToken).ConfigureAwait(false); // this will cache 30 latest PRs
+                var newestPrCommit = await GithubClient.GetPrInfoAsync(newestPr, cancellationToken).ConfigureAwait(false);
+                var oldestPrCommit = await GithubClient.GetPrInfoAsync(oldestPr, cancellationToken).ConfigureAwait(false);
                 if (newestPrCommit?.MergedAt == null || oldestPrCommit?.MergedAt == null)
                     return;
 
@@ -342,7 +342,7 @@ namespace CompatBot.Commands
                 ).ConfigureAwait(false);
                 foreach (var mergedPr in mergedPrs)
                 {
-                    var updateInfo = await client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false)
+                    var updateInfo = await Client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false)
                                      ?? new UpdateInfo {ReturnCode = -1};
                     if (updateInfo.ReturnCode == 0 || updateInfo.ReturnCode == 1) // latest or known build
                     {
@@ -409,7 +409,7 @@ namespace CompatBot.Commands
             CompatResult? result = null;
             try
             {
-                var remoteSearchTask = client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
+                var remoteSearchTask = Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
                 var localResult = GetLocalCompatResult(requestBuilder);
                 result = localResult;
                 var remoteResult = await remoteSearchTask.ConfigureAwait(false);
@@ -505,7 +505,7 @@ namespace CompatBot.Commands
                     var searchHits = sortedList.Where(t => t.score > 0.5
                                                            || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
                                                            || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
-                    foreach (var title in searchHits.Select(t => t.info?.Title).Distinct())
+                    foreach (var title in searchHits.Select(t => t.info.Title).Distinct())
                     {
                         StatsStorage.GameStatCache.TryGetValue(title, out int stat);
                         StatsStorage.GameStatCache.Set(title, ++stat, StatsStorage.CacheTime);
@@ -542,7 +542,7 @@ namespace CompatBot.Commands
 
         public static async Task ImportCompatListAsync()
         {
-            var list = await client.GetCompatListSnapshotAsync(Config.Cts.Token).ConfigureAwait(false);
+            var list = await Client.GetCompatListSnapshotAsync(Config.Cts.Token).ConfigureAwait(false);
             if (list is null)
                 return;
             
@@ -552,7 +552,7 @@ namespace CompatBot.Commands
                 var (productCode, info) = kvp;
                 var dbItem = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
                 if (dbItem is null
-                    && await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false) is {} compatItemSearchResult
+                    && await Client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false) is {} compatItemSearchResult
                     && compatItemSearchResult.Results.TryGetValue(productCode, out var compatItem))
                 {
                     dbItem = (await db.Thumbnail.AddAsync(new Thumbnail
@@ -663,7 +663,7 @@ namespace CompatBot.Commands
                 {
                     try
                     {
-                        var searchResult = await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(title), Config.Cts.Token).ConfigureAwait(false);
+                        var searchResult = await Client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(title), Config.Cts.Token).ConfigureAwait(false);
                         var compatListMatches = searchResult?.Results
                             .Select(i => (productCode: i.Key, titleInfo: i.Value, coef: Math.Max(title.GetFuzzyCoefficientCached(i.Value.Title), title.GetFuzzyCoefficientCached(i.Value.AlternativeTitle))))
                             .Where(i => i.coef > 0.85)

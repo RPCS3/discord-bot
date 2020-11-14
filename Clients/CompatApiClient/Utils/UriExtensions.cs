@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 
-namespace CompatApiClient
+namespace CompatApiClient.Utils
 {
     public static class UriExtensions
     {
@@ -92,7 +92,7 @@ namespace CompatApiClient
         private static Uri AddQueryValue(Uri uri, string queryToAppend)
         {
             var query = uri.IsAbsoluteUri ? uri.Query : new Uri(FakeHost, uri).Query;
-            if (query?.Length > 1)
+            if (query.Length > 1)
                 query = query[1..] + "&" + queryToAppend;
             else
                 query = queryToAppend;

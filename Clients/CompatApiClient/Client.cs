@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
+using CompatApiClient.Formatters;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using Microsoft.Extensions.Caching.Memory;

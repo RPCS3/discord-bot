@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
+using CompatApiClient.Formatters;
 using CompatApiClient.Utils;
 using GithubClient.POCOs;
 using Microsoft.Extensions.Caching.Memory;

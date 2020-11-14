@@ -16,7 +16,7 @@ namespace CompatBot.Database.Providers
             {
                 foreach (var stateVar in setVars)
                     if (stateVar.Value is string value)
-                        Config.inMemorySettings[stateVar.Key[ConfigVarPrefix.Length ..]] = value;
+                        Config.InMemorySettings[stateVar.Key[ConfigVarPrefix.Length ..]] = value;
                 Config.RebuildConfiguration();
             }
         }

@@ -86,9 +86,9 @@ namespace CompatBot.Commands
                 var previousTimestamp = firstWarnTimestamp;
                 var longestGapBetweenWarning = 0L;
                 long longestGapStart = 0L, longestGapEnd = 0L;
-                var span24h = TimeSpan.FromHours(24).Ticks;
+                var span24H = TimeSpan.FromHours(24).Ticks;
                 var currentSpan = new Queue<long>();
-                long mostWarningsStart = 0L, mostWarningsEnd = 0L, daysWithoutWarnings = 0L;
+                long mostWarningsEnd = 0L, daysWithoutWarnings = 0L;
                 var mostWarnings = 0;
                 for (var i = 1; i < timestamps.Count; i++)
                 {
@@ -100,16 +100,16 @@ namespace CompatBot.Commands
                         longestGapStart = previousTimestamp;
                         longestGapEnd = currentTimestamp;
                     }
-                    if (newGap > span24h)
-                        daysWithoutWarnings += newGap / span24h;
+                    if (newGap > span24H)
+                        daysWithoutWarnings += newGap / span24H;
 
                     currentSpan.Enqueue(currentTimestamp);
-                    while (currentSpan.Count > 0 && currentTimestamp - currentSpan.Peek() > span24h)
+                    while (currentSpan.Count > 0 && currentTimestamp - currentSpan.Peek() > span24H)
                         currentSpan.Dequeue();
                     if (currentSpan.Count > mostWarnings)
                     {
                         mostWarnings = currentSpan.Count;
-                        mostWarningsStart = currentSpan.Peek();
+                        currentSpan.Peek();
                         mostWarningsEnd = currentTimestamp;
                     }
                     previousTimestamp = currentTimestamp;
@@ -117,12 +117,11 @@ namespace CompatBot.Commands
 
                 var utcNow = DateTime.UtcNow;
                 var yesterday = utcNow.AddDays(-1).Ticks;
-                var last24hWarnings = db.Warning.Where(w => w.Timestamp > yesterday && !w.Retracted).ToList();
-                var warnCount = last24hWarnings.Count;
+                var last24HWarnings = db.Warning.Where(w => w.Timestamp > yesterday && !w.Retracted).ToList();
+                var warnCount = last24HWarnings.Count;
                 if (warnCount > mostWarnings)
                 {
                     mostWarnings = warnCount;
-                    mostWarningsStart = last24hWarnings.Min(w => w.Timestamp!.Value);
                     mostWarningsEnd = utcNow.Ticks;
                 }
                 var lastWarn = timestamps.Any() ? timestamps.Last() : (long?)null;
@@ -135,7 +134,7 @@ namespace CompatBot.Commands
                         longestGapStart = lastWarn.Value;
                         longestGapEnd = utcNow.Ticks;
                     }
-                    daysWithoutWarnings += currentGapBetweenWarnings / span24h;
+                    daysWithoutWarnings += currentGapBetweenWarnings / span24H;
                 }
                 // most warnings per 24h
                 var statsBuilder = new StringBuilder();

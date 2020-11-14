@@ -36,7 +36,7 @@ namespace CompatBot.Commands
         [Command("schedule"), Aliases("show", "list")]
         [Description("Outputs current schedule")]
         public Task ListGeneric(CommandContext ctx)
-            => List(ctx, null, null);
+            => List(ctx);
 
         [Command("schedule")]
         public Task ListGeneric(CommandContext ctx,
@@ -46,7 +46,7 @@ namespace CompatBot.Commands
         [Command("schedule")]
         public Task ListGeneric(CommandContext ctx,
             [Description("Optional event name to list schedule for")] string eventName)
-            => List(ctx, eventName, null);
+            => List(ctx, eventName);
 
         [Command("schedule")]
         public Task ListGeneric(CommandContext ctx,

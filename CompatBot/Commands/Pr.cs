@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
@@ -20,8 +19,8 @@ namespace CompatBot.Commands
     [Description("Commands to list opened pull requests information")]
     internal sealed class Pr: BaseCommandModuleCustom
     {
-        private static readonly GithubClient.Client githubClient = new();
-        private static readonly CompatApiClient.Client compatApiClient = new();
+        private static readonly GithubClient.Client GithubClient = new();
+        private static readonly CompatApiClient.Client CompatApiClient = new();
         internal static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30);
 
         [GroupCommand]
@@ -30,7 +29,7 @@ namespace CompatBot.Commands
         [GroupCommand]
         public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string? searchStr = null)
         {
-            var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
+            var openPrList = await GithubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
             if (openPrList == null)
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't retrieve open pull requests list, try again later").ConfigureAwait(false);
@@ -93,7 +92,7 @@ namespace CompatBot.Commands
 
         public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)
         {
-            var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
+            var prInfo = await GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
             if (prInfo is null or {Number: 0})
             {
                 await message.ReactWithAsync(Config.Reactions.Failure, prInfo?.Message ?? "PR not found").ConfigureAwait(false);
@@ -190,7 +189,7 @@ namespace CompatBot.Commands
             {
                 var mergeTime = prInfo.MergedAt.GetValueOrDefault();
                 var now = DateTime.UtcNow;
-                var updateInfo = await compatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                var updateInfo = await CompatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
                 if (updateInfo != null)
                 {
                     if (DateTime.TryParse(updateInfo.LatestBuild?.Datetime, out var masterBuildTime) && masterBuildTime.Ticks >= mergeTime.Ticks)
@@ -209,7 +208,7 @@ namespace CompatBot.Commands
 
         public static async Task LinkIssue(DiscordClient client, DiscordMessage message, int issue)
         {
-            var issueInfo = await githubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
+            var issueInfo = await GithubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
             if (issueInfo is null or {Number: 0})
                 return;
 

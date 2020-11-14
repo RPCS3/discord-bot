@@ -33,7 +33,7 @@ namespace Tests
         [TestCase(@"C:\Documents\Downloads\RPCS3_20.7z", TestName = "7z")]
         public async Task PerformanceTest(string path)
         {
-            Config.inMemorySettings[nameof(Config.AttachmentSizeLimit)] = int.MaxValue.ToString();
+            Config.InMemorySettings[nameof(Config.AttachmentSizeLimit)] = int.MaxValue.ToString();
             Config.RebuildConfiguration();
             var timer = Stopwatch.StartNew();
             var cts = new CancellationTokenSource();

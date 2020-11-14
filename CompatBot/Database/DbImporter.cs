@@ -45,7 +45,7 @@ namespace CompatBot.Database
         private static async Task ImportAsync(BotDb dbContext, CancellationToken cancellationToken)
         {
             var db = dbContext.Database;
-            using var tx = await db.BeginTransactionAsync(cancellationToken);
+            await using var tx = await db.BeginTransactionAsync(cancellationToken);
             try
             {
                 // __EFMigrationsHistory table will be already created by the failed migration attempt
@@ -59,7 +59,7 @@ namespace CompatBot.Database
                                                      `discord_id` INTEGER NOT NULL,
                                                      `sudoer`     INTEGER NOT NULL
                                                  )", cancellationToken);
-                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_moderator SELECT `id`,`discord_id`,`sudoer` FROM `moderator`", cancellationToken);
+                await db.ExecuteSqlRawAsync("INSERT INTO `temp_new_moderator` SELECT `id`,`discord_id`,`sudoer` FROM `moderator`", cancellationToken);
                 await db.ExecuteSqlRawAsync("DROP TABLE `moderator`", cancellationToken);
                 await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_moderator` RENAME TO `moderator`", cancellationToken);
                 await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `moderator_discord_id` ON `moderator` (`discord_id`)", cancellationToken);
@@ -68,7 +68,7 @@ namespace CompatBot.Database
                                                      `id`     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                                                      `string` varchar ( 255 ) NOT NULL
                                                  )", cancellationToken);
-                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_piracystring SELECT `id`,`string` FROM `piracystring`", cancellationToken);
+                await db.ExecuteSqlRawAsync("INSERT INTO `temp_new_piracystring` SELECT `id`,`string` FROM `piracystring`", cancellationToken);
                 await db.ExecuteSqlRawAsync("DROP TABLE `piracystring`", cancellationToken);
                 await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_piracystring` RENAME TO `piracystring`", cancellationToken);
                 await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `piracystring_string` ON `piracystring` (`string`)", cancellationToken);
@@ -80,7 +80,7 @@ namespace CompatBot.Database
                                                      `full_reason` TEXT NOT NULL,
                                                      `issuer_id`   INTEGER NOT NULL DEFAULT 0
                                                  )", cancellationToken);
-                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_warning SELECT `id`,`discord_id`,`reason`,`full_reason`,`issuer_id` FROM `warning`", cancellationToken);
+                await db.ExecuteSqlRawAsync("INSERT INTO `temp_new_warning` SELECT `id`,`discord_id`,`reason`,`full_reason`,`issuer_id` FROM `warning`", cancellationToken);
                 await db.ExecuteSqlRawAsync("DROP TABLE `warning`", cancellationToken);
                 await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_warning` RENAME TO `warning`", cancellationToken);
                 await db.ExecuteSqlRawAsync("CREATE INDEX `warning_discord_id` ON `warning` (`discord_id`)", cancellationToken);
@@ -90,15 +90,15 @@ namespace CompatBot.Database
                                                      `keyword` TEXT NOT NULL,
                                                      `text`    TEXT NOT NULL
                                                  )", cancellationToken);
-                await db.ExecuteSqlRawAsync("INSERT INTO temp_new_explanation SELECT `id`,`keyword`,`text` FROM `explanation`", cancellationToken);
+                await db.ExecuteSqlRawAsync("INSERT INTO `temp_new_explanation` SELECT `id`,`keyword`,`text` FROM `explanation`", cancellationToken);
                 await db.ExecuteSqlRawAsync("DROP TABLE `explanation`", cancellationToken);
                 await db.ExecuteSqlRawAsync("ALTER TABLE `temp_new_explanation` RENAME TO `explanation`", cancellationToken);
                 await db.ExecuteSqlRawAsync("CREATE UNIQUE INDEX `explanation_keyword` ON `explanation` (`keyword`)", cancellationToken);
-                tx.Commit();
+                await tx.CommitAsync(cancellationToken);
             }
             catch
             {
-                tx.Commit();
+                await tx.CommitAsync(cancellationToken);
                 throw;
             }
         }
@@ -132,13 +132,11 @@ namespace CompatBot.Database
                             Config.Log.Error($"{dbPath} already exists, please reslove the conflict manually");
                             throw new InvalidOperationException($"Failed to move local {dbName} to {dbPath}");
                         }
-                        else
-                        {
-                            var dbFiles = Directory.GetFiles(".", Path.GetFileNameWithoutExtension(dbName) + ".*");
-                            foreach (var file in dbFiles)
-                                File.Move(file, Path.Combine(settingsFolder, Path.GetFileName(file)));
-                            Config.Log.Info($"Using {dbPath}");
-                        }
+                        
+                        var dbFiles = Directory.GetFiles(".", Path.GetFileNameWithoutExtension(dbName) + ".*");
+                        foreach (var file in dbFiles)
+                            File.Move(file, Path.Combine(settingsFolder, Path.GetFileName(file)));
+                        Config.Log.Info($"Using {dbPath}");
                     }
                 }
                 catch (Exception e)

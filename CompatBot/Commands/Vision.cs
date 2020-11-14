@@ -37,8 +37,6 @@ namespace CompatBot.Commands
     [Cooldown(1, 5, CooldownBucketType.Channel)]
     internal sealed class Vision: BaseCommandModuleCustom
     {
-        private static readonly Color[] DefaultColors = {Color.DeepSkyBlue, Color.DarkOliveGreen, Color.OrangeRed, };
-
         static Vision()
         {
             var list = new StringBuilder("Available system fonts:").AppendLine();
@@ -240,8 +238,8 @@ namespace CompatBot.Commands
                         // object bounding box
                         try
                         {
-                            img.Mutate(i => i.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
-                            img.Mutate(i => i.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
+                            img.Mutate(ipc => ipc.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
+                            img.Mutate(ipc => ipc.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
                         }
                         catch (Exception ex)
                         {
@@ -278,8 +276,8 @@ namespace CompatBot.Commands
                         var textColor = color;
                         try
                         {
-                            img.Mutate(i => i.Fill(bgSgo, textBoxColor, bgBox));
-                            img.Mutate(i => i.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
+                            img.Mutate(ipc => ipc.Fill(bgSgo, textBoxColor, bgBox));
+                            img.Mutate(ipc => ipc.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
                         }
                         catch (Exception ex)
                         {
@@ -289,7 +287,7 @@ namespace CompatBot.Commands
                         // label text
                         try
                         {
-                            img.Mutate(i => i.DrawText(textGraphicsOptions, label, font, textColor, new PointF(bgBox.X + bboxBorder, bgBox.Y + bboxBorder)));
+                            img.Mutate(ipc => ipc.DrawText(textGraphicsOptions, label, font, textColor, new PointF(bgBox.X + bboxBorder, bgBox.Y + bboxBorder)));
                             //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5))); // throws exception
                         }
                         catch (Exception ex)

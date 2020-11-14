@@ -222,7 +222,7 @@ namespace CompatBot.Commands
         [Description("Provides random stuff")]
         public async Task RandomShit(CommandContext ctx, string stuff)
         {
-            stuff = stuff?.ToLowerInvariant() ?? "";
+            stuff = stuff.ToLowerInvariant();
             switch (stuff)
             {
                     case "game":
@@ -230,7 +230,7 @@ namespace CompatBot.Commands
                     case "productcode":
                     case "product code":
                     {
-                        using var db = new ThumbnailDb();
+                        await using var db = new ThumbnailDb();
                         var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
                         if (count == 0)
                         {
@@ -238,8 +238,8 @@ namespace CompatBot.Commands
                             return;
                         }
 
-                        var rng = new Random().Next(count);
-                        var productCode = await db.Thumbnail.Skip(rng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
+                        var tmpRng = new Random().Next(count);
+                        var productCode = await db.Thumbnail.Skip(tmpRng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
                         if (productCode == null)
                         {
                             await ctx.RespondAsync("Sorry, there's something with my brains today. Try again or something").ConfigureAwait(false);
@@ -259,15 +259,14 @@ namespace CompatBot.Commands
         [Description("Provides a ~~random~~ objectively best answer to your question")]
         public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
         {
-            question = question?.ToLowerInvariant() ?? "";
+            question = question.ToLowerInvariant();
             if (question.StartsWith("when "))
                 await When(ctx, question[5..]).ConfigureAwait(false);
             else
             {
                 string answer;
                 var pool = string.IsNullOrEmpty(question) ? EightBallSnarkyComments : EightBallAnswers;
-                lock (rng)
-                    answer = pool[rng.Next(pool.Count)];
+                lock (rng) answer = pool[rng.Next(pool.Count)];
                 if (answer.StartsWith(':') && answer.EndsWith(':'))
                     answer = ctx.Client.GetEmoji(answer, "🔮");
                 await ctx.RespondAsync(answer).ConfigureAwait(false);
@@ -352,23 +351,22 @@ namespace CompatBot.Commands
 
                     void MakeCustomRoleRating(DiscordMember? mem)
                     {
-                        if (mem != null && !choiceFlags.Contains('f'))
-                        {
-                            var roleList = mem.Roles.ToList();
-                            if (roleList.Any())
-                            {
-
-                                var role = roleList[new Random((prefix + mem.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
-                                if (!string.IsNullOrEmpty(role))
-                                {
-                                    if (role.EndsWith('s'))
-                                        role = role[..^1];
-                                    var article = Vowels.Contains(role[0]) ? "n" : "";
-                                    choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
-                                    choiceFlags.Add('f');
-                                }
-                            }
-                        }
+                        if (mem is null || choiceFlags.Contains('f'))
+                            return;
+                        
+                        var roleList = mem.Roles.ToList();
+                        if (roleList.Count == 0)
+                            return;
+                        
+                        var role = roleList[new Random((prefix + mem.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
+                        if (string.IsNullOrEmpty(role))
+                            return;
+                        
+                        if (role.EndsWith('s'))
+                            role = role[..^1];
+                        var article = Vowels.Contains(role[0]) ? "n" : "";
+                        choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
+                        choiceFlags.Add('f');
                     }
 
                     var appended = false;

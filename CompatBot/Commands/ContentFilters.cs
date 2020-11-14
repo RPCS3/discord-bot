@@ -530,7 +530,7 @@ namespace CompatBot.Commands
                 {
                     try
                     {
-                        Regex.IsMatch("test", txt.Content, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                        _ = Regex.IsMatch("test", txt.Content, RegexOptions.Multiline | RegexOptions.IgnoreCase);
                     }
                     catch (Exception e)
                     {

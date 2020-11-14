@@ -138,7 +138,7 @@ namespace CompatBot.Commands
                     {
                         var entity = new Explanation
                         {
-                            Keyword = term, Text = explanation ?? "", Attachment = attachment,
+                            Keyword = term, Text = explanation, Attachment = attachment,
                             AttachmentFilename = attachmentFilename
                         };
                         await db.Explanation.AddAsync(entity).ConfigureAwait(false);

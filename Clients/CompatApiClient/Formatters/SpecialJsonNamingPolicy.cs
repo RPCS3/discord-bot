@@ -1,4 +1,4 @@
-﻿namespace CompatApiClient
+﻿namespace CompatApiClient.Formatters
 {
     public static class SpecialJsonNamingPolicy
     {

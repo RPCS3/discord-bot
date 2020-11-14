@@ -10,6 +10,7 @@ using System.IO.Pipelines;
 using System.Net.Http;
 using System.Threading;
 using CompatApiClient;
+using CompatApiClient.Utils;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
