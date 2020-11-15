@@ -14,6 +14,7 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient;
+using Microsoft.DotNet.PlatformAbstractions;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -298,6 +299,16 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var items = state.CompletedCollection!;
             var multiItems = state.CompleteMultiValueCollection!;
+            #warning report bug?
+            if (RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
+            {
+                var itemKeys = items.AllKeys;
+                foreach (var key in itemKeys)
+                    items[key] = items[key]?.TrimEnd('”');
+                var colKeyList = multiItems.Keys;
+                foreach (var key in colKeyList)
+                    multiItems[key] = new(multiItems[key].Select(i => i.TrimEnd('”')));
+            }
             if (items["strict_rendering_mode"] == "true")
                 items["resolution_scale"] = "Strict Mode";
             if (items["spu_threads"] == "0")
