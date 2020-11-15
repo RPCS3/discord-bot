@@ -12,7 +12,7 @@ namespace CompatBot.Commands.Converters
 {
     internal sealed class TextOnlyDiscordChannelConverter : IArgumentConverter<DiscordChannel>
     {
-        private static Regex ChannelRegex { get; } = new Regex(@"^<#(\d+)>$", RegexOptions.ECMAScript | RegexOptions.Compiled);
+        private static Regex ChannelRegex { get; } = new(@"^<#(\d+)>$", RegexOptions.ECMAScript | RegexOptions.Compiled);
 
         public async Task<Optional<DiscordChannel>> ConvertAsync(string value, CommandContext ctx)
         {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -10,12 +9,15 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using NReco.Text;
+#if DEBUG
+using System.Collections.Generic;
+#endif
 
 namespace CompatBot.EventHandlers
 {
     internal static class BotReactionsHandler
     {
-        private static readonly AhoCorasickDoubleArrayTrie<bool> ChillCheck = new AhoCorasickDoubleArrayTrie<bool>(new[]
+        private static readonly AhoCorasickDoubleArrayTrie<bool> ChillCheck = new(new[]
         {
             "shut the fuck up", "shut up", "shutup", "shuddup", "hush", "chill", "bad bot",
             "no one asked you", "useless bot", "bot sux", "fuck this bot", "fuck bot",
@@ -66,15 +68,15 @@ namespace CompatBot.EventHandlers
             "Glad I could help", "I try my best", "Blessed day", "It is officially a good day today", "I will remember you when the uprising starts",
         };
 
-        private static readonly Regex Paws = new Regex(
+        private static readonly Regex Paws = new(
             @"\b((?<kot>kot(to)?)|(?<doggo>doggo|jarves))\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
         );
-        private static readonly Random rng = new Random();
-        private static readonly object theDoor = new object();
+        private static readonly Random Rng = new();
+        private static readonly object TheDoor = new();
 
-        public static DiscordEmoji RandomNegativeReaction { get { lock (theDoor) return SadReactions[rng.Next(SadReactions.Length)]; } }
-        public static DiscordEmoji RandomPositiveReaction { get { lock (theDoor) return ThankYouReactions[rng.Next(ThankYouReactions.Length)]; } }
+        public static DiscordEmoji RandomNegativeReaction { get { lock (TheDoor) return SadReactions[Rng.Next(SadReactions.Length)]; } }
+        public static DiscordEmoji RandomPositiveReaction { get { lock (TheDoor) return ThankYouReactions[Rng.Next(ThankYouReactions.Length)]; } }
 
         public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
@@ -127,7 +129,7 @@ namespace CompatBot.EventHandlers
 
             if (!string.IsNullOrEmpty(args.Message.Content) && Paws.Matches(args.Message.Content) is MatchCollection mc)
             {
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var matchedGroups = (from m in mc
                         from Group g in m.Groups
                         where g.Success && !string.IsNullOrEmpty(g.Value)
@@ -138,7 +140,7 @@ namespace CompatBot.EventHandlers
                 {
                     if (!db.Kot.Any(k => k.UserId == args.Author.Id))
                     {
-                        db.Kot.Add(new Kot {UserId = args.Author.Id});
+                        await db.Kot.AddAsync(new Kot {UserId = args.Author.Id}).ConfigureAwait(false);
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
@@ -146,7 +148,7 @@ namespace CompatBot.EventHandlers
                 {
                     if (!db.Doggo.Any(d => d.UserId == args.Author.Id))
                     {
-                        db.Doggo.Add(new Doggo {UserId = args.Author.Id});
+                        await db.Doggo.AddAsync(new Doggo {UserId = args.Author.Id}).ConfigureAwait(false);
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
@@ -159,13 +161,13 @@ namespace CompatBot.EventHandlers
             if (needToThank)
             {
                 DiscordEmoji emoji;
-                string thankYouMessage;
-                lock (theDoor)
+                string? thankYouMessage;
+                lock (TheDoor)
                 {
-                    emoji = ThankYouReactions[rng.Next(ThankYouReactions.Length)];
+                    emoji = ThankYouReactions[Rng.Next(ThankYouReactions.Length)];
                     thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel)
                                       || LimitedToOfftopicChannel.IsOfftopicChannel(args.Channel)
-                        ? ThankYouMessages[rng.Next(ThankYouMessages.Length)]
+                        ? ThankYouMessages[Rng.Next(ThankYouMessages.Length)]
                         : null;
                 }
                 await args.Message.ReactWithAsync(emoji, thankYouMessage).ConfigureAwait(false);
@@ -174,10 +176,10 @@ namespace CompatBot.EventHandlers
             {
                 DiscordEmoji emoji;
                 string sadMessage;
-                lock (theDoor)
+                lock (TheDoor)
                 {
-                    emoji = SadReactions[rng.Next(SadReactions.Length)];
-                    sadMessage = SadMessages[rng.Next(SadMessages.Length)];
+                    emoji = SadReactions[Rng.Next(SadReactions.Length)];
+                    sadMessage = SadMessages[Rng.Next(SadMessages.Length)];
                 }
                 await args.Message.ReactWithAsync(emoji, sadMessage).ConfigureAwait(false);
 
@@ -198,7 +200,7 @@ namespace CompatBot.EventHandlers
 
         internal static (bool needToChill, bool needToThank) NeedToSilence(DiscordMessage msg)
         {
-            if (string.IsNullOrEmpty(msg?.Content))
+            if (string.IsNullOrEmpty(msg.Content))
                 return (false, false);
 
             var needToChill = false;
@@ -211,7 +213,7 @@ namespace CompatBot.EventHandlers
                                                   else
                                                       needToThank = true;
                                               });
-            var mentionsBot = msgContent.Contains("bot") || (msg.MentionedUsers?.Any(u => { try { return u.IsCurrent; } catch { return false; }}) ?? false);
+            var mentionsBot = msgContent.Contains("bot") || msg.MentionedUsers?.Any(u => { try { return u.IsCurrent; } catch { return false; }}) is true;
             return (needToChill && mentionsBot, needToThank && mentionsBot);
         }
     }

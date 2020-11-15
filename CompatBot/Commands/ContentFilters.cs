@@ -39,47 +39,45 @@ namespace CompatBot.Commands
                 new AsciiColumn("Actions"),
                 new AsciiColumn("Custom message")
             );
-            using (var db = new BotDb())
+            await using var db = new BotDb();
+            var duplicates = new Dictionary<string, FilterContext>(StringComparer.InvariantCultureIgnoreCase);
+            var filters = db.Piracystring.Where(ps => !ps.Disabled).AsNoTracking().AsEnumerable().OrderBy(ps => ps.String.ToUpperInvariant()).ToList();
+            var nonUniqueTriggers = (
+                from f in filters
+                group f by f.String.ToUpperInvariant()
+                into g
+                where g.Count() > 1
+                select g.Key
+            ).ToList();
+            foreach (var t in nonUniqueTriggers)
             {
-                var duplicates = new Dictionary<string, FilterContext>(StringComparer.InvariantCultureIgnoreCase);
-                var filters = db.Piracystring.Where(ps => !ps.Disabled).AsNoTracking().AsEnumerable().OrderBy(ps => ps.String.ToUpperInvariant()).ToList();
-                var nonUniqueTriggers = (
-                    from f in filters
-                    group f by f.String.ToUpperInvariant()
-                    into g
-                    where g.Count() > 1
-                    select g.Key
-                ).ToList();
-                foreach (var t in nonUniqueTriggers)
+                var duplicateFilters = filters.Where(ps => ps.String.Equals(t, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                foreach (FilterContext fctx in Enum.GetValues(typeof(FilterContext)))
                 {
-                    var duplicateFilters = filters.Where(ps => ps.String.Equals(t, StringComparison.InvariantCultureIgnoreCase)).ToList();
-                    foreach (FilterContext fctx in Enum.GetValues(typeof(FilterContext)))
+                    if (duplicateFilters.Count(f => (f.Context & fctx) == fctx) > 1)
                     {
-                        if (duplicateFilters.Count(f => (f.Context & fctx) == fctx) > 1)
-                        {
-                            if (duplicates.TryGetValue(t, out var fctxs))
-                                duplicates[t] = fctxs | fctx;
-                            else
-                                duplicates[t] = fctx;
-                        }
+                        if (duplicates.TryGetValue(t, out var fctxDup))
+                            duplicates[t] = fctxDup | fctx;
+                        else
+                            duplicates[t] = fctx;
                     }
                 }
-                foreach (var item in filters)
-                {
-                    var ctxl = item.Context.ToString();
-                    if (duplicates.Count > 0
-                        && duplicates.TryGetValue(item.String, out var fctx)
-                        && (item.Context & fctx) != 0)
-                        ctxl = "❗ " + ctxl;
-                    table.Add(
-                        item.Id.ToString(),
-                        item.String.Sanitize(),
-                        item.ValidatingRegex,
-                        ctxl,
-                        item.Actions.ToFlagsString(),
-                        string.IsNullOrEmpty(item.CustomMessage) ? "" : "✅"
-                    );
-                }
+            }
+            foreach (var item in filters)
+            {
+                var ctxl = item.Context.ToString();
+                if (duplicates.Count > 0
+                    && duplicates.TryGetValue(item.String, out var fctx)
+                    && (item.Context & fctx) != 0)
+                    ctxl = "❗ " + ctxl;
+                table.Add(
+                    item.Id.ToString(),
+                    item.String.Sanitize(),
+                    item.ValidatingRegex ?? "",
+                    ctxl,
+                    item.Actions.ToFlagsString(),
+                    string.IsNullOrEmpty(item.CustomMessage) ? "" : "✅"
+                );
             }
             await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
             await ctx.RespondAsync(FilterActionExtensions.GetLegend()).ConfigureAwait(false);
@@ -89,7 +87,7 @@ namespace CompatBot.Commands
         [Description("Adds a new content filter")]
         public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string trigger)
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             Piracystring filter;
             if (string.IsNullOrEmpty(trigger))
                 filter = new Piracystring();
@@ -116,7 +114,7 @@ namespace CompatBot.Commands
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id)).ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                var reportMsg = $"{member.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
+                var reportMsg = $"{member?.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
                 if (!string.IsNullOrEmpty(filter.ValidatingRegex))
                     reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
                 await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
@@ -130,9 +128,9 @@ namespace CompatBot.Commands
         [Description("Modifies the specified content filter")]
         public async Task Edit(CommandContext ctx, [Description("Filter ID")] int id)
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
-            if (filter == null)
+            if (filter is null)
             {
                 await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
                 return;
@@ -144,9 +142,9 @@ namespace CompatBot.Commands
         [Command("edit")]
         public async Task Edit(CommandContext ctx, [Description("Trigger to edit"), RemainingText] string trigger)
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
-            if (filter == null)
+            if (filter is null)
             {
                 await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
                 return;
@@ -161,7 +159,7 @@ namespace CompatBot.Commands
         {
             int removedFilters;
             var removedTriggers = new StringBuilder();
-            using (var db = new BotDb())
+            await using (var db = new BotDb())
             {
                 foreach (var f in db.Piracystring.Where(ps => ids.Contains(ps.Id) && !ps.Disabled))
                 {
@@ -181,7 +179,7 @@ namespace CompatBot.Commands
                 var filterList = removedTriggers.ToString();
                 if (removedFilters == 1)
                     filterList = filterList.TrimStart();
-                await ctx.Client.ReportAsync($"📴 Content filter{s} removed", $"{member.GetMentionWithNickname()} removed {removedFilters} content filter{s}: {filterList}".Trim(EmbedPager.MaxDescriptionLength), null, ReportSeverity.Medium).ConfigureAwait(false);
+                await ctx.Client.ReportAsync($"📴 Content filter{s} removed", $"{member?.GetMentionWithNickname()} removed {removedFilters} content filter{s}: {filterList}".Trim(EmbedPager.MaxDescriptionLength), null, ReportSeverity.Medium).ConfigureAwait(false);
             }
             ContentFilter.RebuildMatcher();
         }
@@ -195,10 +193,10 @@ namespace CompatBot.Commands
                 return;
             }
 
-            using (var db = new BotDb())
+            await using (var db = new BotDb())
             {
                 var f = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
-                if (f == null)
+                if (f is null)
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Specified filter does not exist").ConfigureAwait(false);
                     return;
@@ -210,11 +208,11 @@ namespace CompatBot.Commands
 
             await ctx.ReactWithAsync(Config.Reactions.Success, "Trigger was removed").ConfigureAwait(false);
             var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-            await ctx.Client.ReportAsync("📴 Content filter removed", $"{member.GetMentionWithNickname()} removed 1 content filter: `{trigger.Sanitize()}`", null, ReportSeverity.Medium).ConfigureAwait(false);
+            await ctx.Client.ReportAsync("📴 Content filter removed", $"{member?.GetMentionWithNickname()} removed 1 content filter: `{trigger.Sanitize()}`", null, ReportSeverity.Medium).ConfigureAwait(false);
             ContentFilter.RebuildMatcher();
         }
 
-        private async Task EditFilterCmd(CommandContext ctx, BotDb db, Piracystring filter)
+        private static async Task EditFilterCmd(CommandContext ctx, BotDb db, Piracystring filter)
         {
             var (success, msg) = await EditFilterPropertiesAsync(ctx, db, filter).ConfigureAwait(false);
             if (success)
@@ -222,7 +220,7 @@ namespace CompatBot.Commands
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Updated content filter")).ConfigureAwait(false);
                 var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
-                var reportMsg = $"{member.GetMentionWithNickname()} changed content filter #{filter.Id} (`{filter.Actions.ToFlagsString()}`): `{filter.String.Sanitize()}`";
+                var reportMsg = $"{member?.GetMentionWithNickname()} changed content filter #{filter.Id} (`{filter.Actions.ToFlagsString()}`): `{filter.String.Sanitize()}`";
                 if (!string.IsNullOrEmpty(filter.ValidatingRegex))
                     reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
                 await ctx.Client.ReportAsync("🆙 Content filter updated", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
@@ -232,7 +230,19 @@ namespace CompatBot.Commands
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Content filter update aborted").ConfigureAwait(false);
         }
 
-        private async Task<(bool success, DiscordMessage message)> EditFilterPropertiesAsync(CommandContext ctx, BotDb db, Piracystring filter)
+        private static async Task<(bool success, DiscordMessage? message)> EditFilterPropertiesAsync(CommandContext ctx, BotDb db, Piracystring filter)
+        {
+            try
+            {
+                return await EditFilterPropertiesInternalAsync(ctx, db, filter).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e, "Failed to edit content filter");
+                return (false, null);
+            }
+        }
+        private static async Task<(bool success, DiscordMessage? message)> EditFilterPropertiesInternalAsync(CommandContext ctx, BotDb db, Piracystring filter)
         {
             var interact = ctx.Client.GetInteractivity();
             var abort = DiscordEmoji.FromUnicode("🛑");
@@ -251,10 +261,10 @@ namespace CompatBot.Commands
             var letterE = DiscordEmoji.FromUnicode("🇪");
             var letterU = DiscordEmoji.FromUnicode("🇺");
 
-            DiscordMessage msg = null;
-            string errorMsg = null;
-            DiscordMessage txt;
-            MessageReactionAddEventArgs emoji;
+            DiscordMessage? msg = null;
+            string? errorMsg = null;
+            DiscordMessage? txt;
+            MessageReactionAddEventArgs? emoji;
 
         step1:
             // step 1: define trigger string
@@ -263,9 +273,10 @@ namespace CompatBot.Commands
                     "Any simple string that is used to flag potential content for a check using Validation regex.\n" +
                     "**Must** be sufficiently long to reduce the number of checks."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **trigger**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **trigger**", embed: embed).ConfigureAwait(false);
+            var tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -307,9 +318,10 @@ namespace CompatBot.Commands
                     $"**`L`** = **`{FilterContext.Log}`** will apply it during log parsing.\n" +
                     "Reactions will toggle the context, text message will set the specified flags."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **context(s)**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterC, letterL, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **context(s)**", embed: embed).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterC, letterL, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -378,9 +390,10 @@ namespace CompatBot.Commands
                     $"**`U`** = **`{FilterAction.MuteModQueue}`** mute mod queue reporting for this action.\n" +
                     "Reactions will toggle the action, text message will set the specified flags."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **action(s)**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterR, letterW, letterM, letterE, letterU, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **action(s)**", embed: embed).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterR, letterW, letterM, letterE, letterU, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -487,10 +500,11 @@ namespace CompatBot.Commands
                     "**Please [test](https://regex101.com/) your regex**. Following flags are enabled: Multiline, IgnoreCase.\n" +
                     "Additional validation can help reduce false positives of a plaintext trigger match."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             var next = (filter.Actions & (FilterAction.SendMessage | FilterAction.ShowExplain)) == 0 ? firstPage : nextPage;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (string.IsNullOrEmpty(filter.ValidatingRegex) ? null : trash), (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (string.IsNullOrEmpty(filter.ValidatingRegex) ? null : trash), (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -516,7 +530,7 @@ namespace CompatBot.Commands
                 {
                     try
                     {
-                        Regex.IsMatch("test", txt.Content, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                        _ = Regex.IsMatch("test", txt.Content, RegexOptions.Multiline | RegexOptions.IgnoreCase);
                     }
                     catch (Exception e)
                     {
@@ -544,10 +558,11 @@ namespace CompatBot.Commands
                     "Optional custom message sent to the user.\n" +
                     "If left empty, default piracy warning message will be used."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             next = (filter.Actions.HasFlag(FilterAction.ShowExplain) ? nextPage : firstPage);
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -584,9 +599,10 @@ namespace CompatBot.Commands
                     "Explanation term that is used to show an explanation.\n" +
                     "**__Currently not implemented__**."
                 );
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **explanation term**", embed: embed).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **explanation term**", embed: embed).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -612,7 +628,8 @@ namespace CompatBot.Commands
                     filter.ExplainTerm = null;
                 else
                 {
-                    var existingTerm = await db.Explanation.FirstOrDefaultAsync(exp => exp.Keyword == txt.Content.ToLowerInvariant()).ConfigureAwait(false);
+                    var term = txt.Content.ToLowerInvariant();
+                    var existingTerm = await db.Explanation.FirstOrDefaultAsync(exp => exp.Keyword == term).ConfigureAwait(false);
                     if (existingTerm == null)
                     {
                         errorMsg = $"Term `{txt.Content.ToLowerInvariant().Sanitize()}` is not defined.";
@@ -630,9 +647,10 @@ namespace CompatBot.Commands
             if (errorMsg == null && !filter.IsComplete())
                 errorMsg = "Some required properties are not defined";
             embed = FormatFilter(filter, errorMsg);
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
             errorMsg = null;
-            (msg, txt, emoji) = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
+            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
+            (msg, txt, emoji) = tmp; //workaround compiler warning
             if (emoji != null)
             {
                 if (emoji.Emoji == abort)
@@ -694,7 +712,7 @@ namespace CompatBot.Commands
             return (false, msg);
         }
 
-        private static DiscordEmbedBuilder FormatFilter(Piracystring filter, string error = null, int highlight = -1)
+        private static DiscordEmbedBuilder FormatFilter(Piracystring filter, string? error = null, int highlight = -1)
         {
             var field = 1;
             var result = new DiscordEmbedBuilder
@@ -709,14 +727,14 @@ namespace CompatBot.Commands
             result.AddFieldEx(validTrigger + "Trigger", filter.String, highlight == field++, true)
                 .AddFieldEx("Context", filter.Context.ToString(), highlight == field++, true)
                 .AddFieldEx("Actions", filter.Actions.ToFlagsString(), highlight == field++, true)
-                .AddFieldEx("Validation", filter.ValidatingRegex, highlight == field++, true);
+                .AddFieldEx("Validation", filter.ValidatingRegex ?? "", highlight == field++, true);
             if (filter.Actions.HasFlag(FilterAction.SendMessage))
-                result.AddFieldEx("Message", filter.CustomMessage, highlight == field, true);
+                result.AddFieldEx("Message", filter.CustomMessage ?? "", highlight == field, true);
             field++;
             if (filter.Actions.HasFlag(FilterAction.ShowExplain))
             {
                 var validExplainTerm = string.IsNullOrEmpty(filter.ExplainTerm) ? "⚠ " : "";
-                result.AddFieldEx(validExplainTerm + "Explain", filter.ExplainTerm, highlight == field, true);
+                result.AddFieldEx(validExplainTerm + "Explain", filter.ExplainTerm ?? "", highlight == field, true);
             }
 #if DEBUG
             result.WithFooter("Test bot instance");

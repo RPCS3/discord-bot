@@ -14,7 +14,7 @@ namespace CompatBot.Utils
 
         public static DateTime AsUtc(this long ticks)
         {
-            return new DateTime(ticks, DateTimeKind.Utc);
+            return new(ticks, DateTimeKind.Utc);
         }
 
 

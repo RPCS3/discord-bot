@@ -36,7 +36,7 @@ namespace CompatBot.Utils
                 }
                 case 'N':
                 {
-                    DecodeMediaN(productCode.Slice(1), result);
+                    DecodeMediaN(productCode[1..], result);
                     return;
                 }
                 case 'X':
@@ -51,18 +51,18 @@ namespace CompatBot.Utils
                 }
                 case 'P':
                 {
-                    DecodeMediaP(productCode.Slice(1), result);
+                    DecodeMediaP(productCode[1..], result);
                     return;
                 }
                 case 'C':
                 {
-                    DecodeMediaC(productCode.Slice(1), result);
+                    DecodeMediaC(productCode[1..], result);
                     return;
                 }
                 case char _ when productCode[..4] == "MRTC":
                 {
                     result.Add("Media Replication and Transfer Code (or something completely different, no one knows for sure)");
-                    DecodeRegionNumbers(productCode.Slice(4), result);
+                    DecodeRegionNumbers(productCode[4..], result);
                     return;
                 }
                 default:
@@ -71,7 +71,7 @@ namespace CompatBot.Utils
                     return;
                 }
             }
-            DecodeRights(productCode.Slice(1), result);
+            DecodeRights(productCode[1..], result);
         }
 
         private static void DecodeRights(in ReadOnlySpan<char> productCode, List<string> result)
@@ -94,7 +94,7 @@ namespace CompatBot.Utils
                     break;
                 }
             }
-            DecodePhysicalRegion(productCode.Slice(1), result);
+            DecodePhysicalRegion(productCode[1..], result);
         }
 
         private static void DecodePhysicalRegion(in ReadOnlySpan<char> productCode, List<string> result)
@@ -153,7 +153,7 @@ namespace CompatBot.Utils
                     break;
                 }
             }
-            DecodePhysicalContentType(productCode.Slice(1), result);
+            DecodePhysicalContentType(productCode[1..], result);
         }
 
         private static void DecodePhysicalContentType(in ReadOnlySpan<char> productCode, List<string> result)
@@ -211,7 +211,7 @@ namespace CompatBot.Utils
                     break;
                 }
             }
-            DecodeRegionNumbers(productCode.Slice(1), result);
+            DecodeRegionNumbers(productCode[1..], result);
         }
 
         private static void DecodeRegionNumbers(in ReadOnlySpan<char> productCode, List<string> result)
@@ -282,7 +282,7 @@ namespace CompatBot.Utils
                     return;
                 }
             }
-            DecodeDigitalRegion(productCode.Slice(1), result);
+            DecodeDigitalRegion(productCode[1..], result);
         }
 
         private static void DecodeDigitalRegion(in ReadOnlySpan<char> productCode, List<string> result)
@@ -335,7 +335,7 @@ namespace CompatBot.Utils
                     break;
                 }
             }
-            DecodeDigitalContentType(productCode.Slice(1), result);
+            DecodeDigitalContentType(productCode[1..], result);
         }
 
         private static void DecodeDigitalContentType(in ReadOnlySpan<char> productCode, List<string> result)
@@ -458,7 +458,7 @@ namespace CompatBot.Utils
                     break;
                 }
             }
-            DecodeRegionNumbers(productCode.Slice(1), result);
+            DecodeRegionNumbers(productCode[1..], result);
         }
 
         private static void DecodeMediaP(in ReadOnlySpan<char> productCode, List<string> result)
@@ -482,7 +482,7 @@ namespace CompatBot.Utils
                 }
                 case 'C':
                 {
-                    DecodeMediaPC(productCode.Slice(1), result);
+                    DecodeMediaPC(productCode[1..], result);
                     return;
                 }
                 default:
@@ -491,7 +491,7 @@ namespace CompatBot.Utils
                     return;
                 }
             }
-            DecodePhysicalRegion(productCode.Slice(1), result);
+            DecodePhysicalRegion(productCode[1..], result);
         }
 
         private static void DecodeMediaPC(in ReadOnlySpan<char> productCode, List<string> result)
@@ -501,13 +501,13 @@ namespace CompatBot.Utils
                 case 'S':
                 {
                     result.Add("Playstation Vita software");
-                    DecodeVitaRegion(productCode.Slice(1), result);
+                    DecodeVitaRegion(productCode[1..], result);
                     return;
                 }
                 case 'P':
                 {
                     result.Add("Optical media with promotional videos");
-                    DecodePhysicalContentType(productCode.Slice(1), result);
+                    DecodePhysicalContentType(productCode[1..], result);
                     return;
                 }
                 default:

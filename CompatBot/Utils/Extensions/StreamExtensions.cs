@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using System;
 
 namespace CompatBot.Utils
 {
@@ -14,7 +15,7 @@ namespace CompatBot.Utils
             do
             {
                 var remaining = count - result;
-                read = await stream.ReadAsync(buffer, result, remaining).ConfigureAwait(false);
+                read = await stream.ReadAsync(buffer.AsMemory(result, remaining)).ConfigureAwait(false);
                 result += read;
             } while (read > 0 && result < count);
             return result;

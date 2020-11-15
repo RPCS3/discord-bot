@@ -16,7 +16,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
 
             if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
@@ -36,7 +36,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         {
             try
             {
-                using var statsStream = new BufferCopyStream(sourceStream);
+                await using var statsStream = new BufferCopyStream(sourceStream);
                 using var zipReader = ZipReader.Open(statsStream);
                 while (zipReader.MoveToNextEntry())
                 {
@@ -45,7 +45,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                         && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                     {
                         LogSize = zipReader.Entry.Size;
-                        using var rarStream = zipReader.OpenEntryStream();
+                        await using var rarStream = zipReader.OpenEntryStream();
                         int read;
                         FlushResult flushed;
                         do

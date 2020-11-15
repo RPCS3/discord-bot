@@ -16,14 +16,14 @@ namespace CompatBot.ThumbScrapper
 {
     internal sealed class PsnScraper
     {
-        private static readonly PsnClient.Client Client = new PsnClient.Client();
-        public static readonly Regex ContentIdMatcher = new Regex(@"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
-        private static readonly SemaphoreSlim LockObj = new SemaphoreSlim(1, 1);
-        private static List<string> PsnStores = new List<string>();
-        private static DateTime StoreRefreshTimestamp = DateTime.MinValue;
-        private static readonly SemaphoreSlim QueueLimiter = new SemaphoreSlim(32, 32);
+        private static readonly PsnClient.Client Client = new();
+        public static readonly Regex ContentIdMatcher = new(@"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        private static readonly SemaphoreSlim LockObj = new(1, 1);
+        private static List<string> psnStores = new();
+        private static DateTime storeRefreshTimestamp = DateTime.MinValue;
+        private static readonly SemaphoreSlim QueueLimiter = new(32, 32);
 
-        public async Task RunAsync(CancellationToken cancellationToken)
+        public static async Task RunAsync(CancellationToken cancellationToken)
         {
             do
             {
@@ -53,7 +53,7 @@ namespace CompatBot.ThumbScrapper
             if (!match.Success)
                 return;
 
-            if (!QueueLimiter.Wait(0))
+            if (!QueueLimiter.Wait(0, cancellationToken))
                 return;
 
             try
@@ -63,7 +63,7 @@ namespace CompatBot.ThumbScrapper
                 await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    storesToScrape = new List<string>(PsnStores);
+                    storesToScrape = new List<string>(psnStores);
                 }
                 finally
                 {
@@ -96,18 +96,18 @@ namespace CompatBot.ThumbScrapper
         {
             try
             {
-                if (ScrapeStateProvider.IsFresh(StoreRefreshTimestamp))
+                if (ScrapeStateProvider.IsFresh(storeRefreshTimestamp))
                     return;
 
-                var result = GetLocalesInPreferredOrder(Client.GetLocales());
+                var result = GetLocalesInPreferredOrder(PsnClient.Client.GetLocales());
                 await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    if (ScrapeStateProvider.IsFresh(StoreRefreshTimestamp))
+                    if (ScrapeStateProvider.IsFresh(storeRefreshTimestamp))
                         return;
 
-                    PsnStores = result;
-                    StoreRefreshTimestamp = DateTime.UtcNow;
+                    psnStores = result;
+                    storeRefreshTimestamp = DateTime.UtcNow;
                 }
                 finally
                 {
@@ -126,7 +126,7 @@ namespace CompatBot.ThumbScrapper
             await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                storesToScrape = new List<string>(PsnStores);
+                storesToScrape = new List<string>(psnStores);
             }
             finally
             {
@@ -153,14 +153,15 @@ namespace CompatBot.ThumbScrapper
                 // get all containers from all the menus
                 var stores = await Client.GetStoresAsync(locale, cancellationToken).ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(stores?.Data.BaseUrl))
-                    containerIds.Add(Path.GetFileName(stores.Data.BaseUrl));
-                foreach (var id in containerIds)
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                        return;
+                    containerIds?.Add(Path.GetFileName(stores.Data.BaseUrl));
+                if (containerIds != null)
+                    foreach (var id in containerIds)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                            return;
 
-                    await ScrapeContainerIdsAsync(locale, id, knownContainers, cancellationToken).ConfigureAwait(false);
-                }
+                        await ScrapeContainerIdsAsync(locale, id, knownContainers, cancellationToken).ConfigureAwait(false);
+                    }
                 Config.Log.Debug($"\tFound {knownContainers.Count} containers");
 
                 // now let's scrape for actual games in every container
@@ -192,8 +193,8 @@ namespace CompatBot.ThumbScrapper
                     do
                     {
                         var tries = 0;
-                        Container container = null;
-                        bool error = false;
+                        Container? container = null;
+                        var error = false;
                         do
                         {
                             try
@@ -224,7 +225,7 @@ namespace CompatBot.ThumbScrapper
                             // returned items are just ids that need to be resolved
                             if (returned > 0)
                             {
-                                foreach (var item in container.Data.Relationships.Children.Data)
+                                foreach (var item in container.Data!.Relationships!.Children!.Data!)
                                 {
                                     if (cancellationToken.IsCancellationRequested)
                                         return;
@@ -291,11 +292,11 @@ namespace CompatBot.ThumbScrapper
 
         private static bool NeedLookup(string contentId)
         {
-            using (var db = new ThumbnailDb())
-                if (db.Thumbnail.FirstOrDefault(t => t.ContentId == contentId) is Thumbnail thumbnail)
-                    if (!string.IsNullOrEmpty(thumbnail.Url))
-                        if (ScrapeStateProvider.IsFresh(new DateTime(thumbnail.Timestamp, DateTimeKind.Utc)))
-                            return false;
+            using var db = new ThumbnailDb();
+            if (db.Thumbnail.FirstOrDefault(t => t.ContentId == contentId) is Thumbnail thumbnail)
+                if (!string.IsNullOrEmpty(thumbnail.Url))
+                    if (ScrapeStateProvider.IsFresh(new DateTime(thumbnail.Timestamp, DateTimeKind.Utc)))
+                        return false;
             return true;
         }
 
@@ -338,7 +339,7 @@ namespace CompatBot.ThumbScrapper
                 }
         }
 
-        private static async Task AddOrUpdateThumbnailAsync(string contentId, string name, string url, CancellationToken cancellationToken)
+        private static async Task AddOrUpdateThumbnailAsync(string contentId, string? name, string? url, CancellationToken cancellationToken)
         {
             var match = ContentIdMatcher.Match(contentId);
             if (!match.Success)
@@ -349,7 +350,7 @@ namespace CompatBot.ThumbScrapper
                 return;
 
             name = string.IsNullOrEmpty(name) ? null : name;
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             var savedItem = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
             if (savedItem == null)
             {
@@ -361,7 +362,7 @@ namespace CompatBot.ThumbScrapper
                     Url = url,
                     Timestamp = DateTime.UtcNow.Ticks,
                 };
-                db.Thumbnail.Add(newItem);
+                await db.Thumbnail.AddAsync(newItem, cancellationToken).ConfigureAwait(false);
             }
             else if (!string.IsNullOrEmpty(url))
             {
@@ -426,8 +427,6 @@ namespace CompatBot.ThumbScrapper
         }
 
         private static void PrintError(Exception e)
-        {
-            Config.Log.Error(e, "Error scraping thumbnails");
-        }
+            => Config.Log.Error(e, "Error scraping thumbnails");
     }
 }

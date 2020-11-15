@@ -12,7 +12,7 @@ jobs:
   - task: UseDotNet@2
     displayName: 'update dotnet core sdk'
     inputs:
-        version: "3.1.x"
+        version: "5.0.x"
 
   - script: dotnet restore --ignore-failed-sources
     displayName: 'dotnet restore (first try)'
@@ -48,7 +48,7 @@ jobs:
   - task: UseDotNet@2
     displayName: 'update dotnet core sdk'
     inputs:
-        version: 3.1.x
+        version: 5.0.x
 
   - script: dotnet restore --ignore-failed-sources
     displayName: 'dotnet restore (first try)'

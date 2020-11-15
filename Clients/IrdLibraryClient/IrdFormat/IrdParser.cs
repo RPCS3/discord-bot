@@ -54,6 +54,7 @@ namespace IrdLibraryClient.IrdFormat
             result.Files = new List<IrdFile>(result.FileCount);
             for (var i = 0; i < result.FileCount; i++)
             {
+                // ReSharper disable once UseObjectOrCollectionInitializer
                 var file = new IrdFile();
                 file.Offset = reader.ReadInt64();
                 file.Md5Checksum = reader.ReadBytes(16);

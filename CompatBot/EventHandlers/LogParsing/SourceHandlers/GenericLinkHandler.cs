@@ -14,9 +14,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class GenericLinkHandler : BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z|log)))", DefaultOptions);
+        private static readonly Regex ExternalLink = new(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z|log)))", DefaultOptions);
 
-        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
                 return (null, null);
@@ -42,15 +42,15 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
                         {
                             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Config.Cts.Token);
-                            if (response?.Content?.Headers?.ContentLength > 0)
+                            if (response.Content.Headers.ContentLength > 0)
                                 filesize = (int)response.Content.Headers.ContentLength.Value;
-                            if (response?.Content?.Headers?.ContentDisposition?.FileNameStar is string fname && !string.IsNullOrEmpty(fname))
+                            if (response.Content.Headers.ContentDisposition?.FileNameStar is string fname && !string.IsNullOrEmpty(fname))
                                 filename = fname;
-                            uri = response.RequestMessage.RequestUri;
+                            uri = response.RequestMessage?.RequestUri;
                         }
 
-                        using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
-                        var buf = bufferPool.Rent(SnoopBufferSize);
+                        await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                        var buf = BufferPool.Rent(SnoopBufferSize);
                         try
                         {
                             var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
@@ -65,7 +65,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         }
                         finally
                         {
-                            bufferPool.Return(buf);
+                            BufferPool.Return(buf);
                         }
                     }
                     catch (Exception e)
@@ -79,7 +79,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         private sealed class GenericSource : ISource
         {
-            private readonly Uri uri;
+            private readonly Uri? uri;
             private readonly IArchiveHandler handler;
 
             public string SourceType => "Generic link";
@@ -89,7 +89,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
-            internal GenericSource(Uri uri, IArchiveHandler handler, string host, string fileName, int fileSize)
+            internal GenericSource(Uri? uri, IArchiveHandler handler, string host, string fileName, int fileSize)
             {
                 this.uri = uri;
                 this.handler = handler;
@@ -101,7 +101,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 using var client = HttpClientFactory.Create();
-                using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                await using var stream = await client.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
                 await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }

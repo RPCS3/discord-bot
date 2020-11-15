@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.Utils;
 using NReco.Text;
@@ -24,12 +22,11 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 var parser = new LogSectionParser
                 {
-                    //OnLineCheckAsync = sectionDescription.OnNewLineAsync ?? ((l, s) => Task.CompletedTask),
                     OnSectionEnd = sectionDescription.OnSectionEnd,
                     EndTrigger = sectionDescription.EndTrigger.Select(s => s.ToLatin8BitEncoding()).ToArray(),
                 };
                 // the idea here is to construct Aho-Corasick parser that will look for any data marker and run the associated regex to extract the data into state
-                if (sectionDescription.Extractors?.Count > 0)
+                if (sectionDescription.Extractors.Count > 0)
                 {
                     var act = new AhoCorasickDoubleArrayTrie<Action<string, LogParseState>>(sectionDescription.Extractors.Select(extractorPair =>
                         new SectionAction(
@@ -37,7 +34,7 @@ namespace CompatBot.EventHandlers.LogParsing
                             (buffer, state) =>
                             {
 #if DEBUG
-                                var timer = Stopwatch.StartNew();
+                                var timer = System.Diagnostics.Stopwatch.StartNew();
 #endif
                                 OnExtractorHit(buffer, extractorPair.Key, extractorPair.Value, state);
 
@@ -60,19 +57,18 @@ namespace CompatBot.EventHandlers.LogParsing
 
         private static void OnExtractorHit(string buffer, string trigger, Regex extractor, LogParseState state)
         {
-            if (trigger == "⁂" || trigger == "{PPU[")
+            if (trigger == "{PPU[" || trigger == "⁂")
             {
-                if (state.WipCollection["serial"] is string serial)
+                if (state.WipCollection["serial"] is string serial
+                    && extractor.Match(buffer) is Match match
+                    && match.Success
+                    && match.Groups["syscall_name"].Value is string syscallName)
                 {
-                    var match = extractor.Match(buffer);
-                    if (match.Success && match.Groups["syscall_name"]?.Value is string syscallName)
+                    lock (state)
                     {
-                        lock (state)
-                        {
-                            if (!state.Syscalls.TryGetValue(serial, out var serialSyscallStats))
-                                state.Syscalls[serial] = serialSyscallStats = new HashSet<string>();
-                            serialSyscallStats.Add(syscallName);
-                        }
+                        if (!state.Syscalls.TryGetValue(serial, out var serialSyscallStats))
+                            state.Syscalls[serial] = serialSyscallStats = new HashSet<string>();
+                        serialSyscallStats.Add(syscallName);
                     }
                 }
             }
@@ -84,26 +80,27 @@ namespace CompatBot.EventHandlers.LogParsing
 
                 foreach (Match match in matches)
                 foreach (Group group in match.Groups)
-                    if (!string.IsNullOrEmpty(group.Name) && group.Name != "0" && !string.IsNullOrWhiteSpace(group.Value))
-                    {
-                        if (string.IsNullOrEmpty(group.Value))
-                            continue;
+                {
+                    if (string.IsNullOrEmpty(group.Name)
+                        || group.Name == "0"
+                        || string.IsNullOrWhiteSpace(group.Value))
+                        continue;
 
-                        var strValue = group.Value.ToUtf8();
-                        //Config.Log.Trace($"regex {group.Name} = {group.Value}");
-                        lock (state)
-                        {
-                            if (MultiValueItems.Contains(group.Name))
-                                state.WipMultiValueCollection[group.Name].Add(strValue);
-                            else
-                                state.WipCollection[group.Name] = strValue;
-                            if (CountValueItems.Contains(group.Name))
-                            {
-                                state.ValueHitStats.TryGetValue(group.Name, out var hits);
-                                state.ValueHitStats[group.Name] = ++hits;
-                            }
-                        }
+                    var strValue = group.Value.ToUtf8();
+                    //Config.Log.Trace($"regex {group.Name} = {group.Value}");
+                    lock (state)
+                    {
+                        if (MultiValueItems.Contains(group.Name))
+                            state.WipMultiValueCollection[group.Name].Add(strValue);
+                        else
+                            state.WipCollection[group.Name] = strValue;
+                        if (!CountValueItems.Contains(group.Name))
+                            continue;
+                            
+                        state.ValueHitStats.TryGetValue(group.Name, out var hits);
+                        state.ValueHitStats[group.Name] = ++hits;
                     }
+                }
             }
         }
 
@@ -111,10 +108,9 @@ namespace CompatBot.EventHandlers.LogParsing
 
         private class LogSectionParser
         {
-            public OnNewLineDelegate OnExtract;
-            //public Func<string, LogParseState, Task> OnLineCheckAsync;
-            public Action<LogParseState> OnSectionEnd;
-            public string[] EndTrigger;
+            public OnNewLineDelegate OnExtract = null!;
+            public Action<LogParseState>? OnSectionEnd;
+            public string[] EndTrigger = null!;
         }
     }
 }

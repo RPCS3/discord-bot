@@ -40,12 +40,13 @@ namespace CompatBot.Commands
                 return;
             }
 
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             if (db.SyscallInfo.Any(sci => sci.Function == search))
             {
                 var productInfoList = db.SyscallToProductMap.AsNoTracking()
                     .Where(m => m.SyscallInfo.Function == search)
-                    .Select(m => new {m.Product.ProductCode, Name = m.Product.Name.StripMarks() ?? "???"})
+                    .AsEnumerable()
+                    .Select(m => new {m.Product.ProductCode, Name = m.Product.Name?.StripMarks() ?? "???"})
                     .Distinct()
                     .ToList();
                 var groupedList = productInfoList
@@ -55,7 +56,6 @@ namespace CompatBot.Commands
                 if (groupedList.Any())
                 {
                     var bigList = groupedList.Count >= Config.MaxSyscallResultLines;
-
                     var result = new StringBuilder();
                     var fullList = bigList ? new StringBuilder() : null;
                     result.AppendLine($"List of games using `{search}`:```");
@@ -66,14 +66,14 @@ namespace CompatBot.Commands
                         if (c < Config.MaxSyscallResultLines)
                             result.AppendLine($"{gi.Key.Trim(60)} [{productIds}]");
                         if (bigList)
-                            fullList.AppendLine($"{gi.Key} [{productIds}]");
+                            fullList!.AppendLine($"{gi.Key} [{productIds}]");
                         c++;
                     }
                     await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
                     if (bigList)
                     {
-                        using var memoryStream = Config.MemoryStreamManager.GetStream();
-                        using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
+                        await using var memoryStream = Config.MemoryStreamManager.GetStream();
+                        await using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
                         await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
                         await streamWriter.FlushAsync().ConfigureAwait(false);
                         memoryStream.Seek(0, SeekOrigin.Begin);
@@ -115,7 +115,7 @@ namespace CompatBot.Commands
         [Description("Provides an option to rename function call")]
         public async Task Rename(CommandContext ctx, [Description("Old function name")] string oldFunctionName, [Description("New function name")] string newFunctionName)
         {
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             var oldMatches = await db.SyscallInfo.Where(sci => sci.Function == oldFunctionName).ToListAsync().ConfigureAwait(false);
             if (oldMatches.Count == 0)
             {
@@ -144,10 +144,10 @@ namespace CompatBot.Commands
             await ctx.RespondAsync($"Function `{oldFunctionName}` was successfully renamed to `{newFunctionName}`").ConfigureAwait(false);
         }
 
-        private async Task ReturnSyscallsByGameAsync(CommandContext ctx, string productId)
+        private static async Task ReturnSyscallsByGameAsync(CommandContext ctx, string productId)
         {
             productId = productId.ToUpperInvariant();
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             var title = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productId)?.Name;
             title = string.IsNullOrEmpty(title) ? productId : $"[{productId}] {title.Trim(40)}";
             var sysInfoList = db.SyscallToProductMap.AsNoTracking()
@@ -162,8 +162,8 @@ namespace CompatBot.Commands
                 var result = new StringBuilder();
                 foreach (var sci in sysInfoList)
                     result.AppendLine(sci.Function);
-                using var memoryStream = Config.MemoryStreamManager.GetStream();
-                using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
+                await using var memoryStream = Config.MemoryStreamManager.GetStream();
+                await using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
                 await streamWriter.WriteAsync(result).ConfigureAwait(false);
                 await streamWriter.FlushAsync().ConfigureAwait(false);
                 memoryStream.Seek(0, SeekOrigin.Begin);

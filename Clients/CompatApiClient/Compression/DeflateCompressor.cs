@@ -7,14 +7,10 @@ namespace CompatApiClient.Compression
     {
         public override string EncodingType => "deflate";
 
-        public override Stream CreateCompressionStream(Stream output)
-        {
-            return new DeflateStream(output, CompressionMode.Compress, true);
-        }
+        protected override Stream CreateCompressionStream(Stream output)
+            => new DeflateStream(output, CompressionMode.Compress, true);
 
-        public override Stream CreateDecompressionStream(Stream input)
-        {
-            return new DeflateStream(input, CompressionMode.Decompress, true);
-        }
+        protected override Stream CreateDecompressionStream(Stream input)
+            => new DeflateStream(input, CompressionMode.Decompress, true);
     }
 }

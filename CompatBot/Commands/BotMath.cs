@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using DSharpPlus.CommandsNext;
@@ -31,7 +32,7 @@ namespace CompatBot.Commands
             try
             {
                 var expr = new Expression(expression);
-                result = expr.calculate().ToString();
+                result = expr.calculate().ToString(CultureInfo.InvariantCulture);
             }
             catch (Exception e)
             {
@@ -43,8 +44,6 @@ namespace CompatBot.Commands
         [Command("help"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
         [Description("General math expression help, or description of specific math word")]
         public Task Help(CommandContext ctx)
-        {
-            return ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at <https://mathparser.org/mxparser-math-collection/>");
-        }
+            => ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at <https://mathparser.org/mxparser-math-collection/>");
     }
 }

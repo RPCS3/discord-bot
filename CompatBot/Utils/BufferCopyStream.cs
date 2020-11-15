@@ -14,10 +14,10 @@ namespace CompatBot.Utils
         private readonly byte[] writeBuf;
         private readonly byte[] readBuf;
         private int bufStart, bufLength;
-        private readonly object sync = new object();
+        private readonly object sync = new();
         private bool disposed;
 
-        public BufferCopyStream(Stream baseStream, int bufferSize = 4096)
+        public BufferCopyStream(Stream? baseStream, int bufferSize = 4096)
         {
             if (baseStream == null)
                 throw new ArgumentNullException(nameof(baseStream));
@@ -31,10 +31,7 @@ namespace CompatBot.Utils
             readBuf = ArrayPool<byte>.Shared.Rent(16);
         }
 
-        public override void Flush()
-        {
-            baseStream.Flush();
-        }
+        public override void Flush() => baseStream.Flush();
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -65,15 +62,9 @@ namespace CompatBot.Utils
             }
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotImplementedException();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
 
-        public override void SetLength(long value)
-        {
-            throw new NotImplementedException();
-        }
+        public override void SetLength(long value) => throw new NotImplementedException();
 
         public override void Write(byte[] buffer, int offset, int count)
         {
@@ -98,7 +89,7 @@ namespace CompatBot.Utils
                         disposed = true;
                     }
                 }
-            baseStream?.Dispose();
+            baseStream.Dispose();
             base.Dispose(disposing);
         }
 
@@ -114,7 +105,7 @@ namespace CompatBot.Utils
                         disposed = true;
                     }
                 }
-            baseStream?.Dispose();
+            baseStream.Dispose();
             base.Dispose();
         }
 

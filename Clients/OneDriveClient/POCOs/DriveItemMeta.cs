@@ -1,15 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace OneDriveClient.POCOs
 {
-    public class DriveItemMeta
+    public sealed class DriveItemMeta
     {
-        public string Id;
-        public string Name;
+        public string? Id;
+        public string? Name;
         public int Size;
-        [JsonProperty(PropertyName = "@odata.context")]
-        public string OdataContext;
-        [JsonProperty(PropertyName = "@content.downloadUrl")]
-        public string ContentDownloadUrl;
+        [JsonPropertyName("@odata.context")]
+        public string? OdataContext;
+        [JsonPropertyName("@content.downloadUrl")]
+        public string? ContentDownloadUrl;
     }
 }

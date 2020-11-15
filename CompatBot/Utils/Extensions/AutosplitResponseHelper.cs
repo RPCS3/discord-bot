@@ -10,29 +10,17 @@ namespace CompatBot.Utils
 {
     public static class AutosplitResponseHelper
     {
-        public static Task SendAutosplitMessageAsync(this CommandContext ctx, StringBuilder message, int blockSize = 2000, string blockEnd = "\n```", string blockStart = "```\n")
+        public static Task SendAutosplitMessageAsync(this CommandContext ctx, StringBuilder message, int blockSize = 2000, string? blockEnd = "\n```", string? blockStart = "```\n")
+            => ctx.Channel.SendAutosplitMessageAsync(message, blockSize, blockEnd, blockStart);
+
+        public static Task SendAutosplitMessageAsync(this CommandContext ctx, string message, int blockSize = 2000, string? blockEnd = "\n```", string? blockStart = "```\n")
+            => ctx.Channel.SendAutosplitMessageAsync(message, blockSize, blockEnd, blockStart);
+
+        public static async Task SendAutosplitMessageAsync(this DiscordChannel channel, StringBuilder message, int blockSize = 2000, string? blockEnd = "\n```", string? blockStart = "```\n")
+            => await SendAutosplitMessageAsync(channel, message.ToString(), blockSize, blockEnd, blockStart).ConfigureAwait(false);
+
+        public static async Task SendAutosplitMessageAsync(this DiscordChannel channel, string message, int blockSize = 2000, string? blockEnd = "\n```", string? blockStart = "```\n")
         {
-            return ctx.Channel.SendAutosplitMessageAsync(message, blockSize, blockEnd, blockStart);
-        }
-
-        public static Task SendAutosplitMessageAsync(this CommandContext ctx, string message, int blockSize = 2000, string blockEnd = "\n```", string blockStart = "```\n")
-        {
-            return ctx.Channel.SendAutosplitMessageAsync(message, blockSize, blockEnd, blockStart);
-        }
-
-        public static async Task SendAutosplitMessageAsync(this DiscordChannel channel, StringBuilder message, int blockSize = 2000, string blockEnd = "\n```", string blockStart = "```\n")
-        {
-            if (message == null)
-                throw new ArgumentNullException(nameof(message));
-
-            await SendAutosplitMessageAsync(channel, message.ToString(), blockSize, blockEnd, blockStart).ConfigureAwait(false);
-        }
-
-        public static async Task SendAutosplitMessageAsync(this DiscordChannel channel, string message, int blockSize = 2000, string blockEnd = "\n```", string blockStart = "```\n")
-        {
-            if (channel == null)
-                throw new ArgumentNullException(nameof(channel));
-
             if (string.IsNullOrEmpty(message))
                 return;
 

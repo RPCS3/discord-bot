@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers
             if (!args.Message.Attachments.Any())
                 return;
 
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             var thumb = db.Thumbnail.FirstOrDefault(i => i.ContentId == args.Message.Content);
             if (thumb?.EmbeddableUrl is string url && !string.IsNullOrEmpty(url) && args.Message.Attachments.Any(a => a.Url == url))
             {

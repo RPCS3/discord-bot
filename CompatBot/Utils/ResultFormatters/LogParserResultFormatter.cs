@@ -19,47 +19,47 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static partial class LogParserResult
     {
-        private static readonly Client compatClient = new Client();
-        private static readonly IrdClient irdClient = new IrdClient();
-        private static readonly PsnClient.Client psnClient = new PsnClient.Client();
+        private static readonly Client CompatClient = new();
+        private static readonly IrdClient IrdClient = new();
+        private static readonly PsnClient.Client PsnClient = new();
 
         private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
         // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
         // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
         // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
         // RPCS3 v0.0.5-42b4ce13a Alpha | minor
-        private static readonly Regex BuildInfoInLog = new Regex(
+        private static readonly Regex BuildInfoInLog = new(
             @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+|unknown)) (?<stage>\w+)( \| (?<branch>[^|]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+)( \| (?<unknown>.*))?)?\r?$",
             DefaultSingleLine);
-        private static readonly Regex CpuInfoInLog = new Regex(
+        private static readonly Regex CpuInfoInLog = new(
             @"(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU|(with )?Radeon) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$",
             DefaultSingleLine);
-        internal static readonly Regex OsInfoInLog = new Regex(
+        internal static readonly Regex OsInfoInLog = new(
             @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+))\r?$",
             DefaultSingleLine);
-        private static readonly Regex LinuxKernelVersion = new Regex(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
-        private static readonly Regex ProgramHashPatch = new Regex(@"(?<hash>\w+) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
+        private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
+        private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
         private static readonly char[] NewLineChars = {'\r', '\n'};
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
         // rpcs3-v0.0.5-7105-064d0619_linux64.AppImage
-        private static readonly Regex BuildInfoInUpdate = new Regex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
-        private static readonly Regex VulkanDeviceInfo = new Regex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
-        private static readonly Regex IntelGpuModel = new Regex(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
-        private static readonly Regex InstallPath = new Regex(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine);
+        private static readonly Regex BuildInfoInUpdate = new(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
+        private static readonly Regex VulkanDeviceInfo = new(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
+        private static readonly Regex IntelGpuModel = new(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
+        private static readonly Regex InstallPath = new(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine);
 
-        private static readonly Version MinimumOpenGLVersion = new Version(4, 3);
-        private static readonly Version MinimumFirmwareVersion = new Version(4, 80);
-        private static readonly Version NvidiaFullscreenBugMinVersion = new Version(400, 0);
-        private static readonly Version NvidiaFullscreenBugMaxVersion = new Version(499, 99);
-        private static readonly Version NvidiaRecommendedWindowsVersion = new Version(452, 28);
-        private static readonly Version NvidiaRecommendedLinuxVersion = new Version(450, 56);
-        private static readonly Version AmdRecommendedOldWindowsVersion = new Version(20, 1, 4);
-        private static readonly Version AmdLastGoodOpenGLWindowsVersion = new Version(20, 1, 4);
-        private static readonly Version NvidiaFullscreenBugFixed = new Version(0, 0, 6, 8204);
-        private static readonly Version TsxFaFixedVersion  = new Version(0, 0, 12, 10995);
+        private static readonly Version MinimumOpenGLVersion = new(4, 3);
+        private static readonly Version MinimumFirmwareVersion = new(4, 80);
+        private static readonly Version NvidiaFullscreenBugMinVersion = new(400, 0);
+        private static readonly Version NvidiaFullscreenBugMaxVersion = new(499, 99);
+        private static readonly Version NvidiaRecommendedWindowsVersion = new(452, 28);
+        private static readonly Version NvidiaRecommendedLinuxVersion = new(450, 56);
+        private static readonly Version AmdRecommendedOldWindowsVersion = new(20, 1, 4);
+        private static readonly Version AmdLastGoodOpenGLWindowsVersion = new(20, 1, 4);
+        private static readonly Version NvidiaFullscreenBugFixed = new(0, 0, 6, 8204);
+        private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
 
-        private static readonly Dictionary<string, string> RsxPresentModeMap = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> RsxPresentModeMap = new()
         {
             ["0"] = "VK_PRESENT_MODE_IMMEDIATE_KHR",    // no vsync
             ["1"] = "VK_PRESENT_MODE_MAILBOX_KHR",      // fast sync
@@ -67,7 +67,7 @@ namespace CompatBot.Utils.ResultFormatters
             ["3"] = "VK_PRESENT_MODE_FIFO_RELAXED_KHR", // adaptive vsync
         };
 
-        private static readonly HashSet<string> KnownSyncFolders = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownSyncFolders = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "OneDrive",
             "MEGASync",
@@ -78,7 +78,7 @@ namespace CompatBot.Utils.ResultFormatters
             "Dropbox",
         };
 
-        private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly Dictionary<string, string> KnownDiscOnPsnIds = new(StringComparer.InvariantCultureIgnoreCase)
         {
             // Demon's Souls
             {"BLES00932", "NPEB01202"},
@@ -101,13 +101,13 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
         };
 
-        private static readonly HashSet<string> KnownNoApproximateXFloatIds = new HashSet<string>
+        private static readonly HashSet<string> KnownNoApproximateXFloatIds = new()
         {
             "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
             "BLES00932", "BLUS30443", // DeS
         };
 
-        private static readonly HashSet<string> KnownFpsUnlockPatchIds = new HashSet<string>
+        private static readonly HashSet<string> KnownFpsUnlockPatchIds = new()
         {
             "BLES00932", "BLUS30443", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
@@ -116,7 +116,7 @@ namespace CompatBot.Utils.ResultFormatters
             "BLJS10318", // jojo eoh
         };
 
-        private static readonly HashSet<string> KnownWriteColorBuffersIds = new HashSet<string>
+        private static readonly HashSet<string> KnownWriteColorBuffersIds = new()
         {
             "BLES00932", "BLUS30443", "BCJS70013", "BCJS30022", // DeS
             "BLUS30481", "BLES00826", "BLJM60223", // Nier
@@ -139,13 +139,13 @@ namespace CompatBot.Utils.ResultFormatters
 
         };
 
-        private static readonly HashSet<string> KnownResScaleThresholdIds = new HashSet<string>
+        private static readonly HashSet<string> KnownResScaleThresholdIds = new()
         {
             "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // The Last of Us
             "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175", 
         };
 
-        private static readonly HashSet<string> KnownMotionControlsIds = new HashSet<string>
+        private static readonly HashSet<string> KnownMotionControlsIds = new()
         {
             "BCES00797", "BCES00802", "BCUS98164", "BCJS30040", "NPEA90053", "NPEA90076", "NPUA70088", "NPUA70112", // heavy rain
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
@@ -155,13 +155,13 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS20112", "BCAS20189", "BCKS10112", "BLES01101", "BLJS10072", "BLJS10114", "BLJS50026", "BLUS30652", "NPEB90321", // no more heroes
         };
 
-        private static readonly HashSet<string> KnownGamesThatRequireInterpreter = new HashSet<string>
+        private static readonly HashSet<string> KnownGamesThatRequireInterpreter = new()
         {
             "NPEB00630", "NPUB30493", "NPJB00161", // daytona usa
             "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
         };
 
-        private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat = new HashSet<string>
+        private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat = new()
         {
             "BLES00229", "BLES00258", "BLES00887", "BLES01128", // gta4 + efls
             "BLJM55011", "BLJM60235", "BLJM60459", "BLJM60525", "BLJM61180", "BLKS20073", "BLKS20198", // gta4 + efls
@@ -169,7 +169,7 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB00882", "NPUB30702", "NPUB30704", "NPEB00511", // gta4 + efls
         };
 
-        private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull = new HashSet<string>
+        private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull = new()
         {
             "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758", //rdr
             "BLJM60314", "BLJM60403", "BLJM61181", "BLKS20315",
@@ -181,20 +181,20 @@ namespace CompatBot.Utils.ResultFormatters
             "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
         };
 
-        private static readonly HashSet<string> KnownBogusLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownBogusLicenses = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "UP0700-NPUB30932_00-NNKDLFULLGAMEPTB.rap",
             "EP0700-NPEB01158_00-NNKDLFULLGAMEPTB.rap",
         };
 
-        private static readonly HashSet<string> KnownCustomLicenses = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownCustomLicenses = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "EP4062-NPEB02436_00-PPERSONA5X000000.rap",
             "UP2611-NPUB31848_00-PPERSONA5X000000.rap",
         };
 
         // v1.5 https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Disable_SPU_MLAA
-        private static readonly HashSet<string> KnownMlaaSpuHashes = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> KnownMlaaSpuHashes = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "1549476fe258150ff9f902229ffaed69a932a9c1",
             "191fe1c92c8360992b3240348e70ea37d50812d4",
@@ -231,10 +231,10 @@ namespace CompatBot.Utils.ResultFormatters
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this LogParseState state, DiscordClient client, DiscordMessage message, ISource source)
         {
             DiscordEmbedBuilder builder;
-            state.CompleteCollection ??= state.WipCollection;
+            state.CompletedCollection ??= state.WipCollection;
             state.CompleteMultiValueCollection ??= state.WipMultiValueCollection;
-            var collection = state.CompleteCollection;
-            if (collection?.Count > 0)
+            var collection = state.CompletedCollection;
+            if (collection.Count > 0)
             {
                 var ldrGameSerial = collection["ldr_game_serial"] ?? collection["ldr_path_serial"];
                 if (collection["serial"] is string serial
@@ -246,7 +246,7 @@ namespace CompatBot.Utils.ResultFormatters
                     collection["serial"] = psnSerial;
                     collection["game_category"] = "HG";
                 }
-                var titleUpdateInfoTask = psnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
+                var titleUpdateInfoTask = PsnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
                 var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true, category: collection["game_category"]).ConfigureAwait(false);
                 try
                 {
@@ -296,8 +296,8 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CleanupValues(LogParseState state)
         {
-            var items = state.CompleteCollection;
-            var multiItems = state.CompleteMultiValueCollection;
+            var items = state.CompletedCollection!;
+            var multiItems = state.CompleteMultiValueCollection!;
             if (items["strict_rendering_mode"] == "true")
                 items["resolution_scale"] = "Strict Mode";
             if (items["spu_threads"] == "0")
@@ -316,7 +316,7 @@ namespace CompatBot.Utils.ResultFormatters
                 items["gpu_info"] = items["driver_manuf"];
             if (!string.IsNullOrEmpty(items["gpu_info"]))
             {
-                items["gpu_info"] = items["gpu_info"].StripMarks();
+                items["gpu_info"] = items["gpu_info"]?.StripMarks();
                 items["driver_version_info"] = GetVulkanDriverVersion(items["vulkan_initialized_device"], multiItems["vulkan_found_device"]) ??
                                                GetVulkanDriverVersion(items["gpu_info"], multiItems["vulkan_found_device"]) ??
                                                GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
@@ -389,10 +389,10 @@ namespace CompatBot.Utils.ResultFormatters
                 var interpreter = sm.Contains("interpreter", StringComparison.InvariantCultureIgnoreCase);
                 items["shader_mode"] = (async, recompiler, interpreter) switch
                 {
-                    (true, true, false)  => "Async",
-                    (true, _, true)      => "Async+Interpreter",
+                    ( true, true, false) => "Async",
+                    ( true,    _,  true) => "Async+Interpreter",
                     (false, true, false) => "Recompiler only",
-                    (false, _, true)     => "Interpreter only",
+                    (false,    _,  true) => "Interpreter only",
                     _                    => items["shader_mode"],
                 };
             }
@@ -401,7 +401,7 @@ namespace CompatBot.Utils.ResultFormatters
             else
                 items["shader_mode"] = "Recompiler only";
 
-            static string reformatDecoder(string dec)
+            static string? reformatDecoder(string? dec)
             {
                 if (string.IsNullOrEmpty(dec))
                     return dec;
@@ -418,7 +418,7 @@ namespace CompatBot.Utils.ResultFormatters
                 items["os_type"] = "Windows";
             else if (items["lin_path"] != null)
                 items["os_type"] = "Linux";
-            if (items["os_type"] == "Windows" && GetWindowsVersion((items["driver_version_new"] ?? items["driver_version"])) is string winVersion)
+            if (items["os_type"] == "Windows" && GetWindowsVersion(items["driver_version_new"] ?? items["driver_version"]) is string winVersion)
                 items["os_windows_version"] = winVersion;
             if (items["library_list"] is string libs)
             {
@@ -451,7 +451,7 @@ namespace CompatBot.Utils.ResultFormatters
                     value = EnabledMark;
                 else if ("false".Equals(value, StringComparison.CurrentCultureIgnoreCase))
                     value = DisabledMark;
-                items[key] = value.Sanitize(false);
+                items[key] = value?.Sanitize(false);
             }
         }
 
@@ -468,7 +468,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static async Task<UpdateInfo> CheckForUpdateAsync(NameValueCollection items)
+        private static async Task<UpdateInfo?> CheckForUpdateAsync(NameValueCollection items)
         {
             if (string.IsNullOrEmpty(items["build_and_specs"]))
                 return null;
@@ -476,9 +476,9 @@ namespace CompatBot.Utils.ResultFormatters
             var currentBuildCommit = items["build_commit"];
             if (string.IsNullOrEmpty(currentBuildCommit))
                 currentBuildCommit = null;
-            var updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
+            var updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
             if (updateInfo?.ReturnCode != 1 && currentBuildCommit != null)
-                updateInfo = await compatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
             var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download;
             if (string.IsNullOrEmpty(link))
                 return null;
@@ -490,17 +490,20 @@ namespace CompatBot.Utils.ResultFormatters
             return null;
         }
 
-        private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo updateInfo)
+        private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo? updateInfo)
         {
-            if ((updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta) && (updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuildsInDays))
+            if (updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta
+                && updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuildsInDays)
                 return false;
 
-            if (Version.TryParse(items["build_version"], out var logVersion) && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
+            if (Version.TryParse(items["build_version"], out var logVersion)
+                && Version.TryParse(update.Groups["version"].Value, out var updateVersion))
             {
                 if (logVersion < updateVersion)
                     return true;
 
-                if (int.TryParse(items["build_number"], out var logBuild) && int.TryParse(update.Groups["build"].Value, out var updateBuild))
+                if (int.TryParse(items["build_number"], out var logBuild)
+                    && int.TryParse(update.Groups["build"].Value, out var updateBuild))
                 {
                     if (logBuild + Config.BuildNumberDifferenceForOutdatedBuilds < updateBuild)
                         return true;
@@ -510,7 +513,7 @@ namespace CompatBot.Utils.ResultFormatters
             return !SameCommits(items["build_commit"], update.Groups["commit"].Value);
         }
 
-        private static bool SameCommits(string commitA, string commitB)
+        private static bool SameCommits(string? commitA, string? commitB)
         {
             if (string.IsNullOrEmpty(commitA) && string.IsNullOrEmpty(commitB))
                 return true;
@@ -522,20 +525,21 @@ namespace CompatBot.Utils.ResultFormatters
             return commitA[..len] == commitB[..len];
         }
 
-        private static string GetOpenglDriverVersion(string gpuInfo, string version)
+        private static string? GetOpenglDriverVersion(string? gpuInfo, string? version)
         {
             if (string.IsNullOrEmpty(version))
                 return null;
 
-            if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
-                gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
+            gpuInfo ??= "";
+            if (gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase)
+                || gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase)
+                || gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase))
                 return AmdDriverVersionProvider.GetFromOpenglAsync(version).ConfigureAwait(false).GetAwaiter().GetResult();
 
             return version;
         }
 
-        private static string GetVulkanDriverVersion(string gpu, UniqueList<string> foundDevices)
+        private static string? GetVulkanDriverVersion(string? gpu, UniqueList<string> foundDevices)
         {
             if (string.IsNullOrEmpty(gpu) || !foundDevices.Any())
                 return null;
@@ -585,11 +589,12 @@ namespace CompatBot.Utils.ResultFormatters
             return result;
         }
 
-        private static string GetVulkanDriverVersionRaw(string gpuInfo, string version)
+        private static string? GetVulkanDriverVersionRaw(string? gpuInfo, string? version)
         {
             if (string.IsNullOrEmpty(version))
                 return null;
 
+            gpuInfo ??= "";
             var ver = int.Parse(version);
             if (IsAmd(gpuInfo))
             {
@@ -621,7 +626,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
         }
 
-        private static string GetWindowsVersion(string driverVersionString)
+        private static string? GetWindowsVersion(string? driverVersionString)
         {
             // see https://docs.microsoft.com/en-us/windows-hardware/drivers/display/wddm-2-1-features#driver-versioning
             if (string.IsNullOrEmpty(driverVersionString) || !Version.TryParse(driverVersionString, out var driverVer))
@@ -634,7 +639,7 @@ namespace CompatBot.Utils.ResultFormatters
                 8 => "7",
                 9 => "8",
                 10 => "8.1",
-                int v when v >= 20 && v < 30 => ((v % 10) switch
+                >= 20 and < 30 => (driverVer.Major % 10) switch
                 {
                     // see https://en.wikipedia.org/wiki/Windows_Display_Driver_Model#WDDM_2.0
                     0 => "10",
@@ -646,12 +651,12 @@ namespace CompatBot.Utils.ResultFormatters
                     6 => "10 1903",
                     7 => "10 2004",
                     _ => null,
-                }),
+                },
                 _ => null,
             };
         }
 
-        private static string GetWindowsVersion(Version windowsVersion) =>
+        private static string? GetWindowsVersion(Version windowsVersion) =>
             windowsVersion.Major switch
             {
                 5 => windowsVersion.Minor switch
@@ -671,34 +676,37 @@ namespace CompatBot.Utils.ResultFormatters
                 },
                 10 => windowsVersion.Build switch
                 {
-                    int v when v < 10240 => ("10 TH1 Build " + v),
+                    < 10240 => "10 TH1 Build " + windowsVersion.Build,
                     10240 => "10 1507",
-                    int v when v < 10586 => ("10 TH2 Build " + v),
+                    < 10586 => "10 TH2 Build " + windowsVersion.Build,
                     10586 => "10 1511",
-                    int v when v < 14393 => ("10 RS1 Build " + v),
+                    < 14393 => "10 RS1 Build " + windowsVersion.Build,
                     14393 => "10 1607",
-                    int v when v < 15063 => ("10 RS2 Build " + v),
+                    < 15063 => "10 RS2 Build " + windowsVersion.Build,
                     15063 => "10 1703",
-                    int v when v < 16299 => ("10 RS3 Build " + v),
+                    < 16299 => "10 RS3 Build " + windowsVersion.Build,
                     16299 => "10 1709",
-                    int v when v < 17134 => ("10 RS4 Build " + v),
+                    < 17134 => "10 RS4 Build " + windowsVersion.Build,
                     17134 => "10 1803",
-                    int v when v < 17763 => ("10 RS5 Build " + v),
+                    < 17763 => "10 RS5 Build " + windowsVersion.Build,
                     17763 => "10 1809",
-                    int v when v < 18362 => ("10 19H1 Build " + v),
+                    < 18362 => "10 19H1 Build " + windowsVersion.Build,
                     18362 => "10 1903",
                     18363 => "10 1909",
-                    int v when v < 19041 => ("10 20H1 Build " + v),
+                    < 19041 => "10 20H1 Build " + windowsVersion.Build,
                     19041 => "10 2004",
                     19042 => "10 20H2",
-                    int v when v < 19536 => ("10 Beta Build " + v),
-                    _ => ("10 21H1 Build " + windowsVersion.Build)
+                    < 19536 => "10 Beta Build " + windowsVersion.Build,
+                    _ => "10 21H1 Build " + windowsVersion.Build
                 },
                 _ => null,
             };
 
-        private static string GetLinuxVersion(string release, string version)
+        private static string? GetLinuxVersion(string? release, string version)
         {
+            if (string.IsNullOrEmpty(release))
+                return null;
+            
             var kernelVersion = release;
             if (LinuxKernelVersion.Match(release) is Match m && m.Success)
                 kernelVersion = m.Groups["version"].Value;
@@ -747,9 +755,9 @@ namespace CompatBot.Utils.ResultFormatters
             return $"{microseconds / 1_000_000.0:0.##} s";
         }
 
-        private static List<string> SortLines(List<string> notes, DiscordEmoji piracyEmoji = null)
+        private static List<string> SortLines(List<string> notes, DiscordEmoji? piracyEmoji = null)
         {
-            if (notes == null || notes.Count < 2)
+            if (notes.Count < 2)
                 return notes;
 
             var priorityList = new List<string>(EmojiPriority);
@@ -787,44 +795,33 @@ namespace CompatBot.Utils.ResultFormatters
             return result;
         }
 
-        private static HashSet<string> GetHashes(string hashList)
+        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage? message, ISource source, LogParseState? state = null)
         {
-            if (string.IsNullOrEmpty(hashList))
-                return new HashSet<string>(0, StringComparer.InvariantCultureIgnoreCase);
-
-            return new HashSet<string>(hashList.Split(Environment.NewLine), StringComparer.InvariantCultureIgnoreCase);
-        }
-
-        internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage message, ISource source, LogParseState state = null)
-        {
-            if (state?.Error == LogParseState.ErrorCode.PiracyDetected)
+            if (message == null || state?.Error == LogParseState.ErrorCode.PiracyDetected)
                 return builder;
 
-            if (message != null)
-            {
-                var author = message.Author;
-                var member = client.GetMember(message.Channel?.Guild, author);
-                string msg;
-                if (member == null)
-                    msg = $"Log from {author.Username.Sanitize()} | {author.Id}\n";
-                else
-                    msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
-                msg += " | " + (source?.SourceType ?? "Unknown source");
-                if (state?.ReadBytes > 0 && source?.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
-                    msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
-                else if (source?.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
-                    msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
-                else if (state?.ReadBytes > 0)
-                    msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
-                else if (source?.LogFileSize > 0)
-                    msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
+            var author = message.Author;
+            var member = client.GetMember(message.Channel?.Guild, author);
+            string msg;
+            if (member == null)
+                msg = $"Log from {author.Username.Sanitize()} | {author.Id}\n";
+            else
+                msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
+            msg += " | " + source.SourceType;
+            if (state?.ReadBytes > 0 && source.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
+                msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
+            else if (source.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
+                msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
+            else if (state?.ReadBytes > 0)
+                msg += $" | Parsed {state.ReadBytes} byte{(state.ReadBytes == 1 ? "" : "s")}";
+            else if (source.LogFileSize > 0)
+                msg += $" | {source.LogFileSize} byte{(source.LogFileSize == 1 ? "" : "s")}";
 #if DEBUG
-                if (state?.ParsingTime.TotalMilliseconds > 0)
-                    msg += $" | {state.ParsingTime.TotalSeconds:0.###}s";
-                msg += " | Test Bot Instance";
+            if (state?.ParsingTime.TotalMilliseconds > 0)
+                msg += $" | {state.ParsingTime.TotalSeconds:0.###}s";
+            msg += " | Test Bot Instance";
 #endif
-                builder.WithFooter(msg);
-            }
+            builder.WithFooter(msg);
             return builder;
         }
 
@@ -864,8 +861,8 @@ namespace CompatBot.Utils.ResultFormatters
 
             foreach (var error in fatalErrors[1..])
             {
-                int idx = -1;
-                double similarity = 0.0;
+                var idx = -1;
+                var similarity = 0.0;
                 for (var i = 0; i < result.Count; i++)
                 {
                     similarity = result[i].fatalError.GetFuzzyCoefficientCached(error);

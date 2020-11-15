@@ -19,8 +19,8 @@ namespace Tests
             var resultPath = Path.Combine(Path.GetDirectoryName(samplePath), "zalgo.txt");
 
             var names = await File.ReadAllLinesAsync(samplePath, Encoding.UTF8);
-            using var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read);
-            using var w = new StreamWriter(r, new UTF8Encoding(false));
+            await using var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+            await using var w = new StreamWriter(r, new UTF8Encoding(false));
             foreach (var line in names)
             {
                 var user = UserInfo.Parse(line);
@@ -38,18 +38,16 @@ namespace Tests
 
             var stats = new int[10];
             var names = await File.ReadAllLinesAsync(samplePath, Encoding.UTF8);
-            using (var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            await using var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+            await using var w = new StreamWriter(r, new UTF8Encoding(false));
+            foreach (var line in names)
             {
-                using var w = new StreamWriter(r, new UTF8Encoding(false));
-                foreach (var line in names)
-                {
-                    var user = UserInfo.Parse(line);
-                    var roleCount = user.Roles?.Length ?? 0;
-                    stats[roleCount]++;
-                    w.Write(roleCount);
-                    await w.WriteAsync('\t').ConfigureAwait(false);
-                    await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
-                }
+                var user = UserInfo.Parse(line);
+                var roleCount = user.Roles?.Length ?? 0;
+                stats[roleCount]++;
+                w.Write(roleCount);
+                await w.WriteAsync('\t').ConfigureAwait(false);
+                await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
             }
 
             for (var i = 0; i < stats.Length && stats[i] > 0; i++)
@@ -88,14 +86,14 @@ namespace Tests
         {
             var parts = line.Split('\t');
             if (parts.Length != 4)
-                throw new FormatException("Inalid user info line: " + line);
+                throw new FormatException("Invalid user info line: " + line);
 
             return new UserInfo
             {
                 Username = parts[0],
                 Nickname = parts[1],
                 JoinDate = DateTime.Parse(parts[2], CultureInfo.InvariantCulture),
-                Roles = parts[3]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? new string[0],
+                Roles = parts[3]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>(),
             };
         }
     }

@@ -46,5 +46,15 @@ namespace Tests
 			Assert.That(list[..^4], Is.EqualTo(testValue[..^4]));
 			Assert.That(list[..^5], Is.EqualTo(testValue[..^5]));
 		}
+
+		[Test]
+		public void SubstringTests()
+		{
+			var str = "abc";
+			Assert.That(str[1..], Is.EqualTo(str.Substring(1)));
+			Assert.That("a"[1..], Is.EqualTo("a".Substring(1)));
+			Assert.That(str[0], Is.EqualTo('a'));
+			Assert.That(str[^1], Is.EqualTo('c'));
+		}
 	}
 }

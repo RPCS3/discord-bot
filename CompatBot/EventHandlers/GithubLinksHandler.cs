@@ -14,11 +14,10 @@ namespace CompatBot.EventHandlers
     internal static class GithubLinksHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        public static readonly Regex IssueMention = new Regex(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|(?=\W|^)#(?<also_number>\d{4})|(https?://)github.com/RPCS3/rpcs3/(issues|pull)/(?<another_number>\d+))\b", DefaultOptions);
-        public static readonly Regex CommitMention = new Regex(@"(?<commit_mention>(https?://)github.com/RPCS3/rpcs3/commit/(?<commit_hash>[0-9a-f]+))\b", DefaultOptions);
-        public static readonly Regex ImageMarkup = new Regex(@"(?<img_markup>!\[(?<img_caption>[^\]]+)\]\((?<img_link>\w+://[^\)]+)\))", DefaultOptions);
-        private static readonly Regex IssueLink = new Regex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
-        private static readonly GithubClient.Client Client = new GithubClient.Client();
+        public static readonly Regex IssueMention = new(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|(?=\W|^)#(?<also_number>\d{4})|(https?://)github.com/RPCS3/rpcs3/(issues|pull)/(?<another_number>\d+))\b", DefaultOptions);
+        public static readonly Regex CommitMention = new(@"(?<commit_mention>(https?://)github.com/RPCS3/rpcs3/commit/(?<commit_hash>[0-9a-f]+))\b", DefaultOptions);
+        public static readonly Regex ImageMarkup = new(@"(?<img_markup>!\[(?<img_caption>[^\]]+)\]\((?<img_link>\w+://[^\)]+)\))", DefaultOptions);
+        private static readonly Regex IssueLink = new(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
 
         public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
         {
@@ -34,7 +33,7 @@ namespace CompatBot.EventHandlers
                     return;
 
             lastBotMessages = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id, Config.ProductCodeLookupHistoryThrottle).ConfigureAwait(false);
-            StringBuilder previousRepliesBuilder = null;
+            StringBuilder? previousRepliesBuilder = null;
             foreach (var msg in lastBotMessages)
             {
                 if (msg.Author.IsCurrent)
@@ -77,7 +76,7 @@ namespace CompatBot.EventHandlers
                 .SelectMany(match => new[] {match.Groups["number"].Value, match.Groups["also_number"].Value})
                 .Distinct()
                 .Select(n => {
-                            int.TryParse(n, out var i);
+                            _ = int.TryParse(n, out var i);
                             return i;
                         })
                 .Where(n => n > 0)
@@ -85,11 +84,11 @@ namespace CompatBot.EventHandlers
         }
         public static HashSet<int> GetIssueIdsFromLinks(string input)
         {
-            return new HashSet<int>(
+            return new(
                 IssueLink.Matches(input)
                     .Select(match =>
                             {
-                                int.TryParse(match.Groups["number"].Value, out var n);
+                                _ = int.TryParse(match.Groups["number"].Value, out var n);
                                 return n;
                             })
             );

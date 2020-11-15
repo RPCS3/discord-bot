@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
@@ -20,17 +19,17 @@ namespace CompatBot.Commands
     [Description("Commands to list opened pull requests information")]
     internal sealed class Pr: BaseCommandModuleCustom
     {
-        private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly CompatApiClient.Client compatApiClient = new CompatApiClient.Client();
+        private static readonly GithubClient.Client GithubClient = new();
+        private static readonly CompatApiClient.Client CompatApiClient = new();
         internal static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30);
 
         [GroupCommand]
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
 
         [GroupCommand]
-        public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string searchStr = null)
+        public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string? searchStr = null)
         {
-            var openPrList = await githubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
+            var openPrList = await GithubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
             if (openPrList == null)
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't retrieve open pull requests list, try again later").ConfigureAwait(false);
@@ -45,7 +44,10 @@ namespace CompatBot.Commands
 
             if (!string.IsNullOrEmpty(searchStr))
             {
-                var filteredList = openPrList.Where(pr => pr.Title.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) || pr.User.Login.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                var filteredList = openPrList.Where(
+                    pr => pr.Title?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
+                          || pr.User?.Login?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
+                ).ToList();
                 if (filteredList.Count == 0)
                 {
                     var searchParts = searchStr.Split(' ', 2);
@@ -53,7 +55,10 @@ namespace CompatBot.Commands
                     {
                         var author = searchParts[0].Trim();
                         var substr = searchParts[1].Trim();
-                        openPrList = openPrList.Where(pr => pr.User.Login.Contains(author, StringComparison.InvariantCultureIgnoreCase) && pr.Title.Contains(substr, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                        openPrList = openPrList.Where(
+                            pr => pr.User?.Login?.Contains(author, StringComparison.InvariantCultureIgnoreCase) is true
+                                  && pr.Title?.Contains(substr, StringComparison.InvariantCultureIgnoreCase) is true
+                        ).ToList();
                     }
                     else
                         openPrList = filteredList;
@@ -77,32 +82,32 @@ namespace CompatBot.Commands
             var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             const int maxTitleLength = 80;
             var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
-            var maxAuthor = openPrList.Max(pr => pr.User.Login.GetVisibleLength());
+            var maxAuthor = openPrList.Max(pr => (pr.User?.Login).GetVisibleLength());
             var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.GetVisibleLength()), maxTitleLength);
             var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
             foreach (var pr in openPrList)
-                result.Append("`").Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User.Login.PadRightVisible(maxAuthor)}: {pr.Title.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
+                result.Append('`').Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User?.Login?.PadRightVisible(maxAuthor)}: {pr.Title?.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
             await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
 
         public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)
         {
-            var prInfo = await githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
-            if (prInfo.Number == 0)
+            var prInfo = await GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
+            if (prInfo is null or {Number: 0})
             {
-                await message.ReactWithAsync(Config.Reactions.Failure, prInfo.Message ?? "PR not found").ConfigureAwait(false);
+                await message.ReactWithAsync(Config.Reactions.Failure, prInfo?.Message ?? "PR not found").ConfigureAwait(false);
                 return;
             }
 
-            var prState = prInfo.GetState();
+            var (state, _) = prInfo.GetState();
             var embed = prInfo.AsEmbed();
-            if (prState.state == "Open" || prState.state == "Closed")
+            if (state == "Open" || state == "Closed")
             {
                 var windowsDownloadHeader = "Windows PR Build";
                 var linuxDownloadHeader = "Linux PR Build";
-                string windowsDownloadText = null;
-                string linuxDownloadText = null;
-                string buildTime = null;
+                string? windowsDownloadText = null;
+                string? linuxDownloadText = null;
+                string? buildTime = null;
 
                 var azureClient = Config.GetAzureDevOpsClient();
                 if (azureClient != null && prInfo.Head?.Sha is string commit)
@@ -113,7 +118,7 @@ namespace CompatBot.Commands
                         var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild == null)
                         {
-                            if (prState.state == "Open")
+                            if (state == "Open")
                                 embed.WithFooter($"Opened on {prInfo.CreatedAt:u} ({(DateTime.UtcNow - prInfo.CreatedAt).AsTimeDeltaDescription()} ago)");
                             windowsDownloadText = null;
                             linuxDownloadText = null;
@@ -180,11 +185,11 @@ namespace CompatBot.Commands
                 if (!string.IsNullOrEmpty(buildTime))
                     embed.WithFooter(buildTime);
             }
-            else if (prState.state == "Merged")
+            else if (state == "Merged")
             {
                 var mergeTime = prInfo.MergedAt.GetValueOrDefault();
                 var now = DateTime.UtcNow;
-                var updateInfo = await compatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                var updateInfo = await CompatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
                 if (updateInfo != null)
                 {
                     if (DateTime.TryParse(updateInfo.LatestBuild?.Datetime, out var masterBuildTime) && masterBuildTime.Ticks >= mergeTime.Ticks)
@@ -203,8 +208,8 @@ namespace CompatBot.Commands
 
         public static async Task LinkIssue(DiscordClient client, DiscordMessage message, int issue)
         {
-            var issueInfo = await githubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
-            if (issueInfo.Number == 0)
+            var issueInfo = await GithubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
+            if (issueInfo is null or {Number: 0})
                 return;
 
             if (issueInfo.PullRequest != null)

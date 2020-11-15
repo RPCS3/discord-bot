@@ -17,8 +17,8 @@ namespace CompatBot.Commands
 {
     internal partial class Sudo
     {
-        private static readonly SemaphoreSlim lockObj = new SemaphoreSlim(1, 1);
-        private static readonly SemaphoreSlim importLockObj = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim LockObj = new(1, 1);
+        private static readonly SemaphoreSlim ImportLockObj = new(1, 1);
 
         [Group("bot"), Aliases("kot")]
         [Description("Commands to manage the bot instance")]
@@ -40,7 +40,7 @@ namespace CompatBot.Commands
                 };
                 git.Start();
                 var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-                git.WaitForExit();
+                await git.WaitForExitAsync().ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(stdout))
                     await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
             }
@@ -49,9 +49,9 @@ namespace CompatBot.Commands
             [Description("Updates the bot, and then restarts it")]
             public async Task Update(CommandContext ctx)
             {
-                if (await lockObj.WaitAsync(0).ConfigureAwait(false))
+                if (await LockObj.WaitAsync(0).ConfigureAwait(false))
                 {
-                    DiscordMessage msg = null;
+                    DiscordMessage? msg = null;
                     try
                     {
                         Config.Log.Info("Checking for available updates...");
@@ -69,11 +69,11 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updating failed: " + e.Message).ConfigureAwait(false);
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updating failed: " + e.Message).ConfigureAwait(false);
                     }
                     finally
                     {
-                        lockObj.Release();
+                        LockObj.Release();
                     }
                 }
                 else
@@ -84,9 +84,9 @@ namespace CompatBot.Commands
             [Description("Restarts the bot")]
             public async Task Restart(CommandContext ctx)
             {
-                if (await lockObj.WaitAsync(0).ConfigureAwait(false))
+                if (await LockObj.WaitAsync(0).ConfigureAwait(false))
                 {
-                    DiscordMessage msg = null;
+                    DiscordMessage? msg = null;
                     try
                     {
                         msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
@@ -96,11 +96,11 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting failed: " + e.Message).ConfigureAwait(false);
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting failed: " + e.Message).ConfigureAwait(false);
                     }
                     finally
                     {
-                        lockObj.Release();
+                        LockObj.Release();
                     }
                 }
                 else
@@ -116,7 +116,7 @@ namespace CompatBot.Commands
                     : "Shutting down the bot..."
                 ).ConfigureAwait(false);
                 Config.Log.Info($"Shutting down by request from {ctx.User.Username}#{ctx.User.Discriminator}");
-                Config.inMemorySettings["shutdown"] = "true";
+                Config.InMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
             }
 
@@ -126,7 +126,7 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    using var db = new BotDb();
+                    await using var db = new BotDb();
                     var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
                     var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
                     if (Enum.TryParse(activity, true, out ActivityType activityType)
@@ -160,17 +160,17 @@ namespace CompatBot.Commands
             [Description("Imports Metacritic database dump and links it to existing items")]
             public async Task ImportMc(CommandContext ctx)
             {
-                if (await importLockObj.WaitAsync(0).ConfigureAwait(false))
+                if (await ImportLockObj.WaitAsync(0).ConfigureAwait(false))
                     try
                     {
                         await CompatList.ImportMetacriticScoresAsync().ConfigureAwait(false);
-                        using var db = new ThumbnailDb();
+                        await using var db = new ThumbnailDb();
                         var linkedItems = await db.Thumbnail.CountAsync(i => i.MetacriticId != null).ConfigureAwait(false);
                         await ctx.RespondAsync($"Importing Metacritic info was successful, linked {linkedItems} items").ConfigureAwait(false);
                     }
                     finally
                     {
-                        importLockObj.Release();
+                        ImportLockObj.Release();
                     }
                 else
                     await ctx.RespondAsync("Another import operation is already in progress").ConfigureAwait(false);
@@ -190,7 +190,7 @@ namespace CompatBot.Commands
                 };
                 git.Start();
                 var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-                git.WaitForExit();
+                await git.WaitForExitAsync().ConfigureAwait(false);
                 if (string.IsNullOrEmpty(stdout))
                     return (false, stdout);
 
@@ -200,7 +200,7 @@ namespace CompatBot.Commands
                 return (true, stdout);
             }
 
-            internal static void Restart(ulong channelId, string restartMsg)
+            internal static void Restart(ulong channelId, string? restartMsg)
             {
                 Config.Log.Info($"Saving channelId {channelId} into settings...");
                 using var db = new BotDb();
@@ -233,7 +233,7 @@ namespace CompatBot.Commands
                     StartInfo = new ProcessStartInfo("dotnet", $"run -c Release")
                 };
                 self.Start();
-                Config.inMemorySettings["shutdown"] = "true";
+                Config.InMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
                 Environment.Exit(-1);
             }

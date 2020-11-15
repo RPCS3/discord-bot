@@ -2,13 +2,14 @@
 
 namespace PsnClient.POCOs
 {
-    public class Container
+#nullable disable
+    public sealed class Container
     {
         public ContainerData Data;
         public ContainerIncluded[] Included;
     }
 
-    public class ContainerData
+    public sealed class ContainerData
     {
         public string Id;
         public string Type;
@@ -16,7 +17,7 @@ namespace PsnClient.POCOs
         public Relationships Relationships;
     }
 
-    public class ContainerDataAttributes
+    public sealed class ContainerDataAttributes
     {
         public string Name;
         public bool? NsxPsPlusUpsell;
@@ -32,24 +33,24 @@ namespace PsnClient.POCOs
         public ContainerDataAttributesSubScenes SubScenes;
     }
 
-    public class ContainerFacet
+    public sealed class ContainerFacet
     {
         public string Name;
         public ContainerFacetItem[] Items;
     }
 
-    public class ContainerFacetItem
+    public sealed class ContainerFacetItem
     {
         public string Key;
         public string Name;
         public int Count;
     }
 
-    public class ContainerBanner { }
-    public class ContainerPromoBackground { }
-    public class ContainerDataAttributesSubScenes { }
+    public sealed class ContainerBanner { }
+    public sealed class ContainerPromoBackground { }
+    public sealed class ContainerDataAttributesSubScenes { }
 
-    public class ContainerIncluded
+    public sealed class ContainerIncluded
     {
         public string Id;
         public string Type;
@@ -57,7 +58,7 @@ namespace PsnClient.POCOs
         public Relationships Relationships;
     }
 
-    public class ContainerIncludedAttributes
+    public sealed class ContainerIncludedAttributes
     {
         public string ContentType; // "1"
         public string DefaultSkuId;
@@ -95,33 +96,33 @@ namespace PsnClient.POCOs
         public GameSkuRelation[] Entitlements;
     }
 
-    public class GameFileSize
+    public sealed class GameFileSize
     {
         public string Unit;
         public decimal? Value;
     }
 
-    public class GameMediaList
+    public sealed class GameMediaList
     {
         public GameMediaPreview[] Preview;
         public GameMediaPromo Promo;
         public GameMediaLink[] Screenshots;
     }
 
-    public class GameMediaPreview { }
+    public sealed class GameMediaPreview { }
 
-    public class GameMediaPromo
+    public sealed class GameMediaPromo
     {
         public GameMediaLink[] Images;
         public GameMediaLink[] Videos;
     }
 
-    public class GameMediaLink
+    public sealed class GameMediaLink
     {
         public string Url;
     }
 
-    public class GameParent
+    public sealed class GameParent
     {
         public string Id;
         public string Name;
@@ -129,7 +130,7 @@ namespace PsnClient.POCOs
         public string Url;
     }
 
-    public class GameSku
+    public sealed class GameSku
     {
         public string Id;
         public string Name;
@@ -139,13 +140,13 @@ namespace PsnClient.POCOs
         public GameSkuPrices Prices;
     }
 
-    public class GameSkuPrices
+    public sealed class GameSkuPrices
     {
         public GameSkuPricesInfo NonPlusUser;
         public GameSkuPricesInfo PlusUser;
     }
 
-    public class GameSkuPricesInfo
+    public sealed class GameSkuPricesInfo
     {
         public GamePriceInfo ActualPrice;
         public GamePriceAvailability Availability;
@@ -155,31 +156,31 @@ namespace PsnClient.POCOs
         public GamePriceInfo UpsellPrice;
     }
 
-    public class GamePriceInfo
+    public sealed class GamePriceInfo
     {
         public string Display;
         public decimal Value;
     }
 
-    public class GamePriceAvailability
+    public sealed class GamePriceAvailability
     {
         public DateTime? StartDate;
         public DateTime? EndDate;
     }
 
-    public class GameStarRating
+    public sealed class GameStarRating
     {
         public decimal Score;
         public int Total;
     }
 
-    public class GameLanguageCode
+    public sealed class GameLanguageCode
     {
         public string Name;
         public string[] Codes;
     }
 
-    public class GameUpsellInfo
+    public sealed class GameUpsellInfo
     {
         public string Type;
         public string DisplayPrice;
@@ -187,16 +188,17 @@ namespace PsnClient.POCOs
         public decimal DiscountPercentageDifference;
     }
 
-    public class GameSkuRelation
+    public sealed class GameSkuRelation
     {
         public string Id;
         public string Name;
     }
 
-    public class FirmwareInfo
+    public sealed class FirmwareInfo
     {
         public string Version;
         public string DownloadUrl;
         public string Locale;
     }
+    #nullable restore
 }

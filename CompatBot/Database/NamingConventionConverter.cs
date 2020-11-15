@@ -20,7 +20,7 @@ namespace CompatBot.Database
                 foreach (var key in entity.GetForeignKeys())
                     key.SetConstraintName(nameResolver(key.GetConstraintName()));
                 foreach (var index in entity.GetIndexes())
-                    index.SetName(nameResolver(index.GetName()));
+                    index.SetDatabaseName(nameResolver(index.GetDatabaseName()));
             }
         }
     }

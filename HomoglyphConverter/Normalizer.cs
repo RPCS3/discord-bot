@@ -10,7 +10,7 @@ namespace HomoglyphConverter
         private static readonly Dictionary<uint, uint[]> Mapping = ConfusablesBuilder.Build();
         private static readonly Encoding Utf32 = new UTF32Encoding(false, false, true);
 
-        private static readonly Dictionary<string, string> HomoglyphSequences = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> HomoglyphSequences = new()
         {
             ["rn"] = "m",
             ["cl"] = "d",
@@ -46,29 +46,30 @@ namespace HomoglyphConverter
                 return input;
 
             input = ToSkeletonString(input);
-            var result = ReplaceMultiletterConfusables(input);
+            var result = ReplaceMultiLetterConfusables(input);
             for (var i = 0; result != input && i < 128; i++)
             {
                 input = result;
-                result = ReplaceMultiletterConfusables(input);
+                result = ReplaceMultiLetterConfusables(input);
             }
             return result;
         }
 
-        private static string ReplaceMultiletterConfusables(string input)
+        private static string ReplaceMultiLetterConfusables(string input)
         {
-            foreach (var pair in HomoglyphSequences)
-                input = input.Replace(pair.Key, pair.Value);
+            foreach (var (sequence, replacement) in HomoglyphSequences)
+                input = input.Replace(sequence, replacement);
             return input;
         }
 
         private static string ReplaceConfusables(string input)
         {
             var utf32Input = Utf32.GetBytes(input);
-            var uintInput = new uint[utf32Input.Length / 4];
+            var convertedLength = utf32Input.Length / 4;
+            var uintInput = convertedLength < 256 / sizeof(uint) ? stackalloc uint[convertedLength] : new uint[convertedLength];
             for (var i = 0; i < uintInput.Length; i++)
                 uintInput[i] = BitConverter.ToUInt32(utf32Input, i * 4);
-            var result = new List<uint>(uintInput.Length);
+            var result = new List<uint>(convertedLength);
             foreach (var ch in uintInput)
             {
                 if (Mapping.TryGetValue(ch, out var replacement))

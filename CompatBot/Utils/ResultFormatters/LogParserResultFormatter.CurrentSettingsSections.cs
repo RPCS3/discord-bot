@@ -51,8 +51,8 @@ namespace CompatBot.Utils.ResultFormatters
                 items["cpu_model"] = cpuModel;
                 items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
                 items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
-                items["cpu_tsc"] = cpuInfo.Groups["tsc"]?.Value;
-                items["cpu_extensions"] = cpuInfo.Groups["cpu_extensions"]?.Value;
+                items["cpu_tsc"] = cpuInfo.Groups["tsc"].Value;
+                items["cpu_extensions"] = cpuInfo.Groups["cpu_extensions"].Value;
             }
             if (osInfo.Success)
             {
@@ -135,7 +135,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         private const int ColumnWidth = 30;
 
-        private static (string name, List<string> lines) BuildCpuSection(NameValueCollection items)
+        private static (string? name, List<string>? lines) BuildCpuSection(NameValueCollection items)
         {
             if (string.IsNullOrEmpty(items["ppu_decoder"]))
                 return (null, null);
@@ -155,7 +155,7 @@ namespace CompatBot.Utils.ResultFormatters
             return ("CPU Settings", lines);
         }
 
-        private static (string name, List<string> lines) BuildGpuSection(NameValueCollection items)
+        private static (string? name, List<string>? lines) BuildGpuSection(NameValueCollection items)
         {
             if (string.IsNullOrEmpty(items["renderer"]))
                 return (null, null);
@@ -199,7 +199,7 @@ namespace CompatBot.Utils.ResultFormatters
             return ("GPU Settings", lines);
         }
 
-        private static void BuildSettingsSections(DiscordEmbedBuilder builder, NameValueCollection items, (string name, List<string> lines) colA, (string name, List<string> lines) colB)
+        private static void BuildSettingsSections(DiscordEmbedBuilder builder, NameValueCollection items, (string? name, List<string>? lines) colA, (string? name, List<string>? lines) colB)
         {
             if (colA.lines?.Count > 0 && colB.lines?.Count > 0)
             {
@@ -212,19 +212,19 @@ namespace CompatBot.Utils.ResultFormatters
                     var linesToSkip = colAToRemove - linesToRemove;
                     var tmp = colA.lines;
                     colA.lines = new List<string>(tmp.Count - linesToRemove);
-                    for (var i = 0; i < tmp.Count; i++)
-                        if (!tmp[i].EndsWith("N/A") || (linesToSkip--) > 0)
-                            colA.lines.Add(tmp[i]);
+                    foreach (var t in tmp)
+                        if (!t.EndsWith("N/A") || linesToSkip-- > 0)
+                            colA.lines.Add(t);
 
                     linesToSkip = colBToRemove - linesToRemove;
                     tmp = colB.lines;
                     colB.lines = new List<string>(tmp.Count - linesToRemove);
                     for (var i = 0; i < tmp.Count; i++)
-                        if (!tmp[i].EndsWith("N/A") || (linesToSkip--) > 0)
+                        if (!tmp[i].EndsWith("N/A") || linesToSkip-- > 0)
                             colB.lines.Add(tmp[i]);
                 }
-                AddSettingsSection(builder, colA.name, colA.lines, isCustomSettings);
-                AddSettingsSection(builder, colB.name, colB.lines, isCustomSettings);
+                AddSettingsSection(builder, colA.name!, colA.lines, isCustomSettings);
+                AddSettingsSection(builder, colB.name!, colB.lines, isCustomSettings);
             }
         }
 
@@ -232,7 +232,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var result = new StringBuilder();
             foreach (var line in lines)
-                result.Append("`").Append(line).AppendLine("`");
+                result.Append('`').Append(line).AppendLine("`");
             if (isCustomSettings)
                 name = "Per-game " + name;
             builder.AddField(name, result.ToString().FixSpaces(), true);

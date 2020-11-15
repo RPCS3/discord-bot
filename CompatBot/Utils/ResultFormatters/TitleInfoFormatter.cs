@@ -14,7 +14,7 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static class TitleInfoFormatter
 	{
-		private static readonly Dictionary<string, DiscordColor> StatusColors = new Dictionary<string, DiscordColor>(StringComparer.InvariantCultureIgnoreCase)
+		private static readonly Dictionary<string, DiscordColor> StatusColors = new(StringComparer.InvariantCultureIgnoreCase)
 		{
 			{"Unknown", Config.Colors.CompatStatusUnknown},
 			{"Nothing", Config.Colors.CompatStatusNothing},
@@ -24,10 +24,12 @@ namespace CompatBot.Utils.ResultFormatters
 			{"Playable", Config.Colors.CompatStatusPlayable},
 		};
 
-        public static string ToUpdated(this TitleInfo info)
-            => DateTime.TryParseExact(info.Date, ApiConfig.DateInputFormat, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeUniversal, out var date) ? date.ToString(ApiConfig.DateOutputFormat) : null;
+        public static string? ToUpdated(this TitleInfo info)
+            => DateTime.TryParseExact(info.Date, ApiConfig.DateInputFormat, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeUniversal, out var date)
+                ? date.ToString(ApiConfig.DateOutputFormat)
+                : null;
 
-        private static string ToPrString(this TitleInfo info, string defaultString, bool link = false)
+        private static string? ToPrString(this TitleInfo info, string? defaultString, bool link = false)
         {
             if ((info.Pr ?? 0) == 0)
                 return defaultString;
@@ -63,7 +65,7 @@ namespace CompatBot.Utils.ResultFormatters
             return $"Product code {titleId} was not found in compatibility database";
         }
 
-        public static DiscordEmbedBuilder AsEmbed(this TitleInfo info, string titleId, string gameTitle = null, bool forLog = false, string thumbnailUrl = null)
+        public static DiscordEmbedBuilder AsEmbed(this TitleInfo info, string? titleId, string? gameTitle = null, bool forLog = false, string? thumbnailUrl = null)
         {
             if (string.IsNullOrWhiteSpace(gameTitle))
                 gameTitle = null;
@@ -82,13 +84,12 @@ namespace CompatBot.Utils.ResultFormatters
                         Title = thumb.Name,
                         UsingLocalCache = true,
                     };
-                    
                 }
             }
-            if (StatusColors.TryGetValue(info.Status, out var color))
+            if (info.Status is string status && StatusColors.TryGetValue(status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
-                var onlineOnlypart = info.Network == true ? " 🌐" : "";
+                var onlineOnlypart = info.Network == 1 ? " 🌐" : "";
                 var pr = info.ToPrString(null, true);
                 var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
                 if (pr != null)
@@ -105,7 +106,7 @@ namespace CompatBot.Utils.ResultFormatters
                     StatsStorage.GameStatCache.TryGetValue(cacheTitle, out int stat);
                     StatsStorage.GameStatCache.Set(cacheTitle, ++stat, StatsStorage.CacheTime);
                 }
-                var title = $"{productCodePart}{cacheTitle.Trim(200)}{onlineOnlypart}";
+                var title = $"{productCodePart}{cacheTitle?.Trim(200)}{onlineOnlypart}";
                 if (string.IsNullOrEmpty(title))
                     desc = "";
                 return new DiscordEmbedBuilder
@@ -151,18 +152,12 @@ namespace CompatBot.Utils.ResultFormatters
         }
 
         public static string AsString(this (string code, TitleInfo info, double score) resultInfo)
-        {
-            return resultInfo.info.AsString(resultInfo.code);
-        }
+            => resultInfo.info.AsString(resultInfo.code);
 
         public static string AsString(this KeyValuePair<string, TitleInfo> resultInfo)
-        {
-            return resultInfo.Value.AsString(resultInfo.Key);
-        }
+            => resultInfo.Value.AsString(resultInfo.Key);
 
         public static DiscordEmbed AsEmbed(this KeyValuePair<string, TitleInfo> resultInfo)
-        {
-            return resultInfo.Value.AsEmbed(resultInfo.Key);
-        }
+            => resultInfo.Value.AsEmbed(resultInfo.Key);
     }
 }

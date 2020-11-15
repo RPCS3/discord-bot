@@ -17,9 +17,9 @@ namespace CompatBot.Commands
 {
     internal sealed class Misc: BaseCommandModuleCustom
     {
-        private readonly Random rng = new Random();
+        private readonly Random rng = new();
 
-        private static readonly List<string> EightBallAnswers = new List<string>
+        private static readonly List<string> EightBallAnswers = new()
         {
             // 45
             "Ya fo sho", "Fo shizzle mah nizzle", "Yuuuup", "Da", "Affirmative", // 5
@@ -49,7 +49,7 @@ namespace CompatBot.Commands
             "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means", "👎",
         };
 
-        private static readonly List<string> EightBallSnarkyComments = new List<string>
+        private static readonly List<string> EightBallSnarkyComments = new()
         {
             "Can't answer the question that wasn't asked",
             "Having issues with my mind reading attachment, you'll have to state your question explicitly",
@@ -61,13 +61,13 @@ namespace CompatBot.Commands
             "I'd say maybe, but I'd need to see your question first",
         };
 
-        private static readonly List<string> EightBallTimeUnits = new List<string>
+        private static readonly List<string> EightBallTimeUnits = new()
         {
             "second", "minute", "hour", "day", "week", "month", "year", "decade", "century", "millennium",
             "night", "moon cycle", "solar eclipse", "blood moon", "complete emulator rewrite",
         };
 
-        private static readonly List<string> RateAnswers = new List<string>
+        private static readonly List<string> RateAnswers = new()
         {
             // 60
             "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
@@ -107,19 +107,19 @@ namespace CompatBot.Commands
         private static readonly char[] Prefixes = {'@', '(', '{', '[', '<', '!', '`', '"', '\'', '#'};
         private static readonly char[] EveryTimable = Separators.Concat(Suffixes).Concat(Prefixes).Distinct().ToArray();
 
-        private static readonly HashSet<string> Me = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> Me = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "I", "me", "myself", "moi"
         };
 
-        private static readonly HashSet<string> Your = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> Your = new(StringComparer.InvariantCultureIgnoreCase)
         {
             "your", "you're", "yor", "ur", "yours", "your's",
         };
 
-        private static readonly HashSet<char> Vowels = new HashSet<char> {'a', 'e', 'i', 'o', 'u'};
+        private static readonly HashSet<char> Vowels = new() {'a', 'e', 'i', 'o', 'u'};
 
-        private static readonly Regex Instead = new Regex("rate (?<instead>.+) instead", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex Instead = new("rate (?<instead>.+) instead", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
         [Command("credits"), Aliases("about")]
         [Description("Author Credit")]
@@ -145,9 +145,9 @@ namespace CompatBot.Commands
 
         [Command("roll")]
         [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
-        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string comment = null)
+        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)
         {
-            string result = null;
+            string? result = null;
             if (maxValue > 1)
                 lock (rng) result = (rng.Next(maxValue) + 1).ToString();
             if (string.IsNullOrEmpty(result))
@@ -177,8 +177,7 @@ namespace CompatBot.Commands
                         lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
                         var total = rolls.Sum();
                         var totalStr = total.ToString();
-                        int.TryParse(m.Groups["mod"].Value, out var mod);
-                        if (mod > 0)
+                        if (int.TryParse(m.Groups["mod"].Value, out var mod) && mod > 0)
                             totalStr += $" + {mod} = {total + mod}";
                         var rollsStr = string.Join(' ', rolls);
                         if (rolls.Count > 1)
@@ -223,7 +222,7 @@ namespace CompatBot.Commands
         [Description("Provides random stuff")]
         public async Task RandomShit(CommandContext ctx, string stuff)
         {
-            stuff = stuff?.ToLowerInvariant() ?? "";
+            stuff = stuff.ToLowerInvariant();
             switch (stuff)
             {
                     case "game":
@@ -231,7 +230,7 @@ namespace CompatBot.Commands
                     case "productcode":
                     case "product code":
                     {
-                        using var db = new ThumbnailDb();
+                        await using var db = new ThumbnailDb();
                         var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
                         if (count == 0)
                         {
@@ -239,8 +238,8 @@ namespace CompatBot.Commands
                             return;
                         }
 
-                        var rng = new Random().Next(count);
-                        var productCode = await db.Thumbnail.Skip(rng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
+                        var tmpRng = new Random().Next(count);
+                        var productCode = await db.Thumbnail.Skip(tmpRng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
                         if (productCode == null)
                         {
                             await ctx.RespondAsync("Sorry, there's something with my brains today. Try again or something").ConfigureAwait(false);
@@ -260,15 +259,14 @@ namespace CompatBot.Commands
         [Description("Provides a ~~random~~ objectively best answer to your question")]
         public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
         {
-            question = question?.ToLowerInvariant() ?? "";
+            question = question.ToLowerInvariant();
             if (question.StartsWith("when "))
                 await When(ctx, question[5..]).ConfigureAwait(false);
             else
             {
                 string answer;
                 var pool = string.IsNullOrEmpty(question) ? EightBallSnarkyComments : EightBallAnswers;
-                lock (rng)
-                    answer = pool[rng.Next(pool.Count)];
+                lock (rng) answer = pool[rng.Next(pool.Count)];
                 if (answer.StartsWith(':') && answer.EndsWith(':'))
                     answer = ctx.Client.GetEmoji(answer, "🔮");
                 await ctx.RespondAsync(answer).ConfigureAwait(false);
@@ -279,7 +277,7 @@ namespace CompatBot.Commands
         [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
         public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string whatever = "")
         {
-            var question = whatever?.Trim().TrimEnd('?').ToLowerInvariant() ?? "";
+            var question = whatever.Trim().TrimEnd('?').ToLowerInvariant();
             var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
             var crng = new Random((prefix + question).GetHashCode());
             var number = crng.Next(100) + 1;
@@ -322,8 +320,9 @@ namespace CompatBot.Commands
                 var kdUser = await ctx.Client.GetUserAsync(272631898877198337ul).ConfigureAwait(false);
                 var kdMember = ctx.Client.GetMember(kdUser);
                 var kdMatch = new HashSet<string>(new[] {kdUser.Id.ToString(), kdUser.Username, kdMember?.DisplayName ?? "kd-11", "kd", "kd-11", "kd11", });
-                var botMember = ctx.Client.GetMember(ctx.Client.CurrentUser);
-                var botMatch = new HashSet<string>(new[] {botMember.Id.ToString(), botMember.Username, botMember.DisplayName, "yourself", "urself", "yoself",});
+                var botUser = ctx.Client.CurrentUser;
+                var botMember = ctx.Client.GetMember(botUser);
+                var botMatch = new HashSet<string>(new[] {botUser.Id.ToString(), botUser.Username, botMember?.DisplayName ?? "RPCS3 bot", "yourself", "urself", "yoself",});
 
                 var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
                 var words = whatever.Split(Separators);
@@ -350,29 +349,28 @@ namespace CompatBot.Commands
                         word = word[..^2];
                     }
 
-                    void MakeCustomRoleRating(DiscordMember mem)
+                    void MakeCustomRoleRating(DiscordMember? mem)
                     {
-                        if (mem != null && !choiceFlags.Contains('f'))
-                        {
-                            var roleList = mem.Roles.ToList();
-                            if (roleList.Any())
-                            {
-
-                                var role = roleList[new Random((prefix + mem.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
-                                if (!string.IsNullOrEmpty(role))
-                                {
-                                    if (role.EndsWith('s'))
-                                        role = role[..^1];
-                                    var article = Vowels.Contains(role[0]) ? "n" : "";
-                                    choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
-                                    choiceFlags.Add('f');
-                                }
-                            }
-                        }
+                        if (mem is null || choiceFlags.Contains('f'))
+                            return;
+                        
+                        var roleList = mem.Roles.ToList();
+                        if (roleList.Count == 0)
+                            return;
+                        
+                        var role = roleList[new Random((prefix + mem.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
+                        if (string.IsNullOrEmpty(role))
+                            return;
+                        
+                        if (role.EndsWith('s'))
+                            role = role[..^1];
+                        var article = Vowels.Contains(role[0]) ? "n" : "";
+                        choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
+                        choiceFlags.Add('f');
                     }
 
                     var appended = false;
-                    DiscordMember member = null;
+                    DiscordMember? member = null;
                     if (Me.Contains(word))
                     {
                         member = ctx.Member;
@@ -401,7 +399,7 @@ namespace CompatBot.Commands
                         result.Clear();
                         appended = true;
                     }
-                    if (member == null && i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
+                    if (member is null && i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
                         member = m;
                     if (member != null)
                     {
@@ -435,10 +433,10 @@ namespace CompatBot.Commands
                     }
                     if (!appended)
                         result.Append(word);
-                    result.Append(suffix).Append(" ");
+                    result.Append(suffix).Append(' ');
                 }
                 whatever = result.ToString();
-                var cutIdx = whatever.LastIndexOf("never mind");
+                var cutIdx = whatever.LastIndexOf("never mind", StringComparison.Ordinal);
                 if (cutIdx > -1)
                     whatever = whatever[cutIdx..];
                 whatever = whatever.Replace("'s's", "'s").TrimStart(EveryTimable).Trim();
@@ -465,7 +463,7 @@ namespace CompatBot.Commands
 
         [Command("meme"), Aliases("memes"), Cooldown(1, 30, CooldownBucketType.Channel), Hidden]
         [Description("No, memes are not implemented yet")]
-        public async Task Memes(CommandContext ctx, [RemainingText] string _ = null)
+        public async Task Memes(CommandContext ctx, [RemainingText] string? _ = null)
         {
             var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync($"{ctx.User.Mention} congratulations, you're the meme").ConfigureAwait(false);
@@ -488,8 +486,8 @@ namespace CompatBot.Commands
         public async Task ProductCode(CommandContext ctx, [RemainingText, Description("Product code such as BLUS12345 or SCES")] string productCode)
         {
             productCode = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault() ?? productCode;
-            productCode = productCode?.ToUpperInvariant();
-            if (productCode?.Length > 3)
+            productCode = productCode.ToUpperInvariant();
+            if (productCode.Length > 3)
             {
                 var dsc = ProductCodeDecoder.Decode(productCode);
                 var info = string.Join('\n', dsc);

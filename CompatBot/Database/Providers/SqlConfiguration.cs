@@ -10,12 +10,13 @@ namespace CompatBot.Database.Providers
 
         public static async Task RestoreAsync()
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var setVars = await db.BotState.AsNoTracking().Where(v => v.Key.StartsWith(ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
             if (setVars.Any())
             {
-                foreach (var v in setVars)
-                Config.inMemorySettings[v.Key[ConfigVarPrefix.Length ..]] = v.Value;
+                foreach (var stateVar in setVars)
+                    if (stateVar.Value is string value)
+                        Config.InMemorySettings[stateVar.Key[ConfigVarPrefix.Length ..]] = value;
                 Config.RebuildConfiguration();
             }
         }

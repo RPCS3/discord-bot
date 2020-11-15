@@ -7,14 +7,14 @@ namespace CompatBot.Utils.ResultFormatters
 {
     public static class IrdSearchResultFormatter
     {
-        public static DiscordEmbedBuilder AsEmbed(this SearchResult searchResult)
+        public static DiscordEmbedBuilder AsEmbed(this SearchResult? searchResult)
         {
             var result = new DiscordEmbedBuilder
             {
                 //Title = "IRD Library Search Result",
                 Color = Config.Colors.DownloadLinks,
             };
-            if (searchResult.Data.Count == 0)
+            if (searchResult?.Data is null or {Count: 0})
             {
                 result.Color = Config.Colors.LogResultFailed;
                 result.Description = "No matches were found";
@@ -23,14 +23,15 @@ namespace CompatBot.Utils.ResultFormatters
 
             foreach (var item in searchResult.Data)
             {
-                var parts = item.Filename?.Split('-');
-                if (parts == null)
-                    parts = new string[] {null, null};
-                else if (parts.Length == 1)
-                    parts = new[] {null, item.Filename};
+                if (string.IsNullOrEmpty(item.Filename))
+                    continue;
+
+                string[] parts = item.Filename.Split('-');
+                if (parts.Length == 1)
+                    parts = new[] {"", item.Filename};
                 result.AddField(
-                    $"[{parts?[0]} v{item.GameVersion}] {item.Title?.Sanitize().Trim(EmbedPager.MaxFieldTitleLength)}",
-                    $"[⏬ `{parts[1]?.Sanitize().Trim(200)}`]({IrdClient.GetDownloadLink(item.Filename)})　[ℹ Info]({IrdClient.GetInfoLink(item.Filename)})"
+                    $"[{parts[0]} v{item.GameVersion}] {item.Title?.Sanitize().Trim(EmbedPager.MaxFieldTitleLength)}",
+                    $"[⏬ `{parts[1].Sanitize().Trim(200)}`]({IrdClient.GetDownloadLink(item.Filename)})　[ℹ Info]({IrdClient.GetInfoLink(item.Filename)})"
                 );
             }
             return result;

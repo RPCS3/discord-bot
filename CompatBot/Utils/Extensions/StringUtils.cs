@@ -18,13 +18,13 @@ namespace CompatBot.Utils
                                                                  .GetEncoding()
                                                              ?? Encoding.ASCII;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
-        private static readonly MemoryCache FuzzyPairCache = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
+        private static readonly MemoryCache FuzzyPairCache = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
         private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(30);
         private const char StrikeThroughChar = '\u0336'; // 0x0335 = short dash, 0x0336 = long dash, 0x0337 = short slash, 0x0338 = long slash
         public const char InvisibleSpacer = '\u206a';
         public const char Nbsp = '\u00a0';
 
-        internal static readonly HashSet<char> SpaceCharacters = new HashSet<char>
+        internal static readonly HashSet<char> SpaceCharacters = new()
         {
             '\u00a0',
             '\u2002', '\u2003', '\u2004', '\u2005', '\u2006',
@@ -41,7 +41,7 @@ namespace CompatBot.Utils
 
         public static string StripMarks(this string str)
         {
-            return str?.Replace("(R)", " ", StringComparison.InvariantCultureIgnoreCase)
+            return str.Replace("(R)", " ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace("®", " ")
                 .Replace("(TM)", " ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace("™", " ")
@@ -52,7 +52,7 @@ namespace CompatBot.Utils
 
         public static string StripQuotes(this string str)
         {
-            if (str == null || str.Length < 2)
+            if (str.Length < 2)
                 return str;
 
             if (str.StartsWith('"') && str.EndsWith('"'))
@@ -117,7 +117,7 @@ namespace CompatBot.Utils
             return CreateTrimmedString(str, start, end);
         }
 
-        public static string AsString(this ReadOnlySequence<byte> buffer, Encoding encoding = null)
+        public static string AsString(this ReadOnlySequence<byte> buffer, Encoding? encoding = null)
         {
             encoding ??= Latin8BitEncoding;
             if (buffer.IsSingleSegment)
@@ -128,16 +128,14 @@ namespace CompatBot.Utils
                 foreach (var segment in sequence)
                 {
                     encoding.GetChars(segment.Span, span);
-                    span = span.Slice(segment.Length);
+                    span = span[segment.Length ..];
                 }
             }
             return string.Create((int)buffer.Length, buffer, Splice);
         }
 
         public static string ToUtf8(this string str)
-        {
-            return Utf8.GetString(Latin8BitEncoding.GetBytes(str));
-        }
+            => Utf8.GetString(Latin8BitEncoding.GetBytes(str));
 
         public static string ToLatin8BitEncoding(this string str)
         {
@@ -154,11 +152,12 @@ namespace CompatBot.Utils
 
         public static string GetSuffix(long num) => num == 1 ? "" : "s";
 
-        public static string FixSpaces(this string text) => text?.Replace(" ", " " + InvisibleSpacer)
-            .Replace("`", InvisibleSpacer + "`")
-            .Replace(Environment.NewLine, "\n");
+        public static string FixSpaces(this string text)
+            => text.Replace(" ", " " + InvisibleSpacer)
+                .Replace("`", InvisibleSpacer + "`")
+                .Replace(Environment.NewLine, "\n");
 
-        public static int GetVisibleLength(this string s)
+        public static int GetVisibleLength(this string? s)
         {
             if (string.IsNullOrEmpty(s))
                 return 0;
@@ -168,10 +167,19 @@ namespace CompatBot.Utils
             while (e.MoveNext())
             {
                 var strEl = e.GetTextElement();
-                if (char.IsControl(strEl[0]) || char.GetUnicodeCategory(strEl[0]) == UnicodeCategory.Format || strEl[0] == StrikeThroughChar)
-                    continue;
-
-                c++;
+                foreach (var chr in strEl)
+                {
+                    var category = char.GetUnicodeCategory(chr);
+                    if (char.IsControl(chr)
+                        || category == UnicodeCategory.Format
+                        || category == UnicodeCategory.ModifierSymbol
+                        || category == UnicodeCategory.NonSpacingMark
+                        || char.IsHighSurrogate(chr)
+                        || chr == StrikeThroughChar)
+                        continue;
+                    
+                    c++;
+                }
             }
             return c;
         }
@@ -208,9 +216,6 @@ namespace CompatBot.Utils
 
         public static string TrimVisible(this string s, int maxLength)
         {
-            if (string.IsNullOrEmpty(s))
-                return s;
-
             if (maxLength < 1)
                 throw new ArgumentException("Max length can't be less than 1", nameof(maxLength));
 
@@ -229,12 +234,11 @@ namespace CompatBot.Utils
 
                 c++;
             }
-            return result.Append("…").ToString();
+            return result.Append('…').ToString();
         }
 
         public static string PadLeftVisible(this string s, int totalWidth, char padding = ' ')
         {
-            s ??= "";
             var valueWidth = s.GetVisibleLength();
             var diff = s.Length - valueWidth;
             totalWidth += diff;
@@ -243,7 +247,6 @@ namespace CompatBot.Utils
 
         public static string PadRightVisible(this string s, int totalWidth, char padding = ' ')
         {
-            s ??= "";
             var valueWidth = s.GetVisibleLength();
             var diff = s.Length - valueWidth;
             totalWidth += diff;
@@ -269,7 +272,7 @@ namespace CompatBot.Utils
         public static string GetMoons(decimal? stars, bool haveFun = true)
         {
             if (!stars.HasValue)
-                return null;
+                return "";
 
             var fullStars = (int)stars;
             var halfStar = (int)Math.Round((stars.Value - fullStars)*4, MidpointRounding.ToEven);
@@ -305,7 +308,7 @@ namespace CompatBot.Utils
         public static string GetStars(decimal? stars)
         {
             if (!stars.HasValue)
-                return null;
+                return "";
 
             var fullStars = (int)Math.Round(stars.Value, MidpointRounding.ToEven);
             var noStars = 5 - fullStars;
@@ -346,7 +349,7 @@ namespace CompatBot.Utils
             return result;
         }
 
-        internal static double GetFuzzyCoefficientCached(this string strA, string strB)
+        internal static double GetFuzzyCoefficientCached(this string? strA, string? strB)
         {
             strA = strA?.ToLowerInvariant() ?? "";
             strB = strB?.ToLowerInvariant() ?? "";
@@ -380,15 +383,15 @@ namespace CompatBot.Utils
 
         private static (long, int) GetFuzzyCacheKey(string strA, string strB)
         {
-            var hashPair = (((long) (strA.GetHashCode())) << (sizeof(int) * 8)) | (((long) strB.GetHashCode()) & ((long) uint.MaxValue));
+            var hashPair = (((long)strA.GetHashCode()) << (sizeof(int) * 8)) | (strB.GetHashCode() & uint.MaxValue);
             var lengthPair = (strA.Length << (sizeof(short) * 8)) | (strB.Length & ushort.MaxValue);
             return (hashPair, lengthPair);
         }
 
         private class FuzzyCacheValue
         {
-            public string StrA;
-            public string StrB;
+            public string? StrA;
+            public string? StrB;
             public double Coefficient;
         }
     }

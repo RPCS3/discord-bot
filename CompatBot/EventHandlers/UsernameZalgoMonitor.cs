@@ -13,7 +13,7 @@ namespace CompatBot.EventHandlers
 {
     public static class UsernameZalgoMonitor
     {
-        private static readonly HashSet<char> OversizedChars = new HashSet<char>
+        private static readonly HashSet<char> OversizedChars = new()
         {
             '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞',
         };
@@ -22,15 +22,15 @@ namespace CompatBot.EventHandlers
         {
             try
             {
-                var m = c.GetMember(args.UserAfter);
-                if (NeedsRename(m.DisplayName))
+                if (c.GetMember(args.UserAfter) is DiscordMember m
+                    && NeedsRename(m.DisplayName))
                 {
                     var suggestedName = StripZalgo(m.DisplayName, m.Id).Sanitize();
                     await c.ReportAsync("🔣 Potential display name issue",
                         $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Medium);
-                    await DmAndRenameUserAsync(c, c.GetMember(args.UserAfter), suggestedName).ConfigureAwait(false);
+                    await DmAndRenameUserAsync(c, m, suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -85,7 +85,7 @@ namespace CompatBot.EventHandlers
 
         public static bool NeedsRename(string displayName)
         {
-            displayName = displayName?.Normalize().TrimEager();
+            displayName = displayName.Normalize().TrimEager();
             return displayName != StripZalgo(displayName, 0ul, NormalizationForm.FormC, 3);
         }
 
@@ -111,7 +111,7 @@ namespace CompatBot.EventHandlers
 
         public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
-            displayName = displayName?.Normalize(normalizationForm).TrimEager();
+            displayName = displayName.Normalize(normalizationForm).TrimEager();
             if (string.IsNullOrEmpty(displayName))
                 return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
 

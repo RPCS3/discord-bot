@@ -8,18 +8,18 @@ namespace CompatBot.Database
 {
     internal class BotDb: DbContext
     {
-        public DbSet<BotState> BotState { get; set; }
-        public DbSet<Moderator> Moderator { get; set; }
-        public DbSet<Piracystring> Piracystring { get; set; }
-        public DbSet<Warning> Warning { get; set; }
-        public DbSet<Explanation> Explanation { get; set; }
-        public DbSet<DisabledCommand> DisabledCommands { get; set; }
-        public DbSet<WhitelistedInvite> WhitelistedInvites { get; set; }
-        public DbSet<EventSchedule> EventSchedule { get; set; }
-        public DbSet<Stats> Stats { get; set; }
-        public DbSet<Kot> Kot { get; set; }
-        public DbSet<Doggo> Doggo { get; set; }
-        public DbSet<ForcedNickname> ForcedNicknames { get; set; }
+        public DbSet<BotState> BotState { get; set; } = null!;
+        public DbSet<Moderator> Moderator { get; set; } = null!;
+        public DbSet<Piracystring> Piracystring { get; set; } = null!;
+        public DbSet<Warning> Warning { get; set; } = null!;
+        public DbSet<Explanation> Explanation { get; set; } = null!;
+        public DbSet<DisabledCommand> DisabledCommands { get; set; } = null!;
+        public DbSet<WhitelistedInvite> WhitelistedInvites { get; set; } = null!;
+        public DbSet<EventSchedule> EventSchedule { get; set; } = null!;
+        public DbSet<Stats> Stats { get; set; } = null!;
+        public DbSet<Kot> Kot { get; set; } = null!;
+        public DbSet<Doggo> Doggo { get; set; } = null!;
+        public DbSet<ForcedNickname> ForcedNicknames { get; set; } = null!;
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
@@ -32,20 +32,20 @@ namespace CompatBot.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //configure indices
-            modelBuilder.Entity<BotState>().HasIndex(m => m.Key).IsUnique().HasName("bot_state_key");
-            modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasName("moderator_discord_id");
+            modelBuilder.Entity<BotState>().HasIndex(m => m.Key).IsUnique().HasDatabaseName("bot_state_key");
+            modelBuilder.Entity<Moderator>().HasIndex(m => m.DiscordId).IsUnique().HasDatabaseName("moderator_discord_id");
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Context).HasDefaultValue(FilterContext.Chat | FilterContext.Log);
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Actions).HasDefaultValue(FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage);
-            modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).HasName("piracystring_string");
-            modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasName("warning_discord_id");
-            modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasName("explanation_keyword");
-            modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasName("disabled_command_command");
-            modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasName("whitelisted_invite_guild_id");
-            modelBuilder.Entity<EventSchedule>().HasIndex(e => new {e.Year, e.EventName}).HasName("event_schedule_year_event_name");
-            modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasName("stats_category_key");
-            modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasName("kot_user_id");
-            modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasName("doggo_user_id");
-            modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasName("forced_nickname_guild_id_user_id");
+            modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).HasDatabaseName("piracystring_string");
+            modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasDatabaseName("warning_discord_id");
+            modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasDatabaseName("explanation_keyword");
+            modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasDatabaseName("disabled_command_command");
+            modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasDatabaseName("whitelisted_invite_guild_id");
+            modelBuilder.Entity<EventSchedule>().HasIndex(e => new {e.Year, e.EventName}).HasDatabaseName("event_schedule_year_event_name");
+            modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasDatabaseName("stats_category_key");
+            modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasDatabaseName("kot_user_id");
+            modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasDatabaseName("doggo_user_id");
+            modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasDatabaseName("forced_nickname_guild_id_user_id");
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
@@ -58,8 +58,9 @@ namespace CompatBot.Database
     internal class BotState
     {
         public int Id { get; set; }
-        public string Key { get; set; }
-        public string Value { get; set; }
+        [Required]
+        public string Key { get; set; } = null!;
+        public string? Value { get; set; }
     }
 
     internal class Moderator
@@ -73,12 +74,12 @@ namespace CompatBot.Database
     {
         public int Id { get; set; }
         [Required, Column(TypeName = "varchar(255)")]
-        public string String { get; set; }
-        public string ValidatingRegex { get; set; }
+        public string String { get; set; } = null!;
+        public string? ValidatingRegex { get; set; }
         public FilterContext Context { get; set; }
         public FilterAction Actions { get; set; }
-        public string ExplainTerm { get; set; }
-        public string CustomMessage { get; set; }
+        public string? ExplainTerm { get; set; }
+        public string? CustomMessage { get; set; }
         public bool Disabled { get; set; }
     }
 
@@ -106,13 +107,13 @@ namespace CompatBot.Database
         public ulong DiscordId { get; set; }
         public ulong IssuerId { get; set; }
         [Required]
-        public string Reason { get; set; }
+        public string Reason { get; set; } = null!;
         [Required]
-        public string FullReason { get; set; }
+        public string FullReason { get; set; } = null!;
         public long? Timestamp { get; set; }
         public bool Retracted { get; set; }
         public ulong? RetractedBy { get; set; }
-        public string RetractionReason { get; set; }
+        public string? RetractionReason { get; set; }
         public long? RetractionTimestamp { get; set; }
     }
 
@@ -120,27 +121,27 @@ namespace CompatBot.Database
     {
         public int Id { get; set; }
         [Required]
-        public string Keyword { get; set; }
+        public string Keyword { get; set; } = null!;
         [Required]
-        public string Text { get; set; }
+        public string Text { get; set; } = null!;
         [MaxLength(7*1024*1024)]
-        public byte[] Attachment { get; set; }
-        public string AttachmentFilename { get; set; }
+        public byte[]? Attachment { get; set; }
+        public string? AttachmentFilename { get; set; }
     }
 
     internal class DisabledCommand
     {
         public int Id { get; set; }
         [Required]
-        public string Command { get; set; }
+        public string Command { get; set; } = null!;
     }
 
     internal class WhitelistedInvite
     {
         public int Id { get; set; }
         public ulong GuildId { get; set; }
-        public string Name { get; set; }
-        public string InviteCode { get; set; }
+        public string? Name { get; set; }
+        public string? InviteCode { get; set; }
     }
 
     internal class EventSchedule
@@ -149,17 +150,17 @@ namespace CompatBot.Database
         public int Year { get; set; }
         public long Start { get; set; }
         public long End { get; set; }
-        public string Name { get; set; }
-        public string EventName { get; set; }
+        public string? Name { get; set; }
+        public string? EventName { get; set; }
     }
 
     internal class Stats
     {
         public int Id { get; set; }
         [Required]
-        public string Category { get; set; }
+        public string Category { get; set; } = null!;
         [Required]
-        public string Key { get; set; }
+        public string Key { get; set; } = null!;
         public int Value { get; set; }
         public long ExpirationTimestamp { get; set; }
     }
@@ -182,6 +183,6 @@ namespace CompatBot.Database
         public ulong GuildId { set; get; }
         public ulong UserId { set; get; }
         [Required]
-        public string Nickname { get; set; }
+        public string Nickname { get; set; } = null!;
     }
 }

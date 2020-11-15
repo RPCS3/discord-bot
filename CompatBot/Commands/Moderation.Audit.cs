@@ -22,7 +22,7 @@ namespace CompatBot.Commands
         [Description("Commands to audit server things")]
         public sealed class Audit: BaseCommandModuleCustom
         {
-            public static readonly SemaphoreSlim CheckLock = new SemaphoreSlim(1, 1);
+            public static readonly SemaphoreSlim CheckLock = new(1, 1);
 
             [Command("spoofing"), Aliases("impersonation"), RequireDirectMessage]
             [Description("Checks every user on the server for name spoofing")]
@@ -46,26 +46,22 @@ namespace CompatBot.Commands
                 {
                     await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
                     var members = GetMembers(ctx.Client);
-                    using var compressedResult = Config.MemoryStreamManager.GetStream();
-                    using (var memoryStream = Config.MemoryStreamManager.GetStream())
+                    await using var compressedResult = Config.MemoryStreamManager.GetStream();
+                    await using var memoryStream = Config.MemoryStreamManager.GetStream();
+                    await using var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true);
+                    foreach (var member in members)
+                        await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}").ConfigureAwait(false);
+                    await writer.FlushAsync().ConfigureAwait(false);
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    if (memoryStream.Length <= Config.AttachmentSizeLimit)
                     {
-                        using (var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true))
-                        {
-                            foreach (var member in members)
-                                await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}").ConfigureAwait(false);
-                            await writer.FlushAsync().ConfigureAwait(false);
-                        }
-                        memoryStream.Seek(0, SeekOrigin.Begin);
-                        if (memoryStream.Length <= Config.AttachmentSizeLimit)
-                        {
-                            await ctx.RespondWithFileAsync("names.txt", memoryStream).ConfigureAwait(false);
-                            return;
-                        }
-
-                        using var gzip = new GZipStream(compressedResult, CompressionLevel.Optimal, true);
-                        await memoryStream.CopyToAsync(gzip).ConfigureAwait(false);
-                        await gzip.FlushAsync().ConfigureAwait(false);
+                        await ctx.RespondWithFileAsync("names.txt", memoryStream).ConfigureAwait(false);
+                        return;
                     }
+
+                    await using var gzip = new GZipStream(compressedResult, CompressionLevel.Optimal, true);
+                    await memoryStream.CopyToAsync(gzip).ConfigureAwait(false);
+                    await gzip.FlushAsync().ConfigureAwait(false);
                     compressedResult.Seek(0, SeekOrigin.Begin);
                     if (compressedResult.Length <= Config.AttachmentSizeLimit)
                         await ctx.RespondWithFileAsync("names.txt.gz", compressedResult).ConfigureAwait(false);
@@ -166,7 +162,7 @@ namespace CompatBot.Commands
             }
             */
 
-            private List<DiscordMember> GetMembers(DiscordClient client)
+            private static List<DiscordMember> GetMembers(DiscordClient client)
             {
                 //owner -> white name
                 //newbs -> veterans
@@ -177,7 +173,7 @@ namespace CompatBot.Commands
                     .ToList();
             }
 
-            private async void SpoofingCheck(CommandContext ctx)
+            private static async void SpoofingCheck(CommandContext ctx)
             {
                 if (!CheckLock.Wait(0))
                 {
@@ -204,12 +200,12 @@ namespace CompatBot.Commands
                         checkedMembers.Add(member);
                     }
 
-                    using var compressedStream = Config.MemoryStreamManager.GetStream();
-                    using var uncompressedStream = Config.MemoryStreamManager.GetStream();
-                    using (var writer = new StreamWriter(uncompressedStream, new UTF8Encoding(false), 4096, true))
+                    await using var compressedStream = Config.MemoryStreamManager.GetStream();
+                    await using var uncompressedStream = Config.MemoryStreamManager.GetStream();
+                    await using (var writer = new StreamWriter(uncompressedStream, new UTF8Encoding(false), 4096, true))
                     {
-                        writer.Write(result.ToString());
-                        writer.Flush();
+                        await writer.WriteAsync(result.ToString()).ConfigureAwait(false);
+                        await writer.FlushAsync().ConfigureAwait(false);
                     }
                     uncompressedStream.Seek(0, SeekOrigin.Begin);
                     if (result.Length <= headerLength)
@@ -224,9 +220,9 @@ namespace CompatBot.Commands
                         return;
                     }
 
-                    using (var gzip = new GZipStream(compressedStream, CompressionLevel.Optimal, true))
+                    await using (var gzip = new GZipStream(compressedStream, CompressionLevel.Optimal, true))
                     {
-                        uncompressedStream.CopyTo(gzip);
+                        await uncompressedStream.CopyToAsync(gzip).ConfigureAwait(false);
                         gzip.Flush();
                     }
                     compressedStream.Seek(0, SeekOrigin.Begin);

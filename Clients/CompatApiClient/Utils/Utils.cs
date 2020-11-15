@@ -10,9 +10,6 @@ namespace CompatApiClient.Utils
 
         public static string Trim(this string str, int maxLength)
         {
-            if (string.IsNullOrEmpty(str))
-                return str;
-
             if (str.Length > maxLength)
                 return str[..(maxLength - 1)] + "…";
 
@@ -24,7 +21,7 @@ namespace CompatApiClient.Utils
             if (maxLength < 1)
                 throw new ArgumentException("Argument must be positive, but was " + maxLength, nameof(maxLength));
 
-            if (string.IsNullOrEmpty(str) || str.Length <= maxLength)
+            if (str.Length <= maxLength)
                 return str;
 
             return str[..maxLength];
@@ -32,16 +29,17 @@ namespace CompatApiClient.Utils
 
         public static string Sanitize(this string str, bool breakLinks = true, bool replaceBackTicks = false)
         {
-            var result = str?.Replace("`", "`\u200d").Replace("@", "@\u200d");
+            var result = str.Replace("`", "`\u200d").Replace("@", "@\u200d");
             if (replaceBackTicks)
-                result = result?.Replace('`', '\'');
+                result = result.Replace('`', '\'');
             if (breakLinks)
-                result = result?.Replace(".", ".\u200d").Replace(":", ":\u200d");
+                result = result.Replace(".", ".\u200d").Replace(":", ":\u200d");
             return result;
         }
 
         public static int Clamp(this int amount, int low, int high)
             => Math.Min(high, Math.Max(amount, low));
+        
         public static double Clamp(this double amount, double low, double high)
             => Math.Min(high, Math.Max(amount, low));
 

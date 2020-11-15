@@ -16,30 +16,29 @@ namespace CompatBot.Utils.ResultFormatters
 {
     internal static class UpdateInfoFormatter
     {
-        private static readonly GithubClient.Client githubClient = new GithubClient.Client();
+        private static readonly GithubClient.Client GithubClient = new();
 
-        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder builder = null, PrInfo currentPrInfo = null)
+        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, PrInfo? currentPrInfo = null)
         {
-            if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download) == null)
+            if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download) is null)
                 return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
 
             var justAppend = builder != null;
-            var latestBuild = info.LatestBuild;
+            var latestBuild = info!.LatestBuild;
             var latestPr = latestBuild?.Pr;
             var currentPr = info.CurrentBuild?.Pr;
-            string url = null;
-            PrInfo latestPrInfo = null;
+            string? url = null;
+            PrInfo? latestPrInfo = null;
 
             string prDesc = "";
             if (!justAppend)
             {
                 if (latestPr > 0)
                 {
-                    latestPrInfo = await githubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    latestPrInfo = await GithubClient.GetPrInfoAsync(latestPr.Value, Config.Cts.Token).ConfigureAwait(false);
                     url = latestPrInfo?.HtmlUrl ?? "https://github.com/RPCS3/rpcs3/pull/" + latestPr;
                     var userName = latestPrInfo?.User?.Login ?? "???";
-                    var emoji = GetUserNameEmoji(client, userName);
-                    if (emoji != null)
+                    if (GetUserNameEmoji(client, userName) is DiscordEmoji emoji)
                         userName += " " + emoji;
                     prDesc = $"PR #{latestPr} by {userName}";
                 }
@@ -47,13 +46,13 @@ namespace CompatBot.Utils.ResultFormatters
                     prDesc = "PR #???";
 
                 if (currentPr > 0 && currentPr != latestPr)
-                    currentPrInfo ??= await githubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
+                    currentPrInfo ??= await GithubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
             }
             var desc = latestPrInfo?.Title;
             if (includePrBody
                 && latestPrInfo?.Body is string prInfoBody
                 && !string.IsNullOrEmpty(prInfoBody))
-                desc = $"**{desc.TrimEnd()}**\n\n{prInfoBody}";
+                desc = $"**{desc?.TrimEnd()}**\n\n{prInfoBody}";
             desc = desc?.Trim();
             if (!string.IsNullOrEmpty(desc))
             {
@@ -62,7 +61,7 @@ namespace CompatBot.Utils.ResultFormatters
                     var uniqueLinks = new HashSet<string>(10);
                     foreach (Match m in issueMatches)
                     {
-                        if (m.Groups["issue_mention"]?.Value is string str
+                        if (m.Groups["issue_mention"].Value is string str
                             && !string.IsNullOrEmpty(str)
                             && uniqueLinks.Add(str))
                         {
@@ -87,7 +86,7 @@ namespace CompatBot.Utils.ResultFormatters
                     var uniqueLinks = new HashSet<string>(2);
                     foreach (Match m in commitMatches)
                     {
-                        if (m.Groups["commit_mention"]?.Value is string lnk
+                        if (m.Groups["commit_mention"].Value is string lnk
                             && !string.IsNullOrEmpty(lnk)
                             && uniqueLinks.Add(lnk))
                         {
@@ -109,7 +108,7 @@ namespace CompatBot.Utils.ResultFormatters
                 var uniqueLinks = new HashSet<string>(10);
                 foreach (Match m in imgMatches)
                 {
-                    if (m.Groups["img_markup"]?.Value is string str
+                    if (m.Groups["img_markup"].Value is string str
                         && !string.IsNullOrEmpty(str)
                         && uniqueLinks.Add(str))
                     {
@@ -121,20 +120,23 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
             }
-            desc = desc.Trim(EmbedPager.MaxDescriptionLength);
+            desc = desc?.Trim(EmbedPager.MaxDescriptionLength);
             builder ??= new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
             var currentCommit = currentPrInfo?.MergeCommitSha;
             var latestCommit = latestPrInfo?.MergeCommitSha;
             var buildTimestampKind = "Built";
-            var azureClient = Config.GetAzureDevOpsClient();
-            var currentAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var latestAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-            var latestBuildTimestamp = latestAppveyorBuild?.FinishTime;
-            var currentBuildTimestamp = currentAppveyorBuild?.FinishTime;
-            if (!latestBuildTimestamp.HasValue)
+            DateTime? latestBuildTimestamp = null, currentBuildTimestamp = null;
+            if (Config.GetAzureDevOpsClient() is {} azureClient)
             {
-                buildTimestampKind = "Merged";
-                latestBuildTimestamp = currentPrInfo?.MergedAt;
+                var currentAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+                var latestAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+                latestBuildTimestamp = latestAppveyorBuild?.FinishTime;
+                currentBuildTimestamp = currentAppveyorBuild?.FinishTime;
+                if (!latestBuildTimestamp.HasValue)
+                {
+                    buildTimestampKind = "Merged";
+                    latestBuildTimestamp = currentPrInfo?.MergedAt;
+                }
             }
 
             if (!string.IsNullOrEmpty(latestBuild?.Datetime))
@@ -158,12 +160,12 @@ namespace CompatBot.Utils.ResultFormatters
                 .AddField("Linux download", GetLinkMessage(latestBuild?.Linux?.Download, true), true);
         }
 
-        private static string GetLinkMessage(string link, bool simpleName)
+        private static string GetLinkMessage(string? link, bool simpleName)
         {
             if (string.IsNullOrEmpty(link))
                 return "No link available";
 
-            var text = new Uri(link).Segments?.Last() ?? "";
+            var text = new Uri(link).Segments.Last();
             if (simpleName && text.StartsWith("rpcs3-"))
                 text = text[6..];
             if (simpleName && text.Contains('_'))
@@ -172,7 +174,7 @@ namespace CompatBot.Utils.ResultFormatters
             return $"[⏬ {text}]({link}){"   ".FixSpaces()}";
         }
 
-        private static DiscordEmoji GetUserNameEmoji(DiscordClient client, string githubLogin)
+        private static DiscordEmoji? GetUserNameEmoji(DiscordClient client, string githubLogin)
             => client.GetEmoji(githubLogin switch
             {
 #if DEBUG
@@ -206,7 +208,7 @@ namespace CompatBot.Utils.ResultFormatters
             return null;
         }
 
-        public static TimeSpan? GetUpdateDelta(this UpdateInfo updateInfo)
+        public static TimeSpan? GetUpdateDelta(this UpdateInfo? updateInfo)
         {
             if (updateInfo?.LatestBuild?.Datetime is string latestDateTimeStr
                 && DateTime.TryParse(latestDateTimeStr, out var latestDateTime)

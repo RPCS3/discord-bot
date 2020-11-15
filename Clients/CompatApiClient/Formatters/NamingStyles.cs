@@ -13,7 +13,7 @@ namespace CompatApiClient
             if (value.Length > 0)
             {
                 if (char.IsUpper(value[0]))
-                    value = char.ToLower(value[0]) + value.Substring(1);
+                    value = char.ToLower(value[0]) + value[1..];
             }
             return value;
         }

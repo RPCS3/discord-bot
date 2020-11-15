@@ -3,7 +3,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
-using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
@@ -97,7 +96,7 @@ namespace CompatBot.Commands
 			await ctx.RespondAsync(result.ToString()).ConfigureAwait(false);
 		}
 
-		private byte[,] GenerateField(int width, int height, in int mineCount, in Random rng)
+		private static byte[,] GenerateField(int width, int height, in int mineCount, in Random rng)
 		{
 			var len = width * height;
 			var cells = new byte[len];

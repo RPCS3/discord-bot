@@ -24,7 +24,7 @@ namespace CompatBot.Commands
         [Description("Commands to check for various stuff on PSN")]
         public sealed class Check: BaseCommandModuleCustom
         {
-            private static string latestFwVersion = null;
+            private static string? latestFwVersion;
 
             [Command("updates"), Aliases("update")]
             [Description("Checks if specified product has any updates")]
@@ -64,7 +64,7 @@ namespace CompatBot.Commands
                     Config.Log.Warn(e, "Failed to get title update info");
                     embeds = new List<DiscordEmbedBuilder>
                     {
-                        new DiscordEmbedBuilder
+                        new()
                         {
                             Color = Config.Colors.Maintenance,
                             Title = "Service is unavailable",
@@ -75,25 +75,23 @@ namespace CompatBot.Commands
 
                 if (!ctx.Channel.IsPrivate
                     && ctx.Message.Author.Id == 197163728867688448
-                    && (
-                        embeds[0].Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
-                        embeds[0].Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
-                    ))
+                    && (embeds[0].Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)
+                        || embeds[0].Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)))
                 {
                     foreach (var embed in embeds)
                     {
                         var newTitle = "(๑•ิཬ•ั๑)";
-                        var partStart = embed.Title.IndexOf(" [Part");
+                        var partStart = embed.Title.IndexOf(" [Part", StringComparison.Ordinal);
                         if (partStart > -1)
                             newTitle += embed.Title[partStart..];
                         embed.Title = newTitle;
                         if (!string.IsNullOrEmpty(embed.Thumbnail?.Url))
                             embed.WithThumbnail("https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png");
                     }
-                    var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
+                    var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No)!;
                     await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
                 }
-                if (embeds.Count > 1 || embeds[0].Fields?.Count > 0)
+                if (embeds.Count > 1 || embeds[0].Fields.Count > 0)
                     embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
                 foreach (var embed in embeds)
                     await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
@@ -135,14 +133,14 @@ namespace CompatBot.Commands
                 await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
             }
 
-            internal static async Task CheckFwUpdateForAnnouncementAsync(DiscordClient client, List<FirmwareInfo> fwList = null)
+            internal static async Task CheckFwUpdateForAnnouncementAsync(DiscordClient client, List<FirmwareInfo>? fwList = null)
             {
                 fwList ??= await Client.GetHighestFwVersionAsync(Config.Cts.Token).ConfigureAwait(false);
                 if (fwList.Count == 0)
                     return;
 
                 var newVersion = fwList[0].Version;
-                using var db = new BotDb();
+                await using var db = new BotDb();
                 var fwVersionState = db.BotState.FirstOrDefault(s => s.Key == "Latest-Firmware-Version");
                 latestFwVersion ??= fwVersionState?.Value;
                 if (latestFwVersion is null
@@ -155,7 +153,7 @@ namespace CompatBot.Commands
                     await announcementChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                     latestFwVersion = newVersion;
                     if (fwVersionState == null)
-                        db.BotState.Add(new BotState {Key = "Latest-Firmware-Version", Value = latestFwVersion});
+                        await db.BotState.AddAsync(new BotState {Key = "Latest-Firmware-Version", Value = latestFwVersion}).ConfigureAwait(false);
                     else
                         fwVersionState.Value = latestFwVersion;
                     await db.SaveChangesAsync().ConfigureAwait(false);

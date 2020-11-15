@@ -1,5 +1,6 @@
 ﻿namespace PsnClient.POCOs
 {
+    #nullable disable
     public class Relationships
     {
         public RelationshipsChildren Children;
@@ -21,4 +22,5 @@
     {
         public RelationshipsChildrenItem[] Data;
     }
+    #nullable restore
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,8 +33,9 @@ namespace CompatBot.Commands
 
         [Command("disable"), Aliases("add")]
         [Description("Disables the specified command")]
-        public async Task Disable(CommandContext ctx, [RemainingText, Description("Fully qualified command to disable, e.g. `explain add` or `sudo mod *`")] string command)
+        public async Task Disable(CommandContext ctx, [RemainingText, Description("Fully qualified command to disable, e.g. `explain add` or `sudo mod *`")] string? command)
         {
+            command ??= "";
             var isPrefix = command.EndsWith('*');
             if (isPrefix)
                 command = command.TrimEnd('*', ' ');
@@ -94,7 +96,7 @@ namespace CompatBot.Commands
 
         [Command("enable"), Aliases("reenable", "remove", "delete", "del", "clear")]
         [Description("Enables the specified command")]
-        public async Task Enable(CommandContext ctx, [RemainingText, Description("Fully qualified command to enable, e.g. `explain add` or `sudo mod *`")] string command)
+        public async Task Enable(CommandContext ctx, [RemainingText, Description("Fully qualified command to enable, e.g. `explain add` or `sudo mod *`")] string? command)
         {
             if (command == "*")
             {
@@ -103,6 +105,7 @@ namespace CompatBot.Commands
                 return;
             }
 
+            command ??= "";
             var isPrefix = command.EndsWith('*');
             if (isPrefix)
                 command = command.TrimEnd('*', ' ');
@@ -148,13 +151,13 @@ namespace CompatBot.Commands
             }
         }
 
-        private static Command GetCommand(CommandContext ctx, string qualifiedName)
+        private static Command? GetCommand(CommandContext ctx, string qualifiedName)
         {
             if (string.IsNullOrEmpty(qualifiedName))
                 return null;
 
-            var groups = ctx.CommandsNext.RegisteredCommands.Values;
-            Command result = null;
+            var groups = (IReadOnlyList<Command>)ctx.CommandsNext.RegisteredCommands.Values.ToList();
+            Command? result = null;
             foreach (var cmdPart in qualifiedName.Split(' ', StringSplitOptions.RemoveEmptyEntries))
             {
                 if (groups.FirstOrDefault(g => g.Name == cmdPart || g.Aliases.Any(a => a == cmdPart)) is Command c)

@@ -30,17 +30,17 @@ namespace CompatBot
 {
     internal static class Config
     {
-        private static IConfigurationRoot config;
-        private static TelemetryClient telemetryClient;
-        private static readonly DependencyTrackingTelemetryModule dependencyTrackingTelemetryModule = new DependencyTrackingTelemetryModule();
-        private static readonly PerformanceCollectorModule performanceCollectorModule = new PerformanceCollectorModule();
+        private static IConfigurationRoot config = null!;
+        private static TelemetryClient? telemetryClient;
+        private static readonly DependencyTrackingTelemetryModule DependencyTrackingTelemetryModule = new();
+        private static readonly PerformanceCollectorModule PerformanceCollectorModule = new();
 
         internal static readonly ILogger Log;
         internal static readonly ILoggerFactory LoggerFactory;
-        internal static readonly ConcurrentDictionary<string, string> inMemorySettings = new ConcurrentDictionary<string, string>();
-        internal static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
+        internal static readonly ConcurrentDictionary<string, string> InMemorySettings = new();
+        internal static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
 
-        public static readonly CancellationTokenSource Cts = new CancellationTokenSource();
+        public static readonly CancellationTokenSource Cts = new();
         public static readonly Stopwatch Uptime = Stopwatch.StartNew();
 
         // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
@@ -89,7 +89,7 @@ namespace CompatBot
         internal static class AllowedMentions
         {
             internal static readonly IMention[] UsersOnly = { UserMention.All };
-            internal static readonly IMention[] Nothing = { };
+            internal static readonly IMention[] Nothing = Array.Empty<IMention>();
         }
 
         internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
@@ -101,9 +101,9 @@ namespace CompatBot
                 if (SandboxDetector.Detect() == SandboxType.Docker)
                     return "/bot-config/credentials.json";
 
-                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute)
+                if (Assembly.GetEntryAssembly()?.GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute
+                    && Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId(attribute.UserSecretsId)) is string path)
                 {
-                    var path = Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId(attribute.UserSecretsId));
                     path = Path.Combine(path, "credentials.json");
                     if (File.Exists(path))
                         return path;
@@ -116,28 +116,28 @@ namespace CompatBot
         public static class Colors
         {
             public static readonly DiscordColor Help = DiscordColor.Azure;
-            public static readonly DiscordColor DownloadLinks = new DiscordColor(0x3b88c3);
-            public static readonly DiscordColor Maintenance = new DiscordColor(0xffff00);
+            public static readonly DiscordColor DownloadLinks = new(0x3b88c3);
+            public static readonly DiscordColor Maintenance = new(0xffff00);
 
-            public static readonly DiscordColor CompatStatusNothing = new DiscordColor(0x455556); // colors mimic compat list statuses
-            public static readonly DiscordColor CompatStatusLoadable = new DiscordColor(0xe74c3c);
-            public static readonly DiscordColor CompatStatusIntro = new DiscordColor(0xe08a1e);
-            public static readonly DiscordColor CompatStatusIngame = new DiscordColor(0xf9b32f);
-            public static readonly DiscordColor CompatStatusPlayable = new DiscordColor(0x1ebc61);
-            public static readonly DiscordColor CompatStatusUnknown = new DiscordColor(0x3198ff);
+            public static readonly DiscordColor CompatStatusNothing = new(0x455556); // colors mimic compat list statuses
+            public static readonly DiscordColor CompatStatusLoadable = new(0xe74c3c);
+            public static readonly DiscordColor CompatStatusIntro = new(0xe08a1e);
+            public static readonly DiscordColor CompatStatusIngame = new(0xf9b32f);
+            public static readonly DiscordColor CompatStatusPlayable = new(0x1ebc61);
+            public static readonly DiscordColor CompatStatusUnknown = new(0x3198ff);
 
             public static readonly DiscordColor LogResultFailed = DiscordColor.Gray;
 
-            public static readonly DiscordColor LogAlert = new DiscordColor(0xf04747); // colors mimic discord statuses
-            public static readonly DiscordColor LogNotice = new DiscordColor(0xfaa61a);
-            public static readonly DiscordColor LogInfo = new DiscordColor(0x43b581);
-            public static readonly DiscordColor LogUnknown = new DiscordColor(0x747f8d);
+            public static readonly DiscordColor LogAlert = new(0xf04747); // colors mimic discord statuses
+            public static readonly DiscordColor LogNotice = new(0xfaa61a);
+            public static readonly DiscordColor LogInfo = new(0x43b581);
+            public static readonly DiscordColor LogUnknown = new(0x747f8d);
 
-            public static readonly DiscordColor PrOpen = new DiscordColor(0x2cbe4e);
-            public static readonly DiscordColor PrMerged = new DiscordColor(0x6f42c1);
-            public static readonly DiscordColor PrClosed = new DiscordColor(0xcb2431);
+            public static readonly DiscordColor PrOpen = new(0x2cbe4e);
+            public static readonly DiscordColor PrMerged = new(0x6f42c1);
+            public static readonly DiscordColor PrClosed = new(0xcb2431);
 
-            public static readonly DiscordColor UpdateStatusGood = new DiscordColor(0x3b88c3);
+            public static readonly DiscordColor UpdateStatusGood = new(0x3b88c3);
             public static readonly DiscordColor UpdateStatusBad = DiscordColor.Yellow;
         }
 
@@ -217,6 +217,7 @@ namespace CompatBot
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Error initializing settings: " + e.Message);
                 Console.ResetColor();
+                throw;
             }
         }
 
@@ -225,13 +226,13 @@ namespace CompatBot
             config = new ConfigurationBuilder()
                 .AddUserSecrets(Assembly.GetExecutingAssembly()) // lower priority
                 .AddEnvironmentVariables()
-                .AddInMemoryCollection(inMemorySettings)     // higher priority
+                .AddInMemoryCollection(InMemorySettings)     // higher priority
                 .Build();
         }
 
         private static ILogger GetLog()
         {
-            var config = new NLog.Config.LoggingConfiguration();
+            var loggingConfig = new NLog.Config.LoggingConfiguration();
             var fileTarget = new FileTarget("logfile") {
                 FileName = CurrentLogPath,
                 ArchiveEvery = FileArchivePeriod.Day,
@@ -266,25 +267,25 @@ namespace CompatBot
                 new MethodCallParameter("${message}"),
             });
 #if DEBUG
-            config.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
+            loggingConfig.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
 #else
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
+            loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
 #endif
-            config.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, watchdogTarget);
+            loggingConfig.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
+            loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, watchdogTarget);
 
             var ignoreFilter1 = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')", Action = FilterResult.Ignore, };
             var ignoreFilter2 = new ConditionBasedFilter { Condition = "contains('${message}','One or more pre-execution checks failed')", Action = FilterResult.Ignore, };
-            foreach (var rule in config.LoggingRules)
+            foreach (var rule in loggingConfig.LoggingRules)
             {
                 rule.Filters.Add(ignoreFilter1);
                 rule.Filters.Add(ignoreFilter2);
             }
-            LogManager.Configuration = config;
+            LogManager.Configuration = loggingConfig;
             return LogManager.GetLogger("default");
         }
 
-        public static BuildHttpClient GetAzureDevOpsClient()
+        public static BuildHttpClient? GetAzureDevOpsClient()
         {
             if (string.IsNullOrEmpty(AzureDevOpsToken))
                 return null;
@@ -294,21 +295,21 @@ namespace CompatBot
             return azureConnection.GetClient<BuildHttpClient>();
         }
 
-        public static TelemetryClient TelemetryClient
+        public static TelemetryClient? TelemetryClient
         {
             get
             {
                 if (string.IsNullOrEmpty(AzureAppInsightsKey))
                     return null;
 
-                if (telemetryClient != null && telemetryClient.InstrumentationKey == AzureAppInsightsKey)
+                if (telemetryClient?.InstrumentationKey == AzureAppInsightsKey)
                     return telemetryClient;
 
                 var telemetryConfig = TelemetryConfiguration.CreateDefault();
                 telemetryConfig.InstrumentationKey = AzureAppInsightsKey;
                 telemetryConfig.TelemetryInitializers.Add(new HttpDependenciesParsingTelemetryInitializer());
-                dependencyTrackingTelemetryModule.Initialize(telemetryConfig);
-                performanceCollectorModule.Initialize(telemetryConfig);
+                DependencyTrackingTelemetryModule.Initialize(telemetryConfig);
+                PerformanceCollectorModule.Initialize(telemetryConfig);
                 return telemetryClient = new TelemetryClient(telemetryConfig);
             }
         }

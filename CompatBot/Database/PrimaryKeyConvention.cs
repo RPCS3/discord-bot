@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace CompatBot.Database
 {
@@ -10,7 +9,7 @@ namespace CompatBot.Database
         public static void ConfigureDefaultPkConvention(this ModelBuilder modelBuilder, string keyProperty = "Id")
         {
             if (string.IsNullOrEmpty(keyProperty))
-                throw new ArgumentException(nameof(keyProperty));
+                throw new ArgumentException("Key property name is mandatory", nameof(keyProperty));
 
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {

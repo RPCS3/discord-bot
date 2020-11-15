@@ -9,7 +9,7 @@ namespace CompatBot.Utils
     {
         public static List<(string code, TitleInfo info, double score)> GetSortedList(this CompatResult result)
         {
-            var search = result.RequestBuilder.search;
+            var search = result.RequestBuilder.Search;
             if (string.IsNullOrEmpty(search) || !result.Results.Any())
                 return result.Results
                     .OrderBy(kvp => kvp.Value.Title)
@@ -31,7 +31,7 @@ namespace CompatBot.Utils
             return sortedList;
         }
 
-        public static double GetScore(string search, TitleInfo titleInfo)
+        public static double GetScore(string? search, TitleInfo titleInfo)
         {
             var score = Math.Max(
                 search.GetFuzzyCoefficientCached(titleInfo.Title),

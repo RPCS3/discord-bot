@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,20 +29,19 @@ using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Newtonsoft.Json;
 
 namespace CompatBot.Commands
 {
     internal sealed class CompatList : BaseCommandModuleCustom
     {
-        private static readonly Client client = new Client();
-        private static readonly GithubClient.Client githubClient = new GithubClient.Client();
-        private static readonly SemaphoreSlim updateCheck = new SemaphoreSlim(1, 1);
-        private static string lastUpdateInfo = null, lastFullBuildNumber = null;
+        private static readonly Client Client = new();
+        private static readonly GithubClient.Client GithubClient = new();
+        private static readonly SemaphoreSlim UpdateCheck = new(1, 1);
+        private static string? lastUpdateInfo, lastFullBuildNumber;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
         private const string Rpcs3UpdateBuildKey = "Rpcs3UpdateBuild";
-        private static UpdateInfo CachedUpdateInfo = null;
-        private static readonly Regex UpdateVersionRegex = new Regex(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+        private static UpdateInfo? cachedUpdateInfo;
+        private static readonly Regex UpdateVersionRegex = new(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 
         static CompatList()
         {
@@ -54,12 +54,12 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    var prInfo = githubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
-                    CachedUpdateInfo = client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).ConfigureAwait(false).GetAwaiter().GetResult();
-                    if (CachedUpdateInfo?.CurrentBuild != null)
+                    var prInfo = GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
+                    cachedUpdateInfo = Client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).ConfigureAwait(false).GetAwaiter().GetResult();
+                    if (cachedUpdateInfo?.CurrentBuild != null)
                     {
-                        CachedUpdateInfo.LatestBuild = CachedUpdateInfo.CurrentBuild;
-                        CachedUpdateInfo.CurrentBuild = null;
+                        cachedUpdateInfo.LatestBuild = cachedUpdateInfo.CurrentBuild;
+                        cachedUpdateInfo.CurrentBuild = null;
                     }
                 }
                 catch { }
@@ -68,7 +68,7 @@ namespace CompatBot.Commands
 
         [Command("compat"), Aliases("c", "compatibility")]
         [Description("Searches the compatibility database, USE: !compat search term")]
-        public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string title)
+        public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string? title)
         {
             title = title?.TrimEager().Truncate(40);
             if (string.IsNullOrEmpty(title))
@@ -122,13 +122,13 @@ namespace CompatBot.Commands
             scoreType = scoreType.ToLowerInvariant();
 
             number = number.Clamp(1, 100);
-            bool exactStatus = status.EndsWith("only");
+            var exactStatus = status.EndsWith("only");
             if (exactStatus)
                 status = status[..^4];
             if (!Enum.TryParse(status, true, out CompatStatus s))
                 s = CompatStatus.Playable;
 
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             var queryBase = db.Thumbnail.AsNoTracking();
             if (exactStatus)
                 queryBase = queryBase.Where(g => g.CompatibilityStatus == s);
@@ -137,9 +137,9 @@ namespace CompatBot.Commands
             queryBase = queryBase.Where(g => g.Metacritic != null).Include(t => t.Metacritic);
             var query = scoreType switch
             {
-                "critic" => queryBase.Where(t => t.Metacritic.CriticScore > 0).AsEnumerable().Select(t => (title: t.Metacritic.Title, score: t.Metacritic.CriticScore.Value, second: t.Metacritic.UserScore ?? t.Metacritic.CriticScore.Value)),
-                "user" => queryBase.Where(t => t.Metacritic.UserScore > 0).AsEnumerable().Select(t => (title: t.Metacritic.Title, score: t.Metacritic.UserScore.Value, second: t.Metacritic.CriticScore ?? t.Metacritic.UserScore.Value)),
-                _ => queryBase.AsEnumerable().Select(t => (title: t.Metacritic.Title, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0), second: (byte)0)),
+                "critic" => queryBase.Where(t => t.Metacritic!.CriticScore > 0).AsEnumerable().Select(t => (title: t.Metacritic!.Title, score: t.Metacritic!.CriticScore!.Value, second: t.Metacritic.UserScore ?? t.Metacritic.CriticScore.Value)),
+                "user" => queryBase.Where(t => t.Metacritic!.UserScore > 0).AsEnumerable().Select(t => (title: t.Metacritic!.Title, score: t.Metacritic!.UserScore!.Value, second: t.Metacritic.CriticScore ?? t.Metacritic.UserScore.Value)),
+                _ => queryBase.AsEnumerable().Select(t => (title: t.Metacritic!.Title, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0), second: (byte)0)),
             };
             var resultList = query.Where(i => i.score > 0)
                 .OrderByDescending(i => i.score)
@@ -161,7 +161,7 @@ namespace CompatBot.Commands
                 await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
             }
             else
-                await ctx.RespondAsync("Failed to generate lilst").ConfigureAwait(false);
+                await ctx.RespondAsync("Failed to generate list").ConfigureAwait(false);
         }
 
         [Group("latest"), TriggersTyping]
@@ -200,13 +200,13 @@ namespace CompatBot.Commands
                 return CheckForRpcs3Updates(ctx.Client, null);
             }
 
-            public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel channel, string sinceCommit = null, DiscordMessage emptyBotMsg = null)
+            public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel? channel, string? sinceCommit = null, DiscordMessage? emptyBotMsg = null)
             {
                 var updateAnnouncement = channel is null;
                 var updateAnnouncementRestore = emptyBotMsg != null;
-                var info = await client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
+                var info = await Client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
                 if (info?.ReturnCode != 1 && sinceCommit != null)
-                    info = await client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
+                    info = await Client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
 
                 if (updateAnnouncementRestore && info?.CurrentBuild != null)
                     info.LatestBuild = info.CurrentBuild;
@@ -215,24 +215,24 @@ namespace CompatBot.Commands
                 {
                     if (updateAnnouncementRestore)
                     {
-                        Config.Log.Debug($"Failed to get update info for commit {sinceCommit}: {JsonConvert.SerializeObject(info)}");
+                        Config.Log.Debug($"Failed to get update info for commit {sinceCommit}: {JsonSerializer.Serialize(info)}");
                         return false;
                     }
 
-                    embed = await CachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
+                    embed = await cachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
                 }
                 else if (!updateAnnouncementRestore)
                 {
-                    if (CachedUpdateInfo?.LatestBuild?.Datetime is string previousBuildTimeStr
+                    if (cachedUpdateInfo?.LatestBuild?.Datetime is string previousBuildTimeStr
                         && info.LatestBuild?.Datetime is string newBuildTimeStr
                         && DateTime.TryParse(previousBuildTimeStr, out var previousBuildTime)
                         && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
                         && newBuildTime > previousBuildTime)
-                        CachedUpdateInfo = info;
+                        cachedUpdateInfo = info;
                 }
                 if (!updateAnnouncement)
                 {
-                    await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                    await channel!.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                     return true;
                 }
                 if (updateAnnouncementRestore)
@@ -241,7 +241,7 @@ namespace CompatBot.Commands
                         return false;
 
                     Config.Log.Debug($"Restoring update announcement for build {sinceCommit}: {embed.Title}\n{embed.Description}");
-                    await emptyBotMsg.ModifyAsync(embed: embed.Build()).ConfigureAwait(false);
+                    await emptyBotMsg!.ModifyAsync(embed: embed.Build()).ConfigureAwait(false);
                     return true;
                 }
 
@@ -256,7 +256,7 @@ namespace CompatBot.Commands
 
                 if (string.IsNullOrEmpty(latestUpdatePr)
                     || lastUpdateInfo == latestUpdatePr
-                    || !await updateCheck.WaitAsync(0).ConfigureAwait(false))
+                    || !await UpdateCheck.WaitAsync(0).ConfigureAwait(false))
                     return false;
 
                 if (!string.IsNullOrEmpty(lastFullBuildNumber)
@@ -287,15 +287,15 @@ namespace CompatBot.Commands
                     await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                     lastUpdateInfo = latestUpdatePr;
                     lastFullBuildNumber = latestUpdateBuild;
-                    using var db = new BotDb();
+                    await using var db = new BotDb();
                     var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
                     if (currentState == null)
-                        db.BotState.Add(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr});
+                        await db.BotState.AddAsync(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr}).ConfigureAwait(false);
                     else
                         currentState.Value = latestUpdatePr;
                     var savedLastBuild = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateBuildKey).ConfigureAwait(false);
                     if (savedLastBuild == null)
-                        db.BotState.Add(new BotState {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild});
+                        await db.BotState.AddAsync(new BotState {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild}).ConfigureAwait(false);
                     else
                         savedLastBuild.Value = latestUpdateBuild;
                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -308,30 +308,30 @@ namespace CompatBot.Commands
                 }
                 finally
                 {
-                    updateCheck.Release();
+                    UpdateCheck.Release();
                 }
                 return false;
             }
 
-            private static async Task CheckMissedBuildsBetween(DiscordClient discordClient, DiscordChannel compatChannel, string previousUpdatePr, string latestUpdatePr, CancellationToken cancellationToken)
+            private static async Task CheckMissedBuildsBetween(DiscordClient discordClient, DiscordChannel compatChannel, string? previousUpdatePr, string? latestUpdatePr, CancellationToken cancellationToken)
             {
                 if (!int.TryParse(previousUpdatePr, out var oldestPr)
                     || !int.TryParse(latestUpdatePr, out var newestPr))
                     return;
 
-                var mergedPrs = await githubClient.GetClosedPrsAsync(cancellationToken).ConfigureAwait(false); // this will cache 30 latest PRs
-                var newestPrCommit = await githubClient.GetPrInfoAsync(newestPr, cancellationToken).ConfigureAwait(false);
-                var oldestPrCommit = await githubClient.GetPrInfoAsync(oldestPr, cancellationToken).ConfigureAwait(false);
-                if (newestPrCommit.MergedAt == null || oldestPrCommit.MergedAt == null)
+                var mergedPrs = await GithubClient.GetClosedPrsAsync(cancellationToken).ConfigureAwait(false); // this will cache 30 latest PRs
+                var newestPrCommit = await GithubClient.GetPrInfoAsync(newestPr, cancellationToken).ConfigureAwait(false);
+                var oldestPrCommit = await GithubClient.GetPrInfoAsync(oldestPr, cancellationToken).ConfigureAwait(false);
+                if (newestPrCommit?.MergedAt == null || oldestPrCommit?.MergedAt == null)
                     return;
 
                 mergedPrs = mergedPrs?.Where(pri => pri.MergedAt.HasValue)
-                    .OrderBy(pri => pri.MergedAt.Value)
+                    .OrderBy(pri => pri.MergedAt!.Value)
                     .SkipWhile(pri => pri.Number != oldestPr)
                     .Skip(1)
                     .TakeWhile(pri => pri.Number != newestPr)
                     .ToList();
-                if (mergedPrs is null || mergedPrs.Count == 0)
+                if (mergedPrs is null or {Count: 0})
                     return;
 
                 var failedBuilds = await Config.GetAzureDevOpsClient().GetMasterBuildsAsync(
@@ -342,7 +342,7 @@ namespace CompatBot.Commands
                 ).ConfigureAwait(false);
                 foreach (var mergedPr in mergedPrs)
                 {
-                    var updateInfo = await client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false)
+                    var updateInfo = await Client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false)
                                      ?? new UpdateInfo {ReturnCode = -1};
                     if (updateInfo.ReturnCode == 0 || updateInfo.ReturnCode == 1) // latest or known build
                     {
@@ -353,7 +353,7 @@ namespace CompatBot.Commands
                     }
                     else if (updateInfo.ReturnCode == -1) // unknown build
                     {
-                        var masterBuildInfo = failedBuilds.FirstOrDefault(b => b.Commit.Equals(mergedPr.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase));
+                        var masterBuildInfo = failedBuilds?.FirstOrDefault(b => b.Commit?.Equals(mergedPr.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase) is true);
                         var buildTime = masterBuildInfo?.FinishTime;
                         if (masterBuildInfo != null)
                         {
@@ -403,17 +403,17 @@ namespace CompatBot.Commands
             }
         }
 
-        private async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
+        private static async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
         {
             Config.Log.Info(requestBuilder.Build());
-            CompatResult result = null;
+            CompatResult? result = null;
             try
             {
-                var remoteSearchTask = client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
+                var remoteSearchTask = Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
                 var localResult = GetLocalCompatResult(requestBuilder);
                 result = localResult;
                 var remoteResult = await remoteSearchTask.ConfigureAwait(false);
-                result = remoteResult.Append(localResult);
+                result = remoteResult?.Append(localResult);
             }
             catch
             {
@@ -428,9 +428,9 @@ namespace CompatBot.Commands
             await Task.Delay(5_000).ConfigureAwait(false);
 #endif
             var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-            if (result.Results?.Count == 1)
+            if (result?.Results?.Count == 1)
                 await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, new List<string>(result.Results.Keys)).ConfigureAwait(false);
-            else
+            else if (result != null)
                 foreach (var msg in FormatSearchResults(ctx, result))
                     await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
         }
@@ -438,20 +438,20 @@ namespace CompatBot.Commands
         internal static CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
         {
             var timer = Stopwatch.StartNew();
-            var title = requestBuilder.search;
+            var title = requestBuilder.Search;
             using var db = new ThumbnailDb();
             var matches = db.Thumbnail
                 .AsNoTracking()
                 .AsEnumerable()
                 .Select(t => (thumb: t, coef: title.GetFuzzyCoefficientCached(t.Name)))
                 .OrderByDescending(i => i.coef)
-                .Take(requestBuilder.amountRequested)
+                .Take(requestBuilder.AmountRequested)
                 .ToList();
             var result = new CompatResult
             {
                 RequestBuilder = requestBuilder,
                 ReturnCode = 0,
-                SearchTerm = requestBuilder.search,
+                SearchTerm = requestBuilder.Search,
                 Results = matches.ToDictionary(i => i.thumb.ProductCode, i => new TitleInfo
                 {
                     Status = i.thumb.CompatibilityStatus?.ToString() ?? "Unknown",
@@ -464,7 +464,7 @@ namespace CompatBot.Commands
             return result;
         }
 
-        private IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
+        private static IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
         {
             var returnCode = ApiConfig.ReturnCodes[compatResult.ReturnCode];
             var request = compatResult.RequestBuilder;
@@ -475,27 +475,19 @@ namespace CompatBot.Commands
             {
                 var authorMention = ctx.Channel.IsPrivate ? "You" : ctx.Message.Author.Mention;
                 var result = new StringBuilder();
-                if (string.IsNullOrEmpty(request.customHeader))
+                result.AppendLine($"{authorMention} searched for: ***{request.Search?.Sanitize(replaceBackTicks: true)}***");
+                if (request.Search?.Contains("persona", StringComparison.InvariantCultureIgnoreCase) is true
+                    || request.Search?.Contains("p5", StringComparison.InvariantCultureIgnoreCase) is true)
+                    result.AppendLine("Did you try searching for **__Unnamed__** instead?");
+                else if (!ctx.Channel.IsPrivate
+                         && ctx.Message.Author.Id == 197163728867688448
+                         && compatResult.Results.Values.Any(i =>
+                             i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                             || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase))
+                )
                 {
-                    result.AppendLine($"{authorMention} searched for: ***{request.search.Sanitize(replaceBackTicks: true)}***");
-                    if (request.search.Contains("persona", StringComparison.InvariantCultureIgnoreCase)
-                        || request.search.Contains("p5", StringComparison.InvariantCultureIgnoreCase))
-                        result.AppendLine("Did you try searching for **__Unnamed__** instead?");
-                    else if (!ctx.Channel.IsPrivate
-                             && ctx.Message.Author.Id == 197163728867688448
-                             && (compatResult.Results.Values.Any(i =>
-                                 i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
-                                 || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)))
-                    )
-                    {
-                        var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
-                        result.AppendLine($"One day this meme will die {sqvat}");
-                    }
-                }
-                else
-                {
-                    var formattedHeader = string.Format(request.customHeader, authorMention, request.amountRequested, null, null);
-                    result.AppendLine(formattedHeader.Replace("   ", " ").Replace("  ", " "));
+                    var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
+                    result.AppendLine($"One day this meme will die {sqvat}");
                 }
                 result.AppendFormat(returnCode.info, compatResult.SearchTerm);
                 yield return result.ToString();
@@ -509,20 +501,20 @@ namespace CompatBot.Commands
                     if (trimmedList.Count > 0)
                         sortedList = trimmedList;
 
-                    var searchTerm = request.search ?? @"¯\_(ツ)_/¯";
+                    var searchTerm = request.Search ?? @"¯\_(ツ)_/¯";
                     var searchHits = sortedList.Where(t => t.score > 0.5
                                                            || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
                                                            || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
-                    foreach (var title in searchHits.Select(t => t.info?.Title).Distinct())
+                    foreach (var title in searchHits.Select(t => t.info.Title).Distinct())
                     {
                         StatsStorage.GameStatCache.TryGetValue(title, out int stat);
                         StatsStorage.GameStatCache.Set(title, ++stat, StatsStorage.CacheTime);
                     }
-                    foreach (var resultInfo in sortedList.Take(request.amountRequested))
+                    foreach (var resultInfo in sortedList.Take(request.AmountRequested))
                     {
                         var info = resultInfo.AsString();
 #if DEBUG
-                        info = $"{StringUtils.InvisibleSpacer}`{CompatApiResultUtils.GetScore(request.search, resultInfo.info):0.000000}` {info}";
+                        info = $"{StringUtils.InvisibleSpacer}`{CompatApiResultUtils.GetScore(request.Search, resultInfo.info):0.000000}` {info}";
 #endif
                         result.AppendLine(info);
                     }
@@ -550,28 +542,35 @@ namespace CompatBot.Commands
 
         public static async Task ImportCompatListAsync()
         {
-            var list = await client.GetCompatListSnapshotAsync(Config.Cts.Token).ConfigureAwait(false);
-            using var db = new ThumbnailDb();
+            var list = await Client.GetCompatListSnapshotAsync(Config.Cts.Token).ConfigureAwait(false);
+            if (list is null)
+                return;
+            
+            await using var db = new ThumbnailDb();
             foreach (var kvp in list.Results)
             {
                 var (productCode, info) = kvp;
                 var dbItem = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
-                if (dbItem == null)
+                if (dbItem is null
+                    && await Client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false) is {} compatItemSearchResult
+                    && compatItemSearchResult.Results.TryGetValue(productCode, out var compatItem))
                 {
-                    var compatItemSearchResult = await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false);
-                    if (compatItemSearchResult.Results.TryGetValue(productCode, out var compatItem))
-                        dbItem = db.Thumbnail.Add(new Thumbnail
-                        {
-                            ProductCode = productCode,
-                            Name = compatItem.Title,
-                        }).Entity;
+                    dbItem = (await db.Thumbnail.AddAsync(new Thumbnail
+                    {
+                        ProductCode = productCode,
+                        Name = compatItem.Title,
+                    }).ConfigureAwait(false)).Entity;
                 }
-                if (dbItem == null)
+                if (dbItem is null)
+                {
                     Config.Log.Debug($"Missing product code {productCode} in {nameof(ThumbnailDb)}");
+                    dbItem = new Thumbnail();
+                }
                 if (Enum.TryParse(info.Status, out CompatStatus status))
                 {
                     dbItem.CompatibilityStatus = status;
-                    if (info.Date is string d && DateTime.TryParseExact(d, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date))
+                    if (info.Date is string d
+                        && DateTime.TryParseExact(d, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date))
                         dbItem.CompatibilityChangeDate = date.Ticks;
                 }
                 else
@@ -585,7 +584,7 @@ namespace CompatBot.Commands
             var scoreJson = "metacritic_ps3.json";
             string json;
             if (File.Exists(scoreJson))
-                json = File.ReadAllText(scoreJson);
+                json = await File.ReadAllTextAsync(scoreJson).ConfigureAwait(false);
             else
             {
                 Config.Log.Warn($"Missing {scoreJson}, trying to get an online copy...");
@@ -601,7 +600,8 @@ namespace CompatBot.Commands
                 }
             }
 
-            var scoreList = JsonConvert.DeserializeObject<List<Metacritic>>(json);
+            var scoreList = JsonSerializer.Deserialize<List<Metacritic>>(json) ?? new();
+            
             Config.Log.Debug($"Importing {scoreList.Count} Metacritic items");
             var duplicates = new List<Metacritic>();
             duplicates.AddRange(
@@ -610,7 +610,7 @@ namespace CompatBot.Commands
             );
             duplicates.AddRange(
                 scoreList.Where(i => i.Title.Contains("A Telltale Game"))
-                    .Select(i => i.WithTitle(i.Title.Substring(0, i.Title.IndexOf("A Telltale Game") - 1).TrimEnd(' ', '-', ':')))
+                    .Select(i => i.WithTitle(i.Title.Substring(0, i.Title.IndexOf("A Telltale Game", StringComparison.Ordinal) - 1).TrimEnd(' ', '-', ':')))
             );
             duplicates.AddRange(
                 scoreList.Where(i => i.Title.StartsWith("Ratchet & Clank Future"))
@@ -625,7 +625,7 @@ namespace CompatBot.Commands
                     .Select(i => i.WithTitle(i.Title.Replace("HAWX", "H.A.W.X")))
                 );
 
-            using var db = new ThumbnailDb();
+            await using var db = new ThumbnailDb();
             foreach (var mcScore in scoreList.Where(s => s.CriticScore > 0 || s.UserScore > 0))
             {
                 if (Config.Cts.IsCancellationRequested)
@@ -633,7 +633,7 @@ namespace CompatBot.Commands
 
                 var item = db.Metacritic.FirstOrDefault(i => i.Title == mcScore.Title);
                 if (item == null)
-                    item = db.Metacritic.Add(mcScore).Entity;
+                    item = (await db.Metacritic.AddAsync(mcScore).ConfigureAwait(false)).Entity;
                 else
                 {
                     item.CriticScore = mcScore.CriticScore;
@@ -663,12 +663,13 @@ namespace CompatBot.Commands
                 {
                     try
                     {
-                        var searchResult = await client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(title), Config.Cts.Token).ConfigureAwait(false);
-                        var compatListMatches = searchResult.Results
+                        var searchResult = await Client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(title), Config.Cts.Token).ConfigureAwait(false);
+                        var compatListMatches = searchResult?.Results
                             .Select(i => (productCode: i.Key, titleInfo: i.Value, coef: Math.Max(title.GetFuzzyCoefficientCached(i.Value.Title), title.GetFuzzyCoefficientCached(i.Value.AlternativeTitle))))
                             .Where(i => i.coef > 0.85)
                             .OrderByDescending(i => i.coef)
-                            .ToList();
+                            .ToList()
+                            ?? new List<(string productCode, TitleInfo titleInfo, double coef)>();
                         if (compatListMatches.Any(i => i.coef > 0.99))
                             compatListMatches = compatListMatches.Where(i => i.coef > 0.99).ToList();
                         else if (compatListMatches.Any(i => i.coef > 0.95))
@@ -678,21 +679,21 @@ namespace CompatBot.Commands
                         foreach ((string productCode, TitleInfo titleInfo, double coef) in compatListMatches)
                         {
                             var dbItem = await db.Thumbnail.FirstOrDefaultAsync(i => i.ProductCode == productCode).ConfigureAwait(false);
-                            if (dbItem == null)
-                                dbItem = db.Thumbnail.Add(new Thumbnail
+                            if (dbItem is null)
+                                dbItem = (await db.Thumbnail.AddAsync(new Thumbnail
                                 {
                                     ProductCode = productCode,
                                     Name = titleInfo.Title,
-                                }).Entity;
-                            if (dbItem != null)
-                            {
-                                dbItem.Name = titleInfo.Title;
-                                if (Enum.TryParse(titleInfo.Status, out CompatStatus status))
-                                    dbItem.CompatibilityStatus = status;
-                                if (DateTime.TryParseExact(titleInfo.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date))
-                                    dbItem.CompatibilityChangeDate = date.Ticks;
-                                matches.Add((dbItem, coef));
-                            }
+                                }).ConfigureAwait(false)).Entity;
+                            if (dbItem is null)
+                                continue;
+                            
+                            dbItem.Name = titleInfo.Title;
+                            if (Enum.TryParse(titleInfo.Status, out CompatStatus status))
+                                dbItem.CompatibilityStatus = status;
+                            if (DateTime.TryParseExact(titleInfo.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date))
+                                dbItem.CompatibilityChangeDate = date.Ticks;
+                            matches.Add((dbItem, coef));
                         }
                         await db.SaveChangesAsync().ConfigureAwait(false);
                     }
@@ -701,7 +702,7 @@ namespace CompatBot.Commands
                         Config.Log.Warn(e);
                     }
                 }
-                matches = matches.Where(i => !Regex.IsMatch(i.thumb.Name, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline)).ToList();
+                matches = matches.Where(i => !Regex.IsMatch(i.thumb.Name ?? "", @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline)).ToList();
                 //var bestMatch = matches.FirstOrDefault();
                 //Config.Log.Trace($"Best title match for [{item.Title}] is [{bestMatch.thumb.Name}] with score {bestMatch.coef:0.0000}");
                 if (matches.Count > 0)

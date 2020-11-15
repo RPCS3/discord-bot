@@ -14,7 +14,7 @@ namespace CompatBot.Commands
     {
         [Command("report"), RequiresWhitelistedRole]
         [Description("Adds specified message to the moderation queue")]
-        public async Task Report(CommandContext ctx, [Description("Message ID from current channel to report")] ulong messageId, [RemainingText, Description("Optional report comment")] string comment = null)
+        public async Task Report(CommandContext ctx, [Description("Message ID from current channel to report")] ulong messageId, [RemainingText, Description("Optional report comment")] string? comment = null)
         {
             try
             {
@@ -29,11 +29,17 @@ namespace CompatBot.Commands
 
         [Command("report"), RequiresWhitelistedRole]
         [Description("Adds specified message to the moderation queue")]
-        public async Task Report(CommandContext ctx, [Description("Message link to report")] string messageLink, [RemainingText, Description("Optional report comment")] string comment = null)
+        public async Task Report(CommandContext ctx, [Description("Message link to report")] string messageLink, [RemainingText, Description("Optional report comment")] string? comment = null)
         {
             try
             {
                 var msg = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false);
+                if (msg is null)
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Can't find linked message").ConfigureAwait(false);
+                    return;
+                }
+                
                 await ReportMessage(ctx, comment, msg);
             }
             catch (Exception)
@@ -94,10 +100,10 @@ namespace CompatBot.Commands
             await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
         }
 
-        public static async Task ToggleBadUpdateAnnouncementAsync(DiscordMessage message)
+        public static async Task ToggleBadUpdateAnnouncementAsync(DiscordMessage? message)
         {
             var embed = message?.Embeds?.FirstOrDefault();
-            if (embed == null)
+            if (message is null || embed is null)
                 return;
 
             var result = new DiscordEmbedBuilder(embed);
@@ -132,7 +138,7 @@ namespace CompatBot.Commands
             await message.UpdateOrCreateMessageAsync(message.Channel, embed: result).ConfigureAwait(false);
         }
 
-        private static async Task ReportMessage(CommandContext ctx, string comment, DiscordMessage msg)
+        private static async Task ReportMessage(CommandContext ctx, string? comment, DiscordMessage msg)
         {
             if (msg.Reactions.Any(r => r.IsMe && r.Emoji == Config.Reactions.Moderated))
             {

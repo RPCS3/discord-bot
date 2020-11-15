@@ -13,9 +13,9 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class PastebinHandler : BaseSourceHandler
     {
-        private static readonly Regex ExternalLink = new Regex(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions);
+        private static readonly Regex ExternalLink = new(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions);
 
-        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             if (string.IsNullOrEmpty(message.Content))
                 return (null, null);
@@ -33,8 +33,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         && !string.IsNullOrEmpty(pid))
                     {
                         var uri = new Uri("https://pastebin.com/raw/" + pid);
-                        using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
-                        var buf = bufferPool.Rent(SnoopBufferSize);
+                        await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                        var buf = BufferPool.Rent(SnoopBufferSize);
                         try
                         {
                             var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
@@ -51,7 +51,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         }
                         finally
                         {
-                            bufferPool.Return(buf);
+                            BufferPool.Return(buf);
                         }
                     }
                 }
@@ -85,7 +85,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 using var client = HttpClientFactory.Create();
-                using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                await using var stream = await client.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
                 await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }

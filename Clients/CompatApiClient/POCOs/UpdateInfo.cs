@@ -1,5 +1,7 @@
 ﻿namespace CompatApiClient.POCOs
 {
+    #nullable disable
+    
     public class UpdateInfo
     {
         public int ReturnCode;
@@ -19,4 +21,6 @@
     {
         public string Download;
     }
+    
+    #nullable restore
 }

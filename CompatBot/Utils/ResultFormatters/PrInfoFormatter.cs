@@ -21,7 +21,7 @@ namespace CompatBot.Utils.ResultFormatters
             return new DiscordEmbedBuilder {Title = title, Url = issueInfo.HtmlUrl, Description = issueInfo.Title, Color = state.color};
         }
 
-        public static (string state, DiscordColor color) GetState(this PrInfo prInfo)
+        public static (string? state, DiscordColor color) GetState(this PrInfo prInfo)
         {
             if (prInfo.State == "open")
                 return ("Open", Config.Colors.PrOpen);
@@ -37,7 +37,7 @@ namespace CompatBot.Utils.ResultFormatters
             return (null, Config.Colors.DownloadLinks);
         }
 
-        public static (string state, DiscordColor color) GetState(this IssueInfo issueInfo)
+        public static (string? state, DiscordColor color) GetState(this IssueInfo issueInfo)
         {
             if (issueInfo.State == "open")
                 return ("Open", Config.Colors.PrOpen);

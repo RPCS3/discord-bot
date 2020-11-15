@@ -6,12 +6,13 @@ using System.Linq;
 namespace CompatBot.Utils
 {
     internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
+        where TKey: notnull
     {
-        internal readonly object syncObj = new object();
+        internal readonly object SyncObj = new();
         
         public FixedLengthBuffer(Func<TValue, TKey> keyGenerator)
         {
-            makeKey = keyGenerator ?? throw new ArgumentNullException(nameof(keyGenerator));
+            makeKey = keyGenerator;
         }
 
         public FixedLengthBuffer<TKey, TValue> CloneShallow()
@@ -19,8 +20,8 @@ namespace CompatBot.Utils
             var result = new FixedLengthBuffer<TKey, TValue>(makeKey);
             foreach (var key in keyList)
                 result.keyList.Add(key);
-            foreach (var kvp in lookup)
-                result.lookup[kvp.Key] = kvp.Value;
+            foreach (var (key, value) in lookup)
+                result.lookup[key] = value;
             return result;
         }
 
@@ -29,7 +30,7 @@ namespace CompatBot.Utils
 
         public void Add(TValue item)
         {
-            TKey key = makeKey(item);
+            var key = makeKey(item);
             if (!lookup.ContainsKey(key))
                 keyList.Add(key);
             lookup[key] = item;
@@ -53,10 +54,10 @@ namespace CompatBot.Utils
 
         public void TrimExcess()
         {
-            if (Count <= MaxLength)
+            if (Count <= FixedLengthBuffer<TKey, TValue>.MaxLength)
                 return;
 
-            TrimOldItems(Count - MaxLength);
+            TrimOldItems(Count - FixedLengthBuffer<TKey, TValue>.MaxLength);
         }
 
         public List<TValue> GetOldItems(int count)
@@ -64,15 +65,15 @@ namespace CompatBot.Utils
 
         public List<TValue> GetExcess()
         {
-            if (Count <= MaxLength)
+            if (Count <= FixedLengthBuffer<TKey, TValue>.MaxLength)
                 return new List<TValue>(0);
-            return GetOldItems(Count - MaxLength);
+            return GetOldItems(Count - FixedLengthBuffer<TKey, TValue>.MaxLength);
         }
 
-        public TValue Evict(TKey key)
+        public TValue? Evict(TKey key)
         {
             if (!lookup.TryGetValue(key, out var result))
-                return default;
+                return result;
             
             lookup.Remove(key);
             keyList.Remove(key);
@@ -115,12 +116,12 @@ namespace CompatBot.Utils
         public int Count => lookup.Count;
         public bool IsReadOnly => false;
 
-        public bool NeedTrimming => Count > MaxLength + 20;
+        public bool NeedTrimming => Count > FixedLengthBuffer<TKey, TValue>.MaxLength + 20;
         public TValue this[TKey index] => lookup[index];
 
-        private int MaxLength => Config.ChannelMessageHistorySize;
+        private static int MaxLength => Config.ChannelMessageHistorySize;
         private readonly Func<TValue, TKey> makeKey;
-        private readonly List<TKey> keyList = new List<TKey>();
-        private readonly Dictionary<TKey, TValue> lookup = new Dictionary<TKey, TValue>();
+        private readonly List<TKey> keyList = new();
+        private readonly Dictionary<TKey, TValue> lookup = new();
     }
 }

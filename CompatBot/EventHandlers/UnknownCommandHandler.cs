@@ -25,7 +25,7 @@ namespace CompatBot.EventHandlers
             if (ex is InvalidOperationException && ex.Message.Contains("No matching subcommands were found"))
                 ex = new CommandNotFoundException(e.Command.Name);
 
-            if (!(ex is CommandNotFoundException cnfe))
+            if (ex is not CommandNotFoundException cnfe)
             {
 
                 Config.Log.Error(e.Exception);
@@ -40,12 +40,11 @@ namespace CompatBot.EventHandlers
                 && (e.Context.Message.Content?.EndsWith("?") ?? false)
                 && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
             {
-                var prefixLen = e.Context.Prefix.Length; // workaround for resharper bug
                 var updatedContext = e.Context.CommandsNext.CreateContext(
                     e.Context.Message,
                     e.Context.Prefix,
                     cmd,
-                    e.Context.Message.Content[prefixLen..].Trim()
+                    e.Context.Message.Content[e.Context.Prefix.Length ..].Trim()
                 );
                 try { await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false); } catch { }
                 return;
@@ -54,11 +53,12 @@ namespace CompatBot.EventHandlers
             if (cnfe.CommandName.Length < 3)
                 return;
 
-            var pos = e.Context.Message?.Content?.IndexOf(cnfe.CommandName) ?? -1;
+            var content = e.Context.Message.Content;
+            var pos = content?.IndexOf(cnfe.CommandName) ?? -1;
             if (pos < 0)
                 return;
 
-            var gameTitle = e.Context.Message.Content[pos..].TrimEager().Trim(40);
+            var gameTitle = content![pos..].TrimEager().Trim(40);
             if (string.IsNullOrEmpty(gameTitle) || char.IsPunctuation(gameTitle[0]))
                 return;
 
@@ -123,7 +123,6 @@ namespace CompatBot.EventHandlers
                 return;
             }
 
-
             var ch = await e.Context.GetChannelForSpamAsync().ConfigureAwait(false);
             await ch.SendMessageAsync(
                 $"I am not sure what you wanted me to do, please use one of the following commands:\n" +
@@ -165,6 +164,6 @@ namespace CompatBot.EventHandlers
             return allKnownBotCommands;
         }
 
-        private static List<string> allKnownBotCommands;
+        private static List<string>? allKnownBotCommands;
     }
 }

@@ -15,7 +15,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public long LogSize { get; private set; }
         public long SourcePosition { get; private set; }
 
-        public (bool result, string reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+        public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
                 || fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
@@ -33,7 +33,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         {
             try
             {
-                using var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose);
+                await using var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose);
                 await sourceStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
                 fileStream.Seek(0, SeekOrigin.Begin);
                 using var zipArchive = SevenZipArchive.Open(fileStream);
@@ -44,7 +44,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                         && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                     {
                         LogSize = zipReader.Entry.Size;
-                        using var entryStream = zipReader.OpenEntryStream();
+                        await using var entryStream = zipReader.OpenEntryStream();
                         int read;
                         FlushResult flushed;
                         do

@@ -13,7 +13,7 @@ namespace CompatBot.Commands
             => NearestEvent(ctx, "Cyberpunk 2077");
 
         [Command("2077"), Hidden]
-        public Task Cp77(CommandContext ctx, [RemainingText] string junk)
+        public Task Cp77(CommandContext ctx, [RemainingText] string? _ = null)
             => NearestEvent(ctx, "Cyberpunk 2077");
 
         [Command("countdown")]

@@ -12,15 +12,15 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 {
     internal sealed class DiscordAttachmentHandler : BaseSourceHandler
     {
-        public override async Task<(ISource source, string failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
         {
             using var client = HttpClientFactory.Create();
             foreach (var attachment in message.Attachments)
             {
                 try
                 {
-                    using var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false);
-                    var buf = bufferPool.Rent(SnoopBufferSize);
+                    await using var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false);
+                    var buf = BufferPool.Rent(SnoopBufferSize);
                     try
                     {
                         var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
@@ -35,7 +35,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                     }
                     finally
                     {
-                        bufferPool.Return(buf);
+                        BufferPool.Return(buf);
                     }
                 }
                 catch (Exception e)
@@ -68,7 +68,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
             {
                 using var client = HttpClientFactory.Create();
-                using var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false);
+                await using var stream = await client.GetStreamAsync(attachment.Url, cancellationToken).ConfigureAwait(false);
                 await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
             }
         }

@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime;
 using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
@@ -16,10 +15,10 @@ namespace CompatBot
     internal static class Watchdog
     {
         private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
-        public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new ConcurrentQueue<DateTime>();
+        public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new();
         public static readonly Stopwatch TimeSinceLastIncomingMessage = Stopwatch.StartNew();
         private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < Config.IncomingMessageCheckIntervalInMin;
-        private static DiscordClient discordClient = null;
+        private static DiscordClient? discordClient;
 
         public static async Task Watch(DiscordClient client)
         {
@@ -71,20 +70,21 @@ namespace CompatBot
         {
             if (level == nameof(LogLevel.Info))
             {
-                if (message?.Contains("Session resumed") ?? false)
+                if (message.Contains("Session resumed"))
                     DisconnectTimestamps.Clear();
             }
             else if (level == nameof(LogLevel.Warn))
             {
-                if (message?.Contains("Dispatch:PRESENCES_REPLACE") ?? false)
+                if (message.Contains("Dispatch:PRESENCES_REPLACE")
+                    && discordClient != null)
                     BotStatusMonitor.RefreshAsync(discordClient).ConfigureAwait(false).GetAwaiter().GetResult();
-                else if (message?.Contains("Pre-emptive ratelimit triggered") ?? false)
+                else if (message.Contains("Pre-emptive ratelimit triggered"))
                     Config.TelemetryClient?.TrackEvent("preemptive-rate-limit");
             }
             else if (level == nameof(LogLevel.Fatal))
             {
-                if ((message?.Contains("Socket connection terminated") ?? false)
-                    || (message?.Contains("heartbeats were skipped. Issuing reconnect.") ?? false))
+                if ((message.Contains("Socket connection terminated"))
+                    || (message.Contains("heartbeats were skipped. Issuing reconnect.")))
                     DisconnectTimestamps.Enqueue(DateTime.UtcNow);
             }
         }
@@ -94,17 +94,20 @@ namespace CompatBot
             do
             {
                 await Task.Delay(Config.MetricsIntervalInSec).ConfigureAwait(false);
+                var gcMemInfo = GC.GetGCMemoryInfo();
                 using var process = Process.GetCurrentProcess();
-                if (Config.TelemetryClient is TelemetryClient tc)
-                {
-                    tc.TrackMetric("gw-latency", client.Ping);
-                    tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
-                    tc.TrackMetric("memory-gc-total", GC.GetTotalMemory(false));
-                    tc.TrackMetric("memory-process-private", process.PrivateMemorySize64);
-                    tc.TrackMetric("memory-process-ws", process.WorkingSet64);
-                    tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
-                    tc.Flush();
-                }
+                if (Config.TelemetryClient is not TelemetryClient tc)
+                    continue;
+                
+                tc.TrackMetric("gw-latency", client.Ping);
+                tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
+                tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
+                tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
+                tc.TrackMetric("memory-gc-commited", gcMemInfo.TotalCommittedBytes);
+                tc.TrackMetric("memory-process-private", process.PrivateMemorySize64);
+                tc.TrackMetric("memory-process-ws", process.WorkingSet64);
+                tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
+                tc.Flush();
             } while (!Config.Cts.IsCancellationRequested);
         }
 
@@ -112,22 +115,16 @@ namespace CompatBot
         {
             do
             {
+                var gcMemInfo = GC.GetGCMemoryInfo();
                 using var process = Process.GetCurrentProcess();
                 Config.Log.Info($"Process memory stats:\n" +
-                                $"GC: {GC.GetTotalMemory(false)}\n" +
+                                $"GC Heap: {gcMemInfo.HeapSizeBytes}\n" +
                                 $"Private: {process.PrivateMemorySize64}\n" +
                                 $"Working set: {process.WorkingSet64}\n" +
                                 $"Virtual: {process.VirtualMemorySize64}\n" +
                                 $"Paged: {process.PagedMemorySize64}\n" +
                                 $"Paged sytem: {process.PagedSystemMemorySize64}\n" +
                                 $"Non-pated system: {process.NonpagedSystemMemorySize64}");
-                var processMemory = process.PrivateMemorySize64;
-                var gcMemory = GC.GetTotalMemory(false);
-                if (processMemory / (double)gcMemory > 2)
-                {
-                    GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-                    GC.Collect(2, GCCollectionMode.Optimized, true, true); // force LOH compaction
-                }
                 await Task.Delay(TimeSpan.FromHours(1)).ConfigureAwait(false);
             } while (!Config.Cts.IsCancellationRequested);
         }

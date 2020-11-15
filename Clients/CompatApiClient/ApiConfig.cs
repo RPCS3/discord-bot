@@ -11,14 +11,14 @@ namespace CompatApiClient
 
     public static class ApiConfig
     {
-        public static readonly ProductInfoHeaderValue ProductInfoHeader = new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0");
+        public static readonly ProductInfoHeaderValue ProductInfoHeader = new("RPCS3CompatibilityBot", "2.0");
         public static int Version { get; } = 1;
-        public static Uri BaseUrl { get; } = new Uri("https://rpcs3.net/compatibility");
+        public static Uri BaseUrl { get; } = new("https://rpcs3.net/compatibility");
         public static string DateInputFormat { get; } = "yyyy-M-d";
         public static string DateOutputFormat { get; } = "yyy-MM-dd";
         public static string DateQueryFormat { get; } = "yyyyMMdd";
 
-        public static readonly ReturnCodeType ReturnCodes = new ReturnCodeType
+        public static readonly ReturnCodeType ReturnCodes = new()
         {
             {0, (true, false, true, "Results successfully retrieved.")},
             {1, (false, false, true, "No results.") },
@@ -28,15 +28,15 @@ namespace CompatApiClient
             {-3, (false, false, false, "Illegal characters found, please try again with a different search term.") },
         };
 
-        public static readonly List<int> ResultAmount = new List<int> {25, 50, 100, 200};
+        public static readonly List<int> ResultAmount = new(){25, 50, 100, 200};
 
-        public static readonly Dictionary<char, string[]> Directions = new Dictionary<char, string[]>
+        public static readonly Dictionary<char, string[]> Directions = new()
         {
             {'a', new []{"a", "asc", "ascending"}},
             {'d', new []{"d", "desc", "descending"} },
         };
 
-        public static readonly Dictionary<string, int> Statuses = new Dictionary<string, int>
+        public static readonly Dictionary<string, int> Statuses = new()
         {
             {"all", 0 },
             {"playable", 1 },
@@ -46,7 +46,7 @@ namespace CompatApiClient
             {"nothing", 5 },
         };
 
-        public static readonly Dictionary<string, int> SortTypes = new Dictionary<string, int>
+        public static readonly Dictionary<string, int> SortTypes = new()
         {
             {"id", 1 },
             {"title", 2 },
@@ -54,7 +54,7 @@ namespace CompatApiClient
             {"date", 4 },
         };
 
-        public static readonly Dictionary<char, string[]> ReleaseTypes = new Dictionary<char, string[]>
+        public static readonly Dictionary<char, string[]> ReleaseTypes = new()
         {
             {'b', new[] {"b", "d", "disc", "disk", "bluray", "blu-ray"}},
             {'n', new[] {"n", "p", "PSN"}},
@@ -64,6 +64,8 @@ namespace CompatApiClient
         public static readonly Dictionary<string, char> ReverseReleaseTypes;
 
         private static Dictionary<TV, TK> Reverse<TK, TV>(this Dictionary<TK, TV[]> dic, IEqualityComparer<TV> comparer)
+            where TK: notnull
+            where TV: notnull
         {
             return (
                 from kvp in dic
@@ -73,7 +75,7 @@ namespace CompatApiClient
         }
 
         public static readonly ILogger Log;
-        public static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
+        public static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
 
         static ApiConfig()
         {
@@ -86,6 +88,8 @@ namespace CompatApiClient
             catch (Exception e)
             {
                 Log.Fatal(e);
+                ReverseDirections = new Dictionary<string, char>();
+                ReverseReleaseTypes = new Dictionary<string, char>();
             }
         }
     }

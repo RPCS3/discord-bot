@@ -8,7 +8,7 @@ namespace CompatBot.Utils
     {
         public static readonly Dictionary<string, TimeZoneInfo> TimeZoneMap;
         
-        public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new Dictionary<string, string[]>
+        public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new()
         {
             ["PT"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },
             ["PST"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },
@@ -38,9 +38,11 @@ namespace CompatBot.Utils
                 if (uniqueNames.Contains(tzi.StandardName) || uniqueNames.Contains(tzi.DaylightName) || uniqueNames.Contains(tzi.Id))
                 {
                     Config.Log.Trace("[TZI] Looks like it's a match!");
-                    var acronyms = from tza in TimeZoneAcronyms
+                    var acronyms = (
+                        from tza in TimeZoneAcronyms
                         where tza.Value.Contains(tzi.StandardName) || tza.Value.Contains(tzi.DaylightName) || tza.Value.Contains(tzi.Id)
-                        select tza.Key;
+                        select tza.Key
+                    ).ToList();
                     Config.Log.Trace("[TZI] Matched acronyms: " + string.Join(", ", acronyms));
                     foreach (var tza in acronyms)
                         result[tza] = tzi;

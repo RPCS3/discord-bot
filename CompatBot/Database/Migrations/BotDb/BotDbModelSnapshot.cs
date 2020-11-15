@@ -14,29 +14,30 @@ namespace CompatBot.Database.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.0.0");
+                .HasAnnotation("ProductVersion", "5.0.0");
 
             modelBuilder.Entity("CompatBot.Database.BotState", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<string>("Key")
-                        .HasColumnName("key")
-                        .HasColumnType("TEXT");
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("key");
 
                     b.Property<string>("Value")
-                        .HasColumnName("value")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("value");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("Key")
                         .IsUnique()
-                        .HasName("bot_state_key");
+                        .HasDatabaseName("bot_state_key");
 
                     b.ToTable("bot_state");
                 });
@@ -45,20 +46,20 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<string>("Command")
                         .IsRequired()
-                        .HasColumnName("command")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("command");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("Command")
                         .IsUnique()
-                        .HasName("disabled_command_command");
+                        .HasDatabaseName("disabled_command_command");
 
                     b.ToTable("disabled_commands");
                 });
@@ -67,19 +68,19 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<ulong>("UserId")
-                        .HasColumnName("user_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("UserId")
                         .IsUnique()
-                        .HasName("doggo_user_id");
+                        .HasDatabaseName("doggo_user_id");
 
                     b.ToTable("doggo");
                 });
@@ -88,34 +89,34 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<long>("End")
-                        .HasColumnName("end")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("end");
 
                     b.Property<string>("EventName")
-                        .HasColumnName("event_name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("event_name");
 
                     b.Property<string>("Name")
-                        .HasColumnName("name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("name");
 
                     b.Property<long>("Start")
-                        .HasColumnName("start")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("start");
 
                     b.Property<int>("Year")
-                        .HasColumnName("year")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("year");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("Year", "EventName")
-                        .HasName("event_schedule_year_event_name");
+                        .HasDatabaseName("event_schedule_year_event_name");
 
                     b.ToTable("event_schedule");
                 });
@@ -124,34 +125,34 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<byte[]>("Attachment")
-                        .HasColumnName("attachment")
+                        .HasMaxLength(7340032)
                         .HasColumnType("BLOB")
-                        .HasMaxLength(7340032);
+                        .HasColumnName("attachment");
 
                     b.Property<string>("AttachmentFilename")
-                        .HasColumnName("attachment_filename")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("attachment_filename");
 
                     b.Property<string>("Keyword")
                         .IsRequired()
-                        .HasColumnName("keyword")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("keyword");
 
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasColumnName("text")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("text");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("Keyword")
                         .IsUnique()
-                        .HasName("explanation_keyword");
+                        .HasDatabaseName("explanation_keyword");
 
                     b.ToTable("explanation");
                 });
@@ -160,28 +161,28 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<ulong>("GuildId")
-                        .HasColumnName("guild_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("guild_id");
 
                     b.Property<string>("Nickname")
                         .IsRequired()
-                        .HasColumnName("nickname")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("nickname");
 
                     b.Property<ulong>("UserId")
-                        .HasColumnName("user_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("GuildId", "UserId")
                         .IsUnique()
-                        .HasName("forced_nickname_guild_id_user_id");
+                        .HasDatabaseName("forced_nickname_guild_id_user_id");
 
                     b.ToTable("forced_nicknames");
                 });
@@ -190,19 +191,19 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<ulong>("UserId")
-                        .HasColumnName("user_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("UserId")
                         .IsUnique()
-                        .HasName("kot_user_id");
+                        .HasDatabaseName("kot_user_id");
 
                     b.ToTable("kot");
                 });
@@ -211,23 +212,23 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<ulong>("DiscordId")
-                        .HasColumnName("discord_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("discord_id");
 
                     b.Property<bool>("Sudoer")
-                        .HasColumnName("sudoer")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("sudoer");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("DiscordId")
                         .IsUnique()
-                        .HasName("moderator_discord_id");
+                        .HasDatabaseName("moderator_discord_id");
 
                     b.ToTable("moderator");
                 });
@@ -236,47 +237,47 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<int>("Actions")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("actions")
                         .HasColumnType("INTEGER")
-                        .HasDefaultValue(11);
+                        .HasDefaultValue(11)
+                        .HasColumnName("actions");
 
                     b.Property<byte>("Context")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("context")
                         .HasColumnType("INTEGER")
-                        .HasDefaultValue((byte)3);
+                        .HasDefaultValue((byte)3)
+                        .HasColumnName("context");
 
                     b.Property<string>("CustomMessage")
-                        .HasColumnName("custom_message")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("custom_message");
 
                     b.Property<bool>("Disabled")
-                        .HasColumnName("disabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("disabled");
 
                     b.Property<string>("ExplainTerm")
-                        .HasColumnName("explain_term")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("explain_term");
 
                     b.Property<string>("String")
                         .IsRequired()
-                        .HasColumnName("string")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("string");
 
                     b.Property<string>("ValidatingRegex")
-                        .HasColumnName("validating_regex")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("validating_regex");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("String")
-                        .HasName("piracystring_string");
+                        .HasDatabaseName("piracystring_string");
 
                     b.ToTable("piracystring");
                 });
@@ -285,33 +286,33 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<string>("Category")
                         .IsRequired()
-                        .HasColumnName("category")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("category");
 
                     b.Property<long>("ExpirationTimestamp")
-                        .HasColumnName("expiration_timestamp")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("expiration_timestamp");
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasColumnName("key")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("key");
 
                     b.Property<int>("Value")
-                        .HasColumnName("value")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("value");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("Category", "Key")
                         .IsUnique()
-                        .HasName("stats_category_key");
+                        .HasDatabaseName("stats_category_key");
 
                     b.ToTable("stats");
                 });
@@ -320,52 +321,52 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<ulong>("DiscordId")
-                        .HasColumnName("discord_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("discord_id");
 
                     b.Property<string>("FullReason")
                         .IsRequired()
-                        .HasColumnName("full_reason")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("full_reason");
 
                     b.Property<ulong>("IssuerId")
-                        .HasColumnName("issuer_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("issuer_id");
 
                     b.Property<string>("Reason")
                         .IsRequired()
-                        .HasColumnName("reason")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("reason");
 
                     b.Property<bool>("Retracted")
-                        .HasColumnName("retracted")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("retracted");
 
                     b.Property<ulong?>("RetractedBy")
-                        .HasColumnName("retracted_by")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("retracted_by");
 
                     b.Property<string>("RetractionReason")
-                        .HasColumnName("retraction_reason")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("retraction_reason");
 
                     b.Property<long?>("RetractionTimestamp")
-                        .HasColumnName("retraction_timestamp")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("retraction_timestamp");
 
                     b.Property<long?>("Timestamp")
-                        .HasColumnName("timestamp")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("timestamp");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("DiscordId")
-                        .HasName("warning_discord_id");
+                        .HasDatabaseName("warning_discord_id");
 
                     b.ToTable("warning");
                 });
@@ -374,27 +375,27 @@ namespace CompatBot.Database.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
 
                     b.Property<ulong>("GuildId")
-                        .HasColumnName("guild_id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("guild_id");
 
                     b.Property<string>("InviteCode")
-                        .HasColumnName("invite_code")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("invite_code");
 
                     b.Property<string>("Name")
-                        .HasColumnName("name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("name");
 
                     b.HasKey("Id")
                         .HasName("id");
 
                     b.HasIndex("GuildId")
                         .IsUnique()
-                        .HasName("whitelisted_invite_guild_id");
+                        .HasDatabaseName("whitelisted_invite_guild_id");
 
                     b.ToTable("whitelisted_invites");
                 });

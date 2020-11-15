@@ -25,10 +25,10 @@ namespace CompatBot
 {
     internal static class Program
     {
-        private static readonly SemaphoreSlim InstanceCheck = new SemaphoreSlim(0, 1);
-        private static readonly SemaphoreSlim ShutdownCheck = new SemaphoreSlim(0, 1);
+        private static readonly SemaphoreSlim InstanceCheck = new(0, 1);
+        private static readonly SemaphoreSlim ShutdownCheck = new(0, 1);
         // pre-load the assembly so it won't fail after framework update while the process is still running
-        private static readonly Assembly diagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
+        private static readonly Assembly DiagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
         internal const ulong InvalidChannelId = 13;
 
         internal static async Task Main(string[] args)
@@ -39,12 +39,12 @@ namespace CompatBot
             if (args.Length > 0 && args[0] == "--dry-run")
             {
                 Console.WriteLine("Database path: " + Path.GetDirectoryName(Path.GetFullPath(DbImporter.GetDbPath("fake.db", Environment.SpecialFolder.ApplicationData))));
-                if (Assembly.GetEntryAssembly().GetCustomAttribute<UserSecretsIdAttribute>() != null)
+                if (Assembly.GetEntryAssembly()?.GetCustomAttribute<UserSecretsIdAttribute>() != null)
                     Console.WriteLine("Bot config path: " + Path.GetDirectoryName(Path.GetFullPath(Config.GoogleApiConfigPath)));
                 return;
             }
 
-            if (Process.GetCurrentProcess().Id == 0)
+            if (Environment.ProcessId == 0)
                 Config.Log.Info("Well, this was unexpected");
             var singleInstanceCheckThread = new Thread(() =>
             {
@@ -95,11 +95,11 @@ namespace CompatBot
                     }
                 }
 
-                using (var db = new BotDb())
+                await using (var db = new BotDb())
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
-                using (var db = new ThumbnailDb())
+                await using (var db = new ThumbnailDb())
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
 
@@ -158,7 +158,6 @@ namespace CompatBot
                 commands.RegisterCommands<Events>();
                 commands.RegisterCommands<E3>();
                 commands.RegisterCommands<Cyberpunk2077>();
-                commands.RegisterCommands<Rpcs3Ama>();
                 commands.RegisterCommands<BotStats>();
                 commands.RegisterCommands<Syscall>();
                 commands.RegisterCommands<ForcedNicknames>();
@@ -180,7 +179,7 @@ namespace CompatBot
                                     var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
                                     if (owners.Count > 1)
                                         msg.AppendLine();
-                                    using var db = new BotDb();
+                                    await using var db = new BotDb();
                                     foreach (var owner in owners)
                                     {
                                         msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
@@ -240,7 +239,7 @@ namespace CompatBot
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
-                client.MessageCreated += (_, __) => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
+                client.MessageCreated += (_, _) => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
                 client.MessageCreated += GlobalMessageCache.OnMessageCreated;
                 var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
@@ -296,8 +295,8 @@ namespace CompatBot
                 }
 
                 ulong? channelId = null;
-                string restartMsg = null;
-                using (var db = new BotDb())
+                string? restartMsg = null;
+                await using (var db = new BotDb())
                 {
                     var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
                     if (chState != null)
@@ -312,7 +311,7 @@ namespace CompatBot
                         restartMsg = msgState.Value;
                         db.BotState.Remove(msgState);
                     }
-                    db.SaveChanges();
+                    await db.SaveChangesAsync().ConfigureAwait(false);
                 }
                 if (string.IsNullOrEmpty(restartMsg))
                     restartMsg = null;
@@ -356,13 +355,13 @@ namespace CompatBot
                 {
                     if (client.Ping > 1000)
                         Config.Log.Warn($"High ping detected: {client.Ping}");
-                    await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(dt => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(_ => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
                 }
                 await backgroundTasks.ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                if (!Config.inMemorySettings.ContainsKey("shutdown"))
+                if (!Config.InMemorySettings.ContainsKey("shutdown"))
                     Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
             }
             finally
@@ -372,7 +371,7 @@ namespace CompatBot
                 if (singleInstanceCheckThread.IsAlive)
                     singleInstanceCheckThread.Join(100);
             }
-            if (!Config.inMemorySettings.ContainsKey("shutdown"))
+            if (!Config.InMemorySettings.ContainsKey("shutdown"))
                 Sudo.Bot.Restart(InvalidChannelId, null);
         }
     }

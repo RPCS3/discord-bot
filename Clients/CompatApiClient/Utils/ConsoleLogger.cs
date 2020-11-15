@@ -5,7 +5,7 @@ namespace CompatApiClient.Utils
 {
     public static class ConsoleLogger
     {
-        public static void PrintError(Exception e, HttpResponseMessage response, bool isError = true)
+        public static void PrintError(Exception e, HttpResponseMessage? response, bool isError = true)
         {
             if (isError)
                 ApiConfig.Log.Error(e, "HTTP error");
@@ -16,7 +16,7 @@ namespace CompatApiClient.Utils
 
             try
             {
-                ApiConfig.Log.Info(response.RequestMessage.RequestUri);
+                ApiConfig.Log.Info(response.RequestMessage?.RequestUri);
                 var msg = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 ApiConfig.Log.Warn(msg);
             }

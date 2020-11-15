@@ -16,11 +16,11 @@ namespace CompatBot.EventHandlers
 
     internal static class EmpathySimulationHandler
     {
-        private static readonly TCache MessageQueue = new TCache();
+        private static readonly TCache MessageQueue = new();
         private static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
-        private static readonly MemoryCache Throttling = new MemoryCache(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
+        private static readonly MemoryCache Throttling = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
-        public static async Task OnMessageCreated(DiscordClient _c, MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
@@ -38,7 +38,7 @@ namespace CompatBot.EventHandlers
                 MessageQueue[args.Channel.Id] = queue = new ConcurrentQueue<DiscordMessage>();
             queue.Enqueue(args.Message);
             while (queue.Count > 10)
-                queue.TryDequeue(out _);
+                queue.TryDequeue(out var _);
             var content = args.Message.Content;
             if (string.IsNullOrEmpty(content))
                 return;
@@ -74,7 +74,7 @@ namespace CompatBot.EventHandlers
             if (channel.IsPrivate)
                 return;
 
-            if (message?.Author == null)
+            if (message.Author == null)
                 return;
 
             if (message.Author.IsCurrent)

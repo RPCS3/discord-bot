@@ -11,8 +11,6 @@ namespace CompatBot.Commands.Attributes
         public RequiresBotSudoerRole(): base(reactOnFailure: Config.Reactions.Denied) { }
 
         protected override Task<bool> IsAllowed(CommandContext ctx, bool help)
-        {
-            return Task.FromResult(ctx.User.IsModerator(ctx.Client, ctx.Guild));
-        }
+            => Task.FromResult(ctx.User.IsModerator(ctx.Client, ctx.Guild));
     }
 }

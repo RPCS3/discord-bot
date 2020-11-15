@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -20,9 +19,9 @@ namespace CompatBot.ThumbScrapper
     internal static class GameTdbScraper
     {
         private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
-        private static readonly Uri TitleDownloadLink = new Uri("https://www.gametdb.com/ps3tdb.zip?LANG=EN");
-        private static readonly Regex CoverArtLink = new Regex(@"(?<cover_link>https?://art\.gametdb\.com/ps3/cover(?!full)[/\w\d]+\.jpg(\?\d+)?)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture);
-        private static readonly List<string> PreferredOrder = new List<string>{"coverHQ", "coverM", "cover"};
+        private static readonly Uri TitleDownloadLink = new("https://www.gametdb.com/ps3tdb.zip?LANG=EN");
+        private static readonly Regex CoverArtLink = new(@"(?<cover_link>https?://art\.gametdb\.com/ps3/cover(?!full)[/\w\d]+\.jpg(\?\d+)?)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture);
+        //private static readonly List<string> PreferredOrder = new List<string>{"coverHQ", "coverM", "cover"};
 
         public static async Task RunAsync(CancellationToken cancellationToken)
         {
@@ -43,7 +42,7 @@ namespace CompatBot.ThumbScrapper
             } while (!cancellationToken.IsCancellationRequested);
         }
 
-        public static async Task<string> GetThumbAsync(string productCode)
+        public static async Task<string?> GetThumbAsync(string productCode)
         {
             try
             {
@@ -72,63 +71,58 @@ namespace CompatBot.ThumbScrapper
                     return;
 
                 Config.Log.Debug("Scraping GameTDB for game titles...");
-                using (var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose))
+                await using var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose);
+                await using (var downloadStream = await HttpClient.GetStreamAsync(TitleDownloadLink, cancellationToken).ConfigureAwait(false))
+                    await downloadStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
+                fileStream.Seek(0, SeekOrigin.Begin);
+                using var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read);
+                var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase));
+                if (logEntry == null)
+                    throw new InvalidOperationException("No zip entries that match the .xml criteria");
+
+                await using var zipStream = logEntry.Open();
+                using var xmlReader = XmlReader.Create(zipStream, new XmlReaderSettings { Async = true });
+                xmlReader.ReadToFollowing("PS3TDB");
+                var version = xmlReader.GetAttribute("version");
+                if (!DateTime.TryParseExact(version, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var timestamp))
+                    return;
+
+                if (ScrapeStateProvider.IsFresh("PS3TDB", timestamp))
                 {
-                    using (var downloadStream = await HttpClient.GetStreamAsync(TitleDownloadLink).ConfigureAwait(false))
-                        await downloadStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                    using var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read);
-                    var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase));
-                    if (logEntry == null)
-                        throw new InvalidOperationException("No zip entries that match the .xml criteria");
-
-                    using var zipStream = logEntry.Open();
-                    using var xmlReader = XmlReader.Create(zipStream, new XmlReaderSettings { Async = true });
-                    xmlReader.ReadToFollowing("PS3TDB");
-                    var version = xmlReader.GetAttribute("version");
-                    if (!DateTime.TryParseExact(version, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var timestamp))
-                        return;
-
-                    if (ScrapeStateProvider.IsFresh("PS3TDB", timestamp))
-                    {
-                        await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
-                        return;
-                    }
-
-                    while (!cancellationToken.IsCancellationRequested && xmlReader.ReadToFollowing("game"))
-                    {
-                        if (xmlReader.ReadToFollowing("id"))
-                        {
-                            var productId = (await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false)).ToUpperInvariant();
-                            if (!ProductCodeLookup.ProductCode.IsMatch(productId))
-                                continue;
-
-                            string title = null;
-                            if (xmlReader.ReadToFollowing("locale") && xmlReader.ReadToFollowing("title"))
-                                title = await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false);
-
-                            if (!string.IsNullOrEmpty(title))
-                            {
-                                using var db = new ThumbnailDb();
-                                var item = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
-                                if (item == null)
-                                {
-                                    await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productId, Name = title}, cancellationToken).ConfigureAwait(false);
-                                    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                                }
-                                else
-                                {
-                                    if (item.Name != title && item.Timestamp == 0)
-                                    {
-                                        item.Name = title;
-                                        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                                    }
-                                }
-                            }
-                        }
-                    }
                     await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
+                    return;
                 }
+
+                while (!cancellationToken.IsCancellationRequested && xmlReader.ReadToFollowing("game"))
+                {
+                    if (!xmlReader.ReadToFollowing("id"))
+                        continue;
+                    
+                    var productId = (await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false)).ToUpperInvariant();
+                    if (!ProductCodeLookup.ProductCode.IsMatch(productId))
+                        continue;
+
+                    string? title = null;
+                    if (xmlReader.ReadToFollowing("locale") && xmlReader.ReadToFollowing("title"))
+                        title = await xmlReader.ReadElementContentAsStringAsync().ConfigureAwait(false);
+
+                    if (string.IsNullOrEmpty(title))
+                        continue;
+
+                    await using var db = new ThumbnailDb();
+                    var item = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
+                    if (item is null)
+                    {
+                        await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productId, Name = title}, cancellationToken).ConfigureAwait(false);
+                        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                    else if (item.Name != title && item.Timestamp == 0)
+                    {
+                        item.Name = title;
+                        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
                 await ScrapeStateProvider.SetLastRunTimestampAsync(container).ConfigureAwait(false);
             }
             catch (Exception e)

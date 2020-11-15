@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace PsnClient.POCOs
 {
+    #nullable disable
     // https://store.playstation.com/kamaji/api/valkyrie_storefront/00_09_000/user/stores
     // requires session
     public class Stores
@@ -13,7 +14,7 @@ namespace PsnClient.POCOs
     public class StoresHeader
     {
         public string Details;
-        [JsonProperty(PropertyName = "errorUUID")]
+        [JsonPropertyName("errorUUID")]
         public string ErrorUuid;
 
         public string MessageKey; // "success"
@@ -27,4 +28,5 @@ namespace PsnClient.POCOs
         public string SearchUrl;
         public string TumblerUrl;
     }
+    #nullable restore
 }

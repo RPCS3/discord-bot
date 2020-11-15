@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
-using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -16,9 +15,9 @@ namespace CompatBot.EventHandlers
 {
     internal static class UsernameSpoofMonitor
     {
-        private static readonly Dictionary<string, string> UsernameMapping = new Dictionary<string, string>();
-        private static readonly SemaphoreSlim UsernameLock = new SemaphoreSlim(1, 1);
-        private static readonly MemoryCache SpoofingReportThrottlingCache = new MemoryCache(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
+        private static readonly Dictionary<string, string> UsernameMapping = new();
+        private static readonly SemaphoreSlim UsernameLock = new(1, 1);
+        private static readonly MemoryCache SpoofingReportThrottlingCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
         private static readonly TimeSpan SnoozeDuration = TimeSpan.FromHours(1);
 
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
@@ -26,14 +25,17 @@ namespace CompatBot.EventHandlers
             if (args.UserBefore.Username == args.UserAfter.Username)
                 return;
 
-            var potentialTargets = GetPotentialVictims(c, c.GetMember(args.UserAfter), true, false);
+            var m = c.GetMember(args.UserAfter);
+            if (m is null)
+                return;
+            
+            var potentialTargets = GetPotentialVictims(c, m, true, false);
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashMobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
-            var m = c.GetMember(args.UserAfter);
             await c.ReportAsync("🕵️ Potential user impersonation",
                 $"User {m.GetMentionWithNickname()} has changed their __username__ from " +
                 $"**{args.UserBefore.Username.Sanitize()}#{args.UserBefore.Discriminator}** to " +
@@ -51,7 +53,7 @@ namespace CompatBot.EventHandlers
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashMobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
             await c.ReportAsync("🕵️ Potential user impersonation",
@@ -68,7 +70,7 @@ namespace CompatBot.EventHandlers
             if (!potentialTargets.Any())
                 return;
 
-            if (await IsFlashmobAsync(c, potentialTargets).ConfigureAwait(false))
+            if (await IsFlashMobAsync(c, potentialTargets).ConfigureAwait(false))
                 return;
 
             await c.ReportAsync("🕵️ Potential user impersonation",
@@ -77,7 +79,7 @@ namespace CompatBot.EventHandlers
                 ReportSeverity.Medium);
         }
 
-        internal static List<DiscordMember> GetPotentialVictims(DiscordClient client, DiscordMember newMember, bool checkUsername, bool checkNickname, List<DiscordMember> listToCheckAgainst = null)
+        internal static List<DiscordMember> GetPotentialVictims(DiscordClient client, DiscordMember newMember, bool checkUsername, bool checkNickname, List<DiscordMember>? listToCheckAgainst = null)
         {
             var membersWithRoles = listToCheckAgainst ??
                                    client.Guilds.SelectMany(guild => guild.Value.Members.Values)
@@ -96,57 +98,58 @@ namespace CompatBot.EventHandlers
             return potentialTargets;
         }
 
-        private static async Task<bool> IsFlashmobAsync(DiscordClient client, List<DiscordMember> potentialVictims)
+        private static async Task<bool> IsFlashMobAsync(DiscordClient client, List<DiscordMember> potentialVictims)
         {
-            if (potentialVictims?.Count > 0)
-                try
+            if (potentialVictims.Count == 0)
+                return false;
+            
+            try
+            {
+                var displayName = GetCanonical(potentialVictims[0].DisplayName);
+                if (SpoofingReportThrottlingCache.TryGetValue(displayName, out string s) && !string.IsNullOrEmpty(s))
                 {
-                    var displayName = GetCanonical(potentialVictims[0].DisplayName);
-                    if (SpoofingReportThrottlingCache.TryGetValue(displayName, out string s) && !string.IsNullOrEmpty(s))
-                    {
-                        SpoofingReportThrottlingCache.Set(displayName, s, SnoozeDuration);
-                        return true;
-                    }
+                    SpoofingReportThrottlingCache.Set(displayName, s, SnoozeDuration);
+                    return true;
+                }
 
-                    if (potentialVictims.Count > 3)
-                    {
-                        SpoofingReportThrottlingCache.Set(displayName, "y", SnoozeDuration);
-                        var channel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-                        await channel.SendMessageAsync($"`{displayName.Sanitize()}` is a popular member! Snoozing notifications for an hour").ConfigureAwait(false);
-                        return true;
-                    }
-                }
-                catch (Exception e)
+                if (potentialVictims.Count > 3)
                 {
-                    Config.Log.Debug(e);
+                    SpoofingReportThrottlingCache.Set(displayName, "y", SnoozeDuration);
+                    var channel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
+                    await channel.SendMessageAsync($"`{displayName.Sanitize()}` is a popular member! Snoozing notifications for an hour").ConfigureAwait(false);
+                    return true;
                 }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Debug(e);
+            }
             return false;
         }
 
         private static string GetCanonical(string name)
         {
-            string result;
             if (UsernameLock.Wait(0))
                 try
                 {
-                    if (UsernameMapping.TryGetValue(name, out result))
+                    if (UsernameMapping.TryGetValue(name, out var result))
                         return result;
                 }
                 finally
                 {
                     UsernameLock.Release();
                 }
-            result = name.ToCanonicalForm();
+            var canonicalName = name.ToCanonicalForm();
             if (UsernameLock.Wait(0))
                 try
                 {
-                    UsernameMapping[name] = result;
+                    UsernameMapping[name] = canonicalName;
                 }
                 finally
                 {
                     UsernameLock.Release();
                 }
-            return result;
+            return canonicalName;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace CompatBot.EventHandlers
     {
         public static async Task OnMemberAdded(DiscordClient _, GuildMemberAddEventArgs args)
         {
-            using var db = new BotDb();
+            await using var db = new BotDb();
             var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == "motd").ConfigureAwait(false);
             if (explanation != null)
             {

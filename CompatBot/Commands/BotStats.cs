@@ -35,7 +35,7 @@ namespace CompatBot.Commands
             if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                 embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
             embed.AddField("API Tokens", GetConfiguredApiStats(), true)
-                .AddField("Memory Usage", $"GC: {GC.GetTotalMemory(false).AsStorageUnit()}\n" +
+                .AddField("Memory Usage", $"GC: {GC.GetGCMemoryInfo().HeapSizeBytes.AsStorageUnit()}/{GC.GetGCMemoryInfo().TotalAvailableMemoryBytes.AsStorageUnit()}\n" +
                                           $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
                                           $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
                                           $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
@@ -48,7 +48,7 @@ namespace CompatBot.Commands
                                           $"CPUs: {Environment.ProcessorCount}\n" +
                                           $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
             AppendPiracyStats(embed);
-            AppendCmdStats(ctx, embed);
+            AppendCmdStats(embed);
             AppendExplainStats(embed);
             AppendGameLookupStats(embed);
             AppendSyscallsStats(embed);
@@ -80,15 +80,15 @@ namespace CompatBot.Commands
                 var timestamps = db.Warning
                     .Where(w => w.Timestamp.HasValue && !w.Retracted)
                     .OrderBy(w => w.Timestamp)
-                    .Select(w => w.Timestamp.Value)
+                    .Select(w => w.Timestamp!.Value)
                     .ToList();
                 var firstWarnTimestamp = timestamps.FirstOrDefault();
                 var previousTimestamp = firstWarnTimestamp;
                 var longestGapBetweenWarning = 0L;
                 long longestGapStart = 0L, longestGapEnd = 0L;
-                var span24h = TimeSpan.FromHours(24).Ticks;
+                var span24H = TimeSpan.FromHours(24).Ticks;
                 var currentSpan = new Queue<long>();
-                long mostWarningsStart = 0L, mostWarningsEnd = 0L, daysWithoutWarnings = 0L;
+                long mostWarningsEnd = 0L, daysWithoutWarnings = 0L;
                 var mostWarnings = 0;
                 for (var i = 1; i < timestamps.Count; i++)
                 {
@@ -100,16 +100,16 @@ namespace CompatBot.Commands
                         longestGapStart = previousTimestamp;
                         longestGapEnd = currentTimestamp;
                     }
-                    if (newGap > span24h)
-                        daysWithoutWarnings += newGap / span24h;
+                    if (newGap > span24H)
+                        daysWithoutWarnings += newGap / span24H;
 
                     currentSpan.Enqueue(currentTimestamp);
-                    while (currentSpan.Count > 0 && currentTimestamp - currentSpan.Peek() > span24h)
+                    while (currentSpan.Count > 0 && currentTimestamp - currentSpan.Peek() > span24H)
                         currentSpan.Dequeue();
                     if (currentSpan.Count > mostWarnings)
                     {
                         mostWarnings = currentSpan.Count;
-                        mostWarningsStart = currentSpan.Peek();
+                        currentSpan.Peek();
                         mostWarningsEnd = currentTimestamp;
                     }
                     previousTimestamp = currentTimestamp;
@@ -117,12 +117,11 @@ namespace CompatBot.Commands
 
                 var utcNow = DateTime.UtcNow;
                 var yesterday = utcNow.AddDays(-1).Ticks;
-                var last24hWarnings = db.Warning.Where(w => w.Timestamp > yesterday && !w.Retracted).ToList();
-                var warnCount = last24hWarnings.Count;
+                var last24HWarnings = db.Warning.Where(w => w.Timestamp > yesterday && !w.Retracted).ToList();
+                var warnCount = last24HWarnings.Count;
                 if (warnCount > mostWarnings)
                 {
                     mostWarnings = warnCount;
-                    mostWarningsStart = last24hWarnings.Min(w => w.Timestamp.Value);
                     mostWarningsEnd = utcNow.Ticks;
                 }
                 var lastWarn = timestamps.Any() ? timestamps.Last() : (long?)null;
@@ -135,7 +134,7 @@ namespace CompatBot.Commands
                         longestGapStart = lastWarn.Value;
                         longestGapEnd = utcNow.Ticks;
                     }
-                    daysWithoutWarnings += currentGapBetweenWarnings / span24h;
+                    daysWithoutWarnings += currentGapBetweenWarnings / span24H;
                 }
                 // most warnings per 24h
                 var statsBuilder = new StringBuilder();
@@ -150,7 +149,7 @@ namespace CompatBot.Commands
                 {
                     statsBuilder.Append($"Warnings in the last 24h: **{warnCount}**");
                     if (warnCount == 0)
-                        statsBuilder.Append(" ").Append(BotReactionsHandler.RandomPositiveReaction);
+                        statsBuilder.Append(' ').Append(BotReactionsHandler.RandomPositiveReaction);
                     statsBuilder.AppendLine();
                 }
                 if (lastWarn.HasValue)
@@ -163,7 +162,7 @@ namespace CompatBot.Commands
             }
         }
 
-        private static void AppendCmdStats(CommandContext ctx, DiscordEmbedBuilder embed)
+        private static void AppendCmdStats(DiscordEmbedBuilder embed)
         {
             var commandStats = StatsStorage.CmdStatCache.GetCacheKeys<string>();
             var sortedCommandStats = commandStats
@@ -173,15 +172,15 @@ namespace CompatBot.Commands
                 .ToList();
             var totalCalls = sortedCommandStats.Sum(c => c.stat);
             var top = sortedCommandStats.Take(5).ToList();
-            if (top.Any())
-            {
-                var statsBuilder = new StringBuilder();
-                var n = 1;
-                foreach (var cmdStat in top)
-                    statsBuilder.AppendLine($"{n++}. {cmdStat.name} ({cmdStat.stat} call{(cmdStat.stat == 1 ? "" : "s")}, {cmdStat.stat * 100.0 / totalCalls:0.##}%)");
-                statsBuilder.AppendLine($"Total commands executed: {totalCalls}");
-                embed.AddField($"Top {top.Count} Recent Commands", statsBuilder.ToString().TrimEnd(), true);
-            }
+            if (top.Count == 0)
+                return;
+            
+            var statsBuilder = new StringBuilder();
+            var n = 1;
+            foreach (var (name, stat) in top)
+                statsBuilder.AppendLine($"{n++}. {name} ({stat} call{(stat == 1 ? "" : "s")}, {stat * 100.0 / totalCalls:0.##}%)");
+            statsBuilder.AppendLine($"Total commands executed: {totalCalls}");
+            embed.AddField($"Top {top.Count} Recent Commands", statsBuilder.ToString().TrimEnd(), true);
         }
 
         private static void AppendExplainStats(DiscordEmbedBuilder embed)
@@ -194,15 +193,15 @@ namespace CompatBot.Commands
                 .ToList();
             var totalExplains = sortedTerms.Sum(t => t.stat);
             var top = sortedTerms.Take(5).ToList();
-            if (top.Any())
-            {
-                var statsBuilder = new StringBuilder();
-                var n = 1;
-                foreach (var explain in top)
-                    statsBuilder.AppendLine($"{n++}. {explain.term} ({explain.stat} display{(explain.stat == 1 ? "" : "s")}, {explain.stat * 100.0 / totalExplains:0.##}%)");
-                statsBuilder.AppendLine($"Total explanations shown: {totalExplains}");
-                embed.AddField($"Top {top.Count} Recent Explanations", statsBuilder.ToString().TrimEnd(), true);
-            }
+            if (top.Count == 0)
+                return;
+            
+            var statsBuilder = new StringBuilder();
+            var n = 1;
+            foreach (var (term, stat) in top)
+                statsBuilder.AppendLine($"{n++}. {term} ({stat} display{(stat == 1 ? "" : "s")}, {stat * 100.0 / totalExplains:0.##}%)");
+            statsBuilder.AppendLine($"Total explanations shown: {totalExplains}");
+            embed.AddField($"Top {top.Count} Recent Explanations", statsBuilder.ToString().TrimEnd(), true);
         }
 
         private static void AppendGameLookupStats(DiscordEmbedBuilder embed)
@@ -215,18 +214,18 @@ namespace CompatBot.Commands
                 .ToList();
             var totalLookups = sortedTitles.Sum(t => t.stat);
             var top = sortedTitles.Take(5).ToList();
-            if (top.Any())
-            {
-                var statsBuilder = new StringBuilder();
-                var n = 1;
-                foreach (var title in top)
-                    statsBuilder.AppendLine($"{n++}. {title.title.Trim(40)} ({title.stat} search{(title.stat == 1 ? "" : "es")}, {title.stat * 100.0 / totalLookups:0.##}%)");
-                statsBuilder.AppendLine($"Total game lookups: {totalLookups}");
-                embed.AddField($"Top {top.Count} Recent Game Lookups", statsBuilder.ToString().TrimEnd(), true);
-            }
+            if (top.Count == 0)
+                return;
+            
+            var statsBuilder = new StringBuilder();
+            var n = 1;
+            foreach (var (title, stat) in top)
+                statsBuilder.AppendLine($"{n++}. {title.Trim(40)} ({stat} search{(stat == 1 ? "" : "es")}, {stat * 100.0 / totalLookups:0.##}%)");
+            statsBuilder.AppendLine($"Total game lookups: {totalLookups}");
+            embed.AddField($"Top {top.Count} Recent Game Lookups", statsBuilder.ToString().TrimEnd(), true);
         }
 
-        private void AppendSyscallsStats(DiscordEmbedBuilder embed)
+        private static void AppendSyscallsStats(DiscordEmbedBuilder embed)
         {
             try
             {
@@ -247,7 +246,7 @@ namespace CompatBot.Commands
             }
         }
 
-        private void AppendPawStats(DiscordEmbedBuilder embed)
+        private static void AppendPawStats(DiscordEmbedBuilder embed)
         {
             try
             {
@@ -259,7 +258,12 @@ namespace CompatBot.Commands
 
                 var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;
                 var sign = double.IsNaN(diff) || (double.IsFinite(diff) && !double.IsNegative(diff) && diff < 0.05) ? ":" : (kots > doggos ? ">" : "<");
-                var kot = sign == ">" ? GoodKot[new Random().Next(GoodKot.Length)] : sign == ":" ? "🐱" : MeanKot[new Random().Next(MeanKot.Length)];
+                var kot = sign switch
+                {
+                    ">" => GoodKot[new Random().Next(GoodKot.Length)],
+                    ":" => "🐱",
+                    _ => MeanKot[new Random().Next(MeanKot.Length)]
+                };
                 embed.AddField("🐾 Stats", $"{kot} {kots - 1} {sign} {doggos - 1} 🐶", true);
             }
             catch (Exception e)

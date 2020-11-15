@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace CompatBot.Utils
@@ -34,9 +35,9 @@ namespace CompatBot.Utils
             yield return item;
         }
 
-        public static T RandomElement<T>(this IList<T> collection, int? seed = null)
+        public static T? RandomElement<T>(this IList<T> collection, int? seed = null)
         {
-            if (collection?.Count > 0)
+            if (collection.Count > 0)
             {
                 var rng = seed.HasValue ? new Random(seed.Value) : new Random();
                 return collection[rng.Next(collection.Count)];

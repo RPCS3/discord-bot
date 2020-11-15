@@ -31,14 +31,14 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
 
         public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
         {
-            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            await using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
             await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
         }
 
         public static async Task<ISource> DetectArchiveHandlerAsync(string path, ICollection<IArchiveHandler> handlers)
         {
             var buf = new byte[4096];
-            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            await using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
             var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
             foreach (var handler in handlers)
             {

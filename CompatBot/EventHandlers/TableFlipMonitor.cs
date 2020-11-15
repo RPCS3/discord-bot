@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Utils;
 using DSharpPlus;
-using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers
@@ -38,11 +37,11 @@ namespace CompatBot.EventHandlers
                       content.Contains("┻━┻")))
                     return;
 
-                var tableIdx = content.IndexOf("┻━┻");
+                var tableIdx = content.IndexOf("┻━┻", StringComparison.Ordinal);
                 if (tableIdx < 0)
-                    tableIdx = content.IndexOf("┻━┻");
+                    tableIdx = content.IndexOf("┻━┻", StringComparison.Ordinal);
                 var faceIdx = content[..tableIdx].LastIndexOfAny(OpenParen);
-                var face = content.Substring(faceIdx, tableIdx - faceIdx);
+                var face = content[faceIdx..tableIdx];
                 if (face.Length > 30)
                     return;
 

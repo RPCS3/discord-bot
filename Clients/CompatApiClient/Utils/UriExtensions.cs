@@ -5,11 +5,11 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 
-namespace CompatApiClient
+namespace CompatApiClient.Utils
 {
     public static class UriExtensions
     {
-        private static readonly Uri FakeHost = new Uri("sc://q"); // s:// will be parsed as file:///s:// for some reason
+        private static readonly Uri FakeHost = new("sc://q"); // s:// will be parsed as file:///s:// for some reason
 
         public static NameValueCollection ParseQueryString(Uri uri)
         {
@@ -18,7 +18,7 @@ namespace CompatApiClient
             return uri.ParseQueryString();
         }
 
-        public static string GetQueryParameter(this Uri uri, string name)
+        public static string? GetQueryParameter(this Uri uri, string name)
         {
             var parameters = ParseQueryString(uri);
             return parameters[name];
@@ -51,7 +51,7 @@ namespace CompatApiClient
             return SetQueryValue(uri, FormatUriParams(parameters));
         }
 
-        public static Uri SetQueryParameters(this Uri uri, IEnumerable<KeyValuePair<string, string>> items)
+        public static Uri SetQueryParameters(this Uri uri, IEnumerable<KeyValuePair<string, string?>> items)
         {
             var parameters = ParseQueryString(uri);
             foreach (var item in items)
@@ -59,22 +59,25 @@ namespace CompatApiClient
             return SetQueryValue(uri, FormatUriParams(parameters));
         }
 
-        public static Uri SetQueryParameters(this Uri uri, IEnumerable<(string name, string value)> items)
+        public static Uri SetQueryParameters(this Uri uri, params (string name, string? value)[] items)
         {
             var parameters = ParseQueryString(uri);
-            foreach (var item in items)
-                parameters[item.name] = item.value;
+            foreach (var (name, value) in items)
+                parameters[name] = value;
             return SetQueryValue(uri, FormatUriParams(parameters));
         }
 
         public static string FormatUriParams(NameValueCollection parameters)
         {
-            if (parameters == null || parameters.Count == 0)
+            if (parameters.Count == 0)
                 return "";
 
             var result = new StringBuilder();
             foreach (var key in parameters.AllKeys)
             {
+                if (string.IsNullOrEmpty(key))
+                    continue;
+                
                 var value = parameters[key];
                 if (value == null)
                     continue;
@@ -89,7 +92,7 @@ namespace CompatApiClient
         private static Uri AddQueryValue(Uri uri, string queryToAppend)
         {
             var query = uri.IsAbsoluteUri ? uri.Query : new Uri(FakeHost, uri).Query;
-            if (!string.IsNullOrEmpty(query) && query.Length > 1)
+            if (query.Length > 1)
                 query = query[1..] + "&" + queryToAppend;
             else
                 query = queryToAppend;
