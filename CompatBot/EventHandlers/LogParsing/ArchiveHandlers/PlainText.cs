@@ -35,7 +35,6 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
                     var memory = writer.GetMemory(Config.MinimumBufferSize);
                     read = await sourceStream.ReadAsync(memory, cancellationToken);
                     writer.Advance(read);
-                    SourcePosition = sourceStream.Position;
                     flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                 } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
             }
