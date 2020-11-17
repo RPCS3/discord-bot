@@ -26,6 +26,7 @@ namespace CompatApiClient
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
                 IgnoreNullValues = true,
                 IncludeFields = true,
+                Converters = { new CompatApiCommitHashConverter(), },
             };
         }
 
