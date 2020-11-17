@@ -107,6 +107,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(code))
                 return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog);
 
+            string? thumbnailUrl = null;
             try
             {
                 var result = await CompatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
@@ -116,7 +117,7 @@ namespace CompatBot.EventHandlers
                 if (result?.ReturnCode == -1)
                     return TitleInfo.CommunicationError.AsEmbed(code);
 
-                var thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
+                thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
 
                 if (result?.Results != null && result.Results.TryGetValue(code, out var info))
                     return info.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
@@ -150,7 +151,7 @@ namespace CompatBot.EventHandlers
             catch (Exception e)
             {
                 Config.Log.Warn(e, $"Couldn't get compat result for {code}");
-                return TitleInfo.CommunicationError.AsEmbed(null);
+                return TitleInfo.CommunicationError.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
             }
         }
 
