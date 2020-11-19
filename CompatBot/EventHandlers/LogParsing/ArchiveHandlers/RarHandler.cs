@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
-                || fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
+                || header.Length == 0 && fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
             {
                 var firstEntry = Encoding.ASCII.GetString(header);
                 if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))

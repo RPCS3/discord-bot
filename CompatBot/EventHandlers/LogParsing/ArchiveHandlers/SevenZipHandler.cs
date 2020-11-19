@@ -18,10 +18,10 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
         {
             if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
-                || fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
+                || header.Length == 0 && fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
             {
                 if (fileSize > Config.AttachmentSizeLimit)
-                    return (false, $"Log size is too large: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
+                    return (false, $"Log size is too large for 7z format: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
 
                 return (true, null);
             }
