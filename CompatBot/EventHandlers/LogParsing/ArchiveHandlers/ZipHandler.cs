@@ -20,7 +20,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers
         {
 
             if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
-                || fileName.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
+                || header.Length == 0 && fileName.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
             {
                 var firstEntry = Encoding.ASCII.GetString(header);
                 if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
