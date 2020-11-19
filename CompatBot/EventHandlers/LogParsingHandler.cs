@@ -35,6 +35,7 @@ namespace CompatBot.EventHandlers
             new DropboxHandler(),
             new MegaHandler(),
             new OneDriveSourceHandler(),
+            new MediafireHandler(),
             new GenericLinkHandler(),
             new PastebinHandler(),
         };
