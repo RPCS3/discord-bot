@@ -74,6 +74,7 @@
     <ProjectReference Include="..\Clients\GithubClient\GithubClient.csproj" />
     <ProjectReference Include="..\Clients\MediafireClient\MediafireClient.csproj" />
     <ProjectReference Include="..\Clients\OneDriveClient\OneDriveClient.csproj" />
+    <ProjectReference Include="..\Clients\YandexDiskClient\YandexDiskClient.csproj" />
     <ProjectReference Include="..\HomoglyphConverter\HomoglyphConverter.csproj" />
     <ProjectReference Include="..\Clients\IrdLibraryClient\IrdLibraryClient.csproj" />
     <ProjectReference Include="..\Clients\PsnClient\PsnClient.csproj" />
