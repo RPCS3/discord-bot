@@ -81,10 +81,16 @@ namespace CompatBot
                 else if (message.Contains("Pre-emptive ratelimit triggered"))
                     Config.TelemetryClient?.TrackEvent("preemptive-rate-limit");
             }
+            else if (level == nameof(LogLevel.Error))
+            {
+                if (message.Contains("System.Threading.Tasks.TaskSchedulerException")
+                    || message.Contains("System.OutOfMemoryException"))
+                    Sudo.Bot.RestartNoSaving();
+            }
             else if (level == nameof(LogLevel.Fatal))
             {
-                if ((message.Contains("Socket connection terminated"))
-                    || (message.Contains("heartbeats were skipped. Issuing reconnect.")))
+                if (message.Contains("Socket connection terminated")
+                    || message.Contains("heartbeats were skipped. Issuing reconnect."))
                     DisconnectTimestamps.Enqueue(DateTime.UtcNow);
             }
         }
