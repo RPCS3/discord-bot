@@ -221,12 +221,12 @@ namespace CompatBot.Commands
                 else
                     msg.Value = restartMsg;
                 db.SaveChanges();
+                Config.TelemetryClient?.TrackEvent("Restart");
                 RestartNoSaving();
             }
 
-            private static void RestartNoSaving()
+            internal static void RestartNoSaving()
             {
-                Config.TelemetryClient?.TrackEvent("Restart");
                 Config.Log.Info("Restarting...");
                 using var self = new Process
                 {
