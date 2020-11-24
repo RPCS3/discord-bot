@@ -244,11 +244,13 @@ namespace CompatBot.Utils.ResultFormatters
                     && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase)
                     && ldrGameSerial.Equals(psnSerial, StringComparison.InvariantCultureIgnoreCase))
                 {
+                    collection["disc_to_psn_serial"] = serial;
                     collection["serial"] = psnSerial;
                     collection["game_category"] = "HG";
                 }
+                serial = collection["serial"] ?? "";
                 var titleUpdateInfoTask = PsnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
-                var gameInfo = await client.LookupGameInfoAsync(collection["serial"], collection["game_title"], true, category: collection["game_category"]).ConfigureAwait(false);
+                var gameInfo = await client.LookupGameInfoWithEmbedAsync(serial, collection["game_title"], true, category: collection["game_category"]).ConfigureAwait(false);
                 try
                 {
                     var titleUpdateInfo = await titleUpdateInfoTask.ConfigureAwait(false);
@@ -257,7 +259,11 @@ namespace CompatBot.Utils.ResultFormatters
 
                 }
                 catch {}
-                builder = new DiscordEmbedBuilder(gameInfo) {Thumbnail = null}; // or this will fuck up all formatting
+                builder = new DiscordEmbedBuilder(gameInfo.embedBuilder) {Thumbnail = null}; // or this will fuck up all formatting
+                TitleInfo? compatData = null;
+                if (gameInfo.compatResult?.Results?.TryGetValue(serial, out compatData) is true
+                    && compatData?.Status is string titleStatus)
+                    collection["game_status"] = titleStatus; 
                 collection["embed_title"] = builder.Title ?? "";
                 if (state.Error == LogParseState.ErrorCode.PiracyDetected)
                 {

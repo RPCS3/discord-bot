@@ -103,24 +103,28 @@ namespace CompatBot.EventHandlers
         }
 
         public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string? code, string? gameTitle = null, bool forLog = false, string? category = null)
+            => (await LookupGameInfoWithEmbedAsync(client, code, gameTitle, forLog, category).ConfigureAwait(false)).embedBuilder;
+        
+        public static async Task<(DiscordEmbedBuilder embedBuilder, CompatResult? compatResult)> LookupGameInfoWithEmbedAsync(this DiscordClient client, string? code, string? gameTitle = null, bool forLog = false, string? category = null)
         {
             if (string.IsNullOrEmpty(code))
-                return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog);
+                return (TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog), null);
 
             string? thumbnailUrl = null;
+            CompatResult? result = null;
             try
             {
-                var result = await CompatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
+                result = await CompatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
                 if (result?.ReturnCode == -2)
-                    return TitleInfo.Maintenance.AsEmbed(code);
+                    return (TitleInfo.Maintenance.AsEmbed(code), result);
 
                 if (result?.ReturnCode == -1)
-                    return TitleInfo.CommunicationError.AsEmbed(code);
+                    return (TitleInfo.CommunicationError.AsEmbed(code), result);
 
                 thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
 
                 if (result?.Results != null && result.Results.TryGetValue(code, out var info))
-                    return info.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
+                    return (info.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
 
                 if (category == "1P")
                 {
@@ -131,7 +135,7 @@ namespace CompatBot.EventHandlers
                         Pr = 4802,
                         Status = "Playable",
                     };
-                    return ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
+                    return (ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
                 }
                 if (category == "2P"
                     || category == "2G"
@@ -144,14 +148,14 @@ namespace CompatBot.EventHandlers
                     {
                         Status = "Nothing"
                     };
-                    return ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
+                    return (ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
                 }
-                return TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
+                return (TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e, $"Couldn't get compat result for {code}");
-                return TitleInfo.CommunicationError.AsEmbed(code, gameTitle, forLog, thumbnailUrl);
+                return (TitleInfo.CommunicationError.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
             }
         }
 
