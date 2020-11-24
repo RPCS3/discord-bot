@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
@@ -154,6 +155,12 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
             if (multiItems["failed_to_verify"].Contains("sce"))
                 notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
+            if (items["disc_to_psn_serial"] is string badSerial)
+                notes.Add("❌ This version of the game does not work on the emulator at this time");
+            else if (items["game_status"] is string gameStatus
+                     && Enum.TryParse(gameStatus, true, out CompatStatus status)
+                     && status < CompatStatus.Ingame)
+                notes.Add("❌ This game title does not work on the emulator at this time");
             if (brokenDump)
                 notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
             if (items["fw_version_installed"] is string fw && !string.IsNullOrEmpty(fw))
