@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using Microsoft.VisualStudio.Services.Directories;
 
 namespace CompatBot.Commands
 {
@@ -52,6 +53,7 @@ namespace CompatBot.Commands
 			}
 
 			var header = $"{mineCount}x💣\n";
+			var footer = "If something is cut off, blame Discord";
 			var maxMineCount = (width - 1) * (height - 1) * 2 / 3;
 			if (mineCount > maxMineCount)
 			{
@@ -90,9 +92,9 @@ namespace CompatBot.Commands
 					else
 						result.Append("||").Append(c).Append("||");
 				}
-				if (y < height - 1)
-					result.Append('\n');
+				result.Append('\n');
 			}
+			result.Append(footer);
 			await ctx.RespondAsync(result.ToString()).ConfigureAwait(false);
 		}
 
