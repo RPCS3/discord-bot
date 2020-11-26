@@ -29,7 +29,7 @@ namespace CompatBot.EventHandlers
                     await c.ReportAsync("🔣 Potential display name issue",
                         $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
-                        ReportSeverity.Medium);
+                        ReportSeverity.Low);
                     await DmAndRenameUserAsync(c, m, suggestedName).ConfigureAwait(false);
                 }
             }
@@ -52,7 +52,7 @@ namespace CompatBot.EventHandlers
                     await c.ReportAsync("🔣 Potential display name issue",
                         $"Member {member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
-                        ReportSeverity.Medium);
+                        ReportSeverity.Low);
                     await DmAndRenameUserAsync(c, member, suggestedName).ConfigureAwait(false);
                 }
             }
@@ -73,7 +73,7 @@ namespace CompatBot.EventHandlers
                     await c.ReportAsync("🔣 Potential display name issue",
                         $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
-                        ReportSeverity.Medium);
+                        ReportSeverity.Low);
                     await DmAndRenameUserAsync(c, args.Member, suggestedName).ConfigureAwait(false);
                 }
             }

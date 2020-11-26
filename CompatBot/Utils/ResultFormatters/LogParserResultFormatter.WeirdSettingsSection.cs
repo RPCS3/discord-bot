@@ -29,8 +29,9 @@ namespace CompatBot.Utils.ResultFormatters
             var hasTsxFa = items["cpu_extensions"]?.Contains("TSX-FA") ?? false;
             items["has_tsx"] = hasTsx ? EnabledMark : DisabledMark;
             items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
+            Version? buildVersion = null;
             if (items["build_branch"] == "HEAD"
-                && Version.TryParse(items["build_full_version"], out var buildVersion)
+                && Version.TryParse(items["build_full_version"], out buildVersion)
                 && buildVersion < TsxFaFixedVersion)
             {
                 if (items["enable_tsx"] == "Disabled" && hasTsx && !hasTsxFa)
@@ -158,6 +159,7 @@ namespace CompatBot.Utils.ResultFormatters
                     generalNotes.Add("ℹ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
+                                         && buildVersion < RdnaMsaaFixedVersion
                                          && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
                                          && !gpuInfo.Contains("RADV");
             if (items["msaa"] == "Disabled")
