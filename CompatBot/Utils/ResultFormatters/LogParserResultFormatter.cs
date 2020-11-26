@@ -59,6 +59,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static readonly Version AmdLastGoodOpenGLWindowsVersion = new(20, 1, 4);
         private static readonly Version NvidiaFullscreenBugFixed = new(0, 0, 6, 8204);
         private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
+        private static readonly Version RdnaMsaaFixedVersion  = new(0, 0, 13, 11300);
 
         private static readonly Dictionary<string, string> RsxPresentModeMap = new()
         {
