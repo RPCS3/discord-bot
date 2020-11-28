@@ -19,6 +19,7 @@ namespace CompatBot.Commands
     {
         private static readonly SemaphoreSlim LockObj = new(1, 1);
         private static readonly SemaphoreSlim ImportLockObj = new(1, 1);
+        private static readonly ProcessStartInfo RestartInfo = new("dotnet", $"run -c Release");
 
         [Group("bot"), Aliases("kot")]
         [Description("Commands to manage the bot instance")]
@@ -228,10 +229,7 @@ namespace CompatBot.Commands
             internal static void RestartNoSaving()
             {
                 Config.Log.Info("Restarting...");
-                using var self = new Process
-                {
-                    StartInfo = new ProcessStartInfo("dotnet", $"run -c Release")
-                };
+                using var self = new Process {StartInfo = RestartInfo};
                 self.Start();
                 Config.InMemorySettings["shutdown"] = "true";
                 Config.Cts.Cancel();
