@@ -210,11 +210,10 @@ namespace CompatBot.EventHandlers
 
                                     if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
                                     {
-                                        var previousMessage = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
-                                        var threshold = DateTime.UtcNow.AddMinutes(-10);
-                                        if (!previousMessage.Any(m => m.Author == message.Author
-                                                                      && m.Timestamp.UtcDateTime > threshold
-                                                                      && !string.IsNullOrEmpty(m.Content)))
+                                        var threshold = DateTime.UtcNow.AddMinutes(-15);
+                                        var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
+                                        previousMessages = previousMessages.TakeWhile((msg, num) => num < 15 || msg.Timestamp.UtcDateTime > threshold).ToList();
+                                        if (!previousMessages.Any(m => m.Author == message.Author && !string.IsNullOrEmpty(m.Content)))
                                         {
                                             var botSpamChannel = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                                             if (isHelpChannel)
