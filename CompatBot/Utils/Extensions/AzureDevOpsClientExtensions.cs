@@ -166,8 +166,8 @@ namespace CompatBot.Utils.Extensions
             // linux build
             var linuxBuildArtifact = artifacts.FirstOrDefault(a => a.Name.EndsWith(".GCC")
                                                                    || a.Name.EndsWith("Linux")
-                                                                   || a.Name.EndsWith("(clang)")
-                                                                   || a.Name.EndsWith("(gcc)"));
+                                                                   || a.Name.EndsWith("(gcc)")
+                                                                   || a.Name.EndsWith("(clang)"));
             var linuxBuild = linuxBuildArtifact?.Resource;
             if (linuxBuild?.DownloadUrl is string linDownloadUrl)
             {
