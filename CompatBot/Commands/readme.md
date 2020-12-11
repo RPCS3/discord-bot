@@ -18,8 +18,8 @@ This command group is intended to manage other command policies. The purpose of 
 
 `CompatList`
 ------------
-Command group dedicated for [game compatibility API](Clients/CompatApiClient).
-Game listing is heavily relied on [fuzzy string matching](CompatBot/Utils/Extensions#StringUtils) to sort by similarity score to the original request string.
+Command group dedicated for [game compatibility API](../../Clients/CompatApiClient).
+Game listing is heavily relied on [fuzzy string matching](../../CompatBot/Utils/Extensions#StringUtils) to sort by similarity score to the original request string.
 
 One fun feature is to prevent bot abuse by one specific user, that's just a home grown meme.
 
@@ -44,7 +44,7 @@ It also implements the event object model editor in a similar fashion as `Conten
 One of the more useful command groups, mainly used for tech support.
 It is providing the means to define and show short explanation, a sort of FAQ or a wiki.
 
-Each explanation has a `term` that defines the entry, and is how you can recall the explanation body. When searching for an explanation, if no direct match to term is found, some [fuzzy text match logic](CompatBot/Utils/Extensions#StringUtils) is applied.
+Each explanation has a `term` that defines the entry, and is how you can recall the explanation body. When searching for an explanation, if no direct match to term is found, some [fuzzy text match logic](../../CompatBot/Utils/Extensions#StringUtils) is applied.
 
 There's also an ability to attach a file to each explain. Media files are automatically recognized by the clients, and shown inline. This includes spoiler marks (which is implemented by simply prepending `SPOILER_` to the filename).
 
@@ -54,7 +54,7 @@ This command group is dedicated to management of Discord invite whitelist. By de
 
 `Ird`
 -----
-Simple command to look up available items from the [IRD Library](Clients/IrdLibraryClient).
+Simple command to look up available items from the [IRD Library](../../Clients/IrdLibraryClient).
 
 `Misc`
 ------
@@ -82,7 +82,7 @@ In case only one items is returned, it is show as an embed with the link to the 
 
 `Psn`
 -----
-Various (PSN-related)[Clients/PsnClient] commands.
+Various [PSN-related](../../Clients/PsnClient) commands.
 Most commonly used is the `!psn check updates` that is using PSN game update API to show links for the game updates.
 
 Same kind of anti-abuse measures is implemented here, as for the [`CompatList`](#CompatList).
