@@ -89,7 +89,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (info.Status is string status && StatusColors.TryGetValue(status, out var color))
             {
                 // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
-                var onlineOnlypart = info.Network == 1 ? " 🌐" : "";
+                var onlineOnlyPart = info.Network == 1 ? " 🌐" : "";
                 var pr = info.ToPrString(null, true);
                 var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
                 if (pr != null)
@@ -97,7 +97,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (!forLog && !string.IsNullOrEmpty(info.AlternativeTitle))
                     desc = info.AlternativeTitle + Environment.NewLine + desc;
                 if (!string.IsNullOrEmpty(info.WikiTitle))
-                    desc += $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={info.WikiTitle})";
+                    desc += $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={Uri.EscapeDataString(info.WikiTitle)})";
                 if (info.UsingLocalCache == true)
                     desc += " (cached)";
                 var cacheTitle = info.Title ?? gameTitle;
@@ -106,7 +106,7 @@ namespace CompatBot.Utils.ResultFormatters
                     StatsStorage.GameStatCache.TryGetValue(cacheTitle, out int stat);
                     StatsStorage.GameStatCache.Set(cacheTitle, ++stat, StatsStorage.CacheTime);
                 }
-                var title = $"{productCodePart}{cacheTitle?.Trim(200)}{onlineOnlypart}";
+                var title = $"{productCodePart}{cacheTitle?.Trim(200)}{onlineOnlyPart}";
                 if (string.IsNullOrEmpty(title))
                     desc = "";
                 return new DiscordEmbedBuilder
