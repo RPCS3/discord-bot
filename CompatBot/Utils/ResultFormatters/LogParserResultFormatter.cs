@@ -396,9 +396,9 @@ namespace CompatBot.Utils.ResultFormatters
             items["frame_limit_combined"] = (items["frame_limit"], items["vsync"]) switch
             {
                 ("Off", "true") => "VSync",
-                ("Off", _) => "Off",
-                (_, "true") => items["frame_limit"] + "+VSync",
-                _ => items["frame_limit"],
+                ("Off",      _) => "Off",
+                (    _, "true") => items["frame_limit"] + "+VSync",
+                _               => items["frame_limit"],
             };
             if (items["shader_mode"] is string sm)
             {

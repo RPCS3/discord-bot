@@ -73,11 +73,17 @@ namespace CompatBot.Utils.ResultFormatters
                             {
                                 num = m.Groups["another_number"].Value;
                                 name = "#" + num;
+                                if (!string.IsNullOrEmpty(m.Groups["comment_id"].Value))
+                                    name += " comment";
                             }
                             if (string.IsNullOrEmpty(num))
                                 continue;
 
-                            desc = desc.Replace(str, $"[{name}](https://github.com/RPCS3/rpcs3/issues/{num})");
+                            var commentLink = "";
+                            if (!string.IsNullOrEmpty(m.Groups["comment_id"].Value))
+                                commentLink = "#issuecomment-" + m.Groups["comment_id"].Value;
+                            var newLink = $"[{name}](https://github.com/RPCS3/rpcs3/issues/{num}{commentLink})";
+                            desc = desc.Replace(str, newLink);
                         }
                     }
                 }

@@ -336,11 +336,11 @@ namespace CompatBot.Commands
             {
                 var confidence = captions[0].Confidence switch
                 {
-                    double v when v > 0.98 => "It is",
-                    double v when v > 0.95 => "I'm pretty sure it is",
-                    double v when v > 0.9 => "I'm quite sure it is",
-                    double v when v > 0.8 => "I think it's",
-                    double v when v > 0.5 => "I'm not very smart, so my best guess is that it's",
+                    > 0.98 => "It is",
+                    > 0.95 => "I'm pretty sure it is",
+                    > 0.9 => "I'm quite sure it is",
+                    > 0.8 => "I think it's",
+                    > 0.5 => "I'm not very smart, so my best guess is that it's",
                     _ => "Ugh, idk? Might be",
                 };
                 msg = $"{confidence} {captions[0].Text.FixKot()}";
