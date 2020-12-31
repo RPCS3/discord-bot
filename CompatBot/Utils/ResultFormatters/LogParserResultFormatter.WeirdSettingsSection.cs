@@ -761,9 +761,6 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
 
-            if (items["spu_loop_detection"] == EnabledMark)
-                notes.Add("⚠ `SPU Loop Detection` is `Enabled`, and can cause visual artifacts");
-
             if (items["spu_threads"] is string spuThreads && spuThreads != "Auto")
                 notes.Add("⚠ Please set `SPU Thread Count` to `Auto` for best performance");
 
