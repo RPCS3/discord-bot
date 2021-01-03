@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -329,6 +330,11 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ This CPU is too weak and/or too old for PS3 emulation");
                 }
             }
+
+            if (items["memory_amount"] is string ramSizeStr
+                && double.TryParse(ramSizeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var ramSize)
+                && ramSize < 6)
+                notes.Add("⚠ 8 GB RAM or more is recommended for PS3 emulation");
 
             Version? oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
