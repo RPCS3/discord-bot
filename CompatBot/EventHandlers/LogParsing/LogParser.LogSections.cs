@@ -82,6 +82,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Lib Loader:"] = new(@"[Ll]oader: (?<lib_loader>.*?)\r?$", DefaultOptions),
                     ["Hook static functions:"] = new(@"Hook static functions: (?<hook_static_functions>.*?)\r?$", DefaultOptions),
                     ["Load libraries:"] = new(@"libraries:\r?\n(?<library_list>(.*?(- .*?|\[\])\r?\n)+)", DefaultOptions),
+                    ["Libraries Control:"] = new(@"Libraries Control:\r?\n(?<library_list>(.*?(- .*?|\[\])\r?\n)+)", DefaultOptions),
                     ["HLE lwmutex:"] = new(@"HLE lwmutex: (?<hle_lwmutex>.*?)\r?$", DefaultOptions),
                     ["Clocks scale:"] = new(@"Clocks scale: (?<clock_scale>.*?)\r?$", DefaultOptions),
                     ["Sleep Timers Accuracy:"] = new(@"Sleep Timers Accuracy: (?<sleep_timer>.*?)\r?$", DefaultOptions),

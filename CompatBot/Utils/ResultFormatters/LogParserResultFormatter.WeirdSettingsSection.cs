@@ -336,6 +336,11 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["game_title"] != "vsh.self")
                     notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
             }
+            if (items["library_list_lle"] is string lleLibList && lleLibList != "None"
+                || items["library_list_hle"] is string hleLibList && hleLibList != "None")
+                notes.Add("⚠ Please disable any Firmware Libraries overrides");
+            if (items["library_list_lle"] is string lleLibs && lleLibs.Contains("sysutil"))
+                notes.Add("❗ Never override `sysutil` firmware modules");
 
             if (!string.IsNullOrEmpty(serial))
             {

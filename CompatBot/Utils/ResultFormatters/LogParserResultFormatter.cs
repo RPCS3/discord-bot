@@ -440,8 +440,32 @@ namespace CompatBot.Utils.ResultFormatters
                 items["os_windows_version"] = winVersion;
             if (items["library_list"] is string libs)
             {
-                var libList = libs.Split('\n').Select(l => l.Trim(' ', '\t', '-', '\r', '[', ']')).Where(s => !string.IsNullOrEmpty(s)).ToList();
-                items["library_list"] = libList.Count > 0 ? string.Join(", ", libList) : "None";
+                var libList = libs.Split('\n')
+                    .Select(l => l.Trim(' ', '\t', '-', '\r', '[', ']'))
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Select(l => l.Split(':'))
+                    .Select(p => (name: p[0], mode: p.Length > 1 ? p[1] : ""))
+                    .ToList();
+                var newFormat = libs.Contains(".sprx:");
+                if (newFormat)
+                {
+                    items["library_list"] = "None";
+                    var lleList = new List<string>(libList.Count);
+                    var hleList = new List<string>(libList.Count);
+                    foreach (var (name, mode) in libList)
+                    {
+                        if (mode == "lle")
+                            lleList.Add(name);
+                        else if (mode == "hle")
+                            hleList.Add(name);
+                        else
+                            Config.Log.Warn($"Unknown library override mode '{mode}' in {libs}");
+                    }
+                    items["library_list_lle"] = lleList.Count > 0 ? string.Join(", ", lleList) : "None";
+                    items["library_list_hle"] = hleList.Count > 0 ? string.Join(", ", hleList) : "None";
+                }
+                else
+                    items["library_list"] = libList.Count > 0 ? string.Join(", ", libList.Select(i => i.name)) : "None";
             }
             else
                 items["library_list"] = "None";
@@ -456,8 +480,8 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["game_update_version"] is string gameUpVer && gameUpVer.StartsWith("0"))
                 items["game_update_version"] = gameUpVer[1..];
 
-            if (multiItems["fatal_error"] is UniqueList<string> fatalErrors && fatalErrors.Any())
-                multiItems["fatal_error"] = new UniqueList<string>(fatalErrors.Select(str => str.Contains("'tex00'") ? str.Split('\n', 2)[0] : str), fatalErrors.Comparer);
+            if (multiItems["fatal_error"] is UniqueList<string> {Count: > 0} fatalErrors)
+                multiItems["fatal_error"] = new(fatalErrors.Select(str => str.Contains("'tex00'") ? str.Split('\n', 2)[0] : str), fatalErrors.Comparer);
 
             multiItems["broken_filename"].AddRange(multiItems["broken_filename_or_dir"]);
             multiItems["broken_directory"].AddRange(multiItems["broken_filename_or_dir"]);
