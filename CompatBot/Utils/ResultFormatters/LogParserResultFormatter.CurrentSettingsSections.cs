@@ -150,7 +150,7 @@ namespace CompatBot.Utils.ResultFormatters
                 $"SPU Block Size:{items["spu_block_size"] ?? "N/A",ColumnWidth-14}",
                 $"Accurate xfloat:{items["accurate_xfloat"] ?? "N/A",ColumnWidth-15}",
                 $"Force CPU Blit:{items["cpu_blit"] ?? "N/A",ColumnWidth-14}",
-                $"Lib Mode:{items["lib_loader"],ColumnWidth-8}",
+                //$"Lib Mode:{items["lib_loader"],ColumnWidth-8}",
             };
             return ("CPU Settings", lines);
         }
@@ -189,7 +189,7 @@ namespace CompatBot.Utils.ResultFormatters
                 $"Resolution:{items["resolution"],ColumnWidth-10}",
                 $"Resolution Scale:{items["resolution_scale"] ?? "N/A",ColumnWidth-16}",
                 $"Res Scale Threshold:{items["texture_scale_threshold"] ?? "N/A",ColumnWidth-19}",
-                $"Anti-Aliasing:{items["msaa"] ?? "N/A",ColumnWidth-13}",
+                //$"Anti-Aliasing:{items["msaa"] ?? "N/A",ColumnWidth-13}",
                 $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
                 $"RSX Buffers:{enabledBuffers,ColumnWidth-11}",
                 $"Shader Mode:{items["shader_mode"],ColumnWidth-11}",
@@ -235,6 +235,8 @@ namespace CompatBot.Utils.ResultFormatters
                 result.Append('`').Append(line).AppendLine("`");
             if (isCustomSettings)
                 name = "Per-game " + name;
+            else
+                name = "Global " + name;
             builder.AddField(name, result.ToString().FixSpaces(), true);
         }
 
@@ -244,6 +246,10 @@ namespace CompatBot.Utils.ResultFormatters
                 && (libs.Contains("manual", StringComparison.InvariantCultureIgnoreCase)
                     || libs.Contains("strict", StringComparison.InvariantCultureIgnoreCase)))
                 builder.AddField("Selected Libraries", items["library_list"]?.Trim(1024));
+            if (items["library_list_lle"] is string lle && lle != "None")
+                builder.AddField("LLE Library Override", lle.Trim(1024));
+            if (items["library_list_hle"] is string hle && hle != "None")
+                builder.AddField("HLE Library Override", hle.Trim(1024));
         }
     }
 }

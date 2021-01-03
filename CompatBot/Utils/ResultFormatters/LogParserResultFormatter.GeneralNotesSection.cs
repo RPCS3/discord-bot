@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -330,6 +331,11 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
 
+            if (items["memory_amount"] is string ramSizeStr
+                && double.TryParse(ramSizeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var ramSize)
+                && ramSize < 6)
+                notes.Add("⚠ 8 GiB RAM or more is recommended for PS3 emulation");
+
             Version? oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
                 _ = Version.TryParse(oglVersionString, out oglVersion);
@@ -350,10 +356,15 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
 
+            if (items["os_type"] == "Windows"
+                && Version.TryParse(items["os_version"], out var winVersion)
+                && (winVersion.Major < 10 || winVersion.Build < 18363))
+                notes.Add("⚠ Please upgrade your Windows to currently supported version");
+            
             var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
             if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
             {
-                if (IntelGpuModel.Match(gpuInfo) is Match intelMatch && intelMatch.Success)
+                if (IntelGpuModel.Match(gpuInfo) is Match {Success: true} intelMatch)
                 {
                     var family = intelMatch.Groups["gpu_family"].Value.TrimEnd();
                     var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
@@ -451,7 +462,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (mlaaHashes.Any(h => allSpuPatches[h] != 0))
                     notes.Add("ℹ MLAA patch was applied");
                 else
-                    notes.Add("ℹ This game has MLAA disable patch, see [Game Patches](https://wiki.rpcs3.net/index.php?title=Help:Game_Patches#Disable_SPU_MLAA)");
+                    notes.Add("ℹ This game has MLAA disable patch");
             }
 
             bool discInsideGame = false;
