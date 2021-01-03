@@ -197,7 +197,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["RSX: Your GPU does not support"] = new(@"RSX: Your GPU does not support (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: GPU/driver lacks support"] = new(@"RSX: GPU/driver lacks support for (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: Swapchain:"] = new(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
-                    ["F "] = new(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7)", DefaultSingleLineOptions),
+                    ["F "] = new(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*(Thread terminated due to fatal error: )?|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7|$)", DefaultSingleLineOptions),
                     ["Failed to load RAP file:"] = new(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
                     ["Rap file not found:"] = new(@"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?)(\xE2\x80\x9D)?\r?$", DefaultOptions),
                     ["Pad handler expected but none initialized"] = new(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
