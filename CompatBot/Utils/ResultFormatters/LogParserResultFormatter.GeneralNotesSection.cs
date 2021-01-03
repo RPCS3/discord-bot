@@ -334,7 +334,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["memory_amount"] is string ramSizeStr
                 && double.TryParse(ramSizeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var ramSize)
                 && ramSize < 6)
-                notes.Add("⚠ 8 GB RAM or more is recommended for PS3 emulation");
+                notes.Add("⚠ 8 GiB RAM or more is recommended for PS3 emulation");
 
             Version? oglVersion = null;
             if (items["opengl_version"] is string oglVersionString)
