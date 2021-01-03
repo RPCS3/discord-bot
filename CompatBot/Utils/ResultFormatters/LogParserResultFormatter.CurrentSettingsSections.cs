@@ -235,6 +235,8 @@ namespace CompatBot.Utils.ResultFormatters
                 result.Append('`').Append(line).AppendLine("`");
             if (isCustomSettings)
                 name = "Per-game " + name;
+            else
+                name = "Global " + name;
             builder.AddField(name, result.ToString().FixSpaces(), true);
         }
 
