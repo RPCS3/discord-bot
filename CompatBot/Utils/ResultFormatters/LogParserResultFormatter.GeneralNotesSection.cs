@@ -356,10 +356,15 @@ namespace CompatBot.Utils.ResultFormatters
                 }
             }
 
+            if (items["os_type"] == "Windows"
+                && Version.TryParse(items["os_version"], out var winVersion)
+                && (winVersion.Major < 10 || winVersion.Build < 18363))
+                notes.Add("⚠ Please upgrade your Windows to currently supported version");
+            
             var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
             if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
             {
-                if (IntelGpuModel.Match(gpuInfo) is Match intelMatch && intelMatch.Success)
+                if (IntelGpuModel.Match(gpuInfo) is Match {Success: true} intelMatch)
                 {
                     var family = intelMatch.Groups["gpu_family"].Value.TrimEnd();
                     var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
