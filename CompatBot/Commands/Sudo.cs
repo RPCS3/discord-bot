@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
@@ -102,11 +103,19 @@ namespace CompatBot.Commands
 
         [Command("log"), RequiresDm]
         [Description("Uploads current log file as an attachment")]
-        public async Task Log(CommandContext ctx)
+        public async Task Log(CommandContext ctx, [Description("Specific date")]string date = "")
         {
             try
             {
                 var logPath = Config.CurrentLogPath;
+                if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
+                    logPath = Path.Combine(Config.LogPath, $"bot.{logDate:yyyyMMdd}.0.log");
+                if (!File.Exists(logPath))
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Log file does not exist for specified day", true).ConfigureAwait(false);
+                    return;
+                }
+                
                 var attachmentSizeLimit = Config.AttachmentSizeLimit;
                 await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 await using var result = Config.MemoryStreamManager.GetStream();
