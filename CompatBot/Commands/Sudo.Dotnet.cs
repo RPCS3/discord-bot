@@ -93,6 +93,9 @@ namespace CompatBot.Commands
                 if (string.IsNullOrEmpty(stdout))
                     return (false, stdout);
 
+                if (!stdout.Contains("dotnet-sdk-"))
+                    return (false, stdout);
+                
                 //var resultsMatch = Regex.Match(stdout, @"(?<upgraded>\d+) upgraded, (?<installed>\d+) newly installed");
                 if (stdout.Contains("is already the newest version", StringComparison.InvariantCultureIgnoreCase))
                     return (false, stdout);
