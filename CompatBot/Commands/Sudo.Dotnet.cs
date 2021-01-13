@@ -60,8 +60,6 @@ namespace CompatBot.Commands
                     {
                         CreateNoWindow = true,
                         UseShellExecute = false,
-                        RedirectStandardOutput = false,
-                        StandardOutputEncoding = Encoding.UTF8,
                     },
                 };
                 aptUpdate.Start();
