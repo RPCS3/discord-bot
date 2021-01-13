@@ -55,17 +55,17 @@ namespace CompatBot.Commands
                     DiscordMessage? msg = null;
                     try
                     {
-                        Config.Log.Info("Checking for available updates...");
-                        msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
-                        await StatsStorage.SaveAsync(true).ConfigureAwait(false);
-                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for updates...").ConfigureAwait(false);
+                        Config.Log.Info("Checking for available bot updates...");
+                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for bot updates...").ConfigureAwait(false);
                         var (updated, stdout) = await UpdateAsync().ConfigureAwait(false);
                         if (!string.IsNullOrEmpty(stdout))
                             await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
                         if (!updated)
                             return;
 
-                        msg = await ctx.RespondAsync("Restarting...").ConfigureAwait(false);
+                        msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
+                        await StatsStorage.SaveAsync(true).ConfigureAwait(false);
+                        msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id, "Restarted after successful bot update");
                     }
                     catch (Exception e)
