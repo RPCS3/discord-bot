@@ -122,9 +122,9 @@ namespace CompatBot.Utils
             try
             {
                 if (conents?.Count > 0)
-                    return await logChannel.SendMultipleFilesAsync(conents, embed: embedBuilder.Build(), mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
+                    return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithFiles(conents).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
                 else
-                    return await logChannel.SendMessageAsync(embed: embedBuilder.Build(), mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
+                    return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
             }
             finally
             {
@@ -143,7 +143,7 @@ namespace CompatBot.Utils
             var mentions = reporters.Where(m => m is not null).Select(GetMentionWithNickname!);
             embedBuilder.AddField("Reporters", string.Join(Environment.NewLine, mentions));
             var logChannel = await getLogChannelTask.ConfigureAwait(false);
-            return await logChannel.SendMessageAsync(embed: embedBuilder.Build(), mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
+            return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
         }
 
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember>? potentialVictims, ReportSeverity severity)
@@ -157,7 +157,7 @@ namespace CompatBot.Utils
             if (potentialVictims?.Count > 0)
                 result.AddField("Potential Targets", string.Join(Environment.NewLine, potentialVictims.Select(GetMentionWithNickname)).Trim(EmbedPager.MaxFieldLength));
             var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-            return await logChannel.SendMessageAsync(embed: result.Build(), mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
+            return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(result.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
         }
 
         public static string GetMentionWithNickname(this DiscordMember member)
@@ -202,7 +202,7 @@ namespace CompatBot.Utils
         public static Task SendMessageAsync(this DiscordChannel channel, string message, byte[]? attachment, string? filename)
         {
             if (!string.IsNullOrEmpty(filename) && attachment?.Length > 0)
-                return channel.SendFileAsync(filename, new MemoryStream(attachment), message);
+                return channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(filename, new MemoryStream(attachment)).WithContent(message));
             return channel.SendMessageAsync(message);
         }
 

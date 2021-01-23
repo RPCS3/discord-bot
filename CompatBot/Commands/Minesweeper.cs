@@ -70,7 +70,7 @@ namespace CompatBot.Commands
 			var msgLen = (4 * width * height - 4) + (height - 1) + mineCount * MaxBombLength + (width * height - mineCount) * "0️⃣".Length + header.Length;
 			if (width * height > 198 || msgLen > 2000) // for some reason discord would cut everything beyond 198 cells even if the content length is well within the limits
 			{
-				await ctx.RespondAsync("Requested field size is too large for one message", true).ConfigureAwait(false);
+				await ctx.RespondAsync("Requested field size is too large for one message").ConfigureAwait(false);
 				return;
 			}
 

@@ -58,7 +58,7 @@ namespace CompatBot.EventHandlers
                 {
                     Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
                     var msgContent = GetAvgContent(similarList.Select(m => m.Content).ToList());
-                    var botMsg = await args.Channel.SendMessageAsync(msgContent, mentions: Config.AllowedMentions.UsersOnly).ConfigureAwait(false);
+                    var botMsg = await args.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msgContent).WithAllowedMentions(Config.AllowedMentions.UsersOnly)).ConfigureAwait(false);
                     similarList.Add(botMsg);
                 }
                 else

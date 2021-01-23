@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 
 namespace CompatBot.Commands.Attributes
 {
@@ -23,7 +24,7 @@ namespace CompatBot.Commands.Attributes
                 return true;
 
             await using var stream = new MemoryStream(Poster.Value);
-            await ctx.RespondWithFileAsync("senpai_plz.jpg", stream).ConfigureAwait(false);
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("senpai_plz.jpg", stream)).ConfigureAwait(false);
             return false;
         }
     }

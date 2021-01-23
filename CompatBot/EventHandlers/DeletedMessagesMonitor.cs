@@ -59,11 +59,11 @@ namespace CompatBot.EventHandlers
 				await PostLock.WaitAsync().ConfigureAwait(false);
 				try
 				{
-					await logChannel.SendMessageAsync(embed: embed, mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
+					await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embed.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
 					if (attachmentContent?.Count > 0)
-						await logChannel.SendMultipleFilesAsync(attachmentContent, msg.Content, mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
+						await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithFiles(attachmentContent).WithContent(msg.Content).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
 					else if (!string.IsNullOrEmpty(msg.Content))
-						await logChannel.SendMessageAsync(msg.Content, mentions: Config.AllowedMentions.Nothing).ConfigureAwait(false);
+						await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msg.Content).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
 				}
 				finally
 				{

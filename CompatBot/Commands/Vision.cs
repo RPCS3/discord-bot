@@ -304,7 +304,10 @@ namespace CompatBot.Commands
                         resultStream.Seek(0, SeekOrigin.Begin);
                         quality--;
                     } while (resultStream.Length > Config.AttachmentSizeLimit);
-                    var respondMsg = await ctx.RespondWithFileAsync(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream, description).ConfigureAwait(false);
+                    var messageBuilder = new DiscordMessageBuilder()
+                        .WithContent(description)
+                        .WithFile(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream);
+                    var respondMsg = await ctx.RespondAsync(messageBuilder).ConfigureAwait(false);
                     await ReactToTagsAsync(respondMsg, result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags)).ConfigureAwait(false);
                 }
                 else
