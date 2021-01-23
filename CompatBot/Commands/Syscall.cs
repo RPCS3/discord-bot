@@ -10,6 +10,7 @@ using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -77,7 +78,7 @@ namespace CompatBot.Commands
                         await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
                         await streamWriter.FlushAsync().ConfigureAwait(false);
                         memoryStream.Seek(0, SeekOrigin.Begin);
-                        await ctx.RespondWithFileAsync($"{search}.txt", memoryStream, $"See attached file for full list of {groupedList.Count} entries").ConfigureAwait(false);
+                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile($"{search}.txt", memoryStream).WithContent($"See attached file for full list of {groupedList.Count} entries")).ConfigureAwait(false);
                     }
                 }
                 else
@@ -167,7 +168,7 @@ namespace CompatBot.Commands
                 await streamWriter.WriteAsync(result).ConfigureAwait(false);
                 await streamWriter.FlushAsync().ConfigureAwait(false);
                 memoryStream.Seek(0, SeekOrigin.Begin);
-                await ctx.RespondWithFileAsync($"{productId} syscalls.txt", memoryStream, $"List of syscalls used by `{title}`").ConfigureAwait(false);
+                await ctx.RespondAsync(new DiscordMessageBuilder().WithFile($"{productId} syscalls.txt", memoryStream).WithContent($"List of syscalls used by `{title}`")).ConfigureAwait(false);
             }
             else
                 await ctx.RespondAsync($"No information available for `{title}`").ConfigureAwait(false);

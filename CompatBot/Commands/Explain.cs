@@ -346,12 +346,12 @@ namespace CompatBot.Commands
                 if (!string.IsNullOrEmpty(item.Text))
                 {
                     await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text));
-                    await ctx.Channel.SendFileAsync($"{termOrLink}.txt", stream).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile($"{termOrLink}.txt", stream)).ConfigureAwait(false);
                 }
                 if (!string.IsNullOrEmpty(item.AttachmentFilename) && item.Attachment?.Length > 0)
                 {
                     await using var stream = new MemoryStream(item.Attachment);
-                    await ctx.Channel.SendFileAsync(item.AttachmentFilename, stream).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(item.AttachmentFilename, stream)).ConfigureAwait(false);
                 }
             }
         }
@@ -423,7 +423,7 @@ namespace CompatBot.Commands
             else
             {
                 await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(explanation));
-                await ctx.Channel.SendFileAsync("explanation.txt", stream).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("explanation.txt", stream)).ConfigureAwait(false);
             }
         }
     }

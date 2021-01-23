@@ -10,14 +10,14 @@ namespace CompatBot.Utils
 {
     public static class DiscordMessageExtensions
     {
-        public static Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? message, DiscordChannel channel, string? content = null, bool tts = false, DiscordEmbed? embed = null)
+        public static Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? message, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null)
         {
             Exception? lastException = null;
             for (var i = 0; i<3; i++)
                 try
                 {
                     if (message == null)
-                        return channel.SendMessageAsync(content, tts, embed);
+                        return channel.SendMessageAsync(content, embed);
                     return message.ModifyAsync(content, embed);
                 }
                 catch (Exception e)

@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="DiscUtils.OpticalDisk" Version="0.16.0-alpha0038" />
-    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.3.6" />
+    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -159,7 +159,7 @@ namespace CompatBot.Database.Providers
 
                 memStream.Seek(0, SeekOrigin.Begin);
                 var spam = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                var message = await spam.SendFileAsync(contentId + ".jpg", memStream, contentId).ConfigureAwait(false);
+                var message = await spam.SendMessageAsync(new DiscordMessageBuilder().WithFile(contentId + ".jpg", memStream).WithContent(contentId)).ConfigureAwait(false);
                 url = message.Attachments[0].Url;
                 return (url, memStream.ToArray());
             }

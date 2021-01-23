@@ -31,10 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-rc1" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-rc1" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-rc1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.49.0.2194" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00783" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00783" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00783" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.49.0.2201" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
     <PackageReference Include="MegaApiClient" Version="1.8.2" />
@@ -54,15 +54,15 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
-    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.3.6" />
+    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.4.0" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.170.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
     <PackageReference Include="Microsoft.VisualStudio.Services.Client" Version="16.170.0" />
     <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
-    <PackageReference Include="NLog" Version="4.7.6" />
+    <PackageReference Include="NLog" Version="4.7.7" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.7.0" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.2" />
-    <PackageReference Include="SharpCompress" Version="0.27.0" />
+    <PackageReference Include="SharpCompress" Version="0.27.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta11" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.0" />

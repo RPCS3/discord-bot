@@ -55,7 +55,7 @@ namespace CompatBot.Commands
                     memoryStream.Seek(0, SeekOrigin.Begin);
                     if (memoryStream.Length <= Config.AttachmentSizeLimit)
                     {
-                        await ctx.RespondWithFileAsync("names.txt", memoryStream).ConfigureAwait(false);
+                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("names.txt", memoryStream)).ConfigureAwait(false);
                         return;
                     }
 
@@ -64,7 +64,7 @@ namespace CompatBot.Commands
                     await gzip.FlushAsync().ConfigureAwait(false);
                     compressedResult.Seek(0, SeekOrigin.Begin);
                     if (compressedResult.Length <= Config.AttachmentSizeLimit)
-                        await ctx.RespondWithFileAsync("names.txt.gz", compressedResult).ConfigureAwait(false);
+                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("names.txt.gz", compressedResult)).ConfigureAwait(false);
                     else
                         await ctx.RespondAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
                 }
@@ -216,7 +216,7 @@ namespace CompatBot.Commands
 
                     if (uncompressedStream.Length <= Config.AttachmentSizeLimit)
                     {
-                        await ctx.RespondWithFileAsync("spoofing_check_results.txt", uncompressedStream).ConfigureAwait(false);
+                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt", uncompressedStream)).ConfigureAwait(false);
                         return;
                     }
 
@@ -227,7 +227,7 @@ namespace CompatBot.Commands
                     }
                     compressedStream.Seek(0, SeekOrigin.Begin);
                     if (compressedStream.Length <= Config.AttachmentSizeLimit)
-                        await ctx.RespondWithFileAsync("spoofing_check_results.txt.gz", compressedStream).ConfigureAwait(false);
+                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt.gz", compressedStream)).ConfigureAwait(false);
                     else
                         await ctx.RespondAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);
                 }
