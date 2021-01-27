@@ -283,9 +283,9 @@ namespace CompatBot.Commands
 
         [Command("when"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
         [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
-        public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string whatever = "")
+        public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string something = "")
         {
-            var question = whatever.Trim().TrimEnd('?').ToLowerInvariant();
+            var question = something.Trim().TrimEnd('?').ToLowerInvariant();
             var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
             var crng = new Random((prefix + question).GetHashCode());
             var number = crng.Next(100) + 1;
@@ -300,6 +300,26 @@ namespace CompatBot.Commands
             }
             var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
             await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
+        }
+
+        [Group("how"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
+        [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
+        public class How: BaseCommandModuleCustom
+        {
+            [Command("much"), Aliases("many")]
+            [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
+            public async Task Much(CommandContext ctx, [RemainingText, Description("much or many ")] string ofWhat = "")
+            {
+                var question = ofWhat.Trim().TrimEnd('?').ToLowerInvariant();
+                var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
+                var crng = new Random((prefix + question).GetHashCode());
+                if (crng.NextDouble() < 0.0001)
+                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
+                else
+                {
+                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **{crng.Next(100) + 1}** 🔮").ConfigureAwait(false);
+                }
+            }
         }
 
         [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]
