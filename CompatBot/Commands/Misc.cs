@@ -12,12 +12,13 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Services.Profile;
 
 namespace CompatBot.Commands
 {
     internal sealed class Misc: BaseCommandModuleCustom
     {
-        private readonly Random rng = new();
+        private static readonly Random rng = new();
 
         private static readonly List<string> EightBallAnswers = new()
         {
@@ -145,23 +146,30 @@ namespace CompatBot.Commands
 
         [Command("roll")]
         [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
-        public async Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)
+        public Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)
+            => RollImpl(ctx.Message, maxValue);
+
+        [Command("roll")]
+        public Task Roll(CommandContext ctx, [RemainingText, Description("Dices to roll (i.e. 2d6+1 for two 6-sided dices with a bonus 1)")] string dices)
+            => RollImpl(ctx.Message, dices);
+
+        
+        internal static async Task RollImpl(DiscordMessage message, int maxValue = 6)
         {
             string? result = null;
             if (maxValue > 1)
                 lock (rng) result = (rng.Next(maxValue) + 1).ToString();
             if (string.IsNullOrEmpty(result))
-                await ctx.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), $"How is {maxValue} a positive natural number?").ConfigureAwait(false);
+                await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), $"How is {maxValue} a positive natural number?").ConfigureAwait(false);
             else
-                await ctx.RespondAsync(result).ConfigureAwait(false);
+                await message.RespondAsync(result).ConfigureAwait(false);
         }
-
-        [Command("roll")]
-        public async Task Roll(CommandContext ctx, [RemainingText, Description("Dices to roll (i.e. 2d6+1 for two 6-sided dices with a bonus 1)")] string dices)
+        
+        internal static async Task RollImpl(DiscordMessage message, string dices)
         {
             var result = "";
             var embed = new DiscordEmbedBuilder();
-            if (dices is string dice && Regex.Matches(dice, @"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?") is MatchCollection matches && matches.Count > 0 && matches.Count <= EmbedPager.MaxFields)
+            if (dices is string dice && Regex.Matches(dice, @"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?") is {Count: > 0 and <= EmbedPager.MaxFields } matches)
             {
                 var grandTotal = 0;
                 foreach (Match m in matches)
@@ -206,16 +214,16 @@ namespace CompatBot.Commands
             }
             else
             {
-                await Roll(ctx).ConfigureAwait(false);
+                await RollImpl(message).ConfigureAwait(false);
                 return;
             }
 
             if (string.IsNullOrEmpty(result) && embed == null)
-                await ctx.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
+                await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
             else if (embed != null)
-                await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+                await message.RespondAsync(embed).ConfigureAwait(false);
             else
-                await ctx.RespondAsync(result).ConfigureAwait(false);
+                await message.RespondAsync(result).ConfigureAwait(false);
         }
 
         [Command("random"), Aliases("rng"), Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
@@ -275,9 +283,9 @@ namespace CompatBot.Commands
 
         [Command("when"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
         [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
-        public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string whatever = "")
+        public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string something = "")
         {
-            var question = whatever.Trim().TrimEnd('?').ToLowerInvariant();
+            var question = something.Trim().TrimEnd('?').ToLowerInvariant();
             var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
             var crng = new Random((prefix + question).GetHashCode());
             var number = crng.Next(100) + 1;
@@ -292,6 +300,26 @@ namespace CompatBot.Commands
             }
             var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
             await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
+        }
+
+        [Group("how"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
+        [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
+        public class How: BaseCommandModuleCustom
+        {
+            [Command("much"), Aliases("many")]
+            [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
+            public async Task Much(CommandContext ctx, [RemainingText, Description("much or many ")] string ofWhat = "")
+            {
+                var question = ofWhat.Trim().TrimEnd('?').ToLowerInvariant();
+                var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
+                var crng = new Random((prefix + question).GetHashCode());
+                if (crng.NextDouble() < 0.0001)
+                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
+                else
+                {
+                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **{crng.Next(100) + 1}** 🔮").ConfigureAwait(false);
+                }
+            }
         }
 
         [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]

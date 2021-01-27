@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Commands;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
@@ -33,6 +35,17 @@ namespace CompatBot.EventHandlers
             try
             {
                 var content = args.Message.Content;
+
+                if (content.Contains("🎲") && Regex.IsMatch(content, @"(🎲|\s)+"))
+                {
+                    var count = 1;
+                    var idx = content.IndexOf("🎲");
+                    while (idx < content.Length && (idx = content.IndexOf("🎲", idx + 1)) > 0)
+                        count++;
+                    await Misc.RollImpl(args.Message, $"{count}d6").ConfigureAwait(false);
+                    return;
+                }
+                
                 if (!(content.Contains("┻━┻") ||
                       content.Contains("┻━┻")))
                     return;
