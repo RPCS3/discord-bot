@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS base
 # Native libgdiplus dependencies
 RUN apt-get update
 RUN apt-get install -y --allow-unauthenticated libc6-dev libgdiplus libx11-dev fonts-roboto
