@@ -38,6 +38,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediafireClient", "Clients\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YandexDiskClient", "Clients\YandexDiskClient\YandexDiskClient.csproj", "{CABC3E5E-2153-443B-A5A8-DA3E389359EC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators", "SourceGenerators\SourceGenerators.csproj", "{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,10 @@ Global
 		{CABC3E5E-2153-443B-A5A8-DA3E389359EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CABC3E5E-2153-443B-A5A8-DA3E389359EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CABC3E5E-2153-443B-A5A8-DA3E389359EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

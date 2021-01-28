@@ -1,9 +1,9 @@
 Homoglyph Converter
 ===================
 
-This is a straight up implementation of the recommended [confusable detection algorithm](http://www.unicode.org/reports/tr39/#Confusable_Detection). It is mainly used to check for mod impersonation.
+This is a straight up implementation of the recommended [confusable detection algorithm](https://www.unicode.org/reports/tr39/#Confusable_Detection). It is mainly used to check for mod impersonation.
 
-You can get the latest version of the mappings from the [Unicode.org](http://www.unicode.org/Public/security/latest/confusables.txt). You'll need to manually gzip it for embedding in the resources.
+You can get the latest version of the mappings from the [Unicode.org](https://www.unicode.org/Public/security/latest/confusables.txt). You'll need to manually gzip it for embedding in the resources.
 
 Code is split in two parts:
 * Builder will load the mapping file from the resources and will build the mapping dictionary that can be used to quickly substitute the character sequences.

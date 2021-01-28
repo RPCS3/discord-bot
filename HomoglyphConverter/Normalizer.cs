@@ -7,7 +7,6 @@ namespace HomoglyphConverter
 {
     public static class Normalizer
     {
-        private static readonly Dictionary<uint, uint[]> Mapping = ConfusablesBuilder.Build();
         private static readonly Encoding Utf32 = new UTF32Encoding(false, false, true);
 
         private static readonly Dictionary<string, string> HomoglyphSequences = new()
@@ -72,7 +71,7 @@ namespace HomoglyphConverter
             var result = new List<uint>(convertedLength);
             foreach (var ch in uintInput)
             {
-                if (Mapping.TryGetValue(ch, out var replacement))
+                if (Confusables.Mapping.TryGetValue(ch, out var replacement))
                     result.AddRange(replacement);
                 else
                     result.Add(ch);
