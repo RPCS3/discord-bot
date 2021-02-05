@@ -129,8 +129,8 @@ namespace CompatBot
                                 $"Working set: {process.WorkingSet64}\n" +
                                 $"Virtual: {process.VirtualMemorySize64}\n" +
                                 $"Paged: {process.PagedMemorySize64}\n" +
-                                $"Paged sytem: {process.PagedSystemMemorySize64}\n" +
-                                $"Non-pated system: {process.NonpagedSystemMemorySize64}");
+                                $"Paged system: {process.PagedSystemMemorySize64}\n" +
+                                $"Non-paged system: {process.NonpagedSystemMemorySize64}");
                 await Task.Delay(TimeSpan.FromHours(1)).ConfigureAwait(false);
             } while (!Config.Cts.IsCancellationRequested);
         }
