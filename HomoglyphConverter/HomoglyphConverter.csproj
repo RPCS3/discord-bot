@@ -7,11 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="confusables.txt.gz" />
+    <None Remove="confusables.txt" />
+    <AdditionalFiles Include="confusables.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="confusables.txt.gz" />
+    <ProjectReference Include="..\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
   </ItemGroup>
 
 </Project>

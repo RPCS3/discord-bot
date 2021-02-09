@@ -109,7 +109,7 @@ namespace CompatBot
                 tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
                 tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
                 tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
-                tc.TrackMetric("memory-gc-commited", gcMemInfo.TotalCommittedBytes);
+                tc.TrackMetric("memory-gc-committed", gcMemInfo.TotalCommittedBytes);
                 tc.TrackMetric("memory-process-private", process.PrivateMemorySize64);
                 tc.TrackMetric("memory-process-ws", process.WorkingSet64);
                 tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
@@ -129,8 +129,8 @@ namespace CompatBot
                                 $"Working set: {process.WorkingSet64}\n" +
                                 $"Virtual: {process.VirtualMemorySize64}\n" +
                                 $"Paged: {process.PagedMemorySize64}\n" +
-                                $"Paged sytem: {process.PagedSystemMemorySize64}\n" +
-                                $"Non-pated system: {process.NonpagedSystemMemorySize64}");
+                                $"Paged system: {process.PagedSystemMemorySize64}\n" +
+                                $"Non-paged system: {process.NonpagedSystemMemorySize64}");
                 await Task.Delay(TimeSpan.FromHours(1)).ConfigureAwait(false);
             } while (!Config.Cts.IsCancellationRequested);
         }

@@ -60,7 +60,7 @@ namespace CompatBot.EventHandlers
                 try
                 {
                     var headers = await t.ConfigureAwait(false);
-                    workQueue.Enqueue((evt, new Guid(new Uri(headers.OperationLocation).Segments.Last())));
+                    workQueue.Enqueue((evt, new(new Uri(headers.OperationLocation).Segments.Last())));
                     workSemaphore.Release();
                 }
                 catch (Exception ex)
@@ -75,7 +75,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                 return;
 
-            Guid? reEnqueId = null;
+            Guid? reEnqueueId = null;
             do
             {
                 await workSemaphore.WaitAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -86,10 +86,10 @@ namespace CompatBot.EventHandlers
                 if (!workQueue.TryDequeue(out var item))
                     continue;
 
-                if (item.readOperationId == reEnqueId)
+                if (item.readOperationId == reEnqueueId)
                 {
                     await Task.Delay(100).ConfigureAwait(false);
-                    reEnqueId = null;
+                    reEnqueueId = null;
                     if (Config.Cts.IsCancellationRequested)
                         return;
                 }
@@ -103,13 +103,13 @@ namespace CompatBot.EventHandlers
                         {
                             var cnt = true;
                             var prefix = $"[{item.evt.Message.Id % 100:00}]";
-                            var ocrText = new StringBuilder($"OCR result of message <{item.evt.Message.JumpLink}>:").AppendLine();
+                            var ocrTextBuf = new StringBuilder($"OCR result of message <{item.evt.Message.JumpLink}>:").AppendLine();
                             Config.Log.Debug($"{prefix} OCR result of message {item.evt.Message.JumpLink}:");
                             var duplicates = new HashSet<string>();
                             foreach (var r in result.AnalyzeResult.ReadResults)
                             foreach (var l in r.Lines)
                             {
-                                ocrText.AppendLine(l.Text.Sanitize());
+                                ocrTextBuf.AppendLine(l.Text.Sanitize());
                                 Config.Log.Debug($"{prefix} {l.Text}");
                                 if (cnt
                                     && await ContentFilter.FindTriggerAsync(FilterContext.Chat, l.Text).ConfigureAwait(false) is Piracystring hit
@@ -130,11 +130,14 @@ namespace CompatBot.EventHandlers
                                     cnt &= !hit.Actions.HasFlag(FilterAction.RemoveContent) && !hit.Actions.HasFlag(FilterAction.IssueWarning);
                                 }
                             }
-                            if (!cnt)
+                            var ocrText = ocrTextBuf.ToString();
+                            var hasVkDiagInfo = ocrText.Contains("Vulkan Diagnostics Tool v")
+                                                || ocrText.Contains("VkDiag Version:");
+                            if (!cnt || hasVkDiagInfo)
                                 try
                                 {
                                     var botSpamCh = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
-                                    await botSpamCh.SendAutosplitMessageAsync(ocrText, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                                    await botSpamCh.SendAutosplitMessageAsync(ocrTextBuf, blockStart: "", blockEnd: "").ConfigureAwait(false);
                                 }
                                 catch (Exception ex)
                                 {
@@ -145,7 +148,7 @@ namespace CompatBot.EventHandlers
                     else if (result.Status == OperationStatusCodes.NotStarted || result.Status == OperationStatusCodes.Running)
                     {
                         workQueue.Enqueue(item);
-                        reEnqueId ??= item.readOperationId;
+                        reEnqueueId ??= item.readOperationId;
                         workSemaphore.Release();
                     }
                 }
