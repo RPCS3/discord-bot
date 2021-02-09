@@ -109,7 +109,7 @@ namespace CompatBot
                 tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
                 tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
                 tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
-                tc.TrackMetric("memory-gc-commited", gcMemInfo.TotalCommittedBytes);
+                tc.TrackMetric("memory-gc-committed", gcMemInfo.TotalCommittedBytes);
                 tc.TrackMetric("memory-process-private", process.PrivateMemorySize64);
                 tc.TrackMetric("memory-process-ws", process.WorkingSet64);
                 tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);

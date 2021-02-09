@@ -308,7 +308,9 @@ namespace CompatBot.Commands
                         .WithContent(description)
                         .WithFile(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream);
                     var respondMsg = await ctx.RespondAsync(messageBuilder).ConfigureAwait(false);
-                    await ReactToTagsAsync(respondMsg, result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags)).ConfigureAwait(false);
+                    var tags = result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags).Distinct().ToList();
+                    Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}");
+                    await ReactToTagsAsync(respondMsg, tags).ConfigureAwait(false);
                 }
                 else
                 {
