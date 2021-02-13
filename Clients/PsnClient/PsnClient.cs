@@ -278,7 +278,8 @@ namespace PsnClient
 
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                     meta = await response.Content.ReadAsAsync<TitleMeta>(xmlFormatters, cancellationToken).ConfigureAwait(false);
-                    ResponseCache.Set(id, meta, ResponseCacheDuration);
+                    if (response.IsSuccessStatusCode)
+                        ResponseCache.Set(id, meta, ResponseCacheDuration);
                     return meta;
                 }
                 catch (Exception e)

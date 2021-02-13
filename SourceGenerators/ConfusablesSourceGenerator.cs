@@ -91,7 +91,8 @@ namespace SourceGenerators
             if (mapping.Count == 0)
                 throw new InvalidOperationException("Empty confusable mapping source");
 
-            var ns = context.Compilation.AssemblyName;
+            if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.RootNamespace", out var ns))
+                ns = context.Compilation.AssemblyName;
             var cn = Path.GetFileNameWithoutExtension(resourceName.Path);
             if (cn.Length == 1)
                 cn = cn.ToUpper();
@@ -99,7 +100,6 @@ namespace SourceGenerators
                 cn = char.ToUpper(cn[0]) + cn.Substring(1);
             if (!Version.TryParse(version, out _))
                 version = "";
-            
             
             var result = new StringBuilder()
                 .AppendLine("using System;")

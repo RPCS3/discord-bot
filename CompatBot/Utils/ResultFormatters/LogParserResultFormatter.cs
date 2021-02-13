@@ -250,7 +250,8 @@ namespace CompatBot.Utils.ResultFormatters
                     collection["game_category"] = "HG";
                 }
                 serial = collection["serial"] ?? "";
-                var titleUpdateInfoTask = PsnClient.GetTitleUpdatesAsync(collection["serial"], Config.Cts.Token);
+                var titleUpdateInfoTask = PsnClient.GetTitleUpdatesAsync(serial, Config.Cts.Token);
+                var titleMetaTask = PsnClient.GetTitleMetaAsync(serial, Config.Cts.Token);
                 var gameInfo = await client.LookupGameInfoWithEmbedAsync(serial, collection["game_title"], true, category: collection["game_category"]).ConfigureAwait(false);
                 try
                 {
@@ -260,7 +261,14 @@ namespace CompatBot.Utils.ResultFormatters
 
                 }
                 catch {}
-                builder = new DiscordEmbedBuilder(gameInfo.embedBuilder) {Thumbnail = null}; // or this will fuck up all formatting
+                try
+                {
+                    var resInfo = await titleMetaTask.ConfigureAwait(false);
+                    if (resInfo?.Resolution is string resList)
+                        collection["game_supported_resolution_list"] = resList;
+                }
+                catch {}
+                builder = new(gameInfo.embedBuilder) {Thumbnail = null}; // or this will fuck up all formatting
                 TitleInfo? compatData = null;
                 if (gameInfo.compatResult?.Results?.TryGetValue(serial, out compatData) is true
                     && compatData?.Status is string titleStatus)
