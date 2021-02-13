@@ -39,7 +39,7 @@ namespace CompatBot.Utils.ResultFormatters
             @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+))\r?$",
             DefaultSingleLine);
         private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
-        private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
+        private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+(-\d+)?) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
         private static readonly char[] NewLineChars = {'\r', '\n'};
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
@@ -832,7 +832,7 @@ namespace CompatBot.Utils.ResultFormatters
         private static Dictionary<string, int> GetPatches(UniqueList<string> patchList, in bool onlyApplied)
         {
             if (!patchList.Any())
-                return new Dictionary<string, int>(0);
+                return new();
 
             var result = new Dictionary<string, int>(patchList.Count);
             foreach (var patch in patchList)

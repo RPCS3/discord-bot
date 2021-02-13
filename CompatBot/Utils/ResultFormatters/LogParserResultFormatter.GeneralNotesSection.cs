@@ -441,11 +441,12 @@ namespace CompatBot.Utils.ResultFormatters
             if (!string.IsNullOrEmpty(items["patch_error_file"])) 
                 notes.Add($"⚠ Failed to load `patch.yml`, check syntax around line {items["patch_error_line"]} column {items["patch_error_column"]}");
 
+            var prxPatches = GetPatches(multiItems["prx_patch"], true);
             var ppuPatches = GetPatches(multiItems["ppu_patch"], true);
             var ovlPatches = GetPatches(multiItems["ovl_patch"], true);
             var allSpuPatches = GetPatches(multiItems["spu_patch"], false);
             var spuPatches = new Dictionary<string, int>(allSpuPatches.Where(kvp => kvp.Value != 0));
-            if (ppuPatches.Any() || spuPatches.Any() || ovlPatches.Any())
+            if (ppuPatches.Any() || spuPatches.Any() || ovlPatches.Any() || prxPatches.Any())
             {
                 var patchCount = "";
                 if (ppuPatches.Count != 0)
@@ -453,7 +454,9 @@ namespace CompatBot.Utils.ResultFormatters
                 if (ovlPatches.Count != 0)
                     patchCount += "OVL: " + string.Join('/', ovlPatches.Values) + ", ";
                 if (spuPatches.Count != 0)
-                    patchCount += "SPU: " + string.Join('/', spuPatches.Values);
+                    patchCount += "SPU: " + string.Join('/', spuPatches.Values) + ", ";
+                if (prxPatches.Count != 0)
+                    patchCount += "PRX: " + string.Join('/', prxPatches.Values) + ", ";
                 notes.Add($"ℹ Game-specific patches were applied ({patchCount.TrimEnd(',', ' ')})");
             }
             var mlaaHashes = KnownMlaaSpuHashes.Intersect(allSpuPatches.Keys).ToList();
