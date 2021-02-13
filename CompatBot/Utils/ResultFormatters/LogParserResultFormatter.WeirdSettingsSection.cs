@@ -78,74 +78,100 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["renderer"] == "Vulkan"
                 && items["supported_gpu"] == DisabledMark)
                 notes.Add("❌ Selected `Vulkan` device is not supported, please use `OpenGL` instead");
-            if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] != "1280x720")
+            var selectedRes = items["resolution"];
+            var selectedRatio = items["aspect_ratio"];
+            if (!string.IsNullOrEmpty(selectedRes))
             {
-                if (items["game_category"] != "1P"
-                    && !(items["resolution"] == "1920x1080"
-                         && Known1080pIds.Contains(serial)))
-                    notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
-                var dimensions = items["resolution"]?.Split("x");
-                if (dimensions?.Length > 1
-                    && int.TryParse(dimensions[0], out var width)
-                    && int.TryParse(dimensions[1], out var height))
+                if (selectedRes == "1280x720" && items["game_category"] == "1P")
                 {
-                    var ratio = Reduce(width, height);
-                    var canBeWideOrSquare = width == 720 && (height == 480 || height == 576);
-                    if (ratio == (8, 5))
-                        ratio = (16, 10);
-                    if (items["aspect_ratio"] is string strAr
-                        && strAr != "Auto")
+                    if (serial.Length > 3)
                     {
-                        var arParts = strAr.Split(':');
-                        if (arParts.Length > 1
-                            && int.TryParse(arParts[0], out var arWidth)
-                            && int.TryParse(arParts[1], out var arHeight))
+                        if (serial[2] == 'E')
                         {
-                            var arRatio = Reduce(arWidth, arHeight);
-                            if (arRatio == (8, 5))
-                                arRatio = (16, 10);
-                            /*
-                            if (items["game_category"] == "1P")
-                            {
-                                if (arRatio != (4, 3))
-                                    notes.Add("⚠ PS1 Classics should use `Aspect Ratio` of 4:3");
-                            }
-                            else
-                            */
-                            if (arRatio != ratio && !canBeWideOrSquare)
-                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {strAr}");
+                            if (selectedRes != "720x576")
+                                notes.Add("⚠ PAL PS1 Classics should use `Resolution` of `720x576`");
+                        }
+                        else
+                        {
+                            if (selectedRes != "720x480")
+                                notes.Add("⚠ NTSC PS1 Classics should use `Resolution` of `720x480`");
                         }
                     }
-                    else
-                    {
-                        if (canBeWideOrSquare)
-                            notes.Add("ℹ Setting `Aspect Ratio` to `16:9` of `4:3` instead of `Auto` may improve compatibility");
-                        else
-                            notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
-                    }
-                    if (height < 720 && items["game_category"] != "1P")
-                        notes.Add("⚠ `Resolution` below 720p will not improve performance");
-                }
-            }
-            else if (!string.IsNullOrEmpty(items["resolution"]) && items["resolution"] == "1280x720" && items["game_category"] == "1P")
-            {
-                if (serial.Length > 3)
-                {
-                    if (serial[2] == 'E')
-                    {
-                        if (items["resolution"] != "720x576")
-                            notes.Add("⚠ PAL PS1 Classics should use `Resolution` of `720x576`");
-                    }
-                    else
-                    {
-                        if (items["resolution"] != "720x480")
-                            notes.Add("⚠ NTSC PS1 Classics should use `Resolution` of `720x480`");
-                    }
-                }
-                /*
-                if (items["aspect_ratio"] is string strAr && strAr != "4:3")
+                    /*
+                    if (items["aspect_ratio"] is string strAr && strAr != "4:3")
                     notes.Add("⚠ PS1 Classics should use `Aspect Ratio` of 4:3");
-                */
+                    */
+                }
+                else if (selectedRes != "1280x720")
+                {
+                    var supported = false;
+                    var known = false;
+                    if (items["game_supported_resolution_list"] is string supportedRes)
+                    {
+                        var supportedList = PsnMetaExtensions.GetSupportedResolutions(supportedRes);
+                        supported = selectedRatio == "Auto"
+                            ? supportedList.Any(i => i.resolution == selectedRes)
+                            : supportedList.Any(i => i.resolution == selectedRes && i.aspectRatio == selectedRatio);
+                        known = true;
+                    }
+                    if (selectedRes == "1920x1080" && Known1080pIds.Contains(serial))
+                    {
+                        supported = true;
+                        known = true;
+                    }
+
+                    if (known)
+                    {
+                        if (supported)
+                            notes.Add("ℹ `Resolution` was changed from the recommended `1280x720`");
+                        else
+                            notes.Add("❌ Selected `Resolution` isn't supported, please set to recommended `1280x720`");
+                    }
+                    else if (items["game_category"] != "1P")
+                        notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
+                    var dimensions = selectedRes.Split("x");
+                    if (dimensions.Length > 1
+                        && int.TryParse(dimensions[0], out var width)
+                        && int.TryParse(dimensions[1], out var height))
+                    {
+                        var ratio = Reduce(width, height);
+                        var canBeWideOrSquare = width == 720 && (height == 480 || height == 576);
+                        if (ratio == (8, 5))
+                            ratio = (16, 10);
+                        if (selectedRatio is string strAr && strAr != "Auto")
+                        {
+                            var arParts = strAr.Split(':');
+                            if (arParts.Length > 1
+                                && int.TryParse(arParts[0], out var arWidth)
+                                && int.TryParse(arParts[1], out var arHeight))
+                            {
+                                var arRatio = Reduce(arWidth, arHeight);
+                                if (arRatio == (8, 5))
+                                    arRatio = (16, 10);
+                                /*
+                                if (items["game_category"] == "1P")
+                                {
+                                    if (arRatio != (4, 3))
+                                        notes.Add("⚠ PS1 Classics should use `Aspect Ratio` of 4:3");
+                                }
+                                else
+                                */
+                                if (arRatio != ratio && !canBeWideOrSquare)
+                                    notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {strAr}");
+                            }
+                        }
+                        else
+                        {
+                            if (canBeWideOrSquare)
+                                notes.Add("ℹ Setting `Aspect Ratio` to `16:9` or `4:3` instead of `Auto` may improve compatibility");
+                            else
+                                notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
+                        }
+                        if (height < 720 && items["game_category"] != "1P")
+                            notes.Add("⚠ `Resolution` below 720p will not improve performance");
+                    }
+                }
+
             }
             if (items["stretch_to_display"] == EnabledMark)
                 notes.Add("🤢 `Stretch to Display Area` is enabled");
