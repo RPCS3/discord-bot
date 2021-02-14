@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using DSharpPlus.Entities;
@@ -10,15 +11,25 @@ namespace CompatBot.Utils
 {
     public static class DiscordMessageExtensions
     {
-        public static Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? message, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null)
+        public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? message, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null)
         {
             Exception? lastException = null;
             for (var i = 0; i<3; i++)
                 try
                 {
                     if (message == null)
-                        return channel.SendMessageAsync(content, embed);
-                    return message.ModifyAsync(content, embed);
+                    {
+                        var newMsg = await channel.SendMessageAsync(content, embed).ConfigureAwait(false);
+                        #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
+                        if (newMsg.Channel is null)
+                        {
+                            //newMsg.Channel = channel;
+                            var property = newMsg.GetType().GetProperty(nameof(newMsg.Channel));
+                            property?.SetValue(newMsg, channel, BindingFlags.NonPublic | BindingFlags.Instance, null, null, null);
+                        }
+                        return newMsg;
+                    }
+                    return await message.ModifyAsync(content, embed).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
