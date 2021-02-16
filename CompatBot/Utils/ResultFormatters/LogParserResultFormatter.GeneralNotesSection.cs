@@ -168,19 +168,18 @@ namespace CompatBot.Utils.ResultFormatters
                     >=12000 and < 16000 => "12000-15999",
                     _ => "",
                 };
+
+                Win32ErrorCodes.Map.TryGetValue(code, out var error);
                 if (link.Length == 0)
                     link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
-                else
+                else if (string.IsNullOrEmpty(error.name))
                     link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
-                try
-                {
-                    var exception = new Win32Exception(code);
-                    notes.Add($"ℹ [Error code 0x{code:x}]({link}): {exception.Message}");
-                }
-                catch
-                {
+                else
+                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
+                if (string.IsNullOrEmpty(error.description))
                     notes.Add($"ℹ [Error code 0x{code:x}]({link})");
-                }
+                else
+                    notes.Add($"ℹ [Error code 0x{code:x}]({link}): {error.description}");
             }
 
             if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
