@@ -14,6 +14,7 @@ using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient.IrdFormat;
+using Microsoft.DotNet.PlatformAbstractions;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -152,35 +153,46 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
                 }
             }
-            foreach (var code in win32ErrorCodes)
-            {
-                var link = code switch
+            if (items["os_type"] == "Windows")
+                foreach (var code in win32ErrorCodes)
                 {
-                    >= 0 and < 500 => "0-499",
-                    >=500 and < 1000 => "500-999",
-                    >=1000 and < 1300 => "1000-1299",
-                    >=1300 and < 1700 => "1300-1699",
-                    >=1700 and < 4000 => "1700-3999",
-                    >=4000 and < 6000 => "4000-5999",
-                    >=6000 and < 8200 => "6000-8199",
-                    >=8200 and < 9000 => "8200-8999",
-                    >=9000 and < 12000 => "9000-11999",
-                    >=12000 and < 16000 => "12000-15999",
-                    _ => "",
-                };
+                    var link = code switch
+                    {
+                        >= 0 and < 500 => "0-499",
+                        >=500 and < 1000 => "500-999",
+                        >=1000 and < 1300 => "1000-1299",
+                        >=1300 and < 1700 => "1300-1699",
+                        >=1700 and < 4000 => "1700-3999",
+                        >=4000 and < 6000 => "4000-5999",
+                        >=6000 and < 8200 => "6000-8199",
+                        >=8200 and < 9000 => "8200-8999",
+                        >=9000 and < 12000 => "9000-11999",
+                        >=12000 and < 16000 => "12000-15999",
+                        _ => "",
+                    };
 
-                Win32ErrorCodes.Map.TryGetValue(code, out var error);
-                if (link.Length == 0)
-                    link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
-                else if (string.IsNullOrEmpty(error.name))
-                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
-                else
-                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
-                if (string.IsNullOrEmpty(error.description))
-                    notes.Add($"ℹ [Error code 0x{code:x}]({link})");
-                else
-                    notes.Add($"ℹ [Error code 0x{code:x}]({link}): {error.description}");
-            }
+                    Win32ErrorCodes.Map.TryGetValue(code, out var error);
+                    if (link.Length == 0)
+                        link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
+                    else if (string.IsNullOrEmpty(error.name))
+                        link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
+                    else
+                        link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
+                    if (string.IsNullOrEmpty(error.description))
+                        notes.Add($"ℹ [Error 0x{code:x}]({link})");
+                    else
+                        notes.Add($"ℹ [Error 0x{code:x}]({link}): {error.description}");
+                }
+            else if (items["os_type"] == "Linux" && RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
+                foreach (var code in win32ErrorCodes)
+                {
+                    try
+                    {
+                        var e = new Win32Exception(code);
+                        notes.Add($"ℹ Error `{code:x}`: {e.Message}");
+                    }
+                    catch { }
+                }
 
             if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
                 notes.Add("❌ This game doesn't work on the emulator yet");
