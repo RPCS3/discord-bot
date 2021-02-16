@@ -134,9 +134,13 @@ namespace CompatBot.Utils.ResultFormatters
 #else
                             : $"Fatal Error (x{count})";
 #endif
-                        if (Regex.Match(fatalError, @"\(e=0x(?<verification_error>[0-9a-f]+)(\[\d+\])?\)") is Match {Success: true} match
-                            && int.TryParse(match.Groups["verification_error"].Value, NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var errorCode))
-                            win32ErrorCodes.Add(errorCode);
+                        if (Regex.Match(fatalError, @"\(e=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is Match {Success: true} match)
+                        {
+                            if (int.TryParse(match.Groups["verification_error"].Value, out var decCode))
+                                win32ErrorCodes.Add(decCode);
+                            else if (int.TryParse(match.Groups["verification_error_hex"].Value, NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var hexCode))
+                                win32ErrorCodes.Add(hexCode);
+                        }
                         builder.AddField(sectionName, $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
                     }
                 }
