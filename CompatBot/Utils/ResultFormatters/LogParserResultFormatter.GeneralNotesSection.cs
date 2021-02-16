@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -34,7 +35,8 @@ namespace CompatBot.Utils.ResultFormatters
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var serial = items["serial"] ?? "";
-            if (multiItems["fatal_error"] is UniqueList<string> fatalErrors && fatalErrors.Any())
+            var win32ErrorCodes = new HashSet<int>();
+            if (multiItems["fatal_error"] is UniqueList<string> {Length: > 0} fatalErrors)
             {
                 var contexts = multiItems["fatal_error_context"];
                 var reducedFatalErrors = GroupSimilar(fatalErrors);
@@ -131,6 +133,9 @@ namespace CompatBot.Utils.ResultFormatters
 #else
                             : $"Fatal Error (x{count})";
 #endif
+                        if (Regex.Match(fatalError, @"\(e=0x[0-9a-f]+\[(?<verification_error>\d+)\]\)") is Match {Success: true} match
+                            && int.TryParse(match.Groups["verification_error"].Value, out var errorCode))
+                            win32ErrorCodes.Add(errorCode);
                         builder.AddField(sectionName, $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
                     }
                 }
@@ -147,6 +152,36 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
                 }
             }
+            foreach (var code in win32ErrorCodes)
+            {
+                var link = code switch
+                {
+                    >= 0 and < 500 => "0-499",
+                    >=500 and < 1000 => "500-999",
+                    >=1000 and < 1300 => "1000-1299",
+                    >=1300 and < 1700 => "1300-1699",
+                    >=1700 and < 4000 => "1700-3999",
+                    >=4000 and < 6000 => "4000-5999",
+                    >=6000 and < 8200 => "6000-8199",
+                    >=8200 and < 9000 => "8200-8999",
+                    >=9000 and < 12000 => "9000-11999",
+                    >=12000 and < 16000 => "12000-15999",
+                    _ => "",
+                };
+                if (link.Length == 0)
+                    link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
+                else
+                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
+                try
+                {
+                    var exception = new Win32Exception(code);
+                    notes.Add($"ℹ [Error code 0x{code:x}]({link}): {exception.Message}");
+                }
+                catch
+                {
+                    notes.Add($"ℹ [Error code 0x{code:x}]({link})");
+                }
+            }
 
             if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
                 notes.Add("❌ This game doesn't work on the emulator yet");
@@ -154,7 +189,7 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
             if (items["failed_to_boot"] != null)
                 notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
-            if (multiItems["failed_to_verify"].Contains("sce"))
+            if (multiItems["failed_to_verify_npdrm"].Contains("sce"))
                 notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
             if (items["disc_to_psn_serial"] is string badSerial)
                 notes.Add("❌ This version of the game does not work on the emulator at this time");
