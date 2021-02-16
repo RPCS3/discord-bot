@@ -193,7 +193,7 @@ namespace CompatBot.Utils.ResultFormatters
                     try
                     {
                         var e = new Win32Exception(code);
-                        notes.Add($"ℹ Error `{code:x}`: {e.Message}");
+                        notes.Add($"ℹ Error `{code}`: {e.Message}");
                     }
                     catch { }
                 }
