@@ -52,7 +52,7 @@ namespace SourceGenerators
             
             using var stream = File.Open(resourceName.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (stream is null)
-                throw new InvalidOperationException("Failed to get confusables stream");
+                throw new InvalidOperationException("Failed to get confusables.txt stream");
 
             var mapping = new Dictionary<uint, uint[]>();
             var date = "";
@@ -142,9 +142,9 @@ namespace SourceGenerators
                     context.ReportDiagnostic(Diagnostic.Create(ConfusablesVersionWarning, Location.None, version, date, remoteVer, remoteDate));
                 }
             }
-            catch
+            catch (Exception e)
             {
-                context.ReportDiagnostic(Diagnostic.Create(ConfusablesCheckWarning, Location.None));
+                context.ReportDiagnostic(Diagnostic.Create(ConfusablesCheckWarning, Location.None, e.Message));
             }
         }
     }

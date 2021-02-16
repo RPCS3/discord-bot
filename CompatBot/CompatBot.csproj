@@ -11,7 +11,12 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     <Nullable>enable</Nullable>
+    <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
   </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="RootNamespace" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="logs\**" />
@@ -25,11 +30,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Properties\credentials.json" Condition="Exists('Properties\credentials.json')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\metacritic_ps3.json" Link="metacritic_ps3.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="..\win32_error_codes.txt" />
+    <AdditionalFiles Include="..\win32_error_codes.txt" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00797" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00797" />
@@ -70,6 +86,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     <ProjectReference Include="..\Clients\CompatApiClient\CompatApiClient.csproj" />
     <ProjectReference Include="..\Clients\GithubClient\GithubClient.csproj" />
     <ProjectReference Include="..\Clients\MediafireClient\MediafireClient.csproj" />
@@ -78,12 +95,6 @@
     <ProjectReference Include="..\HomoglyphConverter\HomoglyphConverter.csproj" />
     <ProjectReference Include="..\Clients\IrdLibraryClient\IrdLibraryClient.csproj" />
     <ProjectReference Include="..\Clients\PsnClient\PsnClient.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Properties\credentials.json" Condition="Exists('Properties\credentials.json')">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
