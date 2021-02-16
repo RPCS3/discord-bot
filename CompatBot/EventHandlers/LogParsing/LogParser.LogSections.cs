@@ -179,7 +179,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Invalid or unsupported file format:"] = new(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
                     ["SELF:"] = new(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
                     ["SYS: Version:"] = new(@"Version: (APP_VER=)?(?<disc_app_version>\S+) (/ |VERSION=)(?<disc_package_version>\S+).*?\r?$", DefaultOptions),
-                    ["sceNp: npDrmIsAvailable(): Failed to verify"] = new(@"Failed to verify (?<failed_to_verify>(sce|npd)) file.*\r?$", DefaultOptions),
+                    ["sceNp: npDrmIsAvailable(): Failed to verify"] = new(@"Failed to verify (?<failed_to_verify_npdrm>(sce|npd)) file.*\r?$", DefaultOptions),
                     ["{rsx::thread} RSX: 4"] = new(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
                                                    @"RSX: [^\n]+\r?\n[^\n]*?" +
                                                    @"RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?" +
@@ -223,6 +223,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Unimplemented syscall"] = new(@"U \d+:\d+:\d+\.\d+ ({(?<unimplemented_syscall_context>.+?)} )?.*Unimplemented syscall (?<unimplemented_syscall>.*)\r?$", DefaultOptions),
                     ["Could not enqueue"] = new(@"cellAudio: Could not enqueue buffer onto audio backend(?<enqueue_buffer_error>.).*\r?$", DefaultOptions),
                     ["{PPU["] = new(@"{PPU\[.+\]} (?<log_channel>[^ :]+)( TODO)?: (?!\xE2\x80\x9C)(?<syscall_name>[^ :]+?)\(.*\r?$", DefaultOptions),
+                    ["Verification failed"] = new(@"Verification failed.+\(e=0x(?<verification_error_hex>[0-9a-f]+)\[(?<verification_error>\d+)\]\)"),
                     ["⁂"] = new(@"\xE2\x81\x82 (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
                     ["undub"] =  new(@"(\b|_)(?<game_mod>(undub|translation patch))(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
                 },
@@ -249,8 +250,10 @@ namespace CompatBot.EventHandlers.LogParsing
             "broken_digital_filename",
             "broken_directory",
             "edat_block_offset",
-            "failed_to_verify",
+            "failed_to_verify_npdrm",
             "rsx_not_supported_feature",
+            "verification_error_hex",
+            "verification_error",
         };
 
         private static readonly string[] CountValueItems = {"enqueue_buffer_error"};
@@ -263,7 +266,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 var m = match;
                 if (line.Contains("not valid, removing from")
                     || line.Contains("Invalid disc path"))
-                    m = new Piracystring
+                    m = new()
                     {
                         Id = match.Id,
                         Actions = match.Actions & ~FilterAction.IssueWarning,
@@ -309,8 +312,8 @@ namespace CompatBot.EventHandlers.LogParsing
                         state.WipMultiValueCollection[key] = collection;
                 }
             }
-            state.WipCollection = new NameValueCollection();
-            state.WipMultiValueCollection = new NameUniqueObjectCollection<string>();
+            state.WipCollection = new();
+            state.WipMultiValueCollection = new();
             Copy(
                 "build_and_specs", "fw_version_installed",
                 "first_unicode_dot",

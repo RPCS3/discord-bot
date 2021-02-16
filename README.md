@@ -63,5 +63,6 @@ How to Run in Production
 
 External resources that need manual updates
 -------------------------------------------
-* [Unicode confusables](http://www.unicode.org/Public/security/latest/confusables.txt) gzipped, for Homoglyph checks
+* [Unicode Confusables](http://www.unicode.org/Public/security/latest/confusables.txt), for Homoglyph checks
+* [Windows Error Codes](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/), for error decoding on non-Windows host
 * Optionally [Redump disc key database](http://redump.org/downloads/) in text format (requires membership)

@@ -12,15 +12,15 @@ namespace CompatBot.Utils
 
 		public UniqueList(IEqualityComparer<T>? comparer = null)
 		{
-			list = new List<T>();
-			set = new HashSet<T>(comparer);
+			list = new();
+			set = new(comparer);
 			Comparer = comparer;
 		}
 
 		public UniqueList(int count, IEqualityComparer<T>? comparer = null)
 		{
-			list = new List<T>(count);
-			set = new HashSet<T>(count, comparer);
+			list = new(count);
+			set = new(count, comparer);
 			Comparer = comparer;
 		}
 
@@ -29,13 +29,13 @@ namespace CompatBot.Utils
 			Comparer = comparer;
 			if (collection is ICollection c)
 			{
-				list = new List<T>(c.Count);
-				set = new HashSet<T>(c.Count, comparer);
+				list = new(c.Count);
+				set = new(c.Count, comparer);
 			}
 			else
 			{
-				list = new List<T>();
-				set = new HashSet<T>(comparer);
+				list = new();
+				set = new(comparer);
 			}
 			foreach (var item in collection)
 				if (set.Add(item))

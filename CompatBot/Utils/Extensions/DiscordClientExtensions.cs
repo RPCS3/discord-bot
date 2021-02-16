@@ -118,18 +118,18 @@ namespace CompatBot.Utils
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
             embedBuilder.Description = reportText + embedBuilder.Description;
-            var (conents, _) = await message.DownloadAttachmentsAsync().ConfigureAwait(false);
+            var (contents, _) = await message.DownloadAttachmentsAsync().ConfigureAwait(false);
             try
             {
-                if (conents?.Count > 0)
-                    return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithFiles(conents).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+                if (contents?.Count > 0)
+                    return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithFiles(contents).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
                 else
                     return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
             }
             finally
             {
-                if (conents?.Count > 0)
-                    foreach (var f in conents.Values)
+                if (contents?.Count > 0)
+                    foreach (var f in contents.Values)
                         await f.DisposeAsync();
             }
         }
