@@ -368,6 +368,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (cpu.StartsWith("Intel") || cpu.StartsWith("Pentium"))
                 {
                     if (items["cpu_extensions"]?.Contains("TSX") is not true
+                        && items["cpu_extensions"]?.Contains("AVX-512") is not true
                         && (cpu.Contains("Core2")
                             || cpu.Contains("Celeron")
                             || cpu.Contains("Atom")
