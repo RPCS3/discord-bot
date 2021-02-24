@@ -368,6 +368,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (cpu.StartsWith("Intel") || cpu.StartsWith("Pentium"))
                 {
                     if (items["cpu_extensions"]?.Contains("TSX") is not true
+                        && items["cpu_extensions"]?.Contains("AVX-512") is not true
                         && (cpu.Contains("Core2")
                             || cpu.Contains("Celeron")
                             || cpu.Contains("Atom")
@@ -421,7 +422,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
                         modelNumber = modelNumber[1..];
                     _ = int.TryParse(modelNumber, out var modelNumberInt);
-                    if (family == "UHD" || family == "Iris Plus" || modelNumberInt > 500 && modelNumberInt < 1000)
+                    if (family == "UHD" || family == "Iris Plus" || family == "Iris Xe" || modelNumberInt > 500 && modelNumberInt < 1000)
                         notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
                     else
                     {
