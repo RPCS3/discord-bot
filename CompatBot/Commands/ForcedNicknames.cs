@@ -6,6 +6,7 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -32,7 +33,7 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                if (!expectedNickname.All(c => char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)))
+                if (!expectedNickname.All(c => char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)) && !discordUser.IsBotSafeCheck())
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Nickname must follow Rule 7", true).ConfigureAwait(false);
                     return;
@@ -46,25 +47,28 @@ namespace CompatBot.Commands
                         await ctx.RespondAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
                 }
                 else
-                    guilds = new List<DiscordGuild> {ctx.Guild};
+                    guilds = new(){ctx.Guild};
 
                 int changed = 0, noPermissions = 0, failed = 0;
                 await using var db = new BotDb();
                 foreach (var guild in guilds)
                 {
-                    var enforceRules = db.ForcedNicknames.FirstOrDefault(mem => mem.UserId == discordUser.Id && mem.GuildId == guild.Id);
-                    if (enforceRules is null)
+                    if (!discordUser.IsBotSafeCheck())
                     {
-                        enforceRules = new ForcedNickname {UserId = discordUser.Id, GuildId = guild.Id, Nickname = expectedNickname};
-                        await db.ForcedNicknames.AddAsync(enforceRules).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        if (enforceRules.Nickname == expectedNickname)
+                        var enforceRules = db.ForcedNicknames.FirstOrDefault(mem => mem.UserId == discordUser.Id && mem.GuildId == guild.Id);
+                        if (enforceRules is null)
                         {
-                            continue;
+                            enforceRules = new() {UserId = discordUser.Id, GuildId = guild.Id, Nickname = expectedNickname};
+                            await db.ForcedNicknames.AddAsync(enforceRules).ConfigureAwait(false);
                         }
-                        enforceRules.Nickname = expectedNickname;
+                        else
+                        {
+                            if (enforceRules.Nickname == expectedNickname)
+                            {
+                                continue;
+                            }
+                            enforceRules.Nickname = expectedNickname;
+                        }
                     }
                     if (!(ctx.Guild?.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
                     {
@@ -129,7 +133,7 @@ namespace CompatBot.Commands
                         try
                         {
                             //todo: change to mem.Nickname = default when the library fixes their shit
-                            await discordMember.ModifyAsync(mem => mem.Nickname = new Optional<string>("")).ConfigureAwait(false);
+                            await discordMember.ModifyAsync(mem => mem.Nickname = new("")).ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {
