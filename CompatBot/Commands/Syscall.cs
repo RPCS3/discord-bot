@@ -46,6 +46,7 @@ namespace CompatBot.Commands
             {
                 var productInfoList = db.SyscallToProductMap.AsNoTracking()
                     .Where(m => m.SyscallInfo.Function == search)
+                    .Include(m => m.Product)
                     .AsEnumerable()
                     .Select(m => new {m.Product.ProductCode, Name = m.Product.Name?.StripMarks() ?? "???"})
                     .Distinct()
