@@ -20,6 +20,7 @@ using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.DependencyInjection;
+using Fortune = CompatBot.Commands.Fortune;
 
 namespace CompatBot
 {
@@ -162,6 +163,7 @@ namespace CompatBot
                 commands.RegisterCommands<Syscall>();
                 commands.RegisterCommands<ForcedNicknames>();
                 //commands.RegisterCommands<Minesweeper>();
+                commands.RegisterCommands<Fortune>();
 
                 if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                     commands.RegisterCommands<Vision>();

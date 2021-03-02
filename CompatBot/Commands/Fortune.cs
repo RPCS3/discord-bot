@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -21,6 +22,8 @@ namespace CompatBot.Commands
     [Description("Gives you a fortune once a day")]
     internal sealed class Fortune : BaseCommandModuleCustom
     {
+        private static readonly SemaphoreSlim ImportCheck = new(1, 1);
+
         [GroupCommand]
         [Cooldown(2, 60, CooldownBucketType.User)]
         [Cooldown(1, 3, CooldownBucketType.Channel)]
@@ -49,10 +52,16 @@ namespace CompatBot.Commands
 
             var msg = fortune.Content.FixTypography();
             var msgParts = msg.Split('\n');
-            if (msgParts.Length > 1 && msgParts[^1].StartsWith("    "))
-                msg = string.Join('\n', msgParts[..^2].Select(l => "> " + l)) + "\n" + msgParts[^1].FixSpaces();
-            else
-                msg = "> " + msg;
+            var tmp = new StringBuilder();
+            var quote = true;
+            foreach (var l in msgParts)
+            {
+                quote &= !l.StartsWith("    ");
+                if (quote)
+                    tmp.Append("> ");
+                tmp.Append(l).Append('\n');
+            }
+            msg = tmp.ToString().TrimEnd().FixSpaces();
             await ctx.RespondAsync($"{ctx.User.Mention}, your fortune for today:\n{msg}").ConfigureAwait(false);
         }
 
@@ -90,13 +99,21 @@ namespace CompatBot.Commands
             await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
         }
 
-        [Command("import"), Aliases("append"), RequiresBotModRole]
+        [Command("import"), Aliases("append"), RequiresBotModRole, TriggersTyping]
         [Description("Imports new fortunes from specified URL or attachment. Data should be formatted as standard UNIX fortune source file.")]
         public async Task Import(CommandContext ctx, string? url = null)
         {
+            var msg = await ctx.RespondAsync("Please wait...").ConfigureAwait(false);
+            if (!ImportCheck.Wait(0))
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "There is another import in progress already").ConfigureAwait(false);
+                return;
+            }
+            
             try
             {
-                if (string.IsNullOrEmpty(url)) 
+                if (string.IsNullOrEmpty(url))
                     url = ctx.Message.Attachments.FirstOrDefault()?.Url;
 
                 if (string.IsNullOrEmpty(url))
@@ -105,9 +122,12 @@ namespace CompatBot.Commands
                     return;
                 }
 
+                var stopwatch = Stopwatch.StartNew();
                 await using var db = new ThumbnailDb();
                 using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
-                await using var stream = await httpClient.GetStreamAsync(url, Config.Cts.Token).ConfigureAwait(false);
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                var response = await httpClient.SendAsync(request, Config.Cts.Token).ConfigureAwait(false);
+                await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
                 using var reader = new StreamReader(stream);
                 var buf = new StringBuilder();
                 string? line;
@@ -117,18 +137,41 @@ namespace CompatBot.Commands
                            || buf.Length > 0)
                        && !Config.Cts.IsCancellationRequested)
                 {
-                    line = line?.Trim();
                     if (line == "%" || line is null)
                     {
                         var content = buf.ToString().Replace("\r\n", "\n").Trim();
                         if (content.Length > 1900)
                         {
+                            buf.Clear();
                             skipped++;
                             continue;
                         }
 
-                        if (db.Fortune.AsNoTracking().Select(f => f.Content).Any(f => f.GetFuzzyCoefficientCached(content) >= 0.95))
+                        if (db.Fortune.Any(f => f.Content == content))
+                        {
+                            buf.Clear();
+                            skipped++;
                             continue;
+                        }
+
+                        var duplicate = false;
+                        foreach (var fortune in db.Fortune.AsNoTracking())
+                        {
+                            if (fortune.Content.GetFuzzyCoefficientCached(content) >= 0.95)
+                            {
+                                duplicate = true;
+                                break;
+                            }
+
+                            if (Config.Cts.Token.IsCancellationRequested)
+                                break;
+                        }
+                        if (duplicate)
+                        {
+                            buf.Clear();
+                            skipped++;
+                            continue;
+                        }
 
                         await db.Fortune.AddAsync(new() {Content = content}).ConfigureAwait(false);
                         await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -139,15 +182,32 @@ namespace CompatBot.Commands
                         buf.AppendLine(line);
                     if (line is null)
                         break;
+
+                    if (stopwatch.ElapsedMilliseconds > 10_000)
+                    {
+                        var progressMsg = $"Imported {count} fortune{(count == 1 ? "" : "s")}";
+                        if (skipped > 0)
+                            progressMsg += $", skipped {skipped}";
+                        if (response.Content.Headers.ContentLength is long len && len > 0)
+                            progressMsg += $" ({stream.Position * 100.0 / len:0.##}%)";
+                        await msg.UpdateOrCreateMessageAsync(ctx.Channel, progressMsg).ConfigureAwait(false);
+                        stopwatch.Restart();
+                    }
                 }
                 var result = $"Imported {count} fortune{(count == 1 ? "" : "s")}";
                 if (skipped > 0)
                     result += $", skipped {skipped}";
-                await ctx.ReactWithAsync(Config.Reactions.Success, result).ConfigureAwait(false);
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, result).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to import data: " + e.Message).ConfigureAwait(false);
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Failed to import data: " + e.Message).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+            }
+            finally
+            {
+                ImportCheck.Release();
             }
         }
 
