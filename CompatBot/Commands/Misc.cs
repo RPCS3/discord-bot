@@ -11,6 +11,7 @@ using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using HomoglyphConverter;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Services.Profile;
 
@@ -285,7 +286,7 @@ namespace CompatBot.Commands
         [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
         public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string something = "")
         {
-            var question = something.Trim().TrimEnd('?').ToLowerInvariant();
+            var question = something.Trim().TrimEnd('?').ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
             var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
             var crng = new Random((prefix + question).GetHashCode());
             var number = crng.Next(100) + 1;
@@ -310,7 +311,7 @@ namespace CompatBot.Commands
             [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
             public async Task Much(CommandContext ctx, [RemainingText, Description("much or many ")] string ofWhat = "")
             {
-                var question = ofWhat.Trim().TrimEnd('?').ToLowerInvariant();
+                var question = ofWhat.Trim().TrimEnd('?').ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
                 var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
                 var crng = new Random((prefix + question).GetHashCode());
                 if (crng.NextDouble() < 0.0001)
@@ -330,7 +331,7 @@ namespace CompatBot.Commands
             {
                 var choices = RateAnswers;
                 var choiceFlags = new HashSet<char>();
-                whatever = whatever.ToLowerInvariant();
+                whatever = whatever.ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
                 var originalWhatever = whatever;
                 var matches = Instead.Matches(whatever);
                 if (matches.Any())

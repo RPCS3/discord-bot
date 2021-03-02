@@ -46,6 +46,12 @@ namespace CompatBot.EventHandlers
                     return;
                 }
                 
+                if (content.Trim() == "🥠")
+                {
+                    await Fortune.ShowFortune(args.Message, args.Author).ConfigureAwait(false);
+                    return;
+                }
+
                 if (!(content.Contains("┻━┻") ||
                       content.Contains("┻━┻")))
                     return;

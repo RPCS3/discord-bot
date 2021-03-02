@@ -124,7 +124,7 @@ namespace CompatBot.Commands
                     var mem = ctx.Client.GetMember(ctx.Guild.Id, discordUser);
                     if (mem is not null)
                     {
-                        await mem.ModifyAsync(m => m.Nickname = new("")).ConfigureAwait(false);
+                        await mem.ModifyAsync(m => m.Nickname = new(discordUser.Username)).ConfigureAwait(false);
                         await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
                     }
                     return;
@@ -144,7 +144,7 @@ namespace CompatBot.Commands
                         try
                         {
                             //todo: change to mem.Nickname = default when the library fixes their shit
-                            await discordMember.ModifyAsync(mem => mem.Nickname = new("")).ConfigureAwait(false);
+                            await discordMember.ModifyAsync(mem => mem.Nickname = new(discordMember.Username)).ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {

@@ -60,6 +60,51 @@ namespace CompatBot.Utils
             return str;
         }
 
+        public static string FixTypography(this string str)
+        {
+            // see https://www.typewolf.com/cheatsheet and https://practicaltypography.com/apostrophes.html
+            str = str
+                .Replace("...", "…")
+                .Replace("        ", "    ")
+                .Replace("    -- ", "    —") // em
+                .Replace("    --", "    —") // em
+                .Replace("    ― ", "    —") // em
+                .Replace("    ―", "    —") // em
+                .Replace(" -- ", " – ") // en
+                .Replace("--", "—") // em
+                .Replace("'n'", "’n’")
+                .Replace("'Tis", "’Tis")
+                .Replace("'Kay", "’Kay")
+                .Replace("'er", "’er")
+                .Replace("'em", "’em")
+                .Replace("'cause", "’cause")
+                .Replace("'til", "’til")
+                .Replace("'tis", "’tis")
+                .Replace("'twere", "’twere")
+                .Replace("'twould", "’twould")
+                .Replace("'bout", "’bout")
+                .Replace('`', '‘');
+            var result = new StringBuilder(str.Length);
+            for (var i = 0; i < str.Length; i++)
+            {
+                var chr = str[i] switch
+                {
+                    '\'' when i == 0 => '‘',
+                    '\'' when i == str.Length => '’',
+                    '\'' when char.IsNumber(str[i + 1]) => '’',
+                    '\'' when char.IsWhiteSpace(str[i - 1]) => '‘',
+                    '\'' => '’',
+                    '"' when i == 0 => '“',
+                    '"' when i == str.Length => '”',
+                    '"' when char.IsWhiteSpace(str[i - 1]) => '“',
+                    '"' => '”',
+                    char c => c,
+                };
+                result.Append(chr);
+            }
+            return result.ToString();
+        }
+
         public static string FixKot(this string str)
         {
             var matches = Regex.Matches(str, @"\b(?<cat>cat)s?\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
@@ -376,8 +421,8 @@ namespace CompatBot.Utils
 
         private static double GetScoreWithAcronym(this string strA, string strB)
         {
-            var fullMatch = strA.DiceCoefficient(strB);
-            var acronymMatch = strA.DiceCoefficient(strB.GetAcronym().ToLowerInvariant());
+            var fullMatch = strA.DiceIshCoefficientIsh(strB);
+            var acronymMatch = strA.DiceIshCoefficientIsh(strB.GetAcronym().ToLowerInvariant());
             return Math.Max(fullMatch, acronymMatch);
         }
 

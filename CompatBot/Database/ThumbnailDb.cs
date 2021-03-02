@@ -6,13 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database
 {
-    internal class ThumbnailDb: DbContext
+    internal class ThumbnailDb : DbContext
     {
         public DbSet<State> State { get; set; } = null!;
         public DbSet<Thumbnail> Thumbnail { get; set; } = null!;
         public DbSet<SyscallInfo> SyscallInfo { get; set; } = null!;
         public DbSet<SyscallToProductMap> SyscallToProductMap { get; set; } = null!;
         public DbSet<Metacritic> Metacritic { get; set; } = null!;
+        public DbSet<Fortune> Fortune { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -33,6 +34,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<Thumbnail>().HasIndex(m => m.Timestamp).HasDatabaseName("thumbnail_timestamp");
             modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Function).HasDatabaseName("syscall_info_function");
             modelBuilder.Entity<SyscallToProductMap>().HasKey(m => new {m.ProductId, m.SyscallInfoId});
+            modelBuilder.Entity<Fortune>();
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
@@ -116,5 +118,12 @@ namespace CompatBot.Database
                 Notes = Notes,
             };
         }
+    }
+
+    internal class Fortune
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Content { get; set; } = null!;
     }
 }

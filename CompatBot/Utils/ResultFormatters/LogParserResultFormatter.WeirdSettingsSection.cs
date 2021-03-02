@@ -123,7 +123,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (known)
                     {
                         if (!supported)
-                            notes.Add("❌ Selected `Resolution` isn't supported, please set to recommended `1280x720`");
+                            notes.Add("❌ Selected `Resolution` is not supported, please set to recommended `1280x720`");
                     }
                     else if (items["game_category"] != "1P")
                         notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");

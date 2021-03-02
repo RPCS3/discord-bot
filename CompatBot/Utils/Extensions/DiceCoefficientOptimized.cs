@@ -9,7 +9,7 @@
 		/// <param name="input"></param>
 		/// <param name="comparedTo"></param>
 		/// <returns></returns>
-		public static double DiceCoefficient(this string input, string comparedTo)
+		public static double DiceIshCoefficientIsh(this string input, string comparedTo)
 		{
 			var bgCount1 = input.Length - 1;
 			var bgCount2 = comparedTo.Length - 1;
