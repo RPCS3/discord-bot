@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers
 {
@@ -14,7 +15,7 @@ namespace CompatBot.Database.Providers
 
         static ModProvider()
         {
-            Moderators = Db.Moderator.ToDictionary(m => m.DiscordId, m => m);
+            Moderators = Db.Moderator.AsNoTracking().ToDictionary(m => m.DiscordId, m => m);
         }
 
         public static bool IsMod(ulong userId) => Moderators.ContainsKey(userId);
@@ -26,24 +27,29 @@ namespace CompatBot.Database.Providers
             if (IsMod(userId))
                 return false;
 
-            var result = await Db.Moderator.AddAsync(new Moderator {DiscordId = userId}).ConfigureAwait(false);
+            var newMod = new Moderator {DiscordId = userId};
+            await Db.Moderator.AddAsync(newMod).ConfigureAwait(false);
             await Db.SaveChangesAsync().ConfigureAwait(false);
             lock (Moderators)
             {
                 if (IsMod(userId))
                     return false;
-                Moderators[userId] = result.Entity;
+                Moderators[userId] = newMod;
             }
             return true;
         }
 
         public static async Task<bool> RemoveAsync(ulong userId)
         {
-            if (!Moderators.TryGetValue(userId, out var mod))
+            if (!Moderators.ContainsKey(userId))
                 return false;
 
-            Db.Moderator.Remove(mod);
-            await Db.SaveChangesAsync().ConfigureAwait(false);
+            var mod = await Db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
+            if (mod is not null)
+            {
+                Db.Moderator.Remove(mod);
+                await Db.SaveChangesAsync().ConfigureAwait(false);
+            }
             lock (Moderators)
             {
                 if (IsMod(userId))
@@ -59,8 +65,13 @@ namespace CompatBot.Database.Providers
             if (!Moderators.TryGetValue(userId, out var mod) || mod.Sudoer)
                 return false;
 
+            var dbMod = await Db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
+            if (dbMod is not null)
+            {
+                dbMod.Sudoer = true;
+                await Db.SaveChangesAsync().ConfigureAwait(false);
+            }
             mod.Sudoer = true;
-            await Db.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 
@@ -69,6 +80,12 @@ namespace CompatBot.Database.Providers
             if (!Moderators.TryGetValue(userId, out var mod) || !mod.Sudoer)
                 return false;
 
+            var dbMod = await Db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
+            if (dbMod is not null)
+            {
+                dbMod.Sudoer = false;
+                await Db.SaveChangesAsync().ConfigureAwait(false);
+            }
             mod.Sudoer = false;
             await Db.SaveChangesAsync().ConfigureAwait(false);
             return true;
