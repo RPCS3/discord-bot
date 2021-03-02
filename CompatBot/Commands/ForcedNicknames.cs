@@ -119,13 +119,24 @@ namespace CompatBot.Commands
         {
             try
             {
+                if (discordUser.IsBotSafeCheck())
+                {
+                    var mem = ctx.Client.GetMember(ctx.Guild.Id, discordUser);
+                    if (mem is not null)
+                    {
+                        await mem.ModifyAsync(m => m.Nickname = new("")).ConfigureAwait(false);
+                        await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
+                    }
+                    return;
+                }
+                
                 await using var db = new BotDb();
                 var enforcedRules = ctx.Guild == null
                     ? await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id).ToListAsync().ConfigureAwait(false)
                     : await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id && mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
                 if (enforcedRules.Count == 0)
                     return;
-
+                
                 db.ForcedNicknames.RemoveRange(enforcedRules);
                 await db.SaveChangesAsync().ConfigureAwait(false);
                 foreach (var rule in enforcedRules)
@@ -162,7 +173,7 @@ namespace CompatBot.Commands
             {
                 try
                 {
-                    await ctx.Client.UpdateCurrentUserAsync(username: newName).ConfigureAwait(false);
+                    await discordUser.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
                     await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
                 }
                 catch (Exception)
