@@ -421,8 +421,8 @@ namespace CompatBot.Utils
 
         private static double GetScoreWithAcronym(this string strA, string strB)
         {
-            var fullMatch = strA.DiceCoefficient(strB);
-            var acronymMatch = strA.DiceCoefficient(strB.GetAcronym().ToLowerInvariant());
+            var fullMatch = strA.DiceIshCoefficientIsh(strB);
+            var acronymMatch = strA.DiceIshCoefficientIsh(strB.GetAcronym().ToLowerInvariant());
             return Math.Max(fullMatch, acronymMatch);
         }
 
