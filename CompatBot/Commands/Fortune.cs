@@ -219,8 +219,7 @@ namespace CompatBot.Commands
             {
                 var count = 0;
                 await using var outputStream = Config.MemoryStreamManager.GetStream();
-                await using var compressor = new GZipStream(outputStream, CompressionLevel.Optimal, true);
-                await using var writer = new StreamWriter(compressor);
+                await using var writer = new StreamWriter(outputStream);
                 await using var db = new ThumbnailDb();
                 foreach (var fortune in db.Fortune.AsNoTracking())
                 {
@@ -232,7 +231,6 @@ namespace CompatBot.Commands
                     count++;
                 }
                 await writer.FlushAsync().ConfigureAwait(false);
-                await compressor.FlushAsync().ConfigureAwait(false);
                 outputStream.Seek(0, SeekOrigin.Begin);
                 var builder = new DiscordMessageBuilder()
                     .WithContent($"Exported {count} fortune{(count == 1 ? "": "s")}")
