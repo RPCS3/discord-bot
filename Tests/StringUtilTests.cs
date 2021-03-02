@@ -102,9 +102,6 @@ ignorance the hard way.""
 
             var coef = DiceCoefficientOptimized.DiceIshCoefficientIsh(strA, strB);
             Assert.That(coef, Is.GreaterThan(0.95), "Dice Coefficient");
-
-            var distance = strA.LevenshteinDistance(strB);
-            Assert.That(distance, Is.LessThan(0.05));
         }
 
         public static double DiceCoefficient(string input, string comparedTo)
