@@ -27,11 +27,14 @@ namespace CompatBot.Commands
         [GroupCommand]
         [Cooldown(2, 60, CooldownBucketType.User)]
         [Cooldown(1, 3, CooldownBucketType.Channel)]
-        public async Task ShowFortune(CommandContext ctx)
+        public Task ShowFortune(CommandContext ctx)
+            => ShowFortune(ctx.Message, ctx.User);
+        
+        public static async Task ShowFortune(DiscordMessage message, DiscordUser user)
         {
             var prefix = DateTime.UtcNow.ToString("yyyyMMdd");
             using var sha256 = System.Security.Cryptography.SHA256.Create();
-            var data = Encoding.UTF8.GetBytes(prefix + ctx.User.Id.ToString("x16"));
+            var data = Encoding.UTF8.GetBytes(prefix + user.Id.ToString("x16"));
             var hash = sha256.ComputeHash(data);
             var seed = BitConverter.ToInt32(hash, 0);
             var rng = new Random(seed);
@@ -42,7 +45,7 @@ namespace CompatBot.Commands
                 var totalFortunes = await db.Fortune.CountAsync().ConfigureAwait(false);
                 if (totalFortunes == 0)
                 {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "There are no fortunes to tell", true).ConfigureAwait(false);
+                    await message.ReactWithAsync(Config.Reactions.Failure, "There are no fortunes to tell", true).ConfigureAwait(false);
                     return;
                 }
                 
@@ -62,7 +65,7 @@ namespace CompatBot.Commands
                 tmp.Append(l).Append('\n');
             }
             msg = tmp.ToString().TrimEnd().FixSpaces();
-            await ctx.RespondAsync($"{ctx.User.Mention}, your fortune for today:\n{msg}").ConfigureAwait(false);
+            await message.RespondAsync($"{user.Mention}, your fortune for today:\n{msg}").ConfigureAwait(false);
         }
 
         [Command("add"), RequiresBotModRole]
