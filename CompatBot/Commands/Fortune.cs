@@ -30,9 +30,9 @@ namespace CompatBot.Commands
         public async Task ShowFortune(CommandContext ctx)
         {
             var prefix = DateTime.UtcNow.ToString("yyyyMMdd");
-            using var hmac = new System.Security.Cryptography.HMACSHA256();
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
             var data = Encoding.UTF8.GetBytes(prefix + ctx.User.Id.ToString("x16"));
-            var hash = hmac.ComputeHash(data);
+            var hash = sha256.ComputeHash(data);
             var seed = BitConverter.ToInt32(hash, 0);
             var rng = new Random(seed);
             await using var db = new ThumbnailDb();
