@@ -112,10 +112,13 @@ namespace CompatBot.Commands
                 var buf = new StringBuilder();
                 string? line;
                 int count = 0, skipped = 0;
-                while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null && !Config.Cts.IsCancellationRequested)
+                while (!Config.Cts.IsCancellationRequested
+                       && ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null
+                           || buf.Length > 0)
+                       && !Config.Cts.IsCancellationRequested)
                 {
-                    line = line.Trim();
-                    if (line == "%")
+                    line = line?.Trim();
+                    if (line == "%" || line is null)
                     {
                         var content = buf.ToString().Replace("\r\n", "\n").Trim();
                         if (content.Length > 1900)
@@ -123,20 +126,20 @@ namespace CompatBot.Commands
                             skipped++;
                             continue;
                         }
-                        
+
+                        if (db.Fortune.AsNoTracking().Select(f => f.Content).Any(f => f.GetFuzzyCoefficientCached(content) >= 0.95))
+                            continue;
+
                         await db.Fortune.AddAsync(new() {Content = content}).ConfigureAwait(false);
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                         buf.Clear();
                         count++;
                     }
                     else
                         buf.AppendLine(line);
+                    if (line is null)
+                        break;
                 }
-                if (buf.Length > 0)
-                {
-                    var content = buf.ToString().Replace("\r\n", "\n").Trim();
-                    await db.Fortune.AddAsync(new() {Content = content}).ConfigureAwait(false);
-                }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                 var result = $"Imported {count} fortune{(count == 1 ? "" : "s")}";
                 if (skipped > 0)
                     result += $", skipped {skipped}";
