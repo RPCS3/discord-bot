@@ -15,7 +15,7 @@ namespace CompatBot.EventHandlers
     {
         private static readonly HashSet<char> OversizedChars = new()
         {
-            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞',
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽',
         };
 
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
