@@ -135,9 +135,10 @@ namespace CompatBot
                     TokenType = TokenType.Bot,
                     MessageCacheSize = Config.MessageCacheSize,
                     LoggerFactory = Config.LoggerFactory,
+                    Intents = DiscordIntents.All,
                 };
                 using var client = new DiscordClient(config);
-                var commands = client.UseCommandsNext(new CommandsNextConfiguration
+                var commands = client.UseCommandsNext(new()
                 {
                     StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
                     Services = new ServiceCollection().BuildServiceProvider(),
@@ -170,7 +171,7 @@ namespace CompatBot
 
                 commands.CommandErrored += UnknownCommandHandler.OnError;
 
-                client.UseInteractivity(new InteractivityConfiguration());
+                client.UseInteractivity(new());
 
                 client.Ready += async (c, _) =>
                                 {
@@ -186,7 +187,7 @@ namespace CompatBot
                                     {
                                         msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
                                         if (!await db.Moderator.AnyAsync(m => m.DiscordId == owner.Id, Config.Cts.Token).ConfigureAwait(false))
-                                            await db.Moderator.AddAsync(new Moderator {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
+                                            await db.Moderator.AddAsync(new() {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
                                     }
                                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                                     Config.Log.Info(msg.ToString().TrimEnd);
