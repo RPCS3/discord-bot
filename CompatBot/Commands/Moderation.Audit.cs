@@ -97,8 +97,15 @@ namespace CompatBot.Commands
                     var headerLength = result.Length;
                     var members = GetMembers(ctx.Client);
                     foreach (var member in members)
-                        if (UsernameZalgoMonitor.NeedsRename(member.DisplayName))
-                            result.AppendLine($"{member.Mention} please change your nickname according to Rule #7");
+                        try
+                        {
+                            if (UsernameZalgoMonitor.NeedsRename(member.DisplayName))
+                                result.AppendLine($"{member.Mention} please change your nickname according to Rule #7");
+                        }
+                        catch (Exception e)
+                        {
+                            Config.Log.Warn(e, $"Failed to audit username for {member.Id}");
+                        }
                     if (result.Length == headerLength)
                         result.AppendLine("No naughty users 🎉");
                     await ctx.SendAutosplitMessageAsync(result, blockStart: "", blockEnd: "").ConfigureAwait(false);
