@@ -107,7 +107,7 @@ namespace CompatBot.Commands
         public async Task Import(CommandContext ctx, string? url = null)
         {
             var msg = await ctx.RespondAsync("Please wait...").ConfigureAwait(false);
-            if (!ImportCheck.Wait(0))
+            if (!await ImportCheck.WaitAsync(0).ConfigureAwait(false))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "There is another import in progress already").ConfigureAwait(false);
