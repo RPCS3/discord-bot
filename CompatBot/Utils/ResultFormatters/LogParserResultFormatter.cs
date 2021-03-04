@@ -314,7 +314,6 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var items = state.CompletedCollection!;
             var multiItems = state.CompleteMultiValueCollection!;
-            #warning report bug?
             if (RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
             {
                 var itemKeys = items.AllKeys;
