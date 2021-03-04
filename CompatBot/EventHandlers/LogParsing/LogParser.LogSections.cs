@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Database;
@@ -199,19 +198,19 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["RSX: Swapchain:"] = new(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
                     ["F "] = new(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*(Thread terminated due to fatal error: )?|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7|$)", DefaultSingleLineOptions),
                     ["Failed to load RAP file:"] = new(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
-                    ["Rap file not found:"] = new(@"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?)(\xE2\x80\x9D)?\r?$", DefaultOptions),
+                    ["Rap file not found:"] = new(@"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?\.rap)(\xE2\x80\x9D)?\r?$", DefaultOptions),
                     ["Pad handler expected but none initialized"] = new(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
                     ["Failed to bind device"] = new(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
                     ["Input:"] = new(@"Input: (?<pad_handler>.*?) device .+ connected\r?$", DefaultOptions),
                     ["XAudio2Thread"] = new(@"XAudio2Thread\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["cellAudio Thread"] = new(@"XAudio2Backend\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
                     ["using a Null renderer instead"] = new(@"Audio renderer (?<audio_backend_init_error>.+) could not be initialized\r?$", DefaultOptions),
-                    ["PPU executable hash:"] = new(@"PPU executable hash: PPU-(?<ppu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                    ["OVL executable hash:"] = new(@"OVL executable hash: OVL-(?<ovl_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                    ["SPU executable hash:"] = new(@"SPU executable hash: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                    ["PRX library hash:"] = new(@"PRX library hash: PRX-(?<prx_patch>\w+-\d+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                    ["OVL hash of"] = new(@"OVL hash of (\w|[\.\[\]])+: OVL-(?<ovl_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                    ["PRX hash of"] = new(@"PRX hash of (\w|[\.\[\]])+: PRX-(?<prx_patch>\w+-\d+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
+                    ["PPU executable hash:"] = new(@"PPU executable hash: PPU-(?<ppu_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
+                    ["OVL executable hash:"] = new(@"OVL executable hash: OVL-(?<ovl_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
+                    ["SPU executable hash:"] = new(@"SPU executable hash: SPU-(?<spu_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
+                    ["PRX library hash:"] = new(@"PRX library hash: PRX-(?<prx_patch>\w+-\d+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
+                    ["OVL hash of"] = new(@"OVL hash of (\w|[\.\[\]])+: OVL-(?<ovl_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
+                    ["PRX hash of"] = new(@"PRX hash of (\w|[\.\[\]])+: PRX-(?<prx_patch>\w+-\d+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
                     [": Applied patch"] = new(@"Applied patch \(hash='(?:\w{3}-\w+(-\d+)?)', description='(?<patch_desc>.+?)', author='(?:.+?)', patch_version='(?:.+?)', file_version='(?:.+?)'\) \(<- (?:[1-9]\d*)\).*\r?$", DefaultOptions),
                     ["Loaded SPU image:"] = new(@"Loaded SPU image: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
                     ["'sys_fs_stat' failed"] = new(@"'sys_fs_stat' failed (?!with 0x8001002c).+\xE2\x80\x9C(/dev_bdvd/(?<broken_filename_or_dir>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))\xE2\x80\x9D.*?\r?$", DefaultOptions),

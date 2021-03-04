@@ -13,10 +13,6 @@ namespace CompatBot.Utils
 {
     public static class StringUtils
     {
-        private static readonly Encoding Latin8BitEncoding = Encoding.GetEncodings()
-                                                                 .FirstOrDefault(e => e.CodePage == 1250 || e.CodePage == 1252 || e.CodePage == 28591)?
-                                                                 .GetEncoding()
-                                                             ?? Encoding.ASCII;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
         private static readonly MemoryCache FuzzyPairCache = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
         private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(30);
@@ -164,7 +160,7 @@ namespace CompatBot.Utils
 
         public static string AsString(this ReadOnlySequence<byte> buffer, Encoding? encoding = null)
         {
-            encoding ??= Latin8BitEncoding;
+            encoding ??= Encoding.Latin1;
             if (buffer.IsSingleSegment)
                 return encoding.GetString(buffer.First.Span);
 
@@ -180,17 +176,17 @@ namespace CompatBot.Utils
         }
 
         public static string ToUtf8(this string str)
-            => Utf8.GetString(Latin8BitEncoding.GetBytes(str));
+            => Utf8.GetString(Encoding.Latin1.GetBytes(str));
 
         public static string ToLatin8BitEncoding(this string str)
         {
             try
             {
-                return Latin8BitEncoding.GetString(Utf8.GetBytes(str));
+                return Encoding.Latin1.GetString(Utf8.GetBytes(str));
             }
             catch (Exception e)
             {
-                Config.Log.Error(e, $"Failed to decode string from {Latin8BitEncoding.EncodingName} to {Utf8.EncodingName}");
+                Config.Log.Error(e, $"Failed to decode string from {Encoding.Latin1.EncodingName} to {Utf8.EncodingName}");
                 return str;
             }
         }

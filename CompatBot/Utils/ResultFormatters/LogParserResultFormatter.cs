@@ -39,7 +39,7 @@ namespace CompatBot.Utils.ResultFormatters
             @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+))\r?$",
             DefaultSingleLine);
         private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
-        private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+(-\d+)?) \(<-\s*(?<patch_count>\d+)\)", DefaultSingleLine);
+        private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+(-\d+)?)( \(<-\s*(?<patch_count>\d+)\))?", DefaultSingleLine);
         private static readonly char[] NewLineChars = {'\r', '\n'};
 
         // rpcs3-v0.0.5-7105-064d0619_win64.7z
@@ -314,7 +314,6 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var items = state.CompletedCollection!;
             var multiItems = state.CompleteMultiValueCollection!;
-            #warning report bug?
             if (RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
             {
                 var itemKeys = items.AllKeys;
@@ -839,9 +838,12 @@ namespace CompatBot.Utils.ResultFormatters
             foreach (var patch in patchList)
             {
                 var match = ProgramHashPatch.Match(patch);
-                if (match.Success && int.TryParse(match.Groups["patch_count"].Value, out var pCount))
+                if (match.Success)
+                {
+                    _ = int.TryParse(match.Groups["patch_count"].Value, out var pCount);
                     if (!onlyApplied || pCount > 0)
                         result[match.Groups["hash"].Value] = pCount;
+                }
             }
             return result;
         }
