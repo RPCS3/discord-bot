@@ -16,11 +16,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("rename"), RequiresBotModRole]
+    [Group("rename")]
     [Description("Manage users who has forced nickname.")]
     internal sealed class ForcedNicknames : BaseCommandModuleCustom
     {
-        [GroupCommand]
+        [GroupCommand, RequiresBotModRole]
         [Description("Enforces specific nickname for particular user.")]
         public async Task Rename(CommandContext ctx, 
             [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
@@ -114,7 +114,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("clear"), Aliases("remove")]
+        [Command("clear"), Aliases("remove"), RequiresBotModRole]
         [Description("Removes nickname restriction from particular user.")]
         public async Task Remove(CommandContext ctx, [Description("Discord user to remove from forced nickname list.")] DiscordUser discordUser)
         {
@@ -160,7 +160,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("cleanup"), Aliases("fix")]
+        [Command("cleanup"), Aliases("fix"), RequiresBotModRole]
         [Description("Removes zalgo from specified user nickname")]
         public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordMember discordUser)
         {
@@ -202,8 +202,16 @@ namespace CompatBot.Commands
             }
             await ctx.RespondAsync(result).ConfigureAwait(false);
         }
+
+        [Command("generate"), Aliases("gen", "suggest")]
+        [Description("Generates random name for specified user")]
+        public async Task Generate(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
+        {
+            var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
+            await ctx.RespondAsync(newName).ConfigureAwait(false);
+        }
         
-        [Command("list")]
+        [Command("list"), RequiresBotModRole]
         [Description("Lists all users who has restricted nickname.")]
         public async Task List(CommandContext ctx)
         {

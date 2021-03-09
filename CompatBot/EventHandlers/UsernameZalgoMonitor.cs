@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -15,7 +17,12 @@ namespace CompatBot.EventHandlers
     {
         private static readonly HashSet<char> OversizedChars = new()
         {
-            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽',
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅',
+        };
+
+        private static readonly List<string> OversizedLiterals = new()
+        {
+            "𒐫", "𒈙", 
         };
 
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
@@ -112,8 +119,10 @@ namespace CompatBot.EventHandlers
         public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
             displayName = displayName.Normalize(normalizationForm).TrimEager();
+            foreach (var literal in OversizedLiterals)
+                displayName = displayName.Replace(literal, "");
             if (string.IsNullOrEmpty(displayName))
-                return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
+                return GenerateRandomName(userId);
 
             var builder = new StringBuilder();
             bool skipLowSurrogate = false;
@@ -150,9 +159,19 @@ namespace CompatBot.EventHandlers
             }
             var result = builder.ToString().TrimEager();
             if (string.IsNullOrEmpty(result))
-                return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
+                return GenerateRandomName(userId);
 
             return result;
+        }
+
+        public static string GenerateRandomName(ulong userId)
+        {
+            var hash = userId.GetHashCode();
+            var rng = new Random(hash);
+            using var db = new ThumbnailDb();
+            var count = db.NamePool.Count();
+            var name = db.NamePool.Skip(rng.Next(count)).First().Name;
+            return name + Config.RenameNameSuffix;
         }
     }
 }

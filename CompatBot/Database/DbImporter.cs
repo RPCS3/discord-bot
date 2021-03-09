@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Database.Migrations;
@@ -7,12 +11,31 @@ using CompatBot.Utils;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
+using PsnClient.Utils;
 
 namespace CompatBot.Database
 {
-    internal static class DbImporter
+    public static class DbImporter
     {
-        public static async Task<bool> UpgradeAsync(DbContext dbContext, CancellationToken cancellationToken)
+        public static async Task<bool> UpgradeAsync(CancellationToken cancellationToken)
+        {
+            await using (var db = new BotDb())
+                if (!await UpgradeAsync(db, Config.Cts.Token))
+                    return false;
+
+            await using (var db = new ThumbnailDb())
+            {
+                if (!await UpgradeAsync(db, Config.Cts.Token))
+                    return false;
+
+                if (!await ImportNamesPool(db, Config.Cts.Token))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static async Task<bool> UpgradeAsync(DbContext dbContext, CancellationToken cancellationToken)
         {
             try
             {
@@ -145,6 +168,100 @@ namespace CompatBot.Database
                     throw;
                 }
             return dbPath;
+        }
+
+        private static async Task<bool> ImportNamesPool(ThumbnailDb db, CancellationToken cancellationToken)
+        {
+            Config.Log.Debug("Importing name pool...");
+            var rootDir = Environment.CurrentDirectory;
+            while (rootDir is not null && !Directory.EnumerateFiles(rootDir, "names_*.txt", SearchOption.TopDirectoryOnly).Any())
+                rootDir = Path.GetDirectoryName(rootDir);
+            if (rootDir is null)
+            {
+                Config.Log.Error("Couldn't find any name sources");
+                return db.NamePool.Any();
+            }
+
+            var resources = Directory.GetFiles(rootDir, "names_*.txt", SearchOption.TopDirectoryOnly)
+                .OrderBy(f => f)
+                .ToList();
+            if (resources.Count == 0)
+            {
+                Config.Log.Error("Couldn't find any name sources (???)");
+                return db.NamePool.Any();
+            }
+
+            var timestamp = -1L;
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] buf;
+                foreach (var path in resources)
+                {
+                    var fileInfo = new FileInfo(path);
+                    buf = BitConverter.GetBytes(fileInfo.Length);
+                    sha256.TransformBlock(buf, 0, buf.Length, null, 0);
+                }
+                buf = Encoding.UTF8.GetBytes(Config.RenameNameSuffix);
+                buf = sha256.TransformFinalBlock(buf, 0, buf.Length);
+                timestamp = BitConverter.ToInt64(buf, 0);
+            }
+
+            const string renameStateKey = "rename-name-pool";
+            var stateEntry = db.State.FirstOrDefault(n => n.Locale == renameStateKey);
+            if (stateEntry?.Timestamp == timestamp)
+            {
+                Config.Log.Info("Name pool is up-to-date");
+                return true;
+            }
+
+            Config.Log.Info("Updating name pool...");
+            try
+            {
+                var names = new HashSet<string>();
+                foreach (var resourcePath in resources)
+                {
+                    await using var stream = File.Open(resourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    using var reader = new StreamReader(stream);
+                    while (await reader.ReadLineAsync().ConfigureAwait(false) is string line)
+                    {
+                        if (line.Length < 2 || line.StartsWith("#"))
+                            continue;
+
+                        var commentPos = line.IndexOf(" (");
+                        if (commentPos > 1)
+                            line = line.Substring(0, commentPos);
+                        line = line.Trim()
+                            .Replace("  ", " ")
+                            .Replace('`', '\'') // consider ’
+                            .Replace("\"", "\\\"");
+                        if (line.Length + Config.RenameNameSuffix.Length > 32)
+                            continue;
+
+                        if (line.Contains('@')
+                            || line.Contains('#')
+                            || line.Contains(':'))
+                            continue;
+
+                        names.Add(line);
+                    }
+                }
+                await using var tx = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                db.NamePool.RemoveRange(db.NamePool);
+                foreach (var name in names)
+                    await db.NamePool.AddAsync(new() {Name = name}, cancellationToken).ConfigureAwait(false);
+                if (stateEntry is null)
+                    await db.State.AddAsync(new() {Locale = renameStateKey, Timestamp = timestamp}, cancellationToken).ConfigureAwait(false);
+                else
+                    stateEntry.Timestamp = timestamp;
+                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await tx.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return names.Count > 0;
+            }
+            catch (Exception e)
+            {
+                Config.Log.Error(e);
+                return false;
+            }
         }
     }
 }

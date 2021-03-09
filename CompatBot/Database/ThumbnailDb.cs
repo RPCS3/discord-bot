@@ -14,6 +14,7 @@ namespace CompatBot.Database
         public DbSet<SyscallToProductMap> SyscallToProductMap { get; set; } = null!;
         public DbSet<Metacritic> Metacritic { get; set; } = null!;
         public DbSet<Fortune> Fortune { get; set; } = null!;
+        public DbSet<NamePool> NamePool { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -35,6 +36,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Function).HasDatabaseName("syscall_info_function");
             modelBuilder.Entity<SyscallToProductMap>().HasKey(m => new {m.ProductId, m.SyscallInfoId});
             modelBuilder.Entity<Fortune>();
+            modelBuilder.Entity<NamePool>();
 
             //configure default policy of Id being the primary key
             modelBuilder.ConfigureDefaultPkConvention();
@@ -125,5 +127,12 @@ namespace CompatBot.Database
         public int Id { get; set; }
         [Required]
         public string Content { get; set; } = null!;
+    }
+    
+    internal class NamePool
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = null!;
     }
 }

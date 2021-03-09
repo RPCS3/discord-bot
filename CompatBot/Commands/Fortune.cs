@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -18,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
 {
-    [Group("fortune")]
+    [Group("fortune"), Aliases("fortunes")]
     [Description("Gives you a fortune once a day")]
     internal sealed class Fortune : BaseCommandModuleCustom
     {

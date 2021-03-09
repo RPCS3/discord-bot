@@ -2,7 +2,9 @@
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Database;
 using CompatBot.EventHandlers;
 using NUnit.Framework;
 using File = System.IO.File;
@@ -12,6 +14,13 @@ namespace Tests
     [TestFixture]
     public class ZalgoTests
     {
+        [OneTimeSetUp]
+        public async Task SetupAsync()
+        {
+            var result = await DbImporter.UpgradeAsync(CancellationToken.None).ConfigureAwait(false);
+            Assert.That(result, Is.True);
+        }
+        
         [Test, Explicit("Requires external data")]
         public async Task ZalgoAuditTestAsync()
         {

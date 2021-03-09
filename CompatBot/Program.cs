@@ -96,13 +96,8 @@ namespace CompatBot
                     }
                 }
 
-                await using (var db = new BotDb())
-                    if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
-                        return;
-
-                await using (var db = new ThumbnailDb())
-                    if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
-                        return;
+                if (!await DbImporter.UpgradeAsync(Config.Cts.Token).ConfigureAwait(false))
+                    return;
 
                 await SqlConfiguration.RestoreAsync().ConfigureAwait(false);
                 Config.Log.Debug("Restored configuration variables from persistent storage");

@@ -65,4 +65,4 @@ External resources that need manual updates
 -------------------------------------------
 * [Unicode Confusables](http://www.unicode.org/Public/security/latest/confusables.txt), for Homoglyph checks
 * [Windows Error Codes](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/), for error decoding on non-Windows host
-* Optionally [Redump disc key database](http://redump.org/downloads/) in text format (requires membership)
+* Optionally pool of names (one name per line), files named as `names_<category>.txt`
