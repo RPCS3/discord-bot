@@ -13,7 +13,7 @@ namespace CompatBot.Utils
 {
     public static class StringUtils
     {
-        private static readonly Encoding Utf8 = new UTF8Encoding(false);
+        public static readonly Encoding Utf8 = new UTF8Encoding(false);
         private static readonly MemoryCache FuzzyPairCache = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
         private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(30);
         private const char StrikeThroughChar = '\u0336'; // 0x0335 = short dash, 0x0336 = long dash, 0x0337 = short slash, 0x0338 = long slash
@@ -143,13 +143,16 @@ namespace CompatBot.Utils
                 if (char.IsLowSurrogate(str, end)
                     && end > start
                     && char.IsHighSurrogate(str, end - 1)
-                    && char.GetUnicodeCategory(str, end - 1) == UnicodeCategory.OtherNotAssigned
+                    && char.GetUnicodeCategory(str, end - 1) is UnicodeCategory.OtherNotAssigned or UnicodeCategory.PrivateUse
                     && str[end-1] >= 0xdb40)
                     continue;
 
                 if (char.IsHighSurrogate(str, end)
-                    && char.GetUnicodeCategory(str, end) == UnicodeCategory.OtherNotAssigned
+                    && char.GetUnicodeCategory(str, end) is UnicodeCategory.OtherNotAssigned or UnicodeCategory.PrivateUse
                     && str[end] >= 0xdb40)
+                    continue;
+                
+                if (char.GetUnicodeCategory(str, end) is UnicodeCategory.OtherNotAssigned or UnicodeCategory.PrivateUse)
                     continue;
 
                 break;
