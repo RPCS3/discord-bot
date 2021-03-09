@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
@@ -99,8 +100,21 @@ namespace CompatBot.Commands
                     foreach (var member in members)
                         try
                         {
-                            if (UsernameZalgoMonitor.NeedsRename(member.DisplayName))
-                                result.AppendLine($"{member.Mention} please change your nickname according to Rule #7");
+                            var displayName = member.DisplayName;
+                            if (!UsernameZalgoMonitor.NeedsRename(displayName))
+                                continue;
+                            
+                            var nickname = UsernameZalgoMonitor.StripZalgo(displayName, member.Id).Sanitize();
+                            try
+                            {
+                                await member.ModifyAsync(m => m.Nickname = nickname).ConfigureAwait(false);
+                                result.AppendLine($"{member.Mention} have been automatically renamed from {displayName} to {nickname} according Rule #7");
+                            }
+                            catch (Exception e)
+                            {
+                                Config.Log.Warn(e, $"Failed to rename member {member.GetUsernameWithNickname()}");
+                                result.AppendLine($"{member.Mention} please change your nickname according to Rule #7 (suggestion: {nickname})");
+                            }
                         }
                         catch (Exception e)
                         {

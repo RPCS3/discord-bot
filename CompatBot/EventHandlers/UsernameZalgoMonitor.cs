@@ -74,7 +74,7 @@ namespace CompatBot.EventHandlers
                         $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
                         ReportSeverity.Low);
-                    await DmAndRenameUserAsync(c, args.Member, suggestedName).ConfigureAwait(false);
+                await DmAndRenameUserAsync(c, args.Member, suggestedName).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
