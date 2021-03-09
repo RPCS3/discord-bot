@@ -15,7 +15,12 @@ namespace CompatBot.EventHandlers
     {
         private static readonly HashSet<char> OversizedChars = new()
         {
-            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽',
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅',
+        };
+
+        private static readonly List<string> OversizedLiterals = new()
+        {
+            "𒐫", "𒈙", 
         };
 
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
@@ -112,6 +117,8 @@ namespace CompatBot.EventHandlers
         public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
             displayName = displayName.Normalize(normalizationForm).TrimEager();
+            foreach (var literal in OversizedLiterals)
+                displayName = displayName.Replace(literal, "");
             if (string.IsNullOrEmpty(displayName))
                 return GenerateRandomName(userId);
 
@@ -160,7 +167,7 @@ namespace CompatBot.EventHandlers
             var hash = userId.GetHashCode();
             var rng = new Random(hash);
             var name = NamesPool.List[rng.Next(NamesPool.NameCount)];
-            return $"{name}{NamesPool.NameSuffix} #{hash:x8}";
+            return name + NamesPool.NameSuffix;
         }
     }
 }

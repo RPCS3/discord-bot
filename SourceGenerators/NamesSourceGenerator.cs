@@ -12,8 +12,9 @@ namespace SourceGenerators
     public class NamesSourceGenerator : ISourceGenerator
     {
         private const string Indent = "    ";
-        private const string NameSuffix = " the Rule 7 Breaker";
-        private const int DiscordUsernameLengthLimit = 32-10; //" #12345678"
+        private const string NameSuffix = " (Rule 7)";
+        //private const int DiscordUsernameLengthLimit = 32-10; //" #12345678"
+        private const int DiscordUsernameLengthLimit = 32;
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -21,7 +22,10 @@ namespace SourceGenerators
 
         public void Execute(GeneratorExecutionContext context)
         {
-            var resources = context.AdditionalFiles.Where(f => Path.GetFileName(f.Path).ToLower().StartsWith("names_") && f.Path.ToLower().EndsWith(".txt")).ToList();
+            var resources = context.AdditionalFiles
+                .Where(f => Path.GetFileName(f.Path).ToLower().StartsWith("names_") && f.Path.ToLower().EndsWith(".txt"))
+                .OrderBy(f => f.Path)
+                .ToList();
             if (resources.Count == 0)
                 return;
 
@@ -38,15 +42,23 @@ namespace SourceGenerators
                     var commentPos = line.IndexOf(" (");
                     if (commentPos > 1)
                         line = line.Substring(0, commentPos);
-                    line = line.Trim();
-                    if (line.Length + NameSuffix.Length > DiscordUsernameLengthLimit)
-                        line = line.Split(' ')[0];
+                    line = line.Trim()
+                        .Replace("  ", " ")
+                        .Replace('`', '\'') // consider ’
+                        .Replace("\"", "\\\"");
+                    //if (line.Length + NameSuffix.Length > DiscordUsernameLengthLimit)
+                    //    line = line.Split(' ')[0];
                     if (line.Length + NameSuffix.Length > DiscordUsernameLengthLimit)
                         continue;
 
+                    if (line.Contains('@')
+                        || line.Contains('#')
+                        || line.Contains(':'))
+                        continue;
+
                     names.Add(line);
-                    if (line.Contains(' '))
-                        names.Add(line.Split(' ')[0]);
+                    //if (line.Contains(' '))
+                    //    names.Add(line.Split(' ')[0]);
                 }
             }
             
