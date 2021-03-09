@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -21,7 +22,7 @@ namespace CompatBot.Commands
     {
         [GroupCommand]
         [Description("Enforces specific nickname for particular user.")]
-        public async Task Add(CommandContext ctx, 
+        public async Task Rename(CommandContext ctx, 
             [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
             [Description("Nickname which should be displayed."), RemainingText] string expectedNickname)
         {
@@ -182,6 +183,24 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);
                 }
             }
+        }
+
+        [Command("dump")]
+        [Description("Prints hexadecimal binary representation of an UTF-8 encoded user name for diagnostic purposes")]
+        public async Task Dump(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
+        {
+            var name = discordUser.Username;
+            var nameBytes = StringUtils.Utf8.GetBytes(name);
+            var hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
+            var result = $"User ID: {discordUser.Id}\nUsername: {hex}";
+            var member = ctx.Client.GetMember(ctx.Guild, discordUser);
+            if (member?.Nickname is string {Length: >0} nickname)
+            {
+                nameBytes = StringUtils.Utf8.GetBytes(nickname);
+                hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
+                result += "\nNickname: " + hex;
+            }
+            await ctx.RespondAsync(result).ConfigureAwait(false);
         }
         
         [Command("list")]

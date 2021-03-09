@@ -67,9 +67,10 @@ namespace Tests
         [TestCase("󠀀󠀀", true)]
         [TestCase("꧁꧂🥴🥴🥴HOJU🥴🥴🥴╲⎝⧹", true)]
         [TestCase("", true)]
-        public void ZalgoDetectionTest(string name, bool isBad)
+        [TestCase("᲼᲼᲼", true, "Reserved block")]
+        public void ZalgoDetectionTest(string name, bool isBad, string comment = null)
         {
-            Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad));
+            Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad), comment);
         }
     }
 
@@ -88,7 +89,7 @@ namespace Tests
             if (parts.Length != 4)
                 throw new FormatException("Invalid user info line: " + line);
 
-            return new UserInfo
+            return new()
             {
                 Username = parts[0],
                 Nickname = parts[1],
