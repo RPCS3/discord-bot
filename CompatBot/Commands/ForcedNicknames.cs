@@ -202,6 +202,14 @@ namespace CompatBot.Commands
             }
             await ctx.RespondAsync(result).ConfigureAwait(false);
         }
+
+        [Command("generate"), Aliases("gen", "suggest")]
+        [Description("Generates random name for specified user")]
+        public async Task Generate(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
+        {
+            var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
+            await ctx.RespondAsync(newName).ConfigureAwait(false);
+        }
         
         [Command("list")]
         [Description("Lists all users who has restricted nickname.")]

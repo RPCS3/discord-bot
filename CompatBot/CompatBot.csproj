@@ -43,7 +43,9 @@
 
   <ItemGroup>
     <None Remove="..\win32_error_codes.txt" />
+    <None Remove="..\names_*.txt" />
     <AdditionalFiles Include="..\win32_error_codes.txt" />
+    <AdditionalFiles Include="..\names_*.txt" />
   </ItemGroup>
   
   <ItemGroup>

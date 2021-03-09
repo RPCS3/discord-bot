@@ -113,7 +113,7 @@ namespace CompatBot.EventHandlers
         {
             displayName = displayName.Normalize(normalizationForm).TrimEager();
             if (string.IsNullOrEmpty(displayName))
-                return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
+                return GenerateRandomName(userId);
 
             var builder = new StringBuilder();
             bool skipLowSurrogate = false;
@@ -150,9 +150,17 @@ namespace CompatBot.EventHandlers
             }
             var result = builder.ToString().TrimEager();
             if (string.IsNullOrEmpty(result))
-                return "Rule #7 Breaker #" + userId.GetHashCode().ToString("x8");
+                return GenerateRandomName(userId);
 
             return result;
+        }
+
+        public static string GenerateRandomName(ulong userId)
+        {
+            var hash = userId.GetHashCode();
+            var rng = new Random(hash);
+            var name = NamesPool.List[rng.Next(NamesPool.NameCount)];
+            return $"{name}{NamesPool.NameSuffix} #{hash:x8}";
         }
     }
 }
