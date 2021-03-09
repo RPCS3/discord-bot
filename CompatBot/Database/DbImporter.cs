@@ -15,9 +15,27 @@ using PsnClient.Utils;
 
 namespace CompatBot.Database
 {
-    internal static class DbImporter
+    public static class DbImporter
     {
-        public static async Task<bool> UpgradeAsync(DbContext dbContext, CancellationToken cancellationToken)
+        public static async Task<bool> UpgradeAsync(CancellationToken cancellationToken)
+        {
+            await using (var db = new BotDb())
+                if (!await UpgradeAsync(db, Config.Cts.Token))
+                    return false;
+
+            await using (var db = new ThumbnailDb())
+            {
+                if (!await UpgradeAsync(db, Config.Cts.Token))
+                    return false;
+
+                if (!await ImportNamesPool(db, Config.Cts.Token))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static async Task<bool> UpgradeAsync(DbContext dbContext, CancellationToken cancellationToken)
         {
             try
             {
@@ -152,7 +170,7 @@ namespace CompatBot.Database
             return dbPath;
         }
 
-        public static async Task<bool> ImportNamesPool(ThumbnailDb db, CancellationToken cancellationToken)
+        private static async Task<bool> ImportNamesPool(ThumbnailDb db, CancellationToken cancellationToken)
         {
             Config.Log.Debug("Importing name pool...");
             var rootDir = Environment.CurrentDirectory;
