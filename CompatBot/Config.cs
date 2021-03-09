@@ -85,6 +85,7 @@ namespace CompatBot
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
         public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
         public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
+        public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)"); 
 
         internal static class AllowedMentions
         {

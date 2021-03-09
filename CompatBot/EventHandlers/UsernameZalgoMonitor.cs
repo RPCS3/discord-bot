@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -166,8 +168,10 @@ namespace CompatBot.EventHandlers
         {
             var hash = userId.GetHashCode();
             var rng = new Random(hash);
-            var name = NamesPool.List[rng.Next(NamesPool.NameCount)];
-            return name + NamesPool.NameSuffix;
+            using var db = new ThumbnailDb();
+            var count = db.NamePool.Count();
+            var name = db.NamePool.Skip(rng.Next(count)).First().Name;
+            return name + Config.RenameNameSuffix;
         }
     }
 }

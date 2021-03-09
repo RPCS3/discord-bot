@@ -101,8 +101,13 @@ namespace CompatBot
                         return;
 
                 await using (var db = new ThumbnailDb())
+                {
                     if (!await DbImporter.UpgradeAsync(db, Config.Cts.Token))
                         return;
+
+                    if (!await DbImporter.ImportNamesPool(db, Config.Cts.Token))
+                        return;
+                }
 
                 await SqlConfiguration.RestoreAsync().ConfigureAwait(false);
                 Config.Log.Debug("Restored configuration variables from persistent storage");
