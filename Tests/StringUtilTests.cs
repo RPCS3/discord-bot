@@ -68,6 +68,8 @@ namespace Tests
 
         [TestCase("“F”", ExpectedResult = @"(\xE2\x80\x9C)F(\xE2\x80\x9D)")]
         [TestCase("·! 0", ExpectedResult = @"(\xC2\xB7)! 0")]
+        [TestCase("𫞠", ExpectedResult = @"(\xF0\xAB\x9E\xA0)")] // 0x0002_B7A0
+        [TestCase("􏿽", ExpectedResult = @"(\xF4\x8F\xBF\xBD)")]  // 0x0010_FFFD
         public string RegexPatterReEncoding(string input) => input.ToLatin8BitRegexPattern();
 
         [TestCase("minesweeeper", "minesweeper")]
