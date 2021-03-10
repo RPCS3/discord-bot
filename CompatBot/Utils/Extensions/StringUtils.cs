@@ -2,7 +2,6 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using CompatBot.Utils.Extensions;
@@ -192,6 +191,32 @@ namespace CompatBot.Utils
                 Config.Log.Error(e, $"Failed to decode string from {Encoding.Latin1.EncodingName} to {Utf8.EncodingName}");
                 return str;
             }
+        }
+
+        public static string ToLatin8BitRegexPattern(this Regex regex)
+            => regex.ToString().ToLatin8BitRegexPattern();
+        
+        public static string ToLatin8BitRegexPattern(this string regexPattern)
+        {
+            var encoder = Utf8.GetEncoder();
+            Span<byte> tmp = stackalloc byte[4];
+            var span = regexPattern.AsSpan();
+            var result = new StringBuilder(regexPattern.Length);
+            while (!span.IsEmpty)
+            {
+                var count = encoder.GetBytes(span.Slice(0, 1), tmp, false);
+                if (count == 1)
+                    result.Append(Encoding.Latin1.GetString(tmp.Slice(0, count)));
+                else
+                {
+                    result.Append('(');
+                    for (var i = 0; i < count; i++)
+                        result.Append(@"\x").Append(Utf8ToLatin1RegexPatternEncoderFallback.CustomMapperFallbackBuffer.byteToHex[tmp[i]]);
+                    result.Append(')');
+                }
+                span = span.Slice(1);
+            }
+            return result.ToString();
         }
 
         public static string GetSuffix(long num) => num == 1 ? "" : "s";
