@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -30,174 +31,14 @@ namespace CompatBot.Utils.ResultFormatters
             var notes = new List<string>();
             var (_, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
             brokenDump |= multiItems["edat_block_offset"].Any();
-            var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]);
-            var unsupportedGpuDriver = false;
             var elfBootPath = items["elf_boot_path"] ?? "";
             var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
             var serial = items["serial"] ?? "";
-            var win32ErrorCodes = new HashSet<int>();
-            if (multiItems["fatal_error"] is UniqueList<string> {Length: > 0} fatalErrors)
-            {
-                var contexts = multiItems["fatal_error_context"];
-                var reducedFatalErrors = GroupSimilar(fatalErrors);
-                foreach (var (fatalError, count, similarity) in reducedFatalErrors)
-                {
-                    var knownFatal = false;
-                    if (fatalError.Contains("psf.cpp", StringComparison.InvariantCultureIgnoreCase)
-                        || fatalError.Contains("invalid map<K, T>", StringComparison.InvariantCultureIgnoreCase)
-                        || contexts.Any(c => c.Contains("SaveData", StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        knownFatal = true;
-                        notes.Add("❌ Game save data is corrupted");
-                    }
-                    else if (fatalError.Contains("Could not bind OpenGL context"))
-                    {
-                        knownFatal = true;
-                        notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
-                    }
-                    else if (fatalError.Contains("file is null"))
-                    {
-                        if (contexts.Any(c => c.StartsWith("RSX")))
-                        {
-                            knownFatal = true;
-                            notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
-                        }
-                        if (contexts.Any(c => c.StartsWith("SPU")))
-                        {
-                            knownFatal = true;
-                            notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
-                        }
-                        if (contexts.Any(c => c.StartsWith("PPU")))
-                        {
-                            knownFatal = true;
-                            notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
-                        }
-                    }
-                    else if (fatalError.Contains("Null function") && fatalError.Contains("JIT"))
-                    {
-                        if (contexts.Any(c => c.StartsWith("PPU")))
-                        {
-                            knownFatal = true;
-                            notes.Add("❌ PPU cache has issues; right-click on the game, then `Remove` → `PPU Cache`");
-                        }
-                        if (contexts.Any(c => c.StartsWith("SPU")))
-                        {
-                            knownFatal = true;
-                            notes.Add("❌ SPU cache has issues; right-click on the game, then `Remove` → `SPU Cache`");
-                        }
-                    }
-                    else if (fatalError.Contains("no matching overloaded function found"))
-                    {
-                        if (fatalError.Contains("'mov'"))
-                        {
-                            knownFatal = true;
-                            unsupportedGpuDriver = true;
-                        }
-                    }
-                    else if (fatalError.Contains("RSX Decompiler Thread"))
-                    {
-                        if (items["build_branch"]?.ToLowerInvariant() == "head"
-                            && Version.TryParse(items["build_full_version"], out var v)
-                            && v >= DecompilerIssueStartVersion
-                            && v < DecompilerIssueEndVersion)
-                        {
-                            knownFatal = true;
-                            notes.Add("❌ This RPCS3 build has a known regression, please update to the latest version");
-                        }
-                    }
-                    else if (fatalError.Contains("graphics-hook64.dll"))
-                    {
-                        knownFatal = true;
-                        notes.Add("❌ Please update or uninstall OBS to prevent crashes");
-                    }
-                    else if (fatalError.Contains("bdcamvk64.dll"))
-                    {
-                        knownFatal = true;
-                        notes.Add("❌ Please update or uninstall Bandicam to prevent crashes");
-                    }
-                    else if (fatalError.Contains("(e=0x17): file::read"))
-                    {
-                        // on windows this is ERROR_CRC
-                        notes.Add("❌ Storage device communication error; check your cables");
-                    }
-                    else if (fatalError.Contains("Unknown primitive type"))
-                    {
-                        notes.Add("⚠ RSX desync detected, it's probably random");
-                    }
-                    if (!knownFatal)
-                    {
-                        var sectionName = count == 1
-                            ? "Fatal Error"
-#if DEBUG
-                            : $"Fatal Error (x{count}) [{similarity*100:0.00}%+]";
-#else
-                            : $"Fatal Error (x{count})";
-#endif
-                        if (Regex.Match(fatalError, @"\(e=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is Match {Success: true} match)
-                        {
-                            if (int.TryParse(match.Groups["verification_error"].Value, out var decCode))
-                                win32ErrorCodes.Add(decCode);
-                            else if (int.TryParse(match.Groups["verification_error_hex"].Value, NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var hexCode))
-                                win32ErrorCodes.Add(hexCode);
-                        }
-                        builder.AddField(sectionName, $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
-                    }
-                }
-            }
-            else if (items["unimplemented_syscall"] is string unimplementedSyscall)
-            {
-                if (unimplementedSyscall.Contains("syscall_988"))
-                {
-                    var fatalError = "Unimplemented syscall " + unimplementedSyscall;
-                    builder.AddField("Fatal Error", $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
-                    if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
-                        notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
-                    else
-                        notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
-                }
-            }
-            if (items["os_type"] == "Windows")
-                foreach (var code in win32ErrorCodes)
-                {
-                    var link = code switch
-                    {
-                        >= 0 and < 500 => "0-499",
-                        >=500 and < 1000 => "500-999",
-                        >=1000 and < 1300 => "1000-1299",
-                        >=1300 and < 1700 => "1300-1699",
-                        >=1700 and < 4000 => "1700-3999",
-                        >=4000 and < 6000 => "4000-5999",
-                        >=6000 and < 8200 => "6000-8199",
-                        >=8200 and < 9000 => "8200-8999",
-                        >=9000 and < 12000 => "9000-11999",
-                        >=12000 and < 16000 => "12000-15999",
-                        _ => "",
-                    };
+            BuildFatalErrorSection(builder, items, multiItems, notes);
 
-                    Win32ErrorCodes.Map.TryGetValue(code, out var error);
-                    if (link.Length == 0)
-                        link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
-                    else if (string.IsNullOrEmpty(error.name))
-                        link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
-                    else
-                        link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
-                    if (string.IsNullOrEmpty(error.description))
-                        notes.Add($"ℹ [Error 0x{code:x}]({link})");
-                    else
-                        notes.Add($"ℹ [Error 0x{code:x}]({link}): {error.description}");
-                }
-            else if (items["os_type"] == "Linux" && RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
-                foreach (var code in win32ErrorCodes)
-                {
-                    try
-                    {
-                        var e = new Win32Exception(code);
-                        notes.Add($"ℹ Error `{code}`: {e.Message}");
-                    }
-                    catch { }
-                }
-
+            var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]) && items["supported_gpu"] != DisabledMark;
+            var unsupportedGpuDriver = false;
             if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
                 notes.Add("❌ This game doesn't work on the emulator yet");
             if (items["failed_to_decrypt"] != null)
@@ -627,12 +468,179 @@ namespace CompatBot.Utils.ResultFormatters
             PageSection(builder, notesContent.ToString().Trim(), "Notes");
         }
 
+        private static void BuildFatalErrorSection(DiscordEmbedBuilder builder, NameValueCollection items, NameUniqueObjectCollection<string> multiItems, List<string> notes)
+        {
+            var win32ErrorCodes = new HashSet<int>();
+            if (multiItems["fatal_error"] is UniqueList<string> {Length: > 0} fatalErrors)
+            {
+                var contexts = multiItems["fatal_error_context"];
+                var reducedFatalErrors = GroupSimilar(fatalErrors);
+                foreach (var (fatalError, count, similarity) in reducedFatalErrors)
+                {
+                    var knownFatal = false;
+                    if (fatalError.Contains("psf.cpp", StringComparison.InvariantCultureIgnoreCase)
+                        || fatalError.Contains("invalid map<K, T>", StringComparison.InvariantCultureIgnoreCase)
+                        || contexts.Any(c => c.Contains("SaveData", StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ Game save data is corrupted");
+                    }
+                    else if (fatalError.Contains("Could not bind OpenGL context"))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ GPU or installed GPU drivers do not support OpenGL 4.3");
+                    }
+                    else if (fatalError.Contains("file is null"))
+                    {
+                        if (contexts.Any(c => c.StartsWith("RSX")))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ Shader cache might be corrupted; right-click on the game, then `Remove` → `Shader Cache`");
+                        }
+                        if (contexts.Any(c => c.StartsWith("SPU")))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ SPU cache might be corrupted; right-click on the game, then `Remove` → `SPU Cache`");
+                        }
+                        if (contexts.Any(c => c.StartsWith("PPU")))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ PPU cache might be corrupted; right-click on the game, then `Remove` → `PPU Cache`");
+                        }
+                    }
+                    else if (fatalError.Contains("Null function") && fatalError.Contains("JIT"))
+                    {
+                        if (contexts.Any(c => c.StartsWith("PPU")))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ PPU cache has issues; right-click on the game, then `Remove` → `PPU Cache`");
+                        }
+                        if (contexts.Any(c => c.StartsWith("SPU")))
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ SPU cache has issues; right-click on the game, then `Remove` → `SPU Cache`");
+                        }
+                    }
+                    else if (fatalError.Contains("no matching overloaded function found"))
+                    {
+                        if (fatalError.Contains("'mov'"))
+                        {
+                            knownFatal = true;
+                            items["supported_gpu"] = DisabledMark;
+                        }
+                    }
+                    else if (fatalError.Contains("RSX Decompiler Thread"))
+                    {
+                        if (items["build_branch"]?.ToLowerInvariant() == "head"
+                            && Version.TryParse(items["build_full_version"], out var v)
+                            && v >= DecompilerIssueStartVersion
+                            && v < DecompilerIssueEndVersion)
+                        {
+                            knownFatal = true;
+                            notes.Add("❌ This RPCS3 build has a known regression, please update to the latest version");
+                        }
+                    }
+                    else if (fatalError.Contains("graphics-hook64.dll"))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ Please update or uninstall OBS to prevent crashes");
+                    }
+                    else if (fatalError.Contains("bdcamvk64.dll"))
+                    {
+                        knownFatal = true;
+                        notes.Add("❌ Please update or uninstall Bandicam to prevent crashes");
+                    }
+                    else if (fatalError.Contains("(e=0x17): file::read"))
+                    {
+                        // on windows this is ERROR_CRC
+                        notes.Add("❌ Storage device communication error; check your cables");
+                    }
+                    else if (fatalError.Contains("Unknown primitive type"))
+                    {
+                        notes.Add("⚠ RSX desync detected, it's probably random");
+                    }
+                    if (!knownFatal)
+                    {
+                        var sectionName = count == 1
+                            ? "Fatal Error"
+#if DEBUG
+                            : $"Fatal Error (x{count}) [{similarity*100:0.00}%+]";
+#else
+                            : $"Fatal Error (x{count})";
+#endif
+                        if (Regex.Match(fatalError, @"\(e=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is Match {Success: true} match)
+                        {
+                            if (int.TryParse(match.Groups["verification_error"].Value, out var decCode))
+                                win32ErrorCodes.Add(decCode);
+                            else if (int.TryParse(match.Groups["verification_error_hex"].Value, NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var hexCode))
+                                win32ErrorCodes.Add(hexCode);
+                        }
+                        builder.AddField(sectionName, $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
+                    }
+                }
+            }
+            else if (items["unimplemented_syscall"] is string unimplementedSyscall)
+            {
+                if (unimplementedSyscall.Contains("syscall_988"))
+                {
+                    var fatalError = "Unimplemented syscall " + unimplementedSyscall;
+                    builder.AddField("Fatal Error", $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
+                    if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
+                        notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
+                    else
+                        notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
+                }
+            }
+            if (items["os_type"] == "Windows")
+                foreach (var code in win32ErrorCodes)
+                {
+                    var link = code switch
+                    {
+                        >= 0 and < 500 => "0-499",
+                        >=500 and < 1000 => "500-999",
+                        >=1000 and < 1300 => "1000-1299",
+                        >=1300 and < 1700 => "1300-1699",
+                        >=1700 and < 4000 => "1700-3999",
+                        >=4000 and < 6000 => "4000-5999",
+                        >=6000 and < 8200 => "6000-8199",
+                        >=8200 and < 9000 => "8200-8999",
+                        >=9000 and < 12000 => "9000-11999",
+                        >=12000 and < 16000 => "12000-15999",
+                        _ => "",
+                    };
+
+                    Win32ErrorCodes.Map.TryGetValue(code, out var error);
+                    if (link.Length == 0)
+                        link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
+                    else if (string.IsNullOrEmpty(error.name))
+                        link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
+                    else
+                        link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
+                    if (string.IsNullOrEmpty(error.description))
+                        notes.Add($"ℹ [Error 0x{code:x}]({link})");
+                    else
+                        notes.Add($"ℹ [Error 0x{code:x}]({link}): {error.description}");
+                }
+            else if (items["os_type"] == "Linux" && RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
+                foreach (var code in win32ErrorCodes)
+                {
+                    try
+                    {
+                        var e = new Win32Exception(code);
+                        notes.Add($"ℹ Error `{code}`: {e.Message}");
+                    }
+                    catch { }
+                }
+
+        } 
+        
         private static void BuildAppliedPatchesSection(DiscordEmbedBuilder builder, NameUniqueObjectCollection<string> items)
         {
             var patchNames = items["patch_desc"];
             if (patchNames.Any())
                 builder.AddField("Applied Game Patch" + (patchNames.Length == 1 ? "" : "es"), string.Join(", ", patchNames));
         }
+        
         private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, string serial, NameUniqueObjectCollection<string> items, List<string> generalNotes)
         {
             if (items["rap_file"] is UniqueList<string> raps && raps.Any())
