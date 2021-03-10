@@ -67,7 +67,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     lock (state)
                     {
                         if (!state.Syscalls.TryGetValue(serial, out var serialSyscallStats))
-                            state.Syscalls[serial] = serialSyscallStats = new HashSet<string>();
+                            state.Syscalls[serial] = serialSyscallStats = new();
                         serialSyscallStats.Add(syscallName);
                     }
                 }

@@ -66,6 +66,10 @@ namespace Tests
         [TestCase("a grey and white cat sitting in front of a window", ExpectedResult = "a grey and white kot sitting in front of a window")]
         public string FixKotTest(string input) => input.FixKot();
 
+        [TestCase("“F”", ExpectedResult = @"(\xE2\x80\x9C)F(\xE2\x80\x9D)")]
+        [TestCase("·! 0", ExpectedResult = @"(\xC2\xB7)! 0")]
+        public string RegexPatterReEncoding(string input) => input.ToLatin8BitRegexPattern();
+
         [TestCase("minesweeeper", "minesweeper")]
         [TestCase("minesweeeeeeeeeeeeeeeeeeper", "minesweeper")]
         [TestCase("ee", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")]

@@ -22,17 +22,18 @@ namespace CompatBot.EventHandlers.LogParsing
          * If trigger is matched, then the associated regex will be run on THE WHOLE sliding window
          * If any data was captured, it will be stored in the current collection of items with the key of the explicit capture group of regex
          *
-         * Due to limitations, REGEX can't contain anything other than ASCII (including triggers)
+         * Due to limitations, REGEX can't contain anything other than Latin-1 characters (including triggers)
+         * Anything that's more than 1 byte in UTF8 encoding will be converted to (\x??\x??..) pattern for each unicode character
          *
          */
         private static readonly List<LogSection> LogSections = new()
         {
-            new LogSection
+            new()
             {
                 Extractors = new()
                 {
-                    ["RPCS3 v"] = new(@"(^|.+0:00:00\.000000)\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n\xC2\xB7|$)", DefaultSingleLineOptions),
-                    ["0:00:00.000000"] = new(@"(?<first_unicode_dot>·|\xC2\xB7).+\r?$", DefaultOptions),
+                    ["RPCS3 v"] = new(@"(^|.+0:00:00\.000000)\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n·|$)", DefaultSingleLineOptions),
+                    ["0:00:00.000000"] = new(@"(?<first_unicode_dot>·).+\r?$", DefaultOptions),
                     ["Operating system:"] = LogParserResult.OsInfoInLog,
                     ["Physical device intialized"] = new(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Found vulkan-compatible GPU:"] = new(@"Found vulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
@@ -55,7 +56,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 EndTrigger = new[] {"Used configuration:"},
             },
-            new LogSection
+            new()
             {
                 Extractors = new()
                 {
@@ -88,7 +89,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 EndTrigger = new[] {"VFS:"},
             },
-            new LogSection
+            new()
             {
                 Extractors = new()
                 {
@@ -96,7 +97,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 EndTrigger = new[] {"Video:"},
             },
-            new LogSection
+            new()
             {
                 Extractors = new()
                 {
@@ -134,7 +135,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 EndTrigger = new[] {"Audio:"},
             },
-            new LogSection // Audio, Input/Output, System, Net, Miscellaneous
+            new() // Audio, Input/Output, System, Net, Miscellaneous
             {
                 Extractors = new()
                 {
@@ -154,7 +155,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 },
                 EndTrigger = new[] {"Log:"},
             },
-            new LogSection 
+            new()
             {
                 Extractors = new()
                 {
@@ -163,7 +164,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 EndTrigger = new[] {"·"},
                 OnSectionEnd = MarkAsComplete,
             },
-            new LogSection
+            new()
             {
                 Extractors = new()
                 {
@@ -196,9 +197,9 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["RSX: Your GPU does not support"] = new(@"RSX: Your GPU does not support (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: GPU/driver lacks support"] = new(@"RSX: GPU/driver lacks support for (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
                     ["RSX: Swapchain:"] = new(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
-                    ["F "] = new(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*(Thread terminated due to fatal error: )?|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|\xC2\xB7|$)", DefaultSingleLineOptions),
+                    ["F "] = new(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*(Thread terminated due to fatal error: )?|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|·|$)", DefaultSingleLineOptions),
                     ["Failed to load RAP file:"] = new(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
-                    ["Rap file not found:"] = new(@"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?\.rap)(\xE2\x80\x9D)?\r?$", DefaultOptions),
+                    ["Rap file not found:"] = new(@"Rap file not found: “?(?<rap_file>.*?\.rap)”?\r?$", DefaultOptions),
                     ["Pad handler expected but none initialized"] = new(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
                     ["Failed to bind device"] = new(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
                     ["Input:"] = new(@"Input: (?<pad_handler>.*?) device .+ connected\r?$", DefaultOptions),
@@ -213,17 +214,18 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["PRX hash of"] = new(@"PRX hash of (\w|[\.\[\]])+: PRX-(?<prx_patch>\w+-\d+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
                     [": Applied patch"] = new(@"Applied patch \(hash='(?:\w{3}-\w+(-\d+)?)', description='(?<patch_desc>.+?)', author='(?:.+?)', patch_version='(?:.+?)', file_version='(?:.+?)'\) \(<- (?:[1-9]\d*)\).*\r?$", DefaultOptions),
                     ["Loaded SPU image:"] = new(@"Loaded SPU image: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                    ["'sys_fs_stat' failed"] = new(@"'sys_fs_stat' failed (?!with 0x8001002c).+\xE2\x80\x9C(/dev_bdvd/(?<broken_filename_or_dir>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))\xE2\x80\x9D.*?\r?$", DefaultOptions),
-                    ["'sys_fs_open' failed"] = new(@"'sys_fs_open' failed (?!with 0x8001002c).+\xE2\x80\x9C(/dev_bdvd/(?<broken_filename>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))\xE2\x80\x9D.*?\r?$", DefaultOptions),
-                    ["'sys_fs_opendir' failed"] = new(@"'sys_fs_opendir' failed .+\xE2\x80\x9C/dev_bdvd/(?<broken_directory>.+)\xE2\x80\x9D.*?\r?$", DefaultOptions),
+                    ["'sys_fs_stat' failed"] = new(@"'sys_fs_stat' failed (?!with 0x8001002c).+“(/dev_bdvd/(?<broken_filename_or_dir>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))”.*?\r?$", DefaultOptions),
+                    ["'sys_fs_open' failed"] = new(@"'sys_fs_open' failed (?!with 0x8001002c).+“(/dev_bdvd/(?<broken_filename>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))”.*?\r?$", DefaultOptions),
+                    ["'sys_fs_opendir' failed"] = new(@"'sys_fs_opendir' failed .+“/dev_bdvd/(?<broken_directory>.+)”.*?\r?$", DefaultOptions),
                     ["EDAT: "] = new(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
                     ["PS3 firmware is not installed"] = new(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
                     ["do you have the PS3 firmware installed"] = new(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
                     ["Unimplemented syscall"] = new(@"U \d+:\d+:\d+\.\d+ ({(?<unimplemented_syscall_context>.+?)} )?.*Unimplemented syscall (?<unimplemented_syscall>.*)\r?$", DefaultOptions),
                     ["Could not enqueue"] = new(@"cellAudio: Could not enqueue buffer onto audio backend(?<enqueue_buffer_error>.).*\r?$", DefaultOptions),
-                    ["{PPU["] = new(@"{PPU\[.+\]} (?<log_channel>[^ :]+)( TODO)?: (?!\xE2\x80\x9C)(?<syscall_name>[^ :]+?)\(.*\r?$", DefaultOptions),
-                    ["Verification failed"] = new(@"Verification failed.+\(e=0x(?<verification_error_hex>[0-9a-f]+)\[(?<verification_error>\d+)\]\)"),
-                    ["⁂"] = new(@"\xE2\x81\x82 (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
+                    ["{PPU["] = new(@"{PPU\[.+\]} (?<log_channel>[^ :]+)( TODO)?: (?!“)(?<syscall_name>[^ :]+?)\(.*\r?$", DefaultOptions),
+                    ["Verification failed"] = new(@"Verification failed.+\(e=0x(?<verification_error_hex>[0-9a-f]+)\[(?<verification_error>\d+)\]\)", DefaultOptions),
+                    ["sys_tty_write():"] = new(@"sys_tty_write\(\)\: “(?<tty_line>.*?)”\r?(\n|$)", DefaultSingleLineOptions),
+                    ["⁂"] = new(@"⁂ (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
                     ["undub"] =  new(@"(\b|_)(?<game_mod>(undub|translation patch))(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
                 },
                 OnSectionEnd = MarkAsCompleteAndReset,
@@ -253,6 +255,7 @@ namespace CompatBot.EventHandlers.LogParsing
             "rsx_not_supported_feature",
             "verification_error_hex",
             "verification_error",
+            "tty_line",
         };
 
         private static readonly string[] CountValueItems = {"enqueue_buffer_error"};

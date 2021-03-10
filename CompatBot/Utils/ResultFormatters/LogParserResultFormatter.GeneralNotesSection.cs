@@ -360,8 +360,8 @@ namespace CompatBot.Utils.ResultFormatters
                     notes.Add("ℹ This game has MLAA disable patch");
             }
 
-            bool discInsideGame = false;
-            bool discAsPkg = false;
+            var discInsideGame = false;
+            var discAsPkg = false;
             var pirateEmoji = discordClient.GetEmoji(":piratethink:", DiscordEmoji.FromUnicode("🔨"));
             //var thonkEmoji = discordClient.GetEmoji(":thonkang:", DiscordEmoji.FromUnicode("🤔"));
 			// this is a common scenario now that Mega did the version merge from param.sfo
@@ -459,8 +459,9 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ There was an error during log processing");
 
             BuildWeirdSettingsSection(builder, state, notes);
-            BuildMissingLicensesSection(builder, serial, multiItems, notes);
             BuildAppliedPatchesSection(builder, multiItems);
+            BuildLastTtyMessages(builder, multiItems);
+            BuildMissingLicensesSection(builder, serial, multiItems, notes);
 
             var notesContent = new StringBuilder();
             foreach (var line in SortLines(notes, pirateEmoji).Distinct())
@@ -639,6 +640,24 @@ namespace CompatBot.Utils.ResultFormatters
             var patchNames = items["patch_desc"];
             if (patchNames.Any())
                 builder.AddField("Applied Game Patch" + (patchNames.Length == 1 ? "" : "es"), string.Join(", ", patchNames));
+        }
+
+        private static void BuildLastTtyMessages(DiscordEmbedBuilder builder, NameUniqueObjectCollection<string> items)
+        {
+            var ttyLines = items["tty_line"];
+            if (!ttyLines.Any())
+                return;
+
+            var len = ttyLines[0].Length + 8; //```\n x2
+            var limit = Math.Min(5, ttyLines.Length);
+            var lines = 1;
+            while (lines < limit && len + ttyLines[lines].Length + 1 < EmbedPager.MaxFieldLength)
+            {
+                len += ttyLines[lines].Length + 1;
+                lines++;
+            }
+            var result = string.Join('\n', ttyLines.TakeLast(lines).Select(s => s.Trim())).Sanitize().Trim(EmbedPager.MaxFieldLength - 8);
+            builder.AddField("Last TTY Message" + (lines == 1 ? "" : "s"), $"```\n{result}\n```");
         }
         
         private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, string serial, NameUniqueObjectCollection<string> items, List<string> generalNotes)
