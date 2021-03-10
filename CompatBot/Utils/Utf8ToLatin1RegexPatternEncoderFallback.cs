@@ -4,9 +4,9 @@ using System.Text;
 
 namespace CompatBot.Utils
 {
-    public class Utf8ToLatin1RegexPatternEncoderFallback : EncoderFallback
+    internal class Utf8ToLatin1RegexPatternEncoderFallback : EncoderFallback
     {
-        private const int MaxBufferSize = 2+(2+2)*8; // (\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF)
+        private const int MaxBufferSize = 2+(2+2)*4; // (\xFF\xFF\xFF\xFF)
 
         public override EncoderFallbackBuffer CreateFallbackBuffer() => new CustomMapperFallbackBuffer();
 

@@ -207,7 +207,7 @@ namespace CompatBot.Utils
                 var count = encoder.GetBytes(span.Slice(0, 1), tmp, false);
                 if (count == 1)
                     result.Append(Encoding.Latin1.GetString(tmp.Slice(0, count)));
-                else
+                else if (count > 1)
                 {
                     result.Append('(');
                     for (var i = 0; i < count; i++)

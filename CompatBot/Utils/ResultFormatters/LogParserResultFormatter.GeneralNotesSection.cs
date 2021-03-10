@@ -460,7 +460,9 @@ namespace CompatBot.Utils.ResultFormatters
 
             BuildWeirdSettingsSection(builder, state, notes);
             BuildAppliedPatchesSection(builder, multiItems);
+#if DEBUG
             BuildLastTtyMessages(builder, multiItems);
+#endif
             BuildMissingLicensesSection(builder, serial, multiItems, notes);
 
             var notesContent = new StringBuilder();
