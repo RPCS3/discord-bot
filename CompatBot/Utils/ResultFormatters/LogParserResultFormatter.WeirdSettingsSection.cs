@@ -368,7 +368,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(serial))
             {
-                CheckP5Settings(serial, items, notes, ppuPatches, patchNames);
+                CheckP5Settings(serial, items, notes, generalNotes, ppuHashes, ppuPatches, patchNames);
                 CheckAsurasWrathSettings(serial, items, notes);
                 CheckJojoSettings(serial, state, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckSimpsonsSettings(serial, generalNotes);
@@ -521,7 +521,16 @@ namespace CompatBot.Utils.ResultFormatters
             "NPEB02436", "NPUB31848", "NPJB00769",
         };
 
-        private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
+        
+        private static readonly HashSet<string> KnownP5Patches = new(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "e72e715d646a94770d1902364bc66fe33b1b6606",
+            "b8c34f774adb367761706a7f685d4f8d9d355426",
+            "3b394da7912181d308bf08505009b3578521c756",
+            "9da9b988693598fbe1e2d316d1e927c37ad666bc",
+        };
+
+        private static void CheckP5Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes, HashSet<string> ppuHashes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
         {
             if (!P5Ids.Contains(serial))
                 return;
@@ -577,6 +586,9 @@ namespace CompatBot.Utils.ResultFormatters
              */
             if (patchNames.Any(n => n.Contains("60")) || ppuPatches.Values.Any(n => n > 260))
                 notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
+            
+            if (!KnownP5Patches.Overlaps(ppuHashes))
+                generalNotes.Add("🤔 Very interesting version of the game you got there");
         }
 
         private static void CheckAsurasWrathSettings(string serial, NameValueCollection items, List<string> notes)
