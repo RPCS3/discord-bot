@@ -236,6 +236,13 @@ namespace CompatBot.Utils.ResultFormatters
                 if (pmDesc != null)
                     notes.Add($"ℹ `VSync` is disabled, but the drivers provided `{pmDesc}`");
             }
+            if (items["async_texture_streaming"] == EnabledMark)
+            {
+                if (items["async_queue_scheduler"] == "Device")
+                    notes.Add("⚠ If you experience visual artifacts, try setting `Async Queue Scheduler` is set to `Host`");
+                notes.Add("⚠ If you experience visual artifacts, try disabling `Async Texture Streaming`");
+            }
+            
             if (items["ppu_decoder"] is string ppuDecoder)
             {
                 if (KnownGamesThatRequireInterpreter.Contains(serial))
