@@ -160,6 +160,36 @@ namespace CompatBot.Commands
 
             await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
         }
+        
+        [Command("view"), Aliases("show")]
+        [Description("Shows the details of the specified content filter")]
+        public async Task View(CommandContext ctx, [Description("Filter ID")] int id)
+        {
+            await using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
+            if (filter is null)
+            {
+                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
+            }
+
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
+        }
+        
+        [Command("view"), Aliases("show")]
+        [Description("Shows the details of the specified content filter")]
+        public async Task View(CommandContext ctx, [Description("Trigger to view"), RemainingText] string trigger)
+        {
+            await using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
+            if (filter is null)
+            {
+                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
+            }
+
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
+        }
 
         [Command("remove"), Aliases("delete", "del")]
         [Description("Removes a content filter trigger")]
