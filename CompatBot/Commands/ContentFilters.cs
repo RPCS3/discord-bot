@@ -29,7 +29,7 @@ namespace CompatBot.Commands
         private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
         private static readonly char[] Separators = {' ', ',', ';', '|'};
 
-        [Command("list"), Aliases("show")]
+        [Command("list")]
         [Description("Lists all filters")]
         public async Task List(CommandContext ctx)
         {
@@ -176,7 +176,7 @@ namespace CompatBot.Commands
             await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
         }
         
-        [Command("view"), Aliases("show")]
+        [Command("view")]
         [Description("Shows the details of the specified content filter")]
         public async Task View(CommandContext ctx, [Description("Trigger to view"), RemainingText] string trigger)
         {
