@@ -239,7 +239,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["async_texture_streaming"] == EnabledMark)
             {
                 if (items["async_queue_scheduler"] == "Device")
-                    notes.Add("⚠ If you experience visual artifacts, try setting `Async Queue Scheduler` is set to `Host`");
+                    notes.Add("⚠ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
                 notes.Add("⚠ If you experience visual artifacts, try disabling `Async Texture Streaming`");
             }
             
