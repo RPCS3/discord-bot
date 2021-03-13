@@ -83,6 +83,21 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
             }
         }
+        
+        
+        [Command("analyze")]
+        public async Task Reanalyze(CommandContext ctx)
+        {
+            try
+            {
+                LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, ctx.Message, ctx.Member, true, true);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+                await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+            }
+        }
 
         [Command("badupdate"), Aliases("bad", "recall"), RequiresBotModRole]
         [Description("Toggles new update announcement as being bad")]

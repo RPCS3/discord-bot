@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -27,17 +29,17 @@ namespace CompatBot.Commands
         private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
         private static readonly char[] Separators = {' ', ',', ';', '|'};
 
-        [Command("list"), Aliases("show")]
+        [Command("list")]
         [Description("Lists all filters")]
         public async Task List(CommandContext ctx)
         {
             var table = new AsciiTable(
                 new AsciiColumn("ID", alignToRight: true),
                 new AsciiColumn("Trigger"),
-                new AsciiColumn("Validation"),
-                new AsciiColumn("Context"),
+                new AsciiColumn("Validation", maxWidth: 2048),
+                new AsciiColumn("Context", maxWidth: 4096),
                 new AsciiColumn("Actions"),
-                new AsciiColumn("Custom message")
+                new AsciiColumn("Custom message", maxWidth: 2048)
             );
             await using var db = new BotDb();
             var duplicates = new Dictionary<string, FilterContext>(StringComparer.InvariantCultureIgnoreCase);
@@ -76,11 +78,17 @@ namespace CompatBot.Commands
                     item.ValidatingRegex ?? "",
                     ctxl,
                     item.Actions.ToFlagsString(),
-                    string.IsNullOrEmpty(item.CustomMessage) ? "" : "✅"
+                    item.CustomMessage ?? ""
                 );
             }
-            await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
-            await ctx.RespondAsync(FilterActionExtensions.GetLegend()).ConfigureAwait(false);
+            var result = new StringBuilder(table.ToString(false)).AppendLine()
+                .AppendLine(FilterActionExtensions.GetLegend(""));
+            await using var output = Config.MemoryStreamManager.GetStream();
+            //await using (var gzip = new GZipStream(output, CompressionLevel.Optimal, true))
+            await using (var writer = new StreamWriter(output, leaveOpen: true))
+                await writer.WriteAsync(result.ToString()).ConfigureAwait(false);
+            output.Seek(0, SeekOrigin.Begin);
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("filters.txt", output)).ConfigureAwait(false);
         }
 
         [Command("add"), Aliases("create")]
@@ -151,6 +159,36 @@ namespace CompatBot.Commands
             }
 
             await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
+        }
+        
+        [Command("view"), Aliases("show")]
+        [Description("Shows the details of the specified content filter")]
+        public async Task View(CommandContext ctx, [Description("Filter ID")] int id)
+        {
+            await using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
+            if (filter is null)
+            {
+                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
+            }
+
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
+        }
+        
+        [Command("view")]
+        [Description("Shows the details of the specified content filter")]
+        public async Task View(CommandContext ctx, [Description("Trigger to view"), RemainingText] string trigger)
+        {
+            await using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
+            if (filter is null)
+            {
+                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
+            }
+
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
         }
 
         [Command("remove"), Aliases("delete", "del")]
