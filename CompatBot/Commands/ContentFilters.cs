@@ -151,7 +151,7 @@ namespace CompatBot.Commands
         public async Task Edit(CommandContext ctx, [Description("Trigger to edit"), RemainingText] string trigger)
         {
             await using var db = new BotDb();
-            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && !ps.Disabled).ConfigureAwait(false);
             if (filter is null)
             {
                 await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
@@ -181,7 +181,7 @@ namespace CompatBot.Commands
         public async Task View(CommandContext ctx, [Description("Trigger to view"), RemainingText] string trigger)
         {
             await using var db = new BotDb();
-            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String.Equals(trigger, StringComparison.InvariantCultureIgnoreCase) && !ps.Disabled).ConfigureAwait(false);
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && !ps.Disabled).ConfigureAwait(false);
             if (filter is null)
             {
                 await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
