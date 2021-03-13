@@ -26,11 +26,11 @@ namespace CompatBot.Utils.Extensions
             return new string(result);
         }
 
-        public static string GetLegend()
+        public static string GetLegend(string wrapChar = "`")
         {
             var result = new StringBuilder("Actions flag legend:");
             foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
-                result.Append($"\n`{ActionFlags[fa]}` = {fa}");
+                result.Append($"\n{wrapChar}{ActionFlags[fa]}{wrapChar} = {fa}");
             return result.ToString();
         }
     }

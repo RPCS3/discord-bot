@@ -120,12 +120,16 @@ namespace CompatBot.Utils
                 width[i] = Math.Max(width[i], row[i].GetVisibleLength());
         }
 
-        public override string ToString()
+        public override string ToString() => ToString(true);
+        
+        public string ToString(bool wrapInCodeBlock)
         {
             for (var i = 0; i < columns.Length; i++)
                 width[i] = Math.Min(width[i], maxWidth[i]);
 
-            var result = new StringBuilder().AppendLine("```");
+            var result = new StringBuilder();
+            if (wrapInCodeBlock)
+                result.AppendLine("```");
             var firstIdx = Array.IndexOf(disabled, false);
             if (firstIdx < 0)
                 throw new InvalidOperationException("Can't format table as every column is disabled");
@@ -155,7 +159,8 @@ namespace CompatBot.Utils
                     }
                 result.AppendLine();
             }
-            result.Append("```");
+            if (wrapInCodeBlock)
+                result.Append("```");
             return result.ToString();
         }
     }
