@@ -423,7 +423,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
             else if (items["disable_async_shaders"] == DisabledMark)
                 items["shader_mode"] = "Async";
-            else
+            else if (items["disable_async_shaders"] == EnabledMark)
                 items["shader_mode"] = "Recompiler only";
 
             static string? reformatDecoder(string? dec)
