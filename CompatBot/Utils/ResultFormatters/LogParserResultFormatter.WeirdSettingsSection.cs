@@ -431,7 +431,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["shader_mode"] == "Interpreter only")
                 notes.Add("⚠ `Shader Interpreter Only` mode is not accurate and very demanding");
-            else if (items["shader_mode"]?.StartsWith("Async") is not true)
+            else if (items["shader_mode"]?.StartsWith("Async") is false)
                 notes.Add("❔ Async shader compilation is disabled");
             if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
                 && int.TryParse(driverRecoveryTimeout, out var drtValue)
