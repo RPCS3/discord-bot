@@ -14,7 +14,7 @@ namespace CompatBot.EventHandlers
     internal static class GithubLinksHandler
     {
         private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-        public static readonly Regex IssueMention = new(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|\B#(?<also_number>\d{4})|(https?://)github.com/RPCS3/rpcs3/(issues|pull)/(?<another_number>\d+)(#issuecomment-(?<comment_id>\d+))?)\b", DefaultOptions);
+        public static readonly Regex IssueMention = new(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|\B#(?<also_number>1?\d{4})|(https?://)github.com/RPCS3/rpcs3/(issues|pull)/(?<another_number>\d+)(#issuecomment-(?<comment_id>\d+))?)\b", DefaultOptions);
         public static readonly Regex CommitMention = new(@"(?<commit_mention>(https?://)github.com/RPCS3/rpcs3/commit/(?<commit_hash>[0-9a-f]+))\b", DefaultOptions);
         public static readonly Regex ImageMarkup = new(@"(?<img_markup>!\[(?<img_caption>[^\]]+)\]\((?<img_link>\w+://[^\)]+)\))", DefaultOptions);
         private static readonly Regex IssueLink = new(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
@@ -38,7 +38,7 @@ namespace CompatBot.EventHandlers
             {
                 if (msg.Author.IsCurrent)
                 {
-                    previousRepliesBuilder ??= new StringBuilder();
+                    previousRepliesBuilder ??= new();
                     previousRepliesBuilder.AppendLine(msg.Content);
                     var embeds = msg.Embeds;
                     if (embeds?.Count > 0)
