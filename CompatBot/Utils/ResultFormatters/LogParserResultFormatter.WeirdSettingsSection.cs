@@ -477,8 +477,8 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (!string.IsNullOrEmpty(serial)
                 && KnownMotionControlsIds.Contains(serial)
-                && !multiItems["pad_handler"].Any(h => h.StartsWith("DualShock")))
-                notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3 or DualShock 4 controller");
+                && !multiItems["pad_handler"].Any(h => h.StartsWith("DualS")))
+                notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3, 4, or DualSense controller");
 
             if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
             {
