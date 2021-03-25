@@ -15,30 +15,33 @@ namespace CompatBot.Utils.Extensions
     {
         private static readonly MemoryCache BuildInfoCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
-        public class BuildInfo
+        private const string RepoId = "RPCS3/rpcs3";
+        private const string RepoType = "GitHub";
+
+        public record BuildInfo
         {
-            public string? Commit;
-            public string? WindowsFilename;
-            public string? LinuxFilename;
-            public string? WindowsBuildDownloadLink;
-            public string? LinuxBuildDownloadLink;
-            public DateTime? StartTime;
-            public DateTime? FinishTime;
-            public BuildStatus? Status;
-            public BuildResult? Result { get; set; }
+            public string? Commit { get; init; }
+            public string? WindowsFilename { get; init; }
+            public string? LinuxFilename { get; init; }
+            public string? WindowsBuildDownloadLink { get; init; }
+            public string? LinuxBuildDownloadLink { get; init; }
+            public DateTime? StartTime { get; init; }
+            public DateTime? FinishTime { get; init; }
+            public BuildStatus? Status { get; init; }
+            public BuildResult? Result { get; init; }
         }
 
-        public class PipelineStats
+        public record PipelineStats
         {
-            public TimeSpan Percentile95;
-            public TimeSpan Percentile90;
-            public TimeSpan Percentile85;
-            public TimeSpan Percentile80;
-            public TimeSpan Mean;
-            public TimeSpan StdDev;
-            public int BuildCount;
+            public TimeSpan Percentile95 { get; init; }
+            public TimeSpan Percentile90 { get; init; }
+            public TimeSpan Percentile85 { get; init; }
+            public TimeSpan Percentile80 { get; init; }
+            public TimeSpan Mean { get; init; }
+            public TimeSpan StdDev { get; init; }
+            public int BuildCount { get; init; }
 
-            public static readonly PipelineStats Defaults = new PipelineStats
+            public static readonly PipelineStats Defaults = new()
             {
                 Percentile95 = TimeSpan.FromMinutes(33.696220415),
                 Percentile90 = TimeSpan.FromMinutes(32.635776191666665),
@@ -60,8 +63,8 @@ namespace CompatBot.Utils.Extensions
 
             var builds = await azureDevOpsClient.GetBuildsAsync(
                 Config.AzureDevOpsProjectId,
-                repositoryId: "RPCS3/rpcs3",
-                repositoryType: "GitHub",
+                repositoryId: RepoId,
+                repositoryType: RepoType,
                 statusFilter: BuildStatus.Completed,
                 resultFilter: BuildResult.Succeeded,
                 minFinishTime: DateTime.UtcNow.AddDays(-7),
@@ -86,7 +89,7 @@ namespace CompatBot.Utils.Extensions
                 StdDev = TimeSpan.FromTicks((long)times.Select(t => t.Ticks).StdDev()),
                 BuildCount = times.Count,
             };
-            BuildInfoCache.Set(cacheKey, result, TimeSpan.FromDays(7));
+            BuildInfoCache.Set(cacheKey, result, TimeSpan.FromDays(1));
             return result;
         }
         
@@ -99,8 +102,8 @@ namespace CompatBot.Utils.Extensions
             newestMergeCommit = newestMergeCommit.ToLower();
             var builds = await azureDevOpsClient.GetBuildsAsync(
                 Config.AzureDevOpsProjectId,
-                repositoryId: "RPCS3/rpcs3",
-                repositoryType: "GitHub",
+                repositoryId: RepoId,
+                repositoryType: RepoType,
                 reasonFilter: BuildReason.IndividualCI,
                 minFinishTime: oldestTimestamp,
                 cancellationToken: cancellationToken
@@ -130,8 +133,8 @@ namespace CompatBot.Utils.Extensions
 
             var builds = await azureDevOpsClient.GetBuildsAsync(
                 Config.AzureDevOpsProjectId,
-                repositoryId: "RPCS3/rpcs3",
-                repositoryType: "GitHub",
+                repositoryId: RepoId,
+                repositoryType: RepoType,
                 reasonFilter: BuildReason.IndividualCI,
                 minFinishTime: oldestTimestamp,
                 cancellationToken: cancellationToken
@@ -164,8 +167,8 @@ namespace CompatBot.Utils.Extensions
 
             var builds = await azureDevOpsClient.GetBuildsAsync(
                 Config.AzureDevOpsProjectId,
-                repositoryId: "RPCS3/rpcs3",
-                repositoryType: "GitHub",
+                repositoryId: RepoId,
+                repositoryType: RepoType,
                 reasonFilter: BuildReason.PullRequest,
                 minFinishTime: oldestTimestamp,
                 cancellationToken: cancellationToken
@@ -203,7 +206,7 @@ namespace CompatBot.Utils.Extensions
             var windowsBuild = windowsBuildArtifact?.Resource;
             if (windowsBuild?.DownloadUrl is string winDownloadUrl)
             {
-                result.WindowsBuildDownloadLink = winDownloadUrl;
+                result = result with {WindowsBuildDownloadLink = winDownloadUrl};
                 if (windowsBuild.DownloadUrl.Contains("format=zip", StringComparison.InvariantCultureIgnoreCase))
                     try
                     {
@@ -214,7 +217,7 @@ namespace CompatBot.Utils.Extensions
                         {
                             if (zipStream.Entry.Key.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                result.WindowsFilename = Path.GetFileName(zipStream.Entry.Key);
+                                result = result with {WindowsFilename = Path.GetFileName(zipStream.Entry.Key)};
                                 break;
                             }
                         }
@@ -233,7 +236,7 @@ namespace CompatBot.Utils.Extensions
             var linuxBuild = linuxBuildArtifact?.Resource;
             if (linuxBuild?.DownloadUrl is string linDownloadUrl)
             {
-                result.LinuxBuildDownloadLink = linDownloadUrl;
+                result = result with {LinuxBuildDownloadLink = linDownloadUrl};
                 if (linuxBuild.DownloadUrl.Contains("format=zip", StringComparison.InvariantCultureIgnoreCase))
                     try
                     {
@@ -244,7 +247,7 @@ namespace CompatBot.Utils.Extensions
                         {
                             if (zipStream.Entry.Key.EndsWith(".AppImage", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                result.LinuxFilename = Path.GetFileName(zipStream.Entry.Key);
+                                result = result with {LinuxFilename = Path.GetFileName(zipStream.Entry.Key)};
                                 break;
                             }
                         }
