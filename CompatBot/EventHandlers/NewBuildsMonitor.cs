@@ -80,8 +80,9 @@ namespace CompatBot.EventHandlers
         internal static void Reset()
         {
             var now = DateTime.UtcNow;
-            if (ExpectedNewBuildTimeFrames.TryPeek(out var ebci)
-                && ebci.start <= now && now <= ebci.end)
+            if (!ExpectedNewBuildTimeFrames.IsEmpty
+                && ExpectedNewBuildTimeFrames.TryPeek(out var ebci)
+                && ebci.start < now)
             {
                 ExpectedNewBuildTimeFrames.TryDequeue(out _);
             }
