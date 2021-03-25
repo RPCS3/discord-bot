@@ -235,6 +235,7 @@ namespace CompatBot.Commands
                     await channel!.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                     return true;
                 }
+                
                 if (updateAnnouncementRestore)
                 {
                     if (embed.Title == "Error")
@@ -259,15 +260,15 @@ namespace CompatBot.Commands
                     || !await UpdateCheck.WaitAsync(0).ConfigureAwait(false))
                     return false;
 
-                if (!string.IsNullOrEmpty(lastFullBuildNumber)
-                    && !string.IsNullOrEmpty(latestUpdateBuild)
-                    && int.TryParse(lastFullBuildNumber, out var lastSaveBuild)
-                    && int.TryParse(latestUpdateBuild, out var latestBuild)
-                    && latestBuild <= lastSaveBuild)
-                    return false;
-
                 try
                 {
+                    if (!string.IsNullOrEmpty(lastFullBuildNumber)
+                        && !string.IsNullOrEmpty(latestUpdateBuild)
+                        && int.TryParse(lastFullBuildNumber, out var lastSaveBuild)
+                        && int.TryParse(latestUpdateBuild, out var latestBuild)
+                        && latestBuild <= lastSaveBuild)
+                        return false;
+
                     var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
                     var botMember = discordClient.GetMember(compatChannel.Guild, discordClient.CurrentUser);
                     if (botMember == null)

@@ -21,7 +21,6 @@ namespace CompatBot.Commands
     {
         private static readonly GithubClient.Client GithubClient = new();
         private static readonly CompatApiClient.Client CompatApiClient = new();
-        internal static readonly TimeSpan AvgBuildTime = TimeSpan.FromMinutes(30);
 
         [GroupCommand]
         public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
@@ -89,7 +88,25 @@ namespace CompatBot.Commands
                 result.Append('`').Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User?.Login?.PadRightVisible(maxAuthor)}: {pr.Title?.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
             await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
         }
-
+        
+#if DEBUG
+        [Command("stats"), RequiresBotModRole]
+        public async Task Stats(CommandContext ctx)
+        {
+            var azureClient = Config.GetAzureDevOpsClient();
+            var duration = await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
+            await ctx.RespondAsync(
+                $"Expected pipeline duration (using {duration.BuildCount} builds): \n" +
+                $"95%: {duration.Percentile95} ({duration.Percentile95.TotalMinutes})\n" +
+                $"90%: {duration.Percentile90} ({duration.Percentile90.TotalMinutes})\n" +
+                $"85%: {duration.Percentile85} ({duration.Percentile85.TotalMinutes})\n" +
+                $"80%: {duration.Percentile80} ({duration.Percentile80.TotalMinutes})\n" +
+                $"Avg: {duration.Mean} ({duration.Mean.TotalMinutes})\n" +
+                $"Dev: {duration.StdDev} ({duration.StdDev.TotalMinutes})"
+            ).ConfigureAwait(false);
+        }
+#endif
+        
         public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)
         {
             var prInfo = await GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
@@ -101,6 +118,7 @@ namespace CompatBot.Commands
 
             var (state, _) = prInfo.GetState();
             var embed = prInfo.AsEmbed();
+            var azureClient = Config.GetAzureDevOpsClient();
             if (state == "Open" || state == "Closed")
             {
                 var windowsDownloadHeader = "Windows PR Build";
@@ -109,7 +127,6 @@ namespace CompatBot.Commands
                 string? linuxDownloadText = null;
                 string? buildTime = null;
 
-                var azureClient = Config.GetAzureDevOpsClient();
                 if (azureClient != null && prInfo.Head?.Sha is string commit)
                     try
                     {
@@ -137,7 +154,7 @@ namespace CompatBot.Commands
                                 windowsDownloadText = $"❌ {latestBuild.Result}";
                             else if (latestBuild.Status == BuildStatus.InProgress && latestBuild.StartTime != null)
                             {
-                                var estimatedCompletionTime = latestBuild.StartTime.Value + AvgBuildTime;
+                                var estimatedCompletionTime = latestBuild.StartTime.Value + (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                                 var estimatedTime = TimeSpan.FromMinutes(1);
                                 if (estimatedCompletionTime > DateTime.UtcNow)
                                     estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
@@ -197,8 +214,9 @@ namespace CompatBot.Commands
                     else
                     {
                         var waitTime = TimeSpan.FromMinutes(5);
-                        if (now < (mergeTime + AvgBuildTime))
-                            waitTime = mergeTime + AvgBuildTime - now;
+                        var avgBuildTime = (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
+                        if (now < mergeTime + avgBuildTime)
+                            waitTime = mergeTime + avgBuildTime - now;
                         embed.AddField("Latest master build", $"This pull request has been merged, and will be part of `master` very soon.\nPlease check again in {waitTime.AsTimeDeltaDescription()}.");
                     }
                 }

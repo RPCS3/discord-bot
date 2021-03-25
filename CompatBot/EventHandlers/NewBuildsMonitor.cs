@@ -8,6 +8,7 @@ using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace CompatBot.EventHandlers
 {
@@ -15,11 +16,11 @@ namespace CompatBot.EventHandlers
     {
         private static readonly Regex BuildResult = new(@"\[rpcs3:master\] \d+ new commit", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
         private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromMinutes(20);
-        private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromSeconds(20);
+        private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
         private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new();
 
-        public static Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
             if (args.Author.IsBotSafeCheck()
                 && !args.Author.IsCurrent
@@ -30,11 +31,13 @@ namespace CompatBot.EventHandlers
             )
             {
                 Config.Log.Info("Found new PR merge message");
-                var start = DateTime.UtcNow + Pr.AvgBuildTime;
-                var end = start + ActiveCheckResetThreshold;
+                var azureClient = Config.GetAzureDevOpsClient();
+                var pipelineDurationStats = await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
+                var expectedMean = DateTime.UtcNow + pipelineDurationStats.Mean;
+                var start = expectedMean - pipelineDurationStats.StdDev;
+                var end = expectedMean + pipelineDurationStats.StdDev + ActiveCheckResetThreshold;
                 ExpectedNewBuildTimeFrames.Enqueue((start, end));
             }
-            return Task.CompletedTask;
         }
 
         public static async Task MonitorAsync(DiscordClient client)
@@ -45,8 +48,9 @@ namespace CompatBot.EventHandlers
             {
                 var now = DateTime.UtcNow;
                 var checkInterval = PassiveCheckInterval;
-                (DateTime start, DateTime end) nearestBuildCheckInterval;
-                while (ExpectedNewBuildTimeFrames.TryPeek(out nearestBuildCheckInterval)
+                (DateTime start, DateTime end) nearestBuildCheckInterval = default;
+                while (!ExpectedNewBuildTimeFrames.IsEmpty
+                       && ExpectedNewBuildTimeFrames.TryPeek(out nearestBuildCheckInterval)
                        && nearestBuildCheckInterval.end < now)
                 {
                     ExpectedNewBuildTimeFrames.TryDequeue(out _);
@@ -58,6 +62,7 @@ namespace CompatBot.EventHandlers
                     try
                     {
                         await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
+                        lastCheck = DateTime.UtcNow;
                     }
                     catch (Exception e)
                     {
@@ -67,7 +72,6 @@ namespace CompatBot.EventHandlers
                             lastException = e;
                         }
                     }
-                    lastCheck = DateTime.UtcNow;
                 }
                 await Task.Delay(1000, Config.Cts.Token).ConfigureAwait(false);
             }
@@ -76,8 +80,9 @@ namespace CompatBot.EventHandlers
         internal static void Reset()
         {
             var now = DateTime.UtcNow;
-            if (ExpectedNewBuildTimeFrames.TryPeek(out var ebci)
-                && ebci.start <= now && now <= ebci.end)
+            if (!ExpectedNewBuildTimeFrames.IsEmpty
+                && ExpectedNewBuildTimeFrames.TryPeek(out var ebci)
+                && ebci.start < now)
             {
                 ExpectedNewBuildTimeFrames.TryDequeue(out _);
             }

@@ -34,7 +34,11 @@ namespace CompatBot.Commands
                     return;
                 }
 
-                if (!expectedNickname.All(c => char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)) && !discordUser.IsBotSafeCheck())
+                if ((!expectedNickname.All(c => char.IsLetterOrDigit(c)
+                                                || char.IsWhiteSpace(c)
+                                                || char.IsPunctuation(c))
+                     || expectedNickname.Any(c => c == ':' || c == '#' || c == '@' || c == '`')
+                    ) && !discordUser.IsBotSafeCheck())
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Nickname must follow Rule 7", true).ConfigureAwait(false);
                     return;
