@@ -28,6 +28,68 @@ namespace CompatBot.Utils.Extensions
             public BuildResult? Result { get; set; }
         }
 
+        public class PipelineStats
+        {
+            public TimeSpan Percentile95;
+            public TimeSpan Percentile90;
+            public TimeSpan Percentile85;
+            public TimeSpan Percentile80;
+            public TimeSpan Mean;
+            public TimeSpan StdDev;
+            public int BuildCount;
+
+            public static readonly PipelineStats Defaults = new PipelineStats
+            {
+                Percentile95 = TimeSpan.FromMinutes(33.696220415),
+                Percentile90 = TimeSpan.FromMinutes(32.635776191666665),
+                Percentile85 = TimeSpan.FromMinutes(32.17856230833333),
+                Percentile80 = TimeSpan.FromMinutes(31.885896321666667),
+                Mean = TimeSpan.FromMinutes(28.875494935),
+                StdDev = TimeSpan.FromMinutes(2.8839262116666666),
+            };
+        }
+
+        public static async Task<PipelineStats> GetPipelineDurationAsync(this BuildHttpClient? azureDevOpsClient, CancellationToken cancellationToken)
+        {
+            const string cacheKey = "pipeline-duration";
+            if (BuildInfoCache.TryGetValue(cacheKey, out PipelineStats result))
+                return result;
+
+            if (azureDevOpsClient is null)
+                return PipelineStats.Defaults;
+
+            var builds = await azureDevOpsClient.GetBuildsAsync(
+                Config.AzureDevOpsProjectId,
+                repositoryId: "RPCS3/rpcs3",
+                repositoryType: "GitHub",
+                statusFilter: BuildStatus.Completed,
+                resultFilter: BuildResult.Succeeded,
+                minFinishTime: DateTime.UtcNow.AddDays(-7),
+                cancellationToken: cancellationToken
+            ).ConfigureAwait(false);
+
+            var times = builds
+                .Where(b => b is {StartTime: not null, FinishTime: not null})
+                .Select(b => (b.FinishTime - b.StartTime)!.Value)
+                .OrderByDescending(t => t)
+                .ToList();
+            if (times.Count <= 10)
+                return PipelineStats.Defaults;
+            
+            result = new()
+            {
+                Percentile95 = times[(int)(times.Count * 0.05)],
+                Percentile90 = times[(int)(times.Count * 0.10)],
+                Percentile85 = times[(int)(times.Count * 0.16)],
+                Percentile80 = times[(int)(times.Count * 0.20)],
+                Mean = TimeSpan.FromTicks(times.Select(t => t.Ticks).Mean()),
+                StdDev = TimeSpan.FromTicks((long)times.Select(t => t.Ticks).StdDev()),
+                BuildCount = times.Count,
+            };
+            BuildInfoCache.Set(cacheKey, result, TimeSpan.FromDays(7));
+            return result;
+        }
+        
         public static async Task<List<BuildInfo>?> GetMasterBuildsAsync(this BuildHttpClient? azureDevOpsClient, string? oldestMergeCommit, string? newestMergeCommit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
         {
             if (azureDevOpsClient == null || string.IsNullOrEmpty(oldestMergeCommit) || string.IsNullOrEmpty(newestMergeCommit))

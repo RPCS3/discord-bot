@@ -12,6 +12,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -111,7 +112,8 @@ namespace CompatBot
                     ThumbScrapper.GameTdbScraper.RunAsync(Config.Cts.Token),
 #endif
                     StatsStorage.BackgroundSaveAsync(),
-                    CompatList.ImportCompatListAsync()
+                    CompatList.ImportCompatListAsync(),
+                    Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token)
                 );
 
                 try

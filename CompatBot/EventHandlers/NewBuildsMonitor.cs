@@ -8,6 +8,7 @@ using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace CompatBot.EventHandlers
 {
@@ -19,7 +20,7 @@ namespace CompatBot.EventHandlers
         private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
         private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new();
 
-        public static Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
             if (args.Author.IsBotSafeCheck()
                 && !args.Author.IsCurrent
@@ -30,11 +31,11 @@ namespace CompatBot.EventHandlers
             )
             {
                 Config.Log.Info("Found new PR merge message");
-                var start = DateTime.UtcNow + Pr.AvgBuildTime;
+                var azureClient = Config.GetAzureDevOpsClient();
+                var start = DateTime.UtcNow + (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Percentile95;
                 var end = start + ActiveCheckResetThreshold;
                 ExpectedNewBuildTimeFrames.Enqueue((start, end));
             }
-            return Task.CompletedTask;
         }
 
         public static async Task MonitorAsync(DiscordClient client)
