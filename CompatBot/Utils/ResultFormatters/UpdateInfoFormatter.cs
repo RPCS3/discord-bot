@@ -194,6 +194,9 @@ namespace CompatBot.Utils.ResultFormatters
                 "AniLeo" => ":ani:",
                 "Talkashie" => ":font:",
                 "jarveson" => ":jarves:",
+                "xddxd" => ":kekw:",
+                "isJuhn" => "😺",
+                "13xforever" => "💮",
                 /*
                 "RipleyTom" => null,
                 "VelocityRa" => null,
@@ -201,7 +204,7 @@ namespace CompatBot.Utils.ResultFormatters
                 "CookiePLMonster" => null,
                 "Ruipin" => null,
                 "rajkosto" => null,
-                "isJuhn" => null,
+                "dio-gh" => null,
                 */
                 _ => null,
 #endif
