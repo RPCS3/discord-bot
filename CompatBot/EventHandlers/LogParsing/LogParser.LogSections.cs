@@ -63,7 +63,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["PPU Decoder:"] = new(@"PPU Decoder: (?<ppu_decoder>.*?)\r?$", DefaultOptions),
                     ["PPU Threads:"] = new(@"PPU Threads: (?<ppu_threads>.*?)\r?$", DefaultOptions),
                     ["Use LLVM CPU:"] = new("Use LLVM CPU: \\\"?(?<llvm_arch>.*?)\\\"?\r?$", DefaultOptions),
-                    ["thread scheduler:"] = new(@"scheduler: (?<thread_scheduler>.*?)\r?$", DefaultOptions),
+                    ["thread scheduler"] = new(@"[Ss]cheduler( Mode)?: (?<thread_scheduler>.*?)\r?$", DefaultOptions),
                     ["SPU Decoder:"] = new(@"SPU Decoder: (?<spu_decoder>.*?)\r?$", DefaultOptions),
                     ["secondary cores:"] = new(@"secondary cores: (?<spu_secondary_cores>.*?)\r?$", DefaultOptions),
                     ["priority:"] = new(@"priority: (?<spu_lower_thread_priority>.*?)\r?$", DefaultOptions),

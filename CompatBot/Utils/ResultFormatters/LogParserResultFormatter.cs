@@ -327,8 +327,18 @@ namespace CompatBot.Utils.ResultFormatters
                 items["resolution_scale"] = "Strict Mode";
             if (items["spu_threads"] == "0")
                 items["spu_threads"] = "Auto";
-            if (items["spu_secondary_cores"] != null)
-                items["thread_scheduler"] = items["spu_secondary_cores"];
+            var threadSched = (items["thread_scheduler"] ?? items["spu_secondary_cores"]) switch
+            {
+                "false" => "OS",
+                "Operating System" => "OS",
+                "true" => "RPCS3",
+                "RPCS3 Scheduler" => "RPCS3",
+                "RPCS3 Alternative Scheduler" => "RPCS3 Alt",
+                string s => s,
+                null => null,
+            };
+            if (!string.IsNullOrEmpty(threadSched))
+                items["thread_scheduler"] = threadSched;
             if (items["vulkan_initialized_device"] != null)
                 items["gpu_info"] = items["vulkan_initialized_device"];
             else if (items["driver_manuf_new"] != null)

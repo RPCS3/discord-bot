@@ -55,16 +55,13 @@ namespace CompatBot.Utils.ResultFormatters
                 if (Version.TryParse(items["os_version"], out var winVer)
                     && (winVer.Major < 10 || (winVer.Major == 10 && winVer.Build < 18362))) // everything before win 10 1903
                 {
-                    if (items["thread_scheduler"] == DisabledMark)
-                        notes.Add("⚠ Please enable `Thread Scheduler` option in the CPU Settings");
+                    if (items["thread_scheduler"] == "OS")
+                        notes.Add("⚠ Please enable RPCS3 `Thread Scheduler` option in the CPU Settings");
+                    else
+                        notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
                 }
                 else
-                {
-                    if (items["thread_scheduler"] == DisabledMark)
-                        notes.Add("ℹ Enabling `Thread Scheduler` may or may not increase performance");
-                    else
-                        notes.Add("ℹ Disabling `Thread Scheduler` may or may not increase performance");
-                }
+                    notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
             }
             if (items["llvm_arch"] is string llvmArch)
                 notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
