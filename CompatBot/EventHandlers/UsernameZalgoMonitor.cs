@@ -17,7 +17,7 @@ namespace CompatBot.EventHandlers
     {
         private static readonly HashSet<char> OversizedChars = new()
         {
-            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅',
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄',
         };
 
         private static readonly List<string> OversizedLiterals = new()
