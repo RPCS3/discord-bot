@@ -1055,6 +1055,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
+            
+            if (!ppuHashes.Overlaps(KnownPdf2ndPatches))
+                generalNotes.Add("🤔 Very interesting version of the game you got there");
         }
 
         private static readonly HashSet<string> Gt5Ids = new()
