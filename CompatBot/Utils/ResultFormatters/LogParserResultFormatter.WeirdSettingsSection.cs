@@ -47,20 +47,31 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["spu_lower_thread_priority"] == EnabledMark
                 && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
-            if (items["cpu_model"] is string cpu
-                && cpu.StartsWith("AMD")
-                && cpu.Contains("Ryzen")
-                && items["os_type"] != "Linux")
+            if (items["cpu_model"] is string cpu)
             {
-                if (Version.TryParse(items["os_version"], out var winVer)
-                    && (winVer.Major < 10 || (winVer.Major == 10 && winVer.Build < 18362))) // everything before win 10 1903
+                if (cpu.StartsWith("AMD")
+                    && cpu.Contains("Ryzen")
+                    && items["os_type"] != "Linux")
                 {
-                    if (items["thread_scheduler"] == "OS")
-                        notes.Add("⚠ Please enable RPCS3 `Thread Scheduler` option in the CPU Settings");
+                    if (Version.TryParse(items["os_version"], out var winVer)
+                        && (winVer.Major < 10 || (winVer.Major == 10 && winVer.Build < 18362))) // everything before win 10 1903
+                    {
+                        if (items["thread_scheduler"] == "OS")
+                        {
+                            if (buildVersion >= IntelThreadSchedulerBuildVersion)
+                                notes.Add("⚠ Please enable RPCS3 `Thread Scheduler` option in the CPU Settings");
+                            else
+                                notes.Add("⚠ Please enable `Thread Scheduler` in the CPU Settings");
+                        }
+                        else
+                            notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
+                    }
                     else
                         notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
                 }
-                else
+                else if (cpu.StartsWith("Intel")
+                         && threadCount > 11
+                         && buildVersion >= IntelThreadSchedulerBuildVersion)
                     notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
             }
             if (items["llvm_arch"] is string llvmArch)
@@ -1055,6 +1066,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
+            
+            if (!ppuHashes.Overlaps(KnownPdf2ndPatches))
+                generalNotes.Add("🤔 Very interesting version of the game you got there");
         }
 
         private static readonly HashSet<string> Gt5Ids = new()
