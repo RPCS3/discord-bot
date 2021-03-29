@@ -62,7 +62,6 @@ namespace CompatBot.EventHandlers
             [DiscordEmoji.FromUnicode("💯")] = "100",
 
             [DiscordEmoji.FromUnicode("🆑")] = "CL",
-            [DiscordEmoji.FromUnicode("🆐")] = "DJ",
             [DiscordEmoji.FromUnicode("🆒")] = "COOL",
             [DiscordEmoji.FromUnicode("🆓")] = "FREE",
             [DiscordEmoji.FromUnicode("🆔")] = "ID",
