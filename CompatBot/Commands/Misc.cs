@@ -329,6 +329,7 @@ namespace CompatBot.Commands
         {
             try
             {
+                var funMult = DateTime.UtcNow.Month == 4 && DateTime.UtcNow.Day == 1 ? 100 : Config.FunMultiplier;
                 var choices = RateAnswers;
                 var choiceFlags = new HashSet<char>();
                 whatever = whatever.ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
@@ -394,7 +395,7 @@ namespace CompatBot.Commands
                         if (role.EndsWith('s'))
                             role = role[..^1];
                         var article = Vowels.Contains(role[0]) ? "n" : "";
-                        choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count / 20)).ToList();
+                        choices = RateAnswers.Concat(Enumerable.Repeat($"Pretty fly for a{article} {role} guy", RateAnswers.Count * funMult / 20)).ToList();
                         choiceFlags.Add('f');
                     }
 
@@ -444,7 +445,7 @@ namespace CompatBot.Commands
                     {
                         if (i == 0 && suffix.Length == 0)
                         {
-                            choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3)).ToList();
+                            choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3 * funMult)).ToList();
                             MakeCustomRoleRating(nekoMember);
                         }
                         result.Append(nekoUser.Id);
@@ -454,7 +455,7 @@ namespace CompatBot.Commands
                     {
                         if (i == 0 && suffix.Length == 0)
                         {
-                            choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3)).ToList();
+                            choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3 * funMult)).ToList();
                             MakeCustomRoleRating(kdMember);
                         }
                         result.Append(kdUser.Id);
@@ -472,7 +473,11 @@ namespace CompatBot.Commands
                 if (whatever.StartsWith("rate "))
                     whatever = whatever[("rate ".Length)..];
                 if (originalWhatever == "sonic" || originalWhatever.Contains("sonic the"))
-                    choices = RateAnswers.Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count)).Concat(new[] {"Sonic out of 🦔", "Sonic out of 10"}).ToList();
+                    choices = RateAnswers
+                        .Concat(Enumerable.Repeat("💩 out of 🦔", RateAnswers.Count * funMult))
+                        .Concat(Enumerable.Repeat("Sonic out of 🦔", funMult))
+                        .Concat(Enumerable.Repeat("Sonic out of 10", funMult))
+                        .ToList();
 
                 if (string.IsNullOrEmpty(whatever))
                     await ctx.RespondAsync("Rating nothing makes _**so much**_ sense, right?").ConfigureAwait(false);
