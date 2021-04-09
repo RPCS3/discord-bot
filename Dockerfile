@@ -1,17 +1,21 @@
 FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS base
+
 # Native libgdiplus dependencies
 RUN apt-get update
 RUN apt-get install -y --allow-unauthenticated libc6-dev libgdiplus libx11-dev fonts-roboto
+
 # debian-specific?
 #RUN rm -rf /var/lib/apt/lists/*
 #RUN ln -s /lib/x86_64-linux-gnu/libdl-2.24.so /lib/x86_64-linux-gnu/libdl.so
+
 # Regular stuff
-COPY packages /root/.nuget/packages/
+#COPY packages /root/.nuget/packages/
 WORKDIR /src
 COPY . .
-RUN rm -rf ./packages
+#RUN rm -rf ./packages
 RUN git status
 # Build and test everything
+RUN dotnet restore "CompatBot/CompatBot.csproj"
 RUN dotnet build "CompatBot/CompatBot.csproj" -c Release
 ENV RUNNING_IN_DOCKER true
 # Limit server GC to 512 MB heap max
