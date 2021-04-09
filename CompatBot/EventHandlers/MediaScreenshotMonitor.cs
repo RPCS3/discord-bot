@@ -54,7 +54,7 @@ namespace CompatBot.EventHandlers
             var images = Vision.GetImageAttachment(message).ToList();
             var tasks = new List<Task<ReadHeaders>>(images.Count);
             foreach (var img in images)
-                tasks.Add(cvClient.ReadAsync(img.Url, null, Config.Cts.Token));
+                tasks.Add(cvClient.ReadAsync(img.Url, cancellationToken: Config.Cts.Token));
             foreach (var t in tasks)
             {
                 try
