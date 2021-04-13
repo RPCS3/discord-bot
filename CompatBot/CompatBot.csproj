@@ -47,9 +47,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00833" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00833" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00833" />
+    <PackageReference Include="DSharpPlus" Version="4.0.0" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.51.0.2265" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
