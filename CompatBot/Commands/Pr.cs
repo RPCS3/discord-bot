@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CirrusCiClient;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
@@ -12,6 +13,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.TeamFoundation.Build.WebApi;
+using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands
 {
@@ -127,12 +129,12 @@ namespace CompatBot.Commands
                 string? linuxDownloadText = null;
                 string? buildTime = null;
 
-                if (azureClient != null && prInfo.Head?.Sha is string commit)
+                if (prInfo.Head?.Sha is string commit)
                     try
                     {
                         windowsDownloadText = "⏳ Pending...";
                         linuxDownloadText = "⏳ Pending...";
-                        var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
+                        var latestBuild = await CirrusCi.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild == null)
                         {
                             if (state == "Open")
@@ -143,18 +145,16 @@ namespace CompatBot.Commands
                         else
                         {
                             bool shouldHaveArtifacts = false;
-                            if (latestBuild.Status == BuildStatus.Completed
-                                && (latestBuild.Result == BuildResult.Succeeded || latestBuild.Result == BuildResult.PartiallySucceeded)
-                                && latestBuild.FinishTime.HasValue)
+                            if (latestBuild is {Status: CirrusCiClient.BuildStatus.Completed, FinishTime: not null})
                             {
                                 buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
                                 shouldHaveArtifacts = true;
                             }
-                            else if (latestBuild.Result == BuildResult.Failed || latestBuild.Result == BuildResult.Canceled)
-                                windowsDownloadText = $"❌ {latestBuild.Result}";
-                            else if (latestBuild.Status == BuildStatus.InProgress && latestBuild.StartTime != null)
+                            else if (latestBuild.Status is CirrusCiClient.BuildStatus.Failed or CirrusCiClient.BuildStatus.Errored or CirrusCiClient.BuildStatus.Aborted)
+                                windowsDownloadText = $"❌ {latestBuild.Status}";
+                            else if (latestBuild is {Status: CirrusCiClient.BuildStatus.Executing})
                             {
-                                var estimatedCompletionTime = latestBuild.StartTime.Value + (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
+                                var estimatedCompletionTime = latestBuild.StartTime + (await CirrusCi.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                                 var estimatedTime = TimeSpan.FromMinutes(1);
                                 if (estimatedCompletionTime > DateTime.UtcNow)
                                     estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
@@ -202,7 +202,7 @@ namespace CompatBot.Commands
                 if (!string.IsNullOrEmpty(buildTime))
                     embed.WithFooter(buildTime);
             }
-            else if (state == "Merged")
+            else if (state == "Merged" && azureClient is not null)
             {
                 var mergeTime = prInfo.MergedAt.GetValueOrDefault();
                 var now = DateTime.UtcNow;

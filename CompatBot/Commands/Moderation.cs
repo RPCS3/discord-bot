@@ -90,7 +90,11 @@ namespace CompatBot.Commands
         {
             try
             {
-                LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, ctx.Message, ctx.Member, true, true);
+                if (ctx.Message.Attachments.Any())
+                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, ctx.Message, ctx.Member, true, true);
+                else if (ctx.Message.ReferencedMessage is {} refMsg && refMsg.Attachments.Any())
+                    LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, refMsg, ctx.Member, true, true);
+                    
             }
             catch (Exception e)
             {

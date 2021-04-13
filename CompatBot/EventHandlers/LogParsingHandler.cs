@@ -101,7 +101,10 @@ namespace CompatBot.EventHandlers
                     {
                         Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
                         var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
-                        botMsg = await channel.SendMessageAsync(embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false);
+                        var msgBuilder = new DiscordMessageBuilder()
+                            .WithEmbed(analyzingProgressEmbed.AddAuthor(client, message, source))
+                            .WithReply(message.Id);
+                        botMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                         parsedLog = true;
 
                         LogParseState? result = null, tmpResult;
@@ -238,7 +241,7 @@ namespace CompatBot.EventHandlers
                                     }
 
                                     botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                        requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                        //requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
                                         embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
                                     ).ConfigureAwait(false);
                                 }

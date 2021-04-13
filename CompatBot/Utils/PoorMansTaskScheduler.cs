@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 
 namespace CompatBot.Utils
 {
-    internal class PoorMansTaskScheduler<T>
-        where T: notnull
+    internal class PoorMansTaskScheduler<T> where T: notnull
     {
         private readonly int queueLimit;
         private readonly ConcurrentDictionary<Task, T> taskQueue = new();

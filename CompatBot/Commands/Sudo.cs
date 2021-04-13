@@ -1,8 +1,12 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using CompatApiClient.Compression;
 using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
@@ -10,8 +14,10 @@ using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace CompatBot.Commands
 {
@@ -19,34 +25,53 @@ namespace CompatBot.Commands
     [Description("Used to manage bot moderators and sudoers")]
     internal sealed partial class Sudo : BaseCommandModuleCustom
     {
-        [Command("say"), Priority(10)]
-        [Description("Make bot say things, optionally in a specific channel")]
-        public async Task Say(CommandContext ctx, [Description("Discord channel (can use just #name in DM)")] DiscordChannel channel, [RemainingText, Description("Message text to send")] string message)
+        [Command("say")]
+        [Description("Make bot say things. Specify #channel or put message link in the beginning to specify where to reply")]
+        public async Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
         {
-            if (channel.Type != ChannelType.Text)
+            var msgParts = message.Split(' ', 2, StringSplitOptions.TrimEntries);
+
+            var channel = ctx.Channel;
+            DiscordMessage? ogMsg = null;
+            if (msgParts.Length > 1)
             {
-                Config.Log.Warn($"Resolved a {channel.Type} channel again for #{channel.Name}");
-                var channelResult = await new TextOnlyDiscordChannelConverter().ConvertAsync(channel.Name, ctx).ConfigureAwait(false);
-                if (channelResult.HasValue && channelResult.Value.Type == ChannelType.Text)
-                    channel = channelResult.Value;
-                else
+                if (await ctx.GetMessageAsync(msgParts[0]).ConfigureAwait(false) is DiscordMessage lnk)
                 {
-                    await ctx.RespondAsync($"Resolved a {channel.Type} channel again").ConfigureAwait(false);
-                    return;
+                    ogMsg = lnk;
+                    channel = ogMsg.Channel;
+                    message = msgParts[1];
+                }
+                else if (await TextOnlyDiscordChannelConverter.ConvertAsync(msgParts[0], ctx).ConfigureAwait(false) is {HasValue: true} ch)
+                {
+                    channel = ch.Value;
+                    message = msgParts[1];
                 }
             }
 
             var typingTask = channel.TriggerTypingAsync();
             // simulate bot typing the message at 300 cps
             await Task.Delay(message.Length * 10 / 3).ConfigureAwait(false);
-            await channel.SendMessageAsync(message).ConfigureAwait(false);
+            var msgBuilder = new DiscordMessageBuilder().WithContent(message);
+            if (ogMsg is not null)
+                msgBuilder.WithReply(ogMsg.Id);
+            if (ctx.Message.Attachments.Any())
+            {
+                try
+                {
+                    await using var memStream = Config.MemoryStreamManager.GetStream();
+                    using var client = HttpClientFactory.Create(new CompressionMessageHandler());
+                    await using var requestStream = await client.GetStreamAsync(ctx.Message.Attachments[0].Url!).ConfigureAwait(false);
+                    await requestStream.CopyToAsync(memStream).ConfigureAwait(false);
+                    memStream.Seek(0, SeekOrigin.Begin);
+                    msgBuilder.WithFile(ctx.Message.Attachments[0].FileName, memStream);
+                    await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                }
+                catch { }
+            }
+            else
+                await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
             await typingTask.ConfigureAwait(false);
         }
-
-        [Command("say"), Priority(10)]
-        [Description("Make bot say things, optionally in a specific channel")]
-        public Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
-            => Say(ctx, ctx.Channel, message);
 
         [Command("react")]
         [Description("Add reactions to the specified message")]

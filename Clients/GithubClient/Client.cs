@@ -33,7 +33,7 @@ namespace GithubClient
         public Client()
         {
             client = HttpClientFactory.Create(new CompressionMessageHandler());
-            jsonOptions = new JsonSerializerOptions
+            jsonOptions = new()
             {
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
                 IgnoreNullValues = true,
@@ -72,7 +72,7 @@ namespace GithubClient
             if (result == null)
             {
                 ApiConfig.Log.Debug($"Failed to get {nameof(PrInfo)}, returning empty result");
-                return new PrInfo { Number = pr };
+                return new() { Number = pr };
             }
 
             StatusesCache.Set(pr, result, PrStatusCacheTime);
@@ -111,7 +111,7 @@ namespace GithubClient
             if (result == null)
             {
                 ApiConfig.Log.Debug($"Failed to get {nameof(IssueInfo)}, returning empty result");
-                return new IssueInfo { Number = issue };
+                return new() { Number = issue };
             }
 
             IssuesCache.Set(issue, result, IssueStatusCacheTime);

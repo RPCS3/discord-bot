@@ -40,6 +40,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YandexDiskClient", "Clients
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators", "SourceGenerators\SourceGenerators.csproj", "{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CirrusCiClient", "Clients\CirrusCiClient\CirrusCiClient.csproj", "{897476B0-B80A-4134-A576-8CAEAEA14A28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,10 @@ Global
 		{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A75FAF1-1DD1-43FF-A789-1AB216F4B94E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{897476B0-B80A-4134-A576-8CAEAEA14A28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{897476B0-B80A-4134-A576-8CAEAEA14A28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{897476B0-B80A-4134-A576-8CAEAEA14A28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{897476B0-B80A-4134-A576-8CAEAEA14A28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,6 +107,7 @@ Global
 		{5C4BCF33-2EC6-455F-B026-8A0001B7B7AD} = {E7FE0ADD-CBA6-4321-8A1C-0A3B5C3F54C2}
 		{1F743D3D-4A87-47EF-B88D-A0DCEE1C5FB7} = {E7FE0ADD-CBA6-4321-8A1C-0A3B5C3F54C2}
 		{CABC3E5E-2153-443B-A5A8-DA3E389359EC} = {E7FE0ADD-CBA6-4321-8A1C-0A3B5C3F54C2}
+		{897476B0-B80A-4134-A576-8CAEAEA14A28} = {E7FE0ADD-CBA6-4321-8A1C-0A3B5C3F54C2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7696F56-AEAC-4D83-9BD8-BE0C122A5DCE}
