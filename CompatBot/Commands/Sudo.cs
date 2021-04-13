@@ -3,7 +3,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using CompatApiClient.Compression;
 using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
@@ -51,7 +54,22 @@ namespace CompatBot.Commands
             var msgBuilder = new DiscordMessageBuilder().WithContent(message);
             if (ogMsg is not null)
                 msgBuilder.WithReply(ogMsg.Id);
-            await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+            if (ctx.Message.Attachments.Any())
+            {
+                try
+                {
+                    await using var memStream = Config.MemoryStreamManager.GetStream();
+                    using var client = HttpClientFactory.Create(new CompressionMessageHandler());
+                    await using var requestStream = await client.GetStreamAsync(ctx.Message.Attachments[0].Url!).ConfigureAwait(false);
+                    await requestStream.CopyToAsync(memStream).ConfigureAwait(false);
+                    memStream.Seek(0, SeekOrigin.Begin);
+                    msgBuilder.WithFile(ctx.Message.Attachments[0].FileName, memStream);
+                    await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                }
+                catch { }
+            }
+            else
+                await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
             await typingTask.ConfigureAwait(false);
         }
 
