@@ -1,0 +1,12 @@
+{
+  "schema": "schema.graphql",
+  "documents": "**/*.graphql",
+  "extensions": {
+    "strawberryShake": {
+      "name": "Client",
+      "namespace": "CirrusCiClient",
+      "url": "https://api.cirrus-ci.com/graphql",
+      "dependencyInjection": true
+    }
+  }
+}

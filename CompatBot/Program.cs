@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CirrusCiClient;
 using CompatBot.Commands;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
@@ -113,7 +114,8 @@ namespace CompatBot
 #endif
                     StatsStorage.BackgroundSaveAsync(),
                     CompatList.ImportCompatListAsync(),
-                    Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token)
+                    Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),
+                    CirrusCi.GetPipelineDurationAsync(Config.Cts.Token)
                 );
 
                 try

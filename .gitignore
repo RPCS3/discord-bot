@@ -266,3 +266,4 @@ launchSettings.json
 logs/
 *.ird
 credentials.json
+Generated/

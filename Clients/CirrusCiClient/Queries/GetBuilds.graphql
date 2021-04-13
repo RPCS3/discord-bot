@@ -1,0 +1,65 @@
+query GetPrBuilds($branch: String, $after: String) {
+    githubRepository(owner: "RPCS3", name: "rpcs3") {
+        builds(branch: $branch, after: $after, last: 20) {
+            edges {
+                node {
+                    id
+                    changeIdInRepo
+                    pullRequest
+                    ...BaseNodeInfo
+                    tasks {
+                        id
+                        name
+                        status
+                        artifacts {
+                            files {
+                                path
+                                size
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+query GetBuildWithArtifacts($buildId: ID!) {
+    build(id: $buildId) {
+        pullRequest
+        buildCreatedTimestamp
+        clockDurationInSeconds
+        tasks {
+            name
+            status
+            artifacts {
+                name
+                files {
+                    path
+                    size
+                }
+            }
+        }
+    }
+}
+
+query GetLastFewBuilds($count: Int!) {
+    githubRepository(owner: "RPCS3", name: "rpcs3") {
+        builds(last: $count) {
+            edges {
+                node {
+                    ...BaseNodeInfo
+                }
+            }
+        }
+    }
+}
+
+fragment BaseNodeInfo on Build {
+    status
+    buildCreatedTimestamp
+    clockDurationInSeconds
+    latestGroupTasks {
+        finalStatusTimestamp
+    }
+}

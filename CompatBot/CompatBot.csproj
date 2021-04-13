@@ -86,6 +86,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Clients\CirrusCiClient\CirrusCiClient.csproj" />
     <ProjectReference Include="..\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Clients\CompatApiClient\CompatApiClient.csproj" />
     <ProjectReference Include="..\Clients\GithubClient\GithubClient.csproj" />
