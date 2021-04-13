@@ -11,15 +11,20 @@ namespace CompatBot.Utils
 {
     public static class DiscordMessageExtensions
     {
-        public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? message, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null)
+        public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null, DiscordMessage? refMsg = null)
         {
             Exception? lastException = null;
             for (var i = 0; i<3; i++)
                 try
                 {
-                    if (message == null)
+                    if (botMsg == null)
                     {
-                        var newMsg = await channel.SendMessageAsync(content, embed).ConfigureAwait(false);
+                        var msgBuilder = new DiscordMessageBuilder()
+                            .WithContent(content)
+                            .WithEmbed(embed);
+                        if (refMsg is not null)
+                            msgBuilder.WithReply(refMsg.Id);
+                        var newMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                         #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
                         if (newMsg.Channel is null)
                         {
@@ -30,7 +35,7 @@ namespace CompatBot.Utils
                         }
                         return newMsg;
                     }
-                    return await message.ModifyAsync(content, embed).ConfigureAwait(false);
+                    return await botMsg.ModifyAsync(content, embed).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
