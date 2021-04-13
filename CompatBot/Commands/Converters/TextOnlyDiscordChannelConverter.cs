@@ -14,7 +14,10 @@ namespace CompatBot.Commands.Converters
     {
         private static Regex ChannelRegex { get; } = new(@"^<#(\d+)>$", RegexOptions.ECMAScript | RegexOptions.Compiled);
 
-        public async Task<Optional<DiscordChannel>> ConvertAsync(string value, CommandContext ctx)
+        Task<Optional<DiscordChannel>> IArgumentConverter<DiscordChannel>.ConvertAsync(string value, CommandContext ctx)
+            => ConvertAsync(value, ctx);
+        
+        public static async Task<Optional<DiscordChannel>> ConvertAsync(string value, CommandContext ctx)
         {
             var guildList = new List<DiscordGuild>(ctx.Client.Guilds.Count);
             if (ctx.Guild == null)
