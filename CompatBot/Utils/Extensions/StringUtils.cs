@@ -443,6 +443,14 @@ namespace CompatBot.Utils
             return string.Compare(a, b, CultureInfo.InvariantCulture, CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase) == 0;
         }
 
+        internal static int GetStableHash(this string str)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var data = Encoding.UTF8.GetBytes(str);
+            var hash = sha256.ComputeHash(data);
+            return BitConverter.ToInt32(hash, 0);
+        }
+
         private static double GetScoreWithAcronym(this string strA, string strB)
         {
             var fullMatch = strA.DiceIshCoefficientIsh(strB);

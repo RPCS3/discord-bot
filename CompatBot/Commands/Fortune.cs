@@ -31,12 +31,8 @@ namespace CompatBot.Commands
         
         public static async Task ShowFortune(DiscordMessage message, DiscordUser user)
         {
-            var prefix = DateTime.UtcNow.ToString("yyyyMMdd");
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            var data = Encoding.UTF8.GetBytes(prefix + user.Id.ToString("x16"));
-            var hash = sha256.ComputeHash(data);
-            var seed = BitConverter.ToInt32(hash, 0);
-            var rng = new Random(seed);
+            var prefix = DateTime.UtcNow.ToString("yyyyMMdd")+ user.Id.ToString("x16");
+            var rng = new Random(prefix.GetStableHash());
             await using var db = new ThumbnailDb();
             Database.Fortune fortune;
             do

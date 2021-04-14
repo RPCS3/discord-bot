@@ -251,7 +251,7 @@ namespace CompatBot.Utils.ResultFormatters
                     collection["game_category"] = "HG";
                 }
                 serial = collection["serial"] ?? "";
-                var titleUpdateInfoTask = PsnClient.GetTitleUpdatesAsync(serial, Config.Cts.Token);
+                var titleUpdateInfoTask = TitleUpdateInfoProvider.GetAsync(serial, Config.Cts.Token);
                 var titleMetaTask = PsnClient.GetTitleMetaAsync(serial, Config.Cts.Token);
                 var gameInfo = await client.LookupGameInfoWithEmbedAsync(serial, collection["game_title"], true, category: collection["game_category"]).ConfigureAwait(false);
                 try

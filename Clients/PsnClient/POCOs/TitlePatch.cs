@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System;
+using System.Xml.Serialization;
 
 namespace PsnClient.POCOs
 {
@@ -13,6 +14,8 @@ namespace PsnClient.POCOs
         public string Status { get; set; }
         [XmlElement("tag")]
         public TitlePatchTag Tag { get; set; }
+        [XmlIgnore]
+        public DateTime? OfflineCacheTimestamp { get; set; }
     }
 
     public class TitlePatchTag

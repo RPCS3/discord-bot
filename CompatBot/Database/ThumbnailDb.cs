@@ -10,6 +10,7 @@ namespace CompatBot.Database
     {
         public DbSet<State> State { get; set; } = null!;
         public DbSet<Thumbnail> Thumbnail { get; set; } = null!;
+        public DbSet<GameUpdateInfo> GameUpdateInfo { get; set; } = null!;
         public DbSet<SyscallInfo> SyscallInfo { get; set; } = null!;
         public DbSet<SyscallToProductMap> SyscallToProductMap { get; set; } = null!;
         public DbSet<Metacritic> Metacritic { get; set; } = null!;
@@ -33,6 +34,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ProductCode).IsUnique().HasDatabaseName("thumbnail_product_code");
             modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ContentId).IsUnique().HasDatabaseName("thumbnail_content_id");
             modelBuilder.Entity<Thumbnail>().HasIndex(m => m.Timestamp).HasDatabaseName("thumbnail_timestamp");
+            modelBuilder.Entity<GameUpdateInfo>().HasIndex(ui => ui.ProductCode).IsUnique().HasDatabaseName("game_update_info_product_code");
             modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Function).HasDatabaseName("syscall_info_function");
             modelBuilder.Entity<SyscallToProductMap>().HasKey(m => new {m.ProductId, m.SyscallInfoId});
             modelBuilder.Entity<Fortune>();
@@ -71,6 +73,17 @@ namespace CompatBot.Database
         public Metacritic? Metacritic { get; set; }
 
         public List<SyscallToProductMap> SyscallToProductMap { get; set; } = null!;
+    }
+
+    internal class GameUpdateInfo
+    {
+        public int Id { get; set; }
+        [Required]
+        public string ProductCode { get; set; } = null!;
+        public int MetaHash { get; set; }
+        [Required]
+        public string MetaXml { get; set; } = null!;
+        public long Timestamp { get; set; }
     }
 
     public enum CompatStatus : byte

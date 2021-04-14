@@ -3,14 +3,16 @@ using System;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CompatBot.Migrations
 {
     [DbContext(typeof(ThumbnailDb))]
-    partial class ThumbnailDbModelSnapshot : ModelSnapshot
+    [Migration("20210414183007_AddGameUpdateInfo")]
+    partial class AddGameUpdateInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,10 +56,6 @@ namespace CompatBot.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("product_code");
-
-                    b.Property<long>("Timestamp")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("timestamp");
 
                     b.HasKey("Id")
                         .HasName("id");

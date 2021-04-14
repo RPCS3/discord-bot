@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,7 +33,10 @@ namespace CompatBot.Utils.ResultFormatters
                 var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
                 if (pages > 1)
                     embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxFieldTitleLength);
-                embedBuilder.Description = $"Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
+                var desc = $"Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
+                if (patch?.OfflineCacheTimestamp is DateTime cacheTimestamp)
+                    desc = $"{desc}\n(Offline cache, last updated {(DateTime.UtcNow - cacheTimestamp).AsTimeDeltaDescription()} ago)";
+                embedBuilder.Description = desc;
                 var i = 0;
                 do
                 {
