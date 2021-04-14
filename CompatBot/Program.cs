@@ -111,6 +111,7 @@ namespace CompatBot
                     AmdDriverVersionProvider.RefreshAsync(),
 #if !DEBUG
                     ThumbScrapper.GameTdbScraper.RunAsync(Config.Cts.Token),
+                    TitleUpdateInfoProvider.RefreshGameUpdateInfoAsync(Config.Cts.Token),
 #endif
                     StatsStorage.BackgroundSaveAsync(),
                     CompatList.ImportCompatListAsync(),

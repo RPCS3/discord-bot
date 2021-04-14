@@ -83,6 +83,7 @@ namespace CompatBot.Database
         public int MetaHash { get; set; }
         [Required]
         public string MetaXml { get; set; } = null!;
+        public long Timestamp { get; set; }
     }
 
     public enum CompatStatus : byte
