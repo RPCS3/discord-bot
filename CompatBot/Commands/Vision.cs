@@ -17,6 +17,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
+using Microsoft.DotNet.PlatformAbstractions;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -119,7 +120,7 @@ namespace CompatBot.Commands
                 var resized = false;
                 if (img.Width > 4000 || img.Height > 4000)
                 {
-                    img.Mutate(i => i.Resize(new ResizeOptions {Size = new Size(3840, 2160), Mode = ResizeMode.Min,}));
+                    img.Mutate(i => i.Resize(new ResizeOptions {Size = new(3840, 2160), Mode = ResizeMode.Min,}));
                     resized = true;
                 }
                 img.Mutate(i => i.AutoOrient());
@@ -172,7 +173,7 @@ namespace CompatBot.Commands
                     {
                         var r = obj.Rectangle;
                         await using var tmpStream = Config.MemoryStreamManager.GetStream();
-                        using var boxCopy = img.Clone(i => i.Crop(new Rectangle(r.X, r.Y, r.W, r.H)));
+                        using var boxCopy = img.Clone(i => i.Crop(new(r.X, r.Y, r.W, r.H)));
                         await boxCopy.SaveAsBmpAsync(tmpStream).ConfigureAwait(false);
                         tmpStream.Seek(0, SeekOrigin.Begin);
                         using var b = new Bitmap(tmpStream);
@@ -301,8 +302,8 @@ namespace CompatBot.Commands
                         // label text
                         try
                         {
-                            img.Mutate(ipc => ipc.DrawText(textGraphicsOptions, label, font, textColor, new PointF(bgBox.X + bboxBorder, bgBox.Y + bboxBorder)));
-                            //img.Mutate(i => i.DrawText(textGraphicsOptions, $"{obj.ObjectProperty} ({obj.Confidence:P1})", font, brush, pen, new PointF(r.X + 5, r.Y + 5))); // throws exception
+                            var verticalOffset = RuntimeEnvironment.OperatingSystemPlatform == Platform.Windows ? bboxBorder : -bboxBorder;
+                            img.Mutate(ipc => ipc.DrawText(textGraphicsOptions, label, font, textColor, new(bgBox.X + bboxBorder, bgBox.Y + verticalOffset)));
                         }
                         catch (Exception ex)
                         {
