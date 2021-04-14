@@ -34,6 +34,8 @@ namespace CompatBot.Database.Providers
                     updateInfo.MetaXml = xml;
                     updateInfo.Timestamp = DateTime.UtcNow.Ticks;
                 }
+                else if (updateInfo.MetaHash == xmlChecksum)
+                    updateInfo.Timestamp = DateTime.UtcNow.Ticks;
                 await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             if ((update?.Tag?.Packages?.Length ?? 0) == 0)
@@ -46,6 +48,8 @@ namespace CompatBot.Database.Providers
                 await using var memStream = Config.MemoryStreamManager.GetStream(Encoding.UTF8.GetBytes(updateInfo.MetaXml));
                 var xmlSerializer = new XmlSerializer(typeof(TitlePatch));
                 update = (TitlePatch?)xmlSerializer.Deserialize(memStream);
+                if (update is not null)
+                    update.OfflineCacheTimestamp = updateInfo.Timestamp.AsUtc();
             }
             
             return update;
