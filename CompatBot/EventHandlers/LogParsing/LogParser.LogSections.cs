@@ -40,6 +40,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["Finished reading database from file:"] = new(@"Finished reading database from file: (?<compat_database_path>.*compat_database.dat).*\r?$", DefaultOptions),
                     ["Database file not found:"] = new(@"Database file not found: (?<compat_database_path>.*compat_database.dat).*\r?$", DefaultOptions),
                     ["Successfully installed PS3 firmware"] = new(@"(?<fw_installed_message>Successfully installed PS3 firmware) version (?<fw_version_installed>\d+\.\d+).*\r?$", DefaultOptions),
+                    ["Firmware version:"] = new(@"Firmware version: (?<fw_version_installed>\d+\.\d+).*\r?$", DefaultOptions),
                     ["Title:"] = new(@"(?:LDR|SYS): Title: (?<game_title>.*)?\r?$", DefaultOptions),
                     ["Serial:"] = new(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
                     ["Category:"] = new(@"Category: (?<game_category>.*)?\r?$", DefaultOptions),
