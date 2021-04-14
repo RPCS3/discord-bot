@@ -36,8 +36,7 @@ namespace CompatBot.Commands
                 var lastBotMessages = await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false);
                 var showList = true;
                 foreach (var pastMsg in lastBotMessages)
-                    if (pastMsg.Embeds.FirstOrDefault() is DiscordEmbed pastEmbed
-                        && pastEmbed.Title == TermListTitle
+                    if (pastMsg.Embeds.FirstOrDefault() is DiscordEmbed {Title: TermListTitle}
                         || BotReactionsHandler.NeedToSilence(pastMsg).needToChill)
                     {
                         showList = false;
@@ -89,7 +88,7 @@ namespace CompatBot.Commands
                 }
             }
 
-            if (await SendExplanation(result, term, ctx.Message).ConfigureAwait(false))
+            if (await SendExplanation(result, term, ctx.Message.ReferencedMessage ?? ctx.Message).ConfigureAwait(false))
                 return;
 
             string? inSpecificLocation = null;
@@ -381,19 +380,36 @@ namespace CompatBot.Commands
             {
                 if (termLookupResult.explanation != null && termLookupResult.score > 0.5)
                 {
+                    var replied = false;
+                    DiscordMessageBuilder msgBuilder;
                     if (!string.IsNullOrEmpty(termLookupResult.fuzzyMatch))
                     {
                         var fuzzyNotice = $"Showing explanation for `{termLookupResult.fuzzyMatch}`:";
 #if DEBUG
                         fuzzyNotice = $"Showing explanation for `{termLookupResult.fuzzyMatch}` ({termLookupResult.score:0.######}):";
 #endif
-                        await sourceMessage.Channel.SendMessageAsync(fuzzyNotice).ConfigureAwait(false);
+                        msgBuilder = new DiscordMessageBuilder()
+                            .WithContent(fuzzyNotice)
+                            .WithReply(sourceMessage.Id);
+                        await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                        replied = true;
                     }
 
                     var explain = termLookupResult.explanation;
                     StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
                     StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
-                    await sourceMessage.Channel.SendMessageAsync(explain.Text, explain.Attachment, explain.AttachmentFilename).ConfigureAwait(false);
+                    msgBuilder = new DiscordMessageBuilder().WithContent(explain.Text);
+                    if (!replied)
+                        msgBuilder.WithReply(sourceMessage.Id);
+                    if (explain.Attachment is {Length: >0})
+                    {
+                        await using var memStream = Config.MemoryStreamManager.GetStream(explain.Attachment);
+                        memStream.Seek(0, SeekOrigin.Begin);
+                        msgBuilder.WithFile(explain.AttachmentFilename, memStream);
+                        await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                    }
+                    else
+                        await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                     return true;
                 }
             }
