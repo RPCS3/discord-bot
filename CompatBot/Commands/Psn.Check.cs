@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
 using CompatBot.Utils;
@@ -56,13 +57,13 @@ namespace CompatBot.Commands
                 List<DiscordEmbedBuilder> embeds;
                 try
                 {
-                    var updateInfo = await Client.GetTitleUpdatesAsync(id, Config.Cts.Token).ConfigureAwait(false);
+                    var updateInfo = await TitleUpdateInfoProvider.GetAsync(id, Config.Cts.Token).ConfigureAwait(false);
                     embeds = await updateInfo.AsEmbedAsync(ctx.Client, id).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
                     Config.Log.Warn(e, "Failed to get title update info");
-                    embeds = new List<DiscordEmbedBuilder>
+                    embeds = new()
                     {
                         new()
                         {
@@ -153,7 +154,7 @@ namespace CompatBot.Commands
                     await announcementChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                     latestFwVersion = newVersion;
                     if (fwVersionState == null)
-                        await db.BotState.AddAsync(new BotState {Key = "Latest-Firmware-Version", Value = latestFwVersion}).ConfigureAwait(false);
+                        await db.BotState.AddAsync(new() {Key = "Latest-Firmware-Version", Value = latestFwVersion}).ConfigureAwait(false);
                     else
                         fwVersionState.Value = latestFwVersion;
                     await db.SaveChangesAsync().ConfigureAwait(false);

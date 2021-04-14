@@ -13,6 +13,8 @@ namespace PsnClient.POCOs
         public string Status { get; set; }
         [XmlElement("tag")]
         public TitlePatchTag Tag { get; set; }
+        [XmlIgnore]
+        public bool OfflineCache { get; set; }
     }
 
     public class TitlePatchTag

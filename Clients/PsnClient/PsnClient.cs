@@ -233,25 +233,26 @@ namespace PsnClient
             }
         }
 
-        public async Task<TitlePatch?> GetTitleUpdatesAsync(string? productId, CancellationToken cancellationToken)
+        public async Task<(TitlePatch? patch, string? responseXml)> GetTitleUpdatesAsync(string? productId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(productId))
-                return null;
+                return default;
             
             if (ResponseCache.TryGetValue(productId, out TitlePatch patchInfo))
-                return patchInfo;
+                return (patchInfo, default);
 
             using var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml");
             using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
             try
             {
                 if (response.StatusCode == HttpStatusCode.NotFound)
-                    return null;
+                    return default;
 
                 await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                var xml = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
                 ResponseCache.Set(productId, patchInfo, ResponseCacheDuration);
-                return patchInfo;
+                return (patchInfo, xml);
             }
             catch (Exception e)
             {
