@@ -320,8 +320,7 @@ namespace CompatBot.Commands
                     } while (resultStream.Length > Config.AttachmentSizeLimit);
                     var messageBuilder = new DiscordMessageBuilder()
                         .WithContent(description)
-                        .WithFile(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream)
-                        .WithReply(ogRef.Id);
+                        .WithFile(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream);
                     var respondMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
                     var tags = result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags).Distinct().ToList();
                     Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}");
