@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -27,7 +28,7 @@ namespace CompatBot.Commands
         {
             private static string? latestFwVersion;
 
-            [Command("updates"), Aliases("update")]
+            [Command("updates"), Aliases("update"), LimitedToSpamChannel]
             [Description("Checks if specified product has any updates")]
             public async Task Updates(CommandContext ctx, [RemainingText, Description("Product code such as `BLUS12345`")] string productCode)
             {
