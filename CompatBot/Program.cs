@@ -159,7 +159,6 @@ namespace CompatBot
                 commands.RegisterCommands<Pr>();
                 commands.RegisterCommands<Events>();
                 commands.RegisterCommands<E3>();
-                commands.RegisterCommands<Cyberpunk2077>();
                 commands.RegisterCommands<BotStats>();
                 commands.RegisterCommands<Syscall>();
                 commands.RegisterCommands<ForcedNicknames>();
@@ -242,7 +241,7 @@ namespace CompatBot
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
-                client.MessageCreated += (_, _) => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
+                client.MessageCreated += Watchdog.OnMessageCreated;
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
                 client.MessageCreated += GlobalMessageCache.OnMessageCreated;
                 var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
