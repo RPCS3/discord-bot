@@ -7,6 +7,7 @@ using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using DSharpPlus;
+using DSharpPlus.EventArgs;
 using Microsoft.ApplicationInsights;
 using NLog;
 
@@ -95,6 +96,18 @@ namespace CompatBot
             }
         }
 
+        public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+        {
+            if (Config.TelemetryClient is TelemetryClient tc)
+            {
+                var userToBotDelay = (DateTime.UtcNow - args.Message.Timestamp.UtcDateTime).TotalMilliseconds;
+                tc.TrackMetric("gw-latency", c.Ping);
+                tc.TrackMetric("user-to-bot-latency", userToBotDelay);
+                tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
+            }
+            return Task.CompletedTask;
+        }
+        
         public static async Task SendMetrics(DiscordClient client)
         {
             do
@@ -106,7 +119,6 @@ namespace CompatBot
                     continue;
                 
                 tc.TrackMetric("gw-latency", client.Ping);
-                tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
                 tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
                 tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
                 tc.TrackMetric("memory-gc-committed", gcMemInfo.TotalCommittedBytes);

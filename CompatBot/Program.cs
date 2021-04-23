@@ -241,7 +241,7 @@ namespace CompatBot
                 client.MessageReactionAdded += Starbucks.Handler;
                 client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
-                client.MessageCreated += (_, _) => { Watchdog.TimeSinceLastIncomingMessage.Restart(); return Task.CompletedTask;};
+                client.MessageCreated += Watchdog.OnMessageCreated;
                 client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
                 client.MessageCreated += GlobalMessageCache.OnMessageCreated;
                 var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
