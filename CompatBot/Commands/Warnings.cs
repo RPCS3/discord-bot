@@ -177,7 +177,7 @@ namespace CompatBot.Commands
                 }
 
                 var totalCount = db.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
-                await message.RespondAsync($"User warning saved! User currently has {totalCount} warning{StringUtils.GetSuffix(totalCount)}!").ConfigureAwait(false);
+                await message.Channel.SendMessageAsync($"User warning saved! User currently has {totalCount} warning{StringUtils.GetSuffix(totalCount)}!").ConfigureAwait(false);
                 if (totalCount > 1)
                     await ListUserWarningsAsync(client, message, userId, userName).ConfigureAwait(false);
                 return true;
