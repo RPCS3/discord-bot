@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -28,6 +32,7 @@ namespace CompatBot.Commands
     {
         private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
         private static readonly char[] Separators = {' ', ',', ';', '|'};
+        private static readonly SemaphoreSlim ImportLock = new(1, 1);
 
         [Command("list")]
         [Description("Lists all filters")]
@@ -132,6 +137,95 @@ namespace CompatBot.Commands
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Content filter creation aborted").ConfigureAwait(false);
         }
 
+        [Command("import"), RequiresBotSudoerRole]
+        [Description("Import suspicious strings for a certain dump collection from attached dat file (zip is fine)")]
+        public async Task Import(CommandContext ctx)
+        {
+            if (ctx.Message.Attachments.Count == 0)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "No attached DAT file", true).ConfigureAwait(false);
+                return;
+            }
+
+            if (!await ImportLock.WaitAsync(0))
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Another import is in progress", true).ConfigureAwait(false);
+                return;
+            }
+            var count = 0;
+            try
+            {
+                var attachment = ctx.Message.Attachments[0];
+                await using var datStream = Config.MemoryStreamManager.GetStream();
+                using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
+                await using var attachmentStream = await httpClient.GetStreamAsync(attachment.Url, Config.Cts.Token).ConfigureAwait(false);
+                if (attachment.FileName.ToLower().EndsWith(".dat"))
+                    await attachmentStream.CopyToAsync(datStream, Config.Cts.Token).ConfigureAwait(false);
+                else if (attachment.FileName.ToLower().EndsWith(".zip"))
+                {
+                    using var zipStream = new ZipArchive(attachmentStream, ZipArchiveMode.Read);
+                    var entry = zipStream.Entries.FirstOrDefault(e => e.Name.ToLower().EndsWith(".dat"));
+                    if (entry is null)
+                    {
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, "Attached ZIP file doesn't contain DAT file", true).ConfigureAwait(false);
+                        return;
+                    }
+
+                    await using var entryStream = entry.Open();
+                    await entryStream.CopyToAsync(datStream, Config.Cts.Token).ConfigureAwait(false);
+                }
+                else
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Attached file is not recognized", true).ConfigureAwait(false);
+                    return;
+                }
+
+                datStream.Seek(0, SeekOrigin.Begin);
+                try
+                {
+                    var xml = await XDocument.LoadAsync(datStream, LoadOptions.None, Config.Cts.Token).ConfigureAwait(false);
+                    if (xml.Root is null)
+                    {
+                        await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to read DAT file as XML", true).ConfigureAwait(false);
+                        return;
+                    }
+
+                    await using var db = new BotDb();
+                    foreach (var element in xml.Root.Elements("game"))
+                    {
+                        var name = element.Element("rom")?.Attribute("name")?.Value;
+                        if (string.IsNullOrEmpty(name))
+                            continue;
+
+                        // only match for "complex" names with several regions, or region-languages, or explicit revision
+                        if (!Regex.IsMatch(name, @" (\(.+\)\s*\(.+\)|\(\w+(,\s*\w+)+\))\.iso$"))
+                            continue;
+
+                        name = name[..^4]; //-.iso
+                        if (await db.SuspiciousString.AnyAsync(ss => ss.String == name).ConfigureAwait(false))
+                            continue;
+
+                        db.SuspiciousString.Add(new() {String = name});
+                        count++;
+                    }
+                    await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, $"Failed to load DAT file {attachment.FileName}");
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to read DAT file: " + e.Message, true).ConfigureAwait(false);
+                    return;
+                }
+
+                await ctx.ReactWithAsync(Config.Reactions.Success, $"Successfully imported {count} item{(count == 1 ? "" : "s")}", true).ConfigureAwait(false);
+                ContentFilter.RebuildMatcher();
+            }
+            finally
+            {
+                ImportLock.Release();
+            }
+        }
+        
         [Command("edit"), Aliases("fix", "update", "change")]
         [Description("Modifies the specified content filter")]
         public async Task Edit(CommandContext ctx, [Description("Filter ID")] int id)

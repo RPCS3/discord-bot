@@ -11,6 +11,7 @@ namespace CompatBot.Database
         public DbSet<BotState> BotState { get; set; } = null!;
         public DbSet<Moderator> Moderator { get; set; } = null!;
         public DbSet<Piracystring> Piracystring { get; set; } = null!;
+        public DbSet<SuspiciousString> SuspiciousString { get; set; } = null!;
         public DbSet<Warning> Warning { get; set; } = null!;
         public DbSet<Explanation> Explanation { get; set; } = null!;
         public DbSet<DisabledCommand> DisabledCommands { get; set; } = null!;
@@ -37,6 +38,7 @@ namespace CompatBot.Database
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Context).HasDefaultValue(FilterContext.Chat | FilterContext.Log);
             modelBuilder.Entity<Piracystring>().Property(ps => ps.Actions).HasDefaultValue(FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage);
             modelBuilder.Entity<Piracystring>().HasIndex(ps => ps.String).HasDatabaseName("piracystring_string");
+            modelBuilder.Entity<SuspiciousString>().HasIndex(ss => ss.String).HasDatabaseName("suspicious_string_string");
             modelBuilder.Entity<Warning>().HasIndex(w => w.DiscordId).HasDatabaseName("warning_discord_id");
             modelBuilder.Entity<Explanation>().HasIndex(e => e.Keyword).IsUnique().HasDatabaseName("explanation_keyword");
             modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasDatabaseName("disabled_command_command");
@@ -81,6 +83,13 @@ namespace CompatBot.Database
         public string? ExplainTerm { get; set; }
         public string? CustomMessage { get; set; }
         public bool Disabled { get; set; }
+    }
+
+    public class SuspiciousString
+    {
+        public int Id { get; set; }
+        [Required]
+        public string String { get; set; } = null!;
     }
 
     [Flags]
