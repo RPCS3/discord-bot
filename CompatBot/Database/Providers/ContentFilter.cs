@@ -72,7 +72,7 @@ namespace CompatBot.Database.Providers
                     .Concat(db.SuspiciousString.AsNoTracking().AsEnumerable().Select(ss => new Piracystring
                         {
                             String = ss.String,
-                            Actions = FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage,
+                            Actions = FilterAction.RemoveContent, // | FilterAction.IssueWarning | FilterAction.SendMessage,
                             Context = FilterContext.Log | FilterContext.Chat,
                             CustomMessage = "Please follow the rules and dump your own copy of game yourself. You **can not download** game files from the internet. Repeated offence may result in a ban.",
                         })
@@ -182,7 +182,7 @@ namespace CompatBot.Database.Providers
                         if (string.IsNullOrEmpty(msgContent))
                         {
                             var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
-                            msgContent = $"Please follow the {rules.Mention} and do not post/discuss anything piracy-related on this server. Repeated offence may result in a ban.";
+                            msgContent = $"Please follow the {rules.Mention} and do not post/discuss anything piracy-related on this server.\nYou always **must** dump your own copy of the game yourself. You **can not** download game files from the internet.\nRepeated offence may result in a ban.";
                         }
                         await message.Channel.SendMessageAsync($"{message.Author.Mention} {msgContent}").ConfigureAwait(false);
                     }
