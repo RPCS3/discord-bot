@@ -47,9 +47,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.0.0" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0" />
+    <PackageReference Include="DSharpPlus" Version="4.0.1" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.1" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.1" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.51.0.2300" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="4.4.2" />
@@ -74,11 +74,11 @@
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.170.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
     <PackageReference Include="Microsoft.VisualStudio.Services.Client" Version="16.170.0" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.7.74" />
     <PackageReference Include="NLog" Version="4.7.9" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.7.2" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.2" />
-    <PackageReference Include="SharpCompress" Version="0.28.1" />
+    <PackageReference Include="SharpCompress" Version="0.28.2" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta11" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />

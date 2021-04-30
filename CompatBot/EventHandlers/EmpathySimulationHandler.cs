@@ -35,7 +35,7 @@ namespace CompatBot.EventHandlers
                 return;
 
             if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
-                MessageQueue[args.Channel.Id] = queue = new ConcurrentQueue<DiscordMessage>();
+                MessageQueue[args.Channel.Id] = queue = new();
             queue.Enqueue(args.Message);
             while (queue.Count > 10)
                 queue.TryDequeue(out var _);

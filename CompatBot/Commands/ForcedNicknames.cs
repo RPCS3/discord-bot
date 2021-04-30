@@ -20,15 +20,18 @@ namespace CompatBot.Commands
     [Description("Manage users who has forced nickname.")]
     internal sealed class ForcedNicknames : BaseCommandModuleCustom
     {
-        [GroupCommand, RequiresBotModRole]
+        [GroupCommand]
         [Description("Enforces specific nickname for particular user.")]
         public async Task Rename(CommandContext ctx, 
             [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
             [Description("Nickname which should be displayed."), RemainingText] string expectedNickname)
         {
+            if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
+                return;
+            
             try
             {
-                if (expectedNickname.Length < 2 || expectedNickname.Length > 32)
+                if (expectedNickname.Length is < 2 or > 32)
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Nickname must be between 2 and 32 characters long", true).ConfigureAwait(false);
                     return;
@@ -37,7 +40,7 @@ namespace CompatBot.Commands
                 if ((!expectedNickname.All(c => char.IsLetterOrDigit(c)
                                                 || char.IsWhiteSpace(c)
                                                 || char.IsPunctuation(c))
-                     || expectedNickname.Any(c => c == ':' || c == '#' || c == '@' || c == '`')
+                     || expectedNickname.Any(c => c is ':' or '#' or '@' or '`')
                     ) && !discordUser.IsBotSafeCheck())
                 {
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Nickname must follow Rule 7", true).ConfigureAwait(false);
@@ -49,7 +52,7 @@ namespace CompatBot.Commands
                 {
                     guilds = ctx.Client.Guilds?.Values.ToList() ?? new List<DiscordGuild>(0);
                     if (guilds.Count > 1)
-                        await ctx.RespondAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
                 }
                 else
                     guilds = new(){ctx.Guild};
@@ -164,7 +167,7 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("cleanup"), Aliases("fix"), RequiresBotModRole]
+        [Command("cleanup"), Aliases("clean", "fix"), RequiresBotModRole]
         [Description("Removes zalgo from specified user nickname")]
         public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordMember discordUser)
         {
@@ -172,7 +175,7 @@ namespace CompatBot.Commands
             var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Id);
             if (name == newName)
             {
-                await ctx.RespondAsync("Failed to remove any extra symbols").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Failed to remove any extra symbols").ConfigureAwait(false);
             }
             else
             {
@@ -204,7 +207,7 @@ namespace CompatBot.Commands
                 hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
                 result += "\nNickname: " + hex;
             }
-            await ctx.RespondAsync(result).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
         }
 
         [Command("generate"), Aliases("gen", "suggest")]
@@ -212,7 +215,7 @@ namespace CompatBot.Commands
         public async Task Generate(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
         {
             var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
-            await ctx.RespondAsync(newName).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(newName).ConfigureAwait(false);
         }
         
         [Command("list"), RequiresBotModRole]
@@ -232,7 +235,7 @@ namespace CompatBot.Commands
             ).ToList();
             if (forcedNicknames.Count == 0)
             {
-                await ctx.RespondAsync("No users with forced nicknames").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("No users with forced nicknames").ConfigureAwait(false);
                 return;
             }
 

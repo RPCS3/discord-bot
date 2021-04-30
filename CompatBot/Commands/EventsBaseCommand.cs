@@ -47,7 +47,7 @@ namespace CompatBot.Commands
                 }
                 if (nextEvent != null)
                     nearestEventMsg += $"Next event: {nextEvent.Name} (starts in {FormatCountdown(nextEvent.Start.AsUtc() - current)})";
-                await ctx.RespondAsync(nearestEventMsg.TrimEnd()).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(nearestEventMsg.TrimEnd()).ConfigureAwait(false);
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace CompatBot.Commands
                 }
                 if (!string.IsNullOrEmpty(promo))
                     noEventMsg += promo;
-                await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(noEventMsg).ConfigureAwait(false);
                 return;
             }
 
@@ -97,7 +97,7 @@ namespace CompatBot.Commands
                     upcomingNamedEventMsg += $"\nFirst event: {firstNamedEvent.Name}";
                 else
                     upcomingNamedEventMsg += promo;
-                await ctx.RespondAsync(upcomingNamedEventMsg).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(upcomingNamedEventMsg).ConfigureAwait(false);
                 return;
             }
 
@@ -119,7 +119,7 @@ namespace CompatBot.Commands
                         }
                         if (!string.IsNullOrEmpty(promo))
                             noEventMsg += promo;
-                        await ctx.RespondAsync(noEventMsg).ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync(noEventMsg).ConfigureAwait(false);
                         return;
                     }
                         
@@ -128,14 +128,14 @@ namespace CompatBot.Commands
                         upcomingNamedEventMsg += $"\nFirst event: {firstNamedEvent.Name}";
                     else
                         upcomingNamedEventMsg += promo;
-                    await ctx.RespondAsync(upcomingNamedEventMsg).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(upcomingNamedEventMsg).ConfigureAwait(false);
                     return;
                 }
 
                 var e3EndedMsg = $"__{eventName} {current.Year} has concluded. See you next year! (maybe)__";
                 if (!string.IsNullOrEmpty(promo))
                     e3EndedMsg += promo;
-                await ctx.RespondAsync(e3EndedMsg).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(e3EndedMsg).ConfigureAwait(false);
                 return;
             }
 
@@ -175,9 +175,9 @@ namespace CompatBot.Commands
             db.EventSchedule.RemoveRange(eventsToRemove);
             var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             if (removedCount == ids.Length)
-                await ctx.RespondAsync($"Event{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"Event{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
             else
-                await ctx.RespondAsync($"Removed {removedCount} event{StringUtils.GetSuffix(removedCount)}, but was asked to remove {ids.Length}").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"Removed {removedCount} event{StringUtils.GetSuffix(removedCount)}, but was asked to remove {ids.Length}").ConfigureAwait(false);
         }
 
         protected static async Task Clear(CommandContext ctx, int? year = null)
@@ -191,7 +191,7 @@ namespace CompatBot.Commands
             ).ToListAsync().ConfigureAwait(false);
             db.EventSchedule.RemoveRange(itemsToRemove);
             var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.RespondAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
         protected static async Task Update(CommandContext ctx, int id, string? eventName = null)
@@ -243,7 +243,7 @@ namespace CompatBot.Commands
                 .ConfigureAwait(false);
             if (events.Count == 0)
             {
-                await ctx.RespondAsync("There are no events to show").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("There are no events to show").ConfigureAwait(false);
                 return;
             }
 

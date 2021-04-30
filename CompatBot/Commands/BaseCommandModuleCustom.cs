@@ -48,7 +48,7 @@ namespace CompatBot.Commands
             var disabledCmds = DisabledCommandsProvider.Get();
             if (disabledCmds.Contains(ctx.Command.QualifiedName) && !disabledCmds.Contains("*"))
             {
-                await ctx.RespondAsync(embed: new DiscordEmbedBuilder {Color = Config.Colors.Maintenance, Description = "Command is currently disabled"}).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder {Color = Config.Colors.Maintenance, Description = "Command is currently disabled"}).ConfigureAwait(false);
                 Config.TelemetryClient?.TrackRequest(ctx.Command.QualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.Locked.ToString(), true);
                 throw new DSharpPlus.CommandsNext.Exceptions.ChecksFailedException(ctx.Command, ctx, new CheckBaseAttribute[] {new RequiresDm()});
             }

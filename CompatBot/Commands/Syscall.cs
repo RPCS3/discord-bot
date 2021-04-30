@@ -37,7 +37,7 @@ namespace CompatBot.Commands
 
             if (ctx.User.Id == 216724245957312512UL && !search.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase))
             {
-                await ctx.RespondAsync($"This is not a _syscall_, {ctx.User.Mention}").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"This is not a _syscall_, {ctx.User.Mention}").ConfigureAwait(false);
                 return;
             }
 
@@ -79,11 +79,11 @@ namespace CompatBot.Commands
                         await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
                         await streamWriter.FlushAsync().ConfigureAwait(false);
                         memoryStream.Seek(0, SeekOrigin.Begin);
-                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile($"{search}.txt", memoryStream).WithContent($"See attached file for full list of {groupedList.Count} entries")).ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile($"{search}.txt", memoryStream).WithContent($"See attached file for full list of {groupedList.Count} entries")).ConfigureAwait(false);
                     }
                 }
                 else
-                    await ctx.RespondAsync($"No games found that use `{search}`").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync($"No games found that use `{search}`").ConfigureAwait(false);
             }
             else
             {
@@ -121,14 +121,14 @@ namespace CompatBot.Commands
             var oldMatches = await db.SyscallInfo.Where(sci => sci.Function == oldFunctionName).ToListAsync().ConfigureAwait(false);
             if (oldMatches.Count == 0)
             {
-                await ctx.RespondAsync($"Function `{oldFunctionName}` could not be found").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"Function `{oldFunctionName}` could not be found").ConfigureAwait(false);
                 await Search(ctx, oldFunctionName).ConfigureAwait(false);
                 return;
             }
             
             if (oldMatches.Count > 1)
             {
-                await ctx.RespondAsync("More than one matching function was found, I can't handle this right now 😔").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("More than one matching function was found, I can't handle this right now 😔").ConfigureAwait(false);
                 await Search(ctx, oldFunctionName).ConfigureAwait(false);
                 return;
             }
@@ -136,14 +136,14 @@ namespace CompatBot.Commands
             var conflicts = await db.SyscallInfo.Where(sce => sce.Function == newFunctionName).AnyAsync().ConfigureAwait(false);
             if (conflicts)
             {
-                await ctx.RespondAsync($"There is already a function `{newFunctionName}`").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"There is already a function `{newFunctionName}`").ConfigureAwait(false);
                 await Search(ctx, newFunctionName).ConfigureAwait(false);
                 return;
             }
             
             oldMatches[0].Function = newFunctionName;
             await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.RespondAsync($"Function `{oldFunctionName}` was successfully renamed to `{newFunctionName}`").ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync($"Function `{oldFunctionName}` was successfully renamed to `{newFunctionName}`").ConfigureAwait(false);
         }
 
         private static async Task ReturnSyscallsByGameAsync(CommandContext ctx, string productId)
@@ -169,10 +169,10 @@ namespace CompatBot.Commands
                 await streamWriter.WriteAsync(result).ConfigureAwait(false);
                 await streamWriter.FlushAsync().ConfigureAwait(false);
                 memoryStream.Seek(0, SeekOrigin.Begin);
-                await ctx.RespondAsync(new DiscordMessageBuilder().WithFile($"{productId} syscalls.txt", memoryStream).WithContent($"List of syscalls used by `{title}`")).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile($"{productId} syscalls.txt", memoryStream).WithContent($"List of syscalls used by `{title}`")).ConfigureAwait(false);
             }
             else
-                await ctx.RespondAsync($"No information available for `{title}`").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"No information available for `{title}`").ConfigureAwait(false);
         }
     }
 }

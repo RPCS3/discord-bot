@@ -97,7 +97,7 @@ namespace CompatBot.EventHandlers
 #if DEBUG
                     fuzzyNotice = $"Showing explanation for `{fuzzyMatch}` ({score:0.######}):";
 #endif
-                    await e.Context.RespondAsync(fuzzyNotice).ConfigureAwait(false);
+                    await e.Context.Channel.SendMessageAsync(fuzzyNotice).ConfigureAwait(false);
                 }
                 StatsStorage.ExplainStatCache.TryGetValue(explanation.Keyword, out int stat);
                 StatsStorage.ExplainStatCache.Set(explanation.Keyword, ++stat, StatsStorage.CacheTime);

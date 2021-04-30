@@ -33,7 +33,7 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't save the warning, please try again").ConfigureAwait(false);
         }
 
-        [GroupCommand, RequiresBotModRole]
+        [GroupCommand]
         public async Task Warn(CommandContext ctx, [Description("ID of a user to warn")] ulong userId, [RemainingText, Description("Warning explanation")] string reason)
         {
             if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
@@ -50,7 +50,7 @@ namespace CompatBot.Commands
         public async Task Remove(CommandContext ctx, [Description("Warning IDs to remove separated with space")] params int[] ids)
         {
             var interact = ctx.Client.GetInteractivity();
-            var msg = await ctx.RespondAsync("What is the reason for removal?").ConfigureAwait(false);
+            var msg = await ctx.Channel.SendMessageAsync("What is the reason for removal?").ConfigureAwait(false);
             var response = await interact.WaitForMessageAsync(
                 m => m.Author == ctx.User
                      && m.Channel == ctx.Channel
@@ -74,9 +74,9 @@ namespace CompatBot.Commands
             }
             var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
             if (removedCount == ids.Length)
-                await ctx.RespondAsync($"Warning{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"Warning{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
             else
-                await ctx.RespondAsync($"Removed {removedCount} items, but was asked to remove {ids.Length}").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"Removed {removedCount} items, but was asked to remove {ids.Length}").ConfigureAwait(false);
         }
 
         [Command("clear"), RequiresBotModRole]
@@ -88,7 +88,7 @@ namespace CompatBot.Commands
         public async Task Clear(CommandContext ctx, [Description("User ID to clear warnings for")] ulong userId)
         {
             var interact = ctx.Client.GetInteractivity();
-            var msg = await ctx.RespondAsync("What is the reason for removing all the warnings?").ConfigureAwait(false);
+            var msg = await ctx.Channel.SendMessageAsync("What is the reason for removing all the warnings?").ConfigureAwait(false);
             var response = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
             if (string.IsNullOrEmpty(response.Result?.Content))
             {
@@ -109,7 +109,7 @@ namespace CompatBot.Commands
                     w.RetractionTimestamp = DateTime.UtcNow.Ticks;
                 }
                 var removed = await db.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.RespondAsync($"{removed} warning{StringUtils.GetSuffix(removed)} successfully removed!").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"{removed} warning{StringUtils.GetSuffix(removed)} successfully removed!").ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -177,7 +177,7 @@ namespace CompatBot.Commands
                 }
 
                 var totalCount = db.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
-                await message.RespondAsync($"User warning saved! User currently has {totalCount} warning{StringUtils.GetSuffix(totalCount)}!").ConfigureAwait(false);
+                await message.Channel.SendMessageAsync($"User warning saved! User currently has {totalCount} warning{StringUtils.GetSuffix(totalCount)}!").ConfigureAwait(false);
                 if (totalCount > 1)
                     await ListUserWarningsAsync(client, message, userId, userName).ConfigureAwait(false);
                 return true;
@@ -229,7 +229,7 @@ namespace CompatBot.Commands
                         (_,    _, false,  true) => $"{userName} has no warnings, but are they a good boy?",
                         _ => $"{userName} has no warnings",
                     };
-                    await message.RespondAsync(msg).ConfigureAwait(false);
+                    await message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
                     if (!isPrivate || removed == 0)
                         return;
                 }

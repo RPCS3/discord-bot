@@ -44,7 +44,7 @@ namespace CompatBot.Commands
                     }
                 if (showList)
                     await List(ctx).ConfigureAwait(false);
-                var botMsg = await ctx.RespondAsync("Please tell what term to explain:").ConfigureAwait(false);
+                var botMsg = await ctx.Channel.SendMessageAsync("Please tell what term to explain:").ConfigureAwait(false);
                 var interact = ctx.Client.GetInteractivity();
                 var newMessage = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
                 await botMsg.DeleteAsync().ConfigureAwait(false);
@@ -98,7 +98,7 @@ namespace CompatBot.Commands
                 inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
             }
             var msg = $"Unknown term `{term.Sanitize(replaceBackTicks: true)}`. Use `{ctx.Prefix}explain list` to look at defined terms{inSpecificLocation}";
-            await ctx.RespondAsync(msg).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(msg).ConfigureAwait(false);
         }
 
         [Command("add"), RequiresBotModRole]
@@ -234,7 +234,7 @@ namespace CompatBot.Commands
             await using var db = new BotDb();
             var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
             if (keywords.Count == 0)
-                await ctx.RespondAsync("Nothing has been defined yet").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Nothing has been defined yet").ConfigureAwait(false);
             else
                 try
                 {

@@ -38,12 +38,12 @@ namespace CompatBot.Commands
             {
                 Config.Log.Warn(e, "Math failed");
             }
-            await ctx.RespondAsync(result).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
         }
 
         [Command("help"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
         [Description("General math expression help, or description of specific math word")]
         public Task Help(CommandContext ctx)
-            => ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at <https://mathparser.org/mxparser-math-collection/>");
+            => ctx.Channel.SendMessageAsync("Help for all the features and built-in constants and functions could be found at <https://mathparser.org/mxparser-math-collection/>");
     }
 }

@@ -24,7 +24,7 @@ namespace CompatBot.Commands
             
             var result = await Client.SearchAsync(query, Config.Cts.Token).ConfigureAwait(false);
             var embed = result.AsEmbed();
-            await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
     }
 }

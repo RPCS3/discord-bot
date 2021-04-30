@@ -39,7 +39,7 @@ namespace CompatBot.Commands
             {
                 if (!await CheckLock.WaitAsync(0).ConfigureAwait(false))
                 {
-                    await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Another check is already in progress").ConfigureAwait(false);
                     return;
                 }
 
@@ -56,7 +56,7 @@ namespace CompatBot.Commands
                     memoryStream.Seek(0, SeekOrigin.Begin);
                     if (memoryStream.Length <= Config.AttachmentSizeLimit)
                     {
-                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("names.txt", memoryStream)).ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("names.txt", memoryStream)).ConfigureAwait(false);
                         return;
                     }
 
@@ -65,9 +65,9 @@ namespace CompatBot.Commands
                     await gzip.FlushAsync().ConfigureAwait(false);
                     compressedResult.Seek(0, SeekOrigin.Begin);
                     if (compressedResult.Length <= Config.AttachmentSizeLimit)
-                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("names.txt.gz", compressedResult)).ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("names.txt.gz", compressedResult)).ConfigureAwait(false);
                     else
-                        await ctx.RespondAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -87,7 +87,7 @@ namespace CompatBot.Commands
             {
                 if (!await CheckLock.WaitAsync(0).ConfigureAwait(false))
                 {
-                    await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Another check is already in progress").ConfigureAwait(false);
                     return;
                 }
 
@@ -143,7 +143,7 @@ namespace CompatBot.Commands
             {
                 if (!CheckLock.Wait(0))
                 {
-                    await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Another check is already in progress").ConfigureAwait(false);
                     return;
                 }
 
@@ -198,7 +198,7 @@ namespace CompatBot.Commands
             {
                 if (!CheckLock.Wait(0))
                 {
-                    await ctx.RespondAsync("Another check is already in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Another check is already in progress").ConfigureAwait(false);
                     return;
                 }
 
@@ -231,13 +231,13 @@ namespace CompatBot.Commands
                     uncompressedStream.Seek(0, SeekOrigin.Begin);
                     if (result.Length <= headerLength)
                     {
-                        await ctx.RespondAsync("No potential name spoofing was detected").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync("No potential name spoofing was detected").ConfigureAwait(false);
                         return;
                     }
 
                     if (uncompressedStream.Length <= Config.AttachmentSizeLimit)
                     {
-                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt", uncompressedStream)).ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt", uncompressedStream)).ConfigureAwait(false);
                         return;
                     }
 
@@ -248,9 +248,9 @@ namespace CompatBot.Commands
                     }
                     compressedStream.Seek(0, SeekOrigin.Begin);
                     if (compressedStream.Length <= Config.AttachmentSizeLimit)
-                        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt.gz", compressedStream)).ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt.gz", compressedStream)).ConfigureAwait(false);
                     else
-                        await ctx.RespondAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {

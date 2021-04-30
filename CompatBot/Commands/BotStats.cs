@@ -22,7 +22,7 @@ namespace CompatBot.Commands
     [Group("stats")]
     internal sealed class BotStats: BaseCommandModuleCustom
     {
-        [GroupCommand, Cooldown(1, 10, CooldownBucketType.Global)]
+        [GroupCommand]
         [Description("Use to look at various runtime stats")]
         public async Task Show(CommandContext ctx)
         {

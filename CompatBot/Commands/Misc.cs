@@ -142,7 +142,7 @@ namespace CompatBot.Commands
                     "🙃 TGE\n" +
                     "🍒 Maru\n" +
                     "♋ Tourghool");
-            await ctx.RespondAsync(embed: embed.Build());
+            await ctx.Channel.SendMessageAsync(embed: embed.Build());
         }
 
         [Command("roll")]
@@ -163,7 +163,7 @@ namespace CompatBot.Commands
             if (string.IsNullOrEmpty(result))
                 await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), $"How is {maxValue} a positive natural number?").ConfigureAwait(false);
             else
-                await message.RespondAsync(result).ConfigureAwait(false);
+                await message.Channel.SendMessageAsync(result).ConfigureAwait(false);
         }
         
         internal static async Task RollImpl(DiscordMessage message, string dices)
@@ -222,9 +222,9 @@ namespace CompatBot.Commands
             if (string.IsNullOrEmpty(result) && embed == null)
                 await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
             else if (embed != null)
-                await message.RespondAsync(embed).ConfigureAwait(false);
+                await message.Channel.SendMessageAsync(embed).ConfigureAwait(false);
             else
-                await message.RespondAsync(result).ConfigureAwait(false);
+                await message.Channel.SendMessageAsync(result).ConfigureAwait(false);
         }
 
         [Command("random"), Aliases("rng"), Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
@@ -243,7 +243,7 @@ namespace CompatBot.Commands
                         var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
                         if (count == 0)
                         {
-                            await ctx.RespondAsync("Sorry, I have no information about a single game yet").ConfigureAwait(false);
+                            await ctx.Channel.SendMessageAsync("Sorry, I have no information about a single game yet").ConfigureAwait(false);
                             return;
                         }
 
@@ -251,7 +251,7 @@ namespace CompatBot.Commands
                         var productCode = await db.Thumbnail.Skip(tmpRng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
                         if (productCode == null)
                         {
-                            await ctx.RespondAsync("Sorry, there's something with my brains today. Try again or something").ConfigureAwait(false);
+                            await ctx.Channel.SendMessageAsync("Sorry, there's something with my brains today. Try again or something").ConfigureAwait(false);
                             return;
                         }
 
@@ -278,7 +278,7 @@ namespace CompatBot.Commands
                 lock (rng) answer = pool[rng.Next(pool.Count)];
                 if (answer.StartsWith(':') && answer.EndsWith(':'))
                     answer = ctx.Client.GetEmoji(answer, "🔮");
-                await ctx.RespondAsync(answer).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(answer).ConfigureAwait(false);
             }
         }
 
@@ -300,7 +300,7 @@ namespace CompatBot.Commands
                     unit = "millennia";
             }
             var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
-            await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
         }
 
         [Group("how"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
@@ -315,10 +315,10 @@ namespace CompatBot.Commands
                 var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
                 var crng = new Random((prefix + question).GetHashCode());
                 if (crng.NextDouble() < 0.0001)
-                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync($"🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
                 else
                 {
-                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **{crng.Next(100) + 1}** 🔮").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync($"🔮 My psychic powers tell me the answer should be **{crng.Next(100) + 1}** 🔮").ConfigureAwait(false);
                 }
             }
         }
@@ -480,13 +480,13 @@ namespace CompatBot.Commands
                         .ToList();
 
                 if (string.IsNullOrEmpty(whatever))
-                    await ctx.RespondAsync("Rating nothing makes _**so much**_ sense, right?").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Rating nothing makes _**so much**_ sense, right?").ConfigureAwait(false);
                 else
                 {
                     var seed = (prefix + whatever).GetHashCode(StringComparison.CurrentCultureIgnoreCase);
                     var seededRng = new Random(seed);
                     var answer = choices[seededRng.Next(choices.Count)];
-                    await ctx.RespondAsync(answer).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(answer).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -512,7 +512,7 @@ namespace CompatBot.Commands
         public Task Compare(CommandContext ctx, string strA, string strB)
         {
             var result = strA.GetFuzzyCoefficientCached(strB);
-            return ctx.RespondAsync($"Similarity score is {result:0.######}");
+            return ctx.Channel.SendMessageAsync($"Similarity score is {result:0.######}");
         }
 
         [Command("productcode"), Aliases("pci", "decode")]
@@ -529,10 +529,10 @@ namespace CompatBot.Commands
                 {
                     var embed = await ctx.Client.LookupGameInfoAsync(productCode).ConfigureAwait(false);
                     embed.AddField("Product code info", info);
-                    await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                 }
                 else
-                    await ctx.RespondAsync(info).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(info).ConfigureAwait(false);
             }
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid product code").ConfigureAwait(false);
@@ -579,7 +579,7 @@ namespace CompatBot.Commands
             {
                 //drain the enumerable
             }
-            await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 #endif
     }

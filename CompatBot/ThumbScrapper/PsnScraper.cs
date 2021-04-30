@@ -76,11 +76,11 @@ namespace CompatBot.ThumbScrapper
                     if (relatedContainer == null)
                         continue;
 
-                    await ctx.RespondAsync($"Found {contentId} in {locale} store").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync($"Found {contentId} in {locale} store").ConfigureAwait(false);
                     await ProcessIncludedGamesAsync(locale, relatedContainer, cancellationToken, false).ConfigureAwait(false);
                     return;
                 }
-                await ctx.RespondAsync($"Didn't find {contentId} in any PSN store").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync($"Didn't find {contentId} in any PSN store").ConfigureAwait(false);
             }
             catch (Exception e)
             {

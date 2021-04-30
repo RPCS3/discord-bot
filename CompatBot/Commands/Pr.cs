@@ -39,7 +39,7 @@ namespace CompatBot.Commands
 
             if (openPrList.Count == 0)
             {
-                await ctx.RespondAsync("It looks like there are no open pull requests at the moment 🎉").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("It looks like there are no open pull requests at the moment 🎉").ConfigureAwait(false);
                 return;
             }
 
@@ -70,7 +70,7 @@ namespace CompatBot.Commands
 
             if (openPrList.Count == 0)
             {
-                await ctx.RespondAsync("No open pull requests were found for specified filter").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("No open pull requests were found for specified filter").ConfigureAwait(false);
                 return;
             }
 
@@ -97,7 +97,7 @@ namespace CompatBot.Commands
         {
             var azureClient = Config.GetAzureDevOpsClient();
             var duration = await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
-            await ctx.RespondAsync(
+            await ctx.Channel.SendMessageAsync(
                 $"Expected pipeline duration (using {duration.BuildCount} builds): \n" +
                 $"95%: {duration.Percentile95} ({duration.Percentile95.TotalMinutes})\n" +
                 $"90%: {duration.Percentile90} ({duration.Percentile90.TotalMinutes})\n" +
@@ -221,7 +221,7 @@ namespace CompatBot.Commands
                     }
                 }
             }
-            await message.RespondAsync(embed: embed).ConfigureAwait(false);
+            await message.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
 
         public static async Task LinkIssue(DiscordClient client, DiscordMessage message, int issue)
@@ -236,7 +236,7 @@ namespace CompatBot.Commands
                 return;
             }
 
-            await message.RespondAsync(embed: issueInfo.AsEmbed()).ConfigureAwait(false);
+            await message.Channel.SendMessageAsync(embed: issueInfo.AsEmbed()).ConfigureAwait(false);
         }
     }
 }

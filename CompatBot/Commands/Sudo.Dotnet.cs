@@ -34,7 +34,7 @@ namespace CompatBot.Commands
                         if (!updated)
                             return;
 
-                        msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
+                        msg = await ctx.Channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
                         await StatsStorage.SaveAsync(true).ConfigureAwait(false);
                         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
                         Bot.Restart(ctx.Channel.Id, "Restarted after successful dotnet update");
@@ -49,7 +49,7 @@ namespace CompatBot.Commands
                     }
                 }
                 else
-                    await ctx.RespondAsync("Update is already in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Update is already in progress").ConfigureAwait(false);
             }
 
             private static async Task<(bool updated, string stdout)> UpdateAsync(string version)
