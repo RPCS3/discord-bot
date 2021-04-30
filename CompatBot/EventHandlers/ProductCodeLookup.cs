@@ -137,12 +137,7 @@ namespace CompatBot.EventHandlers
                     };
                     return (ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
                 }
-                if (category == "2P"
-                    || category == "2G"
-                    || category == "2D"
-                    || category == "PP"
-                    || category == "PE"
-                    || category == "MN")
+                if (category is "2P" or "2G" or "2D" or "PP" or "PE" or "MN")
                 {
                     var ti = new TitleInfo
                     {
