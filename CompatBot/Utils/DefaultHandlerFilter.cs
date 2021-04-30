@@ -1,4 +1,6 @@
-﻿using CompatBot.Utils.Extensions;
+﻿using System;
+using CompatBot.Utils.Extensions;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils
@@ -20,5 +22,13 @@ namespace CompatBot.Utils
 
             return false;
         }
+
+        internal static bool IsOnionLike(this CommandContext ctx)
+            => IsOnionLike(ctx.Message);
+        
+        internal static bool IsOnionLike(this DiscordMessage message)
+            => !message.Channel.IsPrivate
+               && (message.Author.Id == 197163728867688448ul
+                   || message.Author.Id == 272022580112654336ul && new Random().NextDouble() < 0.01);
     }
 }

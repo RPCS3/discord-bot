@@ -75,8 +75,7 @@ namespace CompatBot.Commands
                     };
                 }
 
-                if (!ctx.Channel.IsPrivate
-                    && ctx.Message.Author.Id == 197163728867688448
+                if (ctx.IsOnionLike()
                     && (embeds[0].Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)
                         || embeds[0].Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)))
                 {

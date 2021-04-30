@@ -480,8 +480,7 @@ namespace CompatBot.Commands
                 if (request.Search?.Contains("persona", StringComparison.InvariantCultureIgnoreCase) is true
                     || request.Search?.Contains("p5", StringComparison.InvariantCultureIgnoreCase) is true)
                     result.AppendLine("Did you try searching for **__Unnamed__** instead?");
-                else if (!ctx.Channel.IsPrivate
-                         && ctx.Message.Author.Id == 197163728867688448
+                else if (ctx.IsOnionLike()
                          && compatResult.Results.Values.Any(i =>
                              i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
                              || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase))

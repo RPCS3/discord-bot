@@ -161,11 +161,10 @@ namespace CompatBot.EventHandlers
 
         public static async Task FixAfrikaAsync(DiscordClient client, DiscordMessage message, DiscordEmbedBuilder titleInfoEmbed)
         {
-            if (!message.Channel.IsPrivate
-                && message.Author.Id == 197163728867688448
+            if (message.IsOnionLike()
                 && (
-                    titleInfoEmbed.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase) ||
-                    titleInfoEmbed.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
+                    titleInfoEmbed.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)
+                    || titleInfoEmbed.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
                 ))
             {
                 var sqvat = client.GetEmoji(":sqvat:", Config.Reactions.No)!;
