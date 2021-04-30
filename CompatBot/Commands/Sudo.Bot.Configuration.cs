@@ -36,10 +36,10 @@ namespace CompatBot.Commands
                             result.AppendLine(v.Key![(SqlConfiguration.ConfigVarPrefix.Length)..]);
 #endif
                         }
-                        await ctx.RespondAsync(result.ToString()).ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync(result.ToString()).ConfigureAwait(false);
                     }
                     else
-                        await ctx.RespondAsync("No variables were set yet").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync("No variables were set yet").ConfigureAwait(false);
                 }
 
                 [Command("set")]

@@ -36,7 +36,7 @@ namespace CompatBot.Commands
                 var id = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault();
                 if (string.IsNullOrEmpty(id))
                 {
-                    var botMsg = await ctx.RespondAsync("Please specify a valid product code (e.g. BLUS12345 or NPEB98765):").ConfigureAwait(false);
+                    var botMsg = await ctx.Channel.SendMessageAsync("Please specify a valid product code (e.g. BLUS12345 or NPEB98765):").ConfigureAwait(false);
                     var interact = ctx.Client.GetInteractivity();
                     var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
                     await botMsg.DeleteAsync().ConfigureAwait(false);
@@ -96,7 +96,7 @@ namespace CompatBot.Commands
                 if (embeds.Count > 1 || embeds[0].Fields.Count > 0)
                     embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
                 foreach (var embed in embeds)
-                    await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
 
             [Command("content"), Hidden]
@@ -132,7 +132,7 @@ namespace CompatBot.Commands
             {
                 var fwList = await Client.GetHighestFwVersionAsync(Config.Cts.Token).ConfigureAwait(false);
                 var embed = fwList.ToEmbed();
-                await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
 
             internal static async Task CheckFwUpdateForAnnouncementAsync(DiscordClient client, List<FirmwareInfo>? fwList = null)

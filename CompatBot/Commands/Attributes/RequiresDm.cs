@@ -24,7 +24,7 @@ namespace CompatBot.Commands.Attributes
                 return true;
 
             await using var stream = new MemoryStream(Poster.Value);
-            await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("senpai_plz.jpg", stream)).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("senpai_plz.jpg", stream)).ConfigureAwait(false);
             return false;
         }
     }

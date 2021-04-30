@@ -43,7 +43,7 @@ namespace CompatBot.Commands
                 var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
                 await git.WaitForExitAsync().ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(stdout))
-                    await ctx.RespondAsync("```" + stdout + "```").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("```" + stdout + "```").ConfigureAwait(false);
             }
 
             [Command("update"), Aliases("upgrade", "pull", "pet")]
@@ -63,7 +63,7 @@ namespace CompatBot.Commands
                         if (!updated)
                             return;
 
-                        msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
+                        msg = await ctx.Channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
                         await StatsStorage.SaveAsync(true).ConfigureAwait(false);
                         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id, "Restarted after successful bot update");
@@ -78,7 +78,7 @@ namespace CompatBot.Commands
                     }
                 }
                 else
-                    await ctx.RespondAsync("Update is already in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Update is already in progress").ConfigureAwait(false);
             }
 
             [Command("restart"), Aliases("reboot")]
@@ -90,7 +90,7 @@ namespace CompatBot.Commands
                     DiscordMessage? msg = null;
                     try
                     {
-                        msg = await ctx.RespondAsync("Saving state...").ConfigureAwait(false);
+                        msg = await ctx.Channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
                         await StatsStorage.SaveAsync(true).ConfigureAwait(false);
                         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
                         Restart(ctx.Channel.Id, "Restarted due to command request");
@@ -105,14 +105,14 @@ namespace CompatBot.Commands
                     }
                 }
                 else
-                    await ctx.RespondAsync("Update is in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Update is in progress").ConfigureAwait(false);
             }
 
             [Command("stop"), Aliases("exit", "shutdown", "terminate")]
             [Description("Stops the bot. Useful if you can't find where you left one running")]
             public async Task Stop(CommandContext ctx)
             {
-                await ctx.RespondAsync(ctx.Channel.IsPrivate
+                await ctx.Channel.SendMessageAsync(ctx.Channel.IsPrivate
                     ? $"Shutting down bot instance on {Environment.MachineName}..."
                     : "Shutting down the bot..."
                 ).ConfigureAwait(false);
@@ -167,14 +167,14 @@ namespace CompatBot.Commands
                         await CompatList.ImportMetacriticScoresAsync().ConfigureAwait(false);
                         await using var db = new ThumbnailDb();
                         var linkedItems = await db.Thumbnail.CountAsync(i => i.MetacriticId != null).ConfigureAwait(false);
-                        await ctx.RespondAsync($"Importing Metacritic info was successful, linked {linkedItems} items").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync($"Importing Metacritic info was successful, linked {linkedItems} items").ConfigureAwait(false);
                     }
                     finally
                     {
                         ImportLockObj.Release();
                     }
                 else
-                    await ctx.RespondAsync("Another import operation is already in progress").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Another import operation is already in progress").ConfigureAwait(false);
             }
 
             internal static async Task<(bool updated, string stdout)> UpdateAsync()

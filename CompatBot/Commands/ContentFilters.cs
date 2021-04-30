@@ -93,7 +93,7 @@ namespace CompatBot.Commands
             await using (var writer = new StreamWriter(output, leaveOpen: true))
                 await writer.WriteAsync(result.ToString()).ConfigureAwait(false);
             output.Seek(0, SeekOrigin.Begin);
-            await ctx.RespondAsync(new DiscordMessageBuilder().WithFile("filters.txt", output)).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("filters.txt", output)).ConfigureAwait(false);
         }
 
         [Command("add"), Aliases("create")]
@@ -234,7 +234,7 @@ namespace CompatBot.Commands
             var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
             if (filter is null)
             {
-                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
                 return;
             }
 
@@ -248,7 +248,7 @@ namespace CompatBot.Commands
             var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && !ps.Disabled).ConfigureAwait(false);
             if (filter is null)
             {
-                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
                 return;
             }
 
@@ -263,11 +263,11 @@ namespace CompatBot.Commands
             var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
             if (filter is null)
             {
-                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
                 return;
             }
 
-            await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
         }
         
         [Command("view")]
@@ -278,11 +278,11 @@ namespace CompatBot.Commands
             var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && !ps.Disabled).ConfigureAwait(false);
             if (filter is null)
             {
-                await ctx.RespondAsync("Specified filter does not exist").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
                 return;
             }
 
-            await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
         }
 
         [Command("remove"), Aliases("delete", "del")]
@@ -302,7 +302,7 @@ namespace CompatBot.Commands
             }
 
             if (removedFilters < ids.Length)
-                await ctx.RespondAsync("Some ids couldn't be removed.").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Some ids couldn't be removed.").ConfigureAwait(false);
             else
             {
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);

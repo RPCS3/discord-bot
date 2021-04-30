@@ -60,7 +60,7 @@ namespace CompatBot.Commands
                 tmp.Append(l).Append('\n');
             }
             msg = tmp.ToString().TrimEnd().FixSpaces();
-            await message.RespondAsync($"{user.Mention}, your fortune for today:\n{msg}").ConfigureAwait(false);
+            await message.Channel.SendMessageAsync($"{user.Mention}, your fortune for today:\n{msg}").ConfigureAwait(false);
         }
 
         [Command("add"), RequiresBotModRole]
@@ -101,7 +101,7 @@ namespace CompatBot.Commands
         [Description("Imports new fortunes from specified URL or attachment. Data should be formatted as standard UNIX fortune source file.")]
         public async Task Import(CommandContext ctx, string? url = null)
         {
-            var msg = await ctx.RespondAsync("Please wait...").ConfigureAwait(false);
+            var msg = await ctx.Channel.SendMessageAsync("Please wait...").ConfigureAwait(false);
             if (!await ImportCheck.WaitAsync(0).ConfigureAwait(false))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
@@ -233,7 +233,7 @@ namespace CompatBot.Commands
                 var builder = new DiscordMessageBuilder()
                     .WithContent($"Exported {count} fortune{(count == 1 ? "": "s")}")
                     .WithFile("fortunes.txt", outputStream);
-                await ctx.RespondAsync(builder).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(builder).ConfigureAwait(false);
             }
             catch (Exception e)
             {

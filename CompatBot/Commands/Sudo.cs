@@ -150,7 +150,7 @@ namespace CompatBot.Commands
                 if (result.Length <= attachmentSizeLimit)
                 {
                     result.Seek(0, SeekOrigin.Begin);
-                    await ctx.RespondAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".gz", result)).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".gz", result)).ConfigureAwait(false);
                 }
                 else
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
@@ -187,7 +187,7 @@ namespace CompatBot.Commands
                 if (result.Length <= attachmentSizeLimit)
                 {
                     result.Seek(0, SeekOrigin.Begin);
-                    await ctx.RespondAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
                 }
                 else
                     await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);

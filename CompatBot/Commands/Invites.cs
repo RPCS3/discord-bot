@@ -26,7 +26,7 @@ namespace CompatBot.Commands
             var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
             if (whitelistedInvites.Count == 0)
             {
-                await ctx.RespondAsync("There are no whitelisted discord servers").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("There are no whitelisted discord servers").ConfigureAwait(false);
                 return;
             }
 
@@ -163,7 +163,7 @@ namespace CompatBot.Commands
                 if (!await InviteWhitelistProvider.RemoveAsync(id).ConfigureAwait(false))
                     failedIds.Add(id);
             if (failedIds.Count > 0)
-                await ctx.RespondAsync("Some IDs couldn't be removed: " + string.Join(", ", failedIds)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Some IDs couldn't be removed: " + string.Join(", ", failedIds)).ConfigureAwait(false);
             else
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Invite{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
             await List(ctx).ConfigureAwait(false);

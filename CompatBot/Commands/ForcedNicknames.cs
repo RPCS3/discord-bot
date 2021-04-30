@@ -52,7 +52,7 @@ namespace CompatBot.Commands
                 {
                     guilds = ctx.Client.Guilds?.Values.ToList() ?? new List<DiscordGuild>(0);
                     if (guilds.Count > 1)
-                        await ctx.RespondAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
                 }
                 else
                     guilds = new(){ctx.Guild};
@@ -175,7 +175,7 @@ namespace CompatBot.Commands
             var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Id);
             if (name == newName)
             {
-                await ctx.RespondAsync("Failed to remove any extra symbols").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Failed to remove any extra symbols").ConfigureAwait(false);
             }
             else
             {
@@ -207,7 +207,7 @@ namespace CompatBot.Commands
                 hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
                 result += "\nNickname: " + hex;
             }
-            await ctx.RespondAsync(result).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
         }
 
         [Command("generate"), Aliases("gen", "suggest")]
@@ -215,7 +215,7 @@ namespace CompatBot.Commands
         public async Task Generate(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
         {
             var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
-            await ctx.RespondAsync(newName).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(newName).ConfigureAwait(false);
         }
         
         [Command("list"), RequiresBotModRole]
@@ -235,7 +235,7 @@ namespace CompatBot.Commands
             ).ToList();
             if (forcedNicknames.Count == 0)
             {
-                await ctx.RespondAsync("No users with forced nicknames").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("No users with forced nicknames").ConfigureAwait(false);
                 return;
             }
 

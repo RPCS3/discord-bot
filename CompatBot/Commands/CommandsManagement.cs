@@ -28,7 +28,7 @@ namespace CompatBot.Commands
                 await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
             }
             else
-                await ctx.RespondAsync("All commands are enabled").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("All commands are enabled").ConfigureAwait(false);
         }
 
         [Command("disable"), Aliases("add")]
@@ -69,7 +69,7 @@ namespace CompatBot.Commands
                     else
                         DisableSubcommands(ctx, cmd);
                     if (ctx.Command.Parent.QualifiedName.StartsWith(command))
-                        await ctx.RespondAsync("Some subcommands cannot be disabled").ConfigureAwait(false);
+                        await ctx.Channel.SendMessageAsync("Some subcommands cannot be disabled").ConfigureAwait(false);
                     else
                         await ctx.ReactWithAsync(Config.Reactions.Success, $"Disabled `{command}` and all subcommands").ConfigureAwait(false);
                     await List(ctx).ConfigureAwait(false);
@@ -77,7 +77,7 @@ namespace CompatBot.Commands
                 catch (Exception e)
                 {
                     Config.Log.Error(e);
-                    await ctx.RespondAsync("Error while disabling the group").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Error while disabling the group").ConfigureAwait(false);
                 }
             }
             else
@@ -134,7 +134,7 @@ namespace CompatBot.Commands
                 catch (Exception e)
                 {
                     Config.Log.Error(e);
-                    await ctx.RespondAsync("Error while enabling the group").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Error while enabling the group").ConfigureAwait(false);
                 }
             }
             else

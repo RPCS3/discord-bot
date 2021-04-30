@@ -73,7 +73,7 @@ namespace CompatBot.Commands
             title = title?.TrimEager().Truncate(40);
             if (string.IsNullOrEmpty(title))
             {
-                var prompt = await ctx.RespondAsync($"{ctx.Message.Author.Mention} what game do you want to check?").ConfigureAwait(false);
+                var prompt = await ctx.Channel.SendMessageAsync($"{ctx.Message.Author.Mention} what game do you want to check?").ConfigureAwait(false);
                 var interact = ctx.Client.GetInteractivity();
                 var response = await interact.WaitForMessageAsync(m => m.Author == ctx.Message.Author && m.Channel == ctx.Channel).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(response.Result?.Content) || response.Result.Content.StartsWith(Config.CommandPrefix))
@@ -161,7 +161,7 @@ namespace CompatBot.Commands
                 await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
             }
             else
-                await ctx.RespondAsync("Failed to generate list").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Failed to generate list").ConfigureAwait(false);
         }
 
         [Group("latest"), TriggersTyping]
@@ -420,7 +420,7 @@ namespace CompatBot.Commands
             {
                 if (result == null)
                 {
-                    await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
                     return;
                 }
             }

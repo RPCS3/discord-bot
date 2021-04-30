@@ -329,14 +329,14 @@ namespace CompatBot.Commands
                 }
                 else
                 {
-                    await ctx.RespondAsync(description).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(description).ConfigureAwait(false);
                     await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
             {
                 Config.Log.Error(e, "Failed to tag objects in an image");
-                await ctx.RespondAsync("Can't do anything with this image").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Can't do anything with this image").ConfigureAwait(false);
             }
         }
 
@@ -428,7 +428,7 @@ namespace CompatBot.Commands
                     catch (Exception e)
                     {
                         Config.Log.Warn(e, "Failed to get link to the previously posted image");
-                        //await ctx.RespondAsync("Sorry chief, can't find any images in the recent posts").ConfigureAwait(false);
+                        //await ctx.Channel.SendMessageAsync("Sorry chief, can't find any images in the recent posts").ConfigureAwait(false);
                     }
             }
             return imageUrl;
