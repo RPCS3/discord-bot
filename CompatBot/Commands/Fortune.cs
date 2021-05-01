@@ -24,11 +24,9 @@ namespace CompatBot.Commands
         private static readonly SemaphoreSlim ImportCheck = new(1, 1);
 
         [GroupCommand]
-        [Cooldown(2, 60, CooldownBucketType.User)]
-        [Cooldown(1, 3, CooldownBucketType.Channel)]
         public Task ShowFortune(CommandContext ctx)
             => ShowFortune(ctx.Message, ctx.User);
-        
+
         public static async Task ShowFortune(DiscordMessage message, DiscordUser user)
         {
             var prefix = DateTime.UtcNow.ToString("yyyyMMdd")+ user.Id.ToString("x16");
