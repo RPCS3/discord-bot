@@ -17,7 +17,7 @@ namespace CompatBot.EventHandlers
     {
         private static readonly HashSet<char> OversizedChars = new()
         {
-            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄',
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄', '˞',
         };
 
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
@@ -114,7 +114,7 @@ namespace CompatBot.EventHandlers
         public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
             displayName = displayName.Normalize(normalizationForm).TrimEager();
-            if (string.IsNullOrEmpty(displayName))
+            if (displayName is null or {Length: <3})
                 return GenerateRandomName(userId);
 
             var builder = new StringBuilder();
@@ -122,13 +122,14 @@ namespace CompatBot.EventHandlers
             int consecutive = 0;
             int codePoint = 0;
             char highSurrogate = '\0';
+            bool hasNormalCharacterBefore = false;
             foreach (var c in displayName)
             {
                 switch (char.GetUnicodeCategory(c))
                 {
                     case UnicodeCategory.ModifierSymbol:
                     case UnicodeCategory.NonSpacingMark:
-                        if (++consecutive < level)
+                        if (++consecutive < level && hasNormalCharacterBefore)
                             builder.Append(c);
                         break;
 
@@ -150,6 +151,8 @@ namespace CompatBot.EventHandlers
                                 continue;
 
                             builder.Append(highSurrogate).Append(c);
+                            hasNormalCharacterBefore = true;
+                            consecutive = 0;
                         }
                         break;
                     
@@ -163,14 +166,17 @@ namespace CompatBot.EventHandlers
                         else
                         {
                             if (!OversizedChars.Contains(c))
+                            {
                                 builder.Append(c);
-                            consecutive = 0;
+                                hasNormalCharacterBefore = true;
+                                consecutive = 0;
+                            }
                         }
                         break;
                 }
             }
             var result = builder.ToString().TrimEager();
-            if (string.IsNullOrEmpty(result))
+            if (result is null or {Length: <3})
                 return GenerateRandomName(userId);
 
             return result;
