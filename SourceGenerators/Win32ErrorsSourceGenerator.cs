@@ -79,12 +79,13 @@ namespace SourceGenerators
                             resourceName.Path,
                             TextSpan.FromBounds(
                                 previousPos,
-                                (int)stream.Position),
+                                (int)stream.Position
+                            ),
                             new(
                                 new(codeLine, 0),
                                 new(descLine, errorNameAndDescriptionLine.Length)
                             )),
-        errorCodeLine,
+                        errorCodeLine,
                         errorNameAndDescriptionLine));
                     previousPos = (int)stream.Position;
                     continue;

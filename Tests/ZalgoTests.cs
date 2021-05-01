@@ -77,6 +77,7 @@ namespace Tests
         [TestCase("꧁꧂🥴🥴🥴HOJU🥴🥴🥴╲⎝⧹", true)]
         [TestCase("", true)]
         [TestCase("᲼᲼᲼", true, "Reserved block")]
+        [TestCase("𒁃𒃋𒋬𒑭𒕃", true, "Cuneiform block")]
         public void ZalgoDetectionTest(string name, bool isBad, string comment = null)
         {
             Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad), comment);
