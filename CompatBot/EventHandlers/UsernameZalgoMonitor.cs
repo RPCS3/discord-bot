@@ -145,7 +145,8 @@ namespace CompatBot.EventHandlers
                         else
                         {
                             codePoint |= c & 0x3ff;
-                            if (codePoint is >= 0x12000 and < 0x13000) //Cuneiform
+                            if (codePoint is >= 0x10380 and < 0x10400  // Ugaritic and Old Persian
+                                          or >= 0x12000 and < 0x13000) // Cuneiform
                                 continue;
 
                             builder.Append(highSurrogate).Append(c);

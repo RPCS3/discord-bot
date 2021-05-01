@@ -78,6 +78,7 @@ namespace Tests
         [TestCase("", true)]
         [TestCase("᲼᲼᲼", true, "Reserved block")]
         [TestCase("𒁃𒃋𒋬𒑭𒕃", true, "Cuneiform block")]
+        [TestCase("𐎄𐎝𐎪𐎼", true, "Ugaritic and Old Persian blocks")]
         public void ZalgoDetectionTest(string name, bool isBad, string comment = null)
         {
             Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad), comment);
