@@ -17,7 +17,7 @@ namespace CompatBot.EventHandlers
     {
         private static readonly HashSet<char> OversizedChars = new()
         {
-            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄',
+            '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄', '˞',
         };
 
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
@@ -27,7 +27,7 @@ namespace CompatBot.EventHandlers
                 if (c.GetMember(args.UserAfter) is DiscordMember m
                     && NeedsRename(m.DisplayName))
                 {
-                    var suggestedName = StripZalgo(m.DisplayName, m.Id).Sanitize();
+                    var suggestedName = StripZalgo(m.DisplayName, m.Username, m.Id).Sanitize();
                     await c.ReportAsync("🔣 Potential display name issue",
                         $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
@@ -46,11 +46,19 @@ namespace CompatBot.EventHandlers
             try
             {
                 //member object most likely will not be updated in client cache at this moment
-                var name = args.NicknameAfter ?? args.Member.Username;
+                string? fallback;
+                if (args.NicknameAfter is string name)
+                    fallback = args.Member.Username;
+                else
+                {
+                    name = args.Member.Username;
+                    fallback = null;
+                }
+
                 var member = await args.Guild.GetMemberAsync(args.Member.Id).ConfigureAwait(false) ?? args.Member;
                 if (NeedsRename(name))
                 {
-                    var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
+                    var suggestedName = StripZalgo(name, fallback, args.Member.Id).Sanitize();
                     await c.ReportAsync("🔣 Potential display name issue",
                         $"Member {member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
@@ -71,7 +79,7 @@ namespace CompatBot.EventHandlers
                 var name = args.Member.DisplayName;
                 if (NeedsRename(name))
                 {
-                    var suggestedName = StripZalgo(name, args.Member.Id).Sanitize();
+                    var suggestedName = StripZalgo(name, args.Member.Username, args.Member.Id).Sanitize();
                     await c.ReportAsync("🔣 Potential display name issue",
                         $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
                         null,
@@ -88,7 +96,7 @@ namespace CompatBot.EventHandlers
         public static bool NeedsRename(string displayName)
         {
             displayName = displayName.Normalize().TrimEager();
-            return displayName != StripZalgo(displayName, 0ul, NormalizationForm.FormC, 3);
+            return displayName != StripZalgo(displayName, null, 0ul, NormalizationForm.FormC, 3);
         }
 
         private static async Task DmAndRenameUserAsync(DiscordClient client, DiscordMember member, string suggestedName)
@@ -111,10 +119,12 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
+        public static string StripZalgo(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
             displayName = displayName.Normalize(normalizationForm).TrimEager();
-            if (string.IsNullOrEmpty(displayName))
+            if (displayName is null or {Length: <3} && userName is not null)
+                displayName = userName.Normalize(normalizationForm).TrimEager();
+            if (displayName is null or {Length: <3})
                 return GenerateRandomName(userId);
 
             var builder = new StringBuilder();
@@ -122,13 +132,14 @@ namespace CompatBot.EventHandlers
             int consecutive = 0;
             int codePoint = 0;
             char highSurrogate = '\0';
+            bool hasNormalCharacterBefore = false;
             foreach (var c in displayName)
             {
                 switch (char.GetUnicodeCategory(c))
                 {
                     case UnicodeCategory.ModifierSymbol:
                     case UnicodeCategory.NonSpacingMark:
-                        if (++consecutive < level)
+                        if (++consecutive < level && hasNormalCharacterBefore)
                             builder.Append(c);
                         break;
 
@@ -150,6 +161,8 @@ namespace CompatBot.EventHandlers
                                 continue;
 
                             builder.Append(highSurrogate).Append(c);
+                            hasNormalCharacterBefore = true;
+                            consecutive = 0;
                         }
                         break;
                     
@@ -163,16 +176,22 @@ namespace CompatBot.EventHandlers
                         else
                         {
                             if (!OversizedChars.Contains(c))
+                            {
                                 builder.Append(c);
-                            consecutive = 0;
+                                hasNormalCharacterBefore = true;
+                                consecutive = 0;
+                            }
                         }
                         break;
                 }
             }
             var result = builder.ToString().TrimEager();
-            if (string.IsNullOrEmpty(result))
-                return GenerateRandomName(userId);
-
+            if (result is null or {Length: <3})
+            {
+                if (userName is null)
+                    return GenerateRandomName(userId);
+                return StripZalgo(userName, null, userId, normalizationForm, level);
+            }
             return result;
         }
 

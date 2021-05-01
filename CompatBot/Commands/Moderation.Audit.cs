@@ -104,7 +104,7 @@ namespace CompatBot.Commands
                             if (!UsernameZalgoMonitor.NeedsRename(displayName))
                                 continue;
                             
-                            var nickname = UsernameZalgoMonitor.StripZalgo(displayName, member.Id).Sanitize();
+                            var nickname = UsernameZalgoMonitor.StripZalgo(displayName, member.Username, member.Id).Sanitize();
                             try
                             {
                                 await member.ModifyAsync(m => m.Nickname = nickname).ConfigureAwait(false);
