@@ -121,10 +121,11 @@ namespace CompatBot.EventHandlers
 
         public static string StripZalgo(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
+            const int minNicknameLength = 2;
             displayName = displayName.Normalize(normalizationForm).TrimEager();
-            if (displayName is null or {Length: <3} && userName is not null)
+            if (displayName is null or {Length: <minNicknameLength} && userName is not null)
                 displayName = userName.Normalize(normalizationForm).TrimEager();
-            if (displayName is null or {Length: <3})
+            if (displayName is null or {Length: <minNicknameLength})
                 return GenerateRandomName(userId);
 
             var builder = new StringBuilder();
@@ -186,7 +187,7 @@ namespace CompatBot.EventHandlers
                 }
             }
             var result = builder.ToString().TrimEager();
-            if (result is null or {Length: <3})
+            if (result is null or {Length: <minNicknameLength})
             {
                 if (userName is null)
                     return GenerateRandomName(userId);
