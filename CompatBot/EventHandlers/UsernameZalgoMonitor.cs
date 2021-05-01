@@ -20,11 +20,6 @@ namespace CompatBot.EventHandlers
             '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄',
         };
 
-        private static readonly List<string> OversizedLiterals = new()
-        {
-            "𒐫", "𒈙", 
-        };
-
         public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
         {
             try
@@ -119,14 +114,14 @@ namespace CompatBot.EventHandlers
         public static string StripZalgo(string displayName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
         {
             displayName = displayName.Normalize(normalizationForm).TrimEager();
-            foreach (var literal in OversizedLiterals)
-                displayName = displayName.Replace(literal, "");
             if (string.IsNullOrEmpty(displayName))
                 return GenerateRandomName(userId);
 
             var builder = new StringBuilder();
             bool skipLowSurrogate = false;
             int consecutive = 0;
+            int codePoint = 0;
+            char highSurrogate = '\0';
             foreach (var c in displayName)
             {
                 switch (char.GetUnicodeCategory(c))
@@ -141,6 +136,22 @@ namespace CompatBot.EventHandlers
                     case UnicodeCategory.Format:
                         break;
 
+                    case UnicodeCategory.Surrogate:
+                        if (char.IsHighSurrogate(c))
+                        {
+                            codePoint = 0x10000 | ((c & 0x3ff) << 10);
+                            highSurrogate = c;
+                        }
+                        else
+                        {
+                            codePoint |= c & 0x3ff;
+                            if (codePoint is >= 0x12000 and < 0x13000) //Cuneiform
+                                continue;
+
+                            builder.Append(highSurrogate).Append(c);
+                        }
+                        break;
+                    
                     case UnicodeCategory.OtherNotAssigned when c >= 0xdb40:
                         skipLowSurrogate = true;
                         break;
