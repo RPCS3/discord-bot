@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -22,7 +21,7 @@ namespace CompatBot.Commands
     {
         [GroupCommand]
         [Description("Enforces specific nickname for particular user.")]
-        public async Task Rename(CommandContext ctx, 
+        public async Task Rename(CommandContext ctx,
             [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
             [Description("Nickname which should be displayed."), RemainingText] string expectedNickname)
         {
