@@ -171,11 +171,9 @@ namespace CompatBot.Commands
         public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordMember discordUser)
         {
             var name = discordUser.DisplayName;
-            var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Id);
+            var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Username, discordUser.Id);
             if (name == newName)
-            {
                 await ctx.Channel.SendMessageAsync("Failed to remove any extra symbols").ConfigureAwait(false);
-            }
             else
             {
                 try
