@@ -163,7 +163,7 @@ namespace CompatBot
 
             public static readonly IReadOnlyList<ulong> Channels = new List<ulong>
             {
-                272875751773306881,
+                272875751773306881, // #media
                 319224795785068545,
             }.AsReadOnly();
 
