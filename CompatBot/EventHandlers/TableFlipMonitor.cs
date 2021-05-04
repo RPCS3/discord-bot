@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Utils;
 using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {
@@ -42,12 +45,14 @@ namespace CompatBot.EventHandlers
                     var idx = content.IndexOf("🎲");
                     while (idx < content.Length && (idx = content.IndexOf("🎲", idx + 1)) > 0)
                         count++;
+                    EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
                     await Misc.RollImpl(args.Message, $"{count}d6").ConfigureAwait(false);
                     return;
                 }
                 
                 if (content.Trim() == "🥠")
                 {
+                    EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
                     await Fortune.ShowFortune(args.Message, args.Author).ConfigureAwait(false);
                     return;
                 }
