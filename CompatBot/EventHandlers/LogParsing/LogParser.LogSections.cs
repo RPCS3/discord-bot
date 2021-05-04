@@ -22,9 +22,6 @@ namespace CompatBot.EventHandlers.LogParsing
          * If trigger is matched, then the associated regex will be run on THE WHOLE sliding window
          * If any data was captured, it will be stored in the current collection of items with the key of the explicit capture group of regex
          *
-         * Due to limitations, REGEX can't contain anything other than Latin-1 characters (including triggers)
-         * Anything that's more than 1 byte in UTF8 encoding will be converted to (\x??\x??..) pattern for each unicode character
-         *
          */
         private static readonly List<LogSection> LogSections = new()
         {
