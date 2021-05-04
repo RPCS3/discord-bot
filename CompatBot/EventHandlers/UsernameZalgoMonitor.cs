@@ -157,7 +157,9 @@ namespace CompatBot.EventHandlers
                         else
                         {
                             codePoint |= c & 0x3ff;
-                            if (codePoint is >= 0x10380 and < 0x10400  // Ugaritic and Old Persian
+                            if (codePoint is >= 0x016a0 and < 0x01700  // Runic
+                                          or >= 0x101d0 and < 0x10200  // Phaistos Disc
+                                          or >= 0x10380 and < 0x10400  // Ugaritic and Old Persian
                                           or >= 0x12000 and < 0x13000) // Cuneiform
                                 continue;
 

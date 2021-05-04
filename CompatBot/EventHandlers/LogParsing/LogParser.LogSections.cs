@@ -22,9 +22,6 @@ namespace CompatBot.EventHandlers.LogParsing
          * If trigger is matched, then the associated regex will be run on THE WHOLE sliding window
          * If any data was captured, it will be stored in the current collection of items with the key of the explicit capture group of regex
          *
-         * Due to limitations, REGEX can't contain anything other than Latin-1 characters (including triggers)
-         * Anything that's more than 1 byte in UTF8 encoding will be converted to (\x??\x??..) pattern for each unicode character
-         *
          */
         private static readonly List<LogSection> LogSections = new()
         {
@@ -32,8 +29,8 @@ namespace CompatBot.EventHandlers.LogParsing
             {
                 Extractors = new()
                 {
-                    ["RPCS3 v"] = new(@"(^|.+0:00:00\.000000)\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n·|$)", DefaultSingleLineOptions),
-                    ["0:00:00.000000"] = new(@"(?<first_unicode_dot>·).+\r?$", DefaultOptions),
+                    ["RPCS3 v"] = new(@"(^|.+\d:\d\d:\d\d\.\d{6})\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n·|$)", DefaultSingleLineOptions),
+                    ["0:00:00.000"] = new(@"(?<first_unicode_dot>·).+\r?$", DefaultOptions),
                     ["Operating system:"] = LogParserResult.OsInfoInLog,
                     ["Physical device intialized"] = new(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Found vulkan-compatible GPU:"] = new(@"Found vulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
