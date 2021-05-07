@@ -51,10 +51,12 @@ namespace CompatBot.EventHandlers
             if (!message.Attachments.Any())
                 return;
 
-            var images = Vision.GetImageAttachment(message).ToList();
+            var images = Vision.GetImageAttachments(message).Select(att => att.Url)
+                .Concat(Vision.GetImagesFromEmbeds(message))
+                .ToList();
             var tasks = new List<Task<ReadHeaders>>(images.Count);
-            foreach (var img in images)
-                tasks.Add(cvClient.ReadAsync(img.Url, cancellationToken: Config.Cts.Token));
+            foreach (var url in images)
+                tasks.Add(cvClient.ReadAsync(url, cancellationToken: Config.Cts.Token));
             foreach (var t in tasks)
             {
                 try
