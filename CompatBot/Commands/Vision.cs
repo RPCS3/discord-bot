@@ -94,7 +94,9 @@ namespace CompatBot.Commands
                     ogRef = msg;
                     msg = await msg.Channel.GetMessageAsync(msg.Id).ConfigureAwait(false);
                     if (msg.Attachments.Any())
-                        imageUrl = GetImageAttachment(msg).FirstOrDefault()?.Url;
+                        imageUrl = GetImageAttachments(msg).FirstOrDefault()?.Url;
+                    if (string.IsNullOrEmpty(imageUrl))
+                        imageUrl = GetImagesFromEmbeds(msg).FirstOrDefault();
                     if (string.IsNullOrEmpty(imageUrl))
                         imageUrl = await GetImageUrlAsync(ctx, msg.Content).ConfigureAwait(false);
                 }
@@ -340,7 +342,18 @@ namespace CompatBot.Commands
             }
         }
 
-        internal static IEnumerable<DiscordAttachment> GetImageAttachment(DiscordMessage message)
+        internal static IEnumerable<string> GetImagesFromEmbeds(DiscordMessage msg)
+        {
+            foreach (var embed in msg.Embeds)
+            {
+                if (embed.Image?.Url?.ToString() is string url)
+                    yield return url;
+                else if (embed.Thumbnail?.Url?.ToString() is string thumbUrl)
+                    yield return thumbUrl;
+            }
+        }
+
+        internal static IEnumerable<DiscordAttachment> GetImageAttachments(DiscordMessage message)
             => message.Attachments.Where(a =>
                                              a.FileName.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
                                              || a.FileName.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
@@ -388,7 +401,7 @@ namespace CompatBot.Commands
         private static async Task<string?> GetImageUrlAsync(CommandContext ctx, string? imageUrl)
         {
             var reactMsg = ctx.Message;
-            if (GetImageAttachment(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
+            if (GetImageAttachments(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
                 imageUrl = attachment.Url;
             imageUrl = imageUrl?.Trim() ?? "";
             if (!string.IsNullOrEmpty(imageUrl)
@@ -410,7 +423,7 @@ namespace CompatBot.Commands
                         imageUrl = (
                             from m in previousMessages
                             where m.Attachments?.Count > 0
-                            from a in GetImageAttachment(m)
+                            from a in GetImageAttachments(m)
                             select a.Url
                         ).FirstOrDefault();
                         if (string.IsNullOrEmpty(imageUrl))
