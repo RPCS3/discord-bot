@@ -17,8 +17,8 @@ namespace CompatBot.EventHandlers
     internal static class EmpathySimulationHandler
     {
         private static readonly TCache MessageQueue = new();
-        private static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
-        private static readonly MemoryCache Throttling = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
+        internal static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
+        internal static readonly MemoryCache Throttling = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
         public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
         {
@@ -43,6 +43,7 @@ namespace CompatBot.EventHandlers
             if (string.IsNullOrEmpty(content))
                 return;
 
+            //todo: throttle multiple strings at the same time
             if (Throttling.TryGetValue(args.Channel.Id, out List<DiscordMessage> mark) && content.Equals(mark.FirstOrDefault()?.Content, StringComparison.OrdinalIgnoreCase))
             {
                 mark.Add(args.Message);

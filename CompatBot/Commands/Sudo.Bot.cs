@@ -228,11 +228,14 @@ namespace CompatBot.Commands
 
             internal static void RestartNoSaving()
             {
-                Config.Log.Info("Restarting...");
-                using var self = new Process {StartInfo = RestartInfo};
-                self.Start();
-                Config.InMemorySettings["shutdown"] = "true";
-                Config.Cts.Cancel();
+                if (SandboxDetector.Detect() != SandboxType.Docker)
+                {
+                    Config.Log.Info("Restarting...");
+                    using var self = new Process {StartInfo = RestartInfo};
+                    self.Start();
+                    Config.InMemorySettings["shutdown"] = "true";
+                    Config.Cts.Cancel();
+                }
                 Environment.Exit(-1);
             }
         }
