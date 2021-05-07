@@ -31,7 +31,7 @@ namespace CompatBot.Commands
             {
                 using var git = new Process
                 {
-                    StartInfo = new ProcessStartInfo("git", "log -1 --oneline")
+                    StartInfo = new("git", "log -1 --oneline")
                     {
                         CreateNoWindow = true,
                         UseShellExecute = false,
@@ -134,20 +134,20 @@ namespace CompatBot.Commands
                         && !string.IsNullOrEmpty(message))
                     {
                         if (status == null)
-                            await db.BotState.AddAsync(new BotState {Key = "bot-status-activity", Value = activity}).ConfigureAwait(false);
+                            await db.BotState.AddAsync(new() {Key = "bot-status-activity", Value = activity}).ConfigureAwait(false);
                         else
                             status.Value = activity;
                         if (txt == null)
-                            await db.BotState.AddAsync(new BotState {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
+                            await db.BotState.AddAsync(new() {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
                         else
                             txt.Value = message;
-                        await ctx.Client.UpdateStatusAsync(new DiscordActivity(message, activityType), UserStatus.Online).ConfigureAwait(false);
+                        await ctx.Client.UpdateStatusAsync(new(message, activityType), UserStatus.Online).ConfigureAwait(false);
                     }
                     else
                     {
                         if (status != null)
                             db.BotState.Remove(status);
-                        await ctx.Client.UpdateStatusAsync(new DiscordActivity()).ConfigureAwait(false);
+                        await ctx.Client.UpdateStatusAsync(new()).ConfigureAwait(false);
                     }
                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                 }
@@ -181,7 +181,7 @@ namespace CompatBot.Commands
             {
                 using var git = new Process
                 {
-                    StartInfo = new ProcessStartInfo("git", "pull")
+                    StartInfo = new("git", "pull")
                     {
                         CreateNoWindow = true,
                         UseShellExecute = false,
@@ -208,7 +208,7 @@ namespace CompatBot.Commands
                 var ch = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
                 if (ch is null)
                 {
-                    ch = new BotState {Key = "bot-restart-channel", Value = channelId.ToString()};
+                    ch = new() {Key = "bot-restart-channel", Value = channelId.ToString()};
                     db.BotState.Add(ch);
                 }
                 else
@@ -216,7 +216,7 @@ namespace CompatBot.Commands
                 var msg = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-msg");
                 if (msg is null)
                 {
-                    msg = new BotState {Key = "bot-restart-msg", Value = restartMsg};
+                    msg = new() {Key = "bot-restart-msg", Value = restartMsg};
                     db.BotState.Add(msg);
                 }
                 else
