@@ -486,7 +486,10 @@ namespace CompatBot.Commands
                     var seed = (prefix + whatever).GetHashCode(StringComparison.CurrentCultureIgnoreCase);
                     var seededRng = new Random(seed);
                     var answer = choices[seededRng.Next(choices.Count)];
-                    await ctx.Channel.SendMessageAsync(answer).ConfigureAwait(false);
+                    var msgBuilder = new DiscordMessageBuilder()
+                        .WithContent(answer)
+                        .WithReply(ctx.Message.Id);
+                    await ctx.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                 }
             }
             catch (Exception e)

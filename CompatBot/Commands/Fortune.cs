@@ -58,7 +58,10 @@ namespace CompatBot.Commands
                 tmp.Append(l).Append('\n');
             }
             msg = tmp.ToString().TrimEnd().FixSpaces();
-            await message.Channel.SendMessageAsync($"{user.Mention}, your fortune for today:\n{msg}").ConfigureAwait(false);
+            var msgBuilder = new DiscordMessageBuilder()
+                .WithContent($"{user.Mention}, your fortune for today:\n{msg}")
+                .WithReply(message.Id);
+            await message.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
         }
 
         [Command("add"), RequiresBotModRole]

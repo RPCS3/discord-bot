@@ -87,11 +87,9 @@ namespace CompatBot.Commands
         {
             try
             {
-                var ogRef = ctx.Message;
                 imageUrl = await GetImageUrlAsync(ctx, imageUrl).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(imageUrl) && ctx.Message.ReferencedMessage is { } msg)
                 {
-                    ogRef = msg;
                     msg = await msg.Channel.GetMessageAsync(msg.Id).ConfigureAwait(false);
                     if (msg.Attachments.Any())
                         imageUrl = GetImageAttachments(msg).FirstOrDefault()?.Url;
@@ -324,6 +322,8 @@ namespace CompatBot.Commands
                     var messageBuilder = new DiscordMessageBuilder()
                         .WithContent(description)
                         .WithFile(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream);
+                    if (ctx.Message.ReferencedMessage is { } ogRef)
+                        messageBuilder.WithReply(ogRef.Id);
                     var respondMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
                     var tags = result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags).Distinct().ToList();
                     Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}");
@@ -331,7 +331,11 @@ namespace CompatBot.Commands
                 }
                 else
                 {
-                    await ctx.Channel.SendMessageAsync(description).ConfigureAwait(false);
+                    var msgBuilder = new DiscordMessageBuilder()
+                        .WithContent(description);
+                    if (ctx.Message.ReferencedMessage is { } ogRef)
+                        msgBuilder.WithReply(ogRef.Id);
+                    await ctx.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                     await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
                 }
             }
