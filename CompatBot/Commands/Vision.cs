@@ -96,6 +96,8 @@ namespace CompatBot.Commands
                     if (msg.Attachments.Any())
                         imageUrl = GetImageAttachment(msg).FirstOrDefault()?.Url;
                     if (string.IsNullOrEmpty(imageUrl))
+                        imageUrl = GetImageFromEmbed(msg);
+                    if (string.IsNullOrEmpty(imageUrl))
                         imageUrl = await GetImageUrlAsync(ctx, msg.Content).ConfigureAwait(false);
                 }
 
@@ -338,6 +340,19 @@ namespace CompatBot.Commands
                 Config.Log.Error(e, "Failed to tag objects in an image");
                 await ctx.Channel.SendMessageAsync("Can't do anything with this image").ConfigureAwait(false);
             }
+        }
+
+        private string? GetImageFromEmbed(DiscordMessage msg)
+        {
+            foreach (var embed in msg.Embeds)
+            {
+                if (embed.Image?.Url?.ToString() is string url)
+                    return url;
+
+                if (embed.Thumbnail?.Url?.ToString() is string thumbUrl)
+                    return thumbUrl;
+            }
+            return null;
         }
 
         internal static IEnumerable<DiscordAttachment> GetImageAttachment(DiscordMessage message)
