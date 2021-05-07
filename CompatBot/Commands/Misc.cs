@@ -222,9 +222,9 @@ namespace CompatBot.Commands
             if (string.IsNullOrEmpty(result) && embed == null)
                 await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
             else if (embed != null)
-                await message.Channel.SendMessageAsync(embed).ConfigureAwait(false);
+                await message.Channel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embed).WithReply(message.Id)).ConfigureAwait(false);
             else
-                await message.Channel.SendMessageAsync(result).ConfigureAwait(false);
+                await message.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(result).WithReply(message.Id)).ConfigureAwait(false);
         }
 
         [Command("random"), Aliases("rng"), Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
