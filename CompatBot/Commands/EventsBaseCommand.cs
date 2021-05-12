@@ -227,11 +227,8 @@ namespace CompatBot.Commands
             IQueryable<EventSchedule> query = db.EventSchedule;
             if (year.HasValue)
                 query = query.Where(e => e.Year == year);
-            else
-            {
-                if (!ctx.Channel.IsPrivate && !showAll)
-                    query = query.Where(e => e.End > currentTicks);
-            }
+            else if (!showAll)
+                query = query.Where(e => e.End > currentTicks);
             if (!string.IsNullOrEmpty(eventName) && !showAll)
             {
                 eventName = await FuzzyMatchEventName(db, eventName).ConfigureAwait(false);

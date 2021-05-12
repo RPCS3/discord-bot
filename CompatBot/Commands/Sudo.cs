@@ -1,8 +1,6 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -11,13 +9,17 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.Utils;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Common;
+using SharpCompress.Compressors;
+using SharpCompress.Compressors.Deflate;
+using SharpCompress.Writers;
+using SharpCompress.Writers.Zip;
 
 namespace CompatBot.Commands
 {
@@ -144,7 +146,7 @@ namespace CompatBot.Commands
                 var attachmentSizeLimit = Config.AttachmentSizeLimit;
                 await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 await using var result = Config.MemoryStreamManager.GetStream();
-                await using var gzip = new GZipStream(result, CompressionLevel.Optimal, true);
+                await using var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default);
                 await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
                 await gzip.FlushAsync().ConfigureAwait(false);
                 if (result.Length <= attachmentSizeLimit)
@@ -176,13 +178,11 @@ namespace CompatBot.Commands
                 var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
                 var dbName = Path.GetFileNameWithoutExtension(dbPath);
                 await using var result = Config.MemoryStreamManager.GetStream();
-                using var zip = new ZipArchive(result, ZipArchiveMode.Create, true);
+                using var zip = new ZipWriter(result, new(CompressionType.Deflate){DeflateCompressionLevel = CompressionLevel.BestCompression});
                 foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
                 {
                     await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    await using var entryStream = zip.CreateEntry(Path.GetFileName(fname), CompressionLevel.Optimal).Open();
-                    await dbData.CopyToAsync(entryStream, Config.Cts.Token).ConfigureAwait(false);
-                    await entryStream.FlushAsync().ConfigureAwait(false);
+                    zip.Write(Path.GetFileName(fname), dbData);
                 }
                 if (result.Length <= attachmentSizeLimit)
                 {
