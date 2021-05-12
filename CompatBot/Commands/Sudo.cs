@@ -173,12 +173,15 @@ namespace CompatBot.Commands
                 string dbPath;
                 await using (var db = new ThumbnailDb())
                 await using (var connection = db.Database.GetDbConnection())
+                {
                     dbPath = connection.DataSource;
+                    await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
+                }
                 var attachmentSizeLimit = Config.AttachmentSizeLimit;
                 var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
                 var dbName = Path.GetFileNameWithoutExtension(dbPath);
                 await using var result = Config.MemoryStreamManager.GetStream();
-                using var zip = new ZipWriter(result, new(CompressionType.Deflate){DeflateCompressionLevel = CompressionLevel.BestCompression});
+                using var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression});
                 foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
                 {
                     await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
