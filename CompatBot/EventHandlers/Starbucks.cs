@@ -113,11 +113,11 @@ namespace CompatBot.EventHandlers
             }
         }
 
-        private static async Task CheckMessageAsync(DiscordClient client, DiscordChannel channel, DiscordUser user, DiscordMessage message, DiscordEmoji emoji, bool isBacklog)
+        private static async Task CheckMessageAsync(DiscordClient client, DiscordChannel? channel, DiscordUser user, DiscordMessage message, DiscordEmoji emoji, bool isBacklog)
         {
             try
             {
-                if (user.IsBotSafeCheck() || channel.IsPrivate)
+                if (user.IsBotSafeCheck() || channel is null || channel.IsPrivate)
                     return;
 
                 // in case it's not in cache and doesn't contain any info, including Author

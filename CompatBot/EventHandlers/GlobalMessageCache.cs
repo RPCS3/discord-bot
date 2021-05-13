@@ -40,7 +40,7 @@ namespace CompatBot.EventHandlers
 
         public static Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs args)
         {
-            if (args.Channel.IsPrivate)
+            if (args.Channel?.IsPrivate ?? true)
                 return Task.CompletedTask;
             
             if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
