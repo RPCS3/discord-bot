@@ -30,7 +30,7 @@ namespace CompatBot.EventHandlers.LogParsing
                 Extractors = new()
                 {
                     ["RPCS3 v"] = new(@"(^|.+\d:\d\d:\d\d\.\d{6})\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n·|$)", DefaultSingleLineOptions),
-                    ["0:00:00.000"] = new(@"(?<first_unicode_dot>·).+\r?$", DefaultOptions),
+                    ["0:00:00.0"] = new(@"(?<first_unicode_dot>·).+\r?$", DefaultOptions),
                     ["Operating system:"] = LogParserResult.OsInfoInLog,
                     ["Physical device intialized"] = new(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                     ["Found vulkan-compatible GPU:"] = new(@"Found vulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
