@@ -75,6 +75,41 @@ namespace CompatBot.Commands
                 }
             }
 
+            [Command("mods"), Aliases("mtop"), RequiresBotModRole, TriggersTyping]
+            [Description("List bot mods, sorted by the number of warnings issued")]
+            public async Task Mods(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
+            {
+                try
+                {
+                    if (number < 1)
+                        number = 10;
+                    var table = new AsciiTable(
+                        new AsciiColumn("Username", maxWidth: 24),
+                        new AsciiColumn("Issuer ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
+                        new AsciiColumn("Warnings given", alignToRight: true),
+                        new AsciiColumn("Including retracted", alignToRight: true)
+                    );
+                    await using var db = new BotDb();
+                    var query = from warn in db.Warning.AsEnumerable()
+                        group warn by warn.IssuerId
+                        into modGroup
+                        let row = new {userId = modGroup.Key, count = modGroup.Count(w => !w.Retracted), total = modGroup.Count()}
+                        orderby row.count descending
+                        select row;
+                    foreach (var row in query.Take(number))
+                    {
+                        var username = await ctx.GetUserNameAsync(row.userId).ConfigureAwait(false);
+                        table.Add(username, row.userId.ToString(), row.count.ToString(), row.total.ToString());
+                    }
+                    await ctx.SendAutosplitMessageAsync(new StringBuilder("Warnings issued per bot mod:").Append(table)).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, "SQL query for this command is broken at the moment", true).ConfigureAwait(false);
+                }
+            }
+
             [Command("by"), RequiresBotModRole]
             [Description("Shows warnings issued by the specified moderator")]
             public async Task By(CommandContext ctx, ulong moderatorId, [Description("Optional number of items to show. Default is 10")] int number = 10)
