@@ -99,6 +99,8 @@ namespace CompatBot.Commands
                     foreach (var row in query.Take(number))
                     {
                         var username = await ctx.GetUserNameAsync(row.userId).ConfigureAwait(false);
+                        if (username is null or "")
+                            username = "Unknown";
                         table.Add(username, row.userId.ToString(), row.count.ToString(), row.total.ToString());
                     }
                     await ctx.SendAutosplitMessageAsync(new StringBuilder("Warnings issued per bot mod:").Append(table)).ConfigureAwait(false);
