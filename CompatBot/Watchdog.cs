@@ -126,6 +126,9 @@ namespace CompatBot
                 tc.TrackMetric("memory-process-ws", process.WorkingSet64);
                 tc.TrackMetric("github-limit-remaining", GithubClient.Client.RateLimitRemaining);
                 tc.Flush();
+                
+                if (gcMemInfo.TotalCommittedBytes > 3_000_000_000)
+                    Sudo.Bot.Restart(Program.InvalidChannelId, "GC Memory overcommitment");
             } while (!Config.Cts.IsCancellationRequested);
         }
 
