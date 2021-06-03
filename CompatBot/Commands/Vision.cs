@@ -301,8 +301,8 @@ namespace CompatBot.Commands
                         // label text
                         try
                         {
-                            var verticalOffset = RuntimeEnvironment.OperatingSystemPlatform == Platform.Windows ? bboxBorder : -bboxBorder;
-                            img.Mutate(ipc => ipc.DrawText(textDrawingOptions, label, font, textColor, new(bgBox.X + bboxBorder, bgBox.Y + verticalOffset)));
+                            //var verticalOffset = RuntimeEnvironment.OperatingSystemPlatform == Platform.Windows ? bboxBorder : -bboxBorder;
+                            img.Mutate(ipc => ipc.DrawText(textDrawingOptions, label, font, textColor, new(bgBox.X + bboxBorder, bgBox.Y + bboxBorder)));
                         }
                         catch (Exception ex)
                         {
