@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
@@ -93,7 +94,10 @@ namespace CompatBot.Utils
                 if (waitTextResponseTask.IsCompletedSuccessfully)
                     text = (await waitTextResponseTask).Result;
                 if (waitButtonTask.IsCompletedSuccessfully)
+                {
                     reaction = (await waitButtonTask).Result;
+                    await reaction.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate).ConfigureAwait(false);
+                }
                 if (text != null)
                     try
                     {
