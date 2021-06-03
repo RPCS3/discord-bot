@@ -287,6 +287,8 @@ namespace CompatBot
                 client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
                 client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
 
+                //client.ComponentInteractionCreated += ToggleBadUpdate;
+                
                 Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
 
                 try

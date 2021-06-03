@@ -51,12 +51,12 @@ namespace CompatBot.Commands
                         askForId = false;
                         var messageBuilder = new DiscordMessageBuilder().WithContent("Please select correct product code from the list or specify your own:");
                         foreach (var row in compatResult)
-                            messageBuilder.AddComponents(row.Select(c => new DiscordButtonComponent(ButtonStyle.Secondary, c, c)));
+                            messageBuilder.AddComponents(row.Select(c => new DiscordButtonComponent(ButtonStyle.Secondary, "psn:check:updates:" + c, c)));
                         var interactivity = ctx.Client.GetInteractivity();
                         var botMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
                         var reaction = await interactivity.WaitForMessageOrButtonAsync(botMsg, ctx.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
-                        if (reaction.reaction?.Id is {Length: 9} selectedId)
-                            id = selectedId;
+                        if (reaction.reaction?.Id is {Length: >=9} selectedId)
+                            id = selectedId[^9..];
                         else if (reaction.text?.Content is {Length: >= 9} customId)
                         {
                             if (customId.StartsWith(Config.CommandPrefix) || customId.StartsWith(Config.AutoRemoveCommandPrefix))
