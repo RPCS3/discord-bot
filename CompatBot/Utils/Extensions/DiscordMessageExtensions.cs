@@ -11,7 +11,7 @@ namespace CompatBot.Utils
 {
     public static class DiscordMessageExtensions
     {
-        public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null, DiscordMessage? refMsg = null)
+        public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, DiscordMessageBuilder messageBuilder)
         {
             Exception? lastException = null;
             for (var i = 0; i<3; i++)
@@ -19,12 +19,7 @@ namespace CompatBot.Utils
                 {
                     if (botMsg == null)
                     {
-                        var msgBuilder = new DiscordMessageBuilder()
-                            .WithContent(content)
-                            .WithEmbed(embed);
-                        if (refMsg is not null)
-                            msgBuilder.WithReply(refMsg.Id);
-                        var newMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                        var newMsg = await channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
                         #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
                         if (newMsg.Channel is null)
                         {
@@ -35,7 +30,7 @@ namespace CompatBot.Utils
                         }
                         return newMsg;
                     }
-                    return await botMsg.ModifyAsync(content, embed).ConfigureAwait(false);
+                    return await botMsg.ModifyAsync(messageBuilder).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -46,6 +41,16 @@ namespace CompatBot.Utils
                         Task.Delay(100).ConfigureAwait(false).GetAwaiter().GetResult();
                 }
             throw lastException ?? new InvalidOperationException("Something gone horribly wrong");
+        }
+        
+        public static Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null, DiscordMessage? refMsg = null)
+        {
+            var msgBuilder = new DiscordMessageBuilder()
+                .WithContent(content)
+                .WithEmbed(embed);
+            if (refMsg is not null)
+                msgBuilder.WithReply(refMsg.Id);
+            return botMsg.UpdateOrCreateMessageAsync(channel, msgBuilder);
         }
 
         public static async Task<(Dictionary<string, Stream>? attachmentContent, List<string>? failedFilenames)> DownloadAttachmentsAsync(this DiscordMessage msg)

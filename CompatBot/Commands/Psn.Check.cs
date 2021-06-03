@@ -36,6 +36,7 @@ namespace CompatBot.Commands
                 var providedId = productCode;
                 var id = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault();
                 var askForId = true;
+                DiscordMessage? botMsg = null;
                 if (string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(productCode))
                 {
                     var requestBuilder = RequestBuilder.Start().SetSearch(productCode);
@@ -53,40 +54,43 @@ namespace CompatBot.Commands
                         foreach (var row in compatResult)
                             messageBuilder.AddComponents(row.Select(c => new DiscordButtonComponent(ButtonStyle.Secondary, "psn:check:updates:" + c, c)));
                         var interactivity = ctx.Client.GetInteractivity();
-                        var botMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
+                        botMsg = await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
                         var reaction = await interactivity.WaitForMessageOrButtonAsync(botMsg, ctx.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
-                        if (reaction.reaction?.Id is {Length: >=9} selectedId)
+                        if (reaction.reaction?.Id is {Length: >0} selectedId)
                             id = selectedId[^9..];
-                        else if (reaction.text?.Content is {Length: >= 9} customId)
+                        else if (reaction.text?.Content is {Length: >0} customId
+                                 && !customId.StartsWith(Config.CommandPrefix)
+                                 && !customId.StartsWith(Config.AutoRemoveCommandPrefix))
                         {
-                            if (customId.StartsWith(Config.CommandPrefix) || customId.StartsWith(Config.AutoRemoveCommandPrefix))
-                                return;
-
+                            botMsg = null;
                             providedId = customId;
-                            id = ProductCodeLookup.GetProductIds(customId).FirstOrDefault();
+                            if (customId.Length > 8)
+                                id = ProductCodeLookup.GetProductIds(customId).FirstOrDefault();
                         }
-                        await botMsg.DeleteAsync().ConfigureAwait(false);
                     }
                 }
                 if (string.IsNullOrEmpty(id) && askForId)
                 {
-                    var botMsg = await ctx.Channel.SendMessageAsync("Please specify a valid product code (e.g. BLUS12345 or NPEB98765):").ConfigureAwait(false);
+                    botMsg = await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a valid product code (e.g. BLUS12345 or NPEB98765):").ConfigureAwait(false);
                     var interact = ctx.Client.GetInteractivity();
                     var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
-                    await botMsg.DeleteAsync().ConfigureAwait(false);
 
-                    if (string.IsNullOrEmpty(msg.Result?.Content))
-                        return;
-
-                    if (msg.Result.Content.StartsWith(Config.CommandPrefix) || msg.Result.Content.StartsWith(Config.AutoRemoveCommandPrefix))
-                        return;
-
-                    providedId = msg.Result.Content;
-                    id = ProductCodeLookup.GetProductIds(msg.Result.Content).FirstOrDefault();
+                    if (msg.Result?.Content is {Length: > 0} customId
+                        && !customId.StartsWith(Config.CommandPrefix)
+                        && !customId.StartsWith(Config.AutoRemoveCommandPrefix))
+                    {
+                        botMsg = null;
+                        providedId = customId;
+                        if (customId.Length > 8)
+                            id = ProductCodeLookup.GetProductIds(customId).FirstOrDefault();
+                    }
                 }
                 if (string.IsNullOrEmpty(id))
                 {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{providedId.Trim(10).Sanitize(replaceBackTicks: true)}` is not a valid product code").ConfigureAwait(false);
+                    var msgBuilder = new DiscordMessageBuilder()
+                        .WithContent($"`{providedId.Trim(10).Sanitize(replaceBackTicks: true)}` is not a valid product code")
+                        .WithAllowedMentions(Config.AllowedMentions.Nothing);
+                    await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, msgBuilder).ConfigureAwait(false);
                     return;
                 }
                 List<DiscordEmbedBuilder> embeds;
@@ -128,7 +132,9 @@ namespace CompatBot.Commands
                 }
                 if (embeds.Count > 1 || embeds[0].Fields.Count > 0)
                     embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
-                foreach (var embed in embeds)
+
+                await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, new DiscordMessageBuilder().WithEmbed(embeds[0])).ConfigureAwait(false);
+                foreach (var embed in embeds.Skip(1))
                     await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
 
