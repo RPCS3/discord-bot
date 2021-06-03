@@ -71,5 +71,43 @@ namespace CompatBot.Utils
                 return (result, null, null);
             }
         }
+
+        public static async Task<(DiscordMessage? text, ComponentInteractionCreateEventArgs? reaction)> WaitForMessageOrButtonAsync(
+            this InteractivityExtension interactivity,
+            DiscordMessage message,
+            DiscordUser user,
+            TimeSpan? timeout
+        )
+        {
+            try
+            {
+                var expectedChannel = message.Channel;
+                var waitButtonTask = interactivity.WaitForButtonAsync(message, user, timeout);
+                var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && m.Channel == expectedChannel && !string.IsNullOrEmpty(m.Content), timeout);
+                await Task.WhenAny(
+                    waitTextResponseTask,
+                    waitButtonTask
+                ).ConfigureAwait(false);
+                DiscordMessage? text = null;
+                ComponentInteractionCreateEventArgs? reaction = null;
+                if (waitTextResponseTask.IsCompletedSuccessfully)
+                    text = (await waitTextResponseTask).Result;
+                if (waitButtonTask.IsCompletedSuccessfully)
+                    reaction = (await waitButtonTask).Result;
+                if (text != null)
+                    try
+                    {
+                        DeletedMessagesMonitor.RemovedByBotCache.Set(text.Id, true, DeletedMessagesMonitor.CacheRetainTime);
+                        await text.DeleteAsync().ConfigureAwait(false);
+                    }
+                    catch {}
+                return (text, reaction);                
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to get interactive reaction");
+                return (null, null);
+            }
+        }
     }
 }
