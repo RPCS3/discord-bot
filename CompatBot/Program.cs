@@ -144,6 +144,9 @@ namespace CompatBot
                     Services = new ServiceCollection().BuildServiceProvider(),
                 });
                 commands.RegisterConverter(new TextOnlyDiscordChannelConverter());
+#if DEBUG
+                commands.RegisterCommands<DevOnly>();
+#endif
                 commands.RegisterCommands<Misc>();
                 commands.RegisterCommands<CompatList>();
                 commands.RegisterCommands<Sudo>();
