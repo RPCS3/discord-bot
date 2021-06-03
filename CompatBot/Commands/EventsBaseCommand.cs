@@ -279,36 +279,40 @@ namespace CompatBot.Commands
         private static async Task<(bool success, DiscordMessage? message)> EditEventPropertiesAsync(CommandContext ctx, EventSchedule evt, string? eventName = null)
         {
             var interact = ctx.Client.GetInteractivity();
-            var abort = DiscordEmoji.FromUnicode("🛑");
-            var lastPage = DiscordEmoji.FromUnicode("↪");
-            var firstPage = DiscordEmoji.FromUnicode("↩");
-            var previousPage = DiscordEmoji.FromUnicode("⏪");
-            var nextPage = DiscordEmoji.FromUnicode("⏩");
-            var trash = DiscordEmoji.FromUnicode("🗑");
-            var saveEdit = DiscordEmoji.FromUnicode("💾");
+            var abort = new DiscordButtonComponent(ButtonStyle.Danger, "event:edit:abort", "Cancel", emoji: new(DiscordEmoji.FromUnicode("✖")));
+            var lastPage = new DiscordButtonComponent(ButtonStyle.Secondary, "event:edit:last", "To Last Field", emoji: new(DiscordEmoji.FromUnicode("⏭")));
+            var firstPage = new DiscordButtonComponent(ButtonStyle.Secondary, "event:edit:first", "To First Field", emoji: new(DiscordEmoji.FromUnicode("⏮")));
+            var previousPage = new DiscordButtonComponent(ButtonStyle.Secondary, "event:edit:previous", "Previous", emoji: new(DiscordEmoji.FromUnicode("◀")));
+            var nextPage = new DiscordButtonComponent(ButtonStyle.Primary, "event:edit:next", "Next", emoji: new(DiscordEmoji.FromUnicode("▶")));
+            var trash = new DiscordButtonComponent(ButtonStyle.Secondary, "event:edit:trash", "Clear", emoji: new(DiscordEmoji.FromUnicode("🗑")));
+            var saveEdit = new DiscordButtonComponent(ButtonStyle.Success, "event:edit:save", "Save", emoji: new(DiscordEmoji.FromUnicode("💾")));
 
             var skipEventNameStep = !string.IsNullOrEmpty(eventName);
             DiscordMessage? msg = null;
             string? errorMsg = null;
             DiscordMessage? txt;
-            MessageReactionAddEventArgs? emoji;
+            ComponentInteractionCreateEventArgs? btn;
 
         step1:
             // step 1: get the new start date
-            var embed = FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} PST`\nBy default all times use UTC, only limited number of time zones supported");
+            saveEdit.Disabled = !evt.IsComplete();
+            var messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify a new **start date and time**")
+                .WithEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} PST`\nBy default all times use UTC, only limited number of time zones supported"))
+                .AddComponents(lastPage, nextPage)
+                .AddComponents(saveEdit, abort);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **start date and time**", embed: embed).ConfigureAwait(false);
-            var tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; // nullability code analysis workaround
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == lastPage)
+                if (btn.Id == lastPage.CustomId)
                     goto step4;
             }
             else if (txt != null)
@@ -321,7 +325,6 @@ namespace CompatBot.Commands
                 if (newTime < DateTime.UtcNow && evt.End == default)
                     errorMsg = "Specified time is in the past, are you sure it is correct?";
 
-
                 var duration = evt.End - evt.Start;
                 evt.Start = newTime.Ticks;
                 evt.End = evt.Start + duration;
@@ -332,20 +335,24 @@ namespace CompatBot.Commands
 
         step2:
             // step 2: get the new duration
-            embed = FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`");
+            saveEdit.Disabled = !evt.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify a new **event duration**")
+                .WithEmbed(FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`"))
+                .AddComponents(previousPage, nextPage)
+                .AddComponents(saveEdit, abort);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event duration**", embed: embed.Build()).ConfigureAwait(false);
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; // nullability code analysis workaround
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                     goto step1;
 
                 if (skipEventNameStep)
@@ -367,23 +374,28 @@ namespace CompatBot.Commands
 
         step3:
             // step 3: get the new event name
-            embed = FormatEvent(evt, errorMsg, 3);
+            saveEdit.Disabled = !evt.IsComplete();
+            trash.Disabled = string.IsNullOrEmpty(evt.EventName);
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify a new **event name**")
+                .WithEmbed(FormatEvent(evt, errorMsg, 3))
+                .AddComponents(previousPage, nextPage, trash)
+                .AddComponents(saveEdit, abort);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **event name**", embed: embed.Build()).ConfigureAwait(false);
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, (string.IsNullOrEmpty(evt.EventName) ? null : trash), nextPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; // nullability code analysis workaround
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                     goto step2;
 
-                if (emoji.Emoji == trash)
+                if (btn.Id == trash.CustomId)
                     evt.EventName = null;
             }
             else if (txt != null)
@@ -393,23 +405,27 @@ namespace CompatBot.Commands
 
         step4:
             // step 4: get the new schedule entry name
-            embed = FormatEvent(evt, errorMsg, 4);
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **schedule entry title**", embed: embed.Build()).ConfigureAwait(false);
+            saveEdit.Disabled = !evt.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify a new **schedule entry title**")
+                .WithEmbed(FormatEvent(evt, errorMsg, 4))
+                .AddComponents(previousPage, firstPage)
+                .AddComponents(saveEdit, abort);
             errorMsg = null;
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; // nullability code analysis workaround
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == firstPage)
+                if (btn.Id == firstPage.CustomId)
                     goto step1;
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                 {
                     if (skipEventNameStep)
                         goto step2;
@@ -433,23 +449,27 @@ namespace CompatBot.Commands
             // step 5: confirm
             if (errorMsg == null && !evt.IsComplete())
                 errorMsg = "Some required properties are not defined";
-            embed = FormatEvent(evt, errorMsg);
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
+            saveEdit.Disabled = !evt.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Does this look good? (y/n)")
+                .WithEmbed(FormatEvent(evt, errorMsg))
+                .AddComponents(previousPage, firstPage)
+                .AddComponents(saveEdit, abort);
             errorMsg = null;
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (evt.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; // nullability code analysis workaround
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                     goto step4;
 
-                if (emoji.Emoji == firstPage)
+                if (btn.Id == firstPage.CustomId)
                     goto step1;
             }
             else if (!string.IsNullOrEmpty(txt?.Content))

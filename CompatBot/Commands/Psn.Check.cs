@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -32,29 +33,66 @@ namespace CompatBot.Commands
             [Description("Checks if specified product has any updates")]
             public async Task Updates(CommandContext ctx, [RemainingText, Description("Product code such as `BLUS12345`")] string productCode)
             {
-
+                var providedId = productCode;
                 var id = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault();
-                if (string.IsNullOrEmpty(id))
+                var askForId = true;
+                DiscordMessage? botMsg = null;
+                if (string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(productCode))
                 {
-                    var botMsg = await ctx.Channel.SendMessageAsync("Please specify a valid product code (e.g. BLUS12345 or NPEB98765):").ConfigureAwait(false);
-                    var interact = ctx.Client.GetInteractivity();
-                    var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
-                    await botMsg.DeleteAsync().ConfigureAwait(false);
-
-                    if (string.IsNullOrEmpty(msg.Result?.Content))
-                        return;
-
-                    if (msg.Result.Content.StartsWith(Config.CommandPrefix) || msg.Result.Content.StartsWith(Config.AutoRemoveCommandPrefix))
-                        return;
-
-                    id = ProductCodeLookup.GetProductIds(msg.Result.Content).FirstOrDefault();
-                    if (string.IsNullOrEmpty(id))
+                    var requestBuilder = RequestBuilder.Start().SetSearch(productCode);
+                    var compatResult = CompatList.GetLocalCompatResult(requestBuilder)
+                        .GetSortedList()
+                        .Where(i => i.score > 0.8)
+                        .Take(25)
+                        .Select(i => i.code)
+                        .Batch(5)
+                        .ToList();
+                    if (compatResult.Count > 0)
                     {
-                        await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{msg.Result.Content.Trim(10).Sanitize(replaceBackTicks: true)}` is not a valid product code").ConfigureAwait(false);
-                        return;
+                        askForId = false;
+                        var messageBuilder = new DiscordMessageBuilder().WithContent("Please select correct product code from the list or specify your own:");
+                        foreach (var row in compatResult)
+                            messageBuilder.AddComponents(row.Select(c => new DiscordButtonComponent(ButtonStyle.Secondary, "psn:check:updates:" + c, c)));
+                        var interactivity = ctx.Client.GetInteractivity();
+                        botMsg = await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+                        var reaction = await interactivity.WaitForMessageOrButtonAsync(botMsg, ctx.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
+                        if (reaction.reaction?.Id is {Length: >0} selectedId)
+                            id = selectedId[^9..];
+                        else if (reaction.text?.Content is {Length: >0} customId
+                                 && !customId.StartsWith(Config.CommandPrefix)
+                                 && !customId.StartsWith(Config.AutoRemoveCommandPrefix))
+                        {
+                            botMsg = null;
+                            providedId = customId;
+                            if (customId.Length > 8)
+                                id = ProductCodeLookup.GetProductIds(customId).FirstOrDefault();
+                        }
                     }
                 }
+                if (string.IsNullOrEmpty(id) && askForId)
+                {
+                    botMsg = await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a valid product code (e.g. BLUS12345 or NPEB98765):").ConfigureAwait(false);
+                    var interact = ctx.Client.GetInteractivity();
+                    var msg = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
 
+                    if (msg.Result?.Content is {Length: > 0} customId
+                        && !customId.StartsWith(Config.CommandPrefix)
+                        && !customId.StartsWith(Config.AutoRemoveCommandPrefix))
+                    {
+                        botMsg = null;
+                        providedId = customId;
+                        if (customId.Length > 8)
+                            id = ProductCodeLookup.GetProductIds(customId).FirstOrDefault();
+                    }
+                }
+                if (string.IsNullOrEmpty(id))
+                {
+                    var msgBuilder = new DiscordMessageBuilder()
+                        .WithContent($"`{providedId.Trim(10).Sanitize(replaceBackTicks: true)}` is not a valid product code")
+                        .WithAllowedMentions(Config.AllowedMentions.Nothing);
+                    await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, msgBuilder).ConfigureAwait(false);
+                    return;
+                }
                 List<DiscordEmbedBuilder> embeds;
                 try
                 {
@@ -94,7 +132,9 @@ namespace CompatBot.Commands
                 }
                 if (embeds.Count > 1 || embeds[0].Fields.Count > 0)
                     embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
-                foreach (var embed in embeds)
+
+                await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, new DiscordMessageBuilder().WithEmbed(embeds[0])).ConfigureAwait(false);
+                foreach (var embed in embeds.Skip(1))
                     await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
 

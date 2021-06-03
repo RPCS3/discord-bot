@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CompatBot.EventHandlers;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
@@ -69,6 +70,50 @@ namespace CompatBot.Utils
             {
                 Config.Log.Warn(e, "Failed to get interactive reaction");
                 return (result, null, null);
+            }
+        }
+
+        public static async Task<(DiscordMessage? text, ComponentInteractionCreateEventArgs? reaction)> WaitForMessageOrButtonAsync(
+            this InteractivityExtension interactivity,
+            DiscordMessage message,
+            DiscordUser user,
+            TimeSpan? timeout
+        )
+        {
+            try
+            {
+                if (message.Channel is null)
+                    throw new InvalidOperationException("Provided message.Channel was null");
+                
+                var expectedChannel = message.Channel;
+                var waitButtonTask = interactivity.WaitForButtonAsync(message, user, timeout);
+                var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && m.Channel == expectedChannel && !string.IsNullOrEmpty(m.Content), timeout);
+                await Task.WhenAny(
+                    waitTextResponseTask,
+                    waitButtonTask
+                ).ConfigureAwait(false);
+                DiscordMessage? text = null;
+                ComponentInteractionCreateEventArgs? reaction = null;
+                if (waitTextResponseTask.IsCompletedSuccessfully)
+                    text = (await waitTextResponseTask).Result;
+                if (waitButtonTask.IsCompletedSuccessfully)
+                {
+                    reaction = (await waitButtonTask).Result;
+                    await reaction.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate).ConfigureAwait(false);
+                }
+                if (text != null && !message.Channel.IsPrivate)
+                    try
+                    {
+                        DeletedMessagesMonitor.RemovedByBotCache.Set(text.Id, true, DeletedMessagesMonitor.CacheRetainTime);
+                        await text.DeleteAsync().ConfigureAwait(false);
+                    }
+                    catch {}
+                return (text, reaction);                
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to get interactive reaction");
+                return (null, null);
             }
         }
     }

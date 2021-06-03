@@ -11,31 +11,23 @@ namespace CompatBot.Utils
 {
     public static class DiscordMessageExtensions
     {
-        public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null, DiscordMessage? refMsg = null)
+        public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, DiscordMessageBuilder messageBuilder)
         {
             Exception? lastException = null;
             for (var i = 0; i<3; i++)
                 try
                 {
-                    if (botMsg == null)
+                    var task = botMsg is null ? channel.SendMessageAsync(messageBuilder) : botMsg.ModifyAsync(messageBuilder);
+                    var newMsg = await task.ConfigureAwait(false);
+                    #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
+                    if (newMsg.Channel is null)
                     {
-                        var msgBuilder = new DiscordMessageBuilder()
-                            .WithContent(content)
-                            .WithEmbed(embed);
-                        if (refMsg is not null)
-                            msgBuilder.WithReply(refMsg.Id);
-                        var newMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
-                        #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
-                        if (newMsg.Channel is null)
-                        {
-                            Config.Log.Warn("new message in DM from the bot still has no channel");
-                            //newMsg.Channel = channel;
-                            var property = newMsg.GetType().GetProperty(nameof(newMsg.Channel));
-                            property?.SetValue(newMsg, channel, BindingFlags.NonPublic | BindingFlags.Instance, null, null, null);
-                        }
-                        return newMsg;
+                        Config.Log.Warn("new message in DM from the bot still has no channel");
+                        //newMsg.Channel = channel;
+                        var property = newMsg.GetType().GetProperty(nameof(newMsg.Channel));
+                        property?.SetValue(newMsg, channel, BindingFlags.NonPublic | BindingFlags.Instance, null, null, null);
                     }
-                    return await botMsg.ModifyAsync(content, embed).ConfigureAwait(false);
+                    return newMsg;
                 }
                 catch (Exception e)
                 {
@@ -46,6 +38,16 @@ namespace CompatBot.Utils
                         Task.Delay(100).ConfigureAwait(false).GetAwaiter().GetResult();
                 }
             throw lastException ?? new InvalidOperationException("Something gone horribly wrong");
+        }
+        
+        public static Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null, DiscordMessage? refMsg = null)
+        {
+            var msgBuilder = new DiscordMessageBuilder()
+                .WithContent(content)
+                .WithEmbed(embed);
+            if (refMsg is not null)
+                msgBuilder.WithReply(refMsg.Id);
+            return botMsg.UpdateOrCreateMessageAsync(channel, msgBuilder);
         }
 
         public static async Task<(Dictionary<string, Stream>? attachmentContent, List<string>? failedFilenames)> DownloadAttachmentsAsync(this DiscordMessage msg)
