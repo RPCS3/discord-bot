@@ -225,9 +225,8 @@ namespace CompatBot.Commands
                     {
                         ColorBlendingMode = PixelColorBlendingMode.Multiply,
                     };
-                    var shapeOptions = new ShapeOptions();
-                    var shapeGraphicsOptions = new ShapeGraphicsOptions(graphicsOptions, shapeOptions);
-                    var bgSgo = new ShapeGraphicsOptions(bgGop, shapeOptions);
+                    var shapeDrawingOptions = new DrawingOptions { GraphicsOptions = graphicsOptions};
+                    var bgDrawingOptions = new DrawingOptions {GraphicsOptions = bgGop,};
                     var drawnBoxes = new List<RectangleF>(objects.Count);
                     for (var i = 0; i < objects.Count; i++)
                     {
@@ -243,7 +242,7 @@ namespace CompatBot.Commands
                             WrapTextWidth = r.W - 10,
 #endif
                         };
-                        var textGraphicsOptions = new TextGraphicsOptions(fgGop, textOptions);
+                        var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop, TextOptions = textOptions};
                         //var brush = Brushes.Solid(Color.Black);
                         //var pen = Pens.Solid(color, 2);
                         var textBox = TextMeasurer.Measure(label, textRendererOptions);
@@ -253,8 +252,8 @@ namespace CompatBot.Commands
                         // object bounding box
                         try
                         {
-                            img.Mutate(ipc => ipc.Draw(shapeGraphicsOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
-                            img.Mutate(ipc => ipc.Draw(shapeGraphicsOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
+                            img.Mutate(ipc => ipc.Draw(shapeDrawingOptions, complementaryColor, scale, new RectangleF(r.X, r.Y, r.W, r.H)));
+                            img.Mutate(ipc => ipc.Draw(shapeDrawingOptions, color, scale, new RectangleF(r.X + scale, r.Y + scale, r.W - 2 * scale, r.H - 2 * scale)));
                         }
                         catch (Exception ex)
                         {
@@ -291,7 +290,7 @@ namespace CompatBot.Commands
                         var textColor = color;
                         try
                         {
-                            img.Mutate(ipc => ipc.Fill(bgSgo, textBoxColor, bgBox));
+                            img.Mutate(ipc => ipc.Fill(bgDrawingOptions, textBoxColor, bgBox));
                             img.Mutate(ipc => ipc.GaussianBlur(10 * scale, Rectangle.Round(bgBox)));
                         }
                         catch (Exception ex)
@@ -303,7 +302,7 @@ namespace CompatBot.Commands
                         try
                         {
                             var verticalOffset = RuntimeEnvironment.OperatingSystemPlatform == Platform.Windows ? bboxBorder : -bboxBorder;
-                            img.Mutate(ipc => ipc.DrawText(textGraphicsOptions, label, font, textColor, new(bgBox.X + bboxBorder, bgBox.Y + verticalOffset)));
+                            img.Mutate(ipc => ipc.DrawText(textDrawingOptions, label, font, textColor, new(bgBox.X + bboxBorder, bgBox.Y + verticalOffset)));
                         }
                         catch (Exception ex)
                         {
@@ -359,9 +358,9 @@ namespace CompatBot.Commands
 
         internal static IEnumerable<DiscordAttachment> GetImageAttachments(DiscordMessage message)
             => message.Attachments.Where(a =>
-                                             a.FileName.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
-                                             || a.FileName.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
-                                             || a.FileName.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase)
+                a.FileName.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
+                || a.FileName.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
+                || a.FileName.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase)
                 //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
