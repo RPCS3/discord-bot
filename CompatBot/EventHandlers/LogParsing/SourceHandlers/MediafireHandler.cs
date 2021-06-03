@@ -7,6 +7,7 @@ using DSharpPlus.Entities;
 using CompatBot.Utils;
 using System.IO.Pipelines;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using MediafireClient;
 
@@ -53,7 +54,8 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                         }
 
                         await using var stream = await client.GetStreamAsync(directLink).ConfigureAwait(false);
-                        var buf = BufferPool.Rent(SnoopBufferSize);
+                        //var buf = BufferPool.Rent(SnoopBufferSize);
+                        var buf = BufferPool.Rent(512*1024);
                         try
                         {
                             var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
@@ -65,13 +67,13 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
                                 else if (!string.IsNullOrEmpty(reason))
                                     return (null, reason);
                             }
+                            Config.Log.Debug("MediaFire Response:\n" + Encoding.UTF8.GetString(buf, 0, read));
                         }
                         finally
                         {
                             BufferPool.Return(buf);
                         }
                     }
-
                     catch (Exception e)
                     {
                         Config.Log.Warn(e, $"Error sniffing {m.Groups["mediafire_link"].Value}");
