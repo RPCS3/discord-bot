@@ -377,26 +377,29 @@ namespace CompatBot.Commands
         private static async Task<(bool success, DiscordMessage? message)> EditFilterPropertiesInternalAsync(CommandContext ctx, BotDb db, Piracystring filter)
         {
             var interact = ctx.Client.GetInteractivity();
-            var abort = DiscordEmoji.FromUnicode("🛑");
-            var lastPage = DiscordEmoji.FromUnicode("↪");
-            var firstPage = DiscordEmoji.FromUnicode("↩");
-            var previousPage = DiscordEmoji.FromUnicode("⏪");
-            var nextPage = DiscordEmoji.FromUnicode("⏩");
-            var trash = DiscordEmoji.FromUnicode("🗑");
-            var saveEdit = DiscordEmoji.FromUnicode("💾");
+            var abort = new DiscordButtonComponent(ButtonStyle.Danger, "filter:edit:abort", "Cancel", emoji: new(DiscordEmoji.FromUnicode("✖")));
+            var lastPage = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:last", "To Last Field", emoji: new(DiscordEmoji.FromUnicode("⏭")));
+            var firstPage = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:first", "To First Field", emoji: new(DiscordEmoji.FromUnicode("⏮")));
+            var previousPage = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:previous", "Previous", emoji: new(DiscordEmoji.FromUnicode("◀")));
+            var nextPage = new DiscordButtonComponent(ButtonStyle.Primary, "filter:edit:next", "Next", emoji: new(DiscordEmoji.FromUnicode("▶")));
+            var trash = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:trash", "Clear", emoji: new(DiscordEmoji.FromUnicode("🗑")));
+            var saveEdit = new DiscordButtonComponent(ButtonStyle.Success, "filter:edit:save", "Save", emoji: new(DiscordEmoji.FromUnicode("💾")));
 
-            var letterC = DiscordEmoji.FromUnicode("🇨");
-            var letterL = DiscordEmoji.FromUnicode("🇱");
-            var letterR = DiscordEmoji.FromUnicode("🇷");
-            var letterW = DiscordEmoji.FromUnicode("🇼");
-            var letterM = DiscordEmoji.FromUnicode("🇲");
-            var letterE = DiscordEmoji.FromUnicode("🇪");
-            var letterU = DiscordEmoji.FromUnicode("🇺");
+            var contextChat = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:context:chat", "Chat");
+            var contextLog = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:context:log", "Log");
+            var actionR = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:r", "R");
+            var actionW = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:w", "W");
+            var actionM = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:m", "M");
+            var actionE = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:e", "E");
+            var actionU = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:u", "U");
+
+            var minus = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("➖"));
+            var plus = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("➕"));
 
             DiscordMessage? msg = null;
             string? errorMsg = null;
             DiscordMessage? txt;
-            MessageReactionAddEventArgs? emoji;
+            ComponentInteractionCreateEventArgs? btn;
 
         step1:
             // step 1: define trigger string
@@ -405,19 +408,23 @@ namespace CompatBot.Commands
                     "Any simple string that is used to flag potential content for a check using Validation regex.\n" +
                     "**Must** be sufficiently long to reduce the number of checks."
                 );
+            saveEdit.Disabled = !filter.IsComplete();
+            var messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify a new **trigger**")
+                .WithEmbed(embed)
+                .AddComponents(lastPage, nextPage, saveEdit, abort);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify a new **trigger**", embed: embed).ConfigureAwait(false);
-            var tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, lastPage, nextPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; //workaround compiler warning
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == lastPage)
+                if (btn.Id == lastPage.CustomId)
                 {
                     if (filter.Actions.HasFlag(FilterAction.ShowExplain))
                         goto step6;
@@ -450,28 +457,35 @@ namespace CompatBot.Commands
                     $"**`L`** = **`{FilterContext.Log}`** will apply it during log parsing.\n" +
                     "Reactions will toggle the context, text message will set the specified flags."
                 );
+            saveEdit.Disabled = !filter.IsComplete();
+            contextChat.Emoji = filter.Context.HasFlag(FilterContext.Chat) ? minus : plus;
+            contextLog.Emoji = filter.Context.HasFlag(FilterContext.Log) ? minus : plus;
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify filter **context(s)**")
+                .WithEmbed(embed)
+                .AddComponents(previousPage, nextPage, saveEdit, abort)
+                .AddComponents(contextChat, contextLog);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **context(s)**", embed: embed).ConfigureAwait(false);
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterC, letterL, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; //workaround compiler warning
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                     goto step1;
 
-                if (emoji.Emoji == letterC)
+                if (btn.Id == contextChat.CustomId)
                 {
                     filter.Context ^= FilterContext.Chat;
                     goto step2;
                 }
 
-                if (emoji.Emoji == letterL)
+                if (btn.Id == contextLog.CustomId)
                 {
                     filter.Context ^= FilterContext.Log;
                     goto step2;
@@ -522,46 +536,56 @@ namespace CompatBot.Commands
                     $"**`U`** = **`{FilterAction.MuteModQueue}`** mute mod queue reporting for this action.\n" +
                     "Reactions will toggle the action, text message will set the specified flags."
                 );
+            actionR.Emoji = filter.Actions.HasFlag(FilterAction.RemoveContent) ? minus : plus;
+            actionW.Emoji = filter.Actions.HasFlag(FilterAction.IssueWarning) ? minus : plus;
+            actionM.Emoji = filter.Actions.HasFlag(FilterAction.SendMessage) ? minus : plus;
+            actionE.Emoji = filter.Actions.HasFlag(FilterAction.ShowExplain) ? minus : plus;
+            actionU.Emoji = filter.Actions.HasFlag(FilterAction.MuteModQueue) ? minus : plus;
+            saveEdit.Disabled = !filter.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify filter **action(s)**")
+                .WithEmbed(embed)
+                .AddComponents(previousPage, nextPage, saveEdit, abort)
+                .AddComponents(actionR, actionW, actionM, actionE, actionU);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **action(s)**", embed: embed).ConfigureAwait(false);
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, nextPage, letterR, letterW, letterM, letterE, letterU, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; //workaround compiler warning
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                     goto step2;
 
-                if (emoji.Emoji == letterR)
+                if (btn.Id == actionR.CustomId)
                 {
                     filter.Actions ^= FilterAction.RemoveContent;
                     goto step3;
                 }
 
-                if (emoji.Emoji == letterW)
+                if (btn.Id == actionW.CustomId)
                 {
                     filter.Actions ^= FilterAction.IssueWarning;
                     goto step3;
                 }
 
-                if (emoji.Emoji == letterM)
+                if (btn.Id == actionM.CustomId)
                 {
                     filter.Actions ^= FilterAction.SendMessage;
                     goto step3;
                 }
 
-                if (emoji.Emoji == letterE)
+                if (btn.Id == actionE.CustomId)
                 {
                     filter.Actions ^= FilterAction.ShowExplain;
                     goto step3;
                 }
 
-                if (emoji.Emoji == letterU)
+                if (btn.Id == actionU.CustomId)
                 {
                     filter.Actions ^= FilterAction.MuteModQueue;
                     goto step3;
@@ -632,26 +656,31 @@ namespace CompatBot.Commands
                     "**Please [test](https://regex101.com/) your regex**. Following flags are enabled: Multiline, IgnoreCase.\n" +
                     "Additional validation can help reduce false positives of a plaintext trigger match."
                 );
-            errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             var next = (filter.Actions & (FilterAction.SendMessage | FilterAction.ShowExplain)) == 0 ? firstPage : nextPage;
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (string.IsNullOrEmpty(filter.ValidatingRegex) ? null : trash), (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; //workaround compiler warning
-            if (emoji != null)
+            trash.Disabled = string.IsNullOrEmpty(filter.ValidatingRegex);
+            saveEdit.Disabled = !filter.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify filter **validation regex**")
+                .WithEmbed(embed)
+                .AddComponents(previousPage, next, trash, saveEdit, abort);
+            errorMsg = null;
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                     goto step3;
 
-                if (emoji.Emoji == firstPage)
+                if (btn.Id == firstPage.CustomId)
                     goto step1;
 
-                if (emoji.Emoji == trash)
+                if (btn.Id == trash.CustomId)
                     filter.ValidatingRegex = null;
             }
             else if (txt != null)
@@ -690,23 +719,27 @@ namespace CompatBot.Commands
                     "Optional custom message sent to the user.\n" +
                     "If left empty, default piracy warning message will be used."
                 );
-            errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **validation regex**", embed: embed).ConfigureAwait(false);
             next = (filter.Actions.HasFlag(FilterAction.ShowExplain) ? nextPage : firstPage);
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, next, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; //workaround compiler warning
-            if (emoji != null)
+            saveEdit.Disabled = !filter.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify filter **validation regex**")
+                .WithEmbed(embed)
+                .AddComponents(previousPage, next, saveEdit, abort);
+            errorMsg = null;
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                     goto step4;
 
-                if (emoji.Emoji == firstPage)
+                if (btn.Id == firstPage.CustomId)
                     goto step1;
             }
             else if (txt != null)
@@ -731,19 +764,23 @@ namespace CompatBot.Commands
                     "Explanation term that is used to show an explanation.\n" +
                     "**__Currently not implemented__**."
                 );
+            saveEdit.Disabled = !filter.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Please specify filter **explanation term**")
+                .WithEmbed(embed)
+                .AddComponents(previousPage, firstPage, saveEdit, abort);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Please specify filter **explanation term**", embed: embed).ConfigureAwait(false);
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; //workaround compiler warning
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                 {
                     if (filter.Actions.HasFlag(FilterAction.SendMessage))
                         goto step5;
@@ -751,7 +788,7 @@ namespace CompatBot.Commands
                         goto step4;
                 }
 
-                if (emoji.Emoji == firstPage)
+                if (btn.Id == firstPage.CustomId)
                     goto step1;
             }
             else if (txt != null)
@@ -778,20 +815,23 @@ namespace CompatBot.Commands
             // last step: confirm
             if (errorMsg == null && !filter.IsComplete())
                 errorMsg = "Some required properties are not defined";
-            embed = FormatFilter(filter, errorMsg);
+            saveEdit.Disabled = !filter.IsComplete();
+            messageBuilder = new DiscordMessageBuilder()
+                .WithContent("Does this look good? (y/n)")
+                .WithEmbed(FormatFilter(filter, errorMsg))
+                .AddComponents(previousPage, firstPage, saveEdit, abort);
             errorMsg = null;
-            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Does this look good? (y/n)", embed: embed.Build()).ConfigureAwait(false);
-            tmp = await interact.WaitForMessageOrReactionAsync(msg, ctx.User, InteractTimeout, abort, previousPage, firstPage, (filter.IsComplete() ? saveEdit : null)).ConfigureAwait(false);
-            (msg, txt, emoji) = tmp; //workaround compiler warning
-            if (emoji != null)
+            msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
+            (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
+            if (btn != null)
             {
-                if (emoji.Emoji == abort)
+                if (btn.Id == abort.CustomId)
                     return (false, msg);
 
-                if (emoji.Emoji == saveEdit)
+                if (btn.Id == saveEdit.CustomId)
                     return (true, msg);
 
-                if (emoji.Emoji == previousPage)
+                if (btn.Id == previousPage.CustomId)
                 {
                     if (filter.Actions.HasFlag(FilterAction.ShowExplain))
                         goto step6;
@@ -802,7 +842,7 @@ namespace CompatBot.Commands
                     goto step4;
                 }
 
-                if (emoji.Emoji == firstPage)
+                if (btn.Id == firstPage.CustomId)
                     goto step1;
             }
             else if (!string.IsNullOrEmpty(txt?.Content))

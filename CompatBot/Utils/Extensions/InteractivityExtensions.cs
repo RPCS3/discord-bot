@@ -82,6 +82,9 @@ namespace CompatBot.Utils
         {
             try
             {
+                if (message.Channel is null)
+                    throw new InvalidOperationException("Provided message.Channel was null");
+                
                 var expectedChannel = message.Channel;
                 var waitButtonTask = interactivity.WaitForButtonAsync(message, user, timeout);
                 var waitTextResponseTask = interactivity.WaitForMessageAsync(m => m.Author == user && m.Channel == expectedChannel && !string.IsNullOrEmpty(m.Content), timeout);
@@ -98,7 +101,7 @@ namespace CompatBot.Utils
                     reaction = (await waitButtonTask).Result;
                     await reaction.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate).ConfigureAwait(false);
                 }
-                if (text != null)
+                if (text != null && !message.Channel.IsPrivate)
                     try
                     {
                         DeletedMessagesMonitor.RemovedByBotCache.Set(text.Id, true, DeletedMessagesMonitor.CacheRetainTime);
