@@ -290,9 +290,13 @@ namespace CompatBot
                 client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
                 client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
                 client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
-
-                //client.ComponentInteractionCreated += ToggleBadUpdate;
-                
+#if DEBUG
+                client.ComponentInteractionCreated += (_, args) =>
+                {
+                    Config.Log.Debug($"ComponentInteraction: type: {args.Interaction.Type}, id: {args.Interaction.Data.CustomId}, user: {args.Interaction.User}");
+                    return Task.CompletedTask;
+                };
+#endif                
                 Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
 
                 try
