@@ -50,7 +50,7 @@ namespace CompatBot.Commands
                     if (compatResult.Count > 0)
                     {
                         askForId = false;
-                        var messageBuilder = new DiscordMessageBuilder().WithContent("Please select correct product code from the list or specify your own:");
+                        var messageBuilder = new DiscordMessageBuilder().WithContent("Please select correct product code from the list or specify your own");
                         foreach (var row in compatResult)
                             messageBuilder.AddComponents(row.Select(c => new DiscordButtonComponent(ButtonStyle.Secondary, "psn:check:updates:" + c, c)));
                         var interactivity = ctx.Client.GetInteractivity();
@@ -62,6 +62,7 @@ namespace CompatBot.Commands
                                  && !customId.StartsWith(Config.CommandPrefix)
                                  && !customId.StartsWith(Config.AutoRemoveCommandPrefix))
                         {
+                            try{ await botMsg.DeleteAsync().ConfigureAwait(false); } catch {}
                             botMsg = null;
                             providedId = customId;
                             if (customId.Length > 8)
@@ -79,6 +80,7 @@ namespace CompatBot.Commands
                         && !customId.StartsWith(Config.CommandPrefix)
                         && !customId.StartsWith(Config.AutoRemoveCommandPrefix))
                     {
+                        try{ await botMsg.DeleteAsync().ConfigureAwait(false); } catch {}
                         botMsg = null;
                         providedId = customId;
                         if (customId.Length > 8)
