@@ -88,12 +88,12 @@ namespace CompatBot.EventHandlers
                     var cmdMatches = (
                             from t in terms
                             from kc in knownCmds
-                            let v = (cmd: kc, w: t.GetFuzzyCoefficientCached(kc.alias), arg: normalizedTerm[t.Length ..])
+                            let v = (cmd: kc.alias, fqn: kc.fqn, w: t.GetFuzzyCoefficientCached(kc.alias), arg: normalizedTerm[t.Length ..])
                             where v.w > 0.3 && v.w < 1 // if it was a 100% match, we wouldn't be here
                             orderby v.w descending
-                            select (cmd: v.cmd.fqn, arg: v.arg)
+                            select v
                         )
-                        .Distinct()
+                        .DistinctBy(i => i.fqn)
                         .Take(4)
                         .ToList();
                     var btnCompat = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:compat", "Check game compatibility", emoji: new(DiscordEmoji.FromUnicode("🎮")));
