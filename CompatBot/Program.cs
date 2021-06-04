@@ -41,6 +41,7 @@ namespace CompatBot
             Console.WriteLine("Confinement: " + SandboxDetector.Detect());
             if (args.Length > 0 && args[0] == "--dry-run")
             {
+                await OpenSslConfigurator.CheckAndFixSystemConfigAsync().ConfigureAwait(false);
                 Console.WriteLine("Database path: " + Path.GetDirectoryName(Path.GetFullPath(DbImporter.GetDbPath("fake.db", Environment.SpecialFolder.ApplicationData))));
                 if (Assembly.GetEntryAssembly()?.GetCustomAttribute<UserSecretsIdAttribute>() != null)
                     Console.WriteLine("Bot config path: " + Path.GetDirectoryName(Path.GetFullPath(Config.GoogleApiConfigPath)));
@@ -78,10 +79,11 @@ namespace CompatBot
                     return;
                 }
 
-                await OpenSslConfigurator.CheckAndFixSystemConfigAsync().ConfigureAwait(false);
-
                 if (SandboxDetector.Detect() == SandboxType.Docker)
                 {
+                    Config.Log.Info("Checking OpenSSL system configuration...");
+                    await OpenSslConfigurator.CheckAndFixSystemConfigAsync().ConfigureAwait(false);
+                    
                     Config.Log.Info("Checking for updates...");
                     try
                     {
