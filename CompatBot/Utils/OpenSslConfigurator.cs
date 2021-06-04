@@ -24,11 +24,12 @@ namespace CompatBot.Utils
                     using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
                     content = await reader.ReadToEndAsync().ConfigureAwait(false);
                     Config.Log.Debug("openssl.cnf content:\n" + content);
-                    if (content.Contains("CipherString"))
+                    if (content.Contains("CipherString") && content.Contains("\nopenssl_conf"))
                     {
                         Config.Log.Debug("No need to configure");
                         return;
                     }
+                    stream.Seek(0, SeekOrigin.Begin);
                 }
                 else
                     stream = File.Open(configPath, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -38,9 +39,21 @@ namespace CompatBot.Utils
 
                     if (content.Length > 0)
                     {
-                        var idx = content.IndexOf("[");
+                        if (!content.Contains("\nopenssl_conf"))
+                        {
+                            var cutStart = content.IndexOf("openssl_conf");
+                            if (cutStart > 0)
+                            {
+                                var cutEnd = content.IndexOf("CipherString", cutStart);
+                                cutEnd = content.IndexOf('\n', cutEnd) + 1;
+                                content = content[..cutStart] + content[cutEnd..];
+                            }
+                        }
+                        
+                        var idx = content.IndexOf("\n[");
                         if (idx > 0)
                         {
+                            idx++;
                             await writer.WriteAsync(content[..idx]).ConfigureAwait(false);
                             content = content[idx..];
                         }
