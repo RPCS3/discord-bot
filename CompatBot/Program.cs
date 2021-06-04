@@ -78,6 +78,8 @@ namespace CompatBot
                     return;
                 }
 
+                await OpenSslConfigurator.CheckAndFixSystemConfigAsync().ConfigureAwait(false);
+
                 if (SandboxDetector.Detect() == SandboxType.Docker)
                 {
                     Config.Log.Info("Checking for updates...");
