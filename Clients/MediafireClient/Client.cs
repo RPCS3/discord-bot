@@ -1,6 +1,9 @@
 ﻿using System;
+using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -26,7 +29,7 @@ namespace MediafireClient
         public Client()
         {
             client = HttpClientFactory.Create(new CompressionMessageHandler());
-            jsonOptions = new JsonSerializerOptions
+            jsonOptions = new()
             {
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
                 IgnoreNullValues = true,
@@ -66,13 +69,20 @@ namespace MediafireClient
                 using var message = new HttpRequestMessage(HttpMethod.Get, webLink);
                 message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
                 using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                if (response.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.TemporaryRedirect)
+                {
+                    var newLocation = response.Headers.Location;
+                    ApiConfig.Log.Warn($"Unexpected redirect from {webLink} to {newLocation}");
+                    return null;
+                }
+                
                 try
                 {
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                     var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                     var m = DirectUrlRegex.Match(html);
                     if (m.Success)
-                        return new Uri(m.Groups["direct_link"].Value);
+                        return new(m.Groups["direct_link"].Value);
                 }
                 catch (Exception e)
                 {
