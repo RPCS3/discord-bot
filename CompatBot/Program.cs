@@ -296,7 +296,9 @@ namespace CompatBot
                     Config.Log.Debug($"ComponentInteraction: type: {args.Interaction.Type}, id: {args.Interaction.Data.CustomId}, user: {args.Interaction.User}");
                     return Task.CompletedTask;
                 };
-#endif                
+#endif
+                client.ComponentInteractionCreated += GlobalButtonHandler.OnComponentInteraction;
+                
                 Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
 
                 try

@@ -255,7 +255,7 @@ namespace CompatBot.Commands
                             return;
                         }
 
-                        await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, new List<string> {productCode.ProductCode}).ConfigureAwait(false);
+                        await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, new() {productCode.ProductCode}).ConfigureAwait(false);
                         break;
                     }
                     default:
