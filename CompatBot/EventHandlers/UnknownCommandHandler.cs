@@ -107,7 +107,7 @@ namespace CompatBot.EventHandlers
                     if (cmdMatches.Count > 0)
                     {
                         var btnSuggest = cmdMatches.Select((m, i) =>
-                            new DiscordButtonComponent(i == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.cmd + m.arg, emoji: cmdEmoji));
+                            new DiscordButtonComponent(i == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.fqn + m.arg, emoji: cmdEmoji));
                         foreach (var btn in btnSuggest)
                             msgBuilder.AddComponents(btn);
                     }
