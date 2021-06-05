@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
@@ -50,10 +51,10 @@ namespace CompatBot.EventHandlers
             if (codesToLookup.Count == 0)
                 return;
 
-            await LookupAndPostProductCodeEmbedAsync(c, args.Message, codesToLookup).ConfigureAwait(false);
+            await LookupAndPostProductCodeEmbedAsync(c, args.Message, args.Channel, codesToLookup).ConfigureAwait(false);
         }
 
-        public static async Task LookupAndPostProductCodeEmbedAsync(DiscordClient client, DiscordMessage message, List<string> codesToLookup)
+        public static async Task LookupAndPostProductCodeEmbedAsync(DiscordClient client, DiscordMessage message, DiscordChannel channel, List<string> codesToLookup)
         {
             await message.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
             try
@@ -61,11 +62,11 @@ namespace CompatBot.EventHandlers
                 var results = new List<(string code, Task<DiscordEmbedBuilder> task)>(codesToLookup.Count);
                 foreach (var code in codesToLookup)
                     results.Add((code, client.LookupGameInfoAsync(code)));
-                var formattedResults = new List<DiscordEmbedBuilder>(results.Count);
+                var formattedResults = new List<(string code, DiscordEmbedBuilder builder)>(results.Count);
                 foreach (var (code, task) in results)
                     try
                     {
-                        formattedResults.Add(await task.ConfigureAwait(false));
+                        formattedResults.Add((code, await task.ConfigureAwait(false)));
                     }
                     catch (Exception e)
                     {
@@ -73,16 +74,20 @@ namespace CompatBot.EventHandlers
                     }
 
                 // get only results with unique titles
-                formattedResults = formattedResults.GroupBy(e => e.Title).Select(g => g.First()).ToList();
+                formattedResults = formattedResults.DistinctBy(e => e.builder.Title).ToList();
+                var lookupEmoji = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("🔍"));
                 foreach (var result in formattedResults)
                     try
                     {
-                        await FixAfrikaAsync(client, message, result).ConfigureAwait(false);
-                        await message.Channel.SendMessageAsync(embed: result).ConfigureAwait(false);
+                        await FixAfrikaAsync(client, message, result.builder).ConfigureAwait(false);
+                        var messageBuilder = new DiscordMessageBuilder().WithEmbed(result.builder);
+                        if (LimitedToSpamChannel.IsSpamChannel(channel))
+                            messageBuilder.AddComponents(new DiscordButtonComponent(ButtonStyle.Secondary, $"replace with game updates:{message.Author.Id}:{message.Id}:{result.code}", "Check game updates instead", emoji: lookupEmoji));
+                        await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
-                        Config.Log.Warn(e, $"Couldn't post result for {result.Title}");
+                        Config.Log.Warn(e, $"Couldn't post result for {result.code} ({result.builder.Title})");
                     }
             }
             finally

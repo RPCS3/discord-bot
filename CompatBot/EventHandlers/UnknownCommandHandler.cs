@@ -89,25 +89,25 @@ namespace CompatBot.EventHandlers
                             from t in terms
                             from kc in knownCmds
                             let v = (cmd: kc.alias, fqn: kc.fqn, w: t.GetFuzzyCoefficientCached(kc.alias), arg: normalizedTerm[t.Length ..])
-                            where v.w > 0.3 && v.w < 1 // if it was a 100% match, we wouldn't be here
+                            where v.w is >0.5 and <1 // if it was a 100% match, we wouldn't be here
                             orderby v.w descending
                             select v
                         )
                         .DistinctBy(i => i.fqn)
                         .Take(4)
                         .ToList();
-                    var btnCompat = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:compat", "Check game compatibility", emoji: new(DiscordEmoji.FromUnicode("🎮")));
-                    var btnExplain = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:explain", "Look up an explanation", emoji: new(DiscordEmoji.FromUnicode("🔖")));
-                    var btnHelp = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:help", "Show available commands", emoji: new(DiscordEmoji.FromUnicode("🤖")));
+                    var btnExplain = new DiscordButtonComponent(cmdMatches.Count == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:explain", "Explain this", emoji: new(DiscordEmoji.FromUnicode("🔍")));
+                    var btnCompat = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:compat", "Is this game playable?", emoji: new(DiscordEmoji.FromUnicode("🔍")));
+                    var btnHelp = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:help", "Show bot commands", emoji: new(DiscordEmoji.FromUnicode("❔")));
                     var btnCancel = new DiscordButtonComponent(ButtonStyle.Danger, "unk:cmd:cancel", "Ignore", emoji: new(DiscordEmoji.FromUnicode("✖")));
-                    var cmdEmoji = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("💬"));
+                    var cmdEmoji = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("🤖"));
                     var msgBuilder = new DiscordMessageBuilder()
                         .WithContent("I'm afraid the intended command didn't spell out quite right")
-                        .AddComponents(btnCompat, btnExplain, btnHelp, btnCancel);
+                        .AddComponents(btnExplain, btnCompat, btnHelp, btnCancel);
                     if (cmdMatches.Count > 0)
                     {
                         var btnSuggest = cmdMatches.Select((m, i) =>
-                            new DiscordButtonComponent(i == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.cmd + m.arg, emoji: cmdEmoji));
+                            new DiscordButtonComponent(i == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.fqn + m.arg, emoji: cmdEmoji));
                         foreach (var btn in btnSuggest)
                             msgBuilder.AddComponents(btn);
                     }

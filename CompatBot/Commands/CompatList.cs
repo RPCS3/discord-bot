@@ -96,7 +96,7 @@ namespace CompatBot.Commands
             var productCodes = ProductCodeLookup.GetProductIds(ctx.Message.Content);
             if (productCodes.Any())
             {
-                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, productCodes).ConfigureAwait(false);
+                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, productCodes).ConfigureAwait(false);
                 return;
             }
 
@@ -291,12 +291,12 @@ namespace CompatBot.Commands
                     await using var db = new BotDb();
                     var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
                     if (currentState == null)
-                        await db.BotState.AddAsync(new BotState {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr}).ConfigureAwait(false);
+                        await db.BotState.AddAsync(new() {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr}).ConfigureAwait(false);
                     else
                         currentState.Value = latestUpdatePr;
                     var savedLastBuild = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateBuildKey).ConfigureAwait(false);
                     if (savedLastBuild == null)
-                        await db.BotState.AddAsync(new BotState {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild}).ConfigureAwait(false);
+                        await db.BotState.AddAsync(new() {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild}).ConfigureAwait(false);
                     else
                         savedLastBuild.Value = latestUpdateBuild;
                     await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -358,28 +358,28 @@ namespace CompatBot.Commands
                         var buildTime = masterBuildInfo?.FinishTime;
                         if (masterBuildInfo != null)
                         {
-                            updateInfo = new UpdateInfo
+                            updateInfo = new()
                             {
                                 ReturnCode = 1,
-                                LatestBuild = new BuildInfo
+                                LatestBuild = new()
                                 {
                                     Datetime = buildTime?.ToString("yyyy-MM-dd HH:mm:ss"),
                                     Pr = mergedPr.Number,
-                                    Windows = new BuildLink {Download = masterBuildInfo.WindowsBuildDownloadLink ?? ""},
-                                    Linux = new BuildLink {Download = masterBuildInfo.LinuxBuildDownloadLink ?? ""},
+                                    Windows = new() {Download = masterBuildInfo.WindowsBuildDownloadLink ?? ""},
+                                    Linux = new() {Download = masterBuildInfo.LinuxBuildDownloadLink ?? ""},
                                 },
                             };
                         }
                         else
                         {
-                            updateInfo = new UpdateInfo
+                            updateInfo = new()
                             {
                                 ReturnCode = 1,
-                                LatestBuild = new BuildInfo
+                                LatestBuild = new()
                                 {
                                     Pr = mergedPr.Number,
-                                    Windows = new BuildLink {Download = ""},
-                                    Linux = new BuildLink {Download = ""},
+                                    Windows = new() {Download = ""},
+                                    Linux = new() {Download = ""},
                                 },
                             };
                         }
@@ -430,7 +430,7 @@ namespace CompatBot.Commands
 #endif
             var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
             if (result?.Results?.Count == 1)
-                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, new List<string>(result.Results.Keys)).ConfigureAwait(false);
+                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, new(result.Results.Keys)).ConfigureAwait(false);
             else if (result != null)
                 foreach (var msg in FormatSearchResults(ctx, result))
                     await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
@@ -555,7 +555,7 @@ namespace CompatBot.Commands
                     && await Client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false) is {} compatItemSearchResult
                     && compatItemSearchResult.Results.TryGetValue(productCode, out var compatItem))
                 {
-                    dbItem = (await db.Thumbnail.AddAsync(new Thumbnail
+                    dbItem = (await db.Thumbnail.AddAsync(new()
                     {
                         ProductCode = productCode,
                         Name = compatItem.Title,
@@ -564,7 +564,7 @@ namespace CompatBot.Commands
                 if (dbItem is null)
                 {
                     Config.Log.Debug($"Missing product code {productCode} in {nameof(ThumbnailDb)}");
-                    dbItem = new Thumbnail();
+                    dbItem = new();
                 }
                 if (Enum.TryParse(info.Status, out CompatStatus status))
                 {
@@ -680,7 +680,7 @@ namespace CompatBot.Commands
                         {
                             var dbItem = await db.Thumbnail.FirstOrDefaultAsync(i => i.ProductCode == productCode).ConfigureAwait(false);
                             if (dbItem is null)
-                                dbItem = (await db.Thumbnail.AddAsync(new Thumbnail
+                                dbItem = (await db.Thumbnail.AddAsync(new()
                                 {
                                     ProductCode = productCode,
                                     Name = titleInfo.Title,

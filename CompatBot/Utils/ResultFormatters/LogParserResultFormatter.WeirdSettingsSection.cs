@@ -375,12 +375,27 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["game_title"] != "vsh.self")
                     notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
             }
-            if (items["library_list_lle"] is string lleLibList && lleLibList != "None"
-                || items["library_list_hle"] is string hleLibList && hleLibList != "None")
-                notes.Add("⚠ Please disable any Firmware Libraries overrides");
-            if (items["library_list_lle"] is string lleLibs && lleLibs.Contains("sysutil"))
-                notes.Add("❗ Never override `sysutil` firmware modules");
+            bool warnLibraryOverrides = items["library_list_hle"] is string hleLibList && hleLibList != "None";
+            if (items["library_list_lle"] is string lleLibList && lleLibList != "None")
+            {
+                if (lleLibList.Contains("sysutil"))
+                    notes.Add("❗ Never override `sysutil` firmware modules");
 
+                if (lleLibList.Contains("libvdec"))
+                {
+                    var weirdModules = lleLibList.Split(',', StringSplitOptions.TrimEntries).Except(new[] {"libvdec.sprx"}).ToArray();
+                    if (weirdModules.Length > 0)
+                    {
+                        notes.Add("⚠ Please do not override Firmware Libraries that you weren't asked to");
+                        warnLibraryOverrides = false;
+                    }
+                }
+                else
+                    warnLibraryOverrides = true;
+            }
+            if (warnLibraryOverrides)
+                notes.Add("⚠ Please disable any Firmware Libraries overrides");
+            
             if (!string.IsNullOrEmpty(serial))
             {
                 CheckP5Settings(serial, items, notes, generalNotes, ppuHashes, ppuPatches, patchNames);
