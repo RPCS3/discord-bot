@@ -135,9 +135,17 @@ namespace CompatBot.Commands
                 if (embeds.Count > 1 || embeds[0].Fields.Count > 0)
                     embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
 
-                await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, new DiscordMessageBuilder().WithEmbed(embeds[0])).ConfigureAwait(false);
+                var resultMsgBuilder = new DiscordMessageBuilder()
+                    .WithEmbed(embeds[0])
+                    .WithReply(ctx.Message.Id);
+                await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, resultMsgBuilder).ConfigureAwait(false);
                 foreach (var embed in embeds.Skip(1))
-                    await ctx.RespondAsync(embed).ConfigureAwait(false);
+                {
+                    resultMsgBuilder = new DiscordMessageBuilder()
+                        .WithEmbed(embed)
+                        .WithReply(ctx.Message.Id);
+                    await ctx.Channel.SendMessageAsync(resultMsgBuilder).ConfigureAwait(false);
+                }
             }
 
             [Command("content"), Hidden]
