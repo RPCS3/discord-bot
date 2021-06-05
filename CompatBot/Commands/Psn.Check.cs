@@ -137,7 +137,7 @@ namespace CompatBot.Commands
 
                 await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, new DiscordMessageBuilder().WithEmbed(embeds[0])).ConfigureAwait(false);
                 foreach (var embed in embeds.Skip(1))
-                    await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
+                    await ctx.RespondAsync(embed).ConfigureAwait(false);
             }
 
             [Command("content"), Hidden]
