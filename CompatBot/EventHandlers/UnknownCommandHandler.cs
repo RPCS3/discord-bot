@@ -63,10 +63,10 @@ namespace CompatBot.EventHandlers
                     return;
                 }
 
-                if (cnfe.CommandName.Length < 3)
-                    return;
-
                 var content = e.Context.Message.Content;
+                if (content is null or {Length: <3})
+                    return;
+                
                 var pos = content?.IndexOf(cnfe.CommandName) ?? -1;
                 if (pos < 0)
                     return;
@@ -106,8 +106,7 @@ namespace CompatBot.EventHandlers
                         .AddComponents(btnExplain, btnCompat, btnHelp, btnCancel);
                     if (cmdMatches.Count > 0)
                     {
-                        var btnSuggest = cmdMatches.Select((m, i) =>
-                            new DiscordButtonComponent(i == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.fqn + m.arg, emoji: cmdEmoji));
+                        var btnSuggest = cmdMatches.Select((m, i) => new DiscordButtonComponent(i == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.fqn + m.arg, emoji: cmdEmoji));
                         foreach (var btn in btnSuggest)
                             msgBuilder.AddComponents(btn);
                     }
@@ -132,14 +131,7 @@ namespace CompatBot.EventHandlers
                             newArg = cmdMatches.First(m => m.cmd == newCmd).arg;
                         }
                     }
-                    try
-                    {
-                        await botMsg.DeleteAsync().ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                    }
-
+                    try { await botMsg.DeleteAsync().ConfigureAwait(false); } catch { }
                     if (newCmd is not null)
                     {
                         var botCommand = cne.FindCommand(newCmd, out _);
