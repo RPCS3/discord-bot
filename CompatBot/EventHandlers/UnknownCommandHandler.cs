@@ -63,10 +63,10 @@ namespace CompatBot.EventHandlers
                     return;
                 }
 
-                if (cnfe.CommandName.Length < 3)
-                    return;
-
                 var content = e.Context.Message.Content;
+                if (content is null or {Length: <3})
+                    return;
+                
                 var pos = content?.IndexOf(cnfe.CommandName) ?? -1;
                 if (pos < 0)
                     return;
