@@ -55,36 +55,23 @@ namespace CompatBot.EventHandlers
                         cmd,
                         e.Context.Message.Content[e.Context.Prefix.Length ..].Trim()
                     );
-                    try
-                    {
-                        await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false);
-                    }
-                    catch { }
+                    try { await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false); } catch { }
                     return;
                 }
 
                 var content = e.Context.Message.Content;
                 if (content is null or {Length: <3})
                     return;
-                
-                var pos = content?.IndexOf(cnfe.CommandName) ?? -1;
-                if (pos < 0)
-                    return;
 
-                var gameTitle = content![pos..].TrimEager().Trim(40);
-                if (string.IsNullOrEmpty(gameTitle) || char.IsPunctuation(gameTitle[0]))
-                    return;
-
-                var term = gameTitle.ToLowerInvariant();
                 if (e.Context.Prefix == Config.CommandPrefix)
                 {
                     var knownCmds = GetAllRegisteredCommands(e.Context);
-                    var termParts = term.Split(' ', 4, StringSplitOptions.RemoveEmptyEntries);
+                    var termParts = content.Split(' ', 4, StringSplitOptions.RemoveEmptyEntries);
                     var normalizedTerm = string.Join(' ', termParts);
                     var terms = new string[termParts.Length];
-                    terms[0] = termParts[0];
+                    terms[0] = termParts[0].ToLowerInvariant();
                     for (var i = 1; i < termParts.Length; i++)
-                        terms[i] = terms[i - 1] + ' ' + termParts[i];
+                        terms[i] = terms[i - 1] + ' ' + termParts[i].ToLowerInvariant();
                     var cmdMatches = (
                             from t in terms
                             from kc in knownCmds
@@ -113,7 +100,7 @@ namespace CompatBot.EventHandlers
                     var interactivity = cne.Client.GetInteractivity();
                     var botMsg = await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, e.Context.Channel, msgBuilder).ConfigureAwait(false);
                     var (_, reaction) = await interactivity.WaitForMessageOrButtonAsync(botMsg, e.Context.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
-                    string? newCmd = null, newArg = term;
+                    string? newCmd = null, newArg = content;
                     if (reaction?.Id is string btnId)
                     {
                         if (btnId == btnCompat.CustomId)
