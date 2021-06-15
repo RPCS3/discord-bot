@@ -15,7 +15,6 @@ namespace CompatBot
 {
     internal static class Watchdog
     {
-        private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
         public static readonly ConcurrentQueue<DateTime> DisconnectTimestamps = new();
         public static readonly Stopwatch TimeSinceLastIncomingMessage = Stopwatch.StartNew();
         private static bool IsOk => DisconnectTimestamps.IsEmpty && TimeSinceLastIncomingMessage.Elapsed < Config.IncomingMessageCheckIntervalInMin;
@@ -26,7 +25,7 @@ namespace CompatBot
             discordClient = client;
             do
             {
-                await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
+                await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
                 foreach (var sudoer in ModProvider.Mods.Values.Where(m => m.Sudoer))
                 {
                     var user = await client.GetUserAsync(sudoer.DiscordId).ConfigureAwait(false);
@@ -49,7 +48,7 @@ namespace CompatBot
                     Config.TelemetryClient?.TrackEvent("socket-deadlock-potential");
                     Config.Log.Warn("Potential socket deadlock detected, reconnecting...");
                     await client.ReconnectAsync(true).ConfigureAwait(false);
-                    await Task.Delay(CheckInterval, Config.Cts.Token).ConfigureAwait(false);
+                    await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
                     if (IsOk)
                     {
                         Config.Log.Info("Looks like we're back in business");
