@@ -62,7 +62,7 @@ namespace CompatBot.Commands
                     await ctx.ReactWithAsync(Config.Reactions.Success, "Set variable successfully").ConfigureAwait(false);
                 }
 
-                [Command("clear"), Aliases("unset", "remove")]
+                [Command("clear"), Aliases("unset", "remove", "reset")]
                 [Description("Removes configuration variable")]
                 public async Task Clear(CommandContext ctx, string key)
                 {
