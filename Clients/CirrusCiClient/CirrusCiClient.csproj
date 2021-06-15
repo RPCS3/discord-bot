@@ -13,8 +13,8 @@
       <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-      <PackageReference Include="StrawberryShake.CodeGeneration.CSharp.Analyzers" Version="11.2.2" />
-      <PackageReference Include="StrawberryShake.Transport.Http" Version="11.2.2" />
+      <PackageReference Include="StrawberryShake.CodeGeneration.CSharp.Analyzers" Version="11.3.0" />
+      <PackageReference Include="StrawberryShake.Transport.Http" Version="11.3.0" />
     </ItemGroup>
 
 </Project>
