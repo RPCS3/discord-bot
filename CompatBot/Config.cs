@@ -57,6 +57,7 @@ namespace CompatBot
 
         public static TimeSpan ModerationBacklogThresholdInHours => TimeSpan.FromHours(config.GetValue(nameof(ModerationBacklogThresholdInHours), 1));
         public static TimeSpan DefaultTimeoutInSec => TimeSpan.FromSeconds(config.GetValue(nameof(DefaultTimeoutInSec), 30));
+        public static TimeSpan SocketDisconnectCheckIntervalInSec => TimeSpan.FromSeconds(config.GetValue(nameof(SocketDisconnectCheckIntervalInSec), 10));
         public static TimeSpan LogParsingTimeoutInSec => TimeSpan.FromSeconds(config.GetValue(nameof(LogParsingTimeoutInSec), 30));
         public static TimeSpan BuildTimeDifferenceForOutdatedBuildsInDays => TimeSpan.FromDays(config.GetValue(nameof(BuildTimeDifferenceForOutdatedBuildsInDays), 3));
         public static TimeSpan ShutupTimeLimitInMin => TimeSpan.FromMinutes(config.GetValue(nameof(ShutupTimeLimitInMin), 5));
