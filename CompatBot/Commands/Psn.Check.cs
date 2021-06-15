@@ -50,7 +50,9 @@ namespace CompatBot.Commands
                     if (compatResult.Count > 0)
                     {
                         askForId = false;
-                        var messageBuilder = new DiscordMessageBuilder().WithContent("Please select correct product code from the list or specify your own");
+                        var messageBuilder = new DiscordMessageBuilder()
+                            .WithContent("Please select correct product code from the list or specify your own")
+                            .WithReply(ctx.Message.Id);
                         foreach (var row in compatResult)
                             messageBuilder.AddComponents(row.Select(c => new DiscordButtonComponent(ButtonStyle.Secondary, "psn:check:updates:" + c, c)));
                         var interactivity = ctx.Client.GetInteractivity();

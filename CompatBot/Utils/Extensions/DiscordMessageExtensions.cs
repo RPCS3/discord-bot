@@ -17,7 +17,19 @@ namespace CompatBot.Utils
             for (var i = 0; i<3; i++)
                 try
                 {
-                    var task = botMsg is null ? channel.SendMessageAsync(messageBuilder) : botMsg.ModifyAsync(messageBuilder);
+                    Task<DiscordMessage> task;
+                    if (botMsg is null)
+                        task = channel.SendMessageAsync(messageBuilder);
+                    else
+                    {
+                        if (messageBuilder.ReplyId is not null)
+                        {
+                            #warning Ugly hack, needs property reset method in the builder
+                            var property = messageBuilder.GetType().GetProperty(nameof(messageBuilder.ReplyId));
+                            property?.SetValue(messageBuilder, null, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, null, null);
+                        }
+                        task = botMsg.ModifyAsync(messageBuilder);
+                    }
                     var newMsg = await task.ConfigureAwait(false);
                     #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
                     if (newMsg.Channel is null)
