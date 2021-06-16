@@ -699,17 +699,20 @@ namespace CompatBot.Utils.ResultFormatters
                 8 => "7",
                 9 => "8",
                 10 => "8.1",
-                >= 20 and < 30 => (driverVer.Major % 10) switch
+                >= 20 and < 40 => driverVer.Major switch
                 {
                     // see https://en.wikipedia.org/wiki/Windows_Display_Driver_Model#WDDM_2.0
-                    0 => "10",
-                    1 => "10 1607",
-                    2 => "10 1703",
-                    3 => "10 1709",
-                    4 => "10 1803",
-                    5 => "10 1809",
-                    6 => "10 1903",
-                    7 => "10 2004",
+                    20 => "10",
+                    21 => "10 1607",
+                    22 => "10 1703",
+                    23 => "10 1709",
+                    24 => "10 1803",
+                    25 => "10 1809",
+                    26 => "10 1903",
+                    27 => "10 2004",
+                    28 => "10 20H1 Preview",
+                    29 => "10 21H1",
+                    30 => "10 21H2",
                     _ => null,
                 },
                 _ => null,
@@ -758,7 +761,8 @@ namespace CompatBot.Utils.ResultFormatters
                     19042 => "10 20H2",
                     19043 => "10 21H1",
                     < 19536 => "10 Beta Build " + windowsVersion.Build,
-                    _ => "10 Dev Build " + windowsVersion.Build
+                    < 22000 => "10 Dev Build " + windowsVersion.Build,
+                    _ => "11 Internal Build " + windowsVersion.Build,
                 },
                 _ => null,
             };
@@ -769,7 +773,7 @@ namespace CompatBot.Utils.ResultFormatters
                 return null;
             
             var kernelVersion = release;
-            if (LinuxKernelVersion.Match(release) is Match m && m.Success)
+            if (LinuxKernelVersion.Match(release) is {Success: true} m)
                 kernelVersion = m.Groups["version"].Value;
             if (version.Contains("Ubuntu", StringComparison.InvariantCultureIgnoreCase))
                 return "Ubuntu " + kernelVersion;
