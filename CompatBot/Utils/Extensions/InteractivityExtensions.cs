@@ -100,7 +100,7 @@ namespace CompatBot.Utils
                 {
                     reaction = (await waitButtonTask).Result;
                     if (reaction is not null)
-                        await reaction.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate).ConfigureAwait(false);
+                        await reaction.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
                 }
                 if (text != null && !message.Channel.IsPrivate)
                     try

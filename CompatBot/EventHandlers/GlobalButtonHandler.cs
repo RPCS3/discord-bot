@@ -36,7 +36,7 @@ namespace CompatBot.EventHandlers
                         return;
                     
                     e.Handled = true;
-                    await e.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate).ConfigureAwait(false);
+                    await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
                     await e.Message.DeleteAsync().ConfigureAwait(false);
                     var refMsg = await e.Channel.GetMessageAsync(refMsgId).ConfigureAwait(false);
                     var cne = sender.GetCommandsNext();
