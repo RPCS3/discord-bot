@@ -137,9 +137,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
 
             var category = items["game_category"];
-            if (category == "PE"
-                || category == "PP"
-                || serial.StartsWith('U') && ProductCodeLookup.ProductCode.IsMatch(serial))
+            if (category is "PE" or "PP" || serial.StartsWith('U') && ProductCodeLookup.ProductCode.IsMatch(serial))
             {
                 builder.Color = Config.Colors.CompatStatusNothing;
                 notes.Add("❌ PSP software is not supported");
@@ -149,7 +147,7 @@ namespace CompatBot.Utils.ResultFormatters
                 builder.Color = Config.Colors.CompatStatusNothing;
                 notes.Add("❌ Minis are not supported");
             }
-            if (category == "2G" || category == "2P" || category == "2D")
+            if (category is "2G" or "2P" or "2D")
             {
                 builder.Color = Config.Colors.CompatStatusNothing;
                 notes.Add("❌ PS2 software is not supported");
@@ -256,14 +254,14 @@ namespace CompatBot.Utils.ResultFormatters
             var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
             if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
             {
-                if (IntelGpuModel.Match(gpuInfo) is Match {Success: true} intelMatch)
+                if (IntelGpuModel.Match(gpuInfo) is {Success: true} intelMatch)
                 {
                     var family = intelMatch.Groups["gpu_family"].Value.TrimEnd();
                     var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
                     if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
                         modelNumber = modelNumber[1..];
                     _ = int.TryParse(modelNumber, out var modelNumberInt);
-                    if (family == "UHD" || family == "Iris Plus" || family == "Iris Xe" || modelNumberInt > 500 && modelNumberInt < 1000)
+                    if (family is "UHD" or "Iris Plus" or "Iris Xe" || modelNumberInt is > 500 and < 1000)
                         notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
                     else
                     {
@@ -279,6 +277,7 @@ namespace CompatBot.Utils.ResultFormatters
                     if (Version.TryParse(driverVersionString, out var driverVersion)
                         && Version.TryParse(items["build_full_version"], out var buildVersion))
                     {
+                        items["driver_version_parsed"] = driverVersion.ToString();
                         if (IsNvidia(gpuInfo))
                         {
                             var isWindows = items["os_type"] is string os && os != "Linux";
@@ -369,7 +368,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (items["game_category"] == "GD")
                 notes.Add($"❔ Game was booted through the Game Data");
 */
-            if (category == "DG" || category == "GD") // only disc games should install game data
+            if (category is "DG" or "GD") // only disc games should install game data
             {
                 discInsideGame |= !string.IsNullOrEmpty(items["ldr_disc"]) && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
                 discAsPkg |= items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false;
@@ -399,9 +398,7 @@ namespace CompatBot.Utils.ResultFormatters
             var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
             var buildBranch = items["build_branch"]?.ToLowerInvariant();
             if (updateInfo != null
-                && (buildBranch == "head"
-                    || buildBranch == "spu_perf"
-                    || string.IsNullOrEmpty(buildBranch) && updateInfo.CurrentBuild != null))
+                && (buildBranch is "head" or "spu_perf" || string.IsNullOrEmpty(buildBranch) && updateInfo.CurrentBuild != null))
             {
                 string prefix = "⚠";
                 string timeDeltaStr;
