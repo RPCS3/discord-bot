@@ -130,7 +130,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["12:"] = new(@"(D3D12|DirectX 12):\s*\r?\n\s*Adapter: (?<d3d_gpu>.*?)\r?$", DefaultOptions),
                     ["Vulkan:"] = new(@"Vulkan:\s*\r?\n\s*Adapter: (?<vulkan_gpu>.*?)\r?$", DefaultOptions),
                     ["Force FIFO present mode:"] = new(@"Force FIFO present mode: (?<force_fifo_present>.*?)\r?$", DefaultOptions),
-                    ["Asynchronous Texture Streaming:"] = new(@"Asynchronous Texture Streaming: (?<async_texture_streaming>.*?)\r?$", DefaultOptions),
+                    ["Asynchronous Texture Streaming"] = new(@"Asynchronous Texture Streaming( 2)?: (?<async_texture_streaming>.*?)\r?$", DefaultOptions),
                     ["Asynchronous Queue Scheduler:"] = new(@"Asynchronous Queue Scheduler: (?<async_queue_scheduler>.*?)\r?$", DefaultOptions),
                 },
                 EndTrigger = new[] {"Audio:"},
