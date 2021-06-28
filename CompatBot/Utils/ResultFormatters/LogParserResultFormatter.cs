@@ -760,9 +760,10 @@ namespace CompatBot.Utils.ResultFormatters
                     19041 => "10 2004",
                     19042 => "10 20H2",
                     19043 => "10 21H1",
-                    < 19536 => "10 Beta Build " + windowsVersion.Build,
-                    < 22000 => "10 Dev Build " + windowsVersion.Build,
-                    _ => "11 Internal Build " + windowsVersion.Build,
+                    < 21390 => "10 Dev Build " + windowsVersion.Build,
+                    21390 => "10 21H2",
+                    < 22000 => "11 Internal Build " + windowsVersion.Build,
+                    _ => "11 Dev Build " + windowsVersion.Build,
                 },
                 _ => null,
             };
