@@ -44,7 +44,7 @@ namespace CompatBot.Utils
                 catch (Exception e)
                 {
                     lastException = e;
-                    if (i == 2)
+                    if (i == 2 || e is NullReferenceException)
                         Config.Log.Error(e);
                     else
                         Task.Delay(100).ConfigureAwait(false).GetAwaiter().GetResult();
