@@ -45,18 +45,24 @@ namespace CompatBot.Utils
                 {
                     lastException = e;
                     if (i == 2 || e is NullReferenceException)
+                    {
                         Config.Log.Error(e);
-                    else
-                        Task.Delay(100).ConfigureAwait(false).GetAwaiter().GetResult();
+                        if (botMsg is not null)
+                            try { await botMsg.DeleteAsync().ConfigureAwait(false); } catch { }
+                        return await channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
+                    }
+                    Task.Delay(100).ConfigureAwait(false).GetAwaiter().GetResult();
                 }
             throw lastException ?? new InvalidOperationException("Something gone horribly wrong");
         }
-        
+
         public static Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, string? content = null, DiscordEmbed? embed = null, DiscordMessage? refMsg = null)
         {
-            var msgBuilder = new DiscordMessageBuilder()
-                .WithContent(content)
-                .WithEmbed(embed);
+            var msgBuilder = new DiscordMessageBuilder();
+            if (content is {Length: >0})
+                msgBuilder.WithContent(content);
+            if (embed is not null)
+                msgBuilder.WithEmbed(embed);
             if (refMsg is not null)
                 msgBuilder.WithReply(refMsg.Id);
             return botMsg.UpdateOrCreateMessageAsync(channel, msgBuilder);
