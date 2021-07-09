@@ -100,7 +100,7 @@ namespace CompatBot.Commands
             try
             {
                 await using var db = new BotDb();
-                var warningsToRemove = await db.Warning.Where(w => w.DiscordId == userId).ToListAsync().ConfigureAwait(false);
+                var warningsToRemove = await db.Warning.Where(w => w.DiscordId == userId && !w.Retracted).ToListAsync().ConfigureAwait(false);
                 foreach (var w in warningsToRemove)
                 {
                     w.Retracted = true;
