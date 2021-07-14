@@ -424,6 +424,7 @@ namespace CompatBot.Utils.ResultFormatters
                 CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
                 CheckGt5Settings(serial, items, generalNotes);
                 CheckGt6Settings(serial, items, notes, generalNotes);
+                CheckRatchetSettings(serial, items, notes, generalNotes);
                 CheckSly4Settings(serial, items, notes);
                 CheckDragonsCrownSettings(serial, items, notes);
                 CheckLbpSettings(serial, items, generalNotes);
@@ -1186,6 +1187,23 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
             }
+        }
+        
+        private static readonly HashSet<string> RatchetToDIds = new()
+        {
+            "BCAS20045", "BCES00052", "BCJS30014", "BCJS70004", "BCJS70012", "BCKS10054", "BCUS98127", "BCUS98153",
+            "NPEA00452", "NPEA90017", "NPHA20002", "NPUA80965", "NPUA98153", 
+        };
+
+        private static void CheckRatchetSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+        {
+            if (!RatchetToDIds.Contains(serial))
+                return;
+            
+            if (Version.TryParse(items["os_version"], out var winVersion)
+                && winVersion.Major == 10
+                && winVersion.Build < 19043)
+                generalNotes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/software-download/windows10) to current version to prevent some issues with this game");
         }
 
         private static readonly HashSet<string> Sly4Ids = new()
