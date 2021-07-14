@@ -223,7 +223,10 @@ namespace CompatBot.Database.Providers
                 {
                     if (client.GetMember(message.Channel.Guild, message.Author) is DiscordMember mem
                         && !mem.Roles.Any())
+                    {
                         await mem.RemoveAsync("Filter action for trigger " + trigger.String).ConfigureAwait(false);
+                        completedActions.Add(FilterAction.Kick);
+                    }
                 }
                 catch (Exception e)
                 {
