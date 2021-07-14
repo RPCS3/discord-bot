@@ -550,7 +550,8 @@ namespace CompatBot.Commands
                 .WithContent("Please specify filter **action(s)**")
                 .WithEmbed(embed)
                 .AddComponents(previousPage, nextPage, saveEdit, abort)
-                .AddComponents(actionR, actionW, actionM, actionE, actionU, actionK);
+                .AddComponents(actionR, actionW, actionM, actionE, actionU)
+                .AddComponents(actionK);
             errorMsg = null;
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
             (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
