@@ -34,10 +34,12 @@ namespace CompatBot.Utils
                     #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
                     if (newMsg.Channel is null)
                     {
-                        Config.Log.Warn("new message in DM from the bot still has no channel");
+                        Config.Log.Warn("New message in DM from the bot still has no channel");
                         //newMsg.Channel = channel;
                         var property = newMsg.GetType().GetProperty(nameof(newMsg.Channel));
                         property?.SetValue(newMsg, channel, BindingFlags.NonPublic | BindingFlags.Instance, null, null, null);
+                        if (newMsg.Channel is null)
+                            Config.Log.Error("Failed to set private field for Channel :(");
                     }
                     return newMsg;
                 }

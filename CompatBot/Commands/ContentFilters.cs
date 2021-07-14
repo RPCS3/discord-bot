@@ -393,6 +393,7 @@ namespace CompatBot.Commands
             var actionM = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:m", "M");
             var actionE = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:e", "E");
             var actionU = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:u", "U");
+            var actionK = new DiscordButtonComponent(ButtonStyle.Secondary, "filter:edit:action:k", "K");
 
             var minus = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("➖"));
             var plus = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("➕"));
@@ -535,19 +536,21 @@ namespace CompatBot.Commands
                     $"**`M`** = **`{FilterAction.SendMessage}`** send _a_ message with an explanation of why it was removed.\n" +
                     $"**`E`** = **`{FilterAction.ShowExplain}`** show `explain` for the specified term (**not implemented**).\n" +
                     $"**`U`** = **`{FilterAction.MuteModQueue}`** mute mod queue reporting for this action.\n" +
-                    "Reactions will toggle the action, text message will set the specified flags."
+                    $"**`K`** = **`{FilterAction.Kick}`** kick user from server.\n" +
+                    "Buttons will toggle the action, text message will set the specified flags."
                 );
             actionR.Emoji = filter.Actions.HasFlag(FilterAction.RemoveContent) ? minus : plus;
             actionW.Emoji = filter.Actions.HasFlag(FilterAction.IssueWarning) ? minus : plus;
             actionM.Emoji = filter.Actions.HasFlag(FilterAction.SendMessage) ? minus : plus;
             actionE.Emoji = filter.Actions.HasFlag(FilterAction.ShowExplain) ? minus : plus;
             actionU.Emoji = filter.Actions.HasFlag(FilterAction.MuteModQueue) ? minus : plus;
+            actionK.Emoji = filter.Actions.HasFlag(FilterAction.Kick) ? minus : plus;
             saveEdit.Disabled = !filter.IsComplete();
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify filter **action(s)**")
                 .WithEmbed(embed)
                 .AddComponents(previousPage, nextPage, saveEdit, abort)
-                .AddComponents(actionR, actionW, actionM, actionE, actionU);
+                .AddComponents(actionR, actionW, actionM, actionE, actionU, actionK);
             errorMsg = null;
             msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
             (txt, btn) = await interact.WaitForMessageOrButtonAsync(msg, ctx.User, InteractTimeout).ConfigureAwait(false);
@@ -591,6 +594,12 @@ namespace CompatBot.Commands
                     filter.Actions ^= FilterAction.MuteModQueue;
                     goto step3;
                 }
+
+                if (btn.Id == actionK.CustomId)
+                {
+                    filter.Actions ^= FilterAction.Kick;
+                    goto step3;
+                }
             }
             else if (txt != null)
             {
@@ -632,6 +641,10 @@ namespace CompatBot.Commands
                         case "MUTE":
                         case "MUTEMODQUEUE":
                             newActions |= FilterAction.MuteModQueue;
+                            break;
+                        case "K":
+                        case "KICK":
+                            newActions |= FilterAction.Kick;
                             break;
                         case "ABORT":
                             return (false, msg);
