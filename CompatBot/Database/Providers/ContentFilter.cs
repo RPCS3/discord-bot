@@ -216,6 +216,19 @@ namespace CompatBot.Database.Providers
                 await Explain.SendExplanation(result, trigger.ExplainTerm, message).ConfigureAwait(false);
             }
 
+            if (trigger.Actions.HasFlag(FilterAction.Kick) && !ignoreFlags.HasFlag(FilterAction.Kick))
+            {
+                try
+                {
+                    if (client.GetMember(message.Channel.Guild, message.Author) is DiscordMember mem)
+                        await mem.RemoveAsync("Filter action for trigger " + trigger.String).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Couldn't kick user from server");
+                }
+            }
+
             var actionList = "";
             foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
             {
