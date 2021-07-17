@@ -328,7 +328,7 @@ namespace CompatBot.Commands
                         messageBuilder.WithReply(ogRef.Id);
                     var respondMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
                     var tags = result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags).Distinct().ToList();
-                    Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}");
+                    Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}. Adult info: a={result.Adult.AdultScore:0.000}, r={result.Adult.RacyScore:0.000}, g={result.Adult.GoreScore:0.000}");
                     if (result.Adult.IsRacyContent)
                         await respondMsg.ReactWithAsync(DiscordEmoji.FromUnicode("😳")).ConfigureAwait(false);
                     await ReactToTagsAsync(respondMsg, tags).ConfigureAwait(false);
@@ -346,6 +346,7 @@ namespace CompatBot.Commands
                         await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode("😳")).ConfigureAwait(false);
                     if (result.Adult.IsGoryContent)
                         await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode("🆖")).ConfigureAwait(false);
+                    Config.Log.Info($"Adult info for image {imageUrl}: a={result.Adult.AdultScore:0.000}, r={result.Adult.RacyScore:0.000}, g={result.Adult.GoreScore:0.000}");
                     await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
                 }
             }
@@ -404,7 +405,7 @@ namespace CompatBot.Commands
             else
                 msg = "An image so weird, I have no words to describe it";
 #if DEBUG
-            msg += $"(Adult: {adultInfo.AdultScore * 100:0.00}%, racy: {adultInfo.RacyScore * 100:0.00}%, gore: {adultInfo.GoreScore * 100:0.00}%)";
+            msg += $" (Adult: {adultInfo.AdultScore * 100:0.00}%, racy: {adultInfo.RacyScore * 100:0.00}%, gore: {adultInfo.GoreScore * 100:0.00}%)";
 #endif
             return msg;
         }
