@@ -154,18 +154,19 @@ namespace CompatBot.Commands
                     imageStream,
                     new List<VisualFeatureTypes?>
                     {
-                        VisualFeatureTypes.Objects,
-                        VisualFeatureTypes.Description,
+                        VisualFeatureTypes.Objects, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-object-detection
+                        VisualFeatureTypes.Description, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-describing-images
+                        VisualFeatureTypes.Adult, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-detecting-adult-content
                     },
                     cancellationToken: Config.Cts.Token
                 ).ConfigureAwait(false);
-                var description = GetDescription(result.Description);
+                var description = GetDescription(result.Description, result.Adult);
                 var objects = result.Objects
                     .OrderBy(c => c.Rectangle.Y)
                     .ThenBy(c => c.Confidence)
                     .ToList();
                 var scale = Math.Max(1.0f, img.Width / 400.0f);
-                if (objects.Count > 0)
+                if (objects.Count > 0 && !result.Adult.IsAdultContent && !result.Adult.IsGoryContent)
                 {
                     var analyzer = new ColorThief();
                     List<Color> palette = new(objects.Count);
@@ -317,14 +318,19 @@ namespace CompatBot.Commands
                         resultStream.Seek(0, SeekOrigin.Begin);
                         quality--;
                     } while (resultStream.Length > Config.AttachmentSizeLimit);
+                    var attachmentFname = Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg";
+                    if (result.Adult.IsRacyContent && !attachmentFname.StartsWith("SPOILER_"))
+                        attachmentFname = "SPOILER_" + attachmentFname;
                     var messageBuilder = new DiscordMessageBuilder()
                         .WithContent(description)
-                        .WithFile(Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg", resultStream);
-                    if (ctx.Message.ReferencedMessage is { } ogRef)
+                        .WithFile(attachmentFname, resultStream);
+                   if (ctx.Message.ReferencedMessage is { } ogRef)
                         messageBuilder.WithReply(ogRef.Id);
                     var respondMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
                     var tags = result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags).Distinct().ToList();
-                    Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}");
+                    Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}. Adult info: a={result.Adult.AdultScore:0.000}, r={result.Adult.RacyScore:0.000}, g={result.Adult.GoreScore:0.000}");
+                    if (result.Adult.IsRacyContent)
+                        await respondMsg.ReactWithAsync(DiscordEmoji.FromUnicode("😳")).ConfigureAwait(false);
                     await ReactToTagsAsync(respondMsg, tags).ConfigureAwait(false);
                 }
                 else
@@ -334,6 +340,13 @@ namespace CompatBot.Commands
                     if (ctx.Message.ReferencedMessage is { } ogRef)
                         msgBuilder.WithReply(ogRef.Id);
                     await ctx.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                    if (result.Adult.IsAdultContent)
+                        await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode("🔞")).ConfigureAwait(false);
+                    if (result.Adult.IsRacyContent)
+                        await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode("😳")).ConfigureAwait(false);
+                    if (result.Adult.IsGoryContent)
+                        await ctx.Message.ReactWithAsync(DiscordEmoji.FromUnicode("🆖")).ConfigureAwait(false);
+                    Config.Log.Info($"Adult info for image {imageUrl}: a={result.Adult.AdultScore:0.000}, r={result.Adult.RacyScore:0.000}, g={result.Adult.GoreScore:0.000}");
                     await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
                 }
             }
@@ -363,7 +376,7 @@ namespace CompatBot.Commands
                 //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
             );
 
-        private static string GetDescription(ImageDescriptionDetails description)
+        private static string GetDescription(ImageDescriptionDetails description, AdultInfo adultInfo)
         {
             var captions = description.Captions.OrderByDescending(c => c.Confidence).ToList();
             string msg;
@@ -385,11 +398,15 @@ namespace CompatBot.Commands
                 {
                     msg += "\nHowever, here are more guesses:\n";
                     msg += string.Join('\n', captions.Skip(1).Select(c => $"{c.Text} [{c.Confidence * 100:0.00}%]"));
+                    msg += "\n";
                 }
 #endif
             }
             else
                 msg = "An image so weird, I have no words to describe it";
+#if DEBUG
+            msg += $" (Adult: {adultInfo.AdultScore * 100:0.00}%, racy: {adultInfo.RacyScore * 100:0.00}%, gore: {adultInfo.GoreScore * 100:0.00}%)";
+#endif
             return msg;
         }
 
