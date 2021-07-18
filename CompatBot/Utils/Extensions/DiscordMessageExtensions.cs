@@ -28,7 +28,8 @@ namespace CompatBot.Utils
                             var property = messageBuilder.GetType().GetProperty(nameof(messageBuilder.ReplyId));
                             property?.SetValue(messageBuilder, null, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, null, null);
                         }
-                        task = botMsg.ModifyAsync(messageBuilder);
+                        var forceRemoveEmbed = botMsg.Embeds is {Count: >0} && messageBuilder.Embeds is not {Count: >0};
+                        task = botMsg.ModifyAsync(messageBuilder, suppressEmbeds: forceRemoveEmbed);
                     }
                     var newMsg = await task.ConfigureAwait(false);
                     #warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
