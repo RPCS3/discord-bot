@@ -23,7 +23,9 @@ namespace CompatBot.Utils
                     stream = File.Open(configPath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
                     using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
                     content = await reader.ReadToEndAsync().ConfigureAwait(false);
+#if DEBUG
                     Config.Log.Debug("openssl.cnf content:\n" + content);
+#endif                    
                     if (content.Contains("CipherString") && content.Contains("\nopenssl_conf"))
                     {
                         Config.Log.Debug("No need to configure");
