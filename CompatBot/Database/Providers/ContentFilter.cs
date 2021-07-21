@@ -39,7 +39,8 @@ namespace CompatBot.Database.Providers
                 if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
                 {
                     result = h.Value;
-                    return h.Value.Actions.HasFlag(FilterAction.RemoveContent);
+                    Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of message string '{str}'");
+                    return !h.Value.Actions.HasFlag(FilterAction.IssueWarning);
                 }
                 return true;
             });
@@ -52,7 +53,8 @@ namespace CompatBot.Database.Providers
                     if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
                     {
                         result = h.Value;
-                        return h.Value.Actions.HasFlag(FilterAction.RemoveContent);
+                        Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of string '{str}'");
+                        return !h.Value.Actions.HasFlag(FilterAction.IssueWarning);
                     }
                     return true;
                 });
@@ -138,7 +140,7 @@ namespace CompatBot.Database.Providers
                 return true;
 
             await PerformFilterActions(client, message, trigger, suppressActions).ConfigureAwait(false);
-            return (trigger.Actions & (~suppressActions) & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
+            return (trigger.Actions & ~suppressActions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
         }
 
         public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string? triggerContext = null, string? infraction = null, string? warningReason = null)
