@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -127,7 +128,7 @@ namespace CompatBot.Commands
                 if (resized || imgFormat.Name != JpegFormat.Instance.Name)
                 {
                     imageStream.SetLength(0);
-                    await img.SaveAsync(imageStream, new JpegEncoder { Quality = 90 }).ConfigureAwait(false);
+                    await img.SaveAsync(imageStream, new JpegEncoder {Quality = 90}).ConfigureAwait(false);
                     imageStream.Seek(0, SeekOrigin.Begin);
                 }
                 else
@@ -136,7 +137,7 @@ namespace CompatBot.Commands
                     {
                         quality = img.Metadata.GetJpegMetadata().Quality;
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         Config.Log.Warn(ex);
                     }
@@ -149,7 +150,7 @@ namespace CompatBot.Commands
                     imageStream.Seek(0, SeekOrigin.Begin);
                 }
 
-                var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) { Endpoint = Config.AzureComputerVisionEndpoint };
+                var client = new ComputerVisionClient(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
                 var result = await client.AnalyzeImageInStreamAsync(
                     imageStream,
                     new List<VisualFeatureTypes?>
@@ -185,7 +186,7 @@ namespace CompatBot.Commands
                     var tmpP = new List<Color>();
                     var tmpCp = new List<Color>();
                     var uniqueCp = new HashSet<Color>();
-                    for (var i=0; i<complementaryPalette.Count; i++)
+                    for (var i = 0; i < complementaryPalette.Count; i++)
                         if (uniqueCp.Add(complementaryPalette[i]))
                         {
                             tmpP.Add(palette[i]);
@@ -226,7 +227,7 @@ namespace CompatBot.Commands
                     {
                         ColorBlendingMode = PixelColorBlendingMode.Multiply,
                     };
-                    var shapeDrawingOptions = new DrawingOptions { GraphicsOptions = graphicsOptions};
+                    var shapeDrawingOptions = new DrawingOptions {GraphicsOptions = graphicsOptions};
                     var bgDrawingOptions = new DrawingOptions {GraphicsOptions = bgGop,};
                     var drawnBoxes = new List<RectangleF>(objects.Count);
                     for (var i = 0; i < objects.Count; i++)
@@ -265,7 +266,8 @@ namespace CompatBot.Commands
                         var bboxBorder = scale;
 
 #if LABELS_INSIDE
-                        var bgBox = new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, Math.Min(textBox.Width + 2 * (bboxBorder + scale), r.W - 4 * scale), textBox.Height * textHeightScale + 2 * (bboxBorder + scale));
+                        var bgBox =
+ new RectangleF(r.X + 2 * scale, r.Y + 2 * scale, Math.Min(textBox.Width + 2 * (bboxBorder + scale), r.W - 4 * scale), textBox.Height * textHeightScale + 2 * (bboxBorder + scale));
 #else
                         var bgBox = new RectangleF(r.X, r.Y - textBox.Height - 2 * bboxBorder - scale, textBox.Width + 2 * bboxBorder, textBox.Height + 2 * bboxBorder);
 #endif
@@ -324,11 +326,12 @@ namespace CompatBot.Commands
                     var messageBuilder = new DiscordMessageBuilder()
                         .WithContent(description)
                         .WithFile(attachmentFname, resultStream);
-                   if (ctx.Message.ReferencedMessage is { } ogRef)
+                    if (ctx.Message.ReferencedMessage is { } ogRef)
                         messageBuilder.WithReply(ogRef.Id);
                     var respondMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
                     var tags = result.Objects.Select(o => o.ObjectProperty).Concat(result.Description.Tags).Distinct().ToList();
-                    Config.Log.Info($"Tags for image {imageUrl}: {string.Join(", ", tags)}. Adult info: a={result.Adult.AdultScore:0.000}, r={result.Adult.RacyScore:0.000}, g={result.Adult.GoreScore:0.000}");
+                    Config.Log.Info(
+                        $"Tags for image {imageUrl}: {string.Join(", ", tags)}. Adult info: a={result.Adult.AdultScore:0.000}, r={result.Adult.RacyScore:0.000}, g={result.Adult.GoreScore:0.000}");
                     if (result.Adult.IsRacyContent)
                         await respondMsg.ReactWithAsync(DiscordEmoji.FromUnicode("😳")).ConfigureAwait(false);
                     await ReactToTagsAsync(respondMsg, tags).ConfigureAwait(false);
@@ -349,6 +352,11 @@ namespace CompatBot.Commands
                     Config.Log.Info($"Adult info for image {imageUrl}: a={result.Adult.AdultScore:0.000}, r={result.Adult.RacyScore:0.000}, g={result.Adult.GoreScore:0.000}");
                     await ReactToTagsAsync(ctx.Message, result.Description.Tags).ConfigureAwait(false);
                 }
+            }
+            catch (ComputerVisionErrorResponseException cve) when (cve.Response.StatusCode == HttpStatusCode.ServiceUnavailable)
+            {
+                Config.Log.Warn(cve, "Computer Vision is broken");
+                await ctx.Channel.SendMessageAsync("Azure services are temporarily unavailable, please try in an hour or so").ConfigureAwait(false);
             }
             catch (Exception e)
             {
