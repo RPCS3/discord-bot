@@ -25,7 +25,7 @@ namespace HomoglyphConverter
             ["◌"] = "o",
         };
 
-        // as per http://www.unicode.org/reports/tr39/#Confusable_Detection
+        // as per https://www.unicode.org/reports/tr39/#Confusable_Detection
         private static string ToSkeletonString(this string input)
         {
             if (string.IsNullOrEmpty(input))
