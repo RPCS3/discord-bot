@@ -286,7 +286,7 @@ namespace CompatBot.Commands
                 lock (rng) answer = pool[rng.Next(pool.Count)];
                 if (answer.StartsWith(':') && answer.EndsWith(':'))
                     answer = ctx.Client.GetEmoji(answer, "🔮");
-                await ctx.Channel.SendMessageAsync(answer).ConfigureAwait(false);
+                await ctx.RespondAsync(answer).ConfigureAwait(false);
             }
         }
 
@@ -308,7 +308,7 @@ namespace CompatBot.Commands
                     unit = "millennia";
             }
             var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
-            await ctx.Channel.SendMessageAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
+            await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
         }
 
         [Group("how"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
@@ -323,11 +323,9 @@ namespace CompatBot.Commands
                 var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
                 var crng = new Random((prefix + question).GetHashCode());
                 if (crng.NextDouble() < 0.0001)
-                    await ctx.Channel.SendMessageAsync($"🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
+                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
                 else
-                {
-                    await ctx.Channel.SendMessageAsync($"🔮 My psychic powers tell me the answer should be **{crng.Next(100) + 1}** 🔮").ConfigureAwait(false);
-                }
+                    await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **{crng.Next(100) + 1}** 🔮").ConfigureAwait(false);
             }
         }
 
@@ -497,7 +495,7 @@ namespace CompatBot.Commands
                     var msgBuilder = new DiscordMessageBuilder()
                         .WithContent(answer)
                         .WithReply(ctx.Message.Id);
-                    await ctx.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                    await ctx.RespondAsync(msgBuilder).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -511,7 +509,11 @@ namespace CompatBot.Commands
         public async Task Memes(CommandContext ctx, [RemainingText] string? _ = null)
         {
             var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-            await ch.SendMessageAsync($"{ctx.User.Mention} congratulations, you're the meme").ConfigureAwait(false);
+            var msgBuilder = new DiscordMessageBuilder()
+                .WithContent($"{ctx.User.Mention} congratulations, you're the meme");
+            if (ch.Id == ctx.Channel.Id)
+                msgBuilder.WithReply(ctx.Message.Id);
+            await ch.SendMessageAsync(msgBuilder).ConfigureAwait(false);
         }
 
         [Command("firmware"), Aliases("fw"), Cooldown(1, 10, CooldownBucketType.Channel)]
