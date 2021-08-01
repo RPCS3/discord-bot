@@ -250,10 +250,12 @@ namespace CompatBot.Database.Providers
                 {
                     var triggerWord = trigger.String;
                     var context = triggerContext ?? message.Content;
-                    if (trigger.ValidatingRegex is not null
-                        && Regex.Match(context, trigger.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline) is {Success: true} m)
+                    if (context is {Length: >0}
+                        && trigger.ValidatingRegex is {Length: >0} pattern
+                        && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is {Success: true} m
+                        && m.Groups.Count > 1)
                     {
-                        triggerWord += $" (matched on `{m.Groups[0].Value.Trim(256)}`)";
+                        triggerWord += $" (matched on `{m.Groups[1].Value.Trim(256)}`)";
                     }
                     await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, triggerWord, context, severity, actionList).ConfigureAwait(false);
                     ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);

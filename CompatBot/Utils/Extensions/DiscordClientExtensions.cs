@@ -114,7 +114,14 @@ namespace CompatBot.Utils
                 return null;
 
             var embedBuilder = MakeReportTemplate(client, infraction, message, severity, actionList);
-            var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{Environment.NewLine}";
+            var matchedOn = "";
+            var matchedOnIdx = trigger.IndexOf(" (matched on");
+            if (matchedOnIdx > 0)
+            {
+                matchedOn = trigger[matchedOnIdx ..];
+                trigger = trigger[..matchedOnIdx];
+            }
+            var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{matchedOn}{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
             embedBuilder.Description = reportText + embedBuilder.Description;
