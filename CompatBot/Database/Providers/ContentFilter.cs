@@ -248,7 +248,14 @@ namespace CompatBot.Database.Providers
                 ReportAntispamCache.TryGetValue(message.Author.Id, out int counter);
                 if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue) && counter < 3)
                 {
-                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, triggerContext ?? message.Content, severity, actionList).ConfigureAwait(false);
+                    var triggerWord = trigger.String;
+                    var context = triggerContext ?? message.Content;
+                    if (trigger.ValidatingRegex is not null
+                        && Regex.Match(context, trigger.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline) is {Success: true} m)
+                    {
+                        triggerWord += $" (matched on `{m.Groups[0].Value.Trim(256)}`)";
+                    }
+                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, triggerWord, context, severity, actionList).ConfigureAwait(false);
                     ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
                 }
             }
