@@ -410,7 +410,7 @@ namespace CompatBot.Commands
                     "Any simple string that is used to flag potential content for a check using Validation regex.\n" +
                     "**Must** be sufficiently long to reduce the number of checks."
                 );
-            saveEdit.Disabled = !filter.IsComplete();
+            saveEdit.SetEnabled(filter.IsComplete());
             var messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify a new **trigger**")
                 .WithEmbed(embed)
@@ -459,9 +459,9 @@ namespace CompatBot.Commands
                     $"**`L`** = **`{FilterContext.Log}`** will apply it during log parsing.\n" +
                     "Reactions will toggle the context, text message will set the specified flags."
                 );
-            saveEdit.Disabled = !filter.IsComplete();
-            contextChat.Emoji = filter.Context.HasFlag(FilterContext.Chat) ? minus : plus;
-            contextLog.Emoji = filter.Context.HasFlag(FilterContext.Log) ? minus : plus;
+            saveEdit.SetEnabled(filter.IsComplete());
+            contextChat.SetEmoji(filter.Context.HasFlag(FilterContext.Chat) ? minus : plus);
+            contextLog.SetEmoji(filter.Context.HasFlag(FilterContext.Log) ? minus : plus);
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify filter **context(s)**")
                 .WithEmbed(embed)
@@ -539,13 +539,13 @@ namespace CompatBot.Commands
                     $"**`K`** = **`{FilterAction.Kick}`** kick user from server.\n" +
                     "Buttons will toggle the action, text message will set the specified flags."
                 );
-            actionR.Emoji = filter.Actions.HasFlag(FilterAction.RemoveContent) ? minus : plus;
-            actionW.Emoji = filter.Actions.HasFlag(FilterAction.IssueWarning) ? minus : plus;
-            actionM.Emoji = filter.Actions.HasFlag(FilterAction.SendMessage) ? minus : plus;
-            actionE.Emoji = filter.Actions.HasFlag(FilterAction.ShowExplain) ? minus : plus;
-            actionU.Emoji = filter.Actions.HasFlag(FilterAction.MuteModQueue) ? minus : plus;
-            actionK.Emoji = filter.Actions.HasFlag(FilterAction.Kick) ? minus : plus;
-            saveEdit.Disabled = !filter.IsComplete();
+            actionR.SetEmoji(filter.Actions.HasFlag(FilterAction.RemoveContent) ? minus : plus);
+            actionW.SetEmoji(filter.Actions.HasFlag(FilterAction.IssueWarning) ? minus : plus);
+            actionM.SetEmoji(filter.Actions.HasFlag(FilterAction.SendMessage) ? minus : plus);
+            actionE.SetEmoji(filter.Actions.HasFlag(FilterAction.ShowExplain) ? minus : plus);
+            actionU.SetEmoji(filter.Actions.HasFlag(FilterAction.MuteModQueue) ? minus : plus);
+            actionK.SetEmoji(filter.Actions.HasFlag(FilterAction.Kick) ? minus : plus);
+            saveEdit.SetEnabled(filter.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify filter **action(s)**")
                 .WithEmbed(embed)
@@ -672,8 +672,8 @@ namespace CompatBot.Commands
                     "Additional validation can help reduce false positives of a plaintext trigger match."
                 );
             var next = (filter.Actions & (FilterAction.SendMessage | FilterAction.ShowExplain)) == 0 ? firstPage : nextPage;
-            trash.Disabled = string.IsNullOrEmpty(filter.ValidatingRegex);
-            saveEdit.Disabled = !filter.IsComplete();
+            trash.SetDisabled(string.IsNullOrEmpty(filter.ValidatingRegex));
+            saveEdit.SetEnabled(filter.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify filter **validation regex**")
                 .WithEmbed(embed)
@@ -735,7 +735,7 @@ namespace CompatBot.Commands
                     "If left empty, default piracy warning message will be used."
                 );
             next = (filter.Actions.HasFlag(FilterAction.ShowExplain) ? nextPage : firstPage);
-            saveEdit.Disabled = !filter.IsComplete();
+            saveEdit.SetEnabled(filter.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify filter **validation regex**")
                 .WithEmbed(embed)
@@ -779,7 +779,7 @@ namespace CompatBot.Commands
                     "Explanation term that is used to show an explanation.\n" +
                     "**__Currently not implemented__**."
                 );
-            saveEdit.Disabled = !filter.IsComplete();
+            saveEdit.SetEnabled(filter.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify filter **explanation term**")
                 .WithEmbed(embed)
@@ -830,7 +830,7 @@ namespace CompatBot.Commands
             // last step: confirm
             if (errorMsg == null && !filter.IsComplete())
                 errorMsg = "Some required properties are not defined";
-            saveEdit.Disabled = !filter.IsComplete();
+            saveEdit.SetEnabled(filter.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Does this look good? (y/n)")
                 .WithEmbed(FormatFilter(filter, errorMsg))

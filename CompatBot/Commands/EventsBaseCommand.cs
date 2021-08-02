@@ -9,6 +9,7 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -296,7 +297,7 @@ namespace CompatBot.Commands
 
         step1:
             // step 1: get the new start date
-            saveEdit.Disabled = !evt.IsComplete();
+            saveEdit.SetEnabled(evt.IsComplete());
             var messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify a new **start date and time**")
                 .WithEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} PST`\nBy default all times use UTC, only limited number of time zones supported"))
@@ -336,7 +337,7 @@ namespace CompatBot.Commands
 
         step2:
             // step 2: get the new duration
-            saveEdit.Disabled = !evt.IsComplete();
+            saveEdit.SetEnabled(evt.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify a new **event duration**")
                 .WithEmbed(FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`"))
@@ -375,8 +376,8 @@ namespace CompatBot.Commands
 
         step3:
             // step 3: get the new event name
-            saveEdit.Disabled = !evt.IsComplete();
-            trash.Disabled = string.IsNullOrEmpty(evt.EventName);
+            saveEdit.SetEnabled(evt.IsComplete());
+            trash.SetDisabled(string.IsNullOrEmpty(evt.EventName));
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify a new **event name**")
                 .WithEmbed(FormatEvent(evt, errorMsg, 3))
@@ -406,7 +407,7 @@ namespace CompatBot.Commands
 
         step4:
             // step 4: get the new schedule entry name
-            saveEdit.Disabled = !evt.IsComplete();
+            saveEdit.SetEnabled(evt.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Please specify a new **schedule entry title**")
                 .WithEmbed(FormatEvent(evt, errorMsg, 4))
@@ -450,7 +451,7 @@ namespace CompatBot.Commands
             // step 5: confirm
             if (errorMsg == null && !evt.IsComplete())
                 errorMsg = "Some required properties are not defined";
-            saveEdit.Disabled = !evt.IsComplete();
+            saveEdit.SetEnabled(evt.IsComplete());
             messageBuilder = new DiscordMessageBuilder()
                 .WithContent("Does this look good? (y/n)")
                 .WithEmbed(FormatEvent(evt, errorMsg))
