@@ -128,7 +128,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("ℹ The log is empty");
                 notes.Add("ℹ Please boot the game and upload a new log");
             }
-            else if (string.IsNullOrEmpty(serial + items["game_title"])
+            else if (string.IsNullOrEmpty(serial)
+                     && items["game_title"] is null or "" or "sys"
                      && !string.IsNullOrEmpty(items["fw_installed_message"])
                      && items["fw_version_installed"] is string fwVersion)
             {
