@@ -6,7 +6,8 @@
       "name": "Client",
       "namespace": "CirrusCiClient",
       "url": "https://api.cirrus-ci.com/graphql",
-      "dependencyInjection": true
+      "dependencyInjection": true,
+      "emitGeneratedCode": false
     }
   }
 }
