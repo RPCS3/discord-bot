@@ -259,8 +259,8 @@ namespace CompatBot.Utils
             return result;
         }
 
-        private static DiscordColor GetColor(ReportSeverity severity) =>
-            severity switch
+        private static DiscordColor GetColor(ReportSeverity severity)
+            => severity switch
             {
                 ReportSeverity.Low => Config.Colors.LogInfo,
                 ReportSeverity.Medium => Config.Colors.LogNotice,
