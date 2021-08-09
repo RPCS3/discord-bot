@@ -248,16 +248,9 @@ namespace CompatBot.Database.Providers
                 ReportAntispamCache.TryGetValue(message.Author.Id, out int counter);
                 if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue) && counter < 3)
                 {
-                    var triggerWord = trigger.String;
                     var context = triggerContext ?? message.Content;
-                    if (context is {Length: >0}
-                        && trigger.ValidatingRegex is {Length: >0} pattern
-                        && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is {Success: true} m
-                        && m.Groups.Count > 1)
-                    {
-                        triggerWord += $" (matched on `{m.Groups[1].Value.Trim(256)}`)";
-                    }
-                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, triggerWord, context, severity, actionList).ConfigureAwait(false);
+                    var matchedOn = GetMatchedScope(trigger, context);
+                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, context, severity, actionList).ConfigureAwait(false);
                     ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
                 }
             }
@@ -266,5 +259,13 @@ namespace CompatBot.Database.Providers
                 Config.Log.Error(e, "Failed to report content filter hit");
             }
         }
+
+        public static string? GetMatchedScope(Piracystring trigger, string? context)
+            => context is { Length: >0 }
+               && trigger.ValidatingRegex is { Length: >0 } pattern
+               && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is { Success: true } m
+               && m.Groups.Count > 0
+                ? m.Groups[0].Value.Trim(256)
+                : null;
     }
 }

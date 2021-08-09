@@ -107,21 +107,14 @@ namespace CompatBot.Utils
             return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
         }
 
-        public static async Task<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? context, ReportSeverity severity, string? actionList = null)
+        public static async Task<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? matchedOn, string? context, ReportSeverity severity, string? actionList = null)
         {
             var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
             if (logChannel is null)
                 return null;
 
             var embedBuilder = MakeReportTemplate(client, infraction, message, severity, actionList);
-            var matchedOn = "";
-            var matchedOnIdx = trigger.IndexOf(" (matched on");
-            if (matchedOnIdx > 0)
-            {
-                matchedOn = trigger[matchedOnIdx ..];
-                trigger = trigger[..matchedOnIdx];
-            }
-            var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{trigger}`{matchedOn}{Environment.NewLine}";
+            var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn ?? trigger}`{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
             embedBuilder.Description = reportText + embedBuilder.Description;
