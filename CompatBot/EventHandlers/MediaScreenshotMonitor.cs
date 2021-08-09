@@ -126,8 +126,8 @@ namespace CompatBot.EventHandlers
                                         hit,
                                         suppressFlags,
                                         l.Text,
-                                        "🖼 Screenshot of a pirated game",
-                                        "Screenshot of a pirated game"
+                                        "🖼 Screenshot of an undesirable content",
+                                        "Screenshot of an undesirable content"
                                     ).ConfigureAwait(false);
                                     cnt &= !hit.Actions.HasFlag(FilterAction.RemoveContent) && !hit.Actions.HasFlag(FilterAction.IssueWarning);
                                 }

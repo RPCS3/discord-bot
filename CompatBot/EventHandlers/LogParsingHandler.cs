@@ -160,7 +160,8 @@ namespace CompatBot.EventHandlers
                                         var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                         piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
-                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter.String, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
+                                        var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
+                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
                                     }
                                     else
                                     {
@@ -193,7 +194,8 @@ namespace CompatBot.EventHandlers
                                         }
                                         try
                                         {
-                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter.String, result.SelectedFilterContext, severity).ConfigureAwait(false);
+                                            var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
+                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, severity).ConfigureAwait(false);
                                         }
                                         catch (Exception e)
                                         {
