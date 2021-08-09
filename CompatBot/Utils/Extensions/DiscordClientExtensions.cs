@@ -107,13 +107,13 @@ namespace CompatBot.Utils
             return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
         }
 
-        public static async Task<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? matchedOn, string? context, ReportSeverity severity, string? actionList = null)
+        public static async Task<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? matchedOn, int? filterId, string? context, ReportSeverity severity, string? actionList = null)
         {
             var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
             if (logChannel is null)
                 return null;
 
-            var embedBuilder = MakeReportTemplate(client, infraction, message, severity, actionList);
+            var embedBuilder = MakeReportTemplate(client, infraction, filterId, message, severity, actionList);
             var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn ?? trigger}`{Environment.NewLine}";
             if (!string.IsNullOrEmpty(context))
                 reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
@@ -137,7 +137,7 @@ namespace CompatBot.Utils
         public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember?> reporters, string? comment, ReportSeverity severity)
         {
             var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-            var embedBuilder = MakeReportTemplate(client, infraction, message, severity);
+            var embedBuilder = MakeReportTemplate(client, infraction, null, message, severity);
             var reportText = string.IsNullOrEmpty(comment) ? "" : comment.Sanitize() + Environment.NewLine;
             embedBuilder.Description = (reportText + embedBuilder.Description).Trim(EmbedPager.MaxDescriptionLength);
             var mentions = reporters.Where(m => m is not null).Select(GetMentionWithNickname!);
@@ -206,13 +206,13 @@ namespace CompatBot.Utils
             return channel.SendMessageAsync(message);
         }
 
-        private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, DiscordMessage message, ReportSeverity severity, string? actionList = null)
+        private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, int? filterId, DiscordMessage message, ReportSeverity severity, string? actionList = null)
         {
             var content = message.Content;
             if (message.Channel.IsPrivate)
                 severity = ReportSeverity.None;
             var needsAttention = severity > ReportSeverity.Low;
-            if (message.Embeds?.Any() ?? false)
+            if (message.Embeds?.Count > 0)
             {
                 if (!string.IsNullOrEmpty(content))
                     content += Environment.NewLine;
@@ -222,7 +222,7 @@ namespace CompatBot.Utils
                 if (srcEmbed.Fields?.Any() ?? false)
                     content += $"{Environment.NewLine}{srcEmbed.Description}{Environment.NewLine}+{srcEmbed.Fields.Count} fields";
             }
-            if (message.Attachments?.Any() ?? false)
+            if (message.Attachments?.Count > 0)
             {
                 if (!string.IsNullOrEmpty(content))
                     content += Environment.NewLine;
@@ -245,9 +245,10 @@ namespace CompatBot.Utils
                     Title = infraction,
                     Color = GetColor(severity),
                 }.AddField("Violator", author is null ? message.Author.Mention : GetMentionWithNickname(author), true)
-                .AddField("Channel",  message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true)
-                //.AddField("Time (UTC)", message.CreationTimestamp.ToString("yyyy-MM-dd HH:mm:ss"), true)
-                .AddField("Content of the offending item", content.Trim(EmbedPager.MaxFieldLength));
+                .AddField("Channel", message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true);
+            if (filterId is not null)
+                result.AddField("Filter #", filterId.ToString(), true);
+            result.AddField("Content of the offending item", content.Trim(EmbedPager.MaxFieldLength));
             if (!string.IsNullOrEmpty(actionList))
                 result.AddField("Filter Actions", actionList, true);
             if (needsAttention && !message.Channel.IsPrivate)

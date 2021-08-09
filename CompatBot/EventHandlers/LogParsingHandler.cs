@@ -161,7 +161,7 @@ namespace CompatBot.EventHandlers
                                         piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
                                         var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
-                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter.String, matchedOn, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
+                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
                                     }
                                     else
                                     {
@@ -195,7 +195,7 @@ namespace CompatBot.EventHandlers
                                         try
                                         {
                                             var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
-                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter.String, matchedOn, result.SelectedFilterContext, severity).ConfigureAwait(false);
+                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, severity).ConfigureAwait(false);
                                         }
                                         catch (Exception e)
                                         {

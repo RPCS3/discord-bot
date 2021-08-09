@@ -250,7 +250,7 @@ namespace CompatBot.Database.Providers
                 {
                     var context = triggerContext ?? message.Content;
                     var matchedOn = GetMatchedScope(trigger, context);
-                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, context, severity, actionList).ConfigureAwait(false);
+                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, trigger.Id, context, severity, actionList).ConfigureAwait(false);
                     ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
                 }
             }
