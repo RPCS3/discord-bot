@@ -169,7 +169,7 @@ namespace CompatBot
                 commands.RegisterCommands<BotStats>();
                 commands.RegisterCommands<Syscall>();
                 commands.RegisterCommands<ForcedNicknames>();
-                //commands.RegisterCommands<Minesweeper>();
+                commands.RegisterCommands<Minesweeper>();
                 commands.RegisterCommands<Fortune>();
 
                 if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
