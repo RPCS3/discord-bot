@@ -14,8 +14,9 @@ namespace CompatBot.Commands
 	[Description("Generates a minesweeper field with specified parameters")]
 	internal sealed class Minesweeper : BaseCommandModuleCustom
 	{
-		private static readonly string[] Numbers = {"0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣",};
-		private static readonly string[] Bombs = {"💥", "🤡",};
+		//private static readonly string[] Numbers = {"0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣",};
+		private static readonly string[] Numbers = {"０", "１", "２", "３", "４", "５", "６", "７", "８", "９",};
+		private static readonly string[] Bombs = {"＊", "◎"};
 		private static readonly int MaxBombLength;
 
 		static Minesweeper()
