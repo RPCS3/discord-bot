@@ -106,7 +106,7 @@ namespace CompatBot.EventHandlers
                 var renameTask = member.ModifyAsync(m => m.Nickname = suggestedName);
                 Config.Log.Info($"Renamed {member.Username}#{member.Discriminator} ({member.Id}) to {suggestedName}");
                 var rulesChannel = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
-                var msg = $"Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, so you have been renamed to `{suggestedName}.\n" +
+                var msg = $"Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, so you have been renamed to `{suggestedName}`.\n" +
                           "I'm not perfect and can't clean all the junk in names in some cases, so change your nickname at your discretion.\n" +
                           "You can change your _display name_ by clicking on the server name at the top left and selecting **Change Nickname**.";
                 var dm = await member.CreateDmChannelAsync().ConfigureAwait(false);
