@@ -10,15 +10,14 @@ using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
-using GithubClient.POCOs;
 
 namespace CompatBot.Utils.ResultFormatters
 {
     internal static class UpdateInfoFormatter
     {
-        private static readonly GithubClient.Client GithubClient = new();
+        private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
 
-        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, PrInfo? currentPrInfo = null)
+        public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, Octokit.PullRequest? currentPrInfo = null)
         {
             if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download) is null)
                 return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
@@ -28,7 +27,7 @@ namespace CompatBot.Utils.ResultFormatters
             var latestPr = latestBuild?.Pr;
             var currentPr = info.CurrentBuild?.Pr;
             string? url = null;
-            PrInfo? latestPrInfo = null;
+            Octokit.PullRequest? latestPrInfo = null;
 
             string prDesc = "";
             if (!justAppend)
@@ -134,14 +133,14 @@ namespace CompatBot.Utils.ResultFormatters
             DateTime? latestBuildTimestamp = null, currentBuildTimestamp = null;
             if (Config.GetAzureDevOpsClient() is {} azureClient)
             {
-                var currentAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
-                var latestAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt, Config.Cts.Token).ConfigureAwait(false);
+                var currentAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt?.DateTime, Config.Cts.Token).ConfigureAwait(false);
+                var latestAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt?.DateTime, Config.Cts.Token).ConfigureAwait(false);
                 latestBuildTimestamp = latestAppveyorBuild?.FinishTime;
                 currentBuildTimestamp = currentAppveyorBuild?.FinishTime;
                 if (!latestBuildTimestamp.HasValue)
                 {
                     buildTimestampKind = "Merged";
-                    latestBuildTimestamp = currentPrInfo?.MergedAt;
+                    latestBuildTimestamp = currentPrInfo?.MergedAt?.DateTime;
                 }
             }
 

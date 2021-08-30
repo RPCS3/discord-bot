@@ -82,6 +82,7 @@ namespace CompatBot
         public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/");
         public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
         public static string AzureAppInsightsKey => config.GetValue(nameof(AzureAppInsightsKey), "");
+        public static string GithubToken => config.GetValue(nameof(GithubToken), "");
         public static string PreferredFontFamily => config.GetValue(nameof(PreferredFontFamily), "");
         public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
         public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
