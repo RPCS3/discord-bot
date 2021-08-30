@@ -45,6 +45,49 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't save the warning, please try again").ConfigureAwait(false);
         }
 
+        [Command("edit"), RequiresBotModRole]
+        [Description("Edit specified warning")]
+        public async Task Edit(CommandContext ctx, [Description("Warning ID to edit")] int id)
+        {
+            var interact = ctx.Client.GetInteractivity();
+            await using var db = new BotDb();
+            var warnings = await db.Warning.Where(w => id.Equals(w.Id)).ToListAsync().ConfigureAwait(false);
+
+            if (warnings.Count == 0)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Denied, $"{ctx.Message.Author.Mention} Warn not found", true);
+                return;
+            }
+
+            var warningToEdit = warnings.First();
+
+            if (warningToEdit.IssuerId != ctx.User.Id)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Denied, $"{ctx.Message.Author.Mention} This warn wasn't issued by you :(", true);
+                return;
+            }
+
+            var msg = await ctx.Channel.SendMessageAsync("Updated warn reason?").ConfigureAwait(false);
+            var response = await interact.WaitForMessageAsync(
+                m => m.Author == ctx.User
+                     && m.Channel == ctx.Channel
+                     && !string.IsNullOrEmpty(m.Content)
+            ).ConfigureAwait(false);
+
+            await msg.DeleteAsync().ConfigureAwait(false);
+
+            if (string.IsNullOrEmpty(response.Result?.Content))
+            {
+                await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Can't edit warning without a new reason").ConfigureAwait(false);
+                return;
+            }
+
+            warningToEdit.Reason = response.Result.Content;
+
+            await db.SaveChangesAsync().ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync($"Warning successfully edited!").ConfigureAwait(false);
+        }
+
         [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
         [Description("Removes specified warnings")]
         public async Task Remove(CommandContext ctx, [Description("Warning IDs to remove separated with space")] params int[] ids)
