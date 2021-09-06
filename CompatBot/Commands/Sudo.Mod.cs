@@ -10,7 +10,7 @@ namespace CompatBot.Commands
 {
     internal partial class Sudo
     {
-        [Group("mod")]
+        [Group("mod"), RequiresBotSudoerRole]
         [Description("Used to manage bot moderators")]
         public sealed class Mod : BaseCommandModuleCustom
         {
