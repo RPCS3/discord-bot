@@ -66,7 +66,8 @@ namespace CompatBot.EventHandlers
 
             var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
             var isHelpChannel = "help".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase)
-                                || "donors".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
+                                || "donors".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase)
+                                || "testers".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
             var checkExternalLinks = isHelpChannel || isSpamChannel;
             OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
             return Task.CompletedTask;
