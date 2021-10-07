@@ -197,10 +197,10 @@ namespace CompatBot.Utils.ResultFormatters
                 "xddxd" => ":kekw:",
                 "isJuhn" => "😺",
                 "13xforever" => "💮",
+                "RipleyTom" => ":galciv:",
+                "Whatcookie" => "🍪",
                 /*
-                "RipleyTom" => null,
                 "VelocityRa" => null,
-                "Whatcookie" => null,
                 "CookiePLMonster" => null,
                 "Ruipin" => null,
                 "rajkosto" => null,
