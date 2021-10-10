@@ -35,7 +35,7 @@ namespace CompatBot.Commands
     internal sealed class CompatList : BaseCommandModuleCustom
     {
         private static readonly Client Client = new();
-        private static readonly GithubClient.Client GithubClient = new();
+        private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
         private static readonly SemaphoreSlim UpdateCheck = new(1, 1);
         private static string? lastUpdateInfo, lastFullBuildNumber;
         private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
@@ -338,7 +338,7 @@ namespace CompatBot.Commands
                 var failedBuilds = await Config.GetAzureDevOpsClient().GetMasterBuildsAsync(
                     oldestPrCommit.MergeCommitSha,
                     newestPrCommit.MergeCommitSha,
-                    oldestPrCommit.MergedAt,
+                    oldestPrCommit.MergedAt?.DateTime,
                     cancellationToken
                 ).ConfigureAwait(false);
                 foreach (var mergedPr in mergedPrs)

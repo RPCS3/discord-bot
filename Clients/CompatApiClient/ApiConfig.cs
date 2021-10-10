@@ -11,7 +11,9 @@ namespace CompatApiClient
 
     public static class ApiConfig
     {
-        public static readonly ProductInfoHeaderValue ProductInfoHeader = new("RPCS3CompatibilityBot", "2.0");
+        public static readonly string ProductName = "RPCS3CompatibilityBot";
+        public static readonly string ProductVersion = "2.0";
+        public static readonly ProductInfoHeaderValue ProductInfoHeader = new(ProductName, ProductVersion);
         public static int Version { get; } = 1;
         public static Uri BaseUrl { get; } = new("https://rpcs3.net/compatibility");
         public static string DateInputFormat { get; } = "yyyy-M-d";

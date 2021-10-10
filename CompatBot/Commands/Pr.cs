@@ -21,7 +21,7 @@ namespace CompatBot.Commands
     [Description("Commands to list opened pull requests information")]
     internal sealed class Pr: BaseCommandModuleCustom
     {
-        private static readonly GithubClient.Client GithubClient = new();
+        private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
         private static readonly CompatApiClient.Client CompatApiClient = new();
 
         [GroupCommand]
@@ -114,7 +114,7 @@ namespace CompatBot.Commands
             var prInfo = await GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
             if (prInfo is null or {Number: 0})
             {
-                await message.ReactWithAsync(Config.Reactions.Failure, prInfo?.Message ?? "PR not found").ConfigureAwait(false);
+                await message.ReactWithAsync(Config.Reactions.Failure, prInfo?.Title ?? "PR not found").ConfigureAwait(false);
                 return;
             }
 
@@ -134,7 +134,7 @@ namespace CompatBot.Commands
                     {
                         windowsDownloadText = "⏳ Pending...";
                         linuxDownloadText = "⏳ Pending...";
-                        var latestBuild = await CirrusCi.GetPrBuildInfoAsync(commit, prInfo.MergedAt, pr, Config.Cts.Token).ConfigureAwait(false);
+                        var latestBuild = await CirrusCi.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild == null)
                         {
                             if (state == "Open")
