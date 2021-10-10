@@ -96,7 +96,8 @@ namespace CompatBot.EventHandlers
                     
                     var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
                     var isHelpChannel = "help".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
-                                        || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase);
+                                        || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
+                                        || "testers".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
                     
                     if (source != null)
                     {
