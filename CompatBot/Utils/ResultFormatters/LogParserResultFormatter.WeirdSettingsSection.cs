@@ -188,7 +188,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (multiItems["rsx_not_supported_feature"].Contains("alpha-to-one for multisampling"))
             {
                 if (items["msaa"] is string msaa && msaa != "Disabled")
-                    generalNotes.Add("ℹ The driver or GPU do not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
+                    generalNotes.Add("ℹ The driver or GPU does not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
             }
             var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
                                          && buildVersion < RdnaMsaaFixedVersion
@@ -202,7 +202,7 @@ namespace CompatBot.Utils.ResultFormatters
             else if (items["msaa"] is string msaa && msaa != "Disabled")
             {
                 if (isWireframeBugPossible)
-                    notes.Add("⚠ Please disable `Anti-aliasing` if you experience a wireframe-like visual artifacts");
+                    notes.Add("⚠ Please disable `Anti-aliasing` if you experience wireframe-like visual artifacts");
             }
 
             var vsync = items["vsync"] == EnabledMark;
@@ -357,7 +357,7 @@ namespace CompatBot.Utils.ResultFormatters
                 && wcb == DisabledMark)
                 notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
             if (items["zcull"] is string zcull && zcull == EnabledMark)
-                notes.Add("⚠ `ZCull Occlusion Queries` are disabled, which can result in visual artifacts");
+                notes.Add("⚠ `ZCull Occlusion Queries` is disabled, which can result in visual artifacts");
             else if (items["relaxed_zcull"] is string relaxedZcull)
             {
                 if (relaxedZcull == EnabledMark && !KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
@@ -1203,7 +1203,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (Version.TryParse(items["os_version"], out var winVersion)
                 && winVersion.Major == 10
                 && winVersion.Build < 19043)
-                generalNotes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/software-download/windows10) to current version to prevent some issues with this game");
+                generalNotes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/software-download/windows10) to the latest version to prevent some issues with this game");
         }
 
         private static readonly HashSet<string> Sly4Ids = new()
