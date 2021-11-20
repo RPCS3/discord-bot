@@ -144,7 +144,7 @@ namespace CompatBot.Utils.ResultFormatters
             {
                 $"PPU Decoder:{items["ppu_decoder"],ColumnWidth-11}",
                 $"SPU Decoder:{items["spu_decoder"],ColumnWidth-11}",
-                $"SPU Lower Thread Priority:{items["spu_lower_thread_priority"],ColumnWidth-25}",
+                //$"SPU Lower Thread Priority:{items["spu_lower_thread_priority"],ColumnWidth-25}",
                 $"SPU Loop Detection:{items["spu_loop_detection"],ColumnWidth-18}",
                 $"Thread Scheduler:{items["thread_scheduler"],ColumnWidth-16}",
                 $"SPU Threads:{items["spu_threads"],ColumnWidth-11}",
