@@ -44,9 +44,10 @@ namespace CompatBot.Utils.ResultFormatters
                 if (items["enable_tsx"] == "Disabled" && hasTsx)
                     notes.Add("ℹ TSX support is disabled");
             }
-            if (items["spu_lower_thread_priority"] == EnabledMark
-                && threadCount > 4)
+            /*
+            if (items["spu_lower_thread_priority"] == EnabledMark && threadCount > 4)
                 notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
+            */
             if (items["cpu_model"] is string cpu)
             {
                 if (cpu.StartsWith("AMD")
@@ -539,8 +540,9 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
-                if (spuBlockSize != "Safe")
-                    notes.Add($"⚠ Please change `SPU Block Size` to `Safe`, currently `{spuBlockSize}` is unstable.");
+               // TODO warn on DES
+               // if (spuBlockSize != "Safe")
+               //     notes.Add($"⚠ Please change `SPU Block Size` to `Safe`, currently `{spuBlockSize}` is unstable.");
             }
 
             if (items["auto_start_on_boot"] == DisabledMark)

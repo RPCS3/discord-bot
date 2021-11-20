@@ -64,7 +64,7 @@ namespace CompatBot.EventHandlers.LogParsing
                     ["thread scheduler"] = new(@"[Ss]cheduler( Mode)?: (?<thread_scheduler>.*?)\r?$", DefaultOptions),
                     ["SPU Decoder:"] = new(@"SPU Decoder: (?<spu_decoder>.*?)\r?$", DefaultOptions),
                     ["secondary cores:"] = new(@"secondary cores: (?<spu_secondary_cores>.*?)\r?$", DefaultOptions),
-                    ["priority:"] = new(@"priority: (?<spu_lower_thread_priority>.*?)\r?$", DefaultOptions),
+                    //["priority:"] = new(@"priority: (?<spu_lower_thread_priority>.*?)\r?$", DefaultOptions),
                     ["SPU Threads:"] = new(@"SPU Threads: (?<spu_threads>.*?)\r?$", DefaultOptions),
                     ["SPU delay penalty:"] = new(@"SPU delay penalty: (?<spu_delay_penalty>.*?)\r?$", DefaultOptions),
                     ["SPU loop detection:"] = new(@"SPU loop detection: (?<spu_loop_detection>.*?)\r?$", DefaultOptions),
