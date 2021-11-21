@@ -57,7 +57,7 @@ namespace IrdLibraryClient
                     List<string[]> table = doc.DocumentNode
                                 .Descendants("tr")
                                 .Skip(1)
-                                .Where(tr => tr.Elements("td").Count() > 1 && tr.Elements("td").First().InnerText == query)
+                                .Where(tr => tr.Elements("td").Count() > 1 && tr.Elements("td").First().InnerText == query.ToUpper())
                                 .Select(tr => tr.Elements("td").Select(td => td.InnerText.Trim()).ToArray())
                                 .ToList();
 
