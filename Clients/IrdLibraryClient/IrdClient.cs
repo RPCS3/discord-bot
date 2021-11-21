@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -12,6 +11,7 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Formatters;
 using CompatApiClient.Utils;
+using HtmlAgilityPack;
 using IrdLibraryClient.IrdFormat;
 using IrdLibraryClient.POCOs;
 
@@ -19,7 +19,7 @@ namespace IrdLibraryClient
 {
     public class IrdClient
     {
-        public static readonly string BaseUrl = "http://jonnysp.bplaced.net";
+        public static readonly string BaseUrl = "https://ps3.aldostools.org";
 
         private readonly HttpClient client;
         private readonly JsonSerializerOptions jsonOptions;
@@ -37,53 +37,51 @@ namespace IrdLibraryClient
         }
 
         public static string GetDownloadLink(string irdFilename) => $"{BaseUrl}/ird/{irdFilename}";
-        public static string GetInfoLink(string irdFilename) => $"{BaseUrl}/info.php?file=ird/{irdFilename}";
 
         public async Task<SearchResult?> SearchAsync(string query, CancellationToken cancellationToken)
         {
             try
             {
-                var requestUri = new Uri(BaseUrl + "/data.php")
-                    .SetQueryParameters(
-                        ("draw", query.Length.ToString()),
-
-                        ("columns[0][data]", "id"),
-                        ("columns[0][name]", ""),
-                        ("columns[0][searchable]", "true"),
-                        ("columns[0][orderable]", "true"),
-                        ("columns[0][search][value]", ""),
-                        ("columns[0][search][regex]", "false"),
-
-                        ("columns[1][data]", "title"),
-                        ("columns[1][name]", ""),
-                        ("columns[1][searchable]", "true"),
-                        ("columns[1][orderable]", "true"),
-                        ("columns[1][search][value]", ""),
-                        ("columns[1][search][regex]", "false"),
-
-                        ("order[0][column]", "0"),
-                        ("order[0][dir]", "asc"),
-
-                        ("start", "0"),
-                        ("length", "10"),
-
-                        ("search[value]", query.Trim(100)),
-
-                        ("_", DateTime.UtcNow.Ticks.ToString())
-                    );
+                var requestUri = new Uri(BaseUrl + "/ird.html");
                 using var getMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
                 using var response = await client.SendAsync(getMessage, cancellationToken).ConfigureAwait(false);
                 try
                 {
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-                    var result = await response.Content.ReadFromJsonAsync<SearchResult>(jsonOptions, cancellationToken).ConfigureAwait(false);
-                    if (result?.Data?.Count > 0)
-                        foreach (var item in result.Data)
-                        {
-                            item.Filename = GetIrdFilename(item.Filename);
-                            item.Title = GetTitle(item.Title);
-                        }
-                    return result;
+
+                    var result = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                    HtmlDocument doc = new();
+                    doc.LoadHtml(result);
+
+                    List<string[]> table = doc.DocumentNode
+                                .Descendants("tr")
+                                .Skip(1)
+                                .Where(tr => tr.Elements("td").Count() > 1 && tr.Elements("td").First().InnerText == query)
+                                .Select(tr => tr.Elements("td").Select(td => td.InnerText.Trim()).ToArray())
+                                .ToList();
+
+                    SearchResult searchResults = new();
+                    searchResults.Data = new();
+
+                    foreach (var item in table)
+					{
+                        var r = new SearchResultItem();
+                        r.Id = item[0];
+                        r.Title = item[1];
+                        r.GameVersion = item[2];
+                        r.UpdateVersion = item[3];
+                        r.Size = item[4];
+                        r.FileCount = item[5];
+                        r.FolderCount = item[6];
+                        r.MD5 = item[7];
+                        r.IrdName = item[8];
+
+                        r.Filename = r.Id + "-" + r.IrdName + ".ird";
+                        searchResults?.Data?.Add(r);
+                    }
+
+                    return searchResults;
                 }
                 catch (Exception e)
                 {
@@ -206,20 +204,6 @@ namespace IrdLibraryClient
                 ApiConfig.Log.Error(e);
                 return result;
             }
-        }
-
-        private static string? GetIrdFilename(string? html)
-        {
-            if (string.IsNullOrEmpty(html))
-                return null;
-
-            var matches = IrdFilename.Matches(html);
-            if (matches.Count > 0)
-                return matches[0].Groups["filename"].Value;
-            
-            ApiConfig.Log.Warn("Couldn't parse IRD filename from " + html);
-            return null;
-
         }
 
         private static string? GetTitle(string? html)
