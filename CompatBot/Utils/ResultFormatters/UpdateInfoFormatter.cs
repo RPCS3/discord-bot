@@ -198,6 +198,7 @@ namespace CompatBot.Utils.ResultFormatters
                 "13xforever" => "💮",
                 "RipleyTom" => ":galciv:",
                 "Whatcookie" => "🍪",
+                "clienthax" => ":gooseknife:",
                 /*
                 "VelocityRa" => null,
                 "CookiePLMonster" => null,
