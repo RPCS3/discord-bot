@@ -518,12 +518,10 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
             {
-                if (items["os_type"] == "Windows" && !audioBackend.Equals("XAudio2", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("⚠ Please use `XAudio2` as the audio backend on Windows");
-                else if (items["os_type"] == "Linux"
-                         && !audioBackend.Equals("OpenAL", StringComparison.InvariantCultureIgnoreCase)
-                         && !audioBackend.Equals("FAudio", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("ℹ `FAudio` and `OpenAL` are the recommended audio backends on Linux");
+                if (items["os_type"] == "Windows" && !audioBackend.Equals("Cubeb", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("⚠ Please use `Cubeb` as the audio backend on Windows");
+                else if (items["os_type"] == "Linux"  && !audioBackend.Equals("Cubeb", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("ℹ Please use `Cubeb` as the audio backend on Linux");
                 if (audioBackend.Equals("null", StringComparison.InvariantCultureIgnoreCase))
                     notes.Add("⚠ `Audio backend` is set to `null`");
             }
@@ -540,9 +538,8 @@ namespace CompatBot.Utils.ResultFormatters
                 notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
             if (items["spu_block_size"] is string spuBlockSize)
             {
-               // TODO warn on DES
-               // if (spuBlockSize != "Safe")
-               //     notes.Add($"⚠ Please change `SPU Block Size` to `Safe`, currently `{spuBlockSize}` is unstable.");
+               if (spuBlockSize != "Safe" && spuBlockSize != "Mega")
+                    notes.Add($"⚠ Please change `SPU Block Size` to `Safe/Mega`, currently `{spuBlockSize}` is unstable.");
             }
 
             if (items["auto_start_on_boot"] == DisabledMark)
@@ -828,6 +825,9 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (!DesIds.Contains(serial))
                 return;
+
+            if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
+                notes.Add("ℹ Please set `SPU Block Size` to `Safe` to reduce crash rate");
 
             if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
                 notes.Add("⚠ `Frame Limiter` should be `Off`");
