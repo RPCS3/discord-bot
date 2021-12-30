@@ -1,0 +1,66 @@
+name: .NET
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  BuildAndTest:
+    runs-on: ubuntu-latest
+    name: "Run Tests"
+    steps:
+    - uses: actions/checkout@v2
+    - name: update dotnet core sdk
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: dotnet restore (first try)
+      run: dotnet restore --ignore-failed-sources
+    - name: dotnet restore (second try)
+      run: dotnet restore --ignore-failed-sources
+    - name: dotnet restore (last try)
+      run: dotnet restore
+    - name: dotnet build Debug
+      run: dotnet build --no-restore --configuration Debug
+    - name: dotnet test
+      run: dotnet test --no-build --verbosity normal Tests/Tests.csproj
+
+  DockerImage:
+    needs: BuildAndTest
+    runs-on: ubuntu-latest
+    name: "Build Docker image"
+    if: github.ref == 'refs/heads/master'
+    steps:
+    - uses: actions/checkout@v2
+    - name: "clean build artifacts"
+      run: git clean -dfx
+    - name: update dotnet core sdk
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: dotnet restore (first try)
+      run: dotnet restore --ignore-failed-sources
+    - name: dotnet restore (second try)
+      run: dotnet restore --ignore-failed-sources
+    - name: dotnet restore (last try)
+      run: dotnet restore
+    - name: dotnet build Release
+      run: dotnet build --no-restore --configuration Release
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Generating build ID with offset for old builds
+      env:
+        NUM: ${{ github.run_number }}
+      run: echo "GITHUB_RUN_NUMBER_WITH_OFFSET=$(($NUM+1050))" >> $GITHUB_ENV
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        push: 'true'
+        tags: rpcs3/discord-bot:${{ env.GITHUB_RUN_NUMBER_WITH_OFFSET }},rpcs3/discord-bot:release-latest,rpcs3/discord-bot:latest
