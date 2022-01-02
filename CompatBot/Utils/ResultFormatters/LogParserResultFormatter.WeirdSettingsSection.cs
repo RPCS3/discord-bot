@@ -1291,17 +1291,6 @@ namespace CompatBot.Utils.ResultFormatters
 
         private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
         {
-            if (items["build_branch"] is string branch
-                && !branch.Contains("vsh", StringComparison.InvariantCultureIgnoreCase))
-                generalNotes.Add("ℹ Booting `vsh.self` currently requires a special build");
-            if (items["lib_loader"] is string libLoader
-                && libLoader != "Manual selection")
-                notes.Add("⚠ `Library Loader` must be set to `Manual`");
-            if (items["library_list"] is string libList
-                && libList != "None")
-                notes.Add("⚠ Every library module must be deselected");
-            if (items["debug_console_mode"] is string decrMode && decrMode != EnabledMark)
-                notes.Add("⚠ `Debug Console Mode` must be enabled");
             if (items["write_color_buffers"] is string wcb && wcb != EnabledMark)
                 notes.Add("ℹ `Write Color Buffers` should be enabled for proper visuals");
             if (items["cpu_blit"] is string cpuBlit && cpuBlit != EnabledMark)
