@@ -46,24 +46,45 @@ namespace CirrusCiClient
                     .Where(a => a?.Files is {Count: >0})
                     .SelectMany(a => a!.Files!)
                     .FirstOrDefault(f => f?.Path.EndsWith(".7z") ?? false);
+
                 var linTask = node.Tasks?.FirstOrDefault(t => t is {} lt && lt.Name.Contains("Linux") && lt.Name.Contains("GCC"));
                 var linArtifact = linTask?.Artifacts?
                     .Where(a => a?.Files is {Count: >0})
                     .SelectMany(a => a!.Files!)
                     .FirstOrDefault(a => a?.Path.EndsWith(".AppImage") ?? false);
 
+                var macTask = node.Tasks?.FirstOrDefault(t => t?.Name.Contains("macOS") ?? false);
+                var macArtifact = macTask?.Artifacts?
+                    .Where(a => a?.Files is { Count: > 0 })
+                    .SelectMany(a => a!.Files!)
+                    .FirstOrDefault(a => a?.Path.EndsWith(".dmg") ?? false);
+
                 var startTime = FromTimestamp(node.BuildCreatedTimestamp);
                 var finishTime = GetFinishTime(node);
                 return new()
                 {
                     Commit = node.ChangeIdInRepo,
-                    WindowsFilename = winArtifact?.Path is string wp ? Path.GetFileName(wp) : null,
-                    LinuxFilename = linArtifact?.Path is string lp ? Path.GetFileName(lp) : null,
-                    WindowsBuildDownloadLink = winTask?.Id is string wtid && winArtifact?.Path is string wtap ? $"https://api.cirrus-ci.com/v1/artifact/task/{wtid}/Artifact/{wtap}" : null,
-                    LinuxBuildDownloadLink = linTask?.Id is string ltid && linArtifact?.Path is string ltap ? $"https://api.cirrus-ci.com/v1/artifact/task/{ltid}/Artifact/{ltap}" : null,
                     StartTime = startTime,
                     FinishTime = finishTime,
-                    Status = node.Status,
+
+                    WindowsBuild = new()
+                    {
+                        Filename = winArtifact?.Path is string wp ? Path.GetFileName(wp) : null,
+                        DownloadLink = winTask?.Id is string wtid && winArtifact?.Path is string wtap ? $"https://api.cirrus-ci.com/v1/artifact/task/{wtid}/Artifact/{wtap}" : null,
+                        Status = winTask?.Status,
+                    },
+                    LinuxBuild = new()
+					{
+                        Filename = linArtifact?.Path is string lp ? Path.GetFileName(lp) : null,
+                        DownloadLink = linTask?.Id is string ltid && linArtifact?.Path is string ltap ? $"https://api.cirrus-ci.com/v1/artifact/task/{ltid}/Artifact/{ltap}" : null,
+                        Status = linTask?.Status,
+                    },
+                    MacBuild = new()
+					{
+                        Filename = macArtifact?.Path is string mp ? Path.GetFileName(mp) : null,
+                        DownloadLink = macTask?.Id is string mtid && macArtifact?.Path is string mtap ? $"https://api.cirrus-ci.com/v1/artifact/task/{mtid}/Artifact/{mtap}" : null,
+                        Status= macTask?.Status,
+                    }
                 };
             }
             return null;

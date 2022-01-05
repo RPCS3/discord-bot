@@ -15,6 +15,7 @@
         public string Datetime;
         public BuildLink Windows;
         public BuildLink Linux;
+        public BuildLink Mac;
     }
 
     public class BuildLink

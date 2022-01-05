@@ -12,8 +12,8 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Microsoft.TeamFoundation.Build.WebApi;
-using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
+//using Microsoft.TeamFoundation.Build.WebApi;
+//using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands
 {
@@ -125,8 +125,10 @@ namespace CompatBot.Commands
             {
                 var windowsDownloadHeader = "Windows PR Build";
                 var linuxDownloadHeader = "Linux PR Build";
+                var macDownloadHeader = "Mac PR Build";
                 string? windowsDownloadText = null;
                 string? linuxDownloadText = null;
+                string? macDownloadText = null;
                 string? buildTime = null;
 
                 if (prInfo.Head?.Sha is string commit)
@@ -134,58 +136,116 @@ namespace CompatBot.Commands
                     {
                         windowsDownloadText = "⏳ Pending...";
                         linuxDownloadText = "⏳ Pending...";
+                        macDownloadText = "⏳ Pending...";
                         var latestBuild = await CirrusCi.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
                         if (latestBuild == null)
                         {
                             if (state == "Open")
+                            {
                                 embed.WithFooter($"Opened on {prInfo.CreatedAt:u} ({(DateTime.UtcNow - prInfo.CreatedAt).AsTimeDeltaDescription()} ago)");
+                            }
                             windowsDownloadText = null;
                             linuxDownloadText = null;
+                            macDownloadText = null;
                         }
                         else
                         {
                             bool shouldHaveArtifacts = false;
-                            if (latestBuild is {Status: CirrusCiClient.BuildStatus.Completed, FinishTime: not null})
-                            {
+
+                            if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Completed
+                                || latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Completed
+                                || latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Completed)
+							{
                                 buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
                                 shouldHaveArtifacts = true;
                             }
-                            else if (latestBuild.Status is CirrusCiClient.BuildStatus.Failed or CirrusCiClient.BuildStatus.Errored or CirrusCiClient.BuildStatus.Aborted)
-                                windowsDownloadText = $"❌ {latestBuild.Status}";
-                            else if (latestBuild is {Status: CirrusCiClient.BuildStatus.Executing})
+
+                            // Check for subtask errors (win/lin/mac)
+                            if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Aborted or CirrusCiClient.TaskStatus.Failed or CirrusCiClient.TaskStatus.Skipped)
                             {
+                                windowsDownloadText = $"❌ {latestBuild.WindowsBuild?.Status}";
+                            }
+                            if (latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Aborted or CirrusCiClient.TaskStatus.Failed or CirrusCiClient.TaskStatus.Skipped)
+                            {
+                                linuxDownloadText = $"❌ {latestBuild.LinuxBuild?.Status}";
+                            }
+                            if (latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Aborted or CirrusCiClient.TaskStatus.Failed or CirrusCiClient.TaskStatus.Skipped)
+                            {
+                                macDownloadText = $"❌ {latestBuild.MacBuild?.Status}";
+                            }
+
+                            // Check estimated time for pending builds
+                            if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Executing
+                                || latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Executing
+                                || latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+							{
                                 var estimatedCompletionTime = latestBuild.StartTime + (await CirrusCi.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                                 var estimatedTime = TimeSpan.FromMinutes(1);
                                 if (estimatedCompletionTime > DateTime.UtcNow)
                                     estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
-                                windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
-                                linuxDownloadText = windowsDownloadText;
-                            }
-                            // windows build
-                            var name = latestBuild.WindowsFilename ?? "Windows PR Build";
+
+                                if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+                                {
+                                    windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                }
+                                if (latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+                                {
+                                    linuxDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                }
+                                if (latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+                                {
+                                    macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                }
+							}
+
+							// windows build
+							var name = latestBuild.WindowsBuild?.Filename ?? "Windows PR Build";
                             name = name.Replace("rpcs3-", "").Replace("_win64", "");
-                            if (!string.IsNullOrEmpty(latestBuild.WindowsBuildDownloadLink))
-                                windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuildDownloadLink})";
+                            if (!string.IsNullOrEmpty(latestBuild.WindowsBuild?.DownloadLink))
+                                windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuild?.DownloadLink})";
                             else if (shouldHaveArtifacts)
                             {
                                 if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
                                     windowsDownloadText = "No longer available";
-                                else
-                                    windowsDownloadText = null;
                             }
 
                             // linux build
-                            name = latestBuild.LinuxFilename ?? "Linux PR Build";
+                            name = latestBuild.LinuxBuild?.Filename ?? "Linux PR Build";
                             name = name.Replace("rpcs3-", "").Replace("_linux64", "");
-                            if (!string.IsNullOrEmpty(latestBuild.LinuxBuildDownloadLink))
-                                linuxDownloadText = $"[⏬ {name}]({latestBuild.LinuxBuildDownloadLink})";
+                            if (!string.IsNullOrEmpty(latestBuild.LinuxBuild?.DownloadLink))
+                                linuxDownloadText = $"[⏬ {name}]({latestBuild.LinuxBuild?.DownloadLink})";
                             else if (shouldHaveArtifacts)
                             {
                                 if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
                                     linuxDownloadText = "No longer available";
-                                else
-                                    linuxDownloadText = null;
                             }
+
+                            // mac build
+                            name = latestBuild.MacBuild?.Filename ?? "Mac PR Build";
+                            name = name.Replace("rpcs3-", "").Replace("_linux64", "");
+                            if (!string.IsNullOrEmpty(latestBuild.MacBuild?.DownloadLink))
+                                macDownloadText = $"[⏬ {name}]({latestBuild.MacBuild?.DownloadLink})";
+                            else if (shouldHaveArtifacts)
+                            {
+                                if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
+                                    macDownloadText = "No longer available";
+                            }
+
+                            // Neatify PR's with missing builders
+                            if (latestBuild.WindowsBuild?.Status is null)
+                            {
+                                windowsDownloadText = null;
+                            }
+                            if (latestBuild.LinuxBuild?.Status is null)
+                            {
+                                linuxDownloadText = null;
+                            }
+                            if (latestBuild.MacBuild?.Status is null)
+                            {
+                                macDownloadText = null;
+                            }
+
+
                         }
                     }
                     catch (Exception e)
@@ -193,12 +253,15 @@ namespace CompatBot.Commands
                         Config.Log.Error(e, "Failed to get Azure DevOps build info");
                         windowsDownloadText = null; // probably due to expired access token
                         linuxDownloadText = null;
+                        macDownloadText = null;
                     }
 
                 if (!string.IsNullOrEmpty(windowsDownloadText))
                     embed.AddField(windowsDownloadHeader, windowsDownloadText, true);
                 if (!string.IsNullOrEmpty(linuxDownloadText))
                     embed.AddField(linuxDownloadHeader, linuxDownloadText, true);
+                if (!string.IsNullOrEmpty (macDownloadText))
+                    embed.AddField(macDownloadHeader, macDownloadText, true);
                 if (!string.IsNullOrEmpty(buildTime))
                     embed.WithFooter(buildTime);
             }

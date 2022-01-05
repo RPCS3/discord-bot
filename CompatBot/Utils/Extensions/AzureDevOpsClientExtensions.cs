@@ -24,8 +24,10 @@ namespace CompatBot.Utils.Extensions
             public string? Commit { get; init; }
             public string? WindowsFilename { get; init; }
             public string? LinuxFilename { get; init; }
+            public string? MacFilename { get; init; }
             public string? WindowsBuildDownloadLink { get; init; }
             public string? LinuxBuildDownloadLink { get; init; }
+            public string? MacBuildDownloadLink { get; init; }
             public DateTime? StartTime { get; init; }
             public DateTime? FinishTime { get; init; }
             public BuildStatus? Status { get; init; }
@@ -258,6 +260,34 @@ namespace CompatBot.Utils.Extensions
                         Config.Log.Error(e2, "Failed to get linux build filename");
                     }
             }
+
+            // mac build
+            var macBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac"));
+            var macBuild = linuxBuildArtifact?.Resource;
+            if (macBuild?.DownloadUrl is string macDownloadUrl)
+            {
+                result = result with { MacBuildDownloadLink = macDownloadUrl };
+                if (macBuild.DownloadUrl.Contains("format=zip", StringComparison.InvariantCultureIgnoreCase))
+                    try
+                    {
+                        using var httpClient = HttpClientFactory.Create();
+                        await using var stream = await httpClient.GetStreamAsync(macDownloadUrl, cancellationToken).ConfigureAwait(false);
+                        using var zipStream = ReaderFactory.Open(stream);
+                        while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                        {
+                            if (zipStream.Entry.Key.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                result = result with { MacFilename = Path.GetFileName(zipStream.Entry.Key) };
+                                break;
+                            }
+                        }
+                    }
+                    catch (Exception e2)
+                    {
+                        Config.Log.Error(e2, "Failed to get mac build filename");
+                    }
+            }
+
             return result;
         }
     }
