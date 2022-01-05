@@ -2,15 +2,19 @@
 
 namespace CirrusCiClient.POCOs
 {
+    public record BuildOSInfo
+	{
+        public string? Filename { get; init; }
+        public string? DownloadLink { get; init; }
+        public TaskStatus? Status { get; init; }
+	}
     public record BuildInfo
     {
         public string? Commit { get; init; }
-        public string? WindowsFilename { get; init; }
-        public string? LinuxFilename { get; init; }
-        public string? WindowsBuildDownloadLink { get; init; }
-        public string? LinuxBuildDownloadLink { get; init; }
         public DateTime StartTime { get; init; }
         public DateTime? FinishTime { get; init; }
-        public BuildStatus? Status { get; init; }
+        public BuildOSInfo? WindowsBuild { get; init; }
+        public BuildOSInfo? LinuxBuild { get; init; }
+        public BuildOSInfo? MacBuild { get; init; }
     }
 }

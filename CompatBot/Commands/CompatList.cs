@@ -366,7 +366,8 @@ namespace CompatBot.Commands
                                     Datetime = buildTime?.ToString("yyyy-MM-dd HH:mm:ss"),
                                     Pr = mergedPr.Number,
                                     Windows = new() {Download = masterBuildInfo.WindowsBuildDownloadLink ?? ""},
-                                    Linux = new() {Download = masterBuildInfo.LinuxBuildDownloadLink ?? ""},
+                                    Linux = new() { Download = masterBuildInfo.LinuxBuildDownloadLink ?? "" },
+                                    Mac = new() { Download = masterBuildInfo.MacBuildDownloadLink ?? "" },
                                 },
                             };
                         }
@@ -379,7 +380,8 @@ namespace CompatBot.Commands
                                 {
                                     Pr = mergedPr.Number,
                                     Windows = new() {Download = ""},
-                                    Linux = new() {Download = ""},
+                                    Linux = new() { Download = "" },
+                                    Mac = new() { Download = "" },
                                 },
                             };
                         }

@@ -540,7 +540,7 @@ namespace CompatBot.Utils.ResultFormatters
             var updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
             if (updateInfo?.ReturnCode != 1 && currentBuildCommit != null)
                 updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
-            var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download;
+            var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download ?? updateInfo?.LatestBuild?.Mac?.Download;
             if (string.IsNullOrEmpty(link))
                 return null;
 

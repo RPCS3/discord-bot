@@ -19,7 +19,7 @@ namespace CompatBot.Utils.ResultFormatters
 
         public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, Octokit.PullRequest? currentPrInfo = null)
         {
-            if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download) is null)
+            if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download ?? info?.LatestBuild?.Mac?.Download) is null)
                 return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
 
             var justAppend = builder != null;
@@ -162,7 +162,8 @@ namespace CompatBot.Utils.ResultFormatters
             }
             return builder
                 .AddField("Windows download", GetLinkMessage(latestBuild?.Windows?.Download, true), true)
-                .AddField("Linux download", GetLinkMessage(latestBuild?.Linux?.Download, true), true);
+                .AddField("Linux download", GetLinkMessage(latestBuild?.Linux?.Download, true), true)
+                .AddField("Mac download", GetLinkMessage(latestBuild?.Mac?.Download, true), true);
         }
 
         private static string GetLinkMessage(string? link, bool simpleName)
