@@ -263,7 +263,7 @@ namespace CompatBot.Utils.Extensions
 
             // mac build
             var macBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac"));
-            var macBuild = linuxBuildArtifact?.Resource;
+            var macBuild = macBuildArtifact?.Resource;
             if (macBuild?.DownloadUrl is string macDownloadUrl)
             {
                 result = result with { MacBuildDownloadLink = macDownloadUrl };

@@ -74,13 +74,13 @@ namespace CirrusCiClient
                         Status = winTask?.Status,
                     },
                     LinuxBuild = new()
-					{
+                    {
                         Filename = linArtifact?.Path is string lp ? Path.GetFileName(lp) : null,
                         DownloadLink = linTask?.Id is string ltid && linArtifact?.Path is string ltap ? $"https://api.cirrus-ci.com/v1/artifact/task/{ltid}/Artifact/{ltap}" : null,
                         Status = linTask?.Status,
                     },
                     MacBuild = new()
-					{
+                    {
                         Filename = macArtifact?.Path is string mp ? Path.GetFileName(mp) : null,
                         DownloadLink = macTask?.Id is string mtid && macArtifact?.Path is string mtap ? $"https://api.cirrus-ci.com/v1/artifact/task/{mtid}/Artifact/{mtap}" : null,
                         Status= macTask?.Status,

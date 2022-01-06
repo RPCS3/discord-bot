@@ -12,8 +12,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-//using Microsoft.TeamFoundation.Build.WebApi;
-//using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands
 {
@@ -155,7 +153,7 @@ namespace CompatBot.Commands
                             if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Completed
                                 || latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Completed
                                 || latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Completed)
-							{
+                            {
                                 buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
                                 shouldHaveArtifacts = true;
                             }
@@ -178,7 +176,7 @@ namespace CompatBot.Commands
                             if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Executing
                                 || latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Executing
                                 || latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Executing)
-							{
+                            {
                                 var estimatedCompletionTime = latestBuild.StartTime + (await CirrusCi.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                                 var estimatedTime = TimeSpan.FromMinutes(1);
                                 if (estimatedCompletionTime > DateTime.UtcNow)
@@ -196,10 +194,10 @@ namespace CompatBot.Commands
                                 {
                                     macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
                                 }
-							}
+                            }
 
-							// windows build
-							var name = latestBuild.WindowsBuild?.Filename ?? "Windows PR Build";
+                            // windows build
+                            var name = latestBuild.WindowsBuild?.Filename ?? "Windows PR Build";
                             name = name.Replace("rpcs3-", "").Replace("_win64", "");
                             if (!string.IsNullOrEmpty(latestBuild.WindowsBuild?.DownloadLink))
                                 windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuild?.DownloadLink})";
@@ -222,7 +220,7 @@ namespace CompatBot.Commands
 
                             // mac build
                             name = latestBuild.MacBuild?.Filename ?? "Mac PR Build";
-                            name = name.Replace("rpcs3-", "").Replace("_linux64", "");
+                            name = name.Replace("rpcs3-", "").Replace("_macos", "");
                             if (!string.IsNullOrEmpty(latestBuild.MacBuild?.DownloadLink))
                                 macDownloadText = $"[⏬ {name}]({latestBuild.MacBuild?.DownloadLink})";
                             else if (shouldHaveArtifacts)
