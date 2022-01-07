@@ -249,7 +249,7 @@ namespace CompatBot.Utils.ResultFormatters
 
             if (items["os_type"] == "Windows"
                 && Version.TryParse(items["os_version"], out var winVersion)
-                && (winVersion.Major < 10 || winVersion.Build < 19041))
+                && (winVersion.Major < 10 || winVersion.Build < 19042))
                 notes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/software-download/windows10) to currently supported version");
             
             var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
