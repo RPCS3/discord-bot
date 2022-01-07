@@ -48,6 +48,10 @@ namespace CompatBot.Utils.ResultFormatters
                         _ => "AMD APU for PlayStation?",
                     };
                 }
+                if (cpuModel.StartsWith("VirtualApple", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    cpuModel = "Rosetta";
+                }
                 items["cpu_model"] = cpuModel;
                 items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
                 items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
@@ -71,6 +75,12 @@ namespace CompatBot.Utils.ResultFormatters
                         items["os_type"] = osInfo.Groups["posix_name"].Value;
                         items["os_version"] = osInfo.Groups["posix_release"].Value;
                         items["os_linux_version"] = GetLinuxVersion(items["os_version"], osInfo.Groups["posix_version"].Value);
+                        break;
+                    }
+                    case "macos":
+                    {
+                        items["os_type"] = "MacOS";
+                        items["os_version"] = osInfo.Groups["macos_version"].Value;
                         break;
                     }
                 }
