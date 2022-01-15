@@ -35,7 +35,7 @@ namespace CirrusCiClient
             commit = commit.ToLower();
             var queryResult = await Client.GetPrBuilds.ExecuteAsync("pull/" + pr, oldestTimestamp.ToTimestamp(), cancellationToken);
             queryResult.EnsureNoErrors();
-            if (queryResult.Data?.GithubRepository?.Builds?.Edges is {Count: > 0} edgeList)
+            if (queryResult.Data?.OwnerRepository?.Builds?.Edges is {Count: > 0} edgeList)
             {
                 var node = edgeList.LastOrDefault(e => e?.Node?.ChangeIdInRepo  == commit)?.Node;
                 if (node is null)
@@ -102,7 +102,7 @@ namespace CirrusCiClient
                 queryResult.EnsureNoErrors();
 
                 var times = (
-                    from edge in queryResult.Data?.GithubRepository?.Builds?.Edges
+                    from edge in queryResult.Data?.OwnerRepository?.Builds?.Edges
                     let node = edge?.Node
                     where node?.Status == BuildStatus.Completed
                     let p = new {start = FromTimestamp(node.BuildCreatedTimestamp), finish = GetFinishTime(node)}

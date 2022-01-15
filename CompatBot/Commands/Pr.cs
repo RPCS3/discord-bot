@@ -248,7 +248,7 @@ namespace CompatBot.Commands
                     }
                     catch (Exception e)
                     {
-                        Config.Log.Error(e, "Failed to get Azure DevOps build info");
+                        Config.Log.Error(e, "Failed to get CI build info");
                         windowsDownloadText = null; // probably due to expired access token
                         linuxDownloadText = null;
                         macDownloadText = null;

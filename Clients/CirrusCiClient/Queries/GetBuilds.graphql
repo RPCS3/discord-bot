@@ -1,5 +1,5 @@
 query GetPrBuilds($branch: String, $after: String) {
-    githubRepository(owner: "RPCS3", name: "rpcs3") {
+    ownerRepository(platform: "github", owner: "RPCS3", name: "rpcs3") {
         builds(branch: $branch, after: $after, last: 20) {
             edges {
                 node {
@@ -44,7 +44,7 @@ query GetBuildWithArtifacts($buildId: ID!) {
 }
 
 query GetLastFewBuilds($count: Int!) {
-    githubRepository(owner: "RPCS3", name: "rpcs3") {
+    ownerRepository(platform: "github", owner: "RPCS3", name: "rpcs3") {
         builds(last: $count) {
             edges {
                 node {
