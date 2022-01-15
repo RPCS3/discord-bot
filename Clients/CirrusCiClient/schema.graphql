@@ -4,33 +4,15 @@
   subscription: Subscription
 }
 
-type AccountTransaction {
-  accountId: Long!
-  taskId: Long!
-  repositoryId: Long!
-  timestamp: Long!
-  microCreditsAmount: Long!
-  creditsAmount: String!
-  initialCreditsAmount: String
-  task: Task
-  repository: Repository
-}
-
-"An edge in a connection"
-type AccountTransactionEdge {
-  "The item at the end of the edge"
-  node: AccountTransaction
-  "cursor marks a unique position or index into the connection"
-  cursor: String!
-}
-
-"A connection to a list of items."
-type AccountTransactionsConnection {
-  "a list of edges"
-  edges: [AccountTransactionEdge]
-  "details about this specific page"
-  pageInfo: PageInfo!
-}
+"""
+Exposes a URL that specifies the behaviour of this scalar.
+"""
+directive @specifiedBy(
+  """
+  The URL that specifies the behaviour of this scalar.
+  """
+  url: String!
+) on SCALAR
 
 type ApiAccessToken {
   maskedToken: String
@@ -50,7 +32,8 @@ type Artifacts {
 }
 
 type BillingSettings {
-  accountId: Long!
+  platform: String!
+  ownerUid: String!
   enabled: Boolean!
   billingCreditsLimit: Long!
   billingEmailAddress: String!
@@ -58,7 +41,8 @@ type BillingSettings {
 }
 
 input BillingSettingsInput {
-  accountId: ID!
+  platform: String
+  ownerUid: ID!
   enabled: Boolean!
   billingEmailAddress: String!
   invoiceTemplate: String
@@ -117,7 +101,9 @@ type BuildReTriggerPayload {
   clientMutationId: String
 }
 
-"Build status."
+"""
+Build status.
+"""
 enum BuildStatus {
   CREATED
   NEEDS_APPROVAL
@@ -130,7 +116,8 @@ enum BuildStatus {
 }
 
 input BuyComputeCreditsInput {
-  accountId: ID!
+  platform: String!
+  ownerUid: ID!
   amountOfCredits: String!
   paymentTokenId: String!
   receiptEmail: String
@@ -139,12 +126,41 @@ input BuyComputeCreditsInput {
 
 type BuyComputeCreditsPayload {
   error: String
-  info: GitHubOrganizationInfo
+  info: OwnerInfo
   user: User
   clientMutationId: String
 }
 
-"Repository Setting to choose where to look for the configuration file."
+type CacheRetrievalAttemptError {
+  key: String!
+  message: String!
+}
+
+type CacheRetrievalAttemptHit {
+  key: String!
+  sizeBytes: Int!
+  downloadedInMilliseconds: Int!
+  extractedInMilliseconds: Int!
+  valid: Boolean!
+}
+
+type CacheRetrievalAttemptMiss {
+  key: String!
+  sizeBytes: Int!
+  populatedInMilliseconds: Int!
+  archivedInMilliseconds: Int!
+  uploadedInMilliseconds: Int!
+}
+
+type CacheRetrievalAttempts {
+  errors: [CacheRetrievalAttemptError]
+  hits: [CacheRetrievalAttemptHit]
+  misses: [CacheRetrievalAttemptMiss]
+}
+
+"""
+Repository Setting to choose where to look for the configuration file.
+"""
 enum ConfigResolutionStrategy {
   SAME_SHA
   MERGE_FOR_PRS
@@ -152,7 +168,8 @@ enum ConfigResolutionStrategy {
 }
 
 input CreatePersistentWorkerPoolInput {
-  ownerId: Long!
+  platform: String
+  ownerUid: ID!
   name: String!
   enabledForPublic: Boolean!
   clientMutationId: String
@@ -169,7 +186,9 @@ type DayDate {
   day: Int
 }
 
-"Repository Setting to choose how to decrypt variables."
+"""
+Repository Setting to choose how to decrypt variables.
+"""
 enum DecryptEnvironmentVariablesFor {
   USERS_WITH_WRITE_PERMISSIONS
   EVERYONE
@@ -205,7 +224,6 @@ type DeleteWebPushConfigurationPayload {
 }
 
 type ExecutionChart {
-  startTimestamp: Long!
   maxValue: Float!
   minValue: Float!
   points: [ExecutionChartPoint]!
@@ -226,6 +244,8 @@ type ExecutionInfo {
   events: [ExecutionEvent]
   cpuChart: ExecutionChart
   memoryChart: ExecutionChart
+  cacheRetrievalAttempts: CacheRetrievalAttempts
+  agentNotifications: [Notification]
 }
 
 input GenerateNewAccessTokenInput {
@@ -238,6 +258,17 @@ type GenerateNewAccessTokenPayload {
   clientMutationId: String
 }
 
+input GenerateNewOwnerAccessTokenInput {
+  platform: ID
+  ownerUid: ID
+  clientMutationId: String
+}
+
+type GenerateNewOwnerAccessTokenPayload {
+  token: String!
+  clientMutationId: String
+}
+
 input GetPersistentWorkerPoolRegistrationTokenInput {
   poolId: ID
   clientMutationId: String
@@ -246,32 +277,6 @@ input GetPersistentWorkerPoolRegistrationTokenInput {
 type GetPersistentWorkerPoolRegistrationTokenPayload {
   token: String!
   clientMutationId: String
-}
-
-type GitHubMarketplacePurchase {
-  accountId: Long!
-  login: String!
-  planId: Long!
-  planName: String!
-  unitCount: Long!
-  onFreeTrial: Boolean!
-  freeTrialDaysLeft: Int!
-}
-
-type GitHubOrganizationInfo {
-  id: ID!
-  name: String!
-  role: String!
-  purchase: GitHubMarketplacePurchase
-  activeUsersAmount: Int!
-  activeUserNames: [String]
-  balanceInCredits: String!
-  transactions("fetching only nodes before this node (exclusive)" before: String "fetching only nodes after this node (exclusive)" after: String "fetching only the first certain number of nodes" first: Int "fetching only the last certain number of nodes" last: Int): AccountTransactionsConnection
-  billingSettings: BillingSettings
-  webhookSettings: WebHookSettings
-  webhookDeliveries("fetching only nodes before this node (exclusive)" before: String "fetching only nodes after this node (exclusive)" after: String "fetching only the first certain number of nodes" first: Int "fetching only the last certain number of nodes" last: Int): WebhookDeliveriesConnection
-  apiToken: ApiAccessToken
-  persistentWorkerPools: [PersistentWorkerPool]
 }
 
 type Hook {
@@ -293,6 +298,17 @@ type HookExecutionInfo {
   result: String
   outputLogs: [String]
   durationNanos: Long!
+  environment: [String]
+}
+
+input HooksReRunInput {
+  hookIds: [ID]
+  clientMutationId: String
+}
+
+type HooksReRunPayload {
+  newHooks: [Hook]
+  clientMutationId: String
 }
 
 type InstanceResources {
@@ -300,8 +316,20 @@ type InstanceResources {
   memory: Long!
 }
 
-"Long type"
-scalar Long
+input InvalidateCacheEntriesInput {
+  taskId: ID!
+  cacheKeys: [String]
+  clientMutationId: String
+}
+
+type InvalidateCacheEntriesPayload {
+  clientMutationId: String
+}
+
+"""
+Int type
+"""
+scalar Int
 
 type MetricsChart {
   title: String
@@ -322,7 +350,11 @@ input MetricsQueryParameters {
 type Mutation {
   securedVariable(input: RepositorySecuredVariableInput!): RepositorySecuredVariablePayload
   securedOrganizationVariable(input: OrganizationSecuredVariableInput!): OrganizationSecuredVariablePayload
-  updateSecuredOrganizationVariable(input: UpdateOrganizationSecuredVariableInput!): UpdateOrganizationSecuredVariablePayload
+  securedOwnerVariable(input: OwnerSecuredVariableInput!): OwnerSecuredVariablePayload
+  updateSecuredOrganizationVariable(
+    input: UpdateOrganizationSecuredVariableInput!
+  ): UpdateOrganizationSecuredVariablePayload
+  updateSecuredOwnerVariable(input: UpdateOwnerSecuredVariableInput!): UpdateOwnerSecuredVariablePayload
   createBuild(input: RepositoryCreateBuildInput!): RepositoryCreateBuildPayload
   deleteRepository(input: RepositoryDeleteInput!): RepositoryDeletePayload
   rerun(input: TaskReRunInput!): TaskReRunPayload
@@ -335,18 +367,23 @@ type Mutation {
   removeCronSettings(input: RepositoryRemoveCronSettingsInput!): RepositoryRemoveCronSettingsPayload
   approve(input: BuildApproveInput!): BuildApprovePayload
   trigger(input: TaskTriggerInput!): TaskTriggerPayload
-  buyComputeCredits(input: BuyComputeCreditsInput!): BuyComputeCreditsPayload
   saveWebHookSettings(input: SaveWebHookSettingsInput!): SaveWebHookSettingsPayload
-  saveBillingSettings(input: BillingSettingsInput!): BillingSettingsPayload
   generateNewAccessToken(input: GenerateNewAccessTokenInput!): GenerateNewAccessTokenPayload
+  generateNewOwnerAccessToken(input: GenerateNewOwnerAccessTokenInput!): GenerateNewOwnerAccessTokenPayload
   deletePersistentWorker(input: DeletePersistentWorkerInput!): DeletePersistentWorkerPayload
   updatePersistentWorker(input: UpdatePersistentWorkerInput!): UpdatePersistentWorkerPayload
-  persistentWorkerPoolRegistrationToken(input: GetPersistentWorkerPoolRegistrationTokenInput!): GetPersistentWorkerPoolRegistrationTokenPayload
+  persistentWorkerPoolRegistrationToken(
+    input: GetPersistentWorkerPoolRegistrationTokenInput!
+  ): GetPersistentWorkerPoolRegistrationTokenPayload
   createPersistentWorkerPool(input: CreatePersistentWorkerPoolInput!): CreatePersistentWorkerPoolPayload
   updatePersistentWorkerPool(input: UpdatePersistentWorkerPoolInput!): UpdatePersistentWorkerPoolPayload
   deletePersistentWorkerPool(input: DeletePersistentWorkerPoolInput!): DeletePersistentWorkerPoolPayload
   saveWebPushConfiguration(input: SaveWebPushConfigurationInput!): SaveWebPushConfigurationPayload
   deleteWebPushConfiguration(input: DeleteWebPushConfigurationInput!): DeleteWebPushConfigurationPayload
+  rerunHooks(input: HooksReRunInput!): HooksReRunPayload
+  invalidateCacheEntries(input: InvalidateCacheEntriesInput!): InvalidateCacheEntriesPayload
+  saveBillingSettings(input: BillingSettingsInput!): BillingSettingsPayload
+  buyComputeCredits(input: BuyComputeCreditsInput!): BuyComputeCreditsPayload
 }
 
 type Notification {
@@ -355,7 +392,9 @@ type Notification {
   link: String
 }
 
-"Notification level."
+"""
+Notification level.
+"""
 enum NotificationLevel {
   INFO
   WARNING
@@ -373,15 +412,230 @@ type OrganizationSecuredVariablePayload {
   clientMutationId: String
 }
 
-"Information about pagination in a connection."
+type OwnerInfo {
+  uid: ID!
+  platform: String!
+  name: String!
+  description: OwnerInfoDescription!
+  viewerPermission: PermissionType
+  apiToken: ApiAccessToken
+  persistentWorkerPools: [PersistentWorkerPool]
+  webhookSettings: WebHookSettings
+  webhookDeliveries(
+    """
+    fetching only nodes before this node (exclusive)
+    """
+    before: String
+
+    """
+    fetching only nodes after this node (exclusive)
+    """
+    after: String
+
+    """
+    fetching only the first certain number of nodes
+    """
+    first: Int
+
+    """
+    fetching only the last certain number of nodes
+    """
+    last: Int
+  ): OwnerWebhookDeliveriesConnection
+  repositories(
+    """
+    fetching only nodes before this node (exclusive)
+    """
+    before: String
+
+    """
+    fetching only nodes after this node (exclusive)
+    """
+    after: String
+
+    """
+    fetching only the first certain number of nodes
+    """
+    first: Int
+
+    """
+    fetching only the last certain number of nodes
+    """
+    last: Int
+  ): OwnerRepositoriesConnection
+  balanceInCredits: String!
+  billingSettings: BillingSettings
+  transactions(
+    """
+    fetching only nodes before this node (exclusive)
+    """
+    before: String
+
+    """
+    fetching only nodes after this node (exclusive)
+    """
+    after: String
+
+    """
+    fetching only the first certain number of nodes
+    """
+    first: Int
+
+    """
+    fetching only the last certain number of nodes
+    """
+    last: Int
+  ): OwnerTransactionsConnection
+}
+
+type OwnerInfoDescription {
+  message: String!
+  actions: [OwnerInfoDescriptionAction]
+}
+
+type OwnerInfoDescriptionAction {
+  title: String!
+  link: String!
+  icon: String
+}
+
+"""
+A connection to a list of items.
+"""
+type OwnerRepositoriesConnection {
+  """
+  a list of edges
+  """
+  edges: [OwnerRepositoryEdge]
+
+  """
+  details about this specific page
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+An edge in a connection
+"""
+type OwnerRepositoryEdge {
+  """
+  The item at the end of the edge
+  """
+  node: Repository
+
+  """
+  cursor marks a unique position or index into the connection
+  """
+  cursor: String!
+}
+
+input OwnerSecuredVariableInput {
+  platform: String!
+  ownerUid: ID!
+  valueToSecure: String!
+  clientMutationId: String
+}
+
+type OwnerSecuredVariablePayload {
+  variableName: String!
+  clientMutationId: String
+}
+
+type OwnerTransaction {
+  platform: String!
+  ownerUid: String!
+  taskId: Int!
+  repositoryId: Int!
+  timestamp: Int!
+  microCreditsAmount: Int!
+  creditsAmount: String!
+  initialCreditsAmount: String
+  task: Task
+  repository: Repository
+}
+
+"""
+An edge in a connection
+"""
+type OwnerTransactionEdge {
+  """
+  The item at the end of the edge
+  """
+  node: OwnerTransaction
+
+  """
+  cursor marks a unique position or index into the connection
+  """
+  cursor: String!
+}
+
+"""
+A connection to a list of items.
+"""
+type OwnerTransactionsConnection {
+  """
+  a list of edges
+  """
+  edges: [OwnerTransactionEdge]
+
+  """
+  details about this specific page
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+A connection to a list of items.
+"""
+type OwnerWebhookDeliveriesConnection {
+  """
+  a list of edges
+  """
+  edges: [OwnerWebHookDeliveryEdge]
+
+  """
+  details about this specific page
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+An edge in a connection
+"""
+type OwnerWebHookDeliveryEdge {
+  """
+  The item at the end of the edge
+  """
+  node: WebHookDelivery
+
+  """
+  cursor marks a unique position or index into the connection
+  """
+  cursor: String!
+}
+
+"""
+Information about pagination in a connection.
+"""
 type PageInfo {
-  "When paginating forwards, are there more items?"
+  """
+  When paginating forwards, are there more items?
+  """
   hasNextPage: Boolean!
-  "When paginating backwards, are there more items?"
+
+  """
+  When paginating backwards, are there more items?
+  """
   hasPreviousPage: Boolean!
-  "When paginating backwards, the cursor to continue."
+
+  """
+  When paginating backwards, the cursor to continue.
+  """
   startCursor: String
-  "When paginating forwards, the cursor to continue."
+
+  """
+  When paginating forwards, the cursor to continue.
+  """
   endCursor: String
 }
 
@@ -390,12 +644,16 @@ type ParsingResult {
   rawStarlarkConfig: String!
   processedYamlConfig: String!
   issues: [ParsingResultIssue]
+  affectedFiles: [String]
   outputLogs: [String]
+  environment: [String]
 }
 
 type ParsingResultIssue {
   level: ParsingResultIssueLevel!
   message: String!
+  rawDetails: String!
+  path: String!
   line: Long!
   column: Long!
 }
@@ -406,7 +664,9 @@ enum ParsingResultIssueLevel {
   ERROR
 }
 
-"User access level."
+"""
+User access level.
+"""
 enum PermissionType {
   NONE
   READ
@@ -423,27 +683,61 @@ type PersistentWorker {
   version: String!
   labels: [String]
   info: PersistentWorkerInfo
-  assignedTasks("fetching only nodes before this node (exclusive)" before: String "fetching only nodes after this node (exclusive)" after: String "fetching only the first certain number of nodes" first: Int "fetching only the last certain number of nodes" last: Int): PersistentWorkerAssignedTasksConnection
+  assignedTasks(
+    """
+    fetching only nodes before this node (exclusive)
+    """
+    before: String
+
+    """
+    fetching only nodes after this node (exclusive)
+    """
+    after: String
+
+    """
+    fetching only the first certain number of nodes
+    """
+    first: Int
+
+    """
+    fetching only the last certain number of nodes
+    """
+    last: Int
+  ): PersistentWorkerAssignedTasksConnection
 }
 
-"An edge in a connection"
+"""
+An edge in a connection
+"""
 type PersistentWorkerAssignedTaskEdge {
-  "The item at the end of the edge"
+  """
+  The item at the end of the edge
+  """
   node: Task
-  "cursor marks a unique position or index into the connection"
+
+  """
+  cursor marks a unique position or index into the connection
+  """
   cursor: String!
 }
 
-"A connection to a list of items."
+"""
+A connection to a list of items.
+"""
 type PersistentWorkerAssignedTasksConnection {
-  "a list of edges"
+  """
+  a list of edges
+  """
   edges: [PersistentWorkerAssignedTaskEdge]
-  "details about this specific page"
+
+  """
+  details about this specific page
+  """
   pageInfo: PageInfo!
 }
 
 type PersistentWorkerInfo {
-  heartbeatTimestamp: Long!
+  heartbeatTimestamp: Int!
   runningTasks: [Task]
 }
 
@@ -455,7 +749,9 @@ type PersistentWorkerPool {
   viewerPermission: PermissionType
 }
 
-"Task platform."
+"""
+Task platform.
+"""
 enum PlatformType {
   LINUX
   DARWIN
@@ -468,9 +764,35 @@ type Repository {
   owner: String!
   name: String!
   cloneUrl: String!
+  defaultBranch: String!
   masterBranch: String!
   isPrivate: Boolean!
-  builds("fetching only nodes before this node (exclusive)" before: String "fetching only nodes after this node (exclusive)" after: String "fetching only the first certain number of nodes" first: Int "fetching only the last certain number of nodes" last: Int "branch to fetch builds for" branch: String): RepositoryBuildsConnection
+  builds(
+    """
+    fetching only nodes before this node (exclusive)
+    """
+    before: String
+
+    """
+    fetching only nodes after this node (exclusive)
+    """
+    after: String
+
+    """
+    fetching only the first certain number of nodes
+    """
+    first: Int
+
+    """
+    fetching only the last certain number of nodes
+    """
+    last: Int
+
+    """
+    branch to fetch builds for
+    """
+    branch: String
+  ): RepositoryBuildsConnection
   settings: RepositorySettings
   cronSettings: [RepositoryCronSettings]
   viewerPermission: PermissionType
@@ -478,19 +800,33 @@ type Repository {
   metrics(parameters: MetricsQueryParameters): [MetricsChart]
 }
 
-"An edge in a connection"
+"""
+An edge in a connection
+"""
 type RepositoryBuildEdge {
-  "The item at the end of the edge"
+  """
+  The item at the end of the edge
+  """
   node: Build
-  "cursor marks a unique position or index into the connection"
+
+  """
+  cursor marks a unique position or index into the connection
+  """
   cursor: String!
 }
 
-"A connection to a list of items."
+"""
+A connection to a list of items.
+"""
 type RepositoryBuildsConnection {
-  "a list of edges"
+  """
+  a list of edges
+  """
   edges: [RepositoryBuildEdge]
-  "details about this specific page"
+
+  """
+  details about this specific page
+  """
   pageInfo: PageInfo!
 }
 
@@ -565,6 +901,7 @@ type RepositorySettings {
   decryptEnvironmentVariables: DecryptEnvironmentVariablesFor
   configResolutionStrategy: ConfigResolutionStrategy
   additionalEnvironment: [String]
+  cacheVersion: Int
 }
 
 input RepositorySettingsInput {
@@ -573,6 +910,7 @@ input RepositorySettingsInput {
   decryptEnvironmentVariables: DecryptEnvironmentVariablesFor
   configResolutionStrategy: ConfigResolutionStrategy
   additionalEnvironment: [String]
+  cacheVersion: Int
   clientMutationId: String
 }
 
@@ -584,27 +922,29 @@ type RepositorySettingsPayload {
 type Root {
   viewer: User
   repository(id: ID!): Repository
-  githubRepository(owner: String! name: String!): Repository
-  githubRepositories(owner: String!): [Repository]
-  githubOrganizationInfo(organization: String!): GitHubOrganizationInfo
+  ownerRepository(platform: String!, owner: String!, name: String!): Repository
   build(id: ID!): Build
-  searchBuilds(repositoryOwner: String! repositoryName: String! SHA: String): [Build]
+  searchBuilds(repositoryOwner: String!, repositoryName: String!, SHA: String): [Build]
   task(id: ID!): Task
   hook(id: ID!): Hook
   webhookDelivery(id: String!): WebHookDelivery
   persistentWorkerPool(poolId: ID): PersistentWorkerPool
-  persistentWorker(poolId: ID name: String): PersistentWorker
+  persistentWorker(poolId: ID, name: String): PersistentWorker
+  ownerInfo(platform: String, uid: ID): OwnerInfo
+  ownerInfoByName(platform: String, name: String): OwnerInfo
 }
 
 input SaveWebHookSettingsInput {
-  accountId: ID!
+  platform: String!
+  ownerUid: ID!
   webhookURL: String!
+  secretToken: String
   clientMutationId: String
 }
 
 type SaveWebHookSettingsPayload {
   error: String
-  info: GitHubOrganizationInfo
+  info: OwnerInfo
   clientMutationId: String
 }
 
@@ -661,12 +1001,15 @@ type Task {
   stateful: Boolean!
   useComputeCredits: Boolean!
   usedComputeCredits: Boolean!
-  transaction: AccountTransaction
   triggerType: TaskTriggerType!
   instanceResources: InstanceResources
   executionInfo: ExecutionInfo
   baseEnvironment: [String]
   hooks: [Hook]
+  reranBy: UserBasicInfo
+  cancelledBy: UserBasicInfo
+  terminalCredential: TerminalCredential
+  transaction: OwnerTransaction
 }
 
 input TaskAbortInput {
@@ -697,7 +1040,9 @@ type TaskCommand {
   logsTail: [String]
 }
 
-"Task Command status."
+"""
+Task Command status.
+"""
 enum TaskCommandStatus {
   UNDEFINED
   SUCCESS
@@ -707,7 +1052,9 @@ enum TaskCommandStatus {
   ABORTED
 }
 
-"Task Command type."
+"""
+Task Command type.
+"""
 enum TaskCommandType {
   WAIT
   EXIT
@@ -717,10 +1064,12 @@ enum TaskCommandType {
   CLONE
   EXECUTE_BACKGROUND_SCRIPT
   ARTIFACTS
+  WAIT_FOR_TERMINAL
 }
 
 input TaskReRunInput {
   taskId: ID!
+  attachTerminal: Boolean
   clientMutationId: String
 }
 
@@ -729,7 +1078,20 @@ type TaskReRunPayload {
   clientMutationId: String
 }
 
-"Task status."
+input TasksReRunInput {
+  taskIds: [ID]
+  attachTerminal: Boolean
+  clientMutationId: String
+}
+
+type TasksReRunPayload {
+  newTasks: [Task]
+  clientMutationId: String
+}
+
+"""
+Task status.
+"""
 enum TaskStatus {
   CREATED
   TRIGGERED
@@ -757,20 +1119,17 @@ type TaskTriggerPayload {
   clientMutationId: String
 }
 
-"Task trigger type."
+"""
+Task trigger type.
+"""
 enum TaskTriggerType {
   AUTOMATIC
   MANUAL
 }
 
-input TasksReRunInput {
-  taskIds: [ID]
-  clientMutationId: String
-}
-
-type TasksReRunPayload {
-  newTasks: [Task]
-  clientMutationId: String
+type TerminalCredential {
+  locator: String!
+  trustedSecret: String!
 }
 
 type TimePoint {
@@ -786,6 +1145,19 @@ input UpdateOrganizationSecuredVariableInput {
 }
 
 type UpdateOrganizationSecuredVariablePayload {
+  variableName: String!
+  clientMutationId: String
+}
+
+input UpdateOwnerSecuredVariableInput {
+  platform: String!
+  ownerUid: ID!
+  name: String!
+  updatedValueToSecure: String!
+  clientMutationId: String
+}
+
+type UpdateOwnerSecuredVariablePayload {
   variableName: String!
   clientMutationId: String
 }
@@ -814,40 +1186,98 @@ type UpdatePersistentWorkerPoolPayload {
   clientMutationId: String
 }
 
-type User {
+type User implements UserBasicInfo {
   id: ID!
-  githubUserId: Long
-  githubUserName: String!
   category: UserCategoryType!
   avatarURL: String
-  builds("fetching only nodes before this node (exclusive)" before: String "fetching only nodes after this node (exclusive)" after: String "fetching only the first certain number of nodes" first: Int "fetching only the last certain number of nodes" last: Int): UserBuildsConnection
-  githubMarketplacePurchase: GitHubMarketplacePurchase
+  builds(
+    """
+    fetching only nodes before this node (exclusive)
+    """
+    before: String
+
+    """
+    fetching only nodes after this node (exclusive)
+    """
+    after: String
+
+    """
+    fetching only the first certain number of nodes
+    """
+    first: Int
+
+    """
+    fetching only the last certain number of nodes
+    """
+    last: Int
+  ): UserBuildsConnection
   topActiveRepositories: [Repository]
-  organizations: [GitHubOrganizationInfo]
   balanceInCredits: String!
-  transactions("fetching only nodes before this node (exclusive)" before: String "fetching only nodes after this node (exclusive)" after: String "fetching only the first certain number of nodes" first: Int "fetching only the last certain number of nodes" last: Int): UserTransactionsConnection
   apiToken: ApiAccessToken
   webPushServerKey: String!
   persistentWorkerPools: [PersistentWorkerPool]
+  relatedOwners: [OwnerInfo]
+  transactions(
+    """
+    fetching only nodes before this node (exclusive)
+    """
+    before: String
+
+    """
+    fetching only nodes after this node (exclusive)
+    """
+    after: String
+
+    """
+    fetching only the first certain number of nodes
+    """
+    first: Int
+
+    """
+    fetching only the last certain number of nodes
+    """
+    last: Int
+  ): UserTransactionsConnection
 }
 
-"An edge in a connection"
+interface UserBasicInfo {
+  id: ID!
+  avatarURL: String
+}
+
+"""
+An edge in a connection
+"""
 type UserBuildEdge {
-  "The item at the end of the edge"
+  """
+  The item at the end of the edge
+  """
   node: Build
-  "cursor marks a unique position or index into the connection"
+
+  """
+  cursor marks a unique position or index into the connection
+  """
   cursor: String!
 }
 
-"A connection to a list of items."
+"""
+A connection to a list of items.
+"""
 type UserBuildsConnection {
-  "a list of edges"
+  """
+  a list of edges
+  """
   edges: [UserBuildEdge]
-  "details about this specific page"
+
+  """
+  details about this specific page
+  """
   pageInfo: PageInfo!
 }
 
-"User type."
+"""
+User type.
+"""
 enum UserCategoryType {
   DEFAULT
   BLOCKED
@@ -855,37 +1285,44 @@ enum UserCategoryType {
   ADMIN
 }
 
-"An edge in a connection"
+"""
+An edge in a connection
+"""
 type UserTransactionEdge {
-  "The item at the end of the edge"
-  node: AccountTransaction
-  "cursor marks a unique position or index into the connection"
+  """
+  The item at the end of the edge
+  """
+  node: OwnerTransaction
+
+  """
+  cursor marks a unique position or index into the connection
+  """
   cursor: String!
 }
 
-"A connection to a list of items."
+"""
+A connection to a list of items.
+"""
 type UserTransactionsConnection {
-  "a list of edges"
+  """
+  a list of edges
+  """
   edges: [UserTransactionEdge]
-  "details about this specific page"
+
+  """
+  details about this specific page
+  """
   pageInfo: PageInfo!
 }
 
 type WebHookDelivery {
   id: String!
-  accountId: Long!
+  platform: String!
+  ownerUid: String!
   repositoryId: Long!
   timestamp: Long!
   payload: WebHookDeliveryPayload!
   response: WebHookDeliveryResponse!
-}
-
-"An edge in a connection"
-type WebHookDeliveryEdge {
-  "The item at the end of the edge"
-  node: WebHookDelivery
-  "cursor marks a unique position or index into the connection"
-  cursor: String!
 }
 
 type WebHookDeliveryPayload {
@@ -896,18 +1333,11 @@ type WebHookDeliveryPayload {
 
 type WebHookDeliveryResponse {
   status: Int!
-  duration: Long!
+  duration: Int!
   data: String!
 }
 
 type WebHookSettings {
   webhookURL: String
-}
-
-"A connection to a list of items."
-type WebhookDeliveriesConnection {
-  "a list of edges"
-  edges: [WebHookDeliveryEdge]
-  "details about this specific page"
-  pageInfo: PageInfo!
+  maskedSecretToken: String!
 }
