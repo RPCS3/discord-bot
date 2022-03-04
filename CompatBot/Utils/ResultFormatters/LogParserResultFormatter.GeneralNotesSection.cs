@@ -582,6 +582,7 @@ namespace CompatBot.Utils.ResultFormatters
             }
             else if (items["unimplemented_syscall"] is string unimplementedSyscall)
             {
+                /*
                 if (unimplementedSyscall.Contains("syscall_988"))
                 {
                     var fatalError = "Unimplemented syscall " + unimplementedSyscall;
@@ -590,7 +591,7 @@ namespace CompatBot.Utils.ResultFormatters
                         notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
                     else
                         notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
-                }
+                }*/
             }
             if (items["os_type"] == "Windows")
                 foreach (var code in win32ErrorCodes)
