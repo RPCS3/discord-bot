@@ -247,20 +247,9 @@ namespace CompatBot.Utils.ResultFormatters
             }
             if (items["async_texture_streaming"] == EnabledMark)
             {
-                if (items["gpu_info"] is string gpuInfo2
-                    && IsNvidia(gpuInfo2)
-                    && items["driver_version_parsed"] is string driverVersionString
-                    && Version.TryParse(driverVersionString, out var driverVersion)
-                    && driverVersion.Major >= 470)
-                {
-                    notes.Add("❌ Please disable `Async Texture Streaming` for 470 series NVidia drivers");
-                }
-                else
-                {
-                    if (items["async_queue_scheduler"] == "Device")
-                        notes.Add("⚠ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
-                    notes.Add("⚠ If you experience visual artifacts, try disabling `Async Texture Streaming`");
-                }
+                if (items["async_queue_scheduler"] == "Device")
+                    notes.Add("⚠ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
+                notes.Add("⚠ If you experience visual artifacts, try disabling `Async Texture Streaming`");
             }
             
             if (items["ppu_decoder"] is string ppuDecoder)
