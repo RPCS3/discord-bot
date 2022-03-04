@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -9,6 +10,7 @@ using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands
@@ -59,12 +61,17 @@ namespace CompatBot.Commands
                 if (!string.IsNullOrEmpty(item.InviteCode))
                     link = linkPrefix + item.InviteCode;
                 //discord expands invite links even if they're inside the code block for some reason
-                table.Add(item.Id.ToString(), item.GuildId.ToString(), link + StringUtils.InvisibleSpacer, guildName.Sanitize());
+                table.Add(item.Id.ToString(), item.GuildId.ToString(), link /* + StringUtils.InvisibleSpacer*/, guildName.Sanitize());
             }
             var result = new StringBuilder()
                 .AppendLine("Whitelisted discord servers:")
-                .Append(table);
-            await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
+                .Append(table.ToString(false));
+
+            await using var output = Config.MemoryStreamManager.GetStream();
+            await using (var writer = new StreamWriter(output, leaveOpen: true))
+                await writer.WriteAsync(result.ToString()).ConfigureAwait(false);
+            output.Seek(0, SeekOrigin.Begin);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("invites.txt", output)).ConfigureAwait(false);
         }
 
         [Command("whitelist"), Aliases("add", "allow"), Priority(10)]
@@ -80,7 +87,6 @@ namespace CompatBot.Commands
                 await ctx.ReactWithAsync(Config.Reactions.Success, "Invite whitelist was successfully updated!").ConfigureAwait(false);
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to add {errors} invite{StringUtils.GetSuffix(errors)} to the whitelist").ConfigureAwait(false);
-            await List(ctx).ConfigureAwait(false);
         }
 
         [Command("whitelist"), Priority(0)]
