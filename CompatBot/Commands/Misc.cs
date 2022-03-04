@@ -338,7 +338,7 @@ namespace CompatBot.Commands
                 var funMult = DateTime.UtcNow.Month == 4 && DateTime.UtcNow.Day == 1 ? 100 : Config.FunMultiplier;
                 var choices = RateAnswers;
                 var choiceFlags = new HashSet<char>();
-                whatever = whatever.ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
+                whatever = whatever.ToLowerInvariant().StripInvisibleAndDiacritics();
                 var originalWhatever = whatever;
                 var matches = Instead.Matches(whatever);
                 if (matches.Any())
