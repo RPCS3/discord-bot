@@ -380,7 +380,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (discInsideGame)
                 notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
             if (discAsPkg)
-                notes.Add($"{pirateEmoji} Disc game installed as a PKG ");
+                notes.Add($"ℹ Disc game installed as a PKG ");
 
             if (!string.IsNullOrEmpty(items["native_ui_input"]))
                 notes.Add("⚠ Pad initialization problem detected; try disabling `Native UI`");
