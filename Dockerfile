@@ -13,7 +13,7 @@ RUN apt-get install -y --allow-unauthenticated libc6-dev libgdiplus libx11-dev f
 WORKDIR /src
 COPY . .
 #RUN rm -rf ./packages
-#RUN git status
+RUN git status
 # Build and test everything
 RUN dotnet restore "CompatBot/CompatBot.csproj"
 RUN dotnet build "CompatBot/CompatBot.csproj" -c Release

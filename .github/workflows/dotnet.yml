@@ -64,3 +64,5 @@ jobs:
       with:
         push: 'true'
         tags: rpcs3/discord-bot:${{ env.GITHUB_RUN_NUMBER_WITH_OFFSET }},rpcs3/discord-bot:release-latest,rpcs3/discord-bot:latest
+        build-args: |
+          BUILDKIT_CONTEXT_KEEP_GIT_DIR=true
