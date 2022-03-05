@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -320,7 +319,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             var items = state.CompletedCollection!;
             var multiItems = state.CompleteMultiValueCollection!;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
             {
                 var itemKeys = items.AllKeys;
                 foreach (var key in itemKeys)

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -14,6 +13,7 @@ using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.DotNet.PlatformAbstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -44,7 +44,7 @@ namespace CompatBot.Commands
                 .AddField(".NET Info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
                                        $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode", true)
                 .AddField("Runtime Info", $"Confinement: {SandboxDetector.Detect()}\n" +
-                                          $"OS: {RuntimeInformation.OSDescription} {Environment.OSVersion}\n" +
+                                          $"OS: {RuntimeEnvironment.OperatingSystem} {RuntimeEnvironment.OperatingSystemVersion}\n" +
                                           $"CPUs: {Environment.ProcessorCount}\n" +
                                           $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
             AppendPiracyStats(embed);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.DotNet.PlatformAbstractions;
@@ -11,7 +10,7 @@ namespace CompatBot.Utils
     {
         public static async Task CheckAndFixSystemConfigAsync()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (RuntimeEnvironment.OperatingSystemPlatform != Platform.Linux)
                 return;
 
             try

@@ -74,7 +74,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
         {
             private readonly IMegaApiClient client;
             private readonly Uri uri;
-            private readonly INode node;
+            private readonly INodeInfo node;
             private readonly IArchiveHandler handler;
 
             public string SourceType => "Mega";
@@ -83,7 +83,7 @@ namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
             public long SourceFilePosition => handler.SourcePosition;
             public long LogFileSize => handler.LogSize;
 
-            internal MegaSource(IMegaApiClient client, Uri uri, INode node, IArchiveHandler handler)
+            internal MegaSource(IMegaApiClient client, Uri uri, INodeInfo node, IArchiveHandler handler)
             {
                 this.client = client;
                 this.uri = uri;
