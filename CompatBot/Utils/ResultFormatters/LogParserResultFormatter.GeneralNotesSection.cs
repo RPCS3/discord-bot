@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -623,7 +624,7 @@ namespace CompatBot.Utils.ResultFormatters
                     else
                         notes.Add($"ℹ [Error 0x{code:x}]({link}): {error.description}");
                 }
-            else if (items["os_type"] == "Linux" && RuntimeEnvironment.OperatingSystemPlatform == Platform.Linux)
+            else if (items["os_type"] == "Linux" && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 foreach (var code in win32ErrorCodes)
                 {
                     try

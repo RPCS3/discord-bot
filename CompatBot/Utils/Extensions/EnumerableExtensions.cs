@@ -56,7 +56,5 @@ namespace CompatBot.Utils
                 .Select(g => g.Select(x => x.item));
         }
         
-        public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> items, Func<T, TKey> property)
-            => items.GroupBy(property).Select(x => x.First());
     }
 }
