@@ -14,6 +14,8 @@ WORKDIR /src
 COPY . .
 #RUN rm -rf ./packages
 RUN git status
+# Asks for user/pw otherwise..
+RUN git remote set-url origin git://github.com/RPCS3/discord-bot
 # Build and test everything
 RUN dotnet restore "CompatBot/CompatBot.csproj"
 RUN dotnet build "CompatBot/CompatBot.csproj" -c Release
