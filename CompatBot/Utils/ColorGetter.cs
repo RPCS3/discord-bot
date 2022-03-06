@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using ColorThiefDotNet;
 using DSharpPlus.Entities;
 
@@ -15,6 +16,10 @@ namespace CompatBot.Utils
             {
                 // when running dotnet from the snap, it will segfault on attempt to create a Bitmap
                 if (SandboxDetector.Detect() == SandboxType.Snap)
+                    return defaultColor;
+
+                // TODO .net6 breaks this for linux
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     return defaultColor;
 
                 var analyzer = new ColorThief();
