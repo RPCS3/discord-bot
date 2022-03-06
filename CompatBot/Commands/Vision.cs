@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -199,22 +198,19 @@ namespace CompatBot.Commands
                     Config.Log.Debug($"Palette      : {string.Join(' ', palette.Select(c => $"#{c.ToHex()}"))}");
                     Config.Log.Debug($"Complementary: {string.Join(' ', complementaryPalette.Select(c => $"#{c.ToHex()}"))}");
 
-                    if ((string.IsNullOrEmpty(Config.PreferredFontFamily) || !SystemFonts.TryFind(Config.PreferredFontFamily, out var fontFamily))
-                        && !SystemFonts.TryFind("Roboto", out fontFamily)
-                        && !SystemFonts.TryFind("Droid Sans", out fontFamily)
-                        && !SystemFonts.TryFind("DejaVu Sans", out fontFamily)
-                        && !SystemFonts.TryFind("Sans Serif", out fontFamily)
-                        && !SystemFonts.TryFind("Calibri", out fontFamily)
-                        && !SystemFonts.TryFind("Verdana", out fontFamily))
+                    if ((string.IsNullOrEmpty(Config.PreferredFontFamily) || !SystemFonts.TryGet(Config.PreferredFontFamily, out var fontFamily))
+                        && !SystemFonts.TryGet("Roboto", out fontFamily)
+                        && !SystemFonts.TryGet("Droid Sans", out fontFamily)
+                        && !SystemFonts.TryGet("DejaVu Sans", out fontFamily)
+                        && !SystemFonts.TryGet("Sans Serif", out fontFamily)
+                        && !SystemFonts.TryGet("Calibri", out fontFamily)
+                        && !SystemFonts.TryGet("Verdana", out fontFamily))
                     {
                         Config.Log.Warn("Failed to find any suitable font. Available system fonts:\n" + string.Join(Environment.NewLine, SystemFonts.Families.Select(f => f.Name)));
-                        fontFamily = SystemFonts.Families.FirstOrDefault(f => f.Name.Contains("sans", StringComparison.OrdinalIgnoreCase))
-                                     ?? SystemFonts.Families.First();
-
+                        fontFamily = SystemFonts.Families.FirstOrDefault(f => f.Name.Contains("sans", StringComparison.OrdinalIgnoreCase));
                     }
                     Config.Log.Debug($"Selected font: {fontFamily.Name}");
                     var font = fontFamily.CreateFont(10 * scale, FontStyle.Regular);
-                    var textRendererOptions = new RendererOptions(font);
                     var graphicsOptions = new GraphicsOptions
                     {
                         Antialias = true,
@@ -238,17 +234,17 @@ namespace CompatBot.Commands
                         var r = obj.Rectangle;
                         var color = palette[i % palette.Count];
                         var complementaryColor = complementaryPalette[i % complementaryPalette.Count];
-                        var textOptions = new TextOptions
+                        var textOptions = new TextOptions(font)
                         {
-                            ApplyKerning = true,
+                            KerningMode = KerningMode.Normal,
 #if LABELS_INSIDE
                             WrapTextWidth = r.W - 10,
 #endif
                         };
-                        var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop, TextOptions = textOptions};
+                        var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop/*, TextOptions = textOptions*/};
                         //var brush = Brushes.Solid(Color.Black);
                         //var pen = Pens.Solid(color, 2);
-                        var textBox = TextMeasurer.Measure(label, textRendererOptions);
+                        var textBox = TextMeasurer.Measure(label, textOptions);
 #if LABELS_INSIDE
                         var textHeightScale = (int)Math.Ceiling(textBox.Width / Math.Min(img.Width - r.X - 10 - 4 * scale, r.W - 4 * scale));
 #endif
