@@ -18,7 +18,6 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
-using Microsoft.DotNet.PlatformAbstractions;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -178,9 +177,11 @@ namespace CompatBot.Commands
                         using var boxCopy = img.Clone(i => i.Crop(new(r.X, r.Y, r.W, r.H)));
                         await boxCopy.SaveAsBmpAsync(tmpStream).ConfigureAwait(false);
                         tmpStream.Seek(0, SeekOrigin.Begin);
-                        using var b = new Bitmap(tmpStream);
-                        var dominantColor = analyzer.GetColor(b, 1, false);
-                        palette.Add(dominantColor.Color.ToStandardColor());
+
+                        //using var b = new Bitmap(tmpStream);
+                        var b = Image.Load<Rgba32>(tmpStream);
+                        var dominantColor = ColorGetter.GetDominentColor(b);
+                        palette.Add(dominantColor);
                     }
                     var complementaryPalette = palette.Select(c => c.GetComplementary()).ToList();
                     var tmpP = new List<Color>();

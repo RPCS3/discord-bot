@@ -5,11 +5,43 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using ColorThiefDotNet;
 using DSharpPlus.Entities;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace CompatBot.Utils
 {
     internal static class ColorGetter
     {
+        public static SixLabors.ImageSharp.Color GetDominentColor(SixLabors.ImageSharp.Image<Rgba32> img)
+        {
+            //img.Mutate(x => x.Resize(new ResizeOptions { Sampler = KnownResamplers.NearestNeighbor, Size = new Size(100, 0) }));
+            int r = 0;
+            int g = 0;
+            int b = 0;
+            int totalPixels = 0;
+
+            for (int x = 0; x < img.Width; x++)
+            {
+                for (int y = 0; y < img.Height; y++)
+                {
+                    var pixel = img[x, y];
+
+                    r += Convert.ToInt32(pixel.R);
+                    g += Convert.ToInt32(pixel.G);
+                    b += Convert.ToInt32(pixel.B);
+
+                    totalPixels++;
+                }
+            }
+
+            r /= totalPixels;
+            g /= totalPixels;
+            b /= totalPixels;
+
+            Rgba32 dominantColor = new Rgba32((byte)r, (byte)g, (byte)b, 255);
+            return dominantColor;
+        }
+
         public static DiscordColor? Analyze(byte[] jpg, DiscordColor? defaultColor)
         {
             try
