@@ -15,7 +15,7 @@ COPY . .
 #RUN rm -rf ./packages
 RUN git status
 # Asks for user/pw otherwise..
-RUN git remote set-url origin git://github.com/RPCS3/discord-bot
+RUN git remote set-url origin https://github.com/RPCS3/discord-bot
 # Build and test everything
 RUN dotnet restore "CompatBot/CompatBot.csproj"
 RUN dotnet build "CompatBot/CompatBot.csproj" -c Release
@@ -26,3 +26,4 @@ ENV COMPlus_gcServer 1
 WORKDIR /src/CompatBot
 RUN dotnet run -c Release --dry-run
 ENTRYPOINT ["dotnet", "run", "-c", "Release", "CompatBot.csproj"]
+#ENTRYPOINT ["/bin/bash"]
