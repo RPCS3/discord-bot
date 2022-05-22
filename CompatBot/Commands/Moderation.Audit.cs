@@ -81,6 +81,61 @@ namespace CompatBot.Commands
                 }
             }
 
+            [Command("raid")]
+            [Description("Kick known raiders")]
+            public async Task Raid(CommandContext ctx)
+            {
+                if (!await CheckLock.WaitAsync(0).ConfigureAwait(false))
+                {
+                    await ctx.Channel.SendMessageAsync("Another check is already in progress").ConfigureAwait(false);
+                    return;
+                }
+
+                try
+                {
+                    await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                    var result = new StringBuilder("List of users who do not meet Rule #7 requirements:").AppendLine();
+                    var headerLength = result.Length;
+                    var members = GetMembers(ctx.Client);
+                    foreach (var member in members)
+                        try
+                        {
+                            var displayName = member.DisplayName;
+                            if (!UsernameRaidMonitor.NeedsKick(displayName))
+                                continue;
+
+                            try
+                            {
+                                await member.RemoveAsync("Anti Raid").ConfigureAwait(false);
+                                result.AppendLine($"{member.Username} have been automatically kicked");
+                            }
+                            catch (Exception e)
+                            {
+                                Config.Log.Warn(e, $"Failed to rename member {member.GetUsernameWithNickname()}");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Config.Log.Warn(e, $"Failed to audit username for {member.Id}");
+                        }
+                    if (result.Length == headerLength)
+                        result.AppendLine("No naughty users 🎉");
+                    await ctx.SendAutosplitMessageAsync(result, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    var msg = "Failed to check display names for raids for all guild members";
+                    Config.Log.Warn(e, msg);
+                    await ctx.ReactWithAsync(Config.Reactions.Failure, msg).ConfigureAwait(false);
+                }
+                finally
+                {
+                    CheckLock.Release();
+                    await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
+                }
+            }
+
+
             [Command("zalgo"), Aliases("diacritics")]
             [Description("Checks every member's display name for discord and rule #7 requirements")]
             public async Task Zalgo(CommandContext ctx)

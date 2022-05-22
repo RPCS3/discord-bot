@@ -286,10 +286,12 @@ namespace CompatBot
                 client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
                 client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
                 client.GuildMemberAdded += UsernameValidationMonitor.OnMemberAdded;
+                client.GuildMemberAdded += UsernameRaidMonitor.OnMemberAdded;
 
                 client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
                 client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
                 client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
+                client.GuildMemberUpdated += UsernameRaidMonitor.OnMemberUpdated;
 #if DEBUG
                 client.ComponentInteractionCreated += (_, args) =>
                 {
