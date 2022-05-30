@@ -697,7 +697,7 @@ namespace CompatBot.Utils.ResultFormatters
         {
             if (serial == "BLES00142" || serial == "BLUS30065")
             {
-                generalNotes.Add("ℹ This game has a controller initialization bug. Simply unplug and replug it until it works.");
+                generalNotes.Add("ℹ This game has a controller initialization bug. Please use the patch listed here https://wiki.rpcs3.net/index.php?title=The_Simpsons_Game#Patches");
             }
         }
 
