@@ -94,7 +94,7 @@ namespace CompatBot.Commands
                 try
                 {
                     await ctx.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
-                    var result = new StringBuilder("List of users who do not meet Rule #7 requirements:").AppendLine();
+                    var result = new StringBuilder("List of users:").AppendLine();
                     var headerLength = result.Length;
                     var members = GetMembers(ctx.Client);
                     foreach (var member in members)
@@ -111,7 +111,7 @@ namespace CompatBot.Commands
                             }
                             catch (Exception e)
                             {
-                                Config.Log.Warn(e, $"Failed to rename member {member.GetUsernameWithNickname()}");
+                                Config.Log.Warn(e, $"Failed to kick member {member.GetUsernameWithNickname()}");
                             }
                         }
                         catch (Exception e)
