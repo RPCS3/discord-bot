@@ -284,6 +284,7 @@ namespace CompatBot
             {
                 rule.Filters.Add(ignoreFilter1);
                 rule.Filters.Add(ignoreFilter2);
+                rule.FilterDefaultAction = FilterResult.Log;
             }
             LogManager.Configuration = loggingConfig;
             return LogManager.GetLogger("default");
