@@ -144,7 +144,8 @@ namespace CompatBot
                 };
                 using var client = new DiscordClient(config);
                 var slashCommands = client.UseSlashCommands();
-                slashCommands.RegisterCommands<SlashTest>();
+                // Only register to rpcs3 guild for now.
+                slashCommands.RegisterCommands<SlashTest>(Config.BotGuildId);
 
                 var commands = client.UseCommandsNext(new()
                 {
