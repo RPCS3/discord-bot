@@ -19,6 +19,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.DependencyInjection;
@@ -142,6 +143,9 @@ namespace CompatBot
                     Intents = DiscordIntents.All,
                 };
                 using var client = new DiscordClient(config);
+                var slashCommands = client.UseSlashCommands();
+                slashCommands.RegisterCommands<SlashTest>();
+
                 var commands = client.UseCommandsNext(new()
                 {
                     StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
