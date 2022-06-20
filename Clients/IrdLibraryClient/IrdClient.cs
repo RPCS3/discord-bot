@@ -40,6 +40,7 @@ namespace IrdLibraryClient
 
         public async Task<SearchResult?> SearchAsync(string query, CancellationToken cancellationToken)
         {
+            query = query.ToUpper();
             try
             {
                 var requestUri = new Uri(BaseUrl + "/ird.html");
@@ -48,40 +49,34 @@ namespace IrdLibraryClient
                 try
                 {
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
-
                     var result = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-
                     HtmlDocument doc = new();
                     doc.LoadHtml(result);
-
-                    List<string[]> table = doc.DocumentNode
-                                .Descendants("tr")
-                                .Skip(1)
-                                .Where(tr => tr.Elements("td").Count() > 1 && tr.Elements("td").First().InnerText == query.ToUpper())
-                                .Select(tr => tr.Elements("td").Select(td => td.InnerText.Trim()).ToArray())
-                                .ToList();
-
-                    SearchResult searchResults = new();
-                    searchResults.Data = new();
-
-                    foreach (var item in table)
-					{
-                        var r = new SearchResultItem();
-                        r.Id = item[0];
-                        r.Title = item[1];
-                        r.GameVersion = item[2];
-                        r.UpdateVersion = item[3];
-                        r.Size = item[4];
-                        r.FileCount = item[5];
-                        r.FolderCount = item[6];
-                        r.MD5 = item[7];
-                        r.IrdName = item[8];
-
-                        r.Filename = r.Id + "-" + r.IrdName + ".ird";
-                        searchResults?.Data?.Add(r);
-                    }
-
-                    return searchResults;
+                    return new()
+                    {
+                        Data = doc.DocumentNode.Descendants("tr")
+                            .Skip(1)
+                            .Select(tr => tr.Elements("td").ToList())
+                            .Where(tds => tds.Count > 1 && tds[0].InnerText == query)
+                            .Select(tds =>
+                            {
+                                var i = tds.Select(td => td.InnerText.Trim()).ToArray();
+                                return new SearchResultItem
+                                {
+                                    Id = i[0],
+                                    Title = i[1],
+                                    GameVersion = i[2],
+                                    UpdateVersion = i[3],
+                                    Size = i[4],
+                                    FileCount = i[5],
+                                    FolderCount = i[6],
+                                    MD5 = i[7],
+                                    IrdName = i[8],
+                                    Filename = i[0] + "-" + i[8] + ".ird",
+                                };
+                            })
+                            .ToList(),
+                    };
                 }
                 catch (Exception e)
                 {
