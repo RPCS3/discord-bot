@@ -7,6 +7,7 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using OneDriveClient.POCOs;
 
 namespace OneDriveClient
@@ -24,7 +25,7 @@ namespace OneDriveClient
             jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                IgnoreNullValues = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 IncludeFields = true,
             };
         }

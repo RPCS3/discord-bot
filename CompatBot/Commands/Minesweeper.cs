@@ -111,9 +111,7 @@ namespace CompatBot.Commands
 			for (var i = 0; i < len - 1; i++)
 			{
 				var j = rng.Next(i, len);
-				var tmp = cells[i];
-				cells[i] = cells[j];
-				cells[j] = tmp;
+				(cells[i], cells[j]) = (cells[j], cells[i]);
 			}
 			var result = new byte[height, width];
 			Buffer.BlockCopy(cells, 0, result, 0, len);

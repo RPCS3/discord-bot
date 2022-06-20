@@ -4,10 +4,10 @@
   "extensions": {
     "strawberryShake": {
       "name": "Client",
-      "namespace": "CirrusCiClient",
+      "namespace": "CirrusCiClient.Generated",
       "url": "https://api.cirrus-ci.com/graphql",
       "dependencyInjection": true,
-      "emitGeneratedCode": false
+      "emitGeneratedCode": true
     }
   }
 }

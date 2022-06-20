@@ -104,7 +104,7 @@ namespace CompatBot.Commands
             }
 
             var lastNamedEvent = await db.EventSchedule.OrderByDescending(e => e.End).FirstOrDefaultAsync(e => e.Year == current.Year && e.EventName == eventName).ConfigureAwait(false);
-            if (lastNamedEvent.End <= currentTicks)
+            if (lastNamedEvent is not null && lastNamedEvent.End <= currentTicks)
             {
                 if (lastNamedEvent.End < current.AddMonths(-1).Ticks)
                 {

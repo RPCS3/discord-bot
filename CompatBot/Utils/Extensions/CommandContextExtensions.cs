@@ -27,7 +27,7 @@ namespace CompatBot.Utils
         }
 
         public static async Task<DiscordChannel> CreateDmAsync(this CommandContext ctx)
-            => ctx.Channel.IsPrivate ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
+            => ctx.Channel.IsPrivate || ctx.Member is null ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
 
         public static Task<DiscordChannel> GetChannelForSpamAsync(this CommandContext ctx)
             => LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? Task.FromResult(ctx.Channel) : ctx.CreateDmAsync();

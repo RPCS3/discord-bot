@@ -32,7 +32,7 @@ namespace CompatBot.Commands
             var prefix = DateTime.UtcNow.ToString("yyyyMMdd")+ user.Id.ToString("x16");
             var rng = new Random(prefix.GetStableHash());
             await using var db = new ThumbnailDb();
-            Database.Fortune fortune;
+            Database.Fortune? fortune;
             do
             {
                 var totalFortunes = await db.Fortune.CountAsync().ConfigureAwait(false);

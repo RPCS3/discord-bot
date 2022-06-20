@@ -1,4 +1,5 @@
 ﻿using System;
+using CirrusCiClient.Generated;
 
 namespace CirrusCiClient.POCOs
 {

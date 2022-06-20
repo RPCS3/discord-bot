@@ -102,7 +102,7 @@ namespace CompatBot.Commands
         public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string trigger)
         {
             await using var db = new BotDb();
-            Piracystring filter;
+            Piracystring? filter;
             if (string.IsNullOrEmpty(trigger))
                 filter = new Piracystring();
             else
