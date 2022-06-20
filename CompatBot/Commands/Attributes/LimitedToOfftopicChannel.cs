@@ -14,8 +14,11 @@ namespace CompatBot.Commands.Attributes
 	{
 		public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
 		{
-			if (help || LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ||  IsOfftopicChannel(ctx.Channel))
+			if (help || LimitedToSpamChannel.IsSpamChannel(ctx.Channel) || IsOfftopicChannel(ctx.Channel))
 				return true;
+
+			if (ctx.Command is null)
+				return false;
 
 			try
 			{

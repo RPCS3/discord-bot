@@ -46,7 +46,7 @@ namespace CompatBot.Commands
                 return;
             }
 
-            if (command.StartsWith(ctx.Command.Parent.QualifiedName))
+            if (ctx.Command?.Parent is CommandGroup p && command.StartsWith(p.QualifiedName))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Cannot disable command management commands").ConfigureAwait(false);
                 return;
@@ -68,7 +68,7 @@ namespace CompatBot.Commands
                             DisableSubcommands(ctx, c);
                     else
                         DisableSubcommands(ctx, cmd);
-                    if (ctx.Command.Parent.QualifiedName.StartsWith(command))
+                    if (ctx.Command?.Parent is CommandGroup parent && parent.QualifiedName.StartsWith(command))
                         await ctx.Channel.SendMessageAsync("Some subcommands cannot be disabled").ConfigureAwait(false);
                     else
                         await ctx.ReactWithAsync(Config.Reactions.Success, $"Disabled `{command}` and all subcommands").ConfigureAwait(false);
@@ -174,7 +174,7 @@ namespace CompatBot.Commands
 
         private static void DisableSubcommands(CommandContext ctx, Command cmd)
         {
-            if (cmd.QualifiedName.StartsWith(ctx.Command.Parent.QualifiedName))
+            if (ctx.Command?.Parent is not CommandGroup p || cmd.QualifiedName.StartsWith(p.QualifiedName))
                 return;
 
             DisabledCommandsProvider.Disable(cmd.QualifiedName);
@@ -185,7 +185,7 @@ namespace CompatBot.Commands
 
         private static void EnableSubcommands(CommandContext ctx, Command cmd)
         {
-            if (cmd.QualifiedName.StartsWith(ctx.Command.Parent.QualifiedName))
+            if (ctx.Command?.Parent is not CommandGroup p || cmd.QualifiedName.StartsWith(p.QualifiedName))
                 return;
 
             DisabledCommandsProvider.Enable(cmd.QualifiedName);

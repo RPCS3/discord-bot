@@ -19,10 +19,11 @@ namespace CompatBot.Commands
             {
                 try
                 {
-
-                    var helpCmd = ctx.CommandsNext.FindCommand("math help", out _);
-                    var helpCtx = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, helpCmd);
-                    await helpCmd.ExecuteAsync(helpCtx).ConfigureAwait(false);
+                    if (ctx.CommandsNext.FindCommand("math help", out _) is Command helpCmd)
+                    {
+                        var helpCtx = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, helpCmd);
+                        await helpCmd.ExecuteAsync(helpCtx).ConfigureAwait(false);
+                    }
                 }
                 catch { }
                 return;

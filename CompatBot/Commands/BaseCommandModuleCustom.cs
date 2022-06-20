@@ -33,7 +33,7 @@ namespace CompatBot.Commands
                 Config.Log.Warn(e, "Failed to delete command message with the autodelete command prefix");
             }
 
-            if (ctx.Channel.Name == "media" && ctx.Command.QualifiedName != "warn" && ctx.Command.QualifiedName != "report")
+            if (ctx.Channel.Name == "media" && ctx.Command is { QualifiedName: not ("warn" or "report") })
             {
                 Config.Log.Info($"Ignoring command from {ctx.User.Username} (<@{ctx.User.Id}>) in #media: {ctx.Message.Content}");
                 if (ctx.Member is DiscordMember member)
@@ -41,12 +41,12 @@ namespace CompatBot.Commands
                     var dm = await member.CreateDmChannelAsync().ConfigureAwait(false);
                     await dm.SendMessageAsync($"Only `{Config.CommandPrefix}warn` and `{Config.CommandPrefix}report` are allowed in {ctx.Channel.Mention}").ConfigureAwait(false);
                 }
-                Config.TelemetryClient?.TrackRequest(ctx.Command.QualifiedName, executionStart, DateTimeOffset.UtcNow-executionStart, HttpStatusCode.Forbidden.ToString(), true);
-                throw new DSharpPlus.CommandsNext.Exceptions.ChecksFailedException(ctx.Command, ctx, new CheckBaseAttribute[] {new RequiresNotMedia()});
+                Config.TelemetryClient?.TrackRequest(ctx.Command.QualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.Forbidden.ToString(), true);
+                throw new DSharpPlus.CommandsNext.Exceptions.ChecksFailedException(ctx.Command, ctx, new CheckBaseAttribute[] { new RequiresNotMedia() });
             }
 
             var disabledCmds = DisabledCommandsProvider.Get();
-            if (disabledCmds.Contains(ctx.Command.QualifiedName) && !disabledCmds.Contains("*"))
+            if (ctx.Command is not null && disabledCmds.Contains(ctx.Command.QualifiedName) && !disabledCmds.Contains("*"))
             {
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder {Color = Config.Colors.Maintenance, Description = "Command is currently disabled"}).ConfigureAwait(false);
                 Config.TelemetryClient?.TrackRequest(ctx.Command.QualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.Locked.ToString(), true);
@@ -61,10 +61,12 @@ namespace CompatBot.Commands
 
         public override async Task AfterExecutionAsync(CommandContext ctx)
         {
-            var qualifiedName = ctx.Command.QualifiedName;
-            StatsStorage.CmdStatCache.TryGetValue(qualifiedName, out int counter);
-            StatsStorage.CmdStatCache.Set(qualifiedName, ++counter, StatsStorage.CacheTime);
-            Config.TelemetryClient?.TrackRequest(qualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.OK.ToString(), true);
+            if (ctx.Command?.QualifiedName is string qualifiedName)
+            {
+                StatsStorage.CmdStatCache.TryGetValue(qualifiedName, out int counter);
+                StatsStorage.CmdStatCache.Set(qualifiedName, ++counter, StatsStorage.CacheTime);
+                Config.TelemetryClient?.TrackRequest(qualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.OK.ToString(), true);
+            }
 
             if (TriggersTyping(ctx))
                 await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
@@ -73,6 +75,6 @@ namespace CompatBot.Commands
         }
 
         private static bool TriggersTyping(CommandContext ctx)
-            => ctx.Command.CustomAttributes.OfType<TriggersTyping>().FirstOrDefault() is TriggersTyping a && a.ExecuteCheck(ctx);
+            => ctx.Command?.CustomAttributes.OfType<TriggersTyping>().FirstOrDefault() is TriggersTyping a && a.ExecuteCheck(ctx);
     }
 }

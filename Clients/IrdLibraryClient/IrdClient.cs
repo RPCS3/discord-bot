@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace IrdLibraryClient
             jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
-                IgnoreNullValues = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 IncludeFields = true,
             };
         }

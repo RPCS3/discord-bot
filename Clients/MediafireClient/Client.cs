@@ -10,6 +10,7 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using CompatApiClient.Formatters;
 using MediafireClient.POCOs;
@@ -32,7 +33,7 @@ namespace MediafireClient
             jsonOptions = new()
             {
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
-                IgnoreNullValues = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 IncludeFields = true,
             };
         }

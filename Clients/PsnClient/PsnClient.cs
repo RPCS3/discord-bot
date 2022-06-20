@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,13 +50,13 @@ namespace PsnClient
             dashedJson = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.Dashed,
-                IgnoreNullValues = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 IncludeFields = true,
             };
             snakeJson = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
-                IgnoreNullValues = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 IncludeFields = true,
             };
             xmlFormatters = new MediaTypeFormatterCollection(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
@@ -301,7 +302,7 @@ namespace PsnClient
             try
             {
                 var (language, country) = locale.AsLocaleData();
-                var searchId = Uri.EscapeUriString(search);
+                var searchId = Uri.EscapeDataString(search); // was EscapeUriString for some reason I don't remember exactly
                 var queryId = Uri.EscapeDataString(searchId);
                 var uri = new Uri($"https://store.playstation.com/valkyrie-api/{language}/{country}/999/faceted-search/{searchId}?query={queryId}&game_content_type=games&size=30&bucket=games&platform=ps3&start=0");
                 using var message = new HttpRequestMessage(HttpMethod.Get, uri);

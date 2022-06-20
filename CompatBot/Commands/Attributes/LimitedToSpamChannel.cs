@@ -17,6 +17,9 @@ namespace CompatBot.Commands.Attributes
             if (help || IsSpamChannel(ctx.Channel))
                 return true;
 
+            if (ctx.Command is null)
+                return false;
+
             try
             {
                 var msgList = await ctx.Channel.GetMessagesCachedAsync(10).ConfigureAwait(false);

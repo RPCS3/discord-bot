@@ -12,6 +12,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using TaskStatus = CirrusCiClient.Generated.TaskStatus;
 
 namespace CompatBot.Commands
 {
@@ -150,47 +151,48 @@ namespace CompatBot.Commands
                         {
                             bool shouldHaveArtifacts = false;
 
-                            if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Completed
-                                || latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Completed
-                                || latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Completed)
+                            if ((latestBuild.WindowsBuild?.Status is TaskStatus.Completed
+                                || latestBuild.LinuxBuild?.Status is TaskStatus.Completed
+                                || latestBuild.MacBuild?.Status is TaskStatus.Completed)
+                                && latestBuild.FinishTime.HasValue)
                             {
                                 buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
                                 shouldHaveArtifacts = true;
                             }
 
                             // Check for subtask errors (win/lin/mac)
-                            if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Aborted or CirrusCiClient.TaskStatus.Failed or CirrusCiClient.TaskStatus.Skipped)
+                            if (latestBuild.WindowsBuild?.Status is TaskStatus.Aborted or TaskStatus.Failed or TaskStatus.Skipped)
                             {
                                 windowsDownloadText = $"❌ {latestBuild.WindowsBuild?.Status}";
                             }
-                            if (latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Aborted or CirrusCiClient.TaskStatus.Failed or CirrusCiClient.TaskStatus.Skipped)
+                            if (latestBuild.LinuxBuild?.Status is TaskStatus.Aborted or TaskStatus.Failed or TaskStatus.Skipped)
                             {
                                 linuxDownloadText = $"❌ {latestBuild.LinuxBuild?.Status}";
                             }
-                            if (latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Aborted or CirrusCiClient.TaskStatus.Failed or CirrusCiClient.TaskStatus.Skipped)
+                            if (latestBuild.MacBuild?.Status is TaskStatus.Aborted or TaskStatus.Failed or TaskStatus.Skipped)
                             {
                                 macDownloadText = $"❌ {latestBuild.MacBuild?.Status}";
                             }
 
                             // Check estimated time for pending builds
-                            if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Executing
-                                || latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Executing
-                                || latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+                            if (latestBuild.WindowsBuild?.Status is TaskStatus.Executing
+                                || latestBuild.LinuxBuild?.Status is TaskStatus.Executing
+                                || latestBuild.MacBuild?.Status is TaskStatus.Executing)
                             {
                                 var estimatedCompletionTime = latestBuild.StartTime + (await CirrusCi.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                                 var estimatedTime = TimeSpan.FromMinutes(1);
                                 if (estimatedCompletionTime > DateTime.UtcNow)
                                     estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
 
-                                if (latestBuild.WindowsBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+                                if (latestBuild.WindowsBuild?.Status is TaskStatus.Executing)
                                 {
                                     windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
                                 }
-                                if (latestBuild.LinuxBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+                                if (latestBuild.LinuxBuild?.Status is TaskStatus.Executing)
                                 {
                                     linuxDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
                                 }
-                                if (latestBuild.MacBuild?.Status is CirrusCiClient.TaskStatus.Executing)
+                                if (latestBuild.MacBuild?.Status is TaskStatus.Executing)
                                 {
                                     macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
                                 }

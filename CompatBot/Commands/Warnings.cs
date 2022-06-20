@@ -166,7 +166,7 @@ namespace CompatBot.Commands
         {
             await using var db = new BotDb();
             var warn = await db.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
-            if (warn.Retracted)
+            if (warn?.Retracted is true)
             {
                 warn.Retracted = false;
                 warn.RetractedBy = null;

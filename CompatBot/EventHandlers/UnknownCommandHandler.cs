@@ -34,7 +34,7 @@ namespace CompatBot.EventHandlers
 
                 var ex = e.Exception;
                 if (ex is InvalidOperationException && ex.Message.Contains("No matching subcommands were found"))
-                    ex = new CommandNotFoundException(e.Command.Name);
+                    ex = new CommandNotFoundException(e.Command?.Name ?? "unknown command name");
 
                 if (ex is not CommandNotFoundException cnfe)
                 {

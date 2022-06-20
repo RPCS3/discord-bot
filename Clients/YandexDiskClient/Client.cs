@@ -7,6 +7,7 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using CompatApiClient.Formatters;
 using YandexDiskClient.POCOs;
 
@@ -23,7 +24,7 @@ namespace YandexDiskClient
             jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
-                IgnoreNullValues = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 IncludeFields = true,
             };
         }
