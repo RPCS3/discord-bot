@@ -27,11 +27,22 @@ jobs:
     - name: dotnet test
       run: dotnet test --no-build --verbosity normal Tests/Tests.csproj
 
+  ConfigTest:
+    runs-on: ubuntu-latest
+    outputs: 
+      docker-username: ${{ steps.docker-username.outputs.defined }}
+    steps:
+      - id: docker-username
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: "${{ env.DOCKER_USERNAME }}"
+        run: echo "::set-output  name=defined::true"
+
   DockerImage:
-    needs: BuildAndTest
+    needs: [BuildAndTest, ConfigTest]
     runs-on: ubuntu-latest
     name: "Build Docker image"
-    if: github.ref == 'refs/heads/master'
+    if: (github.ref == 'refs/heads/master') && (needs.ConfigTest.outputs.docker-username == 'true')
     steps:
     - uses: actions/checkout@v3
       with:
