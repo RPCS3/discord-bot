@@ -37,7 +37,7 @@ namespace CompatBot.Utils.ResultFormatters
             if (cpuInfo.Success)
             {
                 var cpuModel = cpuInfo.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "").Trim();
-                if (cpuModel.StartsWith("DG1", StringComparison.InvariantCultureIgnoreCase))
+                if (cpuModel.StartsWith("DG1", StringComparison.OrdinalIgnoreCase))
                 {
                     cpuModel = cpuModel[3] switch
                     {
@@ -48,10 +48,8 @@ namespace CompatBot.Utils.ResultFormatters
                         _ => "AMD APU for PlayStation?",
                     };
                 }
-                if (cpuModel.StartsWith("VirtualApple", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    cpuModel = "Rosetta";
-                }
+                else if (cpuModel.Equals("VirtualApple", StringComparison.OrdinalIgnoreCase))
+                    cpuModel = "Apple Mx";
                 items["cpu_model"] = cpuModel;
                 items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
                 items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
@@ -85,7 +83,7 @@ namespace CompatBot.Utils.ResultFormatters
                     }
                 }
             }
-            else if (items["os_version_major"] is string _ || items["posix_name"] is string _)
+            else if (items["os_version_major"] is not null || items["posix_name"] is not null)
             {
                 switch (items["os_type"]?.ToLowerInvariant())
                 {
