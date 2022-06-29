@@ -31,6 +31,10 @@ namespace CompatBot.Database
                 if (!await ImportNamesPool(db, Config.Cts.Token))
                     return false;
             }
+            
+            await using (var db = new HardwareDb())
+                if (!await UpgradeAsync(db, Config.Cts.Token))
+                    return false;
 
             return true;
         }
