@@ -215,7 +215,7 @@ namespace CompatBot.Database.Providers
                 && !string.IsNullOrEmpty(trigger.ExplainTerm))
             {
                 var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
-                await Explain.SendExplanation(result, trigger.ExplainTerm, message).ConfigureAwait(false);
+                await Explain.SendExplanation(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
             }
 
             if (trigger.Actions.HasFlag(FilterAction.Kick)

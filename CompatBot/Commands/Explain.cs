@@ -36,7 +36,7 @@ namespace CompatBot.Commands
                 var lastBotMessages = await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false);
                 var showList = true;
                 foreach (var pastMsg in lastBotMessages)
-                    if (pastMsg.Embeds.FirstOrDefault() is DiscordEmbed {Title: TermListTitle}
+                    if (pastMsg.Embeds.FirstOrDefault() is {Title: TermListTitle}
                         || BotReactionsHandler.NeedToSilence(pastMsg).needToChill)
                     {
                         showList = false;
@@ -61,6 +61,7 @@ namespace CompatBot.Commands
             if (!await ContentFilter.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
                 return;
 
+            var hasMention = false;
             term = term.ToLowerInvariant();
             var result = await LookupTerm(term).ConfigureAwait(false);
             if (result.explanation == null || !string.IsNullOrEmpty(result.fuzzyMatch))
@@ -70,11 +71,10 @@ namespace CompatBot.Commands
                 if (idx > 0)
                 {
                     var potentialUserId = term[(idx + 4)..].Trim();
-                    bool hasMention = false;
                     try
                     {
                         var lookup = await ((IArgumentConverter<DiscordUser>)new DiscordUserConverter()).ConvertAsync(potentialUserId, ctx).ConfigureAwait(false);
-                        hasMention = lookup.HasValue;
+                        hasMention = lookup.HasValue && lookup.Value.Id != ctx.Message.Author.Id;
                     }
                     catch {}
 
@@ -88,7 +88,8 @@ namespace CompatBot.Commands
                 }
             }
 
-            if (await SendExplanation(result, term, ctx.Message.ReferencedMessage ?? ctx.Message).ConfigureAwait(false))
+            var needReply = !hasMention || ctx.Message.ReferencedMessage is not null;
+            if (await SendExplanation(result, term, ctx.Message.ReferencedMessage ?? ctx.Message, needReply).ConfigureAwait(false))
                 return;
 
             string? inSpecificLocation = null;
@@ -374,13 +375,13 @@ namespace CompatBot.Commands
             return (explanation, fuzzyMatch, coefficient);
         }
 
-        internal static async Task<bool> SendExplanation((Explanation? explanation, string? fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage)
+        internal static async Task<bool> SendExplanation((Explanation? explanation, string? fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage, bool useReply)
         {
             try
             {
                 if (termLookupResult.explanation != null && termLookupResult.score > 0.5)
                 {
-                    var replied = false;
+                    var usedReply = false;
                     DiscordMessageBuilder msgBuilder;
                     if (!string.IsNullOrEmpty(termLookupResult.fuzzyMatch))
                     {
@@ -388,18 +389,18 @@ namespace CompatBot.Commands
 #if DEBUG
                         fuzzyNotice = $"Showing explanation for `{termLookupResult.fuzzyMatch}` ({termLookupResult.score:0.######}):";
 #endif
-                        msgBuilder = new DiscordMessageBuilder()
-                            .WithContent(fuzzyNotice)
-                            .WithReply(sourceMessage.Id);
+                        msgBuilder = new DiscordMessageBuilder().WithContent(fuzzyNotice);
+                        if (useReply)
+                            msgBuilder.WithReply(sourceMessage.Id);
                         await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
-                        replied = true;
+                        usedReply = true;
                     }
 
                     var explain = termLookupResult.explanation;
                     StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
                     StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
                     msgBuilder = new DiscordMessageBuilder().WithContent(explain.Text);
-                    if (!replied)
+                    if (!usedReply && useReply)
                         msgBuilder.WithReply(sourceMessage.Id);
                     if (explain.Attachment is {Length: >0})
                     {
