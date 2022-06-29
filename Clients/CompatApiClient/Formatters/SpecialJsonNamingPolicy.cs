@@ -1,8 +1,7 @@
-﻿namespace CompatApiClient.Formatters
+﻿namespace CompatApiClient.Formatters;
+
+public static class SpecialJsonNamingPolicy
 {
-    public static class SpecialJsonNamingPolicy
-    {
-        public static SnakeCaseNamingPolicy SnakeCase { get; } = new();
-        public static DashedNamingPolicy Dashed { get; } = new(); 
-    }
+    public static SnakeCaseNamingPolicy SnakeCase { get; } = new();
+    public static DashedNamingPolicy Dashed { get; } = new(); 
 }

@@ -1,9 +1,8 @@
 ﻿using System.Text.Json;
 
-namespace CompatApiClient
+namespace CompatApiClient;
+
+public sealed class SnakeCaseNamingPolicy: JsonNamingPolicy
 {
-    public sealed class SnakeCaseNamingPolicy: JsonNamingPolicy
-    {
-        public override string ConvertName(string name) => NamingStyles.Underscore(name);
-    }
+    public override string ConvertName(string name) => NamingStyles.Underscore(name);
 }

@@ -10,88 +10,87 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace CompatBot.EventHandlers
-{
-    internal static class TableFlipMonitor
-    {
-        private static readonly char[] OpenParen = {'(', '（', 'ʕ'};
+namespace CompatBot.EventHandlers;
 
-        public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+internal static class TableFlipMonitor
+{
+    private static readonly char[] OpenParen = {'(', '（', 'ʕ'};
+
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    {
+        if (DefaultHandlerFilter.IsFluff(args.Message))
+            return;
+
+        /*
+         * (╯°□°）╯︵ ┻━┻
+         * (ノ ゜Д゜)ノ ︵ ┻━┻
+         * (ノಠ益ಠ)ノ彡┻━┻
+         * ‎(ﾉಥ益ಥ）ﾉ ┻━┻
+         * (ﾉಥДಥ)ﾉ︵┻━┻･/
+         * (ノ^_^)ノ┻━┻
+         * (/¯◡ ‿ ◡)/¯ ~ ┻━┻
+         *
+         * this might look the same, but only because of the font choice
+         *
+         * ┻━┻
+         * ┻━┻
+         */
+        try
         {
-            if (DefaultHandlerFilter.IsFluff(args.Message))
+            var content = args.Message.Content;
+
+            if (content.Contains("🎲") && Regex.IsMatch(content, @"(🎲|\s)+"))
+            {
+                var count = 1;
+                var idx = content.IndexOf("🎲");
+                while (idx < content.Length && (idx = content.IndexOf("🎲", idx + 1)) > 0)
+                    count++;
+                EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
+                await Misc.RollImpl(args.Message, $"{count}d6").ConfigureAwait(false);
+                return;
+            }
+                
+            if (content.Trim() == "🥠")
+            {
+                EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
+                await Fortune.ShowFortune(args.Message, args.Author).ConfigureAwait(false);
+                return;
+            }
+
+            if (!(content.Contains("┻━┻") ||
+                  content.Contains("┻━┻")))
                 return;
 
-            /*
-             * (╯°□°）╯︵ ┻━┻
-             * (ノ ゜Д゜)ノ ︵ ┻━┻
-             * (ノಠ益ಠ)ノ彡┻━┻
-             * ‎(ﾉಥ益ಥ）ﾉ ┻━┻
-             * (ﾉಥДಥ)ﾉ︵┻━┻･/
-             * (ノ^_^)ノ┻━┻
-             * (/¯◡ ‿ ◡)/¯ ~ ┻━┻
-             *
-             * this might look the same, but only because of the font choice
-             *
-             * ┻━┻
-             * ┻━┻
-             */
-            try
-            {
-                var content = args.Message.Content;
+            var tableIdx = content.IndexOf("┻━┻", StringComparison.Ordinal);
+            if (tableIdx < 0)
+                tableIdx = content.IndexOf("┻━┻", StringComparison.Ordinal);
+            var faceIdx = content[..tableIdx].LastIndexOfAny(OpenParen);
+            var face = content[faceIdx..tableIdx];
+            if (face.Length > 30)
+                return;
 
-                if (content.Contains("🎲") && Regex.IsMatch(content, @"(🎲|\s)+"))
-                {
-                    var count = 1;
-                    var idx = content.IndexOf("🎲");
-                    while (idx < content.Length && (idx = content.IndexOf("🎲", idx + 1)) > 0)
-                        count++;
-                    EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
-                    await Misc.RollImpl(args.Message, $"{count}d6").ConfigureAwait(false);
-                    return;
-                }
-                
-                if (content.Trim() == "🥠")
-                {
-                    EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
-                    await Fortune.ShowFortune(args.Message, args.Author).ConfigureAwait(false);
-                    return;
-                }
+            var reverseFace = face
+                .Replace("(╯", "╯(").Replace("(ﾉ", "ﾉ(").Replace("(ノ", "ノ(").Replace("(/¯", @"\_/(")
+                .Replace(")╯", "╯)").Replace(")ﾉ", "ﾉ)").Replace(")ノ", "ノ)").Replace(")/¯", @"\_/)")
 
-                if (!(content.Contains("┻━┻") ||
-                      content.Contains("┻━┻")))
-                    return;
+                .Replace("（╯", "╯（").Replace("（ﾉ", "ﾉ（").Replace("（ノ", "ノ（").Replace("（/¯", @"\_/（")
+                .Replace("）╯", "╯）").Replace("）ﾉ", "ﾉ）").Replace("）ノ", "ノ）").Replace("）/¯", @"\_/）")
 
-                var tableIdx = content.IndexOf("┻━┻", StringComparison.Ordinal);
-                if (tableIdx < 0)
-                    tableIdx = content.IndexOf("┻━┻", StringComparison.Ordinal);
-                var faceIdx = content[..tableIdx].LastIndexOfAny(OpenParen);
-                var face = content[faceIdx..tableIdx];
-                if (face.Length > 30)
-                    return;
+                .Replace("ʕ╯", "╯ʕ").Replace("ʕﾉ", "ﾉʕ").Replace("ʕノ", "ノʕ").Replace("ʕ/¯", @"\_/ʕ")
+                .Replace("ʔ╯", "╯ʔ").Replace("ʔﾉ", "ﾉʔ").Replace("ʔノ", "ノʔ").Replace("ʔ/¯", @"\_/ʔ")
 
-                var reverseFace = face
-                    .Replace("(╯", "╯(").Replace("(ﾉ", "ﾉ(").Replace("(ノ", "ノ(").Replace("(/¯", @"\_/(")
-                    .Replace(")╯", "╯)").Replace(")ﾉ", "ﾉ)").Replace(")ノ", "ノ)").Replace(")/¯", @"\_/)")
+                .TrimEnd('︵', '彡', ' ', '　', '~', '～');
+            if (reverseFace == face)
+                return;
 
-                    .Replace("（╯", "╯（").Replace("（ﾉ", "ﾉ（").Replace("（ノ", "ノ（").Replace("（/¯", @"\_/（")
-                    .Replace("）╯", "╯）").Replace("）ﾉ", "ﾉ）").Replace("）ノ", "ノ）").Replace("）/¯", @"\_/）")
-
-                    .Replace("ʕ╯", "╯ʕ").Replace("ʕﾉ", "ﾉʕ").Replace("ʕノ", "ノʕ").Replace("ʕ/¯", @"\_/ʕ")
-                    .Replace("ʔ╯", "╯ʔ").Replace("ʔﾉ", "ﾉʔ").Replace("ʔノ", "ノʔ").Replace("ʔ/¯", @"\_/ʔ")
-
-                    .TrimEnd('︵', '彡', ' ', '　', '~', '～');
-                if (reverseFace == face)
-                    return;
-
-                var faceLength = reverseFace.Length;
-                if (faceLength > 5 + 4)
-                    reverseFace = $"{reverseFace[..2]}ಠ益ಠ{reverseFace[^2..]}";
-                await args.Channel.SendMessageAsync("┬─┬﻿ " + reverseFace.Sanitize()).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e);
-            }
+            var faceLength = reverseFace.Length;
+            if (faceLength > 5 + 4)
+                reverseFace = $"{reverseFace[..2]}ಠ益ಠ{reverseFace[^2..]}";
+            await args.Channel.SendMessageAsync("┬─┬﻿ " + reverseFace.Sanitize()).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            Config.Log.Warn(e);
         }
     }
 }
