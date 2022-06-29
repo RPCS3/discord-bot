@@ -1,7 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Data;
-using System.Linq;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +7,7 @@ namespace CompatBot.Database;
 
 internal class HardwareDb : DbContext
 {
-    public DbSet<HwInfo> HwInfo { get; set; } = null;
+    public DbSet<HwInfo> HwInfo { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -23,11 +21,7 @@ internal class HardwareDb : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseCollation("NOCASE");
-        modelBuilder.Entity<HwInfo>().HasKey(m => new { m.HwId, m.CpuModel, m.GpuModel, m.OsType, });
         modelBuilder.Entity<HwInfo>().HasIndex(m => m.Timestamp).HasDatabaseName("hardware_timestamp");
-        
-        //configure default policy of Id being the primary key
-        modelBuilder.ConfigureDefaultPkConvention();
 
         //configure name conversion for all configured entities from CamelCase to snake_case
         modelBuilder.ConfigureMapping(NamingStyles.Underscore);
@@ -60,10 +54,9 @@ internal enum OsType : byte
 
 internal class HwInfo
 {
-    public int Id { get; set; }
     public long Timestamp { get; set; }
-    [Required, MinLength(128/8), MaxLength(512/8)]
-    public byte[] HwId { get; set; } = null!; // this should be either a guid or a hash of somewhat unique data (discord user id, user profile name from logs, etc)
+    [Required, Key, MinLength(128/8), MaxLength(512/8)]
+    public byte[] InstallId { get; set; } = null!; // this should be either a guid or a hash of somewhat unique data (discord user id, user profile name from logs, etc)
 
     [Required]
     public string CpuMaker { get; set; } = null!;

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace CompatBot.Migrations.HardwareDbMigrations
+namespace CompatBot.Database.Migrations.HardwareDbMigrations
 {
     [DbContext(typeof(HardwareDb))]
     partial class HardwareDbModelSnapshot : ModelSnapshot
@@ -21,22 +21,10 @@ namespace CompatBot.Migrations.HardwareDbMigrations
 
             modelBuilder.Entity("CompatBot.Database.HwInfo", b =>
                 {
-                    b.Property<byte[]>("HwId")
+                    b.Property<byte[]>("InstallId")
                         .HasMaxLength(64)
                         .HasColumnType("BLOB")
-                        .HasColumnName("hw_id");
-
-                    b.Property<string>("CpuModel")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("cpu_model");
-
-                    b.Property<string>("GpuModel")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("gpu_model");
-
-                    b.Property<byte>("OsType")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("os_type");
+                        .HasColumnName("install_id");
 
                     b.Property<int>("CpuFeatures")
                         .HasColumnType("INTEGER")
@@ -47,18 +35,28 @@ namespace CompatBot.Migrations.HardwareDbMigrations
                         .HasColumnType("TEXT")
                         .HasColumnName("cpu_maker");
 
+                    b.Property<string>("CpuModel")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("cpu_model");
+
                     b.Property<string>("GpuMaker")
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("gpu_maker");
 
-                    b.Property<int>("Id")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("id");
+                    b.Property<string>("GpuModel")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("gpu_model");
 
                     b.Property<string>("OsName")
                         .HasColumnType("TEXT")
                         .HasColumnName("os_name");
+
+                    b.Property<byte>("OsType")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("os_type");
 
                     b.Property<string>("OsVersion")
                         .HasColumnType("TEXT")
@@ -76,8 +74,8 @@ namespace CompatBot.Migrations.HardwareDbMigrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("timestamp");
 
-                    b.HasKey("HwId", "CpuModel", "GpuModel", "OsType")
-                        .HasName("id");
+                    b.HasKey("InstallId")
+                        .HasName("pk_hw_info");
 
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("hardware_timestamp");

@@ -15,7 +15,6 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient;
-using Microsoft.DotNet.PlatformAbstractions;
 
 namespace CompatBot.Utils.ResultFormatters
 {
@@ -295,11 +294,13 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     CleanupValues(state);
                     BuildInfoSection(builder, collection);
+                    var hwUpdateTask = HwInfoProvider.AddOrUpdateSystemAsync(message, collection, Config.Cts.Token);
                     var colA = BuildCpuSection(collection);
                     var colB = BuildGpuSection(collection);
                     BuildSettingsSections(builder, collection, colA, colB);
                     BuildLibsSection(builder, collection);
                     await BuildNotesSectionAsync(builder, state, client).ConfigureAwait(false);
+                    await hwUpdateTask.ConfigureAwait(false);
                 }
             }
             else
@@ -836,15 +837,15 @@ namespace CompatBot.Utils.ResultFormatters
                 13 => "macOS Ventura",
                 _ => null,
             };
-        
-        private static bool IsAmd(string gpuInfo)
+
+        internal static bool IsAmd(string gpuInfo)
         {
             return gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
                    gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
                    gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase);
         }
 
-        private static bool IsNvidia(string gpuInfo)
+        internal static bool IsNvidia(string gpuInfo)
         {
             return gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
                    gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||

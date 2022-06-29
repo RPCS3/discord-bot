@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Globalization;
+using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using CompatBot.Utils;
+using CompatBot.Utils.ResultFormatters;
+using DSharpPlus.Entities;
 
 namespace CompatBot.Database.Providers;
 
@@ -10,7 +15,7 @@ internal static class HwInfoProvider
 {
     private static readonly Encoding Utf8 = new UTF8Encoding(false);
 
-    public static void AddOrUpdateSystem(NameValueCollection items)
+    public static async Task AddOrUpdateSystemAsync(DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
     {
         if (items["cpu_model"] is not string cpuString
             || (items["gpu_name"] ?? items["gpu_info"]) is not string gpuString
@@ -30,13 +35,18 @@ internal static class HwInfoProvider
             return;
         }
 
-        if (gpuStringParts[0].ToLower() is not ("nvidia" or "amd" or "intel" or "apple"))
-        {
-            Config.Log.Warn($"Unknown GPU maker {gpuStringParts[0]}, plz fix");
-            return;
-        }
+        if (gpuStringParts[0].ToLower() is not ("nvidia" or "amd" or "ati" or "intel" or "apple"))
+            if (LogParserResult.IsNvidia(gpuString))
+                gpuStringParts = new[] { "NVIDIA", gpuString };
+            else if (LogParserResult.IsAmd(gpuString))
+                gpuStringParts = new[] { "AMD", gpuString };
+            else
+            {
+                Config.Log.Warn($"Unknown GPU maker {gpuStringParts[0]}, plz fix");
+                return;
+            }
 
-        var ts = DateTime.UtcNow;
+        var ts = msg.Timestamp.UtcDateTime;
         if (items["log_start_timestamp"] is string logTs
             && DateTime.TryParse(logTs, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeUniversal, out var logTsVal))
             ts = logTsVal.ToUniversalTime();
@@ -44,7 +54,7 @@ internal static class HwInfoProvider
         var info = new HwInfo
         {
             Timestamp = ts.Ticks,
-            HwId = GetHwId(items),
+            InstallId = GetHwId(items, msg),
 
             CpuMaker = cpuStringParts[0],
             CpuModel = cpuStringParts[1],
@@ -60,11 +70,25 @@ internal static class HwInfoProvider
             OsName = GetName(osType, items),
             OsVersion = items["os_version"],
         };
+        await using var db = new HardwareDb();
+        var existingItem = await db.HwInfo.FindAsync(info.InstallId).ConfigureAwait(false);
+        if (existingItem is null)
+            db.HwInfo.Add(info);
+        else if (existingItem.Timestamp < info.Timestamp)
+            db.Entry(existingItem).CurrentValues.SetValues(info);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            Config.Log.Error(e, "Failed to update hardware db");
+        }
     }
 
-    private static byte[] GetHwId(NameValueCollection items)
+    private static byte[] GetHwId(NameValueCollection items, DiscordMessage message)
     {
-        var id = items["hw_id"] ?? items["compat_database_path"] ?? "anonymous";
+        var id = items["hw_id"] ?? message.Author.Id.ToString("x16") + items["compat_database_path"];
         return Utf8.GetBytes(id).GetSaltedHash();
     }
 

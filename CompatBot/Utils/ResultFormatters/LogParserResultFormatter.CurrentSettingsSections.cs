@@ -145,7 +145,6 @@ namespace CompatBot.Utils.ResultFormatters
                 systemInfo += $"{Environment.NewLine}GPU{(multiple ? "s" : "")}:{(multiple ? Environment.NewLine : " ")}{availableGpus}";
             }
             builder.AddField("Build Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
-            HwInfoProvider.AddOrUpdateSystem(items);
         }
 
         private const int ColumnWidth = 30;
