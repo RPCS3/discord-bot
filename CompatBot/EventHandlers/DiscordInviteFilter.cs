@@ -21,7 +21,7 @@ namespace CompatBot.EventHandlers;
 internal static class DiscordInviteFilter
 {
     private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline;
-    private static readonly Regex InviteLink = new(@"(https?://)?discord(((app\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|>|$))", DefaultOptions);
+    private static readonly Regex InviteLink = new(@"(https?://)?discord((((app)?\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|>|$))", DefaultOptions);
     private static readonly MemoryCache InviteCodeCache = new(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
