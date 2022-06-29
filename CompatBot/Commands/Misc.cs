@@ -13,7 +13,6 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using HomoglyphConverter;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Services.Profile;
 
 namespace CompatBot.Commands
 {

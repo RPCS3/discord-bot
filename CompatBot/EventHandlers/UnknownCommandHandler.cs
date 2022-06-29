@@ -2,18 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CompatApiClient.Utils;
-using CompatBot.Commands;
-using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers
 {

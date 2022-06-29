@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using ColorThiefDotNet;
 using DSharpPlus.Entities;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace CompatBot.Utils
 {

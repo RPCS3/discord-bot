@@ -4,7 +4,6 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using CompatApiClient.Utils;
-using CompatBot.Database.Providers;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.ResultFormatters

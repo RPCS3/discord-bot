@@ -16,7 +16,6 @@ using CompatBot.EventHandlers.LogParsing.POCOs;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using IrdLibraryClient.IrdFormat;
-using Microsoft.DotNet.PlatformAbstractions;
 
 namespace CompatBot.Utils.ResultFormatters
 {

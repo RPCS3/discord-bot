@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using Microsoft.VisualStudio.Services.Directories;
 
 namespace CompatBot.Commands
 {

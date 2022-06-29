@@ -9,7 +9,6 @@ using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
-using HomoglyphConverter;
 using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 using Microsoft.Extensions.Caching.Memory;

@@ -8,7 +8,6 @@ using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace CompatBot.EventHandlers
 {
