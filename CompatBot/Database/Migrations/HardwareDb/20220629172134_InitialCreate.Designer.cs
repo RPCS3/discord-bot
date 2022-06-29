@@ -11,13 +11,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CompatBot.Migrations.HardwareDbMigrations
 {
     [DbContext(typeof(HardwareDb))]
-    [Migration("20220629140504_InitialCreate")]
+    [Migration("20220629172134_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "6.0.6");
+            modelBuilder
+                .UseCollation("NOCASE")
+                .HasAnnotation("ProductVersion", "6.0.6");
 
             modelBuilder.Entity("CompatBot.Database.HwInfo", b =>
                 {

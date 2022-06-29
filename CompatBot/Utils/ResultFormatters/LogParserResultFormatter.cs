@@ -364,13 +364,16 @@ namespace CompatBot.Utils.ResultFormatters
                                                GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
             }
             if (items["driver_version_info"] != null)
+            {
+                items["gpu_name"] = items["gpu_info"];
                 items["gpu_info"] += $" ({items["driver_version_info"]})";
+            }
 
-            if (multiItems["vulkan_compatible_device_name"] is UniqueList<string> vulkanDevices && vulkanDevices.Any())
+            if (multiItems["vulkan_compatible_device_name"] is { Count: > 0 } vulkanDevices)
             {
                 var devices = vulkanDevices
                     .Distinct()
-                    .Select(n => new {name = n.StripMarks(), driverVersion = GetVulkanDriverVersion(n, multiItems["vulkan_found_device"])})
+                    .Select(n => new { name = n.StripMarks(), driverVersion = GetVulkanDriverVersion(n, multiItems["vulkan_found_device"]) })
                     .Reverse()
                     .ToList();
                 if (string.IsNullOrEmpty(items["gpu_info"]) && devices.Count > 0)
@@ -378,6 +381,7 @@ namespace CompatBot.Utils.ResultFormatters
                     var discreteGpu = devices.FirstOrDefault(d => IsNvidia(d.name))
                                       ?? devices.FirstOrDefault(d => IsAmd(d.name))
                                       ?? devices.First();
+                    items["gpu_name"] = discreteGpu.name;
                     items["discrete_gpu_info"] = $"{discreteGpu.name} ({discreteGpu.driverVersion})";
                     items["driver_version_info"] = discreteGpu.driverVersion;
                 }
@@ -775,7 +779,7 @@ namespace CompatBot.Utils.ResultFormatters
                 _ => null,
             };
 
-        private static string? GetLinuxVersion(string? release, string version)
+        private static string? GetLinuxVersion(string? osType, string? release, string version)
         {
             if (string.IsNullOrEmpty(release))
                 return null;
@@ -801,9 +805,38 @@ namespace CompatBot.Utils.ResultFormatters
                 return "Fedora " + ver;
             }
 
-            return "Linux " + kernelVersion;
+            return $"{osType} {kernelVersion}";
         }
 
+        private static string? GetMacOsVersion(Version macVer)
+            => macVer.Major switch
+            {
+                10 => macVer.Minor switch
+                {
+                     0 => "Mac OS X Cheetah",
+                     1 => "Mac OS X Puma",
+                     2 => "Mac OS X Jaguar",
+                     3 => "Mac OS X Panther",
+                     4 => "Mac OS X Tiger",
+                     5 => "Mac OS X Leopard",
+                     6 => "Mac OS X Snow Leopard",
+                     7 => "OS X Lion",
+                     8 => "OS X Mountain Lion",
+                     9 => "OS X Mavericks",
+                    10 => "OS X Yosemite",
+                    11 => "OS X El Capitan",
+                    12 => "macOS Sierra",
+                    13 => "macOS High Sierra",
+                    14 => "macOS Mojave",
+                    15 => "macOS Catalina",
+                    _ => null,
+                },
+                11 => "macOS Big Sur",
+                12 => "macOS Monterey",
+                13 => "macOS Ventura",
+                _ => null,
+            };
+        
         private static bool IsAmd(string gpuInfo)
         {
             return gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||

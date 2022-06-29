@@ -1,5 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Linq;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +22,7 @@ internal class HardwareDb : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.UseCollation("NOCASE");
         modelBuilder.Entity<HwInfo>().HasKey(m => new { m.HwId, m.CpuModel, m.GpuModel, m.OsType, });
         modelBuilder.Entity<HwInfo>().HasIndex(m => m.Timestamp).HasDatabaseName("hardware_timestamp");
         
@@ -43,6 +46,7 @@ internal enum CpuFeatures
     Fma4     = 0b_00000000_00000000_00000000_00100000,
     Tsx      = 0b_00000000_00000000_00000000_01000000,
     TsxFa    = 0b_00000000_00000000_00000000_10000000,
+    Xop      = 0b_00000000_00000000_00000001_00000000,
 }
 
 internal enum OsType : byte

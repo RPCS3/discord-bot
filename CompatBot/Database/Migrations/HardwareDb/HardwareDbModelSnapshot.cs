@@ -15,7 +15,9 @@ namespace CompatBot.Migrations.HardwareDbMigrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "6.0.6");
+            modelBuilder
+                .UseCollation("NOCASE")
+                .HasAnnotation("ProductVersion", "6.0.6");
 
             modelBuilder.Entity("CompatBot.Database.HwInfo", b =>
                 {

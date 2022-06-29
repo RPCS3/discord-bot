@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using CompatApiClient.Utils;
+using CompatBot.Database.Providers;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.ResultFormatters
@@ -49,7 +50,7 @@ namespace CompatBot.Utils.ResultFormatters
                     };
                 }
                 else if (cpuModel.Equals("VirtualApple", StringComparison.OrdinalIgnoreCase))
-                    cpuModel = "Apple Mx";
+                    cpuModel = items["gpu_name"] is string appleGpu && appleGpu.StartsWith("Apple M", StringComparison.OrdinalIgnoreCase) ? appleGpu : "Apple Mx";
                 items["cpu_model"] = cpuModel;
                 items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
                 items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
@@ -72,13 +73,15 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         items["os_type"] = osInfo.Groups["posix_name"].Value;
                         items["os_version"] = osInfo.Groups["posix_release"].Value;
-                        items["os_linux_version"] = GetLinuxVersion(items["os_version"], osInfo.Groups["posix_version"].Value);
+                        items["os_linux_version"] = GetLinuxVersion(items["os_type"], items["os_version"], osInfo.Groups["posix_version"].Value);
                         break;
                     }
                     case "macos":
                     {
                         items["os_type"] = "MacOS";
                         items["os_version"] = osInfo.Groups["macos_version"].Value;
+                        if (Version.TryParse(items["os_version"], out var macVer) && GetMacOsVersion(macVer) is string macOsVer)
+                            items["os_mac_version"] = macOsVer; 
                         break;
                     }
                 }
@@ -99,7 +102,7 @@ namespace CompatBot.Utils.ResultFormatters
                     {
                         items["os_type"] = items["posix_name"];
                         items["os_version"] = items["posix_release"];
-                        items["os_linux_version"] = GetLinuxVersion(items["os_version"], osInfo.Groups["posix_version"].Value);
+                        items["os_linux_version"] = GetLinuxVersion(items["posix_name"], items["os_version"], osInfo.Groups["posix_version"].Value);
                         break;
                     }
                 }
@@ -118,6 +121,8 @@ namespace CompatBot.Utils.ResultFormatters
                         systemInfo += "Windows " + winVer;
                     else if (items["os_linux_version"] is string linVer)
                         systemInfo += linVer;
+                    else if (items["os_mac_version"] is string macVer)
+                        systemInfo += $"{macVer} {items["os_version"]}";
                     else
                     {
                         systemInfo += items["os_type"];
@@ -140,6 +145,7 @@ namespace CompatBot.Utils.ResultFormatters
                 systemInfo += $"{Environment.NewLine}GPU{(multiple ? "s" : "")}:{(multiple ? Environment.NewLine : " ")}{availableGpus}";
             }
             builder.AddField("Build Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
+            HwInfoProvider.AddOrUpdateSystem(items);
         }
 
         private const int ColumnWidth = 30;
