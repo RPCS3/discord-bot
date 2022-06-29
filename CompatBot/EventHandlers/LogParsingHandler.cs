@@ -23,377 +23,376 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace CompatBot.EventHandlers
+namespace CompatBot.EventHandlers;
+
+public static class LogParsingHandler
 {
-    public static class LogParsingHandler
+    private static readonly char[] LinkSeparator = { ' ', '>', '\r', '\n' };
+    private static readonly ISourceHandler[] SourceHandlers =
     {
-        private static readonly char[] LinkSeparator = { ' ', '>', '\r', '\n' };
-        private static readonly ISourceHandler[] SourceHandlers =
-        {
-            new DiscordAttachmentHandler(),
-            new GoogleDriveHandler(),
-            new DropboxHandler(),
-            new MegaHandler(),
-            new OneDriveSourceHandler(),
-            new YandexDiskHandler(),
-            new MediafireHandler(),
-            new GenericLinkHandler(),
-            new PastebinHandler(),
-        };
-        private static readonly IArchiveHandler[] ArchiveHandlers =
-        {
-            new GzipHandler(),
-            new ZipHandler(),
-            new RarHandler(),
-            new SevenZipHandler(),
-            new PlainTextHandler(),
-        };
+        new DiscordAttachmentHandler(),
+        new GoogleDriveHandler(),
+        new DropboxHandler(),
+        new MegaHandler(),
+        new OneDriveSourceHandler(),
+        new YandexDiskHandler(),
+        new MediafireHandler(),
+        new GenericLinkHandler(),
+        new PastebinHandler(),
+    };
+    private static readonly IArchiveHandler[] ArchiveHandlers =
+    {
+        new GzipHandler(),
+        new ZipHandler(),
+        new RarHandler(),
+        new SevenZipHandler(),
+        new PlainTextHandler(),
+    };
 
-        private static readonly SemaphoreSlim QueueLimiter = new(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
-        private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);
-        private static event OnLog OnNewLog = EnqueueLogProcessing;
+    private static readonly SemaphoreSlim QueueLimiter = new(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
+    private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);
+    private static event OnLog OnNewLog = EnqueueLogProcessing;
 
-        public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
-        {
-            var message = args.Message;
-            if (message.Author.IsBotSafeCheck())
-                return Task.CompletedTask;
-
-            if (!string.IsNullOrEmpty(message.Content)
-                && (message.Content.StartsWith(Config.CommandPrefix)
-                    || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
-                return Task.CompletedTask;
-
-            var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
-            var isHelpChannel = "help".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase)
-                                || "donors".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
-            var checkExternalLinks = isHelpChannel || isSpamChannel;
-            OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
+    public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    {
+        var message = args.Message;
+        if (message.Author.IsBotSafeCheck())
             return Task.CompletedTask;
-        }
 
-        public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false)
+        if (!string.IsNullOrEmpty(message.Content)
+            && (message.Content.StartsWith(Config.CommandPrefix)
+                || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
+            return Task.CompletedTask;
+
+        var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
+        var isHelpChannel = "help".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase)
+                            || "donors".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
+        var checkExternalLinks = isHelpChannel || isSpamChannel;
+        OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
+        return Task.CompletedTask;
+    }
+
+    public static async void EnqueueLogProcessing(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false)
+    {
+        var start = DateTimeOffset.UtcNow;
+        try
         {
-            var start = DateTimeOffset.UtcNow;
+            if (!QueueLimiter.Wait(0))
+            {
+                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, TimeSpan.Zero, HttpStatusCode.TooManyRequests.ToString(), false);
+                await channel.SendMessageAsync("Log processing is rate limited, try again a bit later").ConfigureAwait(false);
+                return;
+            }
+
+            var parsedLog = false;
+            var startTime = Stopwatch.StartNew();
+            DiscordMessage? botMsg = null;
             try
             {
-                if (!QueueLimiter.Wait(0))
+                var possibleHandlers = SourceHandlers.Select(h => h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
+                var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
+                var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
+                    
+                var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
+                var isHelpChannel = "help".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
+                                    || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase);
+                    
+                if (source != null)
                 {
-                    Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, TimeSpan.Zero, HttpStatusCode.TooManyRequests.ToString(), false);
-                    await channel.SendMessageAsync("Log processing is rate limited, try again a bit later").ConfigureAwait(false);
-                    return;
-                }
+                    Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
+                    var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
+                    var msgBuilder = new DiscordMessageBuilder()
+                        .WithEmbed(analyzingProgressEmbed.AddAuthor(client, message, source))
+                        .WithReply(message.Id);
+                    botMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                    parsedLog = true;
 
-                var parsedLog = false;
-                var startTime = Stopwatch.StartNew();
-                DiscordMessage? botMsg = null;
-                try
-                {
-                    var possibleHandlers = SourceHandlers.Select(h => h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
-                    var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
-                    var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
-                    
-                    var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
-                    var isHelpChannel = "help".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
-                                        || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase);
-                    
-                    if (source != null)
+                    LogParseState? result = null, tmpResult;
+                    using (var timeout = new CancellationTokenSource(Config.LogParsingTimeoutInSec))
                     {
-                        Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
-                        var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
-                        var msgBuilder = new DiscordMessageBuilder()
-                            .WithEmbed(analyzingProgressEmbed.AddAuthor(client, message, source))
-                            .WithReply(message.Id);
-                        botMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
-                        parsedLog = true;
-
-                        LogParseState? result = null, tmpResult;
-                        using (var timeout = new CancellationTokenSource(Config.LogParsingTimeoutInSec))
+                        using var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
+                        var tries = 0;
+                        do
                         {
-                            using var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
-                            var tries = 0;
-                            do
-                            {
-                                tmpResult = await ParseLogAsync(
-                                    source,
-                                    async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
-                                    combinedTokenSource.Token
-                                ).ConfigureAwait(false);
-                                result ??= tmpResult;
-                                tries++;
-                            } while ((tmpResult == null || tmpResult.Error == LogParseState.ErrorCode.UnknownError) && !combinedTokenSource.IsCancellationRequested && tries < 3);
-                        }
-                        if (result == null)
-                        {
-                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: new DiscordEmbedBuilder
-                                {
-                                    Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
-                                                  "Please run the game again and re-upload a new copy.",
-                                    Color = Config.Colors.LogResultFailed,
-                                }
-                                .AddAuthor(client, message, source)
-                                .Build()
+                            tmpResult = await ParseLogAsync(
+                                source,
+                                async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
+                                combinedTokenSource.Token
                             ).ConfigureAwait(false);
-                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
-                        }
-                        else
-                        {
-                            result.ParsingTime = startTime.Elapsed;
-                            try
+                            result ??= tmpResult;
+                            tries++;
+                        } while ((tmpResult == null || tmpResult.Error == LogParseState.ErrorCode.UnknownError) && !combinedTokenSource.IsCancellationRequested && tries < 3);
+                    }
+                    if (result == null)
+                    {
+                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: new DiscordEmbedBuilder
                             {
-                                if (result.Error == LogParseState.ErrorCode.PiracyDetected)
+                                Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
+                                              "Please run the game again and re-upload a new copy.",
+                                Color = Config.Colors.LogResultFailed,
+                            }
+                            .AddAuthor(client, message, source)
+                            .Build()
+                        ).ConfigureAwait(false);
+                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
+                    }
+                    else
+                    {
+                        result.ParsingTime = startTime.Elapsed;
+                        try
+                        {
+                            if (result.Error == LogParseState.ErrorCode.PiracyDetected)
+                            {
+                                if (result.SelectedFilter is null)
                                 {
-                                    if (result.SelectedFilter is null)
+                                    Config.Log.Error("Piracy was detectedin log, but no trigger provided");
+                                    result.SelectedFilter = new Piracystring
                                     {
-                                        Config.Log.Error("Piracy was detectedin log, but no trigger provided");
-                                        result.SelectedFilter = new Piracystring
-                                        {
-                                            String = "Unknown trigger, plz kick 13xforever",
-                                            Actions = FilterAction.IssueWarning | FilterAction.RemoveContent,
-                                            Context = FilterContext.Log,
-                                        };
-                                    }
-                                    var yarr = client.GetEmoji(":piratethink:", "☠");
-                                    result.ReadBytes = 0;
-                                    if (message.Author.IsWhitelisted(client, channel.Guild))
-                                    {
-                                        var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
-                                        piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
-                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
-                                        var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
-                                        await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
-                                    }
-                                    else
-                                    {
-                                        var severity = ReportSeverity.Low;
-                                        try
-                                        {
-                                            DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
-                                            await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            severity = ReportSeverity.High;
-                                            Config.Log.Warn(e, $"Unable to delete message in {channel.Name}");
-                                        }
-                                        try
-                                        {
-                                            botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                                $"{message.Author.Mention}, please read carefully:\n" +
-                                                "🏴‍☠️ **Pirated content detected** 🏴‍☠️\n" +
-                                                "__You are being denied further support until you legally dump the game__.\n" +
-                                                "Please note that the RPCS3 community and its developers do not support piracy.\n" +
-                                                "Most of the issues with pirated dumps occur due to them being modified in some way " +
-                                                "that prevent them from working on RPCS3.\n" +
-                                                "If you need help obtaining valid working dump of the game you own, please read the quickstart guide at <https://rpcs3.net/quickstart>"
-                                            ).ConfigureAwait(false);
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Config.Log.Error(e, "Failed to send piracy warning");
-                                        }
-                                        try
-                                        {
-                                            var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
-                                            await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, severity).ConfigureAwait(false);
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Config.Log.Error(e, "Failed to send piracy report");
-                                        }
-                                        if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
-                                            await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}");
-                                    }
+                                        String = "Unknown trigger, plz kick 13xforever",
+                                        Actions = FilterAction.IssueWarning | FilterAction.RemoveContent,
+                                        Context = FilterContext.Log,
+                                    };
+                                }
+                                var yarr = client.GetEmoji(":piratethink:", "☠");
+                                result.ReadBytes = 0;
+                                if (message.Author.IsWhitelisted(client, channel.Guild))
+                                {
+                                    var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
+                                    piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
+                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
+                                    var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
+                                    await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
                                 }
                                 else
                                 {
-                                    if (result.SelectedFilter != null)
+                                    var severity = ReportSeverity.Low;
+                                    try
                                     {
-                                        var ignoreFlags = FilterAction.IssueWarning | FilterAction.SendMessage | FilterAction.ShowExplain;
-                                        await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext!).ConfigureAwait(false);
+                                        DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
+                                        await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
                                     }
-
-                                    if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
+                                    catch (Exception e)
                                     {
-                                        var threshold = DateTime.UtcNow.AddMinutes(-15);
-                                        var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
-                                        previousMessages = previousMessages.TakeWhile((msg, num) => num < 15 || msg.Timestamp.UtcDateTime > threshold).ToList();
-                                        if (!previousMessages.Any(m => m.Author == message.Author && !string.IsNullOrEmpty(m.Content)))
+                                        severity = ReportSeverity.High;
+                                        Config.Log.Warn(e, $"Unable to delete message in {channel.Name}");
+                                    }
+                                    try
+                                    {
+                                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                            $"{message.Author.Mention}, please read carefully:\n" +
+                                            "🏴‍☠️ **Pirated content detected** 🏴‍☠️\n" +
+                                            "__You are being denied further support until you legally dump the game__.\n" +
+                                            "Please note that the RPCS3 community and its developers do not support piracy.\n" +
+                                            "Most of the issues with pirated dumps occur due to them being modified in some way " +
+                                            "that prevent them from working on RPCS3.\n" +
+                                            "If you need help obtaining valid working dump of the game you own, please read the quickstart guide at <https://rpcs3.net/quickstart>"
+                                        ).ConfigureAwait(false);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Config.Log.Error(e, "Failed to send piracy warning");
+                                    }
+                                    try
+                                    {
+                                        var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
+                                        await client.ReportAsync(yarr + " Pirated Release", message, result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id, result.SelectedFilterContext, severity).ConfigureAwait(false);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Config.Log.Error(e, "Failed to send piracy report");
+                                    }
+                                    if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
+                                        await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}");
+                                }
+                            }
+                            else
+                            {
+                                if (result.SelectedFilter != null)
+                                {
+                                    var ignoreFlags = FilterAction.IssueWarning | FilterAction.SendMessage | FilterAction.ShowExplain;
+                                    await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext!).ConfigureAwait(false);
+                                }
+
+                                if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
+                                {
+                                    var threshold = DateTime.UtcNow.AddMinutes(-15);
+                                    var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
+                                    previousMessages = previousMessages.TakeWhile((msg, num) => num < 15 || msg.Timestamp.UtcDateTime > threshold).ToList();
+                                    if (!previousMessages.Any(m => m.Author == message.Author && !string.IsNullOrEmpty(m.Content)))
+                                    {
+                                        var botSpamChannel = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+                                        if (isHelpChannel)
+                                            await botMsg.UpdateOrCreateMessageAsync(
+                                                channel,
+                                                $"{message.Author.Mention} please describe the issue if you require help, " +
+                                                $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
+                                            ).ConfigureAwait(false);
+                                        else
                                         {
-                                            var botSpamChannel = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-                                            if (isHelpChannel)
+                                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
+                                            var helpChannel = channel.Guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "help".Equals(ch.Name));
+                                            if (helpChannel != null)
                                                 await botMsg.UpdateOrCreateMessageAsync(
                                                     channel,
-                                                    $"{message.Author.Mention} please describe the issue if you require help, " +
+                                                    $"{message.Author.Mention} if you require help, please ask in {helpChannel.Mention}, and describe your issue first, " +
                                                     $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
                                                 ).ConfigureAwait(false);
-                                            else
-                                            {
-                                                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
-                                                var helpChannel = channel.Guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "help".Equals(ch.Name));
-                                                if (helpChannel != null)
-                                                    await botMsg.UpdateOrCreateMessageAsync(
-                                                        channel,
-                                                        $"{message.Author.Mention} if you require help, please ask in {helpChannel.Mention}, and describe your issue first, " +
-                                                        $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
-                                                    ).ConfigureAwait(false);
-                                            }
-                                            return;
                                         }
+                                        return;
                                     }
-
-                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                        //requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
-                                        embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
-                                    ).ConfigureAwait(false);
                                 }
-                                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.OK.ToString(), true);
+
+                                botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
+                                    //requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                    embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
+                                ).ConfigureAwait(false);
                             }
-                            catch (Exception e)
-                            {
-                                Config.Log.Error(e, "Sending log results failed");
-                            }
+                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.OK.ToString(), true);
                         }
-                        return;
-                    }
-                    else if (!string.IsNullOrEmpty(fail)
-                             && (isHelpChannel || isSpamChannel))
-                    {
-                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
-                        await channel.SendMessageAsync($"{message.Author.Mention} {fail}").ConfigureAwait(false);
-                        return;
-                    }
-
-                    var potentialLogExtension = message.Attachments.Select(a => Path.GetExtension(a.FileName).ToUpperInvariant().TrimStart('.')).FirstOrDefault();
-                    switch (potentialLogExtension)
-                    {
-                        case "TXT":
+                        catch (Exception e)
                         {
-                            await channel.SendMessageAsync($"{message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of copying the logs from RPCS3's interface, as it doesn't contain all the required information.").ConfigureAwait(false);
-                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.BadRequest.ToString(), true);
-                            return;
+                            Config.Log.Error(e, "Sending log results failed");
                         }
                     }
+                    return;
+                }
+                else if (!string.IsNullOrEmpty(fail)
+                         && (isHelpChannel || isSpamChannel))
+                {
+                    Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
+                    await channel.SendMessageAsync($"{message.Author.Mention} {fail}").ConfigureAwait(false);
+                    return;
+                }
 
-                    if (string.IsNullOrEmpty(message.Content))
+                var potentialLogExtension = message.Attachments.Select(a => Path.GetExtension(a.FileName).ToUpperInvariant().TrimStart('.')).FirstOrDefault();
+                switch (potentialLogExtension)
+                {
+                    case "TXT":
                     {
-                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
+                        await channel.SendMessageAsync($"{message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of copying the logs from RPCS3's interface, as it doesn't contain all the required information.").ConfigureAwait(false);
+                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.BadRequest.ToString(), true);
                         return;
-                    }
-
-                    var linkStart = message.Content.IndexOf("http", StringComparison.Ordinal);
-                    if (linkStart > -1)
-                    {
-                        var link = message.Content[linkStart..].Split(LinkSeparator, 2)[0];
-                        if (link.Contains(".log", StringComparison.InvariantCultureIgnoreCase) || link.Contains("rpcs3.zip", StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            await channel.SendMessageAsync("If you intended to upload a log file please re-upload it directly to discord").ConfigureAwait(false);
-                            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.BadRequest.ToString(), true);
-                        }
                     }
                 }
-                finally
+
+                if (string.IsNullOrEmpty(message.Content))
                 {
-                    QueueLimiter.Release();
-                    if (parsedLog)
-                        Config.Log.Debug($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
+                    Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
+                    return;
+                }
+
+                var linkStart = message.Content.IndexOf("http", StringComparison.Ordinal);
+                if (linkStart > -1)
+                {
+                    var link = message.Content[linkStart..].Split(LinkSeparator, 2)[0];
+                    if (link.Contains(".log", StringComparison.InvariantCultureIgnoreCase) || link.Contains("rpcs3.zip", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        await channel.SendMessageAsync("If you intended to upload a log file please re-upload it directly to discord").ConfigureAwait(false);
+                        Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.BadRequest.ToString(), true);
+                    }
                 }
             }
-            catch (Exception e)
+            finally
             {
-                Config.Log.Error(e, "Error parsing log");
-                Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
-                Config.TelemetryClient?.TrackException(e);
+                QueueLimiter.Release();
+                if (parsedLog)
+                    Config.Log.Debug($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
             }
         }
-
-        public static async Task<LogParseState?> ParseLogAsync(ISource source, Func<Task> onProgressAsync, CancellationToken cancellationToken)
+        catch (Exception e)
         {
-            LogParseState? result = null;
+            Config.Log.Error(e, "Error parsing log");
+            Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
+            Config.TelemetryClient?.TrackException(e);
+        }
+    }
+
+    public static async Task<LogParseState?> ParseLogAsync(ISource source, Func<Task> onProgressAsync, CancellationToken cancellationToken)
+    {
+        LogParseState? result = null;
+        try
+        {
             try
             {
-                try
+                var pipe = new Pipe();
+                var fillPipeTask = source.FillPipeAsync(pipe.Writer, cancellationToken);
+                var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, cancellationToken);
+                do
                 {
-                    var pipe = new Pipe();
-                    var fillPipeTask = source.FillPipeAsync(pipe.Writer, cancellationToken);
-                    var readPipeTask = LogParser.ReadPipeAsync(pipe.Reader, cancellationToken);
-                    do
-                    {
-                        await Task.WhenAny(readPipeTask, Task.Delay(5000, cancellationToken)).ConfigureAwait(false);
-                        if (!readPipeTask.IsCompleted)
-                            await onProgressAsync().ConfigureAwait(false);
-                    } while (!readPipeTask.IsCompleted && !cancellationToken.IsCancellationRequested);
-                    result = await readPipeTask.ConfigureAwait(false);
-                    await fillPipeTask.ConfigureAwait(false);
-                }
-                catch (Exception pre)
-                {
-                    if (!(pre is OperationCanceledException))
-                        Config.Log.Error(pre);
-                    if (result == null)
-                        throw;
-                }
-
-                result.TotalBytes = source.LogFileSize;
-                if (result.FilterTriggers.Any())
-                {
-                    var (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.IssueWarning));
-                    if (f == null)
-                        (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.RemoveContent));
-                    if (f == null)
-                        (f, c) = result.FilterTriggers.Values.FirstOrDefault();
-                    result.SelectedFilter = f;
-                    result.SelectedFilterContext = c;
-                }
-#if DEBUG
-                Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
-                Config.Log.Debug("Extractor hit stats (CPU time, s / total hits):");
-                foreach (var (key, (count, time)) in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value.regexTime))
-                {
-                    var ttime = TimeSpan.FromTicks(time).TotalSeconds;
-                    var msg = $"{ttime:0.000}/{count} ({ttime/count:0.000000}): {key}";
-                    if (count > 100000 || ttime > 20)
-                        Config.Log.Fatal(msg);
-                    else if (count > 10000 || ttime > 10)
-                        Config.Log.Error(msg);
-                    else if (count > 1000 || ttime > 5)
-                        Config.Log.Warn(msg);
-                    else if (count > 100 || ttime > 1)
-                        Config.Log.Info(msg);
-                    else
-                        Config.Log.Debug(msg);
-                }
-
-                Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
-                Config.Log.Debug("Syscall stats:");
-                int serialCount = result.Syscalls.Count, functionCount = 0;
-                foreach (var funcStats in result.Syscalls.Values)
-                    functionCount += funcStats.Count;
-                Config.Log.Debug("Product keys: " + serialCount);
-                Config.Log.Debug("Functions: " + functionCount);
-                Config.Log.Debug("Saving syscall information...");
-                var sw = Stopwatch.StartNew();
-#endif
-                await SyscallInfoProvider.SaveAsync(result.Syscalls).ConfigureAwait(false);
-#if DEBUG
-                Config.Log.Debug("Saving syscall information took " + sw.Elapsed);
-#endif
+                    await Task.WhenAny(readPipeTask, Task.Delay(5000, cancellationToken)).ConfigureAwait(false);
+                    if (!readPipeTask.IsCompleted)
+                        await onProgressAsync().ConfigureAwait(false);
+                } while (!readPipeTask.IsCompleted && !cancellationToken.IsCancellationRequested);
+                result = await readPipeTask.ConfigureAwait(false);
+                await fillPipeTask.ConfigureAwait(false);
             }
-            catch (Exception e)
+            catch (Exception pre)
             {
-                Config.Log.Error(e, "Log parsing failed");
+                if (!(pre is OperationCanceledException))
+                    Config.Log.Error(pre);
+                if (result == null)
+                    throw;
             }
-            return result;
-        }
 
-        private static DiscordEmbedBuilder GetAnalyzingMsgEmbed(DiscordClient client)
+            result.TotalBytes = source.LogFileSize;
+            if (result.FilterTriggers.Any())
+            {
+                var (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.IssueWarning));
+                if (f == null)
+                    (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.RemoveContent));
+                if (f == null)
+                    (f, c) = result.FilterTriggers.Values.FirstOrDefault();
+                result.SelectedFilter = f;
+                result.SelectedFilterContext = c;
+            }
+#if DEBUG
+            Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
+            Config.Log.Debug("Extractor hit stats (CPU time, s / total hits):");
+            foreach (var (key, (count, time)) in result.ExtractorHitStats.OrderByDescending(kvp => kvp.Value.regexTime))
+            {
+                var ttime = TimeSpan.FromTicks(time).TotalSeconds;
+                var msg = $"{ttime:0.000}/{count} ({ttime/count:0.000000}): {key}";
+                if (count > 100000 || ttime > 20)
+                    Config.Log.Fatal(msg);
+                else if (count > 10000 || ttime > 10)
+                    Config.Log.Error(msg);
+                else if (count > 1000 || ttime > 5)
+                    Config.Log.Warn(msg);
+                else if (count > 100 || ttime > 1)
+                    Config.Log.Info(msg);
+                else
+                    Config.Log.Debug(msg);
+            }
+
+            Config.Log.Debug("~~~~~~~~~~~~~~~~~~~~");
+            Config.Log.Debug("Syscall stats:");
+            int serialCount = result.Syscalls.Count, functionCount = 0;
+            foreach (var funcStats in result.Syscalls.Values)
+                functionCount += funcStats.Count;
+            Config.Log.Debug("Product keys: " + serialCount);
+            Config.Log.Debug("Functions: " + functionCount);
+            Config.Log.Debug("Saving syscall information...");
+            var sw = Stopwatch.StartNew();
+#endif
+            await SyscallInfoProvider.SaveAsync(result.Syscalls).ConfigureAwait(false);
+#if DEBUG
+            Config.Log.Debug("Saving syscall information took " + sw.Elapsed);
+#endif
+        }
+        catch (Exception e)
         {
-            var indicator = client.GetEmoji(":kannamag:", Config.Reactions.PleaseWait);
-            return new DiscordEmbedBuilder
-            {
-                Description = $"{indicator} Looking at the log, please wait... {indicator}",
-                Color = Config.Colors.LogUnknown,
-            };
+            Config.Log.Error(e, "Log parsing failed");
         }
+        return result;
+    }
+
+    private static DiscordEmbedBuilder GetAnalyzingMsgEmbed(DiscordClient client)
+    {
+        var indicator = client.GetEmoji(":kannamag:", Config.Reactions.PleaseWait);
+        return new DiscordEmbedBuilder
+        {
+            Description = $"{indicator} Looking at the log, please wait... {indicator}",
+            Color = Config.Colors.LogUnknown,
+        };
     }
 }

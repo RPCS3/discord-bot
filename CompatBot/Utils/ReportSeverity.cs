@@ -1,10 +1,9 @@
-﻿namespace CompatBot.Utils
+﻿namespace CompatBot.Utils;
+
+public enum ReportSeverity
 {
-    public enum ReportSeverity
-    {
-        None,
-        Low,
-        Medium,
-        High,
-    }
+    None,
+    Low,
+    Medium,
+    High,
 }

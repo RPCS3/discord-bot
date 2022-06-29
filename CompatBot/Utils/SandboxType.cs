@@ -1,10 +1,9 @@
-﻿namespace CompatBot.Utils
+﻿namespace CompatBot.Utils;
+
+public enum SandboxType
 {
-    public enum SandboxType
-    {
-        None,
-        Snap,
-        Flatpak,
-        Docker,
-    }
+    None,
+    Snap,
+    Flatpak,
+    Docker,
 }

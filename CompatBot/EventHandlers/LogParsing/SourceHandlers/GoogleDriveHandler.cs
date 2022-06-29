@@ -14,126 +14,125 @@ using Google.Apis.Drive.v3;
 using Google.Apis.Services;
 using FileMeta = Google.Apis.Drive.v3.Data.File;
 
-namespace CompatBot.EventHandlers.LogParsing.SourceHandlers
+namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
+
+internal sealed class GoogleDriveHandler: BaseSourceHandler
 {
-    internal sealed class GoogleDriveHandler: BaseSourceHandler
+    private static readonly Regex ExternalLink = new(@"(?<gdrive_link>(https?://)?drive\.google\.com/(open\?id=|file/d/)(?<gdrive_id>[^/>\s]+))", DefaultOptions);
+    private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
+    private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
+
+    public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
-        private static readonly Regex ExternalLink = new(@"(?<gdrive_link>(https?://)?drive\.google\.com/(open\?id=|file/d/)(?<gdrive_id>[^/>\s]+))", DefaultOptions);
-        private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
-        private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
+        if (string.IsNullOrEmpty(message.Content))
+            return (null, null);
 
-        public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+        if (!File.Exists(Config.GoogleApiConfigPath))
+            return (null, null);
+
+        var matches = ExternalLink.Matches(message.Content);
+        if (matches.Count == 0)
+            return (null, null);
+
+        var client = GetClient();
+        foreach (Match m in matches)
         {
-            if (string.IsNullOrEmpty(message.Content))
-                return (null, null);
-
-            if (!File.Exists(Config.GoogleApiConfigPath))
-                return (null, null);
-
-            var matches = ExternalLink.Matches(message.Content);
-            if (matches.Count == 0)
-                return (null, null);
-
-            var client = GetClient();
-            foreach (Match m in matches)
+            try
             {
-                try
+                if (m.Groups["gdrive_id"].Value is string fid
+                    && !string.IsNullOrEmpty(fid))
                 {
-                    if (m.Groups["gdrive_id"].Value is string fid
-                        && !string.IsNullOrEmpty(fid))
+                    var fileInfoRequest = client.Files.Get(fid);
+                    fileInfoRequest.Fields = "name, size, kind";
+                    var fileMeta = await fileInfoRequest.ExecuteAsync(Config.Cts.Token).ConfigureAwait(false);
+                    if (fileMeta.Kind == "drive#file" && fileMeta.Size > 0)
                     {
-                        var fileInfoRequest = client.Files.Get(fid);
-                        fileInfoRequest.Fields = "name, size, kind";
-                        var fileMeta = await fileInfoRequest.ExecuteAsync(Config.Cts.Token).ConfigureAwait(false);
-                        if (fileMeta.Kind == "drive#file" && fileMeta.Size > 0)
+                        var buf = BufferPool.Rent(SnoopBufferSize);
+                        try
                         {
-                            var buf = BufferPool.Rent(SnoopBufferSize);
-                            try
+                            int read;
+                            await using (var stream = new MemoryStream(buf, true))
                             {
-                                int read;
-                                await using (var stream = new MemoryStream(buf, true))
-                                {
-                                    var limit = Math.Min(SnoopBufferSize, fileMeta.Size.Value) - 1;
-                                    var progress = await fileInfoRequest.DownloadRangeAsync(stream, new RangeHeaderValue(0, limit), Config.Cts.Token).ConfigureAwait(false);
-                                    if (progress.Status != DownloadStatus.Completed)
-                                        continue;
+                                var limit = Math.Min(SnoopBufferSize, fileMeta.Size.Value) - 1;
+                                var progress = await fileInfoRequest.DownloadRangeAsync(stream, new RangeHeaderValue(0, limit), Config.Cts.Token).ConfigureAwait(false);
+                                if (progress.Status != DownloadStatus.Completed)
+                                    continue;
 
-                                    read = (int)progress.BytesDownloaded;
-                                }
-                                foreach (var handler in handlers)
-                                {
-                                    var (canHandle, reason) = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
-                                    if (canHandle)
-                                        return (new GoogleDriveSource(fileInfoRequest, fileMeta, handler), null);
-                                    else if (!string.IsNullOrEmpty(reason))
-                                        return(null, reason);
-                                }
+                                read = (int)progress.BytesDownloaded;
                             }
-                            finally
+                            foreach (var handler in handlers)
                             {
-                                BufferPool.Return(buf);
+                                var (canHandle, reason) = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
+                                if (canHandle)
+                                    return (new GoogleDriveSource(fileInfoRequest, fileMeta, handler), null);
+                                else if (!string.IsNullOrEmpty(reason))
+                                    return(null, reason);
                             }
+                        }
+                        finally
+                        {
+                            BufferPool.Return(buf);
                         }
                     }
                 }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, $"Error sniffing {m.Groups["gdrive_link"].Value}");
-                }
             }
-            return (null, null);
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, $"Error sniffing {m.Groups["gdrive_link"].Value}");
+            }
+        }
+        return (null, null);
+    }
+
+    private static DriveService GetClient()
+    {
+        var credential = GoogleCredential.FromFile(Config.GoogleApiConfigPath).CreateScoped(Scopes);
+        var service = new DriveService(new BaseClientService.Initializer()
+        {
+            HttpClientInitializer = credential,
+            ApplicationName = ApplicationName,
+        });
+        return service;
+    }
+
+    private sealed class GoogleDriveSource : ISource
+    {
+        public string SourceType => "Google Drive";
+        public string FileName => fileMeta.Name;
+        public long SourceFileSize => fileMeta.Size ?? 0;
+        public long SourceFilePosition => handler.SourcePosition;
+        public long LogFileSize => handler.LogSize;
+
+        private readonly FilesResource.GetRequest fileInfoRequest;
+        private readonly FileMeta fileMeta;
+        private readonly IArchiveHandler handler;
+
+        public GoogleDriveSource(FilesResource.GetRequest fileInfoRequest, FileMeta fileMeta, IArchiveHandler handler)
+        {
+            this.fileInfoRequest = fileInfoRequest;
+            this.fileMeta = fileMeta;
+            this.handler = handler;
         }
 
-        private static DriveService GetClient()
+        public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
         {
-            var credential = GoogleCredential.FromFile(Config.GoogleApiConfigPath).CreateScoped(Scopes);
-            var service = new DriveService(new BaseClientService.Initializer()
+            try
             {
-                HttpClientInitializer = credential,
-                ApplicationName = ApplicationName,
-            });
-            return service;
-        }
-
-        private sealed class GoogleDriveSource : ISource
-        {
-            public string SourceType => "Google Drive";
-            public string FileName => fileMeta.Name;
-            public long SourceFileSize => fileMeta.Size ?? 0;
-            public long SourceFilePosition => handler.SourcePosition;
-            public long LogFileSize => handler.LogSize;
-
-            private readonly FilesResource.GetRequest fileInfoRequest;
-            private readonly FileMeta fileMeta;
-            private readonly IArchiveHandler handler;
-
-            public GoogleDriveSource(FilesResource.GetRequest fileInfoRequest, FileMeta fileMeta, IArchiveHandler handler)
-            {
-                this.fileInfoRequest = fileInfoRequest;
-                this.fileMeta = fileMeta;
-                this.handler = handler;
+                var pipe = new Pipe();
+                await using var pushStream = pipe.Writer.AsStream();
+                var progressTask = fileInfoRequest.DownloadAsync(pushStream, cancellationToken);
+                await using var pullStream = pipe.Reader.AsStream();
+                var pipingTask = handler.FillPipeAsync(pullStream, writer, cancellationToken);
+                var result = await progressTask.ConfigureAwait(false);
+                if (result.Status != DownloadStatus.Completed)
+                    Config.Log.Error(result.Exception, "Failed to download file from Google Drive: " + result.Status);
+                await pipe.Writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                await pipe.Writer.CompleteAsync().ConfigureAwait(false);
+                await pipingTask.ConfigureAwait(false);
             }
-
-            public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
+            catch (Exception e)
             {
-                try
-                {
-                    var pipe = new Pipe();
-                    await using var pushStream = pipe.Writer.AsStream();
-                    var progressTask = fileInfoRequest.DownloadAsync(pushStream, cancellationToken);
-                    await using var pullStream = pipe.Reader.AsStream();
-                    var pipingTask = handler.FillPipeAsync(pullStream, writer, cancellationToken);
-                    var result = await progressTask.ConfigureAwait(false);
-                    if (result.Status != DownloadStatus.Completed)
-                        Config.Log.Error(result.Exception, "Failed to download file from Google Drive: " + result.Status);
-                    await pipe.Writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                    await pipe.Writer.CompleteAsync().ConfigureAwait(false);
-                    await pipingTask.ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Error(e, "Failed to download file from Google Drive");
-                }
+                Config.Log.Error(e, "Failed to download file from Google Drive");
             }
         }
     }

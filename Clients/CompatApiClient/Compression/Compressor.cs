@@ -1,32 +1,31 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 
-namespace CompatApiClient.Compression
+namespace CompatApiClient.Compression;
+
+public abstract class Compressor : ICompressor
 {
-    public abstract class Compressor : ICompressor
+    public abstract string EncodingType { get; }
+    protected abstract Stream CreateCompressionStream(Stream output);
+    protected abstract Stream CreateDecompressionStream(Stream input);
+
+    public virtual async Task<long> CompressAsync(Stream source, Stream destination)
     {
-        public abstract string EncodingType { get; }
-        protected abstract Stream CreateCompressionStream(Stream output);
-        protected abstract Stream CreateDecompressionStream(Stream input);
+        await using var memStream = ApiConfig.MemoryStreamManager.GetStream();
+        await using (var compressed = CreateCompressionStream(memStream))
+            await source.CopyToAsync(compressed).ConfigureAwait(false);
+        memStream.Seek(0, SeekOrigin.Begin);
+        await memStream.CopyToAsync(destination).ConfigureAwait(false);
+        return memStream.Length;
+    }
 
-        public virtual async Task<long> CompressAsync(Stream source, Stream destination)
-        {
-            await using var memStream = ApiConfig.MemoryStreamManager.GetStream();
-            await using (var compressed = CreateCompressionStream(memStream))
-                await source.CopyToAsync(compressed).ConfigureAwait(false);
-            memStream.Seek(0, SeekOrigin.Begin);
-            await memStream.CopyToAsync(destination).ConfigureAwait(false);
-            return memStream.Length;
-        }
-
-        public virtual async Task<long> DecompressAsync(Stream source, Stream destination)
-        {
-            await using var memStream = ApiConfig.MemoryStreamManager.GetStream();
-            await using (var decompressed = CreateDecompressionStream(source))
-                await decompressed.CopyToAsync(memStream).ConfigureAwait(false);
-            memStream.Seek(0, SeekOrigin.Begin);
-            await memStream.CopyToAsync(destination).ConfigureAwait(false);
-            return memStream.Length;
-        }
+    public virtual async Task<long> DecompressAsync(Stream source, Stream destination)
+    {
+        await using var memStream = ApiConfig.MemoryStreamManager.GetStream();
+        await using (var decompressed = CreateDecompressionStream(source))
+            await decompressed.CopyToAsync(memStream).ConfigureAwait(false);
+        memStream.Seek(0, SeekOrigin.Begin);
+        await memStream.CopyToAsync(destination).ConfigureAwait(false);
+        return memStream.Length;
     }
 }

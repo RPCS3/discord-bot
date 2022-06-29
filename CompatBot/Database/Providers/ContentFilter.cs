@@ -13,114 +13,114 @@ using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace CompatBot.Database.Providers
+namespace CompatBot.Database.Providers;
+
+internal static class ContentFilter
 {
-    internal static class ContentFilter
+    private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?> filters = new();
+    private static readonly MemoryCache ResponseAntispamCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
+    private static readonly MemoryCache ReportAntispamCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
+    private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(15);
+
+    static ContentFilter() => RebuildMatcher();
+
+    public static Task<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
     {
-        private static Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?> filters = new();
-        private static readonly MemoryCache ResponseAntispamCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
-        private static readonly MemoryCache ReportAntispamCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(5)});
-        private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(15);
+        if (string.IsNullOrEmpty(str))
+            return Task.FromResult((Piracystring?)null);
 
-        static ContentFilter() => RebuildMatcher();
+        if (!filters.TryGetValue(ctx, out var matcher))
+            return Task.FromResult((Piracystring?)null);
 
-        public static Task<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
+        Piracystring? result = null;
+        matcher?.ParseText(str, h =>
         {
-            if (string.IsNullOrEmpty(str))
-                return Task.FromResult((Piracystring?)null);
+            if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
+            {
+                result = h.Value;
+                Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of message string '{str}'");
+                return !h.Value.Actions.HasFlag(FilterAction.IssueWarning);
+            }
+            return true;
+        });
 
-            if (!filters.TryGetValue(ctx, out var matcher))
-                return Task.FromResult((Piracystring?)null);
-
-            Piracystring? result = null;
+        if (result is null && ctx == FilterContext.Chat)
+        {
+            str = str.StripInvisibleAndDiacritics();
             matcher?.ParseText(str, h =>
             {
                 if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
                 {
                     result = h.Value;
-                    Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of message string '{str}'");
+                    Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of string '{str}'");
                     return !h.Value.Actions.HasFlag(FilterAction.IssueWarning);
                 }
                 return true;
             });
-
-            if (result is null && ctx == FilterContext.Chat)
-            {
-                str = str.StripInvisibleAndDiacritics();
-                matcher?.ParseText(str, h =>
-                {
-                    if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
-                    {
-                        result = h.Value;
-                        Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of string '{str}'");
-                        return !h.Value.Actions.HasFlag(FilterAction.IssueWarning);
-                    }
-                    return true;
-                });
-            }
-
-            return Task.FromResult(result);
         }
 
-        public static void RebuildMatcher()
-        {
-            var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
-            using var db = new BotDb();
-            foreach (FilterContext ctx in Enum.GetValues(typeof(FilterContext)))
-            {
-                var triggerList = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking()
-                    .AsEnumerable()
-                    .Concat(db.SuspiciousString.AsNoTracking().AsEnumerable().Select(ss => new Piracystring
-                        {
-                            String = ss.String,
-                            Actions = FilterAction.RemoveContent, // | FilterAction.IssueWarning | FilterAction.SendMessage,
-                            Context = FilterContext.Log | FilterContext.Chat,
-                            CustomMessage = "Please follow the rules and dump your own copy of game yourself. You **can not download** game files from the internet. Repeated offence may result in a ban.",
-                        })
-                    ).ToList();
+        return Task.FromResult(result);
+    }
 
-                if (triggerList.Count == 0)
-                    newFilters[ctx] = null;
-                else
+    public static void RebuildMatcher()
+    {
+        var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
+        using var db = new BotDb();
+        foreach (FilterContext ctx in Enum.GetValues(typeof(FilterContext)))
+        {
+            var triggerList = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking()
+                .AsEnumerable()
+                .Concat(db.SuspiciousString.AsNoTracking().AsEnumerable().Select(ss => new Piracystring
+                    {
+                        String = ss.String,
+                        Actions = FilterAction.RemoveContent, // | FilterAction.IssueWarning | FilterAction.SendMessage,
+                        Context = FilterContext.Log | FilterContext.Chat,
+                        CustomMessage = "Please follow the rules and dump your own copy of game yourself. You **can not download** game files from the internet. Repeated offence may result in a ban.",
+                    })
+                ).ToList();
+
+            if (triggerList.Count == 0)
+                newFilters[ctx] = null;
+            else
+            {
+                try
                 {
-                    try
-                    {
-                        newFilters[ctx] = new(triggerList.ToDictionary(s => s.String, s => s), true);
-                    }
-                    catch (ArgumentException)
-                    {
-                        var duplicate = (
-                            from ps in triggerList
-                            group ps by ps.String into g
-                            where g.Count() > 1
-                            select g.Key
-                        ).ToList();
-                        Config.Log.Error($"Duplicate triggers defined for Context {ctx}: {string.Join(", ", duplicate)}");
-                        var triggerDictionary = new Dictionary<string, Piracystring>();
-                        foreach (var ps in triggerList)
-                            triggerDictionary[ps.String] = ps;
-                        newFilters[ctx] = new(triggerDictionary, true);
-                    }
+                    newFilters[ctx] = new(triggerList.ToDictionary(s => s.String, s => s), true);
+                }
+                catch (ArgumentException)
+                {
+                    var duplicate = (
+                        from ps in triggerList
+                        group ps by ps.String into g
+                        where g.Count() > 1
+                        select g.Key
+                    ).ToList();
+                    Config.Log.Error($"Duplicate triggers defined for Context {ctx}: {string.Join(", ", duplicate)}");
+                    var triggerDictionary = new Dictionary<string, Piracystring>();
+                    foreach (var ps in triggerList)
+                        triggerDictionary[ps.String] = ps;
+                    newFilters[ctx] = new(triggerDictionary, true);
                 }
             }
-            filters = newFilters;
         }
+        filters = newFilters;
+    }
 
 
-        public static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
-        {
-            if (message.Channel.IsPrivate)
-                return true;
+    public static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
+    {
+        if (message.Channel.IsPrivate)
+            return true;
 
-            /*
-            if (message.Author.IsBotSafeCheck())
-                return true;
-            */
+        /*
+        if (message.Author.IsBotSafeCheck())
+            return true;
+        */
 
-            if (message.Author.IsCurrent)
-                return true;
+        if (message.Author.IsCurrent)
+            return true;
 
-            var suppressActions = (FilterAction)0;
+        var suppressActions = (FilterAction)0;
 #if !DEBUG
             if (message.Author.IsWhitelisted(client, message.Channel.Guild))
             {
@@ -131,140 +131,139 @@ namespace CompatBot.Database.Providers
             }
 #endif
 
-            if (string.IsNullOrEmpty(message.Content))
-                return true;
+        if (string.IsNullOrEmpty(message.Content))
+            return true;
 
-            var trigger = await FindTriggerAsync(FilterContext.Chat, message.Content).ConfigureAwait(false);
-            if (trigger == null)
-                return true;
+        var trigger = await FindTriggerAsync(FilterContext.Chat, message.Content).ConfigureAwait(false);
+        if (trigger == null)
+            return true;
 
-            await PerformFilterActions(client, message, trigger, suppressActions).ConfigureAwait(false);
-            return (trigger.Actions & ~suppressActions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
-        }
+        await PerformFilterActions(client, message, trigger, suppressActions).ConfigureAwait(false);
+        return (trigger.Actions & ~suppressActions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
+    }
 
-        public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string? triggerContext = null, string? infraction = null, string? warningReason = null)
+    public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string? triggerContext = null, string? infraction = null, string? warningReason = null)
+    {
+        var severity = ReportSeverity.Low;
+        var completedActions = new List<FilterAction>();
+        if (trigger.Actions.HasFlag(FilterAction.RemoveContent) && !ignoreFlags.HasFlag(FilterAction.RemoveContent))
         {
-            var severity = ReportSeverity.Low;
-            var completedActions = new List<FilterAction>();
-            if (trigger.Actions.HasFlag(FilterAction.RemoveContent) && !ignoreFlags.HasFlag(FilterAction.RemoveContent))
-            {
-                try
-                {
-                    DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
-                    await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
-                    completedActions.Add(FilterAction.RemoveContent);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e);
-                    severity = ReportSeverity.High;
-                }
-                try
-                {
-                    var author = client.GetMember(message.Author);
-                    var username = author?.GetMentionWithNickname() ?? message.Author.GetUsernameWithNickname(client);
-                    Config.Log.Debug($"Removed message from {username} in #{message.Channel.Name}: {message.Content}");
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e);
-                }
-            }
-
-            if (trigger.Actions.HasFlag(FilterAction.SendMessage) && !ignoreFlags.HasFlag(FilterAction.SendMessage))
-            {
-                try
-                {
-                    ResponseAntispamCache.TryGetValue(message.Author.Id, out int counter);
-                    if (counter < 3)
-                    {
-
-                        var msgContent = trigger.CustomMessage;
-                        if (string.IsNullOrEmpty(msgContent))
-                        {
-                            var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
-                            msgContent = $"Please follow the {rules.Mention} and do not post/discuss anything piracy-related on this server.\nYou always **must** dump your own copy of the game yourself. You **can not** download game files from the internet.\nRepeated offence may result in a ban.";
-                        }
-                        await message.Channel.SendMessageAsync($"{message.Author.Mention} {msgContent}").ConfigureAwait(false);
-                    }
-                    ResponseAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
-                    completedActions.Add(FilterAction.SendMessage);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, $"Failed to send message in #{message.Channel.Name}");
-                }
-            }
-
-            if (trigger.Actions.HasFlag(FilterAction.IssueWarning) && !ignoreFlags.HasFlag(FilterAction.IssueWarning))
-            {
-                try
-                {
-                    await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, warningReason ?? "Mention of piracy", message.Content.Sanitize()).ConfigureAwait(false);
-                    completedActions.Add(FilterAction.IssueWarning);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, $"Couldn't issue warning in #{message.Channel.Name}");
-                }
-            }
-
-            if (trigger.Actions.HasFlag(FilterAction.ShowExplain)
-                && !ignoreFlags.HasFlag(FilterAction.ShowExplain)
-                && !string.IsNullOrEmpty(trigger.ExplainTerm))
-            {
-                var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
-                await Explain.SendExplanation(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
-            }
-
-            if (trigger.Actions.HasFlag(FilterAction.Kick)
-                && !ignoreFlags.HasFlag(FilterAction.Kick))
-            {
-                try
-                {
-                    if (client.GetMember(message.Channel.Guild, message.Author) is DiscordMember mem
-                        && !mem.Roles.Any())
-                    {
-                        await mem.RemoveAsync("Filter action for trigger " + trigger.String).ConfigureAwait(false);
-                        completedActions.Add(FilterAction.Kick);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, $"Couldn't kick user from server");
-                }
-            }
-
-            var actionList = "";
-            foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
-            {
-                if (trigger.Actions.HasFlag(fa) && !ignoreFlags.HasFlag(fa))
-                    actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + ' ';
-            }
-
             try
             {
-                ReportAntispamCache.TryGetValue(message.Author.Id, out int counter);
-                if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue) && counter < 3)
+                DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
+                await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
+                completedActions.Add(FilterAction.RemoveContent);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+                severity = ReportSeverity.High;
+            }
+            try
+            {
+                var author = client.GetMember(message.Author);
+                var username = author?.GetMentionWithNickname() ?? message.Author.GetUsernameWithNickname(client);
+                Config.Log.Debug($"Removed message from {username} in #{message.Channel.Name}: {message.Content}");
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e);
+            }
+        }
+
+        if (trigger.Actions.HasFlag(FilterAction.SendMessage) && !ignoreFlags.HasFlag(FilterAction.SendMessage))
+        {
+            try
+            {
+                ResponseAntispamCache.TryGetValue(message.Author.Id, out int counter);
+                if (counter < 3)
                 {
-                    var context = triggerContext ?? message.Content;
-                    var matchedOn = GetMatchedScope(trigger, context);
-                    await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, trigger.Id, context, severity, actionList).ConfigureAwait(false);
-                    ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
+
+                    var msgContent = trigger.CustomMessage;
+                    if (string.IsNullOrEmpty(msgContent))
+                    {
+                        var rules = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
+                        msgContent = $"Please follow the {rules.Mention} and do not post/discuss anything piracy-related on this server.\nYou always **must** dump your own copy of the game yourself. You **can not** download game files from the internet.\nRepeated offence may result in a ban.";
+                    }
+                    await message.Channel.SendMessageAsync($"{message.Author.Mention} {msgContent}").ConfigureAwait(false);
+                }
+                ResponseAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
+                completedActions.Add(FilterAction.SendMessage);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, $"Failed to send message in #{message.Channel.Name}");
+            }
+        }
+
+        if (trigger.Actions.HasFlag(FilterAction.IssueWarning) && !ignoreFlags.HasFlag(FilterAction.IssueWarning))
+        {
+            try
+            {
+                await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, warningReason ?? "Mention of piracy", message.Content.Sanitize()).ConfigureAwait(false);
+                completedActions.Add(FilterAction.IssueWarning);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, $"Couldn't issue warning in #{message.Channel.Name}");
+            }
+        }
+
+        if (trigger.Actions.HasFlag(FilterAction.ShowExplain)
+            && !ignoreFlags.HasFlag(FilterAction.ShowExplain)
+            && !string.IsNullOrEmpty(trigger.ExplainTerm))
+        {
+            var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
+            await Explain.SendExplanation(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
+        }
+
+        if (trigger.Actions.HasFlag(FilterAction.Kick)
+            && !ignoreFlags.HasFlag(FilterAction.Kick))
+        {
+            try
+            {
+                if (client.GetMember(message.Channel.Guild, message.Author) is DiscordMember mem
+                    && !mem.Roles.Any())
+                {
+                    await mem.RemoveAsync("Filter action for trigger " + trigger.String).ConfigureAwait(false);
+                    completedActions.Add(FilterAction.Kick);
                 }
             }
             catch (Exception e)
             {
-                Config.Log.Error(e, "Failed to report content filter hit");
+                Config.Log.Warn(e, $"Couldn't kick user from server");
             }
         }
 
-        public static string? GetMatchedScope(Piracystring trigger, string? context)
-            => context is { Length: >0 }
-               && trigger.ValidatingRegex is { Length: >0 } pattern
-               && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is { Success: true } m
-               && m.Groups.Count > 0
-                ? m.Groups[0].Value.Trim(256)
-                : null;
+        var actionList = "";
+        foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
+        {
+            if (trigger.Actions.HasFlag(fa) && !ignoreFlags.HasFlag(fa))
+                actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + ' ';
+        }
+
+        try
+        {
+            ReportAntispamCache.TryGetValue(message.Author.Id, out int counter);
+            if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue) && counter < 3)
+            {
+                var context = triggerContext ?? message.Content;
+                var matchedOn = GetMatchedScope(trigger, context);
+                await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, trigger.Id, context, severity, actionList).ConfigureAwait(false);
+                ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
+            }
+        }
+        catch (Exception e)
+        {
+            Config.Log.Error(e, "Failed to report content filter hit");
+        }
     }
+
+    public static string? GetMatchedScope(Piracystring trigger, string? context)
+        => context is { Length: >0 }
+           && trigger.ValidatingRegex is { Length: >0 } pattern
+           && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is { Success: true } m
+           && m.Groups.Count > 0
+            ? m.Groups[0].Value.Trim(256)
+            : null;
 }

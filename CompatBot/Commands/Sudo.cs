@@ -19,193 +19,192 @@ using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
 using SharpCompress.Writers.Zip;
 
-namespace CompatBot.Commands
-{
-    [Group("sudo"), RequiresBotSudoerRole]
-    [Description("Used to manage bot moderators and sudoers")]
-    internal sealed partial class Sudo : BaseCommandModuleCustom
-    {
-        [Command("say")]
-        [Description("Make bot say things. Specify #channel or put message link in the beginning to specify where to reply")]
-        public async Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
-        {
-            var msgParts = message.Split(' ', 2, StringSplitOptions.TrimEntries);
+namespace CompatBot.Commands;
 
-            var channel = ctx.Channel;
-            DiscordMessage? ogMsg = null;
-            if (msgParts.Length > 1)
+[Group("sudo"), RequiresBotSudoerRole]
+[Description("Used to manage bot moderators and sudoers")]
+internal sealed partial class Sudo : BaseCommandModuleCustom
+{
+    [Command("say")]
+    [Description("Make bot say things. Specify #channel or put message link in the beginning to specify where to reply")]
+    public async Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
+    {
+        var msgParts = message.Split(' ', 2, StringSplitOptions.TrimEntries);
+
+        var channel = ctx.Channel;
+        DiscordMessage? ogMsg = null;
+        if (msgParts.Length > 1)
+        {
+            if (await ctx.GetMessageAsync(msgParts[0]).ConfigureAwait(false) is DiscordMessage lnk)
             {
-                if (await ctx.GetMessageAsync(msgParts[0]).ConfigureAwait(false) is DiscordMessage lnk)
-                {
-                    ogMsg = lnk;
-                    channel = ogMsg.Channel;
-                    message = msgParts[1];
-                }
-                else if (await TextOnlyDiscordChannelConverter.ConvertAsync(msgParts[0], ctx).ConfigureAwait(false) is {HasValue: true} ch)
-                {
-                    channel = ch.Value;
-                    message = msgParts[1];
-                }
+                ogMsg = lnk;
+                channel = ogMsg.Channel;
+                message = msgParts[1];
+            }
+            else if (await TextOnlyDiscordChannelConverter.ConvertAsync(msgParts[0], ctx).ConfigureAwait(false) is {HasValue: true} ch)
+            {
+                channel = ch.Value;
+                message = msgParts[1];
+            }
+        }
+
+        var typingTask = channel.TriggerTypingAsync();
+        // simulate bot typing the message at 300 cps
+        await Task.Delay(message.Length * 10 / 3).ConfigureAwait(false);
+        var msgBuilder = new DiscordMessageBuilder().WithContent(message);
+        if (ogMsg is not null)
+            msgBuilder.WithReply(ogMsg.Id);
+        if (ctx.Message.Attachments.Any())
+        {
+            try
+            {
+                await using var memStream = Config.MemoryStreamManager.GetStream();
+                using var client = HttpClientFactory.Create(new CompressionMessageHandler());
+                await using var requestStream = await client.GetStreamAsync(ctx.Message.Attachments[0].Url!).ConfigureAwait(false);
+                await requestStream.CopyToAsync(memStream).ConfigureAwait(false);
+                memStream.Seek(0, SeekOrigin.Begin);
+                msgBuilder.WithFile(ctx.Message.Attachments[0].FileName, memStream);
+                await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+            }
+            catch { }
+        }
+        else
+            await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+        await typingTask.ConfigureAwait(false);
+    }
+
+    [Command("react")]
+    [Description("Add reactions to the specified message")]
+    public async Task React(
+        CommandContext ctx,
+        [Description("Message link")] string messageLink,
+        [RemainingText, Description("List of reactions to add")]string emojis
+    )
+    {
+        try
+        {
+            var message = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false);
+            if (message is null)
+            {
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't find the message").ConfigureAwait(false);
+                return;
             }
 
-            var typingTask = channel.TriggerTypingAsync();
-            // simulate bot typing the message at 300 cps
-            await Task.Delay(message.Length * 10 / 3).ConfigureAwait(false);
-            var msgBuilder = new DiscordMessageBuilder().WithContent(message);
-            if (ogMsg is not null)
-                msgBuilder.WithReply(ogMsg.Id);
-            if (ctx.Message.Attachments.Any())
+            string emoji = "";
+            for (var i = 0; i < emojis.Length; i++)
             {
                 try
                 {
-                    await using var memStream = Config.MemoryStreamManager.GetStream();
-                    using var client = HttpClientFactory.Create(new CompressionMessageHandler());
-                    await using var requestStream = await client.GetStreamAsync(ctx.Message.Attachments[0].Url!).ConfigureAwait(false);
-                    await requestStream.CopyToAsync(memStream).ConfigureAwait(false);
-                    memStream.Seek(0, SeekOrigin.Begin);
-                    msgBuilder.WithFile(ctx.Message.Attachments[0].FileName, memStream);
-                    await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                    var c = emojis[i];
+                    if (char.IsHighSurrogate(c))
+                        emoji += c;
+                    else
+                    {
+                        DiscordEmoji de;
+                        if (c == '<')
+                        {
+                            var endIdx = emojis.IndexOf('>', i);
+                            if (endIdx < i)
+                                endIdx = emojis.Length;
+                            emoji = emojis[i..endIdx];
+                            i = endIdx - 1;
+                            var emojiId = ulong.Parse(emoji[(emoji.LastIndexOf(':') + 1)..]);
+                            de = DiscordEmoji.FromGuildEmote(ctx.Client, emojiId);
+                        }
+                        else
+                            de = DiscordEmoji.FromUnicode(emoji + c);
+                        emoji = "";
+                        await message.ReactWithAsync(de).ConfigureAwait(false);
+                    }
                 }
                 catch { }
             }
-            else
-                await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
-            await typingTask.ConfigureAwait(false);
         }
-
-        [Command("react")]
-        [Description("Add reactions to the specified message")]
-        public async Task React(
-            CommandContext ctx,
-            [Description("Message link")] string messageLink,
-            [RemainingText, Description("List of reactions to add")]string emojis
-        )
+        catch (Exception e)
         {
-            try
-            {
-                var message = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false);
-                if (message is null)
-                {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't find the message").ConfigureAwait(false);
-                    return;
-                }
-
-                string emoji = "";
-                for (var i = 0; i < emojis.Length; i++)
-                {
-                    try
-                    {
-                        var c = emojis[i];
-                        if (char.IsHighSurrogate(c))
-                            emoji += c;
-                        else
-                        {
-                            DiscordEmoji de;
-                            if (c == '<')
-                            {
-                                var endIdx = emojis.IndexOf('>', i);
-                                if (endIdx < i)
-                                    endIdx = emojis.Length;
-                                emoji = emojis[i..endIdx];
-                                i = endIdx - 1;
-                                var emojiId = ulong.Parse(emoji[(emoji.LastIndexOf(':') + 1)..]);
-                                de = DiscordEmoji.FromGuildEmote(ctx.Client, emojiId);
-                            }
-                            else
-                                de = DiscordEmoji.FromUnicode(emoji + c);
-                            emoji = "";
-                            await message.ReactWithAsync(de).ConfigureAwait(false);
-                        }
-                    }
-                    catch { }
-                }
-            }
-            catch (Exception e)
-            {
-                Config.Log.Debug(e);
-            }
+            Config.Log.Debug(e);
         }
+    }
 
-        [Command("log"), RequiresDm]
-        [Description("Uploads current log file as an attachment")]
-        public async Task Log(CommandContext ctx, [Description("Specific date")]string date = "")
+    [Command("log"), RequiresDm]
+    [Description("Uploads current log file as an attachment")]
+    public async Task Log(CommandContext ctx, [Description("Specific date")]string date = "")
+    {
+        try
         {
-            try
+            var logPath = Config.CurrentLogPath;
+            if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
+                logPath = Path.Combine(Config.LogPath, $"bot.{logDate:yyyyMMdd}.0.log");
+            if (!File.Exists(logPath))
             {
-                var logPath = Config.CurrentLogPath;
-                if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
-                    logPath = Path.Combine(Config.LogPath, $"bot.{logDate:yyyyMMdd}.0.log");
-                if (!File.Exists(logPath))
-                {
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Log file does not exist for specified day", true).ConfigureAwait(false);
-                    return;
-                }
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Log file does not exist for specified day", true).ConfigureAwait(false);
+                return;
+            }
                 
-                await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                await using var result = Config.MemoryStreamManager.GetStream();
-                await using var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default);
-                await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
-                await gzip.FlushAsync().ConfigureAwait(false);
-                if (result.Length <= ctx.GetAttachmentSizeLimit())
-                {
-                    result.Seek(0, SeekOrigin.Begin);
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".gz", result)).ConfigureAwait(false);
-                }
-                else
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
-            }
-            catch (Exception e)
+            await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            await using var result = Config.MemoryStreamManager.GetStream();
+            await using var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default);
+            await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
+            await gzip.FlushAsync().ConfigureAwait(false);
+            if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
-                Config.Log.Warn(e, "Failed to upload current log");
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send the log", true).ConfigureAwait(false);
+                result.Seek(0, SeekOrigin.Begin);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".gz", result)).ConfigureAwait(false);
             }
+            else
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
         }
-
-        [Command("dbbackup"), Aliases("dbb")]
-        [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
-        public async Task ThumbsBackup(CommandContext ctx)
+        catch (Exception e)
         {
-            try
-            {
-                string dbPath;
-                await using (var db = new ThumbnailDb())
-                await using (var connection = db.Database.GetDbConnection())
-                {
-                    dbPath = connection.DataSource;
-                    await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
-                }
-                var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
-                var dbName = Path.GetFileNameWithoutExtension(dbPath);
-                await using var result = Config.MemoryStreamManager.GetStream();
-                using var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression});
-                foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
-                {
-                    await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    zip.Write(Path.GetFileName(fname), dbData);
-                }
-                if (result.Length <= ctx.GetAttachmentSizeLimit())
-                {
-                    result.Seek(0, SeekOrigin.Begin);
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
-                }
-                else
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e, "Failed to upload current Thumbs.db backup");
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send Thumbs.db backup", true).ConfigureAwait(false);
-            }
+            Config.Log.Warn(e, "Failed to upload current log");
+            await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send the log", true).ConfigureAwait(false);
         }
+    }
 
-        [Command("gen-salt")]
-        [Description("Regenerates salt for data anonymization purposes. This WILL affect Hardware DB deduplication.")]
-        public Task ResetCryptoSalt(CommandContext ctx)
+    [Command("dbbackup"), Aliases("dbb")]
+    [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
+    public async Task ThumbsBackup(CommandContext ctx)
+    {
+        try
         {
-            //todo: warning prompt
-            var salt = new byte[256 / 8];
-            System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
-            return new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt));
+            string dbPath;
+            await using (var db = new ThumbnailDb())
+            await using (var connection = db.Database.GetDbConnection())
+            {
+                dbPath = connection.DataSource;
+                await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
+            }
+            var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
+            var dbName = Path.GetFileNameWithoutExtension(dbPath);
+            await using var result = Config.MemoryStreamManager.GetStream();
+            using var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression});
+            foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
+            {
+                await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                zip.Write(Path.GetFileName(fname), dbData);
+            }
+            if (result.Length <= ctx.GetAttachmentSizeLimit())
+            {
+                result.Seek(0, SeekOrigin.Begin);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
+            }
+            else
+                await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
         }
+        catch (Exception e)
+        {
+            Config.Log.Warn(e, "Failed to upload current Thumbs.db backup");
+            await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send Thumbs.db backup", true).ConfigureAwait(false);
+        }
+    }
+
+    [Command("gen-salt")]
+    [Description("Regenerates salt for data anonymization purposes. This WILL affect Hardware DB deduplication.")]
+    public Task ResetCryptoSalt(CommandContext ctx)
+    {
+        //todo: warning prompt
+        var salt = new byte[256 / 8];
+        System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
+        return new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt));
     }
 }

@@ -7,164 +7,163 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using CompatApiClient.Compression;
 
-namespace CompatBot.Database.Providers
+namespace CompatBot.Database.Providers;
+
+internal static class AmdDriverVersionProvider
 {
-    internal static class AmdDriverVersionProvider
+    private static readonly Dictionary<string, List<string>> VulkanToDriver = new();
+    private static readonly Dictionary<string, string> OpenglToDriver = new();
+    private static readonly SemaphoreSlim SyncObj = new(1, 1);
+
+    public static async Task RefreshAsync()
     {
-        private static readonly Dictionary<string, List<string>> VulkanToDriver = new();
-        private static readonly Dictionary<string, string> OpenglToDriver = new();
-        private static readonly SemaphoreSlim SyncObj = new(1, 1);
-
-        public static async Task RefreshAsync()
-        {
-            if (await SyncObj.WaitAsync(0).ConfigureAwait(false))
-                try
+        if (await SyncObj.WaitAsync(0).ConfigureAwait(false))
+            try
+            {
+                using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
+                await using var response = await httpClient.GetStreamAsync("https://raw.githubusercontent.com/GPUOpen-Drivers/amd-vulkan-versions/master/amdversions.xml").ConfigureAwait(false);
+                var xml = await XDocument.LoadAsync(response, LoadOptions.None, Config.Cts.Token).ConfigureAwait(false);
+                if (xml.Root is null)
                 {
-                    using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
-                    await using var response = await httpClient.GetStreamAsync("https://raw.githubusercontent.com/GPUOpen-Drivers/amd-vulkan-versions/master/amdversions.xml").ConfigureAwait(false);
-                    var xml = await XDocument.LoadAsync(response, LoadOptions.None, Config.Cts.Token).ConfigureAwait(false);
-                    if (xml.Root is null)
-                    {
-                        Config.Log.Warn("Failed to update AMD version mapping");
-                        return;
-                    }
+                    Config.Log.Warn("Failed to update AMD version mapping");
+                    return;
+                }
 
-                    foreach (var driver in xml.Root.Elements("driver"))
-                    {
-                        var winVer = (string?)driver.Element("windows-version");
-                        var vkVer = (string?)driver.Element("vulkan-version");
-                        var driverVer = (string?)driver.Attribute("version");
-                        if (vkVer is null)
-                            continue;
+                foreach (var driver in xml.Root.Elements("driver"))
+                {
+                    var winVer = (string?)driver.Element("windows-version");
+                    var vkVer = (string?)driver.Element("vulkan-version");
+                    var driverVer = (string?)driver.Attribute("version");
+                    if (vkVer is null)
+                        continue;
 
-                        if (!VulkanToDriver.TryGetValue(vkVer, out var verList))
-                            VulkanToDriver[vkVer] = verList = new List<string>();
-                        if (string.IsNullOrEmpty(driverVer))
-                            continue;
+                    if (!VulkanToDriver.TryGetValue(vkVer, out var verList))
+                        VulkanToDriver[vkVer] = verList = new List<string>();
+                    if (string.IsNullOrEmpty(driverVer))
+                        continue;
                         
-                        verList.Insert(0, driverVer);
-                        if (!string.IsNullOrEmpty(winVer))
-                            OpenglToDriver[winVer] = driverVer;
-                    }
-                    foreach (var key in VulkanToDriver.Keys.ToList())
-                        VulkanToDriver[key] = VulkanToDriver[key].Distinct().ToList();
+                    verList.Insert(0, driverVer);
+                    if (!string.IsNullOrEmpty(winVer))
+                        OpenglToDriver[winVer] = driverVer;
                 }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, "Failed to update AMD version mapping");
-                }
-                finally
-                {
-                    SyncObj.Release();
-                }
+                foreach (var key in VulkanToDriver.Keys.ToList())
+                    VulkanToDriver[key] = VulkanToDriver[key].Distinct().ToList();
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to update AMD version mapping");
+            }
+            finally
+            {
+                SyncObj.Release();
+            }
+    }
+
+    public static async Task<string> GetFromOpenglAsync(string openglVersion, bool autoRefresh = true)
+    {
+        if (OpenglToDriver.TryGetValue(openglVersion, out var result))
+            return result;
+
+        if (!Version.TryParse(openglVersion, out var glVersion))
+            return openglVersion;
+            
+        var glVersions = new List<(Version glVer, string driverVer)>(OpenglToDriver.Count);
+        foreach (var key in OpenglToDriver.Keys)
+        {
+            if (Version.TryParse(key, out var ver))
+                glVersions.Add((ver, OpenglToDriver[key]));
+        }
+        if (glVersions.Count == 0)
+            return openglVersion;
+
+        glVersions.Sort((l, r) => l.glVer < r.glVer ? -1 : l.glVer > r.glVer ? 1 : 0);
+        if (glVersion < glVersions[0].glVer)
+            return $"older than {glVersions[0].driverVer} ({openglVersion})";
+
+        var newest = glVersions.Last();
+        if (glVersion > newest.glVer)
+        {
+            if (autoRefresh)
+            {
+                await RefreshAsync().ConfigureAwait(false);
+                return await GetFromOpenglAsync(openglVersion, false).ConfigureAwait(false);
+            }
+
+            return $"newer than {newest.driverVer} ({openglVersion})";
         }
 
-        public static async Task<string> GetFromOpenglAsync(string openglVersion, bool autoRefresh = true)
-        {
-            if (OpenglToDriver.TryGetValue(openglVersion, out var result))
-                return result;
+        var approximate = glVersions.FirstOrDefault(v => v.glVer.Minor == glVersion.Minor && v.glVer.Build == glVersion.Build);
+        if (!string.IsNullOrEmpty(approximate.driverVer))
+            return $"{approximate.driverVer} rev {glVersion.Revision}";
 
-            if (!Version.TryParse(openglVersion, out var glVersion))
-                return openglVersion;
-            
-            var glVersions = new List<(Version glVer, string driverVer)>(OpenglToDriver.Count);
-            foreach (var key in OpenglToDriver.Keys)
+        if (string.IsNullOrEmpty(approximate.driverVer))
+            for (var i = 0; i < glVersions.Count - 1; i++)
+                if (glVersion > glVersions[i].glVer && glVersion < glVersions[i + 1].glVer)
+                {
+                    approximate = glVersions[i];
+                    break;
+                }
+        if (!string.IsNullOrEmpty(approximate.driverVer))
+            return $"probably {approximate.driverVer}";
+
+        return openglVersion;
+    }
+
+    public static async Task<string> GetFromVulkanAsync(string vulkanVersion, bool autoRefresh = true)
+    {
+        if (!VulkanToDriver.TryGetValue(vulkanVersion, out var result))
+            await RefreshAsync().ConfigureAwait(false);
+
+        if (result?.Count > 0 || (VulkanToDriver.TryGetValue(vulkanVersion, out result) && result.Count > 0))
+        {
+            if (result.Count == 1)
+                return result[0];
+            return $"{result.First()} - {result.Last()}";
+        }
+
+        if (Version.TryParse(vulkanVersion, out var vkVer))
+        {
+            var vkVersions = new List<(Version vkVer, string driverVer)>(VulkanToDriver.Count);
+            foreach (var key in VulkanToDriver.Keys)
             {
                 if (Version.TryParse(key, out var ver))
-                    glVersions.Add((ver, OpenglToDriver[key]));
+                    vkVersions.Add((ver, VulkanToDriver[key].First()));
             }
-            if (glVersions.Count == 0)
-                return openglVersion;
+            if (vkVersions.Count == 0)
+                return vulkanVersion;
 
-            glVersions.Sort((l, r) => l.glVer < r.glVer ? -1 : l.glVer > r.glVer ? 1 : 0);
-            if (glVersion < glVersions[0].glVer)
-                return $"older than {glVersions[0].driverVer} ({openglVersion})";
+            vkVersions.Sort((l, r) => l.vkVer < r.vkVer ? -1 : l.vkVer > r.vkVer ? 1 : 0);
+            if (vkVer < vkVersions[0].vkVer)
+                return $"older than {vkVersions[0].driverVer} ({vulkanVersion})";
 
-            var newest = glVersions.Last();
-            if (glVersion > newest.glVer)
+            var (version, driverVer) = vkVersions.Last();
+            if (vkVer > version)
             {
-                if (autoRefresh)
-                {
-                    await RefreshAsync().ConfigureAwait(false);
-                    return await GetFromOpenglAsync(openglVersion, false).ConfigureAwait(false);
-                }
-
-                return $"newer than {newest.driverVer} ({openglVersion})";
-            }
-
-            var approximate = glVersions.FirstOrDefault(v => v.glVer.Minor == glVersion.Minor && v.glVer.Build == glVersion.Build);
-            if (!string.IsNullOrEmpty(approximate.driverVer))
-                return $"{approximate.driverVer} rev {glVersion.Revision}";
-
-            if (string.IsNullOrEmpty(approximate.driverVer))
-                for (var i = 0; i < glVersions.Count - 1; i++)
-                    if (glVersion > glVersions[i].glVer && glVersion < glVersions[i + 1].glVer)
-                    {
-                        approximate = glVersions[i];
-                        break;
-                    }
-            if (!string.IsNullOrEmpty(approximate.driverVer))
-                return $"probably {approximate.driverVer}";
-
-            return openglVersion;
-        }
-
-        public static async Task<string> GetFromVulkanAsync(string vulkanVersion, bool autoRefresh = true)
-        {
-            if (!VulkanToDriver.TryGetValue(vulkanVersion, out var result))
+                if (!autoRefresh)
+                    return $"newer than {driverVer} ({vulkanVersion})";
+                    
                 await RefreshAsync().ConfigureAwait(false);
-
-            if (result?.Count > 0 || (VulkanToDriver.TryGetValue(vulkanVersion, out result) && result.Count > 0))
-            {
-                if (result.Count == 1)
-                    return result[0];
-                return $"{result.First()} - {result.Last()}";
+                return await GetFromVulkanAsync(vulkanVersion, false).ConfigureAwait(false);
             }
-
-            if (Version.TryParse(vulkanVersion, out var vkVer))
-            {
-                var vkVersions = new List<(Version vkVer, string driverVer)>(VulkanToDriver.Count);
-                foreach (var key in VulkanToDriver.Keys)
-                {
-                    if (Version.TryParse(key, out var ver))
-                        vkVersions.Add((ver, VulkanToDriver[key].First()));
-                }
-                if (vkVersions.Count == 0)
-                    return vulkanVersion;
-
-                vkVersions.Sort((l, r) => l.vkVer < r.vkVer ? -1 : l.vkVer > r.vkVer ? 1 : 0);
-                if (vkVer < vkVersions[0].vkVer)
-                    return $"older than {vkVersions[0].driverVer} ({vulkanVersion})";
-
-                var (version, driverVer) = vkVersions.Last();
-                if (vkVer > version)
-                {
-                    if (!autoRefresh)
-                        return $"newer than {driverVer} ({vulkanVersion})";
-                    
-                    await RefreshAsync().ConfigureAwait(false);
-                    return await GetFromVulkanAsync(vulkanVersion, false).ConfigureAwait(false);
-                }
                 
-                for (var i = 1; i < vkVersions.Count; i++)
-                {
-                    if (vkVer >= vkVersions[i].vkVer)
-                        continue;
+            for (var i = 1; i < vkVersions.Count; i++)
+            {
+                if (vkVer >= vkVersions[i].vkVer)
+                    continue;
                     
-                    var lowerVer = vkVersions[i - 1].vkVer;
-                    var mapKey = VulkanToDriver.Keys.FirstOrDefault(k => Version.Parse(k) == lowerVer);
-                    if (mapKey is null)
-                        continue;
+                var lowerVer = vkVersions[i - 1].vkVer;
+                var mapKey = VulkanToDriver.Keys.FirstOrDefault(k => Version.Parse(k) == lowerVer);
+                if (mapKey is null)
+                    continue;
 
-                    if (!VulkanToDriver.TryGetValue(mapKey, out var driverList))
-                        continue;
+                if (!VulkanToDriver.TryGetValue(mapKey, out var driverList))
+                    continue;
                     
-                    var oldestLowerVersion = driverList.Select(Version.Parse).OrderByDescending(v => v).First();
-                    return $"unknown version between {oldestLowerVersion} and {vkVersions[i].driverVer} ({vulkanVersion})";
-                }
+                var oldestLowerVersion = driverList.Select(Version.Parse).OrderByDescending(v => v).First();
+                return $"unknown version between {oldestLowerVersion} and {vkVersions[i].driverVer} ({vulkanVersion})";
             }
-
-            return vulkanVersion;
         }
+
+        return vulkanVersion;
     }
 }

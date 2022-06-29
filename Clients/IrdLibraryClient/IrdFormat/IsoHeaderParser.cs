@@ -5,28 +5,27 @@ using System.Linq;
 using CompatApiClient;
 using DiscUtils.Iso9660;
 
-namespace IrdLibraryClient.IrdFormat
-{
-    public static class IsoHeaderParser
-    {
-        public static List<string> GetFilenames(this Ird ird)
-        {
-            using var decompressedStream = ApiConfig.MemoryStreamManager.GetStream();
-            using (var compressedStream = new MemoryStream(ird.Header, false))
-            {
-                using var gzip = new GZipStream(compressedStream, CompressionMode.Decompress);
-                gzip.CopyTo(decompressedStream);
-            }
+namespace IrdLibraryClient.IrdFormat;
 
-            decompressedStream.Seek(0, SeekOrigin.Begin);
-            var reader = new CDReader(decompressedStream, true, true);
-            return reader.GetFiles(reader.Root.FullName, "*.*", SearchOption.AllDirectories)
-                .Distinct()
-                .Select(n => n
-                    .TrimStart('\\')
-                    .Replace('\\', '/')
-                    .TrimEnd('.')
-                ).ToList();
+public static class IsoHeaderParser
+{
+    public static List<string> GetFilenames(this Ird ird)
+    {
+        using var decompressedStream = ApiConfig.MemoryStreamManager.GetStream();
+        using (var compressedStream = new MemoryStream(ird.Header, false))
+        {
+            using var gzip = new GZipStream(compressedStream, CompressionMode.Decompress);
+            gzip.CopyTo(decompressedStream);
         }
+
+        decompressedStream.Seek(0, SeekOrigin.Begin);
+        var reader = new CDReader(decompressedStream, true, true);
+        return reader.GetFiles(reader.Root.FullName, "*.*", SearchOption.AllDirectories)
+            .Distinct()
+            .Select(n => n
+                .TrimStart('\\')
+                .Replace('\\', '/')
+                .TrimEnd('.')
+            ).ToList();
     }
 }
