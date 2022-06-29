@@ -54,7 +54,7 @@ namespace CompatBot.Commands
                         await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}").ConfigureAwait(false);
                     await writer.FlushAsync().ConfigureAwait(false);
                     memoryStream.Seek(0, SeekOrigin.Begin);
-                    if (memoryStream.Length <= Config.AttachmentSizeLimit)
+                    if (memoryStream.Length <= ctx.GetAttachmentSizeLimit())
                     {
                         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("names.txt", memoryStream)).ConfigureAwait(false);
                         return;
@@ -64,7 +64,7 @@ namespace CompatBot.Commands
                     await memoryStream.CopyToAsync(gzip).ConfigureAwait(false);
                     await gzip.FlushAsync().ConfigureAwait(false);
                     compressedResult.Seek(0, SeekOrigin.Begin);
-                    if (compressedResult.Length <= Config.AttachmentSizeLimit)
+                    if (compressedResult.Length <= ctx.GetAttachmentSizeLimit())
                         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("names.txt.gz", compressedResult)).ConfigureAwait(false);
                     else
                         await ctx.Channel.SendMessageAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
@@ -290,7 +290,7 @@ namespace CompatBot.Commands
                         return;
                     }
 
-                    if (uncompressedStream.Length <= Config.AttachmentSizeLimit)
+                    if (uncompressedStream.Length <= ctx.GetAttachmentSizeLimit())
                     {
                         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt", uncompressedStream)).ConfigureAwait(false);
                         return;
@@ -302,7 +302,7 @@ namespace CompatBot.Commands
                         gzip.Flush();
                     }
                     compressedStream.Seek(0, SeekOrigin.Begin);
-                    if (compressedStream.Length <= Config.AttachmentSizeLimit)
+                    if (compressedStream.Length <= ctx.GetAttachmentSizeLimit())
                         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt.gz", compressedStream)).ConfigureAwait(false);
                     else
                         await ctx.Channel.SendMessageAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);

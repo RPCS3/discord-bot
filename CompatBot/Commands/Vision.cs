@@ -316,7 +316,7 @@ namespace CompatBot.Commands
                         await img.SaveAsync(resultStream, new JpegEncoder {Quality = 95}).ConfigureAwait(false);
                         resultStream.Seek(0, SeekOrigin.Begin);
                         quality--;
-                    } while (resultStream.Length > Config.AttachmentSizeLimit);
+                    } while (resultStream.Length > ctx.GetAttachmentSizeLimit());
                     var attachmentFname = Path.GetFileNameWithoutExtension(imageUrl) + "_tagged.jpg";
                     if (result.Adult.IsRacyContent && !attachmentFname.StartsWith("SPOILER_"))
                         attachmentFname = "SPOILER_" + attachmentFname;

@@ -81,7 +81,7 @@ namespace CompatBot.Utils
             using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
             foreach (var att in msg.Attachments)
             {
-                if (att.FileSize > Config.AttachmentSizeLimit)
+                if (att.FileSize > msg.Channel.Guild.GetAttachmentSizeLimit())
                 {
                     attachmentFilenames.Add(att.FileName);
                     continue;

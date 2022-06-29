@@ -143,13 +143,12 @@ namespace CompatBot.Commands
                     return;
                 }
                 
-                var attachmentSizeLimit = Config.AttachmentSizeLimit;
                 await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 await using var result = Config.MemoryStreamManager.GetStream();
                 await using var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default);
                 await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
                 await gzip.FlushAsync().ConfigureAwait(false);
-                if (result.Length <= attachmentSizeLimit)
+                if (result.Length <= ctx.GetAttachmentSizeLimit())
                 {
                     result.Seek(0, SeekOrigin.Begin);
                     await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".gz", result)).ConfigureAwait(false);
@@ -164,8 +163,8 @@ namespace CompatBot.Commands
             }
         }
 
-        [Command("dbbackup"), Aliases("thumbs", "dbb")]
-        [Description("Uploads current Thumbs.db file as an attachment")]
+        [Command("dbbackup"), Aliases("dbb")]
+        [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
         public async Task ThumbsBackup(CommandContext ctx)
         {
             try
@@ -177,7 +176,6 @@ namespace CompatBot.Commands
                     dbPath = connection.DataSource;
                     await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
                 }
-                var attachmentSizeLimit = Config.AttachmentSizeLimit;
                 var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
                 var dbName = Path.GetFileNameWithoutExtension(dbPath);
                 await using var result = Config.MemoryStreamManager.GetStream();
@@ -187,7 +185,7 @@ namespace CompatBot.Commands
                     await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                     zip.Write(Path.GetFileName(fname), dbData);
                 }
-                if (result.Length <= attachmentSizeLimit)
+                if (result.Length <= ctx.GetAttachmentSizeLimit())
                 {
                     result.Seek(0, SeekOrigin.Begin);
                     await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
@@ -203,9 +201,10 @@ namespace CompatBot.Commands
         }
 
         [Command("gen-salt")]
-        [Description("Regenerates salt for data anonymization purposes")]
+        [Description("Regenerates salt for data anonymization purposes. This WILL affect Hardware DB deduplication.")]
         public Task ResetCryptoSalt(CommandContext ctx)
         {
+            //todo: warning prompt
             var salt = new byte[256 / 8];
             System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
             return new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt));
