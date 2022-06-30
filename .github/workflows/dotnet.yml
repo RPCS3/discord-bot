@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  BuildAndTest:
+  BuildDebugAndTest:
     runs-on: ubuntu-latest
     name: "Run Tests"
     steps:
@@ -27,6 +27,24 @@ jobs:
     - name: dotnet test
       run: dotnet test --no-build --verbosity normal Tests/Tests.csproj
 
+  BuildRelease:
+    runs-on: ubuntu-latest
+    name: "Build Release"
+    steps:
+    - uses: actions/checkout@v2
+    - name: update dotnet core sdk
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: dotnet restore (first try)
+      run: dotnet restore --ignore-failed-sources
+    - name: dotnet restore (second try)
+      run: dotnet restore --ignore-failed-sources
+    - name: dotnet restore (last try)
+      run: dotnet restore
+    - name: dotnet build Release
+      run: dotnet build --no-restore --configuration Release
+
   ConfigTest:
     runs-on: ubuntu-latest
     outputs: 
@@ -39,7 +57,7 @@ jobs:
         run: echo "::set-output  name=defined::true"
 
   DockerImage:
-    needs: [BuildAndTest, ConfigTest]
+    needs: [BuildDebugAndTest, BuildRelease, ConfigTest]
     runs-on: ubuntu-latest
     name: "Build Docker image"
     if: (github.ref == 'refs/heads/master') && (needs.ConfigTest.outputs.docker-username == 'true')
