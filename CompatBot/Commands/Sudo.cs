@@ -161,21 +161,29 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         }
     }
 
-    [Command("dbbackup"), Aliases("dbb")]
+    [Command("dbbackup"), Aliases("dbb"), TriggersTyping]
     [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
-    public async Task ThumbsBackup(CommandContext ctx)
+    public async Task DbBackup(CommandContext ctx)
     {
+        await using (var db = new ThumbnailDb())
+            await BackupDb(ctx, db).ConfigureAwait(false);
+        await using (var db = new HardwareDb())
+            await BackupDb(ctx, db).ConfigureAwait(false);
+    }
+    
+    private static async Task BackupDb(CommandContext ctx, DbContext db)
+    {
+        string? dbName = null;
         try
         {
             string dbPath;
-            await using (var db = new ThumbnailDb())
             await using (var connection = db.Database.GetDbConnection())
             {
                 dbPath = connection.DataSource;
                 await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
             }
             var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
-            var dbName = Path.GetFileNameWithoutExtension(dbPath);
+            dbName = Path.GetFileNameWithoutExtension(dbPath);
             await using var result = Config.MemoryStreamManager.GetStream();
             using var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression});
             foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
@@ -189,12 +197,12 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
                 await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
             }
             else
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Compressed {dbName}.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
         }
         catch (Exception e)
         {
-            Config.Log.Warn(e, "Failed to upload current Thumbs.db backup");
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send Thumbs.db backup", true).ConfigureAwait(false);
+            Config.Log.Warn(e, $"Failed to upload {(dbName is null? "DB": dbName + ".db")} backup");
+            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to send {(dbName is null? "DB": dbName + ".db")} backup", true).ConfigureAwait(false);
         }
     }
 
