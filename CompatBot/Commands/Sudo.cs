@@ -9,9 +9,11 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
 using SharpCompress.Common;
 using SharpCompress.Compressors;
@@ -208,11 +210,26 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
 
     [Command("gen-salt")]
     [Description("Regenerates salt for data anonymization purposes. This WILL affect Hardware DB deduplication.")]
-    public Task ResetCryptoSalt(CommandContext ctx)
+    public async Task ResetCryptoSalt(CommandContext ctx)
     {
-        //todo: warning prompt
-        var salt = new byte[256 / 8];
-        System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
-        return new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt));
+        var btnYes = new DiscordButtonComponent(ButtonStyle.Danger, "gen-salt:yes", "Yes, regenerate salt");
+        var btnNo = new DiscordButtonComponent(ButtonStyle.Primary, "gen-salt:no", "No, I do not fully understand the consequences");
+        var b = new DiscordMessageBuilder()
+            .WithContent("This will affect hardware DB data deduplication. Are you sure?")
+            .AddComponents(btnYes, btnNo);
+        var msg = await ctx.RespondAsync(b).ConfigureAwait(false);
+        var interactivity = ctx.Client.GetInteractivity();
+        var (txt, reaction) = await interactivity.WaitForMessageOrButtonAsync(msg, ctx.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
+        if (txt?.Content?.ToLowerInvariant() is "y" or "yes" || reaction?.Id == btnYes.CustomId)
+        {
+            var salt = new byte[256 / 8];
+            System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
+            await new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt)).ConfigureAwait(false);
+            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Regenerated salt.").ConfigureAwait(false);
+        }
+        else
+        {
+            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Operation cancelled.").ConfigureAwait(false);
+        }
     }
 }
