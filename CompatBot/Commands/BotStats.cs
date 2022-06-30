@@ -63,6 +63,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
 
     [Command("hw"), Aliases("hardware")]
     [Description("Various hardware stats from uploaded log files")]
+    [Cooldown(1, 5, CooldownBucketType.Guild)]
     public Task Hardware(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30) => Commands.Hardware.ShowStats(ctx, period);
     
     private static string GetConfiguredApiStats()

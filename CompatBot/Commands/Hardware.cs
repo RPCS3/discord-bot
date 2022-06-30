@@ -12,6 +12,7 @@ namespace CompatBot.Commands;
 
 [Group("hardware"), Aliases("hw")]
 [Description("Various hardware stats from uploaded log files")]
+[Cooldown(1, 5, CooldownBucketType.Guild)]
 internal sealed class Hardware: BaseCommandModuleCustom
 {
     [GroupCommand]
@@ -33,7 +34,7 @@ internal sealed class Hardware: BaseCommandModuleCustom
             return;
         }
 
-        const int top = 10;
+        var top = Config.MaxPositionsForHwSurveyResults;
         var cpuMakers = await db.HwInfo.AsNoTracking()
             .Where(i => i.Timestamp > ts)
             .GroupBy(i => i.CpuMaker)
@@ -96,7 +97,7 @@ internal sealed class Hardware: BaseCommandModuleCustom
             if (feature == CpuFeatures.None)
                 continue;
             
-            var featureCount = cpuFeatures.Where(f => f.Features.HasFlag(feature)).Select(f => f.Count).Sum();
+            var featureCount = cpuFeatures.Where(f => f.Features.HasFlag(feature)).Sum(f => f.Count);
             if (featureCount == 0)
                 continue;
             
@@ -104,6 +105,43 @@ internal sealed class Hardware: BaseCommandModuleCustom
         }
         var sortedFeatureList = featureStats.OrderByDescending(kvp => kvp.Value).ThenByDescending(kvp => kvp.Key).Select(kvp => (Count: kvp.Value, Name: GetCpuFeature(kvp.Key))).ToList();
 
+        var threads = await db.HwInfo.AsNoTracking()
+            .Where(i => i.Timestamp > ts)
+            .GroupBy(i => i.ThreadCount)
+            .Select(g => new { Count = g.Count(), Number = g.Key })
+            .ToListAsync()
+            .ConfigureAwait(false);
+        var lowTc = threads.Where(i => i.Number < 4).Sum(i => i.Count);
+        var highTc = threads.Where(i => i.Number > 12).Sum(i => i.Count);
+        var threadStats = new (int Count, string Number)[] { (lowTc, "3 or fewer"), (highTc, "13 or more") }
+            .Concat(threads.Where(i => i.Number is > 3 and < 13).Select(i => (i.Count, Number: i.Number.ToString())))
+            .Where(i => i.Count > 0)
+            .OrderByDescending(i => i.Count)
+            .Take(top)
+            .ToList();
+
+        var mem = await db.HwInfo.AsNoTracking()
+            .Where(i => i.Timestamp > ts)
+            .GroupBy(i => i.RamInMb)
+            .Select(g => new { Count = g.Count(), Mem = g.Key })
+            .ToListAsync()
+            .ConfigureAwait(false);
+        var lowRam = mem.Where(i => i.Mem < 4 * 1024).Sum(i => i.Count);
+        var ram4to6 = mem.Where(i => i.Mem is >= 4 * 1024 and < 6 * 1024).Sum(i => i.Count);
+        var ram6to8 = mem.Where(i => i.Mem is >= 6 * 1024 and < 8 * 1024).Sum(i => i.Count);
+        var highRam = mem.Where(i => i.Mem >= 8 * 1024).Sum(i => i.Count);
+        var ramStats = new (int Count, string Mem)[]
+            {
+                (lowRam, "less than 4 GB"),
+                (ram4to6, "4 to 6 GB"),
+                (ram6to8, "6 to 8 GB"),
+                (highRam, "8 GB or more"),
+            }
+            .Where(i => i.Count > 0)
+            .Take(top)
+            .OrderByDescending(i => i.Count)
+            .ToList();
+        
         var embed = new DiscordEmbedBuilder()
             .WithTitle($"RPCS3 Hardware Survey (past {period} day{(period == 1 ? "" : "s")})")
             .WithDescription($"Statistics from the {count} most recent system configuration{(count == 1 ? "" : "s")} found in uploaded RPCS3 logs.")
@@ -125,6 +163,9 @@ internal sealed class Hardware: BaseCommandModuleCustom
             .AddField("Top TSX Extensions", 
                 string.Join('\n', sortedFeatureList.Where(i => i.Name.StartsWith("TSX")).Select((i, n) => $"{i.Count * 100.0 / count:0.00}% {i.Name}")) is { Length: > 0 } tsx ? tsx : "No Data",
                 true)
+            
+            .AddField("Top Thread Configurations", string.Join('\n', threadStats.Select(i => $"{i.Count*100.0/count:0.00}% {i.Number} threads")), true)
+            .AddField("Top RAM Configurations", string.Join('\n', ramStats.Select(i => $"{i.Count*100.0/count:0.00}% {i.Mem}")), true)
 
             .WithFooter("All collected data is anonymous, for details see bot source code");
         await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
