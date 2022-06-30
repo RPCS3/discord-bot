@@ -52,6 +52,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
         AppendExplainStats(embed);
         AppendGameLookupStats(embed);
         AppendSyscallsStats(embed);
+        AppendHwInfoStats(embed);
         AppendPawStats(embed);
 #if DEBUG
         embed.WithFooter("Test Instance");
@@ -60,6 +61,10 @@ internal sealed class BotStats: BaseCommandModuleCustom
         await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
 
+    [Command("hw"), Aliases("hardware")]
+    [Description("Various hardware stats from uploaded log files")]
+    public Task Hardware(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30) => Commands.Hardware.ShowStats(ctx, period);
+    
     private static string GetConfiguredApiStats()
     {
         return new StringBuilder()
@@ -240,6 +245,40 @@ internal sealed class BotStats: BaseCommandModuleCustom
                 $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")}\n" +
                 $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")}\n",
                 true);
+        }
+        catch (Exception e)
+        {
+            Config.Log.Warn(e);
+        }
+    }
+
+    private static void AppendHwInfoStats(DiscordEmbedBuilder embed)
+    {
+        try
+        {
+            using var db = new HardwareDb();
+            var monthAgo = DateTime.UtcNow.AddDays(-30).Ticks;
+            var monthCount = db.HwInfo.Count(i => i.Timestamp > monthAgo);
+            if (monthCount == 0)
+                return;
+            
+            var totalCount = db.HwInfo.Count();
+            var cpu = db.HwInfo.AsNoTracking()
+                .Where(i => i.Timestamp > monthAgo)
+                .GroupBy(i => i.CpuModel)
+                .Select(g => new { count = g.Count(), name = g.Key, maker = g.First().CpuMaker })
+                .OrderByDescending(s => s.count)
+                .FirstOrDefault();
+
+            var cpuInfo = "";
+            if (cpu is not null)
+                cpuInfo = $"\nPopular CPU: {cpu.maker} {cpu.name} ({cpu.count*100.0/monthCount:0.##}%)";
+            embed.AddField("Hardware Stats",
+                $"Total: {totalCount} system{(totalCount == 1 ? "" : "s")}\n" +
+                $"Last 30 days: {monthCount} system{(monthCount == 1 ? "" : "s")}" +
+                cpuInfo,
+                true);
+
         }
         catch (Exception e)
         {

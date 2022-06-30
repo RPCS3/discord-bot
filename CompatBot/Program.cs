@@ -171,6 +171,7 @@ internal static class Program
             commands.RegisterCommands<Events>();
             commands.RegisterCommands<E3>();
             commands.RegisterCommands<BotStats>();
+            commands.RegisterCommands<Hardware>();
             commands.RegisterCommands<Syscall>();
             commands.RegisterCommands<ForcedNicknames>();
             commands.RegisterCommands<Minesweeper>();
