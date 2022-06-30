@@ -9,9 +9,11 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.Utils;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
 using SharpCompress.Common;
 using SharpCompress.Compressors;
@@ -161,21 +163,29 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         }
     }
 
-    [Command("dbbackup"), Aliases("dbb")]
+    [Command("dbbackup"), Aliases("dbb"), TriggersTyping]
     [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
-    public async Task ThumbsBackup(CommandContext ctx)
+    public async Task DbBackup(CommandContext ctx)
     {
+        await using (var db = new ThumbnailDb())
+            await BackupDb(ctx, db).ConfigureAwait(false);
+        await using (var db = new HardwareDb())
+            await BackupDb(ctx, db).ConfigureAwait(false);
+    }
+    
+    private static async Task BackupDb(CommandContext ctx, DbContext db)
+    {
+        string? dbName = null;
         try
         {
             string dbPath;
-            await using (var db = new ThumbnailDb())
             await using (var connection = db.Database.GetDbConnection())
             {
                 dbPath = connection.DataSource;
                 await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
             }
             var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
-            var dbName = Path.GetFileNameWithoutExtension(dbPath);
+            dbName = Path.GetFileNameWithoutExtension(dbPath);
             await using var result = Config.MemoryStreamManager.GetStream();
             using var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression});
             foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
@@ -189,22 +199,37 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
                 await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
             }
             else
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed Thumbs.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Compressed {dbName}.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
         }
         catch (Exception e)
         {
-            Config.Log.Warn(e, "Failed to upload current Thumbs.db backup");
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send Thumbs.db backup", true).ConfigureAwait(false);
+            Config.Log.Warn(e, $"Failed to upload {(dbName is null? "DB": dbName + ".db")} backup");
+            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to send {(dbName is null? "DB": dbName + ".db")} backup", true).ConfigureAwait(false);
         }
     }
 
     [Command("gen-salt")]
     [Description("Regenerates salt for data anonymization purposes. This WILL affect Hardware DB deduplication.")]
-    public Task ResetCryptoSalt(CommandContext ctx)
+    public async Task ResetCryptoSalt(CommandContext ctx)
     {
-        //todo: warning prompt
-        var salt = new byte[256 / 8];
-        System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
-        return new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt));
+        var btnYes = new DiscordButtonComponent(ButtonStyle.Danger, "gen-salt:yes", "Yes, regenerate salt");
+        var btnNo = new DiscordButtonComponent(ButtonStyle.Primary, "gen-salt:no", "No, I do not fully understand the consequences");
+        var b = new DiscordMessageBuilder()
+            .WithContent("This will affect hardware DB data deduplication. Are you sure?")
+            .AddComponents(btnYes, btnNo);
+        var msg = await ctx.RespondAsync(b).ConfigureAwait(false);
+        var interactivity = ctx.Client.GetInteractivity();
+        var (txt, reaction) = await interactivity.WaitForMessageOrButtonAsync(msg, ctx.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
+        if (txt?.Content?.ToLowerInvariant() is "y" or "yes" || reaction?.Id == btnYes.CustomId)
+        {
+            var salt = new byte[256 / 8];
+            System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
+            await new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt)).ConfigureAwait(false);
+            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Regenerated salt.").ConfigureAwait(false);
+        }
+        else
+        {
+            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Operation cancelled.").ConfigureAwait(false);
+        }
     }
 }

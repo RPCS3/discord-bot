@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -346,6 +347,24 @@ internal static partial class LogParserResult
         };
         if (!string.IsNullOrEmpty(threadSched))
             items["thread_scheduler"] = threadSched;
+
+        static string? StripOpenGlMaker(string? gpuName)
+        {
+            if (gpuName is null)
+                return null;
+
+            if (gpuName.EndsWith("(intel)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith("(nvidia)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith("(amd)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith("(ati)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith("(apple)", StringComparison.OrdinalIgnoreCase))
+            {
+                var idx = gpuName.LastIndexOf('(');
+                if (idx > 0)
+                    return gpuName[..idx].TrimEnd();
+            }
+            return gpuName;
+        }
         if (items["vulkan_initialized_device"] != null)
             items["gpu_info"] = items["vulkan_initialized_device"];
         else if (items["driver_manuf_new"] != null)
@@ -364,6 +383,7 @@ internal static partial class LogParserResult
                                            GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
                                            GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
         }
+        items["gpu_info"] = StripOpenGlMaker(items["gpu_info"]);
         if (items["driver_version_info"] != null)
         {
             items["gpu_name"] = items["gpu_info"];
@@ -382,7 +402,7 @@ internal static partial class LogParserResult
                 var discreteGpu = devices.FirstOrDefault(d => IsNvidia(d.name))
                                   ?? devices.FirstOrDefault(d => IsAmd(d.name))
                                   ?? devices.First();
-                items["gpu_name"] = discreteGpu.name;
+                items["gpu_name"] = StripOpenGlMaker(discreteGpu.name);
                 items["discrete_gpu_info"] = $"{discreteGpu.name} ({discreteGpu.driverVersion})";
                 items["driver_version_info"] = discreteGpu.driverVersion;
             }
