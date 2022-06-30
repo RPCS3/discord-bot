@@ -34,7 +34,7 @@ internal sealed class Hardware: BaseCommandModuleCustom
             return;
         }
 
-        const int top = 10;
+        var top = Config.MaxPositionsForHwSurveyResults;
         var cpuMakers = await db.HwInfo.AsNoTracking()
             .Where(i => i.Timestamp > ts)
             .GroupBy(i => i.CpuMaker)
@@ -138,6 +138,7 @@ internal sealed class Hardware: BaseCommandModuleCustom
                 (highRam, "8 GB or more"),
             }
             .Where(i => i.Count > 0)
+            .Take(top)
             .OrderByDescending(i => i.Count)
             .ToList();
         
