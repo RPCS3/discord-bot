@@ -87,7 +87,7 @@ internal static class HwInfoProvider
 
     private static byte[] GetHwId(NameValueCollection items, DiscordMessage message)
     {
-        var id = items["hw_id"] ?? message.Author.Id.ToString("x16") + items["compat_database_path"];
+        var id = items["hw_id"] ?? (message.Author.Id.ToString("x16") + items["compat_database_path"]);
         return Utf8.GetBytes(id).GetSaltedHash();
     }
 

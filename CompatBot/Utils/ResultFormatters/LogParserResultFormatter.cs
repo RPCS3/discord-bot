@@ -363,7 +363,7 @@ internal static partial class LogParserResult
             if (gpuName.EndsWith("(intel)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith("(nvidia)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith("(amd)", StringComparison.OrdinalIgnoreCase)
-                || gpuName.EndsWith("(ati)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith(" inc.)", StringComparison.OrdinalIgnoreCase) // ati
                 || gpuName.EndsWith("(apple)", StringComparison.OrdinalIgnoreCase))
             {
                 var idx = gpuName.LastIndexOf('(');
@@ -818,17 +818,20 @@ internal static partial class LogParserResult
         var kernelVersion = release;
         if (LinuxKernelVersion.Match(release) is {Success: true} m)
             kernelVersion = m.Groups["version"].Value;
-        if (version.Contains("Ubuntu", StringComparison.InvariantCultureIgnoreCase))
+        if (version.Contains("Ubuntu", StringComparison.OrdinalIgnoreCase))
             return "Ubuntu " + kernelVersion;
 
-        if (version.Contains("Debian", StringComparison.InvariantCultureIgnoreCase))
+        if (version.Contains("Debian", StringComparison.OrdinalIgnoreCase))
             return "Debian " + kernelVersion;
 
-        if (release.Contains("-MANJARO", StringComparison.InvariantCultureIgnoreCase))
+        if (release.Contains("-MANJARO", StringComparison.OrdinalIgnoreCase))
             return "Manjaro " + kernelVersion;
 
-        if (release.Contains("-ARCH", StringComparison.InvariantCultureIgnoreCase))
+        if (release.Contains("-ARCH", StringComparison.OrdinalIgnoreCase))
             return "Arch " + kernelVersion;
+
+        if (release.Contains("-gentoo", StringComparison.OrdinalIgnoreCase))
+            return "Gentoo " + kernelVersion;
 
         if (release.Contains(".fc"))
         {
