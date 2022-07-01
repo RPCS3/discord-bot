@@ -73,7 +73,7 @@ internal static class HwInfoProvider
         var existingItem = await db.HwInfo.FindAsync(info.InstallId).ConfigureAwait(false);
         if (existingItem is null)
             db.HwInfo.Add(info);
-        else if (existingItem.Timestamp < info.Timestamp)
+        else if (existingItem.Timestamp <= info.Timestamp)
             db.Entry(existingItem).CurrentValues.SetValues(info);
         try
         {
