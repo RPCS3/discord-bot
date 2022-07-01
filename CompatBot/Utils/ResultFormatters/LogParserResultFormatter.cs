@@ -66,6 +66,8 @@ internal static partial class LogParserResult
     private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
     private static readonly Version RdnaMsaaFixedVersion  = new(0, 0, 13, 11300);
     private static readonly Version IntelThreadSchedulerBuildVersion  = new(0, 0, 15, 12008);
+    private static readonly Version CubebBuildVersion  = new(0, 0, 19, 13050);
+    
 
     private static readonly Dictionary<string, string> RsxPresentModeMap = new()
     {
@@ -362,14 +364,19 @@ internal static partial class LogParserResult
 
             if (gpuName.EndsWith("(intel)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith("(nvidia)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith(" corporation)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith("(amd)", StringComparison.OrdinalIgnoreCase)
-                || gpuName.EndsWith("(ati)", StringComparison.OrdinalIgnoreCase)
-                || gpuName.EndsWith("(apple)", StringComparison.OrdinalIgnoreCase))
+                || gpuName.EndsWith(" inc.)", StringComparison.OrdinalIgnoreCase) // ati
+                || gpuName.EndsWith("(apple)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith("(x.org)", StringComparison.OrdinalIgnoreCase) // linux
+            )
             {
                 var idx = gpuName.LastIndexOf('(');
                 if (idx > 0)
-                    return gpuName[..idx].TrimEnd();
+                    gpuName = gpuName[..idx].TrimEnd();
             }
+            if (gpuName.EndsWith("/PCIe/SSE2"))
+                gpuName = gpuName[..^10];
             return gpuName;
         }
         if (items["vulkan_initialized_device"] != null)
@@ -818,17 +825,23 @@ internal static partial class LogParserResult
         var kernelVersion = release;
         if (LinuxKernelVersion.Match(release) is {Success: true} m)
             kernelVersion = m.Groups["version"].Value;
-        if (version.Contains("Ubuntu", StringComparison.InvariantCultureIgnoreCase))
+        if (version.Contains("Ubuntu", StringComparison.OrdinalIgnoreCase))
             return "Ubuntu " + kernelVersion;
 
-        if (version.Contains("Debian", StringComparison.InvariantCultureIgnoreCase))
+        if (version.Contains("Debian", StringComparison.OrdinalIgnoreCase))
             return "Debian " + kernelVersion;
 
-        if (release.Contains("-MANJARO", StringComparison.InvariantCultureIgnoreCase))
+        if (release.Contains("-MANJARO", StringComparison.OrdinalIgnoreCase))
             return "Manjaro " + kernelVersion;
 
-        if (release.Contains("-ARCH", StringComparison.InvariantCultureIgnoreCase))
+        if (release.Contains("-ARCH", StringComparison.OrdinalIgnoreCase))
             return "Arch " + kernelVersion;
+
+        if (release.Contains("-gentoo", StringComparison.OrdinalIgnoreCase))
+            return "Gentoo " + kernelVersion;
+
+        if (release.Contains("-valve", StringComparison.OrdinalIgnoreCase))
+            return "SteamOS";
 
         if (release.Contains(".fc"))
         {

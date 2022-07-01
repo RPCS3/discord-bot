@@ -73,7 +73,7 @@ internal static class HwInfoProvider
         var existingItem = await db.HwInfo.FindAsync(info.InstallId).ConfigureAwait(false);
         if (existingItem is null)
             db.HwInfo.Add(info);
-        else if (existingItem.Timestamp < info.Timestamp)
+        else if (existingItem.Timestamp <= info.Timestamp)
             db.Entry(existingItem).CurrentValues.SetValues(info);
         try
         {
@@ -87,7 +87,7 @@ internal static class HwInfoProvider
 
     private static byte[] GetHwId(NameValueCollection items, DiscordMessage message)
     {
-        var id = items["hw_id"] ?? message.Author.Id.ToString("x16") + items["compat_database_path"];
+        var id = items["hw_id"] ?? (message.Author.Id.ToString("x16") + items["compat_database_path"]);
         return Utf8.GetBytes(id).GetSaltedHash();
     }
 

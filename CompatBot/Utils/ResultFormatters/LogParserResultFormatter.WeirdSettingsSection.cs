@@ -507,10 +507,20 @@ internal static partial class LogParserResult
 
         if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
         {
-            if (items["os_type"] == "Windows" && !audioBackend.Equals("Cubeb", StringComparison.InvariantCultureIgnoreCase))
-                notes.Add("⚠ Please use `Cubeb` as the audio backend on Windows");
-            else if (items["os_type"] == "Linux"  && !audioBackend.Equals("Cubeb", StringComparison.InvariantCultureIgnoreCase))
-                notes.Add("ℹ Please use `Cubeb` as the audio backend on Linux");
+            if (buildVersion is not null && buildVersion < CubebBuildVersion)
+            {
+                if (items["os_type"] is "Windows" && !audioBackend.Equals("XAudio2", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("⚠ Please use `XAudio2` as the audio backend for this build");
+                else if (items["os_type"] == "Linux"
+                         && !audioBackend.Equals("OpenAL", StringComparison.InvariantCultureIgnoreCase)
+                         && !audioBackend.Equals("FAudio", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("ℹ `FAudio` and `OpenAL` are the recommended audio backends for this build");
+            }
+            else
+            {
+                if (items["os_type"] is "Windows" or "Linux" && !audioBackend.Equals("Cubeb", StringComparison.InvariantCultureIgnoreCase))
+                    notes.Add("⚠ Please use `Cubeb` as the audio backend");
+            }
             if (audioBackend.Equals("null", StringComparison.InvariantCultureIgnoreCase))
                 notes.Add("⚠ `Audio backend` is set to `null`");
         }
