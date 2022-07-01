@@ -126,10 +126,11 @@ internal sealed class Hardware: BaseCommandModuleCustom
             .Select(g => new { Count = g.Count(), Mem = g.Key })
             .ToListAsync()
             .ConfigureAwait(false);
-        var lowRam = mem.Where(i => i.Mem < 4 * 1024).Sum(i => i.Count);
-        var ram4to6 = mem.Where(i => i.Mem is >= 4 * 1024 and < 6 * 1024).Sum(i => i.Count);
-        var ram6to8 = mem.Where(i => i.Mem is >= 6 * 1024 and < 8 * 1024).Sum(i => i.Count);
-        var highRam = mem.Where(i => i.Mem >= 8 * 1024).Sum(i => i.Count);
+        const int margin = 200;
+        var lowRam = mem.Where(i => i.Mem < 4 * 1024 - margin).Sum(i => i.Count);
+        var ram4to6 = mem.Where(i => i.Mem is >= 4 * 1024 - margin and < 6 * 1024 - margin).Sum(i => i.Count);
+        var ram6to8 = mem.Where(i => i.Mem is >= 6 * 1024 - margin and < 8 * 1024 - margin).Sum(i => i.Count);
+        var highRam = mem.Where(i => i.Mem >= 8 * 1024 - margin).Sum(i => i.Count);
         var ramStats = new (int Count, string Mem)[]
             {
                 (lowRam, "less than 4 GB"),
