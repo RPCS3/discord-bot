@@ -841,7 +841,7 @@ internal static partial class LogParserResult
             return "Gentoo " + kernelVersion;
 
         if (release.Contains("-valve", StringComparison.OrdinalIgnoreCase))
-            return "SteamOS";
+            return "SteamOS" + kernelVersion;
 
         if (release.Contains(".fc"))
         {
