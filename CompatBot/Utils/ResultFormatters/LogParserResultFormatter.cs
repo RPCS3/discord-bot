@@ -66,6 +66,8 @@ internal static partial class LogParserResult
     private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
     private static readonly Version RdnaMsaaFixedVersion  = new(0, 0, 13, 11300);
     private static readonly Version IntelThreadSchedulerBuildVersion  = new(0, 0, 15, 12008);
+    private static readonly Version CubebBuildVersion  = new(0, 0, 19, 13050);
+    
 
     private static readonly Dictionary<string, string> RsxPresentModeMap = new()
     {
