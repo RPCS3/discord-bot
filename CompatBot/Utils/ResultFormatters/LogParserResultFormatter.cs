@@ -366,7 +366,9 @@ internal static partial class LogParserResult
                 || gpuName.EndsWith("(nvidia)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith("(amd)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith(" inc.)", StringComparison.OrdinalIgnoreCase) // ati
-                || gpuName.EndsWith("(apple)", StringComparison.OrdinalIgnoreCase))
+                || gpuName.EndsWith("(apple)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith("(x.org)", StringComparison.OrdinalIgnoreCase) // linux
+            )
             {
                 var idx = gpuName.LastIndexOf('(');
                 if (idx > 0)
