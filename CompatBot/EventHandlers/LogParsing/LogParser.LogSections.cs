@@ -33,6 +33,7 @@ internal partial class LogParser
                 ["0:00:00.0"] = new(@"(?<first_unicode_dot>·).+\r?$", DefaultOptions),
                 ["Operating system:"] = LogParserResult.OsInfoInLog,
                 ["Current Time:"] = new(@"Current Time: (?<log_start_timestamp>.+)\r?$", DefaultOptions),
+                ["Installation ID:"] = new(@"Installation ID: (?<hw_id>.+)\r?$", DefaultOptions), //todo: fix when it's actually implemented
                 ["Physical device intialized"] = new(@"Physical device intialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
                 ["Found vulkan-compatible GPU:"] = new(@"Found vulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
                 ["Finished reading database from file:"] = new(@"Finished reading database from file: (?<compat_database_path>.*compat_database.dat).*\r?$", DefaultOptions),

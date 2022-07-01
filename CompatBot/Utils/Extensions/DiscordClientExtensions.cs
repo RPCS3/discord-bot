@@ -185,18 +185,13 @@ public static class DiscordClientExtensions
         if (string.IsNullOrEmpty(emojiName))
             return fallbackEmoji;
 
-        try
-        {
-            if (!emojiName.StartsWith(":"))
-                emojiName = ":" + emojiName;
-            if (!emojiName.EndsWith(":"))
-                emojiName += ":";
-            return DiscordEmoji.FromName(client, emojiName);
-        }
-        catch
-        {
-            return fallbackEmoji;
-        }
+        if (DiscordEmoji.TryFromName(client, emojiName, true, out var result))
+            return result;
+        else if (DiscordEmoji.TryFromName(client, $":{emojiName}:", true, out result))
+            return result;
+        else if (DiscordEmoji.TryFromUnicode(emojiName, out result))
+            return result;
+        return fallbackEmoji;
     }
 
     public static Task SendMessageAsync(this DiscordChannel channel, string message, byte[]? attachment, string? filename)

@@ -119,9 +119,6 @@ internal static class HwInfoProvider
             }
             else if (ext.StartsWith("TSX"))
             {
-                if (ext.Contains("disabled"))
-                    continue;
-
                 result |= CpuFeatures.Tsx;
                 if (ext.Contains("TSX-FA"))
                     result |= CpuFeatures.TsxFa;

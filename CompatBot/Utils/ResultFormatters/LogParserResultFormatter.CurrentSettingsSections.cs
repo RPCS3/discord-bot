@@ -19,6 +19,13 @@ internal static partial class LogParserResult
             systemInfo = string.Join('\n', systemInfo.Split('\n', 4).Take(3)).Trim();
             items["log_from_ui"] = EnabledMark;
         }
+        var idxStart = systemInfo.IndexOf('\0');
+        if (idxStart > 0)
+        {
+            var idxEnd = systemInfo.IndexOf(" | ", idxStart);
+            if (idxEnd > 0)
+                systemInfo = systemInfo[..idxStart] + systemInfo[idxEnd..];
+        }
         var sysInfoParts = systemInfo.Split(NewLineChars, StringSplitOptions.RemoveEmptyEntries);
         var buildInfo = sysInfoParts.Length > 0 ? BuildInfoInLog.Match(sysInfoParts[0]) : BuildInfoInLog.Match(systemInfo);
         var cpuInfo = sysInfoParts.Length > 1 ? CpuInfoInLog.Match(sysInfoParts[1]) : CpuInfoInLog.Match(systemInfo);
