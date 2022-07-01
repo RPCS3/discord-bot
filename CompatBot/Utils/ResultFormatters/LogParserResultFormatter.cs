@@ -364,6 +364,7 @@ internal static partial class LogParserResult
 
             if (gpuName.EndsWith("(intel)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith("(nvidia)", StringComparison.OrdinalIgnoreCase)
+                || gpuName.EndsWith(" corporation)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith("(amd)", StringComparison.OrdinalIgnoreCase)
                 || gpuName.EndsWith(" inc.)", StringComparison.OrdinalIgnoreCase) // ati
                 || gpuName.EndsWith("(apple)", StringComparison.OrdinalIgnoreCase)
@@ -372,8 +373,10 @@ internal static partial class LogParserResult
             {
                 var idx = gpuName.LastIndexOf('(');
                 if (idx > 0)
-                    return gpuName[..idx].TrimEnd();
+                    gpuName = gpuName[..idx].TrimEnd();
             }
+            if (gpuName.EndsWith("/PCIe/SSE2"))
+                gpuName = gpuName[..^10];
             return gpuName;
         }
         if (items["vulkan_initialized_device"] != null)
