@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Utils;
@@ -131,10 +132,20 @@ internal static class ContentFilter
             }
 #endif
 
-        if (string.IsNullOrEmpty(message.Content))
-            return true;
-
-        var trigger = await FindTriggerAsync(FilterContext.Chat, message.Content).ConfigureAwait(false);
+        var content = new StringBuilder(message.Content);
+        foreach (var attachment in message.Attachments)
+            content.AppendLine(attachment.FileName);
+        foreach (var embed in message.Embeds)
+        {
+            content.AppendLine(embed.Title)
+                .AppendLine(embed.Description);
+            foreach (var field in embed.Fields)
+            {
+                content.AppendLine(field.Name);
+                content.AppendLine(field.Value);
+            }
+        }
+        var trigger = await FindTriggerAsync(FilterContext.Chat, content.ToString()).ConfigureAwait(false);
         if (trigger == null)
             return true;
 
