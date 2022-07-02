@@ -39,10 +39,10 @@
     <AdditionalFiles Include="..\win32_error_codes.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01146" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.3.0-nightly-01146" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.3.0-nightly-01146" />
-    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.3.0-nightly-01146" />
+    <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01149" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.3.0-nightly-01149" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.3.0-nightly-01149" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.3.0-nightly-01149" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.57.0.2684" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="5.0.6" />
@@ -61,10 +61,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.2.0" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.170.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.15.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.16.1" />
     <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
     <PackageReference Include="NLog" Version="5.0.1" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.0.1" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.0.2" />
     <PackageReference Include="SharpCompress" Version="0.32.1" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta14" />
