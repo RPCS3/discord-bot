@@ -43,7 +43,10 @@ internal static partial class LogParserResult
         }
         if (cpuInfo.Success)
         {
-            var cpuModel = cpuInfo.Groups["cpu_model"].Value.StripMarks().Replace(" CPU", "").Trim();
+            var cpuModel = cpuInfo.Groups["cpu_model"].Value.StripMarks()
+                .Replace(" CPU", "")
+                .Replace("AMD FX -", "AMD FX-")
+                .Trim();
             if (cpuModel.StartsWith("DG1", StringComparison.OrdinalIgnoreCase))
             {
                 cpuModel = cpuModel[3] switch

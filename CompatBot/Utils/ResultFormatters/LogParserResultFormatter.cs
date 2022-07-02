@@ -349,13 +349,6 @@ internal static partial class LogParserResult
         };
         if (!string.IsNullOrEmpty(threadSched))
             items["thread_scheduler"] = threadSched;
-
-        if (items["cpu_model"] is string cpu)
-        {
-            cpu = cpu.Replace("AMD FX -", "AMD FX-");
-
-            items["cpu_model"] = cpu;
-        }
         
         static string? StripOpenGlMaker(string? gpuName)
         {
