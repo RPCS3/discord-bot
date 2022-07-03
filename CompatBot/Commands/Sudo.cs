@@ -134,6 +134,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
     {
         try
         {
+            Config.Log.Factory.Flush();
             var logPath = Config.CurrentLogPath;
             if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
                 logPath = Path.Combine(Config.LogPath, $"bot.{logDate:yyyyMMdd}.0.log");
