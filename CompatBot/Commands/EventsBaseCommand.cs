@@ -294,13 +294,14 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
         string? errorMsg = null;
         DiscordMessage? txt;
         ComponentInteractionCreateEventArgs? btn;
+        DiscordMessageBuilder messageBuilder;
 
         step1:
         // step 1: get the new start date
         saveEdit.SetEnabled(evt.IsComplete());
-        var messageBuilder = new DiscordMessageBuilder()
+        messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **start date and time**")
-            .WithEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm} PST`\nBy default all times use UTC, only limited number of time zones supported"))
+            .WithEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm}`\nBy default all times use UTC, only limited number of time zones supported"))
             .AddComponents(lastPage, nextPage)
             .AddComponents(saveEdit, abort);
         errorMsg = null;
