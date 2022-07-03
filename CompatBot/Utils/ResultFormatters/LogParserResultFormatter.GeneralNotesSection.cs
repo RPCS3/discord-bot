@@ -249,8 +249,8 @@ internal static partial class LogParserResult
 
         if (items["os_type"] == "Windows"
             && Version.TryParse(items["os_version"], out var winVersion)
-            && (winVersion.Major < 10 || winVersion.Build < 19042))
-            notes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/software-download/windows10) to currently supported version");
+            && (winVersion is { Major: < 10 } or { Build: < 19043 or (> 20000 and < 22000) }))
+            notes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to currently supported version");
             
         var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
         if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))

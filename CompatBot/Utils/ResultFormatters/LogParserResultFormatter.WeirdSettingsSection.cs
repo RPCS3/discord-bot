@@ -414,7 +414,7 @@ internal static partial class LogParserResult
             CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckGt5Settings(serial, items, generalNotes);
             CheckGt6Settings(serial, items, notes, generalNotes);
-            CheckRatchetSettings(serial, items, notes, generalNotes);
+            //CheckRatchetSettings(serial, items, notes, generalNotes);
             CheckSly4Settings(serial, items, notes);
             CheckDragonsCrownSettings(serial, items, notes);
             CheckLbpSettings(serial, items, generalNotes);
@@ -1200,11 +1200,6 @@ internal static partial class LogParserResult
     {
         if (!RatchetToDIds.Contains(serial))
             return;
-            
-        if (Version.TryParse(items["os_version"], out var winVersion)
-            && winVersion.Major == 10
-            && winVersion.Build < 19043)
-            generalNotes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/software-download/windows10) to the latest version to prevent some issues with this game");
     }
 
     private static readonly HashSet<string> Sly4Ids = new()

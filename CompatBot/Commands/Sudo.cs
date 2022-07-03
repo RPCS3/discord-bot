@@ -134,6 +134,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
     {
         try
         {
+            Config.Log.Factory.Flush();
             var logPath = Config.CurrentLogPath;
             if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
                 logPath = Path.Combine(Config.LogPath, $"bot.{logDate:yyyyMMdd}.0.log");
@@ -148,6 +149,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
             await using var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default);
             await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
             await gzip.FlushAsync().ConfigureAwait(false);
+            gzip.Close();
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
@@ -165,12 +167,17 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
 
     [Command("dbbackup"), Aliases("dbb"), TriggersTyping]
     [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
-    public async Task DbBackup(CommandContext ctx)
+    public async Task DbBackup(CommandContext ctx, [Description("Name of the database")]string name = "")
     {
-        await using (var db = new ThumbnailDb())
-            await BackupDb(ctx, db).ConfigureAwait(false);
-        await using (var db = new HardwareDb())
-            await BackupDb(ctx, db).ConfigureAwait(false);
+        name = name.ToLower();
+        if (name.EndsWith(".db"))
+            name = name[..^3];
+        if (name != "hw")
+            await using (var db = new ThumbnailDb())
+                await BackupDb(ctx, db).ConfigureAwait(false);
+        if (name != "thumbs")
+            await using (var db = new HardwareDb())
+                await BackupDb(ctx, db).ConfigureAwait(false);
     }
     
     private static async Task BackupDb(CommandContext ctx, DbContext db)
@@ -178,21 +185,37 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         string? dbName = null;
         try
         {
-            string dbPath;
+            await using var botDb = new BotDb();
+            string dbPath, dbDir;
             await using (var connection = db.Database.GetDbConnection())
             {
                 dbPath = connection.DataSource;
-                await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
+                dbDir = Path.GetDirectoryName(dbPath) ?? ".";
+                dbName = Path.GetFileNameWithoutExtension(dbPath);
+
+                var tsName = "db-vacuum-" + dbName;
+                var vacuumTs = await botDb.BotState.FirstOrDefaultAsync(v => v.Key == tsName).ConfigureAwait(false);
+                if (vacuumTs?.Value is null
+                    || (long.TryParse(vacuumTs.Value, out var vtsTicks)
+                        && vtsTicks < DateTime.UtcNow.AddDays(-30).Ticks))
+                {
+                    await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
+                    
+                    var newTs = DateTime.UtcNow.Ticks.ToString();
+                    if (vacuumTs is null)
+                        botDb.BotState.Add(new() { Key = tsName, Value = newTs });
+                    else
+                        vacuumTs.Value = newTs;
+                    await botDb.SaveChangesAsync().ConfigureAwait(false);
+                }
             }
-            var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
-            dbName = Path.GetFileNameWithoutExtension(dbPath);
             await using var result = Config.MemoryStreamManager.GetStream();
-            using var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression});
-            foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
-            {
-                await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                zip.Write(Path.GetFileName(fname), dbData);
-            }
+            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.Default}))
+                foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, }))
+                {
+                    await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    zip.Write(Path.GetFileName(fname), dbData);
+                }
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
