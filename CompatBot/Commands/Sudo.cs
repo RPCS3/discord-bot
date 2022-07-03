@@ -138,24 +138,25 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
             Config.Log.Factory.Flush();
             var logPath = Config.CurrentLogPath;
             if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
-                logPath = Path.Combine(Config.LogPath, $"bot.{logDate:yyyyMMdd}.0.log");
+                logPath = Path.Combine(Config.LogPath, $"bot.{logDate:yyyyMMdd}.*.log");
             if (!File.Exists(logPath))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Log file does not exist for specified day", true).ConfigureAwait(false);
                 return;
             }
                 
-            await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             await using var result = Config.MemoryStreamManager.GetStream();
-            await using (var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default))
-            {
-                await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
-                await gzip.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
-            }
+            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.Default}))
+                foreach (var fname in Directory.EnumerateFiles(Config.LogPath, Path.GetFileName(logPath), new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, }))
+                {
+                    await using var log = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    zip.Write(Path.GetFileName(fname), log);
+                }
+
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".gz", result)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".zip", result)).ConfigureAwait(false);
             }
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
