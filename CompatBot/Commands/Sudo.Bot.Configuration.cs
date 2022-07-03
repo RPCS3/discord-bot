@@ -50,7 +50,7 @@ internal partial class Sudo
                 Config.RebuildConfiguration();
                 key = SqlConfiguration.ConfigVarPrefix + key;
                 await using var db = new BotDb();
-                var stateValue = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
+                var stateValue = await db.BotState.FirstOrDefaultAsync(v => v.Key == key).ConfigureAwait(false);
                 if (stateValue == null)
                 {
                     stateValue = new BotState {Key = key, Value = value};

@@ -185,16 +185,32 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         string? dbName = null;
         try
         {
-            string dbPath;
+            await using var botDb = new BotDb();
+            string dbPath, dbDir;
             await using (var connection = db.Database.GetDbConnection())
             {
                 dbPath = connection.DataSource;
-                await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
+                dbDir = Path.GetDirectoryName(dbPath) ?? ".";
+                dbName = Path.GetFileNameWithoutExtension(dbPath);
+
+                var tsName = "db-vacuum-" + dbName;
+                var vacuumTs = await botDb.BotState.FirstOrDefaultAsync(v => v.Key == tsName).ConfigureAwait(false);
+                if (vacuumTs?.Value is null
+                    || (long.TryParse(vacuumTs.Value, out var vtsTicks)
+                        && vtsTicks < DateTime.UtcNow.AddDays(-30).Ticks))
+                {
+                    await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
+                    
+                    var newTs = DateTime.UtcNow.Ticks.ToString();
+                    if (vacuumTs is null)
+                        botDb.BotState.Add(new() { Key = tsName, Value = newTs });
+                    else
+                        vacuumTs.Value = newTs;
+                    await botDb.SaveChangesAsync().ConfigureAwait(false);
+                }
             }
-            var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
-            dbName = Path.GetFileNameWithoutExtension(dbPath);
             await using var result = Config.MemoryStreamManager.GetStream();
-            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression}))
+            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.Default}))
                 foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, }))
                 {
                     await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
