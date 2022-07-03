@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
+using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
@@ -146,10 +147,11 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
                 
             await using var log = File.Open(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             await using var result = Config.MemoryStreamManager.GetStream();
-            await using var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default);
-            await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
-            await gzip.FlushAsync().ConfigureAwait(false);
-            gzip.Close();
+            await using (var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default))
+            {
+                await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
+                await gzip.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
+            }
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
@@ -161,7 +163,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         catch (Exception e)
         {
             Config.Log.Warn(e, "Failed to upload current log");
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to send the log", true).ConfigureAwait(false);
+            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to send the log\n{e}".Trim(EmbedPager.MaxMessageLength), true).ConfigureAwait(false);
         }
     }
 
