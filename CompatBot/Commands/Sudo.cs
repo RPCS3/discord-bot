@@ -165,12 +165,17 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
 
     [Command("dbbackup"), Aliases("dbb"), TriggersTyping]
     [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
-    public async Task DbBackup(CommandContext ctx)
+    public async Task DbBackup(CommandContext ctx, [Description("Name of the database")]string name = "")
     {
-        await using (var db = new ThumbnailDb())
-            await BackupDb(ctx, db).ConfigureAwait(false);
-        await using (var db = new HardwareDb())
-            await BackupDb(ctx, db).ConfigureAwait(false);
+        name = name.ToLower();
+        if (name.EndsWith(".db"))
+            name = name[..^3];
+        if (name != "hw")
+            await using (var db = new ThumbnailDb())
+                await BackupDb(ctx, db).ConfigureAwait(false);
+        if (name != "thumbs")
+            await using (var db = new HardwareDb())
+                await BackupDb(ctx, db).ConfigureAwait(false);
     }
     
     private static async Task BackupDb(CommandContext ctx, DbContext db)
