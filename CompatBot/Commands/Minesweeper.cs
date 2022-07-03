@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
+using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
@@ -68,7 +69,7 @@ internal sealed class Minesweeper : BaseCommandModuleCustom
 		}
 
 		var msgLen = (4 * width * height - 4) + (height - 1) + mineCount * MaxBombLength + (width * height - mineCount) * "0️⃣".Length + header.Length;
-		if (width * height > 198 || msgLen > 2000) // for some reason discord would cut everything beyond 198 cells even if the content length is well within the limits
+		if (width * height > 198 || msgLen > EmbedPager.MaxMessageLength) // for some reason discord would cut everything beyond 198 cells even if the content length is well within the limits
 		{
 			await ctx.Channel.SendMessageAsync("Requested field size is too large for one message").ConfigureAwait(false);
 			return;

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
+using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
@@ -150,7 +151,6 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
             {
                 await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
                 await gzip.FlushAsync(Config.Cts.Token).ConfigureAwait(false);
-                gzip.Close();
             }
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
@@ -163,7 +163,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         catch (Exception e)
         {
             Config.Log.Warn(e, "Failed to upload current log");
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to send the log\n{e}", true).ConfigureAwait(false);
+            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to send the log\n{e}".Trim(EmbedPager.MaxMessageLength), true).ConfigureAwait(false);
         }
     }
 

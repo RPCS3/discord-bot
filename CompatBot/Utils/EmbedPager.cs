@@ -15,6 +15,7 @@ internal static class EmbedPager
     public const int MaxFieldLength = 1024;
     public const int MaxFooterLength = 2048;
     public const int MaxAuthorNameLength = 256;
+    public const int MaxMessageLength = 2000;
 
     public static IEnumerable<DiscordEmbed> BreakInEmbeds(this IEnumerable<string> lines, DiscordEmbedBuilder builder, int maxLinesPerField = 10, string? titleBase = null)
     {
