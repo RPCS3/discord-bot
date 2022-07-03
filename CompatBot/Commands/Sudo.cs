@@ -149,6 +149,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
             await using var gzip = new GZipStream(result, CompressionMode.Compress, CompressionLevel.Default);
             await log.CopyToAsync(gzip, Config.Cts.Token).ConfigureAwait(false);
             await gzip.FlushAsync().ConfigureAwait(false);
+            gzip.Close();
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
@@ -193,12 +194,12 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
             var dbDir = Path.GetDirectoryName(dbPath) ?? ".";
             dbName = Path.GetFileNameWithoutExtension(dbPath);
             await using var result = Config.MemoryStreamManager.GetStream();
-            using var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression});
-            foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions {IgnoreInaccessible = true, RecurseSubdirectories = false,}))
-            {
-                await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                zip.Write(Path.GetFileName(fname), dbData);
-            }
+            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.BestCompression}))
+                foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, }))
+                {
+                    await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    zip.Write(Path.GetFileName(fname), dbData);
+                }
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
