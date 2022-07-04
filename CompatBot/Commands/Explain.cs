@@ -397,8 +397,7 @@ internal sealed class Explain: BaseCommandModuleCustom
                 }
 
                 var explain = termLookupResult.explanation;
-                StatsStorage.ExplainStatCache.TryGetValue(explain.Keyword, out int stat);
-                StatsStorage.ExplainStatCache.Set(explain.Keyword, ++stat, StatsStorage.CacheTime);
+                StatsStorage.IncExplainStat(explain.Keyword);
                 msgBuilder = new DiscordMessageBuilder().WithContent(explain.Text);
                 if (!usedReply && useReply)
                     msgBuilder.WithReply(sourceMessage.Id);
