@@ -297,7 +297,7 @@ internal static partial class LogParserResult
             {
                 CleanupValues(state);
                 BuildInfoSection(builder, collection);
-                var hwUpdateTask = HwInfoProvider.AddOrUpdateSystemAsync(message, collection, Config.Cts.Token);
+                var hwUpdateTask = HwInfoProvider.AddOrUpdateSystemAsync(client, message, collection, Config.Cts.Token);
                 var colA = BuildCpuSection(collection);
                 var colB = BuildGpuSection(collection);
                 BuildSettingsSections(builder, collection, colA, colB);

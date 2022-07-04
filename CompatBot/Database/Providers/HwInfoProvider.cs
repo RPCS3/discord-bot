@@ -6,16 +6,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
+using DSharpPlus;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Database.Providers;
 
 internal static class HwInfoProvider
 {
     private static readonly Encoding Utf8 = new UTF8Encoding(false);
+    private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
+    private static readonly MemoryCache UserCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
-    public static async Task AddOrUpdateSystemAsync(DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
+    public static async Task AddOrUpdateSystemAsync(DiscordClient client, DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
     {
+        var ignoreAuthor = msg.Author.IsWhitelisted(client, msg.Channel.Guild);
+        byte counter = 0;
+        if (!ignoreAuthor && (!UserCache.TryGetValue(msg.Author.Id, out counter) || counter > 4))
+        {
+            Config.Log.Debug($"Ignoring HW report for user {msg.Author.Id} ({msg.Author.Username}#{msg.Author.Discriminator})");
+            return;
+        }
+
         if (items["cpu_model"] is not string cpuString
             || (items["gpu_name"] ?? items["gpu_info"]) is not string gpuString
             || !int.TryParse(items["thread_count"], out var threadCount)
@@ -83,6 +95,8 @@ internal static class HwInfoProvider
         {
             Config.Log.Error(e, "Failed to update hardware db");
         }
+        if (!ignoreAuthor)
+            UserCache.Set(msg.Author.Id, counter + 1, CacheTime);
     }
 
     private static byte[] GetHwId(NameValueCollection items, DiscordMessage message)
