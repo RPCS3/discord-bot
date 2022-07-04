@@ -78,7 +78,7 @@ internal static class DiscordInviteFilter
                 }
                 catch (Exception e)
                 {
-                    Config.Log.Warn($"Some missing permissions in #{channel.Name}: {e.Message}");
+                    Config.Log.Warn(e, $"Some missing permissions in #{channel.Name}");
                 }
             }
         }

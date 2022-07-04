@@ -27,7 +27,7 @@ internal static class GlobalMessageCache
             lock (MessageQueue)
             {
                 if (!MessageQueue.TryGetValue(args.Channel.Id, out queue))
-                    MessageQueue[args.Channel.Id] = queue = new FixedLengthBuffer<ulong, DiscordMessage>(KeyGen);
+                    MessageQueue[args.Channel.Id] = queue = new(KeyGen);
             }
         lock(queue.SyncObj)
             queue.Add(args.Message);
@@ -83,7 +83,7 @@ internal static class GlobalMessageCache
         if (!MessageQueue.TryGetValue(ch.Id, out var queue))
             lock (MessageQueue)
                 if (!MessageQueue.TryGetValue(ch.Id, out queue))
-                    MessageQueue[ch.Id] = queue = new FixedLengthBuffer<ulong, DiscordMessage>(KeyGen);
+                    MessageQueue[ch.Id] = queue = new(KeyGen);
         List<DiscordMessage> result;
         lock(queue.SyncObj)
             result = queue.Reverse().Take(count).ToList();
@@ -114,7 +114,7 @@ internal static class GlobalMessageCache
         if (!MessageQueue.TryGetValue(ch.Id, out var queue))
             lock (MessageQueue)
                 if (!MessageQueue.TryGetValue(ch.Id, out queue))
-                    MessageQueue[ch.Id] = queue = new FixedLengthBuffer<ulong, DiscordMessage>(KeyGen);
+                    MessageQueue[ch.Id] = queue = new(KeyGen);
         List<DiscordMessage> result;
         lock(queue.SyncObj)
             result = queue.Reverse().SkipWhile(m => m.Id >= msgId).Take(count).ToList();
