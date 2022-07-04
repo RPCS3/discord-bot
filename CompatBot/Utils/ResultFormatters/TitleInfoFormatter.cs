@@ -102,10 +102,7 @@ internal static class TitleInfoFormatter
                 desc += " (cached)";
             var cacheTitle = info.Title ?? gameTitle;
             if (!string.IsNullOrEmpty(cacheTitle))
-            {
-                StatsStorage.GameStatCache.TryGetValue(cacheTitle, out int stat);
-                StatsStorage.GameStatCache.Set(cacheTitle, ++stat, StatsStorage.CacheTime);
-            }
+                StatsStorage.IncGameStat(cacheTitle);
             var title = $"{productCodePart}{cacheTitle?.Trim(200)}{onlineOnlyPart}";
             if (string.IsNullOrEmpty(title))
                 desc = "";
@@ -143,8 +140,7 @@ internal static class TitleInfoFormatter
                 gameTitle = titleName;
             if (!string.IsNullOrEmpty(gameTitle))
             {
-                StatsStorage.GameStatCache.TryGetValue(gameTitle, out int stat);
-                StatsStorage.GameStatCache.Set(gameTitle, ++stat, StatsStorage.CacheTime);
+                StatsStorage.IncGameStat(gameTitle);
                 result.Title = $"{productCodePart}{gameTitle.Sanitize().Trim(200)}";
             }
             return result;

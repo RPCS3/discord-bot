@@ -32,7 +32,7 @@ internal static class IsTheGamePlayableHandler
 
     public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
     {
-        if (DefaultHandlerFilter.IsFluff(args.Message))
+        if (DefaultHandlerFilter.IsFluff(args.Message) || args.Channel is null)
             return;
 
 #if !DEBUG
@@ -125,10 +125,7 @@ internal static class IsTheGamePlayableHandler
                 return (null, null);
 
             if (!string.IsNullOrEmpty(info.Title))
-            {
-                StatsStorage.GameStatCache.TryGetValue(info.Title, out int stat);
-                StatsStorage.GameStatCache.Set(info.Title, ++stat, StatsStorage.CacheTime);
-            }
+                StatsStorage.IncGameStat(info.Title);
             return (code, info);
         }
         catch (Exception e)

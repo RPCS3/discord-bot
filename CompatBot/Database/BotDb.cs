@@ -44,7 +44,7 @@ internal class BotDb: DbContext
         modelBuilder.Entity<DisabledCommand>().HasIndex(c => c.Command).IsUnique().HasDatabaseName("disabled_command_command");
         modelBuilder.Entity<WhitelistedInvite>().HasIndex(i => i.GuildId).IsUnique().HasDatabaseName("whitelisted_invite_guild_id");
         modelBuilder.Entity<EventSchedule>().HasIndex(e => new {e.Year, e.EventName}).HasDatabaseName("event_schedule_year_event_name");
-        modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Key }).IsUnique().HasDatabaseName("stats_category_key");
+        modelBuilder.Entity<Stats>().HasIndex(s => new { s.Category, s.Bucket, s.Key }).IsUnique().HasDatabaseName("stats_category_bucket_key");
         modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasDatabaseName("kot_user_id");
         modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasDatabaseName("doggo_user_id");
         modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasDatabaseName("forced_nickname_guild_id_user_id");
@@ -169,6 +169,7 @@ internal class Stats
     public int Id { get; set; }
     [Required]
     public string Category { get; set; } = null!;
+    public string? Bucket { get; set; }
     [Required]
     public string Key { get; set; } = null!;
     public int Value { get; set; }

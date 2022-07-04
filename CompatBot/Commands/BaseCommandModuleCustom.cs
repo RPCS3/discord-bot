@@ -63,8 +63,7 @@ internal class BaseCommandModuleCustom : BaseCommandModule
     {
         if (ctx.Command?.QualifiedName is string qualifiedName)
         {
-            StatsStorage.CmdStatCache.TryGetValue(qualifiedName, out int counter);
-            StatsStorage.CmdStatCache.Set(qualifiedName, ++counter, StatsStorage.CacheTime);
+            StatsStorage.IncCmdStat(qualifiedName);
             Config.TelemetryClient?.TrackRequest(qualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.OK.ToString(), true);
         }
 

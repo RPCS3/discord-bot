@@ -171,12 +171,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
 
     private static void AppendCmdStats(DiscordEmbedBuilder embed)
     {
-        var commandStats = StatsStorage.CmdStatCache.GetCacheKeys<string>();
-        var sortedCommandStats = commandStats
-            .Select(c => (name: c, stat: StatsStorage.CmdStatCache.Get(c) as int?))
-            .Where(c => c.stat.HasValue)
-            .OrderByDescending(c => c.stat)
-            .ToList();
+        var sortedCommandStats = StatsStorage.GetCmdStats();
         var totalCalls = sortedCommandStats.Sum(c => c.stat);
         var top = sortedCommandStats.Take(5).ToList();
         if (top.Count == 0)
@@ -192,12 +187,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
 
     private static void AppendExplainStats(DiscordEmbedBuilder embed)
     {
-        var terms = StatsStorage.ExplainStatCache.GetCacheKeys<string>();
-        var sortedTerms = terms
-            .Select(t => (term: t, stat: StatsStorage.ExplainStatCache.Get(t) as int?))
-            .Where(t => t.stat.HasValue)
-            .OrderByDescending(t => t.stat)
-            .ToList();
+        var sortedTerms = StatsStorage.GetExplainStats();
         var totalExplains = sortedTerms.Sum(t => t.stat);
         var top = sortedTerms.Take(5).ToList();
         if (top.Count == 0)
@@ -213,12 +203,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
 
     private static void AppendGameLookupStats(DiscordEmbedBuilder embed)
     {
-        var gameTitles = StatsStorage.GameStatCache.GetCacheKeys<string>();
-        var sortedTitles = gameTitles
-            .Select(t => (title: t, stat: StatsStorage.GameStatCache.Get(t) as int?))
-            .Where(t => t.stat.HasValue)
-            .OrderByDescending(t => t.stat)
-            .ToList();
+        var sortedTitles = StatsStorage.GetGameStats();
         var totalLookups = sortedTitles.Sum(t => t.stat);
         var top = sortedTitles.Take(5).ToList();
         if (top.Count == 0)

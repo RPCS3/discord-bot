@@ -508,10 +508,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
                                                        || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
                                                        || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
                 foreach (var title in searchHits.Select(t => t.info.Title).Distinct())
-                {
-                    StatsStorage.GameStatCache.TryGetValue(title, out int stat);
-                    StatsStorage.GameStatCache.Set(title, ++stat, StatsStorage.CacheTime);
-                }
+                    StatsStorage.IncGameStat(title);
                 foreach (var resultInfo in sortedList.Take(request.AmountRequested))
                 {
                     var info = resultInfo.AsString();
