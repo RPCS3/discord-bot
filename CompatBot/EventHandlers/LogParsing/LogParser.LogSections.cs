@@ -320,6 +320,9 @@ internal partial class LogParser
         state.WipMultiValueCollection = new();
         Copy(
             "build_and_specs", "fw_version_installed",
+            "log_start_timestamp", "hw_id",
+            "os_type", "posix_name", "posix_release", "posix_version", "macos_version",
+            "os_version_major", "os_version_minor", "os_version_build", "os_service_pack", "os_compat_mode",
             "first_unicode_dot",
             "vulkan_gpu", "d3d_gpu",
             "driver_version", "driver_manuf",

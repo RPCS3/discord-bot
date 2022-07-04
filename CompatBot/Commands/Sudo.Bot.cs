@@ -231,6 +231,7 @@ internal partial class Sudo
             if (SandboxDetector.Detect() != SandboxType.Docker)
             {
                 Config.Log.Info("Restarting...");
+                Config.Log.Factory.Flush();
                 using var self = new Process {StartInfo = RestartInfo};
                 self.Start();
                 Config.InMemorySettings["shutdown"] = "true";

@@ -133,18 +133,21 @@ internal static class ContentFilter
 #endif
 
         var content = new StringBuilder(message.Content);
-        foreach (var attachment in message.Attachments)
-            content.AppendLine(attachment.FileName);
-        foreach (var embed in message.Embeds)
-        {
-            content.AppendLine(embed.Title)
-                .AppendLine(embed.Description);
-            foreach (var field in embed.Fields)
+        if (message.Attachments is not null)
+            foreach (var attachment in message.Attachments.Where(a => a is not null))
+                content.AppendLine(attachment.FileName);
+        if (message.Embeds is not null)
+            foreach (var embed in message.Embeds.Where(e => e is not null))
             {
-                content.AppendLine(field.Name);
-                content.AppendLine(field.Value);
+                content.AppendLine(embed.Title)
+                    .AppendLine(embed.Description);
+                if (embed.Fields is not null)
+                    foreach (var field in embed.Fields.Where(f => f is not null))
+                    {
+                        content.AppendLine(field.Name);
+                        content.AppendLine(field.Value);
+                    }
             }
-        }
         var trigger = await FindTriggerAsync(FilterContext.Chat, content.ToString()).ConfigureAwait(false);
         if (trigger == null)
             return true;
