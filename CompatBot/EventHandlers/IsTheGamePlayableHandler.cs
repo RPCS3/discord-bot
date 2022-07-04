@@ -32,7 +32,7 @@ internal static class IsTheGamePlayableHandler
 
     public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
     {
-        if (DefaultHandlerFilter.IsFluff(args.Message))
+        if (DefaultHandlerFilter.IsFluff(args.Message) || args.Channel is null)
             return;
 
 #if !DEBUG
