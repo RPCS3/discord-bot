@@ -15,7 +15,6 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands;
 
@@ -34,6 +33,9 @@ internal sealed class BotStats: BaseCommandModuleCustom
             .AddField("Discord Latency", $"{ctx.Client.Ping} ms", true);
         if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
             embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
+        var osInfo = RuntimeInformation.OSDescription;
+        if (Environment.OSVersion.Platform is PlatformID.Unix or PlatformID.MacOSX)
+            osInfo = RuntimeInformation.RuntimeIdentifier;
         embed.AddField("API Tokens", GetConfiguredApiStats(), true)
             .AddField("Memory Usage", $"GC: {GC.GetGCMemoryInfo().HeapSizeBytes.AsStorageUnit()}/{GC.GetGCMemoryInfo().TotalAvailableMemoryBytes.AsStorageUnit()}\n" +
                                       $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
@@ -41,10 +43,10 @@ internal sealed class BotStats: BaseCommandModuleCustom
                                       $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
                                       $" S: {Config.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.SmallPoolInUseSize + Config.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}", true)
             .AddField("GitHub Rate Limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-            .AddField(".NET Info", $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n" +
+            .AddField(".NET Info", $"{RuntimeInformation.FrameworkDescription}\n" +
                                    $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode", true)
             .AddField("Runtime Info", $"Confinement: {SandboxDetector.Detect()}\n" +
-                                      $"OS: {RuntimeInformation.OSDescription} {Environment.OSVersion}\n" +
+                                      $"OS: {osInfo}\n" +
                                       $"CPUs: {Environment.ProcessorCount}\n" +
                                       $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
         AppendPiracyStats(embed);
