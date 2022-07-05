@@ -135,9 +135,6 @@ internal sealed partial class Psn
                 var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No)!;
                 await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
             }
-            if (embeds.Count > 1 || embeds[0].Fields.Count > 0)
-                embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
-
             var resultMsgBuilder = new DiscordMessageBuilder()
                 .WithEmbed(embeds[0])
                 .WithReply(ctx.Message.Id);
