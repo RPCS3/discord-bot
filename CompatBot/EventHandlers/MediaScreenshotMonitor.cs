@@ -10,7 +10,6 @@ using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
-using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;

@@ -13,7 +13,6 @@ using CompatBot.Utils.ResultFormatters;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
 

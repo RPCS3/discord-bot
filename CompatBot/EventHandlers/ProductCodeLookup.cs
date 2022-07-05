@@ -82,7 +82,7 @@ internal static class ProductCodeLookup
                     await FixAfrikaAsync(client, message, result.builder).ConfigureAwait(false);
                     var messageBuilder = new DiscordMessageBuilder().WithEmbed(result.builder);
                     if (LimitedToSpamChannel.IsSpamChannel(channel))
-                        messageBuilder.AddComponents(new DiscordButtonComponent(ButtonStyle.Secondary, $"replace with game updates:{message.Author.Id}:{message.Id}:{result.code}", "Check game updates instead", emoji: lookupEmoji));
+                        messageBuilder.AddComponents(new DiscordButtonComponent(ButtonStyle.Secondary, $"replace with game updates:{message.Author.Id}:{message.Id}:{result.code}", "Check for updates", emoji: lookupEmoji));
                     await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);
                 }
                 catch (Exception e)
