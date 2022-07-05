@@ -33,9 +33,9 @@ internal static class TitlePatchFormatter
             var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
             if (pages > 1)
                 embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxFieldTitleLength);
-            var desc = $"Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}";
-            if (patch?.OfflineCacheTimestamp is DateTime cacheTimestamp)
-                desc = $"{desc}\n(Offline cache, last updated {(DateTime.UtcNow - cacheTimestamp).AsTimeDeltaDescription()} ago)";
+            var desc = $"ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}.\n" +
+                       "\n" +
+                       "⚠️ You **must** install updates starting with the first. You **can not** install only the latest update.";
             embedBuilder.Description = desc;
             var i = 0;
             do
@@ -64,6 +64,8 @@ internal static class TitlePatchFormatter
             embedBuilder.Description = "No update information available";
         if (!result.Any() || embedBuilder.Fields.Any())
             result.Add(embedBuilder);
+        if (patch?.OfflineCacheTimestamp is DateTime cacheTimestamp)
+            result[^1].WithFooter($"Offline cache, last updated {(DateTime.UtcNow - cacheTimestamp).AsTimeDeltaDescription()} ago");
         return result;
     }
 

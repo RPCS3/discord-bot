@@ -16,6 +16,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity.Extensions;
 using PsnClient.POCOs;
 
@@ -134,9 +135,6 @@ internal sealed partial class Psn
                 var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No)!;
                 await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
             }
-            if (embeds.Count > 1 || embeds[0].Fields.Count > 0)
-                embeds[^1] = embeds.Last().WithFooter("Note that you need to install ALL listed updates, one by one");
-
             var resultMsgBuilder = new DiscordMessageBuilder()
                 .WithEmbed(embeds[0])
                 .WithReply(ctx.Message.Id);
@@ -219,6 +217,39 @@ internal sealed partial class Psn
             {
                 await CheckFwUpdateForAnnouncementAsync(client).ConfigureAwait(false);
                 await Task.Delay(TimeSpan.FromHours(1), cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        internal static async Task OnCheckUpdatesButtonClick(DiscordClient client, ComponentInteractionCreateEventArgs e)
+        {
+            var btnId = e.Interaction.Data.CustomId;
+            var parts = btnId.Split(':');
+            if (parts.Length != 4)
+            {
+                Config.Log.Warn("Invalid interaction id: " + btnId);
+                return;
+            }
+
+            try
+            {
+                var authorId = ulong.Parse(parts[1]);
+                var refMsgId = ulong.Parse(parts[2]);
+                var productCode = parts[3];
+                if (e.User.Id != authorId)
+                    return;
+                    
+                e.Handled = true;
+                await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
+                await e.Message.DeleteAsync().ConfigureAwait(false);
+                var refMsg = await e.Channel.GetMessageAsync(refMsgId).ConfigureAwait(false);
+                var cne = client.GetCommandsNext();
+                var cmd = cne.FindCommand("psn check updates", out _);
+                var context = cne.CreateContext(refMsg, Config.CommandPrefix, cmd, productCode);
+                await cne.ExecuteCommandAsync(context).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Config.Log.Warn(ex);
             }
         }
     }
