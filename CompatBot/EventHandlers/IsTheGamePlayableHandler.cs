@@ -51,44 +51,52 @@ internal static class IsTheGamePlayableHandler
         if (!matches.Any())
             return;
 
-        var gameTitle = matches.Select(m => m.Groups["game_title_1"].Value)
-            .Concat(matches.Select(m => m.Groups["game_title_2"].Value))
-            .Concat(matches.Select(m => m.Groups["game_title_3"].Value))
-            .FirstOrDefault(t => !string.IsNullOrEmpty(t));
-        if (string.IsNullOrEmpty(gameTitle) || gameTitle.Length < 2)
-            return;
-
-        gameTitle = CompatList.FixGameTitleSearch(gameTitle);
-        if (gameTitle.Length < 4)
-            return;
-
-        if (ProductCodeLookup.ProductCode.IsMatch(args.Message.Content))
-            return;
-
-        var (_, info) = await LookupGameAsync(args.Channel, args.Message, gameTitle).ConfigureAwait(false);
-        if (string.IsNullOrEmpty(info?.Status))
-            return;
-
-        gameTitle = info.Title?.StripMarks();
-        if (string.IsNullOrEmpty(gameTitle))
-            return;
-
-        var botSpamChannel = await c.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-        var status = info.Status.ToLowerInvariant();
-        string msg;
-        if (status == "unknown")
-            msg = $"{args.Message.Author.Mention} {gameTitle} status is {status}";
-        else
+        try
         {
-            if (status != "playable")
-                status += " (not playable)";
-            msg = $"{args.Message.Author.Mention} {gameTitle} is {status}";
-            if (!string.IsNullOrEmpty(info.Date))
-                msg += $" since {info.ToUpdated()}";
+            var gameTitle = matches.Select(m => m.Groups["game_title_1"].Value)
+                .Concat(matches.Select(m => m.Groups["game_title_2"].Value))
+                .Concat(matches.Select(m => m.Groups["game_title_3"].Value))
+                .FirstOrDefault(t => !string.IsNullOrEmpty(t));
+            if (string.IsNullOrEmpty(gameTitle) || gameTitle.Length < 2)
+                return;
+
+            gameTitle = CompatList.FixGameTitleSearch(gameTitle);
+            if (gameTitle.Length < 4)
+                return;
+
+            if (ProductCodeLookup.ProductCode.IsMatch(args.Message.Content))
+                return;
+
+            var (_, info) = await LookupGameAsync(args.Channel, args.Message, gameTitle).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(info?.Status))
+                return;
+
+            gameTitle = info.Title?.StripMarks();
+            if (string.IsNullOrEmpty(gameTitle))
+                return;
+
+            var botSpamChannel = await c.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
+            var status = info.Status.ToLowerInvariant();
+            string msg;
+            if (status == "unknown")
+                msg = $"{args.Message.Author.Mention} {gameTitle} status is {status}";
+            else
+            {
+                if (status != "playable")
+                    status += " (not playable)";
+                msg = $"{args.Message.Author.Mention} {gameTitle} is {status}";
+                if (!string.IsNullOrEmpty(info.Date))
+                    msg += $" since {info.ToUpdated()}";
+            }
+            msg +=
+                $"\nfor more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
+            await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+            CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
         }
-        msg += $"\nfor more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
-        await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
-        CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
+        catch (Exception e)
+        {
+            Config.Log.Error(e);
+        }
     }
 
     public static async Task<(string? productCode, TitleInfo? info)> LookupGameAsync(DiscordChannel channel, DiscordMessage message, string gameTitle)
