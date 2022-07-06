@@ -22,7 +22,9 @@ internal static class HwInfoProvider
     {
         var ignoreAuthor = msg.Author.IsWhitelisted(client, msg.Channel.Guild);
         byte counter = 0;
-        if (!ignoreAuthor && (!UserCache.TryGetValue(msg.Author.Id, out counter) || counter > 4))
+        if (!ignoreAuthor
+            && UserCache.TryGetValue(msg.Author.Id, out counter)
+            && counter > 4)
         {
             Config.Log.Debug($"Ignoring HW report for user {msg.Author.Id} ({msg.Author.Username}#{msg.Author.Discriminator})");
             return;
