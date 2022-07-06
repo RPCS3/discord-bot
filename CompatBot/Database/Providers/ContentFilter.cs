@@ -123,13 +123,13 @@ internal static class ContentFilter
 
         var suppressActions = (FilterAction)0;
 #if !DEBUG
-            if (message.Author.IsWhitelisted(client, message.Channel.Guild))
-            {
-                if (message.Content.StartsWith('>'))
-                    suppressActions = FilterAction.IssueWarning | FilterAction.RemoveContent;
-                else
-                    return true;
-            }
+        if (message.Author.IsWhitelisted(client, message.Channel.Guild))
+        {
+            if (message.Content.StartsWith('>'))
+                suppressActions = FilterAction.IssueWarning | FilterAction.RemoveContent | FilterAction.Kick;
+            else
+                return true;
+        }
 #endif
 
         var content = new StringBuilder(message.Content);
