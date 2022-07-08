@@ -914,9 +914,9 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         result.AddFieldEx(validTrigger + "Trigger", filter.String, highlight == field++, true)
             .AddFieldEx("Context", filter.Context.ToString(), highlight == field++, true)
             .AddFieldEx("Actions", filter.Actions.ToFlagsString(), highlight == field++, true)
-            .AddFieldEx("Validation", filter.ValidatingRegex ?? "", highlight == field++, true);
+            .AddFieldEx("Validation", filter.ValidatingRegex?.Trim(EmbedPager.MaxFieldLength) ?? "", highlight == field++, true);
         if (filter.Actions.HasFlag(FilterAction.SendMessage))
-            result.AddFieldEx("Message", filter.CustomMessage ?? "", highlight == field, true);
+            result.AddFieldEx("Message", filter.CustomMessage?.Trim(EmbedPager.MaxFieldLength) ?? "", highlight == field, true);
         field++;
         if (filter.Actions.HasFlag(FilterAction.ShowExplain))
         {
