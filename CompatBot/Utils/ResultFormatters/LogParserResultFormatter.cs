@@ -43,7 +43,7 @@ internal static partial class LogParserResult
     internal static readonly Regex OsInfoInLog = new(
         @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+)|Version: (?<macos_version>[^\r\n]+))\r?$",
         DefaultSingleLine);
-    private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+(-\d+)?)", DefaultSingleLine);
+    private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+)", DefaultSingleLine);
     private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+(-\d+)?)( \(<-\s*(?<patch_count>\d+)\))?", DefaultSingleLine);
     private static readonly char[] NewLineChars = {'\r', '\n'};
 
@@ -836,6 +836,9 @@ internal static partial class LogParserResult
 
         if (release.Contains("-valve", StringComparison.OrdinalIgnoreCase))
             return "SteamOS " + kernelVersion;
+
+        if (release.Contains("-artix", StringComparison.OrdinalIgnoreCase))
+            return "Artix " + kernelVersion;
 
         if (release.Contains(".fc"))
         {
