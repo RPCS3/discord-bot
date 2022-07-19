@@ -32,7 +32,7 @@ internal static partial class LogParserResult
     // RPCS3 v0.0.5-42b4ce13a Alpha | minor
     // RPCS3 v0.0.18-local_build Alpha | local_build
     private static readonly Regex BuildInfoInLog = new(
-        @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-z_]+|unknown)) (?<stage>\w+)( \| (?<branch>[^|]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$",
+        @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-z_]+|unknown))( (?<stage>\w+))?( \| (?<branch>[^|\r\n]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$",
         DefaultSingleLine);
     private static readonly Regex CpuInfoInLog = new(
         @"(\d{1,2}(th|rd|nd|st) Gen)?(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU with|(with )?Radeon|R\d, \d+ Compute) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$",
