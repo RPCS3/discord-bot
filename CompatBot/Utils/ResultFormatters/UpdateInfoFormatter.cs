@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -48,21 +49,17 @@ internal static class UpdateInfoFormatter
                 currentPrInfo ??= await GithubClient.GetPrInfoAsync(currentPr.Value, Config.Cts.Token).ConfigureAwait(false);
         }
         var desc = latestPrInfo?.Title;
-        if (includePrBody
-            && latestPrInfo?.Body is string prInfoBody
-            && !string.IsNullOrEmpty(prInfoBody))
+        if (includePrBody && latestPrInfo?.Body is { Length: >0 } prInfoBody)
             desc = $"**{desc?.TrimEnd()}**\n\n{prInfoBody}";
         desc = desc?.Trim();
         if (!string.IsNullOrEmpty(desc))
         {
-            if (GithubLinksHandler.IssueMention.Matches(desc) is MatchCollection issueMatches && issueMatches.Any())
+            if (GithubLinksHandler.IssueMention.Matches(desc) is { Count: >0 } issueMatches)
             {
                 var uniqueLinks = new HashSet<string>(10);
                 foreach (Match m in issueMatches)
                 {
-                    if (m.Groups["issue_mention"].Value is string str
-                        && !string.IsNullOrEmpty(str)
-                        && uniqueLinks.Add(str))
+                    if (m.Groups["issue_mention"].Value is { Length: >0 } str && uniqueLinks.Add(str))
                     {
                         var name = str;
                         var num = m.Groups["number"].Value;
@@ -86,14 +83,12 @@ internal static class UpdateInfoFormatter
                     }
                 }
             }
-            if (GithubLinksHandler.CommitMention.Matches(desc) is MatchCollection commitMatches && commitMatches.Any())
+            if (GithubLinksHandler.CommitMention.Matches(desc) is { Count: >0 } commitMatches)
             {
                 var uniqueLinks = new HashSet<string>(2);
                 foreach (Match m in commitMatches)
                 {
-                    if (m.Groups["commit_mention"].Value is string lnk
-                        && !string.IsNullOrEmpty(lnk)
-                        && uniqueLinks.Add(lnk))
+                    if (m.Groups["commit_mention"].Value is { Length: >0 } lnk && uniqueLinks.Add(lnk))
                     {
                         var num = m.Groups["commit_hash"].Value;
                         if (string.IsNullOrEmpty(num))
@@ -106,16 +101,12 @@ internal static class UpdateInfoFormatter
                 }
             }
         }
-        if (!string.IsNullOrEmpty(desc)
-            && GithubLinksHandler.ImageMarkup.Matches(desc) is MatchCollection imgMatches
-            && imgMatches.Any())
+        if (!string.IsNullOrEmpty(desc) && GithubLinksHandler.ImageMarkup.Matches(desc) is {Count: >0} imgMatches)
         {
             var uniqueLinks = new HashSet<string>(10);
             foreach (Match m in imgMatches)
             {
-                if (m.Groups["img_markup"].Value is string str
-                    && !string.IsNullOrEmpty(str)
-                    && uniqueLinks.Add(str))
+                if (m.Groups["img_markup"].Value is { Length: >0 } str && uniqueLinks.Add(str))
                 {
                     var caption = m.Groups["img_caption"].Value;
                     var link = m.Groups["img_link"].Value;
@@ -126,7 +117,7 @@ internal static class UpdateInfoFormatter
             }
         }
         desc = desc?.Trim(EmbedPager.MaxDescriptionLength);
-        builder ??= new DiscordEmbedBuilder {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
+        builder ??= new() {Title = prDesc, Url = url, Description = desc, Color = Config.Colors.DownloadLinks};
         var currentCommit = currentPrInfo?.MergeCommitSha;
         var latestCommit = latestPrInfo?.MergeCommitSha;
         var buildTimestampKind = "Built";
