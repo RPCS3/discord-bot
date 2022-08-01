@@ -99,7 +99,7 @@ internal static class ProductCodeLookup
     public static List<string> GetProductIds(string? input)
     {
         if (string.IsNullOrEmpty(input))
-            return new List<string>(0);
+            return new(0);
 
         return ProductCode.Matches(input)
             .Select(match => (match.Groups["letters"].Value + match.Groups["numbers"]).ToUpper())
@@ -131,6 +131,7 @@ internal static class ProductCodeLookup
             if (result?.Results != null && result.Results.TryGetValue(code, out var info))
                 return (info.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
 
+            gameTitle ??= await ThumbnailProvider.GetTitleNameAsync(code, Config.Cts.Token).ConfigureAwait(false);
             if (category == "1P")
             {
                 var ti = new TitleInfo
