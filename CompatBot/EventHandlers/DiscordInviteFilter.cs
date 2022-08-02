@@ -131,7 +131,8 @@ internal static class DiscordInviteFilter
             {
                 if (!InviteCodeCache.TryGetValue(message.Author.Id, out HashSet<string> recentInvites))
                     recentInvites = new();
-                var circumventionAttempt = !recentInvites.Add(invite.Code) && attemptedWorkaround; //do not flip, must add to cache always
+                var repeatedInvitePost = !recentInvites.Add(invite.Code);
+                var circumventionAttempt = repeatedInvitePost && attemptedWorkaround;
                 InviteCodeCache.Set(message.Author.Id, recentInvites, CacheDuration);
                 var removed = false;
                 try
@@ -162,7 +163,7 @@ internal static class DiscordInviteFilter
                         userMsg += "Please remove it and refrain from posting it again until you have received an approval from a moderator.";
                 }
                 await client.ReportAsync("🛃 An unapproved discord invite", message, reportMsg, null, null, null, ReportSeverity.Low).ConfigureAwait(false);
-                if (recentInvites.Count > 1)
+                if (repeatedInvitePost || recentInvites.Count > 1)
                     try
                     {
                         var member = client.GetMember(message.Channel.Guild, message.Author);
