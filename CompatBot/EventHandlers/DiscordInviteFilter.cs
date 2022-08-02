@@ -26,14 +26,10 @@ internal static class DiscordInviteFilter
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
     public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
-    {
-        args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
-    }
+        => args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
 
     public static async Task OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args)
-    {
-        args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
-    }
+        => args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
 
     public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
     {
@@ -134,7 +130,7 @@ internal static class DiscordInviteFilter
             if (!await InviteWhitelistProvider.IsWhitelistedAsync(invite).ConfigureAwait(false))
             {
                 if (!InviteCodeCache.TryGetValue(message.Author.Id, out HashSet<string> recentInvites))
-                    recentInvites = new HashSet<string>();
+                    recentInvites = new();
                 var circumventionAttempt = !recentInvites.Add(invite.Code) && attemptedWorkaround; //do not flip, must add to cache always
                 InviteCodeCache.Set(message.Author.Id, recentInvites, CacheDuration);
                 var removed = false;
@@ -166,6 +162,21 @@ internal static class DiscordInviteFilter
                         userMsg += "Please remove it and refrain from posting it again until you have received an approval from a moderator.";
                 }
                 await client.ReportAsync("🛃 An unapproved discord invite", message, reportMsg, null, null, null, ReportSeverity.Low).ConfigureAwait(false);
+                if (recentInvites.Count > 1)
+                    try
+                    {
+                        var member = client.GetMember(message.Channel.Guild, message.Author);
+                        if (member is not null)
+                        {
+                            await member.RemoveAsync("Multiple invites after being warned").ConfigureAwait(false);
+                            return false;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e, $"Failed to kick user {message.Author.GetUsernameWithNickname(client)} for repeated invite spam");
+                    }
+                
                 await message.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
                 if (circumventionAttempt)
                     await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Attempted to circumvent discord invite filter", codeResolveMsg);
