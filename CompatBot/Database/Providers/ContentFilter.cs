@@ -132,7 +132,7 @@ internal static class ContentFilter
         }
 #endif
 
-        var content = new StringBuilder(message.Content);
+        var content = new StringBuilder(message.Content).AppendLine();
         if (message.Attachments is not null)
             foreach (var attachment in message.Attachments.Where(a => a is not null))
                 content.AppendLine(attachment.FileName);
