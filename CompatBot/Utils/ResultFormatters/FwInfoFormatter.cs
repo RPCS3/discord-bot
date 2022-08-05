@@ -53,7 +53,7 @@ internal static class FwInfoFormatter
                 links.Append(newLink);
             }
             result.AddField("System Software License Agreement", "You **must** read and agree with the terms described [here](https://doc.dl.playstation.net/doc/ps3-eula/) before downloading");
-            result.AddField("Download Links", links.ToString().TrimEnd());
+            result.AddField("Click a flag below to download the firmware", links.ToString().TrimEnd());
             return result.WithFooter("Every region has identical firmware content");
         }
 
