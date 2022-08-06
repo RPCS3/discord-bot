@@ -152,17 +152,17 @@ internal static class UpdateInfoFormatter
             builder.WithFooter($"{buildTimestampKind} on {timestampInfo}");
         }
         return builder
-            .AddField("Windows download", GetLinkMessage(latestBuild?.Windows?.Download, true), true)
-            .AddField("Linux download", GetLinkMessage(latestBuild?.Linux?.Download, true), true)
-            .AddField("Mac download", GetLinkMessage(latestBuild?.Mac?.Download, true), true);
+            .AddField("Windows download", GetLinkMessage(latestBuild?.Windows, true), true)
+            .AddField("Linux download", GetLinkMessage(latestBuild?.Linux, true), true)
+            .AddField("Mac download", GetLinkMessage(latestBuild?.Mac, true), true);
     }
 
-    private static string GetLinkMessage(string? link, bool simpleName)
+    private static string GetLinkMessage(BuildLink? link, bool simpleName)
     {
-        if (string.IsNullOrEmpty(link))
+        if (link is null or { Download: null or "" } or { Size: 0 })
             return "No link available";
 
-        var text = new Uri(link).Segments.Last();
+        var text = new Uri(link.Download).Segments.Last();
         if (simpleName && text.StartsWith("rpcs3-"))
             text = text[6..];
         if (simpleName && text.Contains('_'))
