@@ -168,7 +168,7 @@ internal static class UpdateInfoFormatter
         if (simpleName && text.Contains('_'))
             text = text.Split('_', 2)[0] + Path.GetExtension(text);
 
-        return $"[⏬ {text}]({link}){"   ".FixSpaces()}";
+        return $"[⏬ {text}]({link.Download}){"   ".FixSpaces()}";
     }
 
     private static DiscordEmoji? GetUserNameEmoji(DiscordClient client, string githubLogin)
