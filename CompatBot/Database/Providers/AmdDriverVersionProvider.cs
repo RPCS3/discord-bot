@@ -13,6 +13,7 @@ internal static class AmdDriverVersionProvider
 {
     private static readonly Dictionary<string, List<string>> VulkanToDriver = new();
     private static readonly Dictionary<string, string> OpenglToDriver = new();
+    private static readonly Dictionary<string, string> InternalToDriver = new();
     private static readonly SemaphoreSlim SyncObj = new(1, 1);
 
     public static async Task RefreshAsync()
@@ -33,18 +34,21 @@ internal static class AmdDriverVersionProvider
                 {
                     var winVer = (string?)driver.Element("windows-version");
                     var vkVer = (string?)driver.Element("vulkan-version");
+                    var internVer = (string?)driver.Element("internal-version");
                     var driverVer = (string?)driver.Attribute("version");
                     if (vkVer is null)
                         continue;
 
                     if (!VulkanToDriver.TryGetValue(vkVer, out var verList))
-                        VulkanToDriver[vkVer] = verList = new List<string>();
+                        VulkanToDriver[vkVer] = verList = new();
                     if (string.IsNullOrEmpty(driverVer))
                         continue;
                         
                     verList.Insert(0, driverVer);
                     if (!string.IsNullOrEmpty(winVer))
                         OpenglToDriver[winVer] = driverVer;
+                    if (!string.IsNullOrEmpty(internVer))
+                        InternalToDriver[internVer] = driverVer;
                 }
                 foreach (var key in VulkanToDriver.Keys.ToList())
                     VulkanToDriver[key] = VulkanToDriver[key].Distinct().ToList();
@@ -66,6 +70,9 @@ internal static class AmdDriverVersionProvider
 
         if (!Version.TryParse(openglVersion, out var glVersion))
             return openglVersion;
+
+        if (glVersion is { Major: >= 22, Minor: < 13, Build: <10, Revision: > 220600 })
+            return $"{glVersion.Major}.{glVersion.Minor}.{glVersion.Build}";
             
         var glVersions = new List<(Version glVer, string driverVer)>(OpenglToDriver.Count);
         foreach (var key in OpenglToDriver.Keys)
