@@ -26,6 +26,7 @@ public class Client: IDisposable
         {
             PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
             IncludeFields = true,
             Converters = { new CompatApiCommitHashConverter(), },
         };
