@@ -8,8 +8,11 @@ public static class Utils
     private const long UnderMB = 1000 * 1024;
     private const long UnderGB = 1000 * 1024 * 1024;
 
-    public static string Trim(this string str, int maxLength)
+    public static string Trim(this string? str, int maxLength)
     {
+        if (str is null)
+            return "";
+        
         if (str.Length > maxLength)
             return str[..(maxLength - 1)] + "…";
 

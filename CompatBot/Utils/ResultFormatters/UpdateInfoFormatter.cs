@@ -159,7 +159,7 @@ internal static class UpdateInfoFormatter
 
     private static string GetLinkMessage(BuildLink? link, bool simpleName)
     {
-        if (link is null or { Download: null or "" } or { Size: 0 })
+        if (link is null or { Download: null or "" } or { Size: null or 0 })
             return "No link available";
 
         var text = new Uri(link.Download).Segments.Last();
