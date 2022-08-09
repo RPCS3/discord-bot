@@ -20,7 +20,7 @@ public class BuildInfo
 public class BuildLink
 {
     public string Download;
-    public int Size;
+    public int? Size;
     public string Checksum;
 }
     
