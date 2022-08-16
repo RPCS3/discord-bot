@@ -51,13 +51,13 @@ public static class TimeParser
             }
             else
             {
-                var a = tzi.StandardName.GetAcronym();
+                var a = tzi.StandardName.GetAcronym(includeAllCaps: true, includeAllDigits: true);
                 if (TimeZoneAcronyms.ContainsKey(a))
                     continue;
                 
                 if (!standardNames.ContainsKey(a))
                     standardNames[a] = tzi;
-                a = tzi.DaylightName.GetAcronym();
+                a = tzi.DaylightName.GetAcronym(includeAllCaps: true, includeAllDigits: true);
                 if (TimeZoneAcronyms.ContainsKey(a) || standardNames.ContainsKey(a))
                     continue;
                 

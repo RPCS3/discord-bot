@@ -110,6 +110,17 @@ ignorance the hard way.""
         Assert.That(coef, Is.GreaterThan(0.95), "Dice Coefficient");
     }
 
+    [TestCase("Metal Gear Solid 4", "MGS4", "MGS4", "MGS4", "MGS4")]
+    [TestCase("UTC-11", "U1", "UTC1", "U11", "UTC11")]
+    [TestCase("camelCaseString13", "c", "cCS", "c13", "cCS13")]
+    public void AcronymGenerationTest(string input, string expectedDefault, string expectedWithUpper, string expectedWithDigits, string expectedWithUpperAndDigits)
+    {
+        Assert.That(input.GetAcronym(), Is.EqualTo(expectedDefault));
+        Assert.That(input.GetAcronym(includeAllCaps: true), Is.EqualTo(expectedWithUpper));
+        Assert.That(input.GetAcronym(includeAllDigits: true), Is.EqualTo(expectedWithDigits));
+        Assert.That(input.GetAcronym(includeAllCaps: true, includeAllDigits: true), Is.EqualTo(expectedWithUpperAndDigits));
+    }
+
     public static double DiceCoefficient(string input, string comparedTo)
     {
         var ngrams = input.ToBiGrams()[1..^1];

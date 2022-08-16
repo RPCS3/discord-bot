@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -400,17 +401,19 @@ public static class StringUtils
         return len == 0 ? "" : str.Substring(start, len);
     }
 
-    internal static string GetAcronym(this string str)
+    internal static string GetAcronym(this string? str, bool includeAllCaps = false, bool includeAllDigits = false)
     {
         if (string.IsNullOrEmpty(str))
-            return str;
+            return "";
 
         var result = "";
-        bool previousWasLetter = false;
+        var previousWasLetter = false;
         foreach (var c in str)
         {
             var isLetter = char.IsLetterOrDigit(c);
-            if (isLetter && !previousWasLetter)
+            if ((isLetter && !previousWasLetter)
+                || (includeAllCaps && char.IsUpper(c))
+                || (includeAllDigits && char.IsDigit(c)))
                 result += c;
             previousWasLetter = isLetter;
         }
