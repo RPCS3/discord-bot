@@ -82,7 +82,7 @@ internal static class Config
     public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");
     public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/");
     public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
-    public static string AzureAppInsightsKey => config.GetValue(nameof(AzureAppInsightsKey), "");
+    public static string AzureAppInsightsConnectionString => config.GetValue(nameof(AzureAppInsightsConnectionString), "");
     public static string GithubToken => config.GetValue(nameof(GithubToken), "");
     public static string PreferredFontFamily => config.GetValue(nameof(PreferredFontFamily), "");
     public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
@@ -305,14 +305,14 @@ internal static class Config
     {
         get
         {
-            if (string.IsNullOrEmpty(AzureAppInsightsKey))
+            if (string.IsNullOrEmpty(AzureAppInsightsConnectionString))
                 return null;
 
-            if (telemetryClient?.InstrumentationKey == AzureAppInsightsKey)
+            if (telemetryClient?.InstrumentationKey == AzureAppInsightsConnectionString)
                 return telemetryClient;
 
             var telemetryConfig = TelemetryConfiguration.CreateDefault();
-            telemetryConfig.InstrumentationKey = AzureAppInsightsKey;
+            telemetryConfig.ConnectionString = AzureAppInsightsConnectionString;
             telemetryConfig.TelemetryInitializers.Add(new HttpDependenciesParsingTelemetryInitializer());
             DependencyTrackingTelemetryModule.Initialize(telemetryConfig);
             PerformanceCollectorModule.Initialize(telemetryConfig);

@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0-jammy AS base
 
 # Native libgdiplus dependencies
 RUN apt-get update
-RUN apt-get install -y --allow-unauthenticated libc6-dev libgdiplus libx11-dev fonts-roboto
+RUN apt-get install -y --allow-unauthenticated libc6-dev libgdiplus libx11-dev fonts-roboto tzdata
 
 # debian-specific?
 #RUN rm -rf /var/lib/apt/lists/*

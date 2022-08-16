@@ -74,7 +74,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
             .Append(File.Exists(Config.GoogleApiConfigPath) ? "✅" : "❌").AppendLine(" Google Drive")
             .Append(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅").AppendLine(" Azure DevOps")
             .Append(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅").AppendLine(" Computer Vision")
-            .Append(string.IsNullOrEmpty(Config.AzureAppInsightsKey) ? "❌" : "✅").AppendLine(" AppInsights")
+            .Append(string.IsNullOrEmpty(Config.AzureAppInsightsConnectionString) ? "❌" : "✅").AppendLine(" AppInsights")
             .Append(string.IsNullOrEmpty(Config.GithubToken) ? "❌" : "✅").AppendLine(" Github")
             .ToString()
             .Trim();

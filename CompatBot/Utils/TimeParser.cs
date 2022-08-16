@@ -32,6 +32,8 @@ public static class TimeParser
         var tzList = TimeZoneInfo.GetSystemTimeZones();
         Config.Log.Trace("[TZI] System TZI count: " + tzList.Count);
         var result = new Dictionary<string, TimeZoneInfo>();
+        var standardNames = new Dictionary<string, TimeZoneInfo>();
+        var daylightNames = new Dictionary<string, TimeZoneInfo>();
         foreach (var tzi in tzList)
         {
             Config.Log.Trace($"[TZI] Checking {tzi.Id} ({tzi.DisplayName} / {tzi.StandardName} / {tzi.DaylightName})");
@@ -47,9 +49,26 @@ public static class TimeParser
                 foreach (var tza in acronyms)
                     result[tza] = tzi;
             }
+            else
+            {
+                var a = tzi.StandardName.GetAcronym();
+                if (TimeZoneAcronyms.ContainsKey(a))
+                    continue;
+                
+                if (!standardNames.ContainsKey(a))
+                    standardNames[a] = tzi;
+                a = tzi.DaylightName.GetAcronym();
+                if (TimeZoneAcronyms.ContainsKey(a) || standardNames.ContainsKey(a))
+                    continue;
+                
+                if (!daylightNames.ContainsKey(a))
+                    daylightNames[a] = tzi;
+            }
         }
         Config.Log.Trace("[TZI] Total matched acronyms: " + result.Count);
-        TimeZoneMap = result;
+        TimeZoneMap = result.Concat(standardNames).Concat(daylightNames)
+            .DistinctBy(kvp => kvp.Key)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
 
     public static bool TryParse(string dateTime, out DateTime result)
