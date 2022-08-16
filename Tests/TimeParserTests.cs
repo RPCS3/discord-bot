@@ -17,4 +17,10 @@ public class TimeParserTests
         Assert.That(result, Is.EqualTo(utc));
         Assert.That(result.Kind, Is.EqualTo(DateTimeKind.Utc));
     }
+
+    [Test]
+    public void TimeZoneInfoTest()
+    {
+        Assert.That(TimeParser.TimeZoneMap.Count, Is.GreaterThan(0));
+    }
 }
