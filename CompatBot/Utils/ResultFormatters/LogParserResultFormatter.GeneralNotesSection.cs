@@ -120,8 +120,12 @@ internal static partial class LogParserResult
             notes.Add("❌ Disc version of the game inside the `/dev_hdd0/game/` directory");
         if (!string.IsNullOrEmpty(serial) && isElf)
             notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
+        if (items["os_type"] == "Windows"
+            && items["mounted_dev_bdvd"] is {Length: >0} mountedBdvd
+            && mountedBdvd.TrimEnd('/').EndsWith(':'))
+            notes.Add("⚠️ Booting directly from blu-ray disc is not supported, please make a proper game dump");
 
-        if (items["log_from_ui"] is string _)
+        if (items["log_from_ui"] is not null)
             notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
         else if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
         {
