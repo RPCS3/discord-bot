@@ -192,7 +192,7 @@ internal static partial class LogParserResult
         {
             if (cpu.StartsWith("AMD"))
             {
-                if (cpu.Contains("Ryzen"))
+                if (cpu.Contains("Ryzen") || cpu.Contains("Custom APU 0405"))
                 {
                     if (threadCount < 12)
                         notes.Add("⚠ Six cores or more is recommended for Ryzen CPUs");
