@@ -807,7 +807,7 @@ internal static partial class LogParserResult
                 22000 => "11 21H2",
                 < 22621 => "11 22H2 Insider Build " + windowsVersion.Build,
                 22621 => "11 22H2",
-                22622 => "11 Beta Build " + windowsVersion.Build,
+                < 22624 => "11 Beta Build " + windowsVersion.Build,
                 _ => "11 Dev Build " + windowsVersion.Build,
             },
             _ => null,
