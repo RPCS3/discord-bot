@@ -7,6 +7,7 @@ using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
 using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
@@ -36,7 +37,7 @@ internal static class IsTheGamePlayableHandler
 
 #if !DEBUG
             if (!(args.Channel.Id == Config.BotGeneralChannelId
-                  || args.Channel.Name.Equals("help", StringComparison.InvariantCultureIgnoreCase)))
+                  || LimitedToHelpChannel.IsHelpChannel(args.Channel)))
                 return;
 
             if (CooldownBuckets.TryGetValue(args.Channel.Id, out var lastCheck)

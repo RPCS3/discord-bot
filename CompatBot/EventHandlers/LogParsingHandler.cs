@@ -65,8 +65,7 @@ public static class LogParsingHandler
             return Task.CompletedTask;
 
         var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
-        var isHelpChannel = "help".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase)
-                            || "donors".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
+        var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(args.Channel);
         var checkExternalLinks = isHelpChannel || isSpamChannel;
         OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
         return Task.CompletedTask;
@@ -94,8 +93,7 @@ public static class LogParsingHandler
                 var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
                     
                 var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
-                var isHelpChannel = "help".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
-                                    || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase);
+                var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(channel);
                     
                 if (source != null)
                 {
@@ -230,8 +228,8 @@ public static class LogParsingHandler
                                         else
                                         {
                                             Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
-                                            var helpChannel = channel.Guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "help".Equals(ch.Name));
-                                            if (helpChannel != null)
+                                            var helpChannel = LimitedToHelpChannel.GetHelpChannel(client, channel, message.Author);
+                                            if (helpChannel is not null)
                                                 await botMsg.UpdateOrCreateMessageAsync(
                                                     channel,
                                                     $"{message.Author.Mention} if you require help, please ask in {helpChannel.Mention}, and describe your issue first, " +
