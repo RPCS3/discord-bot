@@ -156,28 +156,33 @@ internal static class Config
         public static readonly DiscordEmoji No = DiscordEmoji.FromUnicode("😐");
         public static readonly DiscordEmoji PleaseWait = DiscordEmoji.FromUnicode("👀");
         public static readonly DiscordEmoji PiracyCheck = DiscordEmoji.FromUnicode("🔨");
-        public static readonly DiscordEmoji Shutup = DiscordEmoji.FromUnicode("🔇");
+        public static readonly DiscordEmoji ShutUp = DiscordEmoji.FromUnicode("🔇");
         public static readonly DiscordEmoji BadUpdate = DiscordEmoji.FromUnicode("⚠\ufe0f");
     }
 
     public static class Moderation
     {
-        public static readonly int StarbucksThreshold = 5;
+        public const int StarbucksThreshold = 5;
 
-        public static readonly IReadOnlyList<ulong> Channels = new List<ulong>
+        public static readonly IReadOnlyCollection<ulong> MediaChannels = new List<ulong>
         {
             272875751773306881, // #media
             319224795785068545,
         }.AsReadOnly();
 
-        public static readonly IReadOnlyCollection<ulong> OcrChannels = new HashSet<ulong>(Channels)
+        public static readonly IReadOnlyCollection<ulong> OcrChannels = new HashSet<ulong>(MediaChannels)
         {
             272035812277878785, // #rpcs3
             277227681836302338, // #help
             272875751773306881, // #media
-            // test server
-            564846659109126244, // #media
-            534749301797158914, // private-spam
+        };
+
+        public static readonly IReadOnlyCollection<ulong> LogParsingChannels = new HashSet<ulong>
+        {
+            277227681836302338, // #help
+            272081036316377088, // donors
+            319224795785068545, // #bot-spam
+            442667232489897997, // testers
         };
 
         public static readonly IReadOnlyCollection<string> RoleWhiteList = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)

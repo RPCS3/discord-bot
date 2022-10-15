@@ -58,6 +58,10 @@ public static class LogParsingHandler
         var message = args.Message;
         if (message.Author.IsBotSafeCheck())
             return Task.CompletedTask;
+        
+        if (!args.Channel.IsPrivate
+            && !Config.Moderation.LogParsingChannels.Contains(args.Channel.Id))
+            return Task.CompletedTask;
 
         if (!string.IsNullOrEmpty(message.Content)
             && (message.Content.StartsWith(Config.CommandPrefix)

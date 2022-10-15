@@ -92,7 +92,7 @@ internal static class Starbucks
         {
             var after = DateTime.UtcNow - Config.ModerationBacklogThresholdInHours;
             var checkTasks = new List<Task>();
-            foreach (var channel in guild.Channels.Values.Where(ch => Config.Moderation.Channels.Contains(ch.Id)))
+            foreach (var channel in guild.Channels.Values.Where(ch => Config.Moderation.MediaChannels.Contains(ch.Id)))
             {
                 var messages = await channel.GetMessagesCachedAsync().ConfigureAwait(false);
                 var messagesToCheck = from msg in messages
@@ -124,7 +124,7 @@ internal static class Starbucks
             message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
             if (emoji == Config.Reactions.Starbucks)
                 await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
-            if (emoji == Config.Reactions.Shutup && !isBacklog)
+            if (emoji == Config.Reactions.ShutUp && !isBacklog)
                 await ShutupAsync(client, user, message).ConfigureAwait(false);
             if (emoji == Config.Reactions.BadUpdate && !isBacklog)
                 await BadUpdateAsync(client, user, message, emoji).ConfigureAwait(false);
@@ -139,7 +139,7 @@ internal static class Starbucks
 
     private static async Task CheckMediaTalkAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordEmoji emoji)
     {
-        if (!Config.Moderation.Channels.Contains(channel.Id))
+        if (!Config.Moderation.MediaChannels.Contains(channel.Id))
             return;
 
         // message.Timestamp throws if it's not in the cache AND is in local time zone
