@@ -58,6 +58,10 @@ public static class LogParsingHandler
         var message = args.Message;
         if (message.Author.IsBotSafeCheck())
             return Task.CompletedTask;
+        
+        if (!args.Channel.IsPrivate
+            && !Config.Moderation.LogParsingChannels.Contains(args.Channel.Id))
+            return Task.CompletedTask;
 
         if (!string.IsNullOrEmpty(message.Content)
             && (message.Content.StartsWith(Config.CommandPrefix)
@@ -65,8 +69,7 @@ public static class LogParsingHandler
             return Task.CompletedTask;
 
         var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
-        var isHelpChannel = "help".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase)
-                            || "donors".Equals(args.Channel.Name, StringComparison.OrdinalIgnoreCase);
+        var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(args.Channel);
         var checkExternalLinks = isHelpChannel || isSpamChannel;
         OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
         return Task.CompletedTask;
@@ -94,8 +97,7 @@ public static class LogParsingHandler
                 var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
                     
                 var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
-                var isHelpChannel = "help".Equals(channel.Name, StringComparison.OrdinalIgnoreCase)
-                                    || "donors".Equals(channel.Name, StringComparison.OrdinalIgnoreCase);
+                var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(channel);
                     
                 if (source != null)
                 {
@@ -213,7 +215,7 @@ public static class LogParsingHandler
                                     await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext!).ConfigureAwait(false);
                                 }
 
-                                if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
+                                if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel && !message.Author.IsSmartlisted(client, message.Channel.Guild))
                                 {
                                     var threshold = DateTime.UtcNow.AddMinutes(-15);
                                     var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
@@ -230,8 +232,8 @@ public static class LogParsingHandler
                                         else
                                         {
                                             Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
-                                            var helpChannel = channel.Guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "help".Equals(ch.Name));
-                                            if (helpChannel != null)
+                                            var helpChannel = LimitedToHelpChannel.GetHelpChannel(client, channel, message.Author);
+                                            if (helpChannel is not null)
                                                 await botMsg.UpdateOrCreateMessageAsync(
                                                     channel,
                                                     $"{message.Author.Mention} if you require help, please ask in {helpChannel.Mention}, and describe your issue first, " +

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -18,7 +19,7 @@ internal static class LogAsTextMonitor
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
-        if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
+        if (!LimitedToHelpChannel.IsHelpChannel(args.Channel))
             return;
 
         if ((args.Message.Author as DiscordMember)?.Roles.Any() ?? false)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Utils;
 using DSharpPlus;
@@ -29,7 +30,7 @@ internal static class PostLogHelpHandler
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
-        if (!"help".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase))
+        if (!LimitedToHelpChannel.IsHelpChannel(args.Channel))
             return;
 
         if (DateTime.UtcNow - lastMention < ThrottlingThreshold)

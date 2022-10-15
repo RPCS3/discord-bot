@@ -25,7 +25,7 @@ internal class LimitedToSpamChannel: CheckBaseAttribute
             var msgList = await ctx.Channel.GetMessagesCachedAsync(10).ConfigureAwait(false);
             if (msgList.Any(m => m.Author.IsCurrent
                                  && m.Content is string s
-                                 && s.Contains(ctx.Command.QualifiedName, StringComparison.InvariantCultureIgnoreCase)))
+                                 && s.Contains(ctx.Command.QualifiedName, StringComparison.OrdinalIgnoreCase)))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
                 return false; // we just explained to use #bot-spam or DMs, can't help if people can't read
@@ -40,6 +40,8 @@ internal class LimitedToSpamChannel: CheckBaseAttribute
 
     internal static bool IsSpamChannel(DiscordChannel channel)
     {
-        return channel.IsPrivate || channel.Name.Contains("spam", StringComparison.InvariantCultureIgnoreCase);
+        return channel.IsPrivate
+               || channel.Name.Contains("spam", StringComparison.OrdinalIgnoreCase)
+               || channel.Name.Equals("testers", StringComparison.OrdinalIgnoreCase);
     }
 }

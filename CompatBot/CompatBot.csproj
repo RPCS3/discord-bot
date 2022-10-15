@@ -39,32 +39,32 @@
     <AdditionalFiles Include="..\win32_error_codes.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01169" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.3.0-nightly-01169" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.3.0-nightly-01169" />
-    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.3.0-nightly-01169" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.57.0.2746" />
+    <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01173" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.3.0-nightly-01173" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.3.0-nightly-01173" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.3.0-nightly-01173" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.57.0.2789" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
-    <PackageReference Include="MathParser.org-mXparser" Version="5.0.6" />
+    <PackageReference Include="MathParser.org-mXparser" Version="5.0.7" />
     <PackageReference Include="MegaApiClient" Version="1.10.2" />
     <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.21.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.21.0" />
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.ComputerVision" Version="7.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.8">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.10">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
-    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.2.0" />
+    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.2.1" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.170.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.8.61" />
-    <PackageReference Include="NLog" Version="5.0.2" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.0.2" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.9.112" />
+    <PackageReference Include="NLog" Version="5.0.4" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.0.4" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
     <PackageReference Include="SharpCompress" Version="0.32.2" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta15" />
