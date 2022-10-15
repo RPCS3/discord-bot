@@ -215,7 +215,7 @@ public static class LogParsingHandler
                                     await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext!).ConfigureAwait(false);
                                 }
 
-                                if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel)
+                                if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel && !message.Author.IsSmartlisted(client, message.Channel.Guild))
                                 {
                                     var threshold = DateTime.UtcNow.AddMinutes(-15);
                                     var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
