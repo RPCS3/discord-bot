@@ -1,7 +1,7 @@
 RPCS3 Compatibility Bot
 =======================
 
-[![Build Status](https://dev.azure.com/rpcs3-bot/RPCS3%20Bot/_apis/build/status/RPCS3.discord-bot?branchName=master)](https://dev.azure.com/rpcs3-bot/RPCS3%20Bot/_build?definitionId=1&branchName=master) [![RPCS3 discord server](https://discordapp.com/api/guilds/272035812277878785/widget.png)](https://discord.me/rpcs3)
+[![Build Status](https://github.com/RPCS3/discord-bot/actions/workflows/dotnet.yml/badge.svg)](https://github.com/RPCS3/discord-bot/actions/workflows/dotnet.yml) [![RPCS3 discord server](https://discordapp.com/api/guilds/272035812277878785/widget.png)](https://discord.me/rpcs3)
 
 This is a tech support / moderation / crowd entertainment bot for the [RPCS3 discord server](https://discord.me/rpcs3).
 
@@ -9,7 +9,7 @@ You can read the design and implementation notes by visiting the folders in the 
 
 Development Requirements
 ------------------------
-* [.NET 6.0 SDK](https://dotnet.microsoft.com/download) or newer
+* [.NET 7.0 SDK](https://dotnet.microsoft.com/download) or newer
 * Any text editor, but here are some recommends:
   * [Visual Studio](https://visualstudio.microsoft.com/) (Windows and Mac only, has free Community edition)
   * [Visual Studio Code](https://code.visualstudio.com/) (cross-platform, free)
@@ -17,7 +17,7 @@ Development Requirements
 
 Runtime Requirements
 --------------------
-* [.NET 6.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
+* [.NET 7.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
   * bot needs `dotnet` command to be available (i.e. alias for the Snap package)
 * Optionally Google API credentials to access Google Drive:
   * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
