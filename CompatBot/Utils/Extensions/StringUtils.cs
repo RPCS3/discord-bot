@@ -426,7 +426,8 @@ public static class StringUtils
         strA = strA?.ToLowerInvariant() ?? "";
         strB = strB?.ToLowerInvariant() ?? "";
         var cacheKey = GetFuzzyCacheKey(strA, strB);
-        if (!FuzzyPairCache.TryGetValue(cacheKey, out FuzzyCacheValue match)
+        if (!FuzzyPairCache.TryGetValue(cacheKey, out FuzzyCacheValue? match)
+            || match is null
             || strA != match.StrA
             || strB != match.StrB)
             match = new FuzzyCacheValue

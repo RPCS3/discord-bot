@@ -239,7 +239,7 @@ public class Client
         if (string.IsNullOrEmpty(productId))
             return default;
             
-        if (ResponseCache.TryGetValue(productId, out TitlePatch patchInfo))
+        if (ResponseCache.TryGetValue(productId, out TitlePatch? patchInfo))
             return (patchInfo, default);
 
         using var message = new HttpRequestMessage(HttpMethod.Get, $"https://a0.ww.np.dl.playstation.net/tpl/np/{productId}/{productId}-ver.xml");

@@ -17,7 +17,7 @@ public static class PsnMetaExtensions
 
     internal static List<(string resolution, string aspectRatio)> GetSupportedResolutions(string resolutionList)
     {
-        if (ParsedData.TryGetValue(resolutionList, out List<(string, string)> result))
+        if (ParsedData.TryGetValue(resolutionList, out List<(string, string)>? result) && result is not null)
             return result;
 
         var resList = resolutionList

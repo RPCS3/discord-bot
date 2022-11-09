@@ -44,7 +44,9 @@ internal static class EmpathySimulationHandler
             return;
 
         //todo: throttle multiple strings at the same time
-        if (Throttling.TryGetValue(args.Channel.Id, out List<DiscordMessage> mark) && content.Equals(mark.FirstOrDefault()?.Content, StringComparison.OrdinalIgnoreCase))
+        if (Throttling.TryGetValue(args.Channel.Id, out List<DiscordMessage>? mark)
+            && mark is not null
+            && content.Equals(mark.FirstOrDefault()?.Content, StringComparison.OrdinalIgnoreCase))
         {
             mark.Add(args.Message);
             Config.Log.Debug($"Bailed out of repeating '{content}' due to throttling");
@@ -81,7 +83,7 @@ internal static class EmpathySimulationHandler
         if (message.Author.IsCurrent)
             return;
 
-        if (!Throttling.TryGetValue(channel.Id, out List<DiscordMessage> msgList))
+        if (!Throttling.TryGetValue(channel.Id, out List<DiscordMessage>? msgList) || msgList is null)
             return;
 
         if (msgList.Any(m => m.Id == message.Id))

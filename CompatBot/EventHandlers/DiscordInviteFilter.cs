@@ -129,7 +129,7 @@ internal static class DiscordInviteFilter
         {
             if (!await InviteWhitelistProvider.IsWhitelistedAsync(invite).ConfigureAwait(false))
             {
-                if (!InviteCodeCache.TryGetValue(message.Author.Id, out HashSet<string> recentInvites))
+                if (!InviteCodeCache.TryGetValue(message.Author.Id, out HashSet<string>? recentInvites) || recentInvites is null)
                     recentInvites = new();
                 var repeatedInvitePost = !recentInvites.Add(invite.Code);
                 var circumventionAttempt = repeatedInvitePost && attemptedWorkaround;
@@ -195,7 +195,7 @@ internal static class DiscordInviteFilter
         var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => !string.IsNullOrEmpty(s)));
         var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
         var attemptedWorkaround = false;
-        if (author != null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string> recentInvites))
+        if (author != null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string>? recentInvites) && recentInvites is not null)
         {
             foreach (var c in recentInvites)
                 if (message.Contains(c))
