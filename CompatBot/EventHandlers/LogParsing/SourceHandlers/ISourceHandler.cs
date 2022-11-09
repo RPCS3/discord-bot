@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ public interface ISourceHandler
     Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
 }
 
-public interface ISource
+public interface ISource: IDisposable
 {
     string SourceType { get; }
     string FileName { get; }

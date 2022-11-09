@@ -93,8 +93,15 @@ public static class LogParsingHandler
             try
             {
                 var possibleHandlers = SourceHandlers.Select(h => h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
-                var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
+                using var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
                 var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
+                foreach (var (s, _) in possibleHandlers)
+                {
+                    if (ReferenceEquals(s, source))
+                        continue;
+                    
+                    s?.Dispose();
+                }
                     
                 var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
                 var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(channel);

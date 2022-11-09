@@ -84,12 +84,13 @@ internal static class Config
     public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
     public static string AzureAppInsightsConnectionString => config.GetValue(nameof(AzureAppInsightsConnectionString), "")!;
     public static string GithubToken => config.GetValue(nameof(GithubToken), "")!;
+    public static string GoogleApiCredentials => config.GetValue(nameof(GoogleApiCredentials), "")!;
     public static string PreferredFontFamily => config.GetValue(nameof(PreferredFontFamily), "")!;
     public static string LogPath => config.GetValue(nameof(LogPath), "./logs/")!; // paths are relative to the working directory
     public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/")!;
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
     public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), "")!);
-    public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)")!; 
+    public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)")!;
 
     internal static class AllowedMentions
     {
@@ -180,9 +181,12 @@ internal static class Config
         public static readonly IReadOnlyCollection<ulong> LogParsingChannels = new HashSet<ulong>
         {
             277227681836302338, // #help
-            272081036316377088, // donors
+            272081036316377088, // #donors
             319224795785068545, // #bot-spam
-            442667232489897997, // testers
+            442667232489897997, // #testers
+            
+            // test server
+            988392381118308394,
         };
 
         public static readonly IReadOnlyCollection<string> RoleWhiteList = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)

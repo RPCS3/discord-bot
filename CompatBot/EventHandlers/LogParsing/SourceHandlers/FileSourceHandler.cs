@@ -51,4 +51,6 @@ internal class FileSource : ISource
         }
         throw new InvalidOperationException("Unknown source type");
     }
+
+    public void Dispose() { }
 }

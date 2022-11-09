@@ -96,5 +96,7 @@ internal sealed class MegaHandler : BaseSourceHandler
             await using var stream = await client.DownloadAsync(uri, Doodad, cancellationToken).ConfigureAwait(false);
             await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
         }
+
+        public void Dispose() { }
     }
 }

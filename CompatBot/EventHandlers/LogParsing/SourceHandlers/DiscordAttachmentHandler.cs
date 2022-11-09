@@ -71,5 +71,7 @@ internal sealed class DiscordAttachmentHandler : BaseSourceHandler
             await using var stream = await client.GetStreamAsync(attachment.Url, cancellationToken).ConfigureAwait(false);
             await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
         }
+
+        public void Dispose() { }
     }
 }
