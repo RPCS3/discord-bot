@@ -10,6 +10,7 @@ using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
+using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -71,14 +72,13 @@ internal sealed class BotStats: BaseCommandModuleCustom
     private static string GetConfiguredApiStats()
     {
         return new StringBuilder()
-            .Append(File.Exists(Config.GoogleApiConfigPath) ? "✅" : "❌").AppendLine(" Google Drive")
+            .Append(GoogleDriveHandler.ValidateCredentials() ? "✅" : "❌").AppendLine(" Google Drive")
             .Append(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅").AppendLine(" Azure DevOps")
             .Append(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅").AppendLine(" Computer Vision")
             .Append(string.IsNullOrEmpty(Config.AzureAppInsightsConnectionString) ? "❌" : "✅").AppendLine(" AppInsights")
             .Append(string.IsNullOrEmpty(Config.GithubToken) ? "❌" : "✅").AppendLine(" Github")
             .ToString()
             .Trim();
-
     }
 
     private static void AppendPiracyStats(DiscordEmbedBuilder embed)

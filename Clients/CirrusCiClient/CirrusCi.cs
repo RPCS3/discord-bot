@@ -94,7 +94,7 @@ public static class CirrusCi
     public static async Task<ProjectBuildStats> GetPipelineDurationAsync(CancellationToken cancellationToken)
     {
         const string cacheKey = "project-build-stats";
-        if (BuildInfoCache.TryGetValue(cacheKey, out ProjectBuildStats result))
+        if (BuildInfoCache.TryGetValue(cacheKey, out ProjectBuildStats? result) && result is not null)
             return result;
 
         try

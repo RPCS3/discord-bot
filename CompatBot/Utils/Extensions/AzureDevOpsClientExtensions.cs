@@ -58,7 +58,7 @@ internal static class AzureDevOpsClientExtensions
     public static async Task<PipelineStats> GetPipelineDurationAsync(this BuildHttpClient? azureDevOpsClient, CancellationToken cancellationToken)
     {
         const string cacheKey = "pipeline-duration";
-        if (BuildInfoCache.TryGetValue(cacheKey, out PipelineStats result))
+        if (BuildInfoCache.TryGetValue(cacheKey, out PipelineStats? result) && result is not null)
             return result;
 
         if (azureDevOpsClient is null)
@@ -131,7 +131,7 @@ internal static class AzureDevOpsClientExtensions
             return null;
 
         commit = commit.ToLower();
-        if (BuildInfoCache.TryGetValue(commit, out BuildInfo result))
+        if (BuildInfoCache.TryGetValue(commit, out BuildInfo? result) && result is not null)
             return result;
 
         var builds = await azureDevOpsClient.GetBuildsAsync(
@@ -165,7 +165,7 @@ internal static class AzureDevOpsClientExtensions
             return null;
 
         commit = commit.ToLower();
-        if (BuildInfoCache.TryGetValue(commit, out BuildInfo result))
+        if (BuildInfoCache.TryGetValue(commit, out BuildInfo? result) && result is not null)
             return result;
 
         var builds = await azureDevOpsClient.GetBuildsAsync(

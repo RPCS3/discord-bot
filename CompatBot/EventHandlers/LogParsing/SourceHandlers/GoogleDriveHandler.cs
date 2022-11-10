@@ -27,7 +27,7 @@ internal sealed class GoogleDriveHandler: BaseSourceHandler
         if (string.IsNullOrEmpty(message.Content))
             return (null, null);
 
-        if (!File.Exists(Config.GoogleApiConfigPath))
+        if (string.IsNullOrEmpty(Config.GoogleApiCredentials))
             return (null, null);
 
         var matches = ExternalLink.Matches(message.Content);
@@ -64,7 +64,7 @@ internal sealed class GoogleDriveHandler: BaseSourceHandler
                             {
                                 var (canHandle, reason) = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
                                 if (canHandle)
-                                    return (new GoogleDriveSource(fileInfoRequest, fileMeta, handler), null);
+                                    return (new GoogleDriveSource(client, fileInfoRequest, fileMeta, handler), null);
                                 else if (!string.IsNullOrEmpty(reason))
                                     return(null, reason);
                             }
@@ -84,15 +84,29 @@ internal sealed class GoogleDriveHandler: BaseSourceHandler
         return (null, null);
     }
 
-    private static DriveService GetClient()
+    private static DriveService GetClient(string? json = null)
     {
-        var credential = GoogleCredential.FromFile(Config.GoogleApiConfigPath).CreateScoped(Scopes);
-        var service = new DriveService(new BaseClientService.Initializer()
+        var credential = GoogleCredential.FromJson(json ?? Config.GoogleApiCredentials).CreateScoped(Scopes);
+        var service = new DriveService(new()
         {
             HttpClientInitializer = credential,
             ApplicationName = ApplicationName,
         });
         return service;
+    }
+
+    internal static bool ValidateCredentials(string? json = null)
+    {
+        try
+        {
+            using var _ = GetClient(json);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Config.Log.Error(e);
+            return false;
+        }
     }
 
     private sealed class GoogleDriveSource : ISource
@@ -103,12 +117,14 @@ internal sealed class GoogleDriveHandler: BaseSourceHandler
         public long SourceFilePosition => handler.SourcePosition;
         public long LogFileSize => handler.LogSize;
 
+        private readonly DriveService driveService;
         private readonly FilesResource.GetRequest fileInfoRequest;
         private readonly FileMeta fileMeta;
         private readonly IArchiveHandler handler;
 
-        public GoogleDriveSource(FilesResource.GetRequest fileInfoRequest, FileMeta fileMeta, IArchiveHandler handler)
+        public GoogleDriveSource(DriveService driveService, FilesResource.GetRequest fileInfoRequest, FileMeta fileMeta, IArchiveHandler handler)
         {
+            this.driveService = driveService;
             this.fileInfoRequest = fileInfoRequest;
             this.fileMeta = fileMeta;
             this.handler = handler;
@@ -135,5 +151,7 @@ internal sealed class GoogleDriveHandler: BaseSourceHandler
                 Config.Log.Error(e, "Failed to download file from Google Drive");
             }
         }
+
+        public void Dispose() => driveService.Dispose();
     }
 }

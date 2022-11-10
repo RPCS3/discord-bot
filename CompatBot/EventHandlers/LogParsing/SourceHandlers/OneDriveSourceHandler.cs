@@ -103,5 +103,7 @@ internal sealed class OneDriveSourceHandler : BaseSourceHandler
             await using var stream = await client.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
             await handler.FillPipeAsync(stream, writer, cancellationToken).ConfigureAwait(false);
         }
+
+        public void Dispose() { }
     }
 }

@@ -797,7 +797,7 @@ internal static partial class LogParserResult
                 < 19041 => "10 20H1 Build " + windowsVersion.Build,
                 19041 => "10 2004",
                 19042 => "10 20H2",
-                19043 => "10 21H1",
+                19043 => "10 21H1", // deprecated
                 19044 => "10 21H2",
                 19045 => "10 22H2",
                 

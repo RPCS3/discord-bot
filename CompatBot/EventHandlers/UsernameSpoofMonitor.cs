@@ -106,7 +106,7 @@ internal static class UsernameSpoofMonitor
         try
         {
             var displayName = GetCanonical(potentialVictims[0].DisplayName);
-            if (SpoofingReportThrottlingCache.TryGetValue(displayName, out string s) && !string.IsNullOrEmpty(s))
+            if (SpoofingReportThrottlingCache.TryGetValue(displayName, out string? s) && !string.IsNullOrEmpty(s))
             {
                 SpoofingReportThrottlingCache.Set(displayName, s, SnoozeDuration);
                 return true;
