@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
@@ -14,6 +15,9 @@ namespace CompatBot.EventHandlers;
 
 internal static class UnknownCommandHandler
 {
+    private static readonly Regex BinaryQuestion = new(@"^\s*(am I|(are|is|do(es)|did|can(?!\s+of\s+)|should|must|have)(n't)?|shall|shan't|may|will|won't)\b",
+        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
+    
     public static Task OnError(CommandsNextExtension cne, CommandErrorEventArgs e)
     {
         OnErrorInternal(cne, e);
@@ -42,14 +46,15 @@ internal static class UnknownCommandHandler
 
             if (e.Context.Prefix != Config.CommandPrefix
                 && e.Context.Prefix != Config.AutoRemoveCommandPrefix
-                && (e.Context.Message.Content?.EndsWith("?") ?? false)
+                && e.Context.Message.Content is string msgTxt
+                && (msgTxt.EndsWith("?") || BinaryQuestion.IsMatch(msgTxt.AsSpan(e.Context.Prefix.Length)))
                 && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
             {
                 var updatedContext = e.Context.CommandsNext.CreateContext(
                     e.Context.Message,
                     e.Context.Prefix,
                     cmd,
-                    e.Context.Message.Content[e.Context.Prefix.Length ..].Trim()
+                    msgTxt[e.Context.Prefix.Length ..].Trim()
                 );
                 try { await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false); } catch { }
                 return;
