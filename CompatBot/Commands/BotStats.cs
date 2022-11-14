@@ -19,7 +19,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("stats")]
+[Group("stats"), Aliases("status")]
 internal sealed class BotStats: BaseCommandModuleCustom
 {
     [GroupCommand]
