@@ -290,6 +290,10 @@ internal static partial class LogParserResult
                         var minVersion = isWindows ? NvidiaRecommendedWindowsVersion : NvidiaRecommendedLinuxVersion;
                         if (driverVersion < minVersion)
                             notes.Add($"❗ Please update your nVidia GPU driver to at least version {minVersion}");
+                        if (driverVersion >= NvidiaTextureMemoryBugMinVersion
+                            && driverVersion < NvidiaTextureMemoryBugMaxVersion
+                            && items["renderer"] == "Vulkan")
+                            notes.Add("ℹ 526 series nVidia drivers can cause out of memory errors, please upgrade or downgrade the drivers");
                         if (isWindows
                             && buildVersion < NvidiaFullscreenBugFixed
                             && items["build_branch"] == "HEAD")
