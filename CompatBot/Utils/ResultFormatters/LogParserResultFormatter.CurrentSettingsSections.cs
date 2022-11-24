@@ -51,10 +51,11 @@ internal static partial class LogParserResult
             {
                 cpuModel = cpuModel[3] switch
                 {
-                    '0' => "AMD APU for PlayStation 4", // DG1000FGF84HT
-                    '1' => "AMD APU for PlayStation 4", // DG1101SKF84HV
+                    '0' => "AMD APU for PlayStation 4",     // DG1000FGF84HT
+                    '1' => "AMD APU for PlayStation 4",     // DG1101SKF84HV
                     '2' => "AMD APU for PlayStation 4 Pro", // DG1201SLF87HW
                     '3' => "AMD APU for PlayStation 4 Pro", // DG1301SML87HY
+                    '4' => "AMD APU for PlayStation 4 Slim",// DG1401SNF87ID 
                     _ => "AMD APU for PlayStation?",
                 };
             }
