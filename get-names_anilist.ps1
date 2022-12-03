@@ -35,7 +35,7 @@ function Request-Page($num)
 function Get-TotalPageCount($start)
 {
     $min = $start
-    $max = $start + 1000
+    $max = $start + 3000
     do
     {
         $response = Request-Page $max
