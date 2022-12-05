@@ -165,14 +165,15 @@ internal static partial class LogParserResult
         {
             $"PPU Decoder:{items["ppu_decoder"],ColumnWidth-11}",
             $"SPU Decoder:{items["spu_decoder"],ColumnWidth-11}",
-            //$"SPU Lower Thread Priority:{items["spu_lower_thread_priority"],ColumnWidth-25}",
             $"SPU Loop Detection:{items["spu_loop_detection"],ColumnWidth-18}",
             $"Thread Scheduler:{items["thread_scheduler"],ColumnWidth-16}",
             $"SPU Threads:{items["spu_threads"],ColumnWidth-11}",
             $"SPU Block Size:{items["spu_block_size"] ?? "N/A",ColumnWidth-14}",
             $"SPU xfloat mode:{items["xfloat_mode"] ?? "N/A",ColumnWidth-15}",
             $"Force CPU Blit:{items["cpu_blit"] ?? "N/A",ColumnWidth-14}",
-            //$"Lib Mode:{items["lib_loader"],ColumnWidth-8}",
+            $"Accurate RSX Reservation:{items["accurate_rsx_reservation"] ?? "N/A",ColumnWidth-24}",
+            $"CPU Preemptions:{items["cpu_preempt_count"] ?? "N/A",ColumnWidth-15}",
+            //$"Lib Mode:{items["lib_loader"] ?? "N/A",ColumnWidth-8}",
         };
         return ("CPU Settings", lines);
     }
@@ -215,6 +216,7 @@ internal static partial class LogParserResult
             $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
             $"RSX Buffers:{enabledBuffers,ColumnWidth-11}",
             $"Shader Mode:{items["shader_mode"],ColumnWidth-11}",
+            $"RSX FIFO Mode:{items["rsx_fifo_mode"] ?? "N/A",ColumnWidth-13}",
             $"ZCull:{items["zcull_status"],ColumnWidth-5}",
             $"Frame Limit:{items["frame_limit_combined"],ColumnWidth-11}",
         };
@@ -233,14 +235,14 @@ internal static partial class LogParserResult
             {
                 var linesToSkip = colAToRemove - linesToRemove;
                 var tmp = colA.lines;
-                colA.lines = new List<string>(tmp.Count - linesToRemove);
+                colA.lines = new(tmp.Count - linesToRemove);
                 foreach (var t in tmp)
                     if (!t.EndsWith("N/A") || linesToSkip-- > 0)
                         colA.lines.Add(t);
 
                 linesToSkip = colBToRemove - linesToRemove;
                 tmp = colB.lines;
-                colB.lines = new List<string>(tmp.Count - linesToRemove);
+                colB.lines = new(tmp.Count - linesToRemove);
                 for (var i = 0; i < tmp.Count; i++)
                     if (!tmp[i].EndsWith("N/A") || linesToSkip-- > 0)
                         colB.lines.Add(tmp[i]);

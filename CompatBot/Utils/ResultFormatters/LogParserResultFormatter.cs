@@ -481,6 +481,8 @@ internal static partial class LogParserResult
             items["shader_mode"] = "Async";
         else if (items["disable_async_shaders"] is EnabledMark or "true")
             items["shader_mode"] = "Recompiler only";
+        if (items["cpu_preempt_count"] is "0")
+            items["cpu_preempt_count"] = "Disabled";
 
         if (items["relaxed_xfloat"] is null)
         {
