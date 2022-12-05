@@ -293,7 +293,7 @@ internal static partial class LogParserResult
                         if (driverVersion >= NvidiaTextureMemoryBugMinVersion
                             && driverVersion < NvidiaTextureMemoryBugMaxVersion
                             && items["renderer"] == "Vulkan")
-                            notes.Add("ℹ 526 series nVidia drivers can cause out of memory errors, please upgrade or downgrade the drivers");
+                            notes.Add("ℹ 526 series nVidia drivers can cause out of memory errors, please upgrade the drivers");
                         if (isWindows
                             && buildVersion < NvidiaFullscreenBugFixed
                             && items["build_branch"] == "HEAD")
