@@ -346,12 +346,12 @@ internal sealed class Explain: BaseCommandModuleCustom
             if (!string.IsNullOrEmpty(item.Text))
             {
                 await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text));
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile($"{termOrLink}.txt", stream)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{termOrLink}.txt", stream)).ConfigureAwait(false);
             }
             if (!string.IsNullOrEmpty(item.AttachmentFilename) && item.Attachment?.Length > 0)
             {
                 await using var stream = new MemoryStream(item.Attachment);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(item.AttachmentFilename, stream)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(item.AttachmentFilename, stream)).ConfigureAwait(false);
             }
         }
     }
@@ -405,7 +405,7 @@ internal sealed class Explain: BaseCommandModuleCustom
                 {
                     await using var memStream = Config.MemoryStreamManager.GetStream(explain.Attachment);
                     memStream.Seek(0, SeekOrigin.Begin);
-                    msgBuilder.WithFile(explain.AttachmentFilename, memStream);
+                    msgBuilder.AddFile(explain.AttachmentFilename, memStream);
                     await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                 }
                 else
@@ -439,7 +439,7 @@ internal sealed class Explain: BaseCommandModuleCustom
         else
         {
             await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(explanation));
-            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("explanation.txt", stream)).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("explanation.txt", stream)).ConfigureAwait(false);
         }
     }
 }

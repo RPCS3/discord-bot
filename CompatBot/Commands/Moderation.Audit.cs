@@ -56,7 +56,7 @@ internal sealed partial class Moderation
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 if (memoryStream.Length <= ctx.GetAttachmentSizeLimit())
                 {
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("names.txt", memoryStream)).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("names.txt", memoryStream)).ConfigureAwait(false);
                     return;
                 }
 
@@ -65,7 +65,7 @@ internal sealed partial class Moderation
                 await gzip.FlushAsync().ConfigureAwait(false);
                 compressedResult.Seek(0, SeekOrigin.Begin);
                 if (compressedResult.Length <= ctx.GetAttachmentSizeLimit())
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("names.txt.gz", compressedResult)).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("names.txt.gz", compressedResult)).ConfigureAwait(false);
                 else
                     await ctx.Channel.SendMessageAsync($"Dump is too large: {compressedResult.Length} bytes").ConfigureAwait(false);
             }
@@ -292,7 +292,7 @@ internal sealed partial class Moderation
 
                 if (uncompressedStream.Length <= ctx.GetAttachmentSizeLimit())
                 {
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt", uncompressedStream)).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("spoofing_check_results.txt", uncompressedStream)).ConfigureAwait(false);
                     return;
                 }
 
@@ -303,7 +303,7 @@ internal sealed partial class Moderation
                 }
                 compressedStream.Seek(0, SeekOrigin.Begin);
                 if (compressedStream.Length <= ctx.GetAttachmentSizeLimit())
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("spoofing_check_results.txt.gz", compressedStream)).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("spoofing_check_results.txt.gz", compressedStream)).ConfigureAwait(false);
                 else
                     await ctx.Channel.SendMessageAsync($"Dump is too large: {compressedStream.Length} bytes").ConfigureAwait(false);
             }

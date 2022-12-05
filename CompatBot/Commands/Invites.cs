@@ -71,7 +71,7 @@ internal sealed class Invites: BaseCommandModuleCustom
         await using (var writer = new StreamWriter(output, leaveOpen: true))
             await writer.WriteAsync(result.ToString()).ConfigureAwait(false);
         output.Seek(0, SeekOrigin.Begin);
-        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("invites.txt", output)).ConfigureAwait(false);
+        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("invites.txt", output)).ConfigureAwait(false);
     }
 
     [Command("whitelist"), Aliases("add", "allow"), Priority(10)]

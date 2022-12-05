@@ -79,7 +79,7 @@ internal sealed class Syscall: BaseCommandModuleCustom
                     await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
                     await streamWriter.FlushAsync().ConfigureAwait(false);
                     memoryStream.Seek(0, SeekOrigin.Begin);
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile($"{search}.txt", memoryStream).WithContent($"See attached file for full list of {groupedList.Count} entries")).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{search}.txt", memoryStream).WithContent($"See attached file for full list of {groupedList.Count} entries")).ConfigureAwait(false);
                 }
             }
             else
@@ -169,7 +169,7 @@ internal sealed class Syscall: BaseCommandModuleCustom
             await streamWriter.WriteAsync(result).ConfigureAwait(false);
             await streamWriter.FlushAsync().ConfigureAwait(false);
             memoryStream.Seek(0, SeekOrigin.Begin);
-            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile($"{productId} syscalls.txt", memoryStream).WithContent($"List of syscalls used by `{title}`")).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{productId} syscalls.txt", memoryStream).WithContent($"List of syscalls used by `{title}`")).ConfigureAwait(false);
         }
         else
             await ctx.Channel.SendMessageAsync($"No information available for `{title}`").ConfigureAwait(false);

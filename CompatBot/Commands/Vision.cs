@@ -322,7 +322,7 @@ internal sealed class Vision: BaseCommandModuleCustom
                     attachmentFname = "SPOILER_" + attachmentFname;
                 var messageBuilder = new DiscordMessageBuilder()
                     .WithContent(description)
-                    .WithFile(attachmentFname, resultStream);
+                    .AddFile(attachmentFname, resultStream);
                 if (ctx.Message.ReferencedMessage is { } ogRef)
                     messageBuilder.WithReply(ogRef.Id);
                 var respondMsg = await ctx.Channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
