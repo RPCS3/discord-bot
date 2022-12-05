@@ -921,7 +921,7 @@ internal static partial class LogParserResult
         return notes
             .Select(s =>
             {
-                var prioritySymbol = s.Split(PrioritySeparator, 2)[0];
+                var prioritySymbol = s.Split(PrioritySeparator, 2)[0].TrimEnd('️');
                 var priority = priorityList.IndexOf(prioritySymbol);
                 return new
                 {

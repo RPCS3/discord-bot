@@ -123,7 +123,7 @@ internal static partial class LogParserResult
         if (items["os_type"] == "Windows"
             && items["mounted_dev_bdvd"] is {Length: >0} mountedBdvd
             && mountedBdvd.TrimEnd('/').EndsWith(':'))
-            notes.Add("⚠️ Booting directly from blu-ray disc is not supported, please make a proper game dump");
+            notes.Add("⚠ Booting directly from blu-ray disc is not supported, please make a proper game dump");
 
         if (items["log_from_ui"] is not null)
             notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
