@@ -203,6 +203,23 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
         await ctx.Channel.SendMessageAsync(newName).ConfigureAwait(false);
     }
+
+    [Command("autorename"), Aliases("auto"), RequiresBotModRole]
+    [Description("Sets automatically generated nickname without enforcing it")]
+    public async Task Autorename(CommandContext ctx, [Description("Discord user to rename")] DiscordMember discordUser)
+    {
+        var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
+        try
+        {
+            await discordUser.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
+            await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            Config.Log.Warn($"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
+            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);
+        }
+    }
         
     [Command("list"), RequiresBotModRole]
     [Description("Lists all users who has restricted nickname.")]
