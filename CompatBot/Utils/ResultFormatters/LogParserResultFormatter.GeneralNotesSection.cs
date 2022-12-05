@@ -578,7 +578,7 @@ internal static partial class LogParserResult
 #else
                             : $"Fatal Error (x{count})";
 #endif
-                    if (Regex.Match(fatalError, @"\(e=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is Match {Success: true} match)
+                    if (Regex.Match(fatalError, @"\(e(rror)?=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is Match {Success: true} match)
                     {
                         if (int.TryParse(match.Groups["verification_error"].Value, out var decCode))
                             win32ErrorCodes.Add(decCode);
