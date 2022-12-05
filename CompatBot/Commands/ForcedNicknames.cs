@@ -146,17 +146,6 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
                 
             db.ForcedNicknames.RemoveRange(enforcedRules);
             await db.SaveChangesAsync().ConfigureAwait(false);
-            foreach (var rule in enforcedRules)
-                if (ctx.Client.GetMember(rule.GuildId, discordUser) is DiscordMember discordMember)
-                    try
-                    {
-                        //todo: change to mem.Nickname = default when the library fixes their shit
-                        await discordMember.ModifyAsync(mem => mem.Nickname = new(discordMember.Username)).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        Config.Log.Debug(ex);
-                    }
             await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
         }
         catch (Exception e)
