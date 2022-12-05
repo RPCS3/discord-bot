@@ -142,12 +142,12 @@ internal static partial class LogParserResult
                     && int.TryParse(dimensions[1], out var height))
                 {
                     var ratio = Reduce(width, height);
-                    var canBeWideOrSquare = width == 720 && (height == 480 || height == 576);
+                    var canBeWideOrSquare = width is 720 && height is 480 or 576;
                     if (ratio == (8, 5))
                         ratio = (16, 10);
-                    if (selectedRatio is string strAr && strAr != "Auto")
+                    if (selectedRatio is not null and not "Auto")
                     {
-                        var arParts = strAr.Split(':');
+                        var arParts = selectedRatio.Split(':');
                         if (arParts.Length > 1
                             && int.TryParse(arParts[0], out var arWidth)
                             && int.TryParse(arParts[1], out var arHeight))
@@ -164,7 +164,7 @@ internal static partial class LogParserResult
                             else
                             */
                             if (arRatio != ratio && !canBeWideOrSquare)
-                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {strAr}");
+                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {selectedRatio}");
                         }
                     }
                     else
@@ -217,7 +217,7 @@ internal static partial class LogParserResult
             notes.Add("⚠ Double-buffered VSync is forced");
             vsync = true;
         }
-        if (items["rsx_swapchain_mode"] is string swapchainMode && swapchainMode == "2")
+        if (items["rsx_swapchain_mode"] is "2")
             vsync = true;
         if (vsync && items["frame_limit"] is string frameLimitStr)
         {
@@ -225,7 +225,7 @@ internal static partial class LogParserResult
                 notes.Add("ℹ Frame rate might be limited to 30 fps due to enabled VSync");
             else if (double.TryParse(frameLimitStr, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var frameLimit))
             {
-                if (frameLimit > 30 && frameLimit < 60)
+                if (frameLimit is >30 and <60)
                     notes.Add("ℹ Frame rate might be limited to 30 fps due to enabled VSync");
                 else if (frameLimit < 30)
                     notes.Add("ℹ Frame rate might be limited to 15 fps due to enabled VSync");
@@ -288,17 +288,14 @@ internal static partial class LogParserResult
                     notes.Add("⚠ `Accurate xfloat` is required for this game, but it will significantly impact performance");
             }
         }
-        if (items["relaxed_xfloat"] is string relaxedXfloat)
+        if (items["relaxed_xfloat"] is DisabledMark)
         {
-            if (relaxedXfloat == DisabledMark)
-            {
-                if (KnownNoRelaxedXFloatIds.Contains(serial))
-                    notes.Add("ℹ `Relaxed xfloat` is disabled");
-                else
-                    notes.Add("⚠ `Relaxed xfloat` is disabled, please enable");
-            }
+            if (KnownNoRelaxedXFloatIds.Contains(serial))
+                notes.Add("ℹ `Relaxed xfloat` is disabled");
+            else
+                notes.Add("⚠ `Relaxed xfloat` is disabled, please enable");
         } 
-        if (items["approximate_xfloat"] is string approximateXfloat && approximateXfloat == DisabledMark)
+        if (items["approximate_xfloat"] is DisabledMark)
         {
             if (KnownNoApproximateXFloatIds.Contains(serial))
                 notes.Add("ℹ `Approximate xfloat` is disabled");
@@ -351,12 +348,10 @@ internal static partial class LogParserResult
             notes.Add("ℹ `Vertex Cache` is disabled, and may impact performance");
         if (items["frame_skip"] == EnabledMark)
             notes.Add("⚠ `Frame Skip` is enabled, please disable");
-        if (items["cpu_blit"] is string cpuBlit
-            && cpuBlit == EnabledMark
-            && items["write_color_buffers"] is string wcb
-            && wcb == DisabledMark)
+        if (items["cpu_blit"] is EnabledMark 
+            && items["write_color_buffers"] is DisabledMark)
             notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
-        if (items["zcull"] is string zcull && zcull == EnabledMark)
+        if (items["zcull"] is EnabledMark)
             notes.Add("⚠ `ZCull Occlusion Queries` is disabled, which can result in visual artifacts");
         else if (items["relaxed_zcull"] is string relaxedZcull)
         {
@@ -437,9 +432,9 @@ internal static partial class LogParserResult
 
         if (items["game_title"] != "vsh.self" && items["debug_console_mode"] == EnabledMark)
             notes.Add("⚠ `Debug Console Mode` is enabled, and may cause game crashes");
-        if (items["hook_static_functions"] is string hookStaticFunctions && hookStaticFunctions == EnabledMark)
+        if (items["hook_static_functions"] is EnabledMark)
             notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
-        if (items["host_root"] is string hostRoot && hostRoot == EnabledMark)
+        if (items["host_root"] is EnabledMark)
             notes.Add("❔ `/host_root/` is enabled");
         if (items["ppu_threads"] is string ppuThreads
             && ppuThreads != "2")
@@ -448,13 +443,13 @@ internal static partial class LogParserResult
             && int.TryParse(spursSetting, out var spursThreads)
             && spursThreads != 6)
         {
-            if (spursThreads > 6 || spursThreads < 1)
+            if (spursThreads is <1 or >6)
                 notes.Add($"⚠ `Max SPURS Threads` is set to `{spursThreads}`; please change it back to `6`");
             else
                 notes.Add($"ℹ `Max SPURS Threads` is set to `{spursThreads}`; may result in game crash");
         }
 
-        if (items["gpu_texture_scaling"] is string gpuTextureScaling && gpuTextureScaling == EnabledMark)
+        if (items["gpu_texture_scaling"] is EnabledMark)
             notes.Add("⚠ `GPU Texture Scaling` is enabled, please disable");
         if (items["af_override"] is string af)
         {
@@ -495,7 +490,7 @@ internal static partial class LogParserResult
         if (items["audio_stretching"] == EnabledMark)
             notes.Add("ℹ `Audio Time Stretching` is `Enabled`");
 
-        if (items["mtrsx"] is string mtrsx && mtrsx == EnabledMark)
+        if (items["mtrsx"] is EnabledMark)
         {
             if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
                 notes.Add("⚠ `Multithreaded RSX` is enabled, please disable for this game");
@@ -543,7 +538,7 @@ internal static partial class LogParserResult
                 notes.Add($"⚠ Audio volume is set to {audioVolume}%; audio clipping is to be expected");
         }
 
-        if (items["hle_lwmutex"] is string hleLwmutex && hleLwmutex == EnabledMark)
+        if (items["hle_lwmutex"] is EnabledMark)
             notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
         if (items["spu_block_size"] is string spuBlockSize)
         {
@@ -619,11 +614,11 @@ internal static partial class LogParserResult
             notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
         if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
             notes.Add("⚠ `Frame Limiter` is not required, please disable");
-        if (items["write_color_buffers"] is string wcb && wcb == EnabledMark)
+        if (items["write_color_buffers"] is EnabledMark)
             notes.Add("⚠ `Write Color Buffers` is not required, please disable");
-        if (items["cpu_blit"] is string cpuBlit && cpuBlit == EnabledMark)
+        if (items["cpu_blit"] is EnabledMark)
             notes.Add("⚠ `Force CPU Blit` is not required, please disable");
-        if (items["strict_rendering_mode"] is string srm && srm == EnabledMark)
+        if (items["strict_rendering_mode"] is EnabledMark)
             notes.Add("⚠ `Strict Rendering Mode` is not required, please disable");
         if (ppuPatches.Count == 0
             && items["resolution_scale"] is string resScale
@@ -643,7 +638,7 @@ internal static partial class LogParserResult
 
     private static void CheckAsurasWrathSettings(string serial, NameValueCollection items, List<string> notes)
     {
-        if (serial == "BLES01227" || serial == "BLUS30721")
+        if (serial is "BLES01227" or "BLUS30721")
         {
             if (items["resolution_scale"] is string resScale
                 && int.TryParse(resScale, out var scale)
@@ -673,14 +668,14 @@ internal static partial class LogParserResult
     private static void CheckJojoSettings(string serial, LogParseState state, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
     {
         var items = state.CompletedCollection!;
-        if (AllStarBattleIds.Contains(serial) || serial == "BLJS10318" || serial == "NPJB00753")
+        if (AllStarBattleIds.Contains(serial) || serial is "BLJS10318" or "NPJB00753")
         {
             if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
                 notes.Add("ℹ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
             else if (items["audio_buffering"] == DisabledMark)
                 notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
 
-            if ((serial == "BLUS31405" || serial == "BLJS10318")
+            if (serial is "BLUS31405" or "BLJS10318"
                 && items["vblank_rate"] is string vbrStr
                 && int.TryParse(vbrStr, out var vbr))
             {
@@ -698,10 +693,7 @@ internal static partial class LogParserResult
                     if (vbr > 60)
                         notes.Add("ℹ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownJojoPatches))
-                    {
-                        var link = serial == "BLUS31405" ? "JoJo.27s_Bizarre_Adventure:_All_Star_Battle" : "JoJo.27s_Bizarre_Adventure:_Eyes_of_Heaven";
                         generalNotes.Add($"ℹ This game has an FPS unlock patch");
-                    }
                 }
             }
 
@@ -715,10 +707,8 @@ internal static partial class LogParserResult
 
     private static void CheckSimpsonsSettings(string serial, List<string> generalNotes)
     {
-        if (serial == "BLES00142" || serial == "BLUS30065")
-        {
-            generalNotes.Add("ℹ This game has a controller initialization bug. Please use the patch listed here https://wiki.rpcs3.net/index.php?title=The_Simpsons_Game#Patches");
-        }
+        if (serial is "BLES00142" or "BLUS30065")
+            generalNotes.Add("ℹ This game has a controller initialization bug. Please use [the patch](https://wiki.rpcs3.net/index.php?title=The_Simpsons_Game#Patches).");
     }
 
     private static readonly HashSet<string> KnownNierPatches = new(StringComparer.InvariantCultureIgnoreCase)
@@ -729,7 +719,7 @@ internal static partial class LogParserResult
 
     private static void CheckNierSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
     {
-        if (serial == "BLUS30481" || serial == "BLES00826" || serial == "BLJM60223")
+        if (serial is "BLUS30481" or "BLES00826" or "BLJM60223")
         {
             var frameLimit = items["frame_limit"];
             var vsync = items["vsync"] == EnabledMark;
@@ -778,7 +768,7 @@ internal static partial class LogParserResult
 
     private static void CheckScottPilgrimSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
     {
-        if (serial == "NPEB00258" || serial == "NPUB30162" || serial == "NPJB00068")
+        if (serial is "NPEB00258" or "NPUB30162" or "NPJB00068")
         {
             if (items["resolution"] is string res && res != "1920x1080")
                 notes.Add("⚠ For perfect sprite scaling without borders set `Resolution` to `1920x1080`");
@@ -921,7 +911,7 @@ internal static partial class LogParserResult
             {
                 if (vbr == 60)
                     notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
-                else if (vbr == 120 || vbr == 240)
+                else if (vbr is 120 or 240)
                     notes.Add($"✅ Settings are set for the {vbr / 2} FPS patch");
                 else if (vbr > 240)
                     notes.Add($"⚠ Settings are configured for the {vbr/2} FPS patch, which is too high; issues are expected");
@@ -1200,12 +1190,6 @@ internal static partial class LogParserResult
         "BCAS20045", "BCES00052", "BCJS30014", "BCJS70004", "BCJS70012", "BCKS10054", "BCUS98127", "BCUS98153",
         "NPEA00452", "NPEA90017", "NPHA20002", "NPUA80965", "NPUA98153", 
     };
-
-    private static void CheckRatchetSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
-    {
-        if (!RatchetToDIds.Contains(serial))
-            return;
-    }
 
     private static readonly HashSet<string> Sly4Ids = new()
     {
