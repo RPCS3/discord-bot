@@ -35,8 +35,8 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Remove="..\win32_error_codes.txt" />
-    <AdditionalFiles Include="..\win32_error_codes.txt" />
+    <None Remove="..\win32_error_codes*.txt" />
+    <AdditionalFiles Include="..\win32_error_codes*.txt" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01189" />
