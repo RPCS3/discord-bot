@@ -1041,11 +1041,6 @@ internal static partial class LogParserResult
             generalNotes.Add("⚠ Custom RPCS3 builds are not officially supported");
             generalNotes.Add("⚠ This custom build comes with pre-configured settings, don't change anything");
         }
-        else
-        {
-            generalNotes.Add("ℹ Metal Gear Solid 4 just got ingame, and is still very unstable");
-            generalNotes.Add("ℹ There is no universal set of settings and game updates that works for everyone");
-        }
     }
 
     private static readonly HashSet<string> PdfIds = new()
