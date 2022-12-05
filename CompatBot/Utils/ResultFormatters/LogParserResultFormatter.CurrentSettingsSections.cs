@@ -173,7 +173,7 @@ internal static partial class LogParserResult
             $"Force CPU Blit:{items["cpu_blit"] ?? "N/A",ColumnWidth-14}",
             $"Accurate RSX Reservation:{items["accurate_rsx_reservation"] ?? "N/A",ColumnWidth-24}",
             $"CPU Preemptions:{items["cpu_preempt_count"] ?? "N/A",ColumnWidth-15}",
-            //$"Lib Mode:{items["lib_loader"] ?? "N/A",ColumnWidth-8}",
+            $"Lib Mode:{items["lib_loader"] ?? "N/A",ColumnWidth-8}",
         };
         return ("CPU Settings", lines);
     }
@@ -231,22 +231,22 @@ internal static partial class LogParserResult
             var colAToRemove = colA.lines.Count(l => l.EndsWith("N/A"));
             var colBToRemove = colB.lines.Count(l => l.EndsWith("N/A"));
             var linesToRemove = Math.Min(colAToRemove, colBToRemove);
-            if (linesToRemove > 0)
-            {
-                var linesToSkip = colAToRemove - linesToRemove;
-                var tmp = colA.lines;
-                colA.lines = new(tmp.Count - linesToRemove);
-                foreach (var t in tmp)
-                    if (!t.EndsWith("N/A") || linesToSkip-- > 0)
-                        colA.lines.Add(t);
+            var linesToRemoveA = Math.Min(colAToRemove, Math.Max(linesToRemove, linesToRemove + colA.lines.Count - colB.lines.Count));
+            var linesToRemoveB = Math.Min(colBToRemove, Math.Max(linesToRemove, linesToRemove + colB.lines.Count - colA.lines.Count));
 
-                linesToSkip = colBToRemove - linesToRemove;
-                tmp = colB.lines;
-                colB.lines = new(tmp.Count - linesToRemove);
-                for (var i = 0; i < tmp.Count; i++)
-                    if (!tmp[i].EndsWith("N/A") || linesToSkip-- > 0)
-                        colB.lines.Add(tmp[i]);
-            }
+            var linesToSkip = colAToRemove - linesToRemoveA;
+            var tmp = colA.lines;
+            colA.lines = new(tmp.Count - linesToRemoveA);
+            foreach (var t in tmp)
+                if (!t.EndsWith("N/A") || linesToSkip-- > 0)
+                    colA.lines.Add(t);
+            linesToSkip = colBToRemove - linesToRemoveB;
+            tmp = colB.lines;
+            colB.lines = new(tmp.Count - linesToRemoveB);
+            for (var i = 0; i < tmp.Count; i++)
+                if (!tmp[i].EndsWith("N/A") || linesToSkip-- > 0)
+                    colB.lines.Add(tmp[i]);
+
             AddSettingsSection(builder, colA.name!, colA.lines, isCustomSettings);
             AddSettingsSection(builder, colB.name!, colB.lines, isCustomSettings);
         }
