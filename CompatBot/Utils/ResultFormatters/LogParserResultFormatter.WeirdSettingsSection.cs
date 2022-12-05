@@ -1146,7 +1146,7 @@ internal static partial class LogParserResult
                 }
                 if (items["read_depth_buffer"] == DisabledMark)
                 {
-                    notes.Add("ℹ `Read Depth Buffer` might be required");
+                    notes.Add("⚠ Please enable `Read Depth Buffer`");
                     needChanges = true;
                 }
                 if (needChanges)
