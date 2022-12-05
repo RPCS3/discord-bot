@@ -170,7 +170,7 @@ internal static partial class LogParserResult
             $"Thread Scheduler:{items["thread_scheduler"],ColumnWidth-16}",
             $"SPU Threads:{items["spu_threads"],ColumnWidth-11}",
             $"SPU Block Size:{items["spu_block_size"] ?? "N/A",ColumnWidth-14}",
-            $"Accurate xfloat:{items["accurate_xfloat"] ?? "N/A",ColumnWidth-15}",
+            $"SPU xfloat mode:{items["xfloat_mode"] ?? "N/A",ColumnWidth-15}",
             $"Force CPU Blit:{items["cpu_blit"] ?? "N/A",ColumnWidth-14}",
             //$"Lib Mode:{items["lib_loader"],ColumnWidth-8}",
         };

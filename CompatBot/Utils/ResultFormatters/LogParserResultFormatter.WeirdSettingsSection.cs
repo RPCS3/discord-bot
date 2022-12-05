@@ -288,6 +288,16 @@ internal static partial class LogParserResult
                     notes.Add("⚠ `Accurate xfloat` is required for this game, but it will significantly impact performance");
             }
         }
+        if (items["relaxed_xfloat"] is string relaxedXfloat)
+        {
+            if (relaxedXfloat == DisabledMark)
+            {
+                if (KnownNoRelaxedXFloatIds.Contains(serial))
+                    notes.Add("ℹ `Relaxed xfloat` is disabled");
+                else
+                    notes.Add("⚠ `Relaxed xfloat` is disabled, please enable");
+            }
+        } 
         if (items["approximate_xfloat"] is string approximateXfloat && approximateXfloat == DisabledMark)
         {
             if (KnownNoApproximateXFloatIds.Contains(serial))

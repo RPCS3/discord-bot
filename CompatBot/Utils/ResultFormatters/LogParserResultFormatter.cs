@@ -117,6 +117,8 @@ internal static partial class LogParserResult
         "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
     };
 
+    private static readonly HashSet<string> KnownNoRelaxedXFloatIds = new();
+    
     private static readonly HashSet<string> KnownNoApproximateXFloatIds = new()
     {
         "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
@@ -475,11 +477,31 @@ internal static partial class LogParserResult
                 _                    => items["shader_mode"],
             };
         }
-        else if (items["disable_async_shaders"] == DisabledMark)
+        else if (items["disable_async_shaders"] is DisabledMark or "false")
             items["shader_mode"] = "Async";
-        else if (items["disable_async_shaders"] == EnabledMark)
+        else if (items["disable_async_shaders"] is EnabledMark or "true")
             items["shader_mode"] = "Recompiler only";
 
+        if (items["relaxed_xfloat"] is null)
+        {
+            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"]) switch
+            {
+                ( "true",       _) => "Accurate",
+                (      _,  "true") => "Approximate",
+                (      _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}]",
+            };
+        }
+        else
+        {
+            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"], items["relaxed_xfloat"]) switch
+            {
+                ( "true", "false",  "true") => "Accurate",
+                ("false",  "true",  "true") => "Approximate",
+                ("false", "false",  "true") => "Relaxed",
+                (      _,       _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}{(v.Item3 == "true"? "r" : "-")}]",
+            };
+        }
+        
         static string? reformatDecoder(string? dec)
         {
             if (string.IsNullOrEmpty(dec))
