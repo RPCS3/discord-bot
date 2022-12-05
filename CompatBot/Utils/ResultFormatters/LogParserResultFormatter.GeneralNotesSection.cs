@@ -160,8 +160,7 @@ internal static partial class LogParserResult
 
         if (items["compat_database_path"] is string compatDbPath)
         {
-            if (InstallPath.Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is Match installPathMatch
-                && installPathMatch.Success)
+            if (InstallPath.Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is { Success: true } installPathMatch)
             {
                 var rpcs3FolderMissing = string.IsNullOrEmpty(installPathMatch.Groups["rpcs3_folder"].Value);
                 var desktop = !string.IsNullOrEmpty(installPathMatch.Groups["desktop"].Value);
@@ -181,7 +180,7 @@ internal static partial class LogParserResult
             }
 
             var pathSegments = PathUtils.GetSegments(compatDbPath);
-            var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.InvariantCultureIgnoreCase));
+            var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.OrdinalIgnoreCase));
             if (!string.IsNullOrEmpty(syncFolder))
                 notes.Add($"⚠ RPCS3 is installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
             var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
@@ -238,7 +237,7 @@ internal static partial class LogParserResult
         if (items["glsl_version"] is string glslVersionString &&
             Version.TryParse(glslVersionString, out var glslVersion))
         {
-            glslVersion = new Version(glslVersion.Major, glslVersion.Minor / 10);
+            glslVersion = new(glslVersion.Major, glslVersion.Minor / 10);
             if (oglVersion == null || glslVersion > oglVersion)
                 oglVersion = glslVersion;
         }
@@ -448,8 +447,7 @@ internal static partial class LogParserResult
             notes.Add(msg);
         }
         if (multiItems["ppu_patch"].FirstOrDefault() is string firstPpuPatch
-            && ProgramHashPatch.Match(firstPpuPatch) is Match m
-            && m.Success
+            && ProgramHashPatch.Match(firstPpuPatch) is { Success: true } m 
             && m.Groups["hash"].Value is string firstPpuHash)
         {
             var exe = Path.GetFileName(items["elf_boot_path"] ?? "");
@@ -481,7 +479,7 @@ internal static partial class LogParserResult
     private static void BuildFatalErrorSection(DiscordEmbedBuilder builder, NameValueCollection items, NameUniqueObjectCollection<string> multiItems, List<string> notes)
     {
         var win32ErrorCodes = new HashSet<int>();
-        if (multiItems["fatal_error"] is UniqueList<string> {Length: > 0} fatalErrors)
+        if (multiItems["fatal_error"] is {Length: > 0} fatalErrors)
         {
             var contexts = multiItems["fatal_error_context"];
             var reducedFatalErrors = GroupSimilar(fatalErrors);
@@ -578,7 +576,7 @@ internal static partial class LogParserResult
 #else
                             : $"Fatal Error (x{count})";
 #endif
-                    if (Regex.Match(fatalError, @"\(e(rror)?=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is Match {Success: true} match)
+                    if (Regex.Match(fatalError, @"\(e(rror)?=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is {Success: true} match)
                     {
                         if (int.TryParse(match.Groups["verification_error"].Value, out var decCode))
                             win32ErrorCodes.Add(decCode);
@@ -739,7 +737,7 @@ internal static partial class LogParserResult
         try
         {
             var irdFiles = await IrdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token).ConfigureAwait(false);
-            knownFiles = new HashSet<string>(
+            knownFiles = new(
                 from ird in irdFiles
                 from name in ird.GetFilenames()
                 select name,

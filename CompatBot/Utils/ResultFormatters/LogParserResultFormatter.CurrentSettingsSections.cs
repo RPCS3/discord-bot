@@ -267,12 +267,12 @@ internal static partial class LogParserResult
     private static void BuildLibsSection(DiscordEmbedBuilder builder, NameValueCollection items)
     {
         if (items["lib_loader"] is string libs
-            && (libs.Contains("manual", StringComparison.InvariantCultureIgnoreCase)
-                || libs.Contains("strict", StringComparison.InvariantCultureIgnoreCase)))
+            && (libs.Contains("manual", StringComparison.OrdinalIgnoreCase)
+                || libs.Contains("strict", StringComparison.OrdinalIgnoreCase)))
             builder.AddField("Selected Libraries", items["library_list"]?.Trim(1024));
-        if (items["library_list_lle"] is string lle && lle != "None")
+        if (items["library_list_lle"] is string lle and not "None")
             builder.AddField("LLE Library Override", lle.Trim(1024));
-        if (items["library_list_hle"] is string hle && hle != "None")
+        if (items["library_list_hle"] is string hle and not "None")
             builder.AddField("HLE Library Override", hle.Trim(1024));
     }
 }

@@ -990,7 +990,7 @@ internal static partial class LogParserResult
         else
             msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
         msg += " | " + source.SourceType;
-        if (state?.ReadBytes > 0 && source.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
+        if (state?.ReadBytes > 0 && source.LogFileSize is >0 and <2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
             msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
         else if (source.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
             msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";
