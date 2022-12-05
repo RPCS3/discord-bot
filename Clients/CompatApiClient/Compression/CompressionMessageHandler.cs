@@ -33,7 +33,7 @@ public class CompressionMessageHandler : DelegatingHandler
         if (isServer
             && request.Content?.Headers.ContentEncoding != null
             && request.Content.Headers.ContentEncoding.FirstOrDefault() is string serverEncoding
-            && Compressors.FirstOrDefault(c => c.EncodingType.Equals(serverEncoding, StringComparison.InvariantCultureIgnoreCase)) is ICompressor serverDecompressor)
+            && Compressors.FirstOrDefault(c => c.EncodingType.Equals(serverEncoding, StringComparison.OrdinalIgnoreCase)) is ICompressor serverDecompressor)
         {
             request.Content = new DecompressedContent(request.Content, serverDecompressor);
         }
@@ -42,7 +42,7 @@ public class CompressionMessageHandler : DelegatingHandler
                  && request.Content != null
                  && request.Headers.TryGetValues(PostCompressionFlag, out var compressionFlagValues)
                  && compressionFlagValues.FirstOrDefault() is string compressionFlag
-                 && Compressors.FirstOrDefault(c => c.EncodingType.Equals(compressionFlag, StringComparison.InvariantCultureIgnoreCase)) is ICompressor clientCompressor)
+                 && Compressors.FirstOrDefault(c => c.EncodingType.Equals(compressionFlag, StringComparison.OrdinalIgnoreCase)) is ICompressor clientCompressor)
         {
             request.Content = new CompressedContent(request.Content, clientCompressor);
         }
@@ -52,13 +52,13 @@ public class CompressionMessageHandler : DelegatingHandler
         //ApiConfig.Log.Trace($"Response: {response.StatusCode} {request.RequestUri}");
         if (isClient
             && response.Content.Headers.ContentEncoding.FirstOrDefault() is string clientEncoding
-            && Compressors.FirstOrDefault(c => c.EncodingType.Equals(clientEncoding, StringComparison.InvariantCultureIgnoreCase)) is ICompressor clientDecompressor)
+            && Compressors.FirstOrDefault(c => c.EncodingType.Equals(clientEncoding, StringComparison.OrdinalIgnoreCase)) is ICompressor clientDecompressor)
         {
             response.Content = new DecompressedContent(response.Content, clientDecompressor);
         }
         else if (isServer
                  && request.Headers.AcceptEncoding.FirstOrDefault() is {} acceptEncoding
-                 && Compressors.FirstOrDefault(c => c.EncodingType.Equals(acceptEncoding.Value, StringComparison.InvariantCultureIgnoreCase)) is ICompressor serverCompressor)
+                 && Compressors.FirstOrDefault(c => c.EncodingType.Equals(acceptEncoding.Value, StringComparison.OrdinalIgnoreCase)) is ICompressor serverCompressor)
         {
             response.Content = new CompressedContent(response.Content, serverCompressor);
         }
