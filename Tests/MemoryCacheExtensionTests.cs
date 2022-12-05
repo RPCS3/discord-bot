@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using CompatBot.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using NUnit.Framework;
