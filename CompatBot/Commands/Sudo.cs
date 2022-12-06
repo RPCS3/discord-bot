@@ -66,7 +66,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
                 await using var requestStream = await client.GetStreamAsync(ctx.Message.Attachments[0].Url!).ConfigureAwait(false);
                 await requestStream.CopyToAsync(memStream).ConfigureAwait(false);
                 memStream.Seek(0, SeekOrigin.Begin);
-                msgBuilder.WithFile(ctx.Message.Attachments[0].FileName, memStream);
+                msgBuilder.AddFile(ctx.Message.Attachments[0].FileName, memStream);
                 await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
             }
             catch { }
@@ -156,7 +156,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(logPath) + ".zip", result)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(Path.GetFileName(logPath) + ".zip", result)).ConfigureAwait(false);
             }
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
@@ -222,7 +222,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
             if (result.Length <= ctx.GetAttachmentSizeLimit())
             {
                 result.Seek(0, SeekOrigin.Begin);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
             }
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"Compressed {dbName}.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);

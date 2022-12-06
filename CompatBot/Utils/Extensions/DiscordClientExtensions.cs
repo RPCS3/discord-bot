@@ -122,7 +122,7 @@ public static class DiscordClientExtensions
         try
         {
             if (contents?.Count > 0)
-                return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithFiles(contents).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+                return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).AddFiles(contents).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
             else
                 return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
         }
@@ -197,7 +197,7 @@ public static class DiscordClientExtensions
     public static Task SendMessageAsync(this DiscordChannel channel, string message, byte[]? attachment, string? filename)
     {
         if (!string.IsNullOrEmpty(filename) && attachment?.Length > 0)
-            return channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(filename, new MemoryStream(attachment)).WithContent(message));
+            return channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(filename, new MemoryStream(attachment)).WithContent(message));
         return channel.SendMessageAsync(message);
     }
 

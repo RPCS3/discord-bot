@@ -18,15 +18,16 @@ internal static class UpdateInfoFormatter
 {
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
 
-    public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, Octokit.PullRequest? currentPrInfo = null)
+    public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, Octokit.PullRequest? currentPrInfo = null, bool useCurrent = false)
     {
         if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download ?? info?.LatestBuild?.Mac?.Download) is null)
             return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
 
         var justAppend = builder != null;
         var latestBuild = info!.LatestBuild;
+        var currentBuild = info.CurrentBuild;
         var latestPr = latestBuild?.Pr;
-        var currentPr = info.CurrentBuild?.Pr;
+        var currentPr = currentBuild?.Pr;
         string? url = null;
         Octokit.PullRequest? latestPrInfo = null;
 
@@ -135,10 +136,12 @@ internal static class UpdateInfoFormatter
             }
         }
 
-        if (!string.IsNullOrEmpty(latestBuild?.Datetime))
+        var linkedBuild = useCurrent ? currentBuild : latestBuild;
+        if (!string.IsNullOrEmpty(linkedBuild?.Datetime))
         {
-            var timestampInfo = latestBuildTimestamp?.ToString("u") ?? latestBuild.Datetime;
-            if (currentPr > 0
+            var timestampInfo = (useCurrent ? currentBuildTimestamp : latestBuildTimestamp)?.ToString("u") ?? linkedBuild.Datetime;
+            if (!useCurrent
+                && currentPr > 0
                 && currentPr != latestPr
                 && GetUpdateDelta(latestBuildTimestamp, currentBuildTimestamp) is TimeSpan timeDelta)
                 timestampInfo += $" ({timeDelta.AsTimeDeltaDescription()} newer)";
@@ -148,13 +151,18 @@ internal static class UpdateInfoFormatter
                 timestampInfo += $" ({(DateTime.UtcNow - latestBuildTimestamp.Value).AsTimeDeltaDescription()} ago)";
 
             if (justAppend)
-                builder.AddField("Latest master build", "This pull request has been merged, and is a part of `master` now");
+            {
+                if (useCurrent)
+                    builder.AddField("Archived official build", "This is an **old** archived build for the specified pull request");
+                else
+                    builder.AddField("Latest official release", "This pull request has been merged, and is a part of the latest official build");
+            }
             builder.WithFooter($"{buildTimestampKind} on {timestampInfo}");
         }
         return builder
-            .AddField("Windows download", GetLinkMessage(latestBuild?.Windows, true), true)
-            .AddField("Linux download", GetLinkMessage(latestBuild?.Linux, true), true)
-            .AddField("Mac download", GetLinkMessage(latestBuild?.Mac, true), true);
+            .AddField("Windows download", GetLinkMessage(linkedBuild?.Windows, true), true)
+            .AddField("Linux download", GetLinkMessage(linkedBuild?.Linux, true), true)
+            .AddField("Mac download", GetLinkMessage(linkedBuild?.Mac, true), true);
     }
 
     private static string GetLinkMessage(BuildLink? link, bool simpleName)

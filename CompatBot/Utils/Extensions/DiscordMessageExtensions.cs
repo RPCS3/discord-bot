@@ -24,7 +24,6 @@ public static class DiscordMessageExtensions
                 {
                     if (messageBuilder.ReplyId is not null)
                     {
-#warning Ugly hack, needs property reset method in the builder
                         var property = messageBuilder.GetType().GetProperty(nameof(messageBuilder.ReplyId));
                         property?.SetValue(messageBuilder, null, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, null, null);
                     }
@@ -32,7 +31,6 @@ public static class DiscordMessageExtensions
                     task = botMsg.ModifyAsync(messageBuilder, suppressEmbeds: forceRemoveEmbed);
                 }
                 var newMsg = await task.ConfigureAwait(false);
-#warning Ugly hack, needs proper fix in upstream, but they are not enthused to do so
                 if (newMsg.Channel is null)
                 {
                     Config.Log.Warn("New message in DM from the bot still has no channel");

@@ -146,17 +146,6 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
                 
             db.ForcedNicknames.RemoveRange(enforcedRules);
             await db.SaveChangesAsync().ConfigureAwait(false);
-            foreach (var rule in enforcedRules)
-                if (ctx.Client.GetMember(rule.GuildId, discordUser) is DiscordMember discordMember)
-                    try
-                    {
-                        //todo: change to mem.Nickname = default when the library fixes their shit
-                        await discordMember.ModifyAsync(mem => mem.Nickname = new(discordMember.Username)).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        Config.Log.Debug(ex);
-                    }
             await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -213,6 +202,23 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
     {
         var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
         await ctx.Channel.SendMessageAsync(newName).ConfigureAwait(false);
+    }
+
+    [Command("autorename"), Aliases("auto"), RequiresBotModRole]
+    [Description("Sets automatically generated nickname without enforcing it")]
+    public async Task Autorename(CommandContext ctx, [Description("Discord user to rename")] DiscordMember discordUser)
+    {
+        var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
+        try
+        {
+            await discordUser.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
+            await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            Config.Log.Warn($"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
+            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);
+        }
     }
         
     [Command("list"), RequiresBotModRole]

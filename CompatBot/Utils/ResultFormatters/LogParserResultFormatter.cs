@@ -72,8 +72,9 @@ internal static partial class LogParserResult
     private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
     private static readonly Version RdnaMsaaFixedVersion  = new(0, 0, 13, 11300);
     private static readonly Version IntelThreadSchedulerBuildVersion  = new(0, 0, 15, 12008);
+    private static readonly Version PsnDiscFixBuildVersion  = new(0, 0, 18, 12783);
     private static readonly Version CubebBuildVersion  = new(0, 0, 19, 13050);
-    
+
 
     private static readonly Dictionary<string, string> RsxPresentModeMap = new()
     {
@@ -117,6 +118,8 @@ internal static partial class LogParserResult
         "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
     };
 
+    private static readonly HashSet<string> KnownNoRelaxedXFloatIds = new();
+    
     private static readonly HashSet<string> KnownNoApproximateXFloatIds = new()
     {
         "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
@@ -256,8 +259,8 @@ internal static partial class LogParserResult
             if (collection["serial"] is string serial
                 && KnownDiscOnPsnIds.TryGetValue(serial, out var psnSerial)
                 && !string.IsNullOrEmpty(ldrGameSerial)
-                && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase)
-                && ldrGameSerial.Equals(psnSerial, StringComparison.InvariantCultureIgnoreCase))
+                && ldrGameSerial.StartsWith("NP", StringComparison.OrdinalIgnoreCase)
+                && ldrGameSerial.Equals(psnSerial, StringComparison.OrdinalIgnoreCase))
             {
                 collection["disc_to_psn_serial"] = serial;
                 collection["serial"] = psnSerial;
@@ -475,11 +478,33 @@ internal static partial class LogParserResult
                 _                    => items["shader_mode"],
             };
         }
-        else if (items["disable_async_shaders"] == DisabledMark)
+        else if (items["disable_async_shaders"] is DisabledMark or "false")
             items["shader_mode"] = "Async";
-        else if (items["disable_async_shaders"] == EnabledMark)
+        else if (items["disable_async_shaders"] is EnabledMark or "true")
             items["shader_mode"] = "Recompiler only";
+        if (items["cpu_preempt_count"] is "0")
+            items["cpu_preempt_count"] = "Disabled";
 
+        if (items["relaxed_xfloat"] is null)
+        {
+            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"]) switch
+            {
+                ( "true",       _) => "Accurate",
+                (      _,  "true") => "Approximate",
+                (      _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}]",
+            };
+        }
+        else
+        {
+            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"], items["relaxed_xfloat"]) switch
+            {
+                ( "true", "false",  "true") => "Accurate",
+                ("false",  "true",  "true") => "Approximate",
+                ("false", "false",  "true") => "Relaxed",
+                (      _,       _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}{(v.Item3 == "true"? "r" : "-")}]",
+            };
+        }
+        
         static string? reformatDecoder(string? dec)
         {
             if (string.IsNullOrEmpty(dec))
@@ -921,7 +946,7 @@ internal static partial class LogParserResult
         return notes
             .Select(s =>
             {
-                var prioritySymbol = s.Split(PrioritySeparator, 2)[0];
+                var prioritySymbol = s.Split(PrioritySeparator, 2)[0].TrimEnd('️');
                 var priority = priorityList.IndexOf(prioritySymbol);
                 return new
                 {
@@ -966,7 +991,7 @@ internal static partial class LogParserResult
         else
             msg = $"Log from {member.DisplayName.Sanitize()} | {member.Id}\n";
         msg += " | " + source.SourceType;
-        if (state?.ReadBytes > 0 && source.LogFileSize > 0 && source.LogFileSize < 2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
+        if (state?.ReadBytes > 0 && source.LogFileSize is >0 and <2L*1024*1024*1024 && state.ReadBytes <= source.LogFileSize)
             msg += $" | Parsed {state.ReadBytes * 100.0 / source.LogFileSize:0.##}%";
         else if (source.SourceFilePosition > 0 && source.SourceFileSize > 0 && source.SourceFilePosition <= source.SourceFileSize)
             msg += $" | Read {source.SourceFilePosition * 100.0 / source.SourceFileSize:0.##}%";

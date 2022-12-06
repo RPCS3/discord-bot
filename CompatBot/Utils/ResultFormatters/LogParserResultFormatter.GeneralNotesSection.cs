@@ -32,11 +32,14 @@ internal static partial class LogParserResult
         var (_, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
         brokenDump |= multiItems["edat_block_offset"].Any();
         var elfBootPath = items["elf_boot_path"] ?? "";
-        var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
-        var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
+        var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.OrdinalIgnoreCase);
+        var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.OrdinalIgnoreCase);
         var serial = items["serial"] ?? "";
         BuildFatalErrorSection(builder, items, multiItems, notes);
 
+        Version? buildVersion = null;
+        if (items["build_branch"] == "HEAD")
+            Version.TryParse(items["build_full_version"], out buildVersion);
         var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]) && items["supported_gpu"] != DisabledMark;
         var unsupportedGpuDriver = false;
         if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
@@ -47,8 +50,8 @@ internal static partial class LogParserResult
             notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
         if (multiItems["failed_to_verify_npdrm"].Contains("sce"))
             notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
-        if (items["disc_to_psn_serial"] is string badSerial)
-            notes.Add("❌ This version of the game does not work on the emulator at this time");
+        if (items["disc_to_psn_serial"] is { Length: >0 } && (buildVersion is null || buildVersion < PsnDiscFixBuildVersion))
+            notes.Add("❌ Please update the emulator to make this version of the game work");
         else if (items["game_status"] is string gameStatus
                  && Enum.TryParse(gameStatus, true, out CompatStatus status)
                  && status < CompatStatus.Ingame)
@@ -123,7 +126,7 @@ internal static partial class LogParserResult
         if (items["os_type"] == "Windows"
             && items["mounted_dev_bdvd"] is {Length: >0} mountedBdvd
             && mountedBdvd.TrimEnd('/').EndsWith(':'))
-            notes.Add("⚠️ Booting directly from blu-ray disc is not supported, please make a proper game dump");
+            notes.Add("⚠ Booting directly from blu-ray disc is not supported, please make a proper game dump");
 
         if (items["log_from_ui"] is not null)
             notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
@@ -160,8 +163,7 @@ internal static partial class LogParserResult
 
         if (items["compat_database_path"] is string compatDbPath)
         {
-            if (InstallPath.Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is Match installPathMatch
-                && installPathMatch.Success)
+            if (InstallPath.Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is { Success: true } installPathMatch)
             {
                 var rpcs3FolderMissing = string.IsNullOrEmpty(installPathMatch.Groups["rpcs3_folder"].Value);
                 var desktop = !string.IsNullOrEmpty(installPathMatch.Groups["desktop"].Value);
@@ -181,7 +183,7 @@ internal static partial class LogParserResult
             }
 
             var pathSegments = PathUtils.GetSegments(compatDbPath);
-            var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.InvariantCultureIgnoreCase));
+            var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.OrdinalIgnoreCase));
             if (!string.IsNullOrEmpty(syncFolder))
                 notes.Add($"⚠ RPCS3 is installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
             var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
@@ -238,7 +240,7 @@ internal static partial class LogParserResult
         if (items["glsl_version"] is string glslVersionString &&
             Version.TryParse(glslVersionString, out var glslVersion))
         {
-            glslVersion = new Version(glslVersion.Major, glslVersion.Minor / 10);
+            glslVersion = new(glslVersion.Major, glslVersion.Minor / 10);
             if (oglVersion == null || glslVersion > oglVersion)
                 oglVersion = glslVersion;
         }
@@ -280,8 +282,7 @@ internal static partial class LogParserResult
             {
                 if (driverVersionString.Contains('-'))
                     driverVersionString = driverVersionString.Split(new[] {' ', '-'}, StringSplitOptions.RemoveEmptyEntries).Last();
-                if (Version.TryParse(driverVersionString, out var driverVersion)
-                    && Version.TryParse(items["build_full_version"], out var buildVersion))
+                if (Version.TryParse(driverVersionString, out var driverVersion) && buildVersion is not null)
                 {
                     items["driver_version_parsed"] = driverVersion.ToString();
                     if (IsNvidia(gpuInfo))
@@ -293,10 +294,8 @@ internal static partial class LogParserResult
                         if (driverVersion >= NvidiaTextureMemoryBugMinVersion
                             && driverVersion < NvidiaTextureMemoryBugMaxVersion
                             && items["renderer"] == "Vulkan")
-                            notes.Add("ℹ 526 series nVidia drivers can cause out of memory errors, please upgrade or downgrade the drivers");
-                        if (isWindows
-                            && buildVersion < NvidiaFullscreenBugFixed
-                            && items["build_branch"] == "HEAD")
+                            notes.Add("ℹ 526 series nVidia drivers can cause out of memory errors, please upgrade the drivers");
+                        if (isWindows && buildVersion < NvidiaFullscreenBugFixed)
                         {
                             if (driverVersion >= NvidiaFullscreenBugMinVersion
                                 && driverVersion < NvidiaFullscreenBugMaxVersion
@@ -448,8 +447,7 @@ internal static partial class LogParserResult
             notes.Add(msg);
         }
         if (multiItems["ppu_patch"].FirstOrDefault() is string firstPpuPatch
-            && ProgramHashPatch.Match(firstPpuPatch) is Match m
-            && m.Success
+            && ProgramHashPatch.Match(firstPpuPatch) is { Success: true } m 
             && m.Groups["hash"].Value is string firstPpuHash)
         {
             var exe = Path.GetFileName(items["elf_boot_path"] ?? "");
@@ -481,7 +479,7 @@ internal static partial class LogParserResult
     private static void BuildFatalErrorSection(DiscordEmbedBuilder builder, NameValueCollection items, NameUniqueObjectCollection<string> multiItems, List<string> notes)
     {
         var win32ErrorCodes = new HashSet<int>();
-        if (multiItems["fatal_error"] is UniqueList<string> {Length: > 0} fatalErrors)
+        if (multiItems["fatal_error"] is {Length: > 0} fatalErrors)
         {
             var contexts = multiItems["fatal_error_context"];
             var reducedFatalErrors = GroupSimilar(fatalErrors);
@@ -578,7 +576,7 @@ internal static partial class LogParserResult
 #else
                             : $"Fatal Error (x{count})";
 #endif
-                    if (Regex.Match(fatalError, @"\(e=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is Match {Success: true} match)
+                    if (Regex.Match(fatalError, @"\(e(rror)?=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is {Success: true} match)
                     {
                         if (int.TryParse(match.Groups["verification_error"].Value, out var decCode))
                             win32ErrorCodes.Add(decCode);
@@ -739,7 +737,7 @@ internal static partial class LogParserResult
         try
         {
             var irdFiles = await IrdClient.DownloadAsync(productCode, Config.IrdCachePath, Config.Cts.Token).ConfigureAwait(false);
-            knownFiles = new HashSet<string>(
+            knownFiles = new(
                 from ird in irdFiles
                 from name in ird.GetFilenames()
                 select name,

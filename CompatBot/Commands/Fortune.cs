@@ -233,7 +233,7 @@ internal sealed class Fortune : BaseCommandModuleCustom
             outputStream.Seek(0, SeekOrigin.Begin);
             var builder = new DiscordMessageBuilder()
                 .WithContent($"Exported {count} fortune{(count == 1 ? "": "s")}")
-                .WithFile("fortunes.txt", outputStream);
+                .AddFile("fortunes.txt", outputStream);
             await ctx.Channel.SendMessageAsync(builder).ConfigureAwait(false);
         }
         catch (Exception e)

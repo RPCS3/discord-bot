@@ -165,14 +165,15 @@ internal static partial class LogParserResult
         {
             $"PPU Decoder:{items["ppu_decoder"],ColumnWidth-11}",
             $"SPU Decoder:{items["spu_decoder"],ColumnWidth-11}",
-            //$"SPU Lower Thread Priority:{items["spu_lower_thread_priority"],ColumnWidth-25}",
             $"SPU Loop Detection:{items["spu_loop_detection"],ColumnWidth-18}",
             $"Thread Scheduler:{items["thread_scheduler"],ColumnWidth-16}",
             $"SPU Threads:{items["spu_threads"],ColumnWidth-11}",
             $"SPU Block Size:{items["spu_block_size"] ?? "N/A",ColumnWidth-14}",
-            $"Accurate xfloat:{items["accurate_xfloat"] ?? "N/A",ColumnWidth-15}",
+            $"SPU xfloat mode:{items["xfloat_mode"] ?? "N/A",ColumnWidth-15}",
             $"Force CPU Blit:{items["cpu_blit"] ?? "N/A",ColumnWidth-14}",
-            //$"Lib Mode:{items["lib_loader"],ColumnWidth-8}",
+            $"Accurate RSX Reservation:{items["accurate_rsx_reservation"] ?? "N/A",ColumnWidth-24}",
+            $"CPU Preemptions:{items["cpu_preempt_count"] ?? "N/A",ColumnWidth-15}",
+            $"Lib Mode:{items["lib_loader"] ?? "N/A",ColumnWidth-8}",
         };
         return ("CPU Settings", lines);
     }
@@ -215,6 +216,7 @@ internal static partial class LogParserResult
             $"Anisotropic Filter:{items["af_override"] ?? "N/A",ColumnWidth-18}",
             $"RSX Buffers:{enabledBuffers,ColumnWidth-11}",
             $"Shader Mode:{items["shader_mode"],ColumnWidth-11}",
+            $"RSX FIFO Mode:{items["rsx_fifo_mode"] ?? "N/A",ColumnWidth-13}",
             $"ZCull:{items["zcull_status"],ColumnWidth-5}",
             $"Frame Limit:{items["frame_limit_combined"],ColumnWidth-11}",
         };
@@ -229,22 +231,22 @@ internal static partial class LogParserResult
             var colAToRemove = colA.lines.Count(l => l.EndsWith("N/A"));
             var colBToRemove = colB.lines.Count(l => l.EndsWith("N/A"));
             var linesToRemove = Math.Min(colAToRemove, colBToRemove);
-            if (linesToRemove > 0)
-            {
-                var linesToSkip = colAToRemove - linesToRemove;
-                var tmp = colA.lines;
-                colA.lines = new List<string>(tmp.Count - linesToRemove);
-                foreach (var t in tmp)
-                    if (!t.EndsWith("N/A") || linesToSkip-- > 0)
-                        colA.lines.Add(t);
+            var linesToRemoveA = Math.Min(colAToRemove, Math.Max(linesToRemove, linesToRemove + colA.lines.Count - colB.lines.Count));
+            var linesToRemoveB = Math.Min(colBToRemove, Math.Max(linesToRemove, linesToRemove + colB.lines.Count - colA.lines.Count));
 
-                linesToSkip = colBToRemove - linesToRemove;
-                tmp = colB.lines;
-                colB.lines = new List<string>(tmp.Count - linesToRemove);
-                for (var i = 0; i < tmp.Count; i++)
-                    if (!tmp[i].EndsWith("N/A") || linesToSkip-- > 0)
-                        colB.lines.Add(tmp[i]);
-            }
+            var linesToSkip = colAToRemove - linesToRemoveA;
+            var tmp = colA.lines;
+            colA.lines = new(tmp.Count - linesToRemoveA);
+            foreach (var t in tmp)
+                if (!t.EndsWith("N/A") || linesToSkip-- > 0)
+                    colA.lines.Add(t);
+            linesToSkip = colBToRemove - linesToRemoveB;
+            tmp = colB.lines;
+            colB.lines = new(tmp.Count - linesToRemoveB);
+            for (var i = 0; i < tmp.Count; i++)
+                if (!tmp[i].EndsWith("N/A") || linesToSkip-- > 0)
+                    colB.lines.Add(tmp[i]);
+
             AddSettingsSection(builder, colA.name!, colA.lines, isCustomSettings);
             AddSettingsSection(builder, colB.name!, colB.lines, isCustomSettings);
         }
@@ -265,12 +267,12 @@ internal static partial class LogParserResult
     private static void BuildLibsSection(DiscordEmbedBuilder builder, NameValueCollection items)
     {
         if (items["lib_loader"] is string libs
-            && (libs.Contains("manual", StringComparison.InvariantCultureIgnoreCase)
-                || libs.Contains("strict", StringComparison.InvariantCultureIgnoreCase)))
+            && (libs.Contains("manual", StringComparison.OrdinalIgnoreCase)
+                || libs.Contains("strict", StringComparison.OrdinalIgnoreCase)))
             builder.AddField("Selected Libraries", items["library_list"]?.Trim(1024));
-        if (items["library_list_lle"] is string lle && lle != "None")
+        if (items["library_list_lle"] is string lle and not "None")
             builder.AddField("LLE Library Override", lle.Trim(1024));
-        if (items["library_list_hle"] is string hle && hle != "None")
+        if (items["library_list_hle"] is string hle and not "None")
             builder.AddField("HLE Library Override", hle.Trim(1024));
     }
 }

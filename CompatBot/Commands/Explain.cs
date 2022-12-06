@@ -1,7 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
@@ -17,7 +20,7 @@ using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Description = DSharpPlus.CommandsNext.Attributes.DescriptionAttribute; 
 
 namespace CompatBot.Commands;
 
@@ -346,16 +349,58 @@ internal sealed class Explain: BaseCommandModuleCustom
             if (!string.IsNullOrEmpty(item.Text))
             {
                 await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text));
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile($"{termOrLink}.txt", stream)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{termOrLink}.txt", stream)).ConfigureAwait(false);
             }
             if (!string.IsNullOrEmpty(item.AttachmentFilename) && item.Attachment?.Length > 0)
             {
                 await using var stream = new MemoryStream(item.Attachment);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile(item.AttachmentFilename, stream)).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(item.AttachmentFilename, stream)).ConfigureAwait(false);
             }
         }
     }
 
+    [Command("error")]
+    [Description("Provides additional information about Win32 and Linux system error")]
+    public async Task Error(CommandContext ctx, [Description("Error code (should start with 0x for hex code, otherwise it's interpreted as decimal)")] string code, [RemainingText, Description("OS type: win (default) or lin")] string os = "Windows")
+    {
+        var osType = OsType.Windows;
+        if (os.StartsWith("lin", StringComparison.OrdinalIgnoreCase) || os.EndsWith("nix", StringComparison.OrdinalIgnoreCase))
+            osType = OsType.Linux;
+
+        if (osType == OsType.Linux && !RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            await ctx.RespondAsync("Access to Linux error code descriptions is not available at the moment").ConfigureAwait(false);
+            return;
+        }
+
+        if (!(code.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && int.TryParse(code[2..], NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var intCode))
+            && !int.TryParse(code, out intCode)
+            && !int.TryParse(code, NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out intCode))
+        {
+            await ctx.RespondAsync($"Failed to parse {code} as an error code.").ConfigureAwait(false);
+            return;
+        }
+
+        if (osType == OsType.Windows)
+        {
+            if (Win32ErrorCodes.Map.TryGetValue(intCode, out var win32Info))
+                await ctx.RespondAsync($"`0x{intCode:x8}` (`{win32Info.name}`): {win32Info.description}").ConfigureAwait(false);
+            else
+                await ctx.RespondAsync($"Unknown Win32 error code 0x{intCode:x8}").ConfigureAwait(false);
+        }
+        else
+        {
+            try
+            {
+                await ctx.RespondAsync($"`{code}`: {new Win32Exception(code).Message}").ConfigureAwait(false);
+            }
+            catch
+            {
+                await ctx.RespondAsync($"Unknown Linux error code {intCode}").ConfigureAwait(false);
+            }
+        }
+    }
+    
     internal static async Task<(Explanation? explanation, string? fuzzyMatch, double score)> LookupTerm(string term)
     {
         await using var db = new BotDb();
@@ -405,7 +450,7 @@ internal sealed class Explain: BaseCommandModuleCustom
                 {
                     await using var memStream = Config.MemoryStreamManager.GetStream(explain.Attachment);
                     memStream.Seek(0, SeekOrigin.Begin);
-                    msgBuilder.WithFile(explain.AttachmentFilename, memStream);
+                    msgBuilder.AddFile(explain.AttachmentFilename, memStream);
                     await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                 }
                 else
@@ -439,7 +484,7 @@ internal sealed class Explain: BaseCommandModuleCustom
         else
         {
             await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(explanation));
-            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithFile("explanation.txt", stream)).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("explanation.txt", stream)).ConfigureAwait(false);
         }
     }
 }

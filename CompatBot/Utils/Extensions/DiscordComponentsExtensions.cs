@@ -13,7 +13,6 @@ public static class DiscordComponentsExtensions
 
     public static DiscordButtonComponent SetEmoji(this DiscordButtonComponent button, DiscordComponentEmoji emoji)
     {
-#warning Ugly hack, needs builder method or better yet making the setter public like before
         var property = button.GetType().GetProperty(nameof(button.Emoji));
         property?.SetValue(button, emoji, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, null, null);
         return button;

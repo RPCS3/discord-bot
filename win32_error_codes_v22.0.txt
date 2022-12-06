@@ -1358,7 +1358,7 @@ ERROR_UNKNOWN_REVISION	The revision level is unknown.
 ERROR_REVISION_MISMATCH	Indicates two revision levels are incompatible.
 0x0000051B
 ERROR_INVALID_OWNER	This SID cannot be assigned as the owner of this object.
- 0x0000051C
+0x0000051C
 ERROR_INVALID_PRIMARY_GROUP	This SID cannot be assigned as the primary group of an object.
 0x0000051D
 ERROR_NO_IMPERSONATION_TOKEN	An attempt has been made to operate on an impersonation token by a thread that is not currently impersonating a client.
@@ -1800,7 +1800,6 @@ RPC_S_PROTSEQ_NOT_SUPPORTED	The RPC protocol sequence is not supported.
 RPC_S_INVALID_RPC_PROTSEQ	The RPC protocol sequence is invalid.
 0x000006A9
 RPC_S_INVALID_STRING_UUID	The string UUID is invalid.
-
 0x000006AA
 RPC_S_INVALID_ENDPOINT_FORMAT	The endpoint format is invalid.
 0x000006AB
@@ -2310,7 +2309,7 @@ NERR_UnableToAddName_W	The logon processor did not add the message alias.
 0x0000089D
 NERR_UnableToAddName_F	The logon processor did not add the message alias.
 0x0000089E
-NERR_UnableToDelName_W	@W The logoff processor did not delete the message alias.
+NERR_UnableToDelName_W	The logoff processor did not delete the message alias.
 0x0000089F
 NERR_UnableToDelName_F	The logoff processor did not delete the message alias.
 0x000008A1

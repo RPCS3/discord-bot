@@ -204,8 +204,8 @@ public static class DbImporter
                 sha256.TransformBlock(buf, 0, buf.Length, null, 0);
             }
             buf = Encoding.UTF8.GetBytes(Config.RenameNameSuffix);
-            buf = sha256.TransformFinalBlock(buf, 0, buf.Length);
-            timestamp = BitConverter.ToInt64(buf, 0);
+            sha256.TransformFinalBlock(buf, 0, buf.Length);
+            timestamp = BitConverter.ToInt64(sha256.Hash!, 0);
         }
 
         const string renameStateKey = "rename-name-pool";
@@ -224,7 +224,7 @@ public static class DbImporter
             {
                 await using var stream = File.Open(resourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 using var reader = new StreamReader(stream);
-                while (await reader.ReadLineAsync().ConfigureAwait(false) is string line)
+                while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false) is string line)
                 {
                     if (line.Length < 2 || line.StartsWith("#"))
                         continue;

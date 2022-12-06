@@ -89,7 +89,11 @@ internal sealed class Pr: BaseCommandModuleCustom
             result.Append('`').Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User?.Login?.PadRightVisible(maxAuthor)}: {pr.Title?.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
         await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
     }
-        
+
+    [Command("link"), Aliases("old")]
+    [Description("Links to the official binary builds produced after specified PR was merged")]
+    public Task Link(CommandContext ctx, [Description("PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr, true);
+    
 #if DEBUG
     [Command("stats"), RequiresBotModRole]
     public async Task Stats(CommandContext ctx)
@@ -108,7 +112,7 @@ internal sealed class Pr: BaseCommandModuleCustom
     }
 #endif
         
-    public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr)
+    public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr, bool linkOld = false)
     {
         var prInfo = await GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
         if (prInfo is null or {Number: 0})
@@ -120,7 +124,7 @@ internal sealed class Pr: BaseCommandModuleCustom
         var (state, _) = prInfo.GetState();
         var embed = prInfo.AsEmbed();
         var azureClient = Config.GetAzureDevOpsClient();
-        if (state == "Open" || state == "Closed")
+        if (state is "Open" or "Closed")
         {
             var windowsDownloadHeader = "Windows PR Build";
             var linuxDownloadHeader = "Linux PR Build";
@@ -265,15 +269,15 @@ internal sealed class Pr: BaseCommandModuleCustom
             if (!string.IsNullOrEmpty(buildTime))
                 embed.WithFooter(buildTime);
         }
-        else if (state == "Merged" && azureClient is not null)
+        else if (state is "Merged" && azureClient is not null)
         {
             var mergeTime = prInfo.MergedAt.GetValueOrDefault();
             var now = DateTime.UtcNow;
-            var updateInfo = await CompatApiClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
-            if (updateInfo != null)
+            var updateInfo = await CompatApiClient.GetUpdateAsync(Config.Cts.Token, linkOld ? prInfo.MergeCommitSha : null).ConfigureAwait(false);
+            if (updateInfo is not null)
             {
                 if (DateTime.TryParse(updateInfo.LatestBuild?.Datetime, out var masterBuildTime) && masterBuildTime.Ticks >= mergeTime.Ticks)
-                    embed = await updateInfo.AsEmbedAsync(client, false, embed, prInfo).ConfigureAwait(false);
+                    embed = await updateInfo.AsEmbedAsync(client, false, embed, prInfo, linkOld).ConfigureAwait(false);
                 else
                 {
                     var waitTime = TimeSpan.FromMinutes(5);

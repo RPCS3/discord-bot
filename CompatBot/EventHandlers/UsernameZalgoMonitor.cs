@@ -138,6 +138,7 @@ public static class UsernameZalgoMonitor
         {
             switch (char.GetUnicodeCategory(c))
             {
+                case UnicodeCategory.EnclosingMark:
                 case UnicodeCategory.ModifierSymbol:
                 case UnicodeCategory.NonSpacingMark:
                     if (++consecutive < level && hasNormalCharacterBefore)
