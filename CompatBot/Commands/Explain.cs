@@ -20,18 +20,19 @@ using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Description = DSharpPlus.CommandsNext.Attributes.DescriptionAttribute; 
 
 namespace CompatBot.Commands;
 
 [Group("explain"), Aliases("botsplain", "define")]
 [Cooldown(1, 3, CooldownBucketType.Channel)]
-[DSharpPlus.CommandsNext.Attributes.Description("Used to manage and show explanations")]
+[Description("Used to manage and show explanations")]
 internal sealed class Explain: BaseCommandModuleCustom
 {
     private const string TermListTitle = "Defined terms";
 
     [GroupCommand]
-    public async Task ShowExplanation(CommandContext ctx, [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("Term to explain")] string term)
+    public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
     {
         if (string.IsNullOrEmpty(term))
         {
@@ -105,10 +106,10 @@ internal sealed class Explain: BaseCommandModuleCustom
     }
 
     [Command("add"), RequiresBotModRole]
-    [DSharpPlus.CommandsNext.Attributes.Description("Adds a new explanation to the list")]
+    [Description("Adds a new explanation to the list")]
     public async Task Add(CommandContext ctx,
-        [DSharpPlus.CommandsNext.Attributes.Description("A term to explain. Quote it if it contains spaces")] string term,
-        [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("Explanation text. Can have attachment")] string explanation)
+        [Description("A term to explain. Quote it if it contains spaces")] string term,
+        [RemainingText, Description("Explanation text. Can have attachment")] string explanation)
     {
         try
         {
@@ -156,10 +157,10 @@ internal sealed class Explain: BaseCommandModuleCustom
     }
 
     [Command("update"), Aliases("replace"), RequiresBotModRole]
-    [DSharpPlus.CommandsNext.Attributes.Description("Update explanation for a given term")]
+    [Description("Update explanation for a given term")]
     public async Task Update(CommandContext ctx,
-        [DSharpPlus.CommandsNext.Attributes.Description("A term to update. Quote it if it contains spaces")] string term,
-        [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("New explanation text")] string explanation)
+        [Description("A term to update. Quote it if it contains spaces")] string term,
+        [RemainingText, Description("New explanation text")] string explanation)
     {
         term = term.ToLowerInvariant().StripQuotes();
         byte[]? attachment = null;
@@ -197,8 +198,8 @@ internal sealed class Explain: BaseCommandModuleCustom
 
     [Command("rename"), Priority(10), RequiresBotModRole]
     public async Task Rename(CommandContext ctx,
-        [DSharpPlus.CommandsNext.Attributes.Description("A term to rename. Remember quotes if it contains spaces")] string oldTerm,
-        [DSharpPlus.CommandsNext.Attributes.Description("New term. Again, quotes")] string newTerm)
+        [Description("A term to rename. Remember quotes if it contains spaces")] string oldTerm,
+        [Description("New term. Again, quotes")] string newTerm)
     {
         oldTerm = oldTerm.ToLowerInvariant().StripQuotes();
         newTerm = newTerm.ToLowerInvariant().StripQuotes();
@@ -217,11 +218,11 @@ internal sealed class Explain: BaseCommandModuleCustom
     }
 
     [Command("rename"), Priority(1), RequiresBotModRole]
-    [DSharpPlus.CommandsNext.Attributes.Description("Renames a term in case you misspelled it or something")]
+    [Description("Renames a term in case you misspelled it or something")]
     public async Task Rename(CommandContext ctx,
-        [DSharpPlus.CommandsNext.Attributes.Description("A term to rename. Remember quotes if it contains spaces")] string oldTerm,
-        [DSharpPlus.CommandsNext.Attributes.Description("Constant \"to'")] string to,
-        [DSharpPlus.CommandsNext.Attributes.Description("New term. Again, quotes")] string newTerm)
+        [Description("A term to rename. Remember quotes if it contains spaces")] string oldTerm,
+        [Description("Constant \"to'")] string to,
+        [Description("New term. Again, quotes")] string newTerm)
     {
         if ("to".Equals(to, StringComparison.InvariantCultureIgnoreCase))
             await Rename(ctx, oldTerm, newTerm).ConfigureAwait(false);
@@ -230,7 +231,7 @@ internal sealed class Explain: BaseCommandModuleCustom
     }
 
     [Command("list")]
-    [DSharpPlus.CommandsNext.Attributes.Description("List all known terms that could be used for !explain command")]
+    [Description("List all known terms that could be used for !explain command")]
     public async Task List(CommandContext ctx)
     {
         var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
@@ -251,11 +252,11 @@ internal sealed class Explain: BaseCommandModuleCustom
     }
 
     [Group("remove"), Aliases("delete", "del", "erase", "obliterate"), RequiresBotModRole]
-    [DSharpPlus.CommandsNext.Attributes.Description("Removes an explanation from the definition list")]
+    [Description("Removes an explanation from the definition list")]
     internal sealed class Remove: BaseCommandModuleCustom
     {
         [GroupCommand]
-        public async Task RemoveExplanation(CommandContext ctx, [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("Term to remove")] string term)
+        public async Task RemoveExplanation(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
         {
             term = term.ToLowerInvariant().StripQuotes();
             await using var db = new BotDb();
@@ -271,8 +272,8 @@ internal sealed class Explain: BaseCommandModuleCustom
         }
 
         [Command("attachment"), Aliases("image", "picture", "file")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Removes attachment from specified explanation. If there is no text, the whole explanation is removed")]
-        public async Task Attachment(CommandContext ctx, [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("Term to remove")] string term)
+        [Description("Removes attachment from specified explanation. If there is no text, the whole explanation is removed")]
+        public async Task Attachment(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
         {
             term = term.ToLowerInvariant().StripQuotes();
             await using var db = new BotDb();
@@ -293,8 +294,8 @@ internal sealed class Explain: BaseCommandModuleCustom
         }
 
         [Command("text"), Aliases("description")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Removes explanation text. If there is no attachment, the whole explanation is removed")]
-        public async Task Text(CommandContext ctx, [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("Term to remove")] string term)
+        [Description("Removes explanation text. If there is no attachment, the whole explanation is removed")]
+        public async Task Text(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
         {
             term = term.ToLowerInvariant().StripQuotes();
             await using var db = new BotDb();
@@ -315,8 +316,8 @@ internal sealed class Explain: BaseCommandModuleCustom
     }
 
     [Command("dump"), Aliases("download")]
-    [DSharpPlus.CommandsNext.Attributes.Description("Returns explanation text as a file attachment")]
-    public async Task Dump(CommandContext ctx, [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("Term to dump **or** a link to a message containing the explanation")] string? termOrLink = null)
+    [Description("Returns explanation text as a file attachment")]
+    public async Task Dump(CommandContext ctx, [RemainingText, Description("Term to dump **or** a link to a message containing the explanation")] string? termOrLink = null)
     {
         if (string.IsNullOrEmpty(termOrLink))
         {
@@ -359,8 +360,8 @@ internal sealed class Explain: BaseCommandModuleCustom
     }
 
     [Command("error")]
-    [DSharpPlus.CommandsNext.Attributes.Description("Provides additional information about Win32 and Linux system error")]
-    public async Task Error(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("Error code (should start with 0x for hex code, otherwise it's interpreted as decimal)")] string code, [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("OS type: win (default) or lin")] string os = "Windows")
+    [Description("Provides additional information about Win32 and Linux system error")]
+    public async Task Error(CommandContext ctx, [Description("Error code (should start with 0x for hex code, otherwise it's interpreted as decimal)")] string code, [RemainingText, Description("OS type: win (default) or lin")] string os = "Windows")
     {
         var osType = OsType.Windows;
         if (os.StartsWith("lin", StringComparison.OrdinalIgnoreCase) || os.EndsWith("nix", StringComparison.OrdinalIgnoreCase))

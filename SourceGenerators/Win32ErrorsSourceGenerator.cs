@@ -31,9 +31,9 @@ public class Win32ErrorsSourceGenerator : ISourceGenerator
     {
         var resourceName = context.AdditionalFiles
             .OrderBy(f => f.Path, StringComparer.OrdinalIgnoreCase)
-            .LastOrDefault(f => Path.GetFileName(f.Path) is string fname && fname.StartsWith("win32_error_codes") && fname.EndsWith(".txt"));
+            .LastOrDefault(f => Path.GetFileName(f.Path) is string fname && fname.StartsWith("win32_error_codes", StringComparison.OrdinalIgnoreCase) && fname.EndsWith(".txt", StringComparison.OrdinalIgnoreCase));
         if (resourceName is null)
-            throw new InvalidOperationException("Failed to locate win32_error_codes txt file");
+            return;
             
         using var stream = File.Open(resourceName.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
         if (stream is null)
