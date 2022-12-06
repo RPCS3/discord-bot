@@ -32,11 +32,14 @@ internal static partial class LogParserResult
         var (_, brokenDump, longestPath) = await HasBrokenFilesAsync(state).ConfigureAwait(false);
         brokenDump |= multiItems["edat_block_offset"].Any();
         var elfBootPath = items["elf_boot_path"] ?? "";
-        var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
-        var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.InvariantCultureIgnoreCase);
+        var isEboot = !string.IsNullOrEmpty(elfBootPath) && elfBootPath.EndsWith("EBOOT.BIN", StringComparison.OrdinalIgnoreCase);
+        var isElf = !string.IsNullOrEmpty(elfBootPath) && !elfBootPath.EndsWith("EBOOT.BIN", StringComparison.OrdinalIgnoreCase);
         var serial = items["serial"] ?? "";
         BuildFatalErrorSection(builder, items, multiItems, notes);
 
+        Version? buildVersion = null;
+        if (items["build_branch"] == "HEAD")
+            Version.TryParse(items["build_full_version"], out buildVersion);
         var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]) && items["supported_gpu"] != DisabledMark;
         var unsupportedGpuDriver = false;
         if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
@@ -47,8 +50,8 @@ internal static partial class LogParserResult
             notes.Add("❌ Failed to boot the game, the dump might be encrypted or corrupted");
         if (multiItems["failed_to_verify_npdrm"].Contains("sce"))
             notes.Add("❌ Failed to decrypt executables, PPU recompiler may crash or fail");
-        if (items["disc_to_psn_serial"] is string badSerial)
-            notes.Add("❌ This version of the game does not work on the emulator at this time");
+        if (items["disc_to_psn_serial"] is { Length: >0 } && (buildVersion is null || buildVersion < PsnDiscFixBuildVersion))
+            notes.Add("❌ Please update the emulator to make this version of the game work");
         else if (items["game_status"] is string gameStatus
                  && Enum.TryParse(gameStatus, true, out CompatStatus status)
                  && status < CompatStatus.Ingame)
@@ -279,8 +282,7 @@ internal static partial class LogParserResult
             {
                 if (driverVersionString.Contains('-'))
                     driverVersionString = driverVersionString.Split(new[] {' ', '-'}, StringSplitOptions.RemoveEmptyEntries).Last();
-                if (Version.TryParse(driverVersionString, out var driverVersion)
-                    && Version.TryParse(items["build_full_version"], out var buildVersion))
+                if (Version.TryParse(driverVersionString, out var driverVersion) && buildVersion is not null)
                 {
                     items["driver_version_parsed"] = driverVersion.ToString();
                     if (IsNvidia(gpuInfo))
@@ -293,9 +295,7 @@ internal static partial class LogParserResult
                             && driverVersion < NvidiaTextureMemoryBugMaxVersion
                             && items["renderer"] == "Vulkan")
                             notes.Add("ℹ 526 series nVidia drivers can cause out of memory errors, please upgrade the drivers");
-                        if (isWindows
-                            && buildVersion < NvidiaFullscreenBugFixed
-                            && items["build_branch"] == "HEAD")
+                        if (isWindows && buildVersion < NvidiaFullscreenBugFixed)
                         {
                             if (driverVersion >= NvidiaFullscreenBugMinVersion
                                 && driverVersion < NvidiaFullscreenBugMaxVersion
