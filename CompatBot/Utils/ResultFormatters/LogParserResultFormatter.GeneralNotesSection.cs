@@ -224,6 +224,7 @@ internal static partial class LogParserResult
                         || cpu.EndsWith('M')
                         || cpu.Contains('Y')
                         || cpu[^2] == 'G'
+                        || Regex.IsMatch(cpu, @"Xeon (([EXLW]C?|LV )?\d+|(E\d|AWS)-\d+\w?( (v[2-4]|0))?|D-1.+)( \(ES\))?$", DefaultSingleLine)
                         || threadCount < 6))
                     notes.Add("⚠ This CPU is too weak and/or too old for PS3 emulation");
             }
