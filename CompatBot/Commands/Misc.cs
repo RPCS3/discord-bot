@@ -130,31 +130,6 @@ internal sealed class Misc: BaseCommandModuleCustom
 
     private static readonly Regex Instead = new("rate (?<instead>.+) instead", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
-    [Command("credits"), Aliases("about")]
-    [Description("Author Credit")]
-    public async Task About(CommandContext ctx)
-    {
-        var hcorion = ctx.Client.GetEmoji(":hcorion:", DiscordEmoji.FromUnicode("🍁"));
-        var clienthax = ctx.Client.GetEmoji(":gooseknife:", DiscordEmoji.FromUnicode("🐱"));
-        var embed = new DiscordEmbedBuilder
-            {
-                Title = "RPCS3 Compatibility Bot",
-                Url = "https://github.com/RPCS3/discord-bot",
-                Color = DiscordColor.Purple,
-            }.AddField("Made by",
-                "💮 13xforever\n" +
-                "🇭🇷 Roberto Anić Banić aka nicba1010\n" +
-                $"{clienthax} clienthax\n"
-            )
-            .AddField("People who ~~broke~~ helped test the bot",
-                "🐱 Juhn\n" +
-                $"{hcorion} hcorion\n" +
-                "🙃 TGE\n" +
-                "🍒 Maru\n" +
-                "♋ Tourghool");
-        await ctx.Channel.SendMessageAsync(embed: embed.Build());
-    }
-
     [Command("roll")]
     [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
     public Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)

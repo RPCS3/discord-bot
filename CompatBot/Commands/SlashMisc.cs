@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace CompatBot.Commands;
 
-internal sealed class SlashTest: ApplicationCommandModule
+internal sealed class SlashMisc: BaseApplicationCommandModuleCustom
 {
-    [SlashCommand("credits", "Author Credit")]
-    // TODO [Aliases("about")]
+    [SlashCommand("about", "Bot information")]
     public async Task About(InteractionContext ctx)
     {
         var hcorion = ctx.Client.GetEmoji(":hcorion:", DiscordEmoji.FromUnicode("🍁"));
@@ -20,17 +19,21 @@ internal sealed class SlashTest: ApplicationCommandModule
                 Url = "https://github.com/RPCS3/discord-bot",
                 Color = DiscordColor.Purple,
             }.AddField("Made by",
-                "💮 13xforever\n" +
-                "🇭🇷 Roberto Anić Banić aka nicba1010\n" +
-                $"{clienthax} clienthax\n"
+                $"""
+                💮 13xforever
+                🇭🇷 Roberto Anić Banić aka nicba1010
+                {clienthax} clienthax
+                """
             )
             .AddField("People who ~~broke~~ helped test the bot",
-                "🐱 Juhn\n" +
-                $"{hcorion} hcorion\n" +
-                "🙃 TGE\n" +
-                "🍒 Maru\n" +
-                "♋ Tourghool");
-        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AddEmbed(embed.Build()));
+                $"""
+                🐱 Juhn
+                {hcorion} hcorion
+                🙃 TGE
+                🍒 Maru
+                ♋ Tourghool
+                """
+            );
+        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AddEmbed(embed.Build()).AsEphemeral());
     }
-
 }
