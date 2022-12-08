@@ -30,6 +30,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 		SECURITY.md = SECURITY.md
 		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+		get-names_anidb.ps1 = get-names_anidb.ps1
+		get-names_anilist.ps1 = get-names_anilist.ps1
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OneDriveClient", "Clients\OneDriveClient\OneDriveClient.csproj", "{5C4BCF33-2EC6-455F-B026-8A0001B7B7AD}"

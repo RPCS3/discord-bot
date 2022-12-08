@@ -142,10 +142,6 @@ internal static class Program
                 Intents = DiscordIntents.All,
             };
             using var client = new DiscordClient(config);
-            var slashCommands = client.UseSlashCommands();
-            // Only register to rpcs3 guild for now.
-            slashCommands.RegisterCommands<SlashTest>(Config.BotGuildId);
-
             var commands = client.UseCommandsNext(new()
             {
                 StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
@@ -176,9 +172,12 @@ internal static class Program
             commands.RegisterCommands<ForcedNicknames>();
             commands.RegisterCommands<Minesweeper>();
             commands.RegisterCommands<Fortune>();
-
             if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                 commands.RegisterCommands<Vision>();
+
+            var slashCommands = client.UseSlashCommands();
+            // Only register to rpcs3 guild for now.
+            slashCommands.RegisterCommands<SlashMisc>(Config.BotGuildId);
 
             commands.CommandErrored += UnknownCommandHandler.OnError;
 
