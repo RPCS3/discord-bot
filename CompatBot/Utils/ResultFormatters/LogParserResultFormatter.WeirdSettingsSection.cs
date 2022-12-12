@@ -164,7 +164,7 @@ internal static partial class LogParserResult
                             else
                             */
                             if (arRatio != ratio && !canBeWideOrSquare)
-                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {selectedRatio}");
+                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denominator}, but `Aspect Ratio` is set to {selectedRatio}");
                         }
                     }
                     else
@@ -172,7 +172,7 @@ internal static partial class LogParserResult
                         if (canBeWideOrSquare)
                             notes.Add("ℹ Setting `Aspect Ratio` to `16:9` or `4:3` instead of `Auto` may improve compatibility");
                         else
-                            notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
+                            notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denominator}` instead of `Auto` may improve compatibility");
                     }
                     if (height < 720 && items["game_category"] != "1P")
                         notes.Add("⚠ `Resolution` below 720p will not improve performance");

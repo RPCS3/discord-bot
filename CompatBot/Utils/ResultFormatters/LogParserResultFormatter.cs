@@ -1008,10 +1008,10 @@ internal static partial class LogParserResult
         return builder;
     }
 
-    private static (int numerator, int denumerator) Reduce(int numerator, int denumerator)
+    private static (int numerator, int denominator) Reduce(int numerator, int denominator)
     {
-        var gcd = Gcd(numerator, denumerator);
-        return (numerator / gcd, denumerator / gcd);
+        var gcd = Gcd(numerator, denominator);
+        return (numerator / gcd, denominator / gcd);
     }
 
     private static int Gcd(int a, int b)
