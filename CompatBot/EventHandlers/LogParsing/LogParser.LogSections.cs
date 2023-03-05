@@ -233,6 +233,8 @@ internal partial class LogParser
                 ["sys_tty_write():"] = new(@"sys_tty_write\(\)\: “(?<tty_line>.*?)”\r?(\n|$)", DefaultSingleLineOptions),
                 ["⁂"] = new(@"⁂ (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
                 ["undub"] =  new(@"(\b|_)(?<game_mod>(undub|translation patch))(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
+                ["Input: Pad"] = new(@"Input: Pad (?<pad_id>\d): device='(?<pad_controller_name>(?!Null).+?)', handler=(?<pad_handler>.+?), VID=.+?\r?$", DefaultOptions),
+                ["SDL: Found game controller"] = new(@"Found game controller \d: .+ has_accel=(?<pad_has_accel>.+?), has_gyro=(?<pad_has_gyro>.+?)\r?$", DefaultOptions),
             },
             OnSectionEnd = MarkAsCompleteAndReset,
             EndTrigger = new[] { "Stopping emulator...", "All threads stopped...", "LDR: Booting from"},
@@ -242,6 +244,8 @@ internal partial class LogParser
     private static readonly HashSet<string> MultiValueItems = new()
     {
         "pad_handler",
+        "pad_controller_name",
+        "pad_has_gyro",
         "fatal_error_context",
         "fatal_error",
         "rap_file",

@@ -164,7 +164,7 @@ internal static partial class LogParserResult
                             else
                             */
                             if (arRatio != ratio && !canBeWideOrSquare)
-                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denumerator}, but `Aspect Ratio` is set to {selectedRatio}");
+                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denominator}, but `Aspect Ratio` is set to {selectedRatio}");
                         }
                     }
                     else
@@ -172,7 +172,7 @@ internal static partial class LogParserResult
                         if (canBeWideOrSquare)
                             notes.Add("ℹ Setting `Aspect Ratio` to `16:9` or `4:3` instead of `Auto` may improve compatibility");
                         else
-                            notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denumerator}` instead of `Auto` may improve compatibility");
+                            notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denominator}` instead of `Auto` may improve compatibility");
                     }
                     if (height < 720 && items["game_category"] != "1P")
                         notes.Add("⚠ `Resolution` below 720p will not improve performance");
@@ -507,8 +507,9 @@ internal static partial class LogParserResult
 
         if (!string.IsNullOrEmpty(serial)
             && KnownMotionControlsIds.Contains(serial)
-            && !multiItems["pad_handler"].Any(h => h.StartsWith("DualS")))
-            notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3, 4, or DualSense controller");
+            && !multiItems["pad_handler"].Any(h => h.StartsWith("DualS"))
+            && !multiItems["pad_has_gyro"].Any(g => g is "1" or "true"))
+            notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3, 4, DualSense, or SDL handler with compatible controller");
 
         if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
         {
