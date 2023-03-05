@@ -507,8 +507,9 @@ internal static partial class LogParserResult
 
         if (!string.IsNullOrEmpty(serial)
             && KnownMotionControlsIds.Contains(serial)
-            && !multiItems["pad_handler"].Any(h => h.StartsWith("DualS")))
-            notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3, 4, or DualSense controller");
+            && !multiItems["pad_handler"].Any(h => h.StartsWith("DualS"))
+            && !multiItems["pad_has_gyro"].Any(g => g is "1" or "true"))
+            notes.Add("❗ This game requires motion controls, please use native handler for DualShock 3, 4, DualSense, or SDL handler with compatible controller");
 
         if (items["audio_backend"] is string audioBackend && !string.IsNullOrEmpty(audioBackend))
         {
