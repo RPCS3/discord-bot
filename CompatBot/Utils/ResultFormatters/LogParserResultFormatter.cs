@@ -358,6 +358,12 @@ internal static partial class LogParserResult
         };
         if (!string.IsNullOrEmpty(threadSched))
             items["thread_scheduler"] = threadSched;
+        if (items["fw_version_installed"] is { Length: >1 } fwVer
+            && fwVer.Split('.') is [_, {Length: 1}])
+        {
+            // fix x.y0 reported as x.y for some reason in logs; x.0y is properly logged, so there's no confusion
+            items["fw_version_installed"] += "0";
+        }
         
         static string? StripOpenGlMaker(string? gpuName)
         {
