@@ -48,38 +48,7 @@ internal partial class Sudo
 
         [Command("update"), Aliases("upgrade", "pull", "pet")]
         [Description("Updates the bot, and then restarts it")]
-        public async Task Update(CommandContext ctx)
-        {
-            if (await LockObj.WaitAsync(0).ConfigureAwait(false))
-            {
-                DiscordMessage? msg = null;
-                try
-                {
-                    Config.Log.Info("Checking for available bot updates...");
-                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for bot updates...").ConfigureAwait(false);
-                    var (updated, stdout) = await UpdateAsync().ConfigureAwait(false);
-                    if (!string.IsNullOrEmpty(stdout))
-                        await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
-                    if (!updated)
-                        return;
-
-                    msg = await ctx.Channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
-                    await StatsStorage.SaveAsync(true).ConfigureAwait(false);
-                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
-                    Restart(ctx.Channel.Id, "Restarted after successful bot update");
-                }
-                catch (Exception e)
-                {
-                    await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updating failed: " + e.Message).ConfigureAwait(false);
-                }
-                finally
-                {
-                    LockObj.Release();
-                }
-            }
-            else
-                await ctx.Channel.SendMessageAsync("Update is already in progress").ConfigureAwait(false);
-        }
+        public Task Update(CommandContext ctx) => UpdateCheckAsync(ctx.Channel, Config.Cts.Token);
 
         [Command("restart"), Aliases("reboot")]
         [Description("Restarts the bot")]
@@ -177,7 +146,66 @@ internal partial class Sudo
                 await ctx.Channel.SendMessageAsync("Another import operation is already in progress").ConfigureAwait(false);
         }
 
-        internal static async Task<(bool updated, string stdout)> UpdateAsync()
+        internal static async Task UpdateCheckScheduledAsync(CancellationToken cancellationToken)
+        {
+            do
+            {
+                await Task.Delay(TimeSpan.FromHours(6), cancellationToken).ConfigureAwait(false);
+                await UpdateCheckAsync(null, cancellationToken).ConfigureAwait(false);
+            } while (!cancellationToken.IsCancellationRequested);
+            
+        }
+        
+        private static async Task UpdateCheckAsync(DiscordChannel? channel, CancellationToken cancellationToken)
+        {
+            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
+#pragma warning disable VSTHRD103
+            if (LockObj.Wait(0))
+#pragma warning restore VSTHRD103
+            {
+                DiscordMessage? msg = null;
+                try
+                {
+                    Config.Log.Info("Checking for available bot updates...");
+                    if (channel is not null)
+                        msg = await msg.UpdateOrCreateMessageAsync(channel, "Checking for bot updates...").ConfigureAwait(false);
+                    var (updated, stdout) = await GitPullAsync(cancellationToken).ConfigureAwait(false);
+                    if (!string.IsNullOrEmpty(stdout))
+                    {
+                        Config.Log.Debug($"git pull output:\n{stdout}");
+                        if (channel is not null)
+                            await channel.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
+                    }
+                    if (!updated)
+                        return;
+
+                    if (channel is not null)
+                        msg = await channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
+                    await StatsStorage.SaveAsync(true).ConfigureAwait(false);
+                    if (channel is not null)
+                        msg = await msg.UpdateOrCreateMessageAsync(channel, "Restarting...").ConfigureAwait(false);
+                    Restart(channel?.Id ?? Config.BotLogId, "Restarted after successful bot update");
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn($"Updating failed: {e.Message}");
+                    if (channel is not null)
+                        await msg.UpdateOrCreateMessageAsync(channel, "Updating failed: " + e.Message).ConfigureAwait(false);
+                }
+                finally
+                {
+                    LockObj.Release();
+                }
+            }
+            else
+            {
+                Config.Log.Info("Update check is already in progress");
+                if (channel is not null)
+                    await channel.SendMessageAsync("Update is in progress").ConfigureAwait(false);
+            }
+        }
+        
+        internal static async Task<(bool updated, string stdout)> GitPullAsync(CancellationToken cancellationToken)
         {
             using var git = new Process
             {
@@ -190,8 +218,8 @@ internal partial class Sudo
                 },
             };
             git.Start();
-            var stdout = await git.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-            await git.WaitForExitAsync().ConfigureAwait(false);
+            var stdout = await git.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+            await git.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(stdout))
                 return (false, stdout);
 
