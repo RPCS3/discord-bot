@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using CompatBot.Utils;
 using DSharpPlus.Entities;
 using Microsoft.ApplicationInsights;
@@ -42,7 +43,8 @@ internal static class Config
 
     public static readonly CancellationTokenSource Cts = new();
     public static readonly Stopwatch Uptime = Stopwatch.StartNew();
-
+    public static string? GitRevision { get; private set; }
+    
     // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
     public static string CommandPrefix => config.GetValue(nameof(CommandPrefix), "!")!;
     public static string AutoRemoveCommandPrefix => config.GetValue(nameof(AutoRemoveCommandPrefix), ".")!;
@@ -327,5 +329,15 @@ internal static class Config
             PerformanceCollectorModule.Initialize(telemetryConfig);
             return telemetryClient = new TelemetryClient(telemetryConfig);
         }
+    }
+
+    public static async Task GetCurrentGitRevisionAsync(CancellationToken cancellationToken)
+    {
+        if (GitRevision is not null)
+            return;
+        
+        var commit = await GitRunner.Exec("log -1 --pretty=format:%h", cancellationToken);
+        var branch = await GitRunner.Exec("rev-parse --abbrev-ref HEAD", cancellationToken);
+        GitRevision = $"{commit} on {branch}";
     }
 }

@@ -207,19 +207,8 @@ internal partial class Sudo
         
         internal static async Task<(bool updated, string stdout)> GitPullAsync(CancellationToken cancellationToken)
         {
-            using var git = new Process
-            {
-                StartInfo = new("git", "pull")
-                {
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                },
-            };
-            git.Start();
-            var stdout = await git.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-            await git.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+            var stdout = await GitRunner.Exec("pull", cancellationToken);
             if (string.IsNullOrEmpty(stdout))
                 return (false, stdout);
 

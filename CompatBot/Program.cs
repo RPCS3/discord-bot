@@ -120,6 +120,7 @@ internal static class Program
                 StatsStorage.BackgroundSaveAsync(),
                 CompatList.ImportCompatListAsync(),
                 Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),
+                Config.GetCurrentGitRevisionAsync(Config.Cts.Token),
                 CirrusCi.GetPipelineDurationAsync(Config.Cts.Token),
                 Sudo.Bot.UpdateCheckScheduledAsync(Config.Cts.Token)
             );
