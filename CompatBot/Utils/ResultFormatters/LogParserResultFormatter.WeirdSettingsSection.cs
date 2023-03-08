@@ -30,7 +30,7 @@ internal static partial class LogParserResult
         items["has_tsx"] = hasTsx ? EnabledMark : DisabledMark;
         items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
         Version? buildVersion = null;
-        if (items["build_branch"] == "HEAD"
+        if (items["build_branch"] is "HEAD" or "master"
             && Version.TryParse(items["build_full_version"], out buildVersion)
             && buildVersion < TsxFaFixedVersion)
         {

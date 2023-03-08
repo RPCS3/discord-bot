@@ -33,7 +33,8 @@ internal sealed class SlashMisc: BaseApplicationCommandModuleCustom
                 🍒 Maru
                 ♋ Tourghool
                 """
-            );
+            )
+            .WithFooter($"Running {Config.GitRevision}");
         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AddEmbed(embed.Build()).AsEphemeral());
     }
 }

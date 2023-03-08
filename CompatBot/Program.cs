@@ -87,7 +87,7 @@ internal static class Program
                 Config.Log.Info("Checking for updates...");
                 try
                 {
-                    var (updated, stdout) = await Sudo.Bot.UpdateAsync().ConfigureAwait(false);
+                    var (updated, stdout) = await Sudo.Bot.GitPullAsync(Config.Cts.Token).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(stdout) && updated)
                         Config.Log.Debug(stdout);
                     if (updated)
@@ -120,7 +120,9 @@ internal static class Program
                 StatsStorage.BackgroundSaveAsync(),
                 CompatList.ImportCompatListAsync(),
                 Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),
-                CirrusCi.GetPipelineDurationAsync(Config.Cts.Token)
+                Config.GetCurrentGitRevisionAsync(Config.Cts.Token),
+                CirrusCi.GetPipelineDurationAsync(Config.Cts.Token),
+                Sudo.Bot.UpdateCheckScheduledAsync(Config.Cts.Token)
             );
 
             try
