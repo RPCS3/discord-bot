@@ -38,7 +38,7 @@ internal static partial class LogParserResult
         BuildFatalErrorSection(builder, items, multiItems, notes);
 
         Version? buildVersion = null;
-        if (items["build_branch"] == "HEAD")
+        if (items["build_branch"] is "HEAD" or "master")
             Version.TryParse(items["build_full_version"], out buildVersion);
         var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]) && items["supported_gpu"] != DisabledMark;
         var unsupportedGpuDriver = false;
@@ -408,7 +408,8 @@ internal static partial class LogParserResult
         var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
         if (updateInfo != null
-            && (buildBranch is "master" or "head" or "spu_perf" || string.IsNullOrEmpty(buildBranch) && updateInfo.CurrentBuild != null))
+            && (buildBranch is "master" or "head" or "spu_perf"
+                || string.IsNullOrEmpty(buildBranch) && updateInfo.CurrentBuild != null))
         {
             string prefix = "⚠";
             string timeDeltaStr;
@@ -540,7 +541,7 @@ internal static partial class LogParserResult
                 }
                 else if (fatalError.Contains("RSX Decompiler Thread"))
                 {
-                    if (items["build_branch"]?.ToLowerInvariant() == "head"
+                    if (items["build_branch"] is "HEAD" or "master"
                         && Version.TryParse(items["build_full_version"], out var v)
                         && v >= DecompilerIssueStartVersion
                         && v < DecompilerIssueEndVersion)
