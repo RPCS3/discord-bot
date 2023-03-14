@@ -266,13 +266,13 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
                 var printName = string.IsNullOrEmpty(currentEvent) ? "Various independent events" : $"**{currentEvent} {currentYear} schedule**";
                 msg.AppendLine($"{printName} (UTC):");
             }
-            msg.Append(StringUtils.InvisibleSpacer).Append('`');
+            msg.Append(StringUtils.InvisibleSpacer);
             if (ModProvider.IsMod(ctx.Message.Author.Id))
-                msg.Append($"[{evt.Id:0000}] ");
-            msg.Append($"{evt.Start.AsUtc():u}");
+                msg.Append($"`[{evt.Id:0000}]` ");
+            msg.Append($"<t:{((DateTimeOffset)evt.Start.AsUtc()).ToUnixTimeSeconds():u}:f>");
             if (ctx.Channel.IsPrivate)
-                msg.Append($@" - {evt.End.AsUtc():u}");
-            msg.AppendLine($@" ({evt.End.AsUtc() - evt.Start.AsUtc():h\:mm})`: {evt.Name}");
+                msg.Append($@" - <t:{((DateTimeOffset)evt.End.AsUtc()).ToUnixTimeSeconds():u}:f>");
+            msg.AppendLine($@" ({evt.End.AsUtc() - evt.Start.AsUtc():h\:mm}): {evt.Name}");
         }
         var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
         await ch.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
