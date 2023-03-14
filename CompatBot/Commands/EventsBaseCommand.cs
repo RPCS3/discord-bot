@@ -269,9 +269,9 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
             msg.Append(StringUtils.InvisibleSpacer);
             if (ModProvider.IsMod(ctx.Message.Author.Id))
                 msg.Append($"`[{evt.Id:0000}]` ");
-            msg.Append($"<t:{((DateTimeOffset)evt.Start.AsUtc()).ToUnixTimeSeconds():u}:f>");
+            msg.Append($"<t:{((DateTimeOffset)evt.Start.AsUtc()).ToUnixTimeSeconds()}:f>");
             if (ctx.Channel.IsPrivate)
-                msg.Append($@" - <t:{((DateTimeOffset)evt.End.AsUtc()).ToUnixTimeSeconds():u}:f>");
+                msg.Append($@" - <t:{((DateTimeOffset)evt.End.AsUtc()).ToUnixTimeSeconds()}:f>");
             msg.AppendLine($@" ({evt.End.AsUtc() - evt.Start.AsUtc():h\:mm}): {evt.Name}");
         }
         var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
