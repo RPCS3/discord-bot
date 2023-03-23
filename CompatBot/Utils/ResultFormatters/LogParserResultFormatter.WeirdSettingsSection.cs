@@ -35,14 +35,14 @@ internal static partial class LogParserResult
             && buildVersion < TsxFaFixedVersion)
         {
             if (items["enable_tsx"] == "Disabled" && hasTsx && !hasTsxFa)
-                notes.Add("ℹ TSX support is disabled");
+                notes.Add("ℹ️ TSX support is disabled");
             else if (items["enable_tsx"] == "Enabled" && hasTsxFa)
-                notes.Add("⚠ Disable TSX support if you experience performance issues");
+                notes.Add("⚠️ Disable TSX support if you experience performance issues");
         }
         else
         {
             if (items["enable_tsx"] == "Disabled" && hasTsx)
-                notes.Add("ℹ TSX support is disabled");
+                notes.Add("ℹ️ TSX support is disabled");
         }
         /*
         if (items["spu_lower_thread_priority"] == EnabledMark && threadCount > 4)
@@ -60,20 +60,20 @@ internal static partial class LogParserResult
                     if (items["thread_scheduler"] == "OS")
                     {
                         if (buildVersion >= IntelThreadSchedulerBuildVersion)
-                            notes.Add("⚠ Please enable RPCS3 `Thread Scheduler` option in the CPU Settings");
+                            notes.Add("⚠️ Please enable RPCS3 `Thread Scheduler` option in the CPU Settings");
                         else
-                            notes.Add("⚠ Please enable `Thread Scheduler` in the CPU Settings");
+                            notes.Add("⚠️ Please enable `Thread Scheduler` in the CPU Settings");
                     }
                     else
-                        notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
+                        notes.Add("ℹ️ Changing `Thread Scheduler` option may or may not increase performance");
                 }
                 else
-                    notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
+                    notes.Add("ℹ️ Changing `Thread Scheduler` option may or may not increase performance");
             }
             else if (cpu.StartsWith("Intel")
                      && threadCount > 11
                      && buildVersion >= IntelThreadSchedulerBuildVersion)
-                notes.Add("ℹ Changing `Thread Scheduler` option may or may not increase performance");
+                notes.Add("ℹ️ Changing `Thread Scheduler` option may or may not increase performance");
         }
         if (items["llvm_arch"] is string llvmArch)
             notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
@@ -83,7 +83,7 @@ internal static partial class LogParserResult
         if (items["renderer"] == "OpenGL"
             && items["supported_gpu"] == EnabledMark
             && !GowHDIds.Contains(serial))
-            notes.Add("⚠ `Vulkan` is the recommended `Renderer`");
+            notes.Add("⚠️ `Vulkan` is the recommended `Renderer`");
         if (items["renderer"] == "Vulkan"
             && items["supported_gpu"] == DisabledMark)
             notes.Add("❌ Selected `Vulkan` device is not supported, please use `OpenGL` instead");
@@ -98,17 +98,17 @@ internal static partial class LogParserResult
                     if (serial[2] == 'E')
                     {
                         if (selectedRes != "720x576")
-                            notes.Add("⚠ PAL PS1 Classics should use `Resolution` of `720x576`");
+                            notes.Add("⚠️ PAL PS1 Classics should use `Resolution` of `720x576`");
                     }
                     else
                     {
                         if (selectedRes != "720x480")
-                            notes.Add("⚠ NTSC PS1 Classics should use `Resolution` of `720x480`");
+                            notes.Add("⚠️ NTSC PS1 Classics should use `Resolution` of `720x480`");
                     }
                 }
                 /*
                 if (items["aspect_ratio"] is string strAr && strAr != "4:3")
-                notes.Add("⚠ PS1 Classics should use `Aspect Ratio` of 4:3");
+                notes.Add("⚠️ PS1 Classics should use `Aspect Ratio` of 4:3");
                 */
             }
             else if (selectedRes != "1280x720")
@@ -135,7 +135,7 @@ internal static partial class LogParserResult
                         notes.Add("❌ Selected `Resolution` is not supported, please set to recommended `1280x720`");
                 }
                 else if (items["game_category"] != "1P")
-                    notes.Add("⚠ `Resolution` was changed from the recommended `1280x720`");
+                    notes.Add("⚠️ `Resolution` was changed from the recommended `1280x720`");
                 var dimensions = selectedRes.Split("x");
                 if (dimensions.Length > 1
                     && int.TryParse(dimensions[0], out var width)
@@ -159,23 +159,23 @@ internal static partial class LogParserResult
                             if (items["game_category"] == "1P")
                             {
                                 if (arRatio != (4, 3))
-                                    notes.Add("⚠ PS1 Classics should use `Aspect Ratio` of 4:3");
+                                    notes.Add("⚠️ PS1 Classics should use `Aspect Ratio` of 4:3");
                             }
                             else
                             */
                             if (arRatio != ratio && !canBeWideOrSquare)
-                                notes.Add($"⚠ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denominator}, but `Aspect Ratio` is set to {selectedRatio}");
+                                notes.Add($"⚠️ Selected `Resolution` has aspect ratio of {ratio.numerator}:{ratio.denominator}, but `Aspect Ratio` is set to {selectedRatio}");
                         }
                     }
                     else
                     {
                         if (canBeWideOrSquare)
-                            notes.Add("ℹ Setting `Aspect Ratio` to `16:9` or `4:3` instead of `Auto` may improve compatibility");
+                            notes.Add("ℹ️ Setting `Aspect Ratio` to `16:9` or `4:3` instead of `Auto` may improve compatibility");
                         else
-                            notes.Add($"ℹ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denominator}` instead of `Auto` may improve compatibility");
+                            notes.Add($"ℹ️ Setting `Aspect Ratio` to `{ratio.numerator}:{ratio.denominator}` instead of `Auto` may improve compatibility");
                     }
                     if (height < 720 && items["game_category"] != "1P")
-                        notes.Add("⚠ `Resolution` below 720p will not improve performance");
+                        notes.Add("⚠️ `Resolution` below 720p will not improve performance");
                 }
             }
 
@@ -184,12 +184,12 @@ internal static partial class LogParserResult
             notes.Add("🤢 `Stretch to Display Area` is enabled");
         var vertexCacheDisabled = items["vertex_cache"] == EnabledMark || items["mtrsx"] == EnabledMark;
         if (KnownDisableVertexCacheIds.Contains(serial) && !vertexCacheDisabled)
-            notes.Add("⚠ This game requires disabling `Vertex Cache` option");
+            notes.Add("⚠️ This game requires disabling `Vertex Cache` option");
 
         if (multiItems["rsx_not_supported_feature"].Contains("alpha-to-one for multisampling"))
         {
             if (items["msaa"] is string msaa && msaa != "Disabled")
-                generalNotes.Add("ℹ The driver or GPU does not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
+                generalNotes.Add("ℹ️ The driver or GPU does not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
         }
         var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
                                      && buildVersion < RdnaMsaaFixedVersion
@@ -198,12 +198,12 @@ internal static partial class LogParserResult
         if (items["msaa"] == "Disabled")
         {
             if (!isWireframeBugPossible)
-                notes.Add("ℹ `Anti-aliasing` is disabled, which may result in visual artifacts");
+                notes.Add("ℹ️ `Anti-aliasing` is disabled, which may result in visual artifacts");
         }
         else if (items["msaa"] is string msaa && msaa != "Disabled")
         {
             if (isWireframeBugPossible)
-                notes.Add("⚠ Please disable `Anti-aliasing` if you experience wireframe-like visual artifacts");
+                notes.Add("⚠️ Please disable `Anti-aliasing` if you experience wireframe-like visual artifacts");
         }
 
         var vsync = items["vsync"] == EnabledMark;
@@ -214,7 +214,7 @@ internal static partial class LogParserResult
             vkPm = null;
         if (items["force_fifo_present"] == EnabledMark)
         {
-            notes.Add("⚠ Double-buffered VSync is forced");
+            notes.Add("⚠️ Double-buffered VSync is forced");
             vsync = true;
         }
         if (items["rsx_swapchain_mode"] is "2")
@@ -222,15 +222,15 @@ internal static partial class LogParserResult
         if (vsync && items["frame_limit"] is string frameLimitStr)
         {
             if (frameLimitStr == "Auto")
-                notes.Add("ℹ Frame rate might be limited to 30 fps due to enabled VSync");
+                notes.Add("ℹ️ Frame rate might be limited to 30 fps due to enabled VSync");
             else if (double.TryParse(frameLimitStr, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var frameLimit))
             {
                 if (frameLimit is >30 and <60)
-                    notes.Add("ℹ Frame rate might be limited to 30 fps due to enabled VSync");
+                    notes.Add("ℹ️ Frame rate might be limited to 30 fps due to enabled VSync");
                 else if (frameLimit < 30)
-                    notes.Add("ℹ Frame rate might be limited to 15 fps due to enabled VSync");
+                    notes.Add("ℹ️ Frame rate might be limited to 15 fps due to enabled VSync");
                 else
-                    notes.Add("ℹ Frame pacing might be affected due to VSync and Frame Limiter enabled at the same time");
+                    notes.Add("ℹ️ Frame pacing might be affected due to VSync and Frame Limiter enabled at the same time");
             }
         }
         if (!vsync && vkPm != "VK_PRESENT_MODE_IMMEDIATE_KHR")
@@ -243,13 +243,13 @@ internal static partial class LogParserResult
                 _ => null,
             };
             if (pmDesc != null)
-                notes.Add($"ℹ `VSync` is disabled, but the drivers provided `{pmDesc}`");
+                notes.Add($"ℹ️ `VSync` is disabled, but the drivers provided `{pmDesc}`");
         }
         if (items["async_texture_streaming"] == EnabledMark)
         {
             if (items["async_queue_scheduler"] == "Device")
-                notes.Add("⚠ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
-            notes.Add("⚠ If you experience visual artifacts, try disabling `Async Texture Streaming`");
+                notes.Add("⚠️ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
+            notes.Add("⚠️ If you experience visual artifacts, try disabling `Async Texture Streaming`");
         }
             
         if (items["ppu_decoder"] is string ppuDecoder)
@@ -257,50 +257,50 @@ internal static partial class LogParserResult
             if (KnownGamesThatRequireInterpreter.Contains(serial))
             {
                 if (ppuDecoder.Contains("Recompiler", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("⚠ This game requires `PPU Decoder` to use `Interpreter (fast)`");
+                    notes.Add("⚠️ This game requires `PPU Decoder` to use `Interpreter (fast)`");
             }
             else
             {
                 if (ppuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("⚠ Please set `PPU Decoder` to use recompiler for better performance");
+                    notes.Add("⚠️ Please set `PPU Decoder` to use recompiler for better performance");
             }
         }
         if (items["spu_decoder"] is string spuDecoder && spuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
-            notes.Add("⚠ Please set `SPU Decoder` to use recompiler for better performance");
+            notes.Add("⚠️ Please set `SPU Decoder` to use recompiler for better performance");
 
         if (items["accurate_getllar"] == EnabledMark)
-            notes.Add("ℹ `Accurate GETLLAR` is enabled");
+            notes.Add("ℹ️ `Accurate GETLLAR` is enabled");
         if (items["accurate_putlluc"] == EnabledMark)
-            notes.Add("ℹ `Accurate PUTLLUC` is enabled");
+            notes.Add("ℹ️ `Accurate PUTLLUC` is enabled");
         if (items["accurate_rsx_reservation"] == EnabledMark)
-            notes.Add("ℹ `Accurate RSX Reservation Access` is enabled");
+            notes.Add("ℹ️ `Accurate RSX Reservation Access` is enabled");
 
         if (items["accurate_xfloat"] is string accurateXfloat)
         {
             if (accurateXfloat == EnabledMark)
             {
                 if (!KnownGamesThatRequireAccurateXfloat.Contains(serial))
-                    notes.Add("ℹ `Accurate xfloat` is not required, and significantly impacts performance");
+                    notes.Add("ℹ️ `Accurate xfloat` is not required, and significantly impacts performance");
             }
             else
             {
                 if (KnownGamesThatRequireAccurateXfloat.Contains(serial))
-                    notes.Add("⚠ `Accurate xfloat` is required for this game, but it will significantly impact performance");
+                    notes.Add("⚠️ `Accurate xfloat` is required for this game, but it will significantly impact performance");
             }
         }
         if (items["relaxed_xfloat"] is DisabledMark)
         {
             if (KnownNoRelaxedXFloatIds.Contains(serial))
-                notes.Add("ℹ `Relaxed xfloat` is disabled");
+                notes.Add("ℹ️ `Relaxed xfloat` is disabled");
             else
-                notes.Add("⚠ `Relaxed xfloat` is disabled, please enable");
+                notes.Add("⚠️ `Relaxed xfloat` is disabled, please enable");
         } 
         if (items["approximate_xfloat"] is DisabledMark)
         {
             if (KnownNoApproximateXFloatIds.Contains(serial))
-                notes.Add("ℹ `Approximate xfloat` is disabled");
+                notes.Add("ℹ️ `Approximate xfloat` is disabled");
             else
-                notes.Add("⚠ `Approximate xfloat` is disabled, please enable");
+                notes.Add("⚠️ `Approximate xfloat` is disabled, please enable");
         }
         if (items["resolution_scale"] is string resScale
             && int.TryParse(resScale, out var resScaleFactor))
@@ -313,20 +313,20 @@ internal static partial class LogParserResult
                 && threshold < 16
                 && !KnownResScaleThresholdIds.Contains(serial))
             {
-                notes.Add("⚠ `Resolution Scale Threshold` below `16x16` may result in corrupted visuals and game crash");
+                notes.Add("⚠️ `Resolution Scale Threshold` below `16x16` may result in corrupted visuals and game crash");
             }
             if (resScaleFactor > 100
                 && items["msaa"] is string msaa
                 && msaa != "Disabled")
             {
-                var level = "ℹ";
+                var level = "ℹ️";
                 if (resScaleFactor > 200)
-                    level = "⚠";
+                    level = "⚠️";
                 notes.Add($"{level} If you have missing UI elements or experience performance issues, decrease `Resolution Scale` or disable `Anti-aliasing`");
             }
 
             if (resScaleFactor > 300)
-                notes.Add("⚠ Excessive `Resolution Scale` may impact performance");
+                notes.Add("⚠️ Excessive `Resolution Scale` may impact performance");
         }
         var allPpuHashes = GetPatches(multiItems["ppu_patch"], false);
         var ppuPatches = allPpuHashes.Where(kvp => kvp.Value > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -337,40 +337,40 @@ internal static partial class LogParserResult
             && KnownWriteColorBuffersIds.Contains(serial))
         {
             if (DesIds.Contains(serial) && ppuPatches.Count != 0)
-                notes.Add("ℹ `Write Color Buffers` is disabled");
+                notes.Add("ℹ️ `Write Color Buffers` is disabled");
             else
-                notes.Add("⚠ `Write Color Buffers` is disabled, please enable");
+                notes.Add("⚠️ `Write Color Buffers` is disabled, please enable");
         }
         if (items["vertex_cache"] == EnabledMark
             && items["mtrsx"] == DisabledMark
             && !string.IsNullOrEmpty(serial)
             && !KnownDisableVertexCacheIds.Contains(serial))
-            notes.Add("ℹ `Vertex Cache` is disabled, and may impact performance");
+            notes.Add("ℹ️ `Vertex Cache` is disabled, and may impact performance");
         if (items["frame_skip"] == EnabledMark)
-            notes.Add("⚠ `Frame Skip` is enabled, please disable");
+            notes.Add("⚠️ `Frame Skip` is enabled, please disable");
         if (items["cpu_blit"] is EnabledMark 
             && items["write_color_buffers"] is DisabledMark)
             notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
         if (items["zcull"] is EnabledMark)
-            notes.Add("⚠ `ZCull Occlusion Queries` is disabled, which can result in visual artifacts");
+            notes.Add("⚠️ `ZCull Occlusion Queries` is disabled, which can result in visual artifacts");
         else if (items["relaxed_zcull"] is string relaxedZcull)
         {
             if (relaxedZcull == EnabledMark && !KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
-                notes.Add("ℹ `Relaxed ZCull Sync` is enabled and can cause performance and visual issues");
+                notes.Add("ℹ️ `Relaxed ZCull Sync` is enabled and can cause performance and visual issues");
             else if (relaxedZcull == DisabledMark && KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
-                notes.Add("ℹ Enabling `Relaxed ZCull Sync` for this game may improve performance");
+                notes.Add("ℹ️ Enabling `Relaxed ZCull Sync` for this game may improve performance");
         }
         if (!KnownFpsUnlockPatchIds.Contains(serial) || ppuPatches.Count == 0)
         {
             if (items["vblank_rate"] is string vblank
                 && int.TryParse(vblank, out var vblankRate)
                 && vblankRate != 60)
-                notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz ({vblankRate / 60.0 * 100:0}%)");
+                notes.Add($"ℹ️ `VBlank Rate` is set to {vblankRate} Hz ({vblankRate / 60.0 * 100:0}%)");
 
             if (items["clock_scale"] is string clockScaleStr
                 && int.TryParse(clockScaleStr, out var clockScale)
                 && clockScale != 100)
-                notes.Add($"ℹ `Clock Scale` is set to {clockScale}%");
+                notes.Add($"ℹ️ `Clock Scale` is set to {clockScale}%");
         }
         if (items["lib_loader"] is string libLoader
             && (libLoader == "Auto"
@@ -379,7 +379,7 @@ internal static partial class LogParserResult
                     && (string.IsNullOrEmpty(items["library_list"]) || items["library_list"] == "None"))))
         {
             if (items["game_title"] != "vsh.self")
-                notes.Add("⚠ Please use `Load liblv2.sprx only` as a `Library loader`");
+                notes.Add("⚠️ Please use `Load liblv2.sprx only` as a `Library loader`");
         }
         bool warnLibraryOverrides = items["library_list_hle"] is string hleLibList && hleLibList != "None";
         if (items["library_list_lle"] is string lleLibList && lleLibList != "None")
@@ -392,7 +392,7 @@ internal static partial class LogParserResult
                 var weirdModules = lleLibList.Split(',', StringSplitOptions.TrimEntries).Except(new[] {"libvdec.sprx"}).ToArray();
                 if (weirdModules.Length > 0)
                 {
-                    notes.Add("⚠ Please do not override Firmware Libraries that you weren't asked to");
+                    notes.Add("⚠️ Please do not override Firmware Libraries that you weren't asked to");
                     warnLibraryOverrides = false;
                 }
             }
@@ -400,7 +400,7 @@ internal static partial class LogParserResult
                 warnLibraryOverrides = true;
         }
         if (warnLibraryOverrides)
-            notes.Add("⚠ Please disable any Firmware Libraries overrides");
+            notes.Add("⚠️ Please disable any Firmware Libraries overrides");
             
         if (!string.IsNullOrEmpty(serial))
         {
@@ -431,26 +431,26 @@ internal static partial class LogParserResult
             CheckPs1ClassicsSettings(items, notes, generalNotes);
 
         if (items["game_title"] != "vsh.self" && items["debug_console_mode"] == EnabledMark)
-            notes.Add("⚠ `Debug Console Mode` is enabled, and may cause game crashes");
+            notes.Add("⚠️ `Debug Console Mode` is enabled, and may cause game crashes");
         if (items["hook_static_functions"] is EnabledMark)
-            notes.Add("⚠ `Hook Static Functions` is enabled, please disable");
+            notes.Add("⚠️ `Hook Static Functions` is enabled, please disable");
         if (items["host_root"] is EnabledMark)
             notes.Add("❔ `/host_root/` is enabled");
         if (items["ppu_threads"] is string ppuThreads
             && ppuThreads != "2")
-            notes.Add($"⚠ `PPU Threads` is set to `{ppuThreads.Sanitize()}`; please change it back to `2`");
+            notes.Add($"⚠️ `PPU Threads` is set to `{ppuThreads.Sanitize()}`; please change it back to `2`");
         if (items["spurs_threads"] is string spursSetting
             && int.TryParse(spursSetting, out var spursThreads)
             && spursThreads != 6)
         {
             if (spursThreads is <1 or >6)
-                notes.Add($"⚠ `Max SPURS Threads` is set to `{spursThreads}`; please change it back to `6`");
+                notes.Add($"⚠️ `Max SPURS Threads` is set to `{spursThreads}`; please change it back to `6`");
             else
-                notes.Add($"ℹ `Max SPURS Threads` is set to `{spursThreads}`; may result in game crash");
+                notes.Add($"ℹ️ `Max SPURS Threads` is set to `{spursThreads}`; may result in game crash");
         }
 
         if (items["gpu_texture_scaling"] is EnabledMark)
-            notes.Add("⚠ `GPU Texture Scaling` is enabled, please disable");
+            notes.Add("⚠️ `GPU Texture Scaling` is enabled, please disable");
         if (items["af_override"] is string af)
         {
             if (af == "Disabled")
@@ -460,7 +460,7 @@ internal static partial class LogParserResult
         }
 
         if (items["shader_mode"] == "Interpreter only")
-            notes.Add("⚠ `Shader Interpreter Only` mode is not accurate and very demanding");
+            notes.Add("⚠️ `Shader Interpreter Only` mode is not accurate and very demanding");
         else if (items["shader_mode"]?.StartsWith("Async") is false)
             notes.Add("❔ Async shader compilation is disabled");
         if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
@@ -468,42 +468,42 @@ internal static partial class LogParserResult
             && drtValue != 1000000)
         {
             if (drtValue == 0)
-                notes.Add("⚠ `Driver Recovery Timeout` is set to 0 (infinite), please use default value of 1000000");
+                notes.Add("⚠️ `Driver Recovery Timeout` is set to 0 (infinite), please use default value of 1000000");
             else if (drtValue < 10_000)
-                notes.Add($"⚠ `Driver Recovery Timeout` is set too low: {GetTimeFormat(drtValue)} (1 frame @ {(1_000_000.0 / drtValue):0.##} fps)");
+                notes.Add($"⚠️ `Driver Recovery Timeout` is set too low: {GetTimeFormat(drtValue)} (1 frame @ {(1_000_000.0 / drtValue):0.##} fps)");
             else if (drtValue > 10_000_000)
-                notes.Add($"⚠ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
+                notes.Add($"⚠️ `Driver Recovery Timeout` is set too high: {GetTimeFormat(drtValue)}");
         }
         if (items["driver_wakeup_delay"] is string strDriverWakeup
             && int.TryParse(strDriverWakeup, out var driverWakeupDelay)
             && driverWakeupDelay > 1)
         {
             if (driverWakeupDelay > 1000)
-                notes.Add($"⚠ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}, and will impact performance");
+                notes.Add($"⚠️ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}, and will impact performance");
             else
-                notes.Add($"ℹ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}");
+                notes.Add($"ℹ️ `Driver Wake-up Delay` is set to {GetTimeFormat(driverWakeupDelay)}");
         }
         if (items["audio_buffering"] == EnabledMark
             && int.TryParse(items["audio_buffer_duration"], out var duration)
             && duration > 100)
-            notes.Add($"ℹ `Audio Buffer Duration` is set to {duration}ms, which may cause audio lag");
+            notes.Add($"ℹ️ `Audio Buffer Duration` is set to {duration}ms, which may cause audio lag");
         if (items["audio_stretching"] == EnabledMark)
-            notes.Add("ℹ `Audio Time Stretching` is `Enabled`");
+            notes.Add("ℹ️ `Audio Time Stretching` is `Enabled`");
 
         if (items["mtrsx"] is EnabledMark)
         {
             if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
-                notes.Add("⚠ `Multithreaded RSX` is enabled, please disable for this game");
+                notes.Add("⚠️ `Multithreaded RSX` is enabled, please disable for this game");
             else if (items["write_color_buffers"] == EnabledMark)
-                notes.Add("⚠ `Multithreaded RSX` is enabled along with `Write Color Buffers` which may cause crashes");
+                notes.Add("⚠️ `Multithreaded RSX` is enabled along with `Write Color Buffers` which may cause crashes");
             else if (threadCount < 6)
-                notes.Add("⚠ `Multithreaded RSX` is enabled on a CPU with few threads");
+                notes.Add("⚠️ `Multithreaded RSX` is enabled on a CPU with few threads");
             else
-                notes.Add("ℹ `Multithreaded RSX` is enabled");
+                notes.Add("ℹ️ `Multithreaded RSX` is enabled");
         }
 
         if (items["failed_pad"] is string failedPad)
-            notes.Add($"⚠ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
+            notes.Add($"⚠️ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
 
         if (!string.IsNullOrEmpty(serial)
             && KnownMotionControlsIds.Contains(serial)
@@ -516,35 +516,35 @@ internal static partial class LogParserResult
             if (buildVersion is not null && buildVersion < CubebBuildVersion)
             {
                 if (items["os_type"] is "Windows" && !audioBackend.Equals("XAudio2", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("⚠ Please use `XAudio2` as the audio backend for this build");
+                    notes.Add("⚠️ Please use `XAudio2` as the audio backend for this build");
                 else if (items["os_type"] == "Linux"
                          && !audioBackend.Equals("OpenAL", StringComparison.InvariantCultureIgnoreCase)
                          && !audioBackend.Equals("FAudio", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("ℹ `FAudio` and `OpenAL` are the recommended audio backends for this build");
+                    notes.Add("ℹ️ `FAudio` and `OpenAL` are the recommended audio backends for this build");
             }
             else
             {
                 if (items["os_type"] is "Windows" or "Linux" && !audioBackend.Equals("Cubeb", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("⚠ Please use `Cubeb` as the audio backend");
+                    notes.Add("⚠️ Please use `Cubeb` as the audio backend");
             }
             if (audioBackend.Equals("null", StringComparison.InvariantCultureIgnoreCase))
-                notes.Add("⚠ `Audio backend` is set to `null`");
+                notes.Add("⚠️ `Audio backend` is set to `null`");
         }
 
         if (int.TryParse(items["audio_volume"], out var audioVolume))
         {
             if (audioVolume < 10)
-                notes.Add($"⚠ Audio volume is set to {audioVolume}%");
+                notes.Add($"⚠️ Audio volume is set to {audioVolume}%");
             else if (audioVolume > 100)
-                notes.Add($"⚠ Audio volume is set to {audioVolume}%; audio clipping is to be expected");
+                notes.Add($"⚠️ Audio volume is set to {audioVolume}%; audio clipping is to be expected");
         }
 
         if (items["hle_lwmutex"] is EnabledMark)
-            notes.Add("⚠ `HLE lwmutex` is enabled, might affect compatibility");
+            notes.Add("⚠️ `HLE lwmutex` is enabled, might affect compatibility");
         if (items["spu_block_size"] is string spuBlockSize)
         {
             if (spuBlockSize != "Safe" && spuBlockSize != "Mega")
-                notes.Add($"⚠ Please change `SPU Block Size` to `Safe/Mega`, currently `{spuBlockSize}` is unstable.");
+                notes.Add($"⚠️ Please change `SPU Block Size` to `Safe/Mega`, currently `{spuBlockSize}` is unstable.");
         }
 
         if (items["auto_start_on_boot"] == DisabledMark)
@@ -553,7 +553,7 @@ internal static partial class LogParserResult
             notes.Add("❔ `Always start after boot` is disabled");
 
         if (items["custom_config"] != null && notes.Any())
-            generalNotes.Add("⚠ To change custom configuration, **Right-click on the game**, then `Configure`");
+            generalNotes.Add("⚠️ To change custom configuration, **Right-click on the game**, then `Configure`");
 
         var notesContent = new StringBuilder();
         foreach (var line in SortLines(notes))
@@ -582,13 +582,13 @@ internal static partial class LogParserResult
             return;
 
         if (items["ppu_decoder"] is string ppuDecoder && !ppuDecoder.Contains("LLVM"))
-            notes.Add("⚠ Please set `PPU Decoder` to `Recompiler (LLVM)`");
+            notes.Add("⚠️ Please set `PPU Decoder` to `Recompiler (LLVM)`");
         if (items["spu_decoder"] is string spuDecoder)
         {
             if (spuDecoder.Contains("Interpreter"))
-                notes.Add("⚠ Please set `SPU Decoder` to `Recompiler (LLVM)`");
+                notes.Add("⚠️ Please set `SPU Decoder` to `Recompiler (LLVM)`");
             else if (spuDecoder.Contains("ASMJIT"))
-                notes.Add("ℹ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
+                notes.Add("ℹ️ Please consider setting `SPU Decoder` to `Recompiler (LLVM)`");
         }
 
         if (items["spu_threads"] is string spuThreads)
@@ -596,42 +596,42 @@ internal static partial class LogParserResult
             if (items["has_tsx"] == EnabledMark)
             {
                 if (spuThreads != "Auto")
-                    notes.Add("ℹ `SPU Thread Count` is best to set to `Auto`");
+                    notes.Add("ℹ️ `SPU Thread Count` is best to set to `Auto`");
             }
             else if (spuThreads != "2")
             {
                 if (int.TryParse(items["thread_count"], out var threadCount))
                 {
                     if (threadCount > 4)
-                        notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                        notes.Add("ℹ️ `SPU Thread Count` is best to set to `2`");
                     else if (spuThreads != "1")
-                        notes.Add("ℹ `SPU Thread Count` is best to set to `2` or `1`");
+                        notes.Add("ℹ️ `SPU Thread Count` is best to set to `2` or `1`");
                 }
                 else
-                    notes.Add("ℹ `SPU Thread Count` is best to set to `2`");
+                    notes.Add("ℹ️ `SPU Thread Count` is best to set to `2`");
             }
         }
         if (items["spu_loop_detection"] == EnabledMark)
-            notes.Add("ℹ If you have distorted audio, try disabling `SPU Loop Detection`");
+            notes.Add("ℹ️ If you have distorted audio, try disabling `SPU Loop Detection`");
         if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
-            notes.Add("⚠ `Frame Limiter` is not required, please disable");
+            notes.Add("⚠️ `Frame Limiter` is not required, please disable");
         if (items["write_color_buffers"] is EnabledMark)
-            notes.Add("⚠ `Write Color Buffers` is not required, please disable");
+            notes.Add("⚠️ `Write Color Buffers` is not required, please disable");
         if (items["cpu_blit"] is EnabledMark)
-            notes.Add("⚠ `Force CPU Blit` is not required, please disable");
+            notes.Add("⚠️ `Force CPU Blit` is not required, please disable");
         if (items["strict_rendering_mode"] is EnabledMark)
-            notes.Add("⚠ `Strict Rendering Mode` is not required, please disable");
+            notes.Add("⚠️ `Strict Rendering Mode` is not required, please disable");
         if (ppuPatches.Count == 0
             && items["resolution_scale"] is string resScale
             && int.TryParse(resScale, out var scale)
             && scale > 100)
-            notes.Add("⚠ `Resolution Scale` over 100% requires portrait sprites mod");
+            notes.Add("⚠️ `Resolution Scale` over 100% requires portrait sprites mod");
         /*
          * 60 fps v1   = 12
          * 60 fps v2   = 268
          */
         if (patchNames.Any(n => n.Contains("60")) || ppuPatches.Values.Any(n => n > 260))
-            notes.Add("ℹ 60 fps patch is enabled; please disable if you have any strange issues");
+            notes.Add("ℹ️ 60 fps patch is enabled; please disable if you have any strange issues");
             
         if (!KnownP5Patches.Overlaps(ppuHashes))
             generalNotes.Add("🤔 Very interesting version of the game you got there");
@@ -647,10 +647,10 @@ internal static partial class LogParserResult
                 && items["texture_scale_threshold"] is string thresholdStr
                 && int.TryParse(thresholdStr, out var threshold)
                 && threshold < 500)
-                notes.Add("⚠ `Resolution Scale` over 100% requires `Resolution Scale Threshold` set to `512x512`");
+                notes.Add("⚠️ `Resolution Scale` over 100% requires `Resolution Scale Threshold` set to `512x512`");
 
             if (items["af_override"] is string af && af != "Auto")
-                notes.Add("⚠ Please use `Auto` for `Anisotropic Filter Override`");
+                notes.Add("⚠️ Please use `Auto` for `Anisotropic Filter Override`");
         }
     }
 
@@ -672,9 +672,9 @@ internal static partial class LogParserResult
         if (AllStarBattleIds.Contains(serial) || serial is "BLJS10318" or "NPJB00753")
         {
             if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
-                notes.Add("ℹ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
+                notes.Add("ℹ️ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
             else if (items["audio_buffering"] == DisabledMark)
-                notes.Add("ℹ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
+                notes.Add("ℹ️ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
 
             if (serial is "BLUS31405" or "BLJS10318"
                 && items["vblank_rate"] is string vbrStr
@@ -683,18 +683,18 @@ internal static partial class LogParserResult
                 if (ppuPatches.Any())
                 {
                     if (vbr == 60)
-                        notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
+                        notes.Add("ℹ️ `VBlank Rate` is not set; FPS is limited to 30");
                     else if (vbr == 120)
                         notes.Add("✅ Settings are set for the 60 FPS patch");
                     else
-                        notes.Add($"⚠ Settings are configured for the {vbr / 2} FPS patch, which is unsupported");
+                        notes.Add($"⚠️ Settings are configured for the {vbr / 2} FPS patch, which is unsupported");
                 }
                 else
                 {
                     if (vbr > 60)
-                        notes.Add("ℹ Unlocking FPS requires game patch");
+                        notes.Add("ℹ️ Unlocking FPS requires game patch");
                     if (ppuHashes.Overlaps(KnownJojoPatches))
-                        generalNotes.Add($"ℹ This game has an FPS unlock patch");
+                        generalNotes.Add($"ℹ️ This game has an FPS unlock patch");
                 }
             }
 
@@ -709,7 +709,7 @@ internal static partial class LogParserResult
     private static void CheckSimpsonsSettings(string serial, List<string> generalNotes)
     {
         if (serial is "BLES00142" or "BLUS30065")
-            generalNotes.Add("ℹ This game has a controller initialization bug. Please use [the patch](https://wiki.rpcs3.net/index.php?title=The_Simpsons_Game#Patches).");
+            generalNotes.Add("ℹ️ This game has a controller initialization bug. Please use [the patch](https://wiki.rpcs3.net/index.php?title=The_Simpsons_Game#Patches).");
     }
 
     private static readonly HashSet<string> KnownNierPatches = new(StringComparer.InvariantCultureIgnoreCase)
@@ -731,39 +731,39 @@ internal static partial class LogParserResult
                 if (frameLimit == "Off")
                 {
                     if (!vsync)
-                        notes.Add("⚠ Please set `Framerate Limiter` to `Auto` or enable V-Sync");
+                        notes.Add("⚠️ Please set `Framerate Limiter` to `Auto` or enable V-Sync");
                 }
                 else if (frameLimit != "59.95"
                          && frameLimit != "60"
                          && frameLimit != "Auto")
                 {
                     if (vsync)
-                        notes.Add("⚠ Please set `Framerate Limiter` to `Off`");
+                        notes.Add("⚠️ Please set `Framerate Limiter` to `Off`");
                     else
-                        notes.Add("⚠ Please set `Framerate Limiter` to `Auto` or enable V-Sync");
+                        notes.Add("⚠️ Please set `Framerate Limiter` to `Auto` or enable V-Sync");
                 }
                 else
                 {
                     if (vsync)
-                        notes.Add("⚠ Please set `Framerate Limiter` to `Off`");
+                        notes.Add("⚠️ Please set `Framerate Limiter` to `Off`");
                 }
-                notes.Add("⚠ There is a new variable frame rate FPS patch available");
+                notes.Add("⚠️ There is a new variable frame rate FPS patch available");
             }
             else
             {
                 if (frameLimit != "30")
-                    notes.Add("⚠ Please set `Framerate Limiter` to 30 fps");
+                    notes.Add("⚠️ Please set `Framerate Limiter` to 30 fps");
                 if (ppuHashes.Overlaps(KnownNierPatches))
-                    generalNotes.Add("ℹ This game has an FPS unlock patch");
+                    generalNotes.Add("ℹ️ This game has an FPS unlock patch");
             }
 
             if (serial == "BLJM60223" && items["native_ui"] == EnabledMark)
-                notes.Add("ℹ To enter the character name, disable `Native UI` and use Japanese text");
+                notes.Add("ℹ️ To enter the character name, disable `Native UI` and use Japanese text");
 
             if (items["sleep_timer"] is string sleepTimer
                 && sleepTimer != "Usleep Only"
                 && sleepTimer != "Usleep")
-                notes.Add("⚠ Please set `Sleep Timers Accuracy` setting to `Usleep Only`");
+                notes.Add("⚠️ Please set `Sleep Timers Accuracy` setting to `Usleep Only`");
         }
     }
 
@@ -772,11 +772,11 @@ internal static partial class LogParserResult
         if (serial is "NPEB00258" or "NPUB30162" or "NPJB00068")
         {
             if (items["resolution"] is string res && res != "1920x1080")
-                notes.Add("⚠ For perfect sprite scaling without borders set `Resolution` to `1920x1080`");
+                notes.Add("⚠️ For perfect sprite scaling without borders set `Resolution` to `1920x1080`");
             if (items["game_version"] is string gameVer
                 && Version.TryParse(gameVer, out var v)
                 && v < new Version(1, 03))
-                generalNotes.Add("⚠ Please update game to v1.03 if you experience visual issues");
+                generalNotes.Add("⚠️ Please update game to v1.03 if you experience visual issues");
         }
     }
 
@@ -804,9 +804,9 @@ internal static partial class LogParserResult
             return;
 
         if (Gow3Ids.Contains(serial))
-            generalNotes.Add("ℹ Black screen after Santa Monica logo is fine for up to 5 minutes");
+            generalNotes.Add("ℹ️ Black screen after Santa Monica logo is fine for up to 5 minutes");
         else if (GowAscIds.Contains(serial))
-            generalNotes.Add("ℹ This game is known to be very unstable");
+            generalNotes.Add("ℹ️ This game is known to be very unstable");
     }
 
     private static readonly HashSet<string> DesIds = new()
@@ -827,16 +827,16 @@ internal static partial class LogParserResult
             return;
 
         if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
-            notes.Add("ℹ Please set `SPU Block Size` to `Safe` to reduce crash rate");
+            notes.Add("ℹ️ Please set `SPU Block Size` to `Safe` to reduce crash rate");
 
         if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
-            notes.Add("⚠ `Frame Limiter` should be `Off`");
+            notes.Add("⚠️ `Frame Limiter` should be `Off`");
 
         if (items["spu_loop_detection"] == EnabledMark)
-            notes.Add("⚠ `SPU Loop Detection` is `Enabled`, and can cause visual artifacts");
+            notes.Add("⚠️ `SPU Loop Detection` is `Enabled`, and can cause visual artifacts");
 
         if (items["spu_threads"] is string spuThreads && spuThreads != "Auto")
-            notes.Add("⚠ Please set `SPU Thread Count` to `Auto` for best performance");
+            notes.Add("⚠️ Please set `SPU Thread Count` to `Auto` for best performance");
 
         if (serial != "BLES00932" && serial != "BLUS30443")
             return;
@@ -851,33 +851,33 @@ internal static partial class LogParserResult
             if (ppuPatches.Values.Any(v => v >= 25))
             {
                 if (vblankRate != 60)
-                    notes.Add($"ℹ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%)");
+                    notes.Add($"ℹ️ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%)");
                 if (clockScale != 100)
-                    notes.Add($"⚠ `Clock Scale` is set to {clockScale}%, please set it back to 100%");
+                    notes.Add($"⚠️ `Clock Scale` is set to {clockScale}%, please set it back to 100%");
                 else
                     notes.Add("✅ Settings are set for the variable rate FPS patch");
             }
             else if (ppuPatches.Any())
             {
                 if (vblankRate == 60)
-                    notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
+                    notes.Add("ℹ️ `VBlank Rate` is not set; FPS is limited to 30");
                 if (Math.Abs(vbrRatio - clkRatio) > 0.05)
-                    notes.Add($"⚠ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%), but `Clock Scale` is set to {clockScale}%");
+                    notes.Add($"⚠️ `VBlank Rate` is set to {vblankRate} Hz ({vbrRatio * 100:0}%), but `Clock Scale` is set to {clockScale}%");
                 else if (vblankRate == 60)
-                    notes.Add("ℹ Settings are not set for the fixed rate FPS patch");
+                    notes.Add("ℹ️ Settings are not set for the fixed rate FPS patch");
                 else
                     notes.Add($"✅ Settings are set for the fixed rate {vblankRate / 2} FPS patch");
-                notes.Add("⚠ There is a new variable frame rate FPS patch available");
+                notes.Add("⚠️ There is a new variable frame rate FPS patch available");
             }
             else
             {
                 if (ppuHashes.Overlaps(KnownDesPatches))
-                    generalNotes.Add("ℹ This game has an FPS unlock patch");
+                    generalNotes.Add("ℹ️ This game has an FPS unlock patch");
             }
         }
         else if (ppuPatches.Any())
         {
-            notes.Add("ℹ `VBlank Rate` or `Clock Scale` is not set");
+            notes.Add("ℹ️ `VBlank Rate` or `Clock Scale` is not set");
         }
     }
 
@@ -911,20 +911,20 @@ internal static partial class LogParserResult
             if (ppuPatches.Any())
             {
                 if (vbr == 60)
-                    notes.Add("ℹ `VBlank Rate` is not set; FPS is limited to 30");
+                    notes.Add("ℹ️ `VBlank Rate` is not set; FPS is limited to 30");
                 else if (vbr is 120 or 240)
                     notes.Add($"✅ Settings are set for the {vbr / 2} FPS patch");
                 else if (vbr > 240)
-                    notes.Add($"⚠ Settings are configured for the {vbr/2} FPS patch, which is too high; issues are expected");
+                    notes.Add($"⚠️ Settings are configured for the {vbr/2} FPS patch, which is too high; issues are expected");
                 else
-                    notes.Add($"ℹ Settings are set for the {vbr/2} FPS patch");
+                    notes.Add($"ℹ️ Settings are set for the {vbr/2} FPS patch");
             }
             else
             {
                 if (vbr > 60)
-                    notes.Add("ℹ Unlocking FPS requires game patch");
+                    notes.Add("ℹ️ Unlocking FPS requires game patch");
                 if (ppuHashes.Overlaps(KnownDod3Patches))
-                    generalNotes.Add("ℹ This game has an FPS unlock patch");
+                    generalNotes.Add("ℹ️ This game has an FPS unlock patch");
                 else if (ppuHashes.Any())
                     generalNotes.Add("🤔 Very interesting version of the game you got there");
             }
@@ -943,30 +943,30 @@ internal static partial class LogParserResult
             return;
 
         if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
-            notes.Add("ℹ Please set `SPU Block Size` to `Safe` to reduce crash rate");
+            notes.Add("ℹ️ Please set `SPU Block Size` to `Safe` to reduce crash rate");
         if (items["cpu_blit"] == EnabledMark)
-            notes.Add("⚠ Please disable `Force CPU Blit`");
+            notes.Add("⚠️ Please disable `Force CPU Blit`");
         if (items["read_color_buffers"] == DisabledMark)
-            notes.Add("⚠ Please enable `Read Color Buffers`");
+            notes.Add("⚠️ Please enable `Read Color Buffers`");
         if (ppuPatches.Any() && patchNames.Count(n => n.Contains("depth buffer", StringComparison.OrdinalIgnoreCase)) > 1) // when all (two) depth buffer patches are applied
         {
             if (items["read_depth_buffer"] == EnabledMark)
-                notes.Add("⚠ `Read Depth Buffer` is not required with applied patches");
+                notes.Add("⚠️ `Read Depth Buffer` is not required with applied patches");
         }
         else
         {
             if (items["read_depth_buffer"] == DisabledMark)
-                notes.Add("⚠ Please enable `Read Depth Buffer` or appropriate patches");
+                notes.Add("⚠️ Please enable `Read Depth Buffer` or appropriate patches");
         }
         if (ppuPatches.Any() && patchNames.Any(n => n.Contains("MLAA", StringComparison.OrdinalIgnoreCase))) // when MLAA patch is applied
         {
             if (items["write_color_buffers"] == EnabledMark)
-                notes.Add("⚠ `Write Color Buffers` is not required with applied MLAA patch");
+                notes.Add("⚠️ `Write Color Buffers` is not required with applied MLAA patch");
         }
         else
         {
             if (items["write_color_buffers"] == DisabledMark)
-                notes.Add("⚠ Please enable MLAA patch (Recommended) or `Write Color Buffers`");
+                notes.Add("⚠️ Please enable MLAA patch (Recommended) or `Write Color Buffers`");
         }
         if (items["resolution_scale"] is string resFactor
             && int.TryParse(resFactor, out var resolutionScale))
@@ -974,12 +974,12 @@ internal static partial class LogParserResult
             if (resolutionScale > 100 && items["strict_rendering_mode"] != EnabledMark)
             {
                 if (!patchNames.Any(n => n.Contains("MLAA")))
-                    notes.Add("⚠ Please set `Resolution Scale` to 100% or enable MLAA patch");
+                    notes.Add("⚠️ Please set `Resolution Scale` to 100% or enable MLAA patch");
                 if (items["texture_scale_threshold"] is string tst
                     && int.TryParse(tst, out var scaleThreshold)
                     && scaleThreshold > 1)
                 {
-                    notes.Add("⚠ Please set `Resolution Scale Threshold` to 1x1");
+                    notes.Add("⚠️ Please set `Resolution Scale Threshold` to 1x1");
                 }
             }
         }
@@ -999,12 +999,12 @@ internal static partial class LogParserResult
         if (patchNames.Any(n => n.Contains("MLAA", StringComparison.OrdinalIgnoreCase)))
         {
             if (items["write_color_buffers"] == EnabledMark)
-                notes.Add("⚠ `Write Color Buffers` is not required with applied MLAA patch");
+                notes.Add("⚠️ `Write Color Buffers` is not required with applied MLAA patch");
         }
         else
         {
             if (items["write_color_buffers"] == DisabledMark)
-                notes.Add("⚠ Please enable MLAA patch (recommended) or `Write Color Buffers`");
+                notes.Add("⚠️ Please enable MLAA patch (recommended) or `Write Color Buffers`");
         }
     }
     private static readonly HashSet<string> RdrIds = new()
@@ -1021,7 +1021,7 @@ internal static partial class LogParserResult
             return;
 
         if (items["write_color_buffers"] == DisabledMark)
-            notes.Add("ℹ `Write Color Buffers` is required for proper visuals at night");
+            notes.Add("ℹ️ `Write Color Buffers` is required for proper visuals at night");
     }
 
     private static readonly HashSet<string> Mgs4Ids = new()
@@ -1039,8 +1039,8 @@ internal static partial class LogParserResult
         if (items["build_branch"] == "mgs4")
         {
             //notes.Clear();
-            generalNotes.Add("⚠ Custom RPCS3 builds are not officially supported");
-            generalNotes.Add("⚠ This custom build comes with pre-configured settings, don't change anything");
+            generalNotes.Add("⚠️ Custom RPCS3 builds are not officially supported");
+            generalNotes.Add("⚠️ This custom build comes with pre-configured settings, don't change anything");
         }
     }
 
@@ -1084,12 +1084,12 @@ internal static partial class LogParserResult
         if (!ppuPatches.Any())
         {
             if (ppuHashes.Overlaps(KnownPdfPatches))
-                generalNotes.Add("ℹ This game has an FPS unlock patch");
+                generalNotes.Add("ℹ️ This game has an FPS unlock patch");
             else if (ppuHashes.Overlaps(KnownPdf2ndPatches))
-                generalNotes.Add("ℹ This game has an FPS unlock patch");
+                generalNotes.Add("ℹ️ This game has an FPS unlock patch");
         }
         if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
-            notes.Add("⚠ `Frame Limiter` should be `Off`");
+            notes.Add("⚠️ `Frame Limiter` should be `Off`");
             
         if (!ppuHashes.Overlaps(KnownPdf2ndPatches))
             generalNotes.Add("🤔 Very interesting version of the game you got there");
@@ -1111,7 +1111,7 @@ internal static partial class LogParserResult
         if (items["game_version"] is string gameVer
             && Version.TryParse(gameVer, out var v)
             && v > new Version(1, 05) && v < new Version(1, 10))
-            generalNotes.Add("ℹ Game versions between 1.05 and 1.10 can fail to boot with HDD space error");
+            generalNotes.Add("ℹ️ Game versions between 1.05 and 1.10 can fail to boot with HDD space error");
     }
 
     private static readonly HashSet<string> Gt6Ids = new()
@@ -1127,7 +1127,7 @@ internal static partial class LogParserResult
             return;
 
         if (items["spu_loop_detection"] == EnabledMark)
-            notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
+            notes.Add("⚠️ Please disable `SPU Loop Detection` for this game");
 
         if (items["game_version"] is string gameVer
             && Version.TryParse(gameVer, out var v))
@@ -1137,52 +1137,52 @@ internal static partial class LogParserResult
                 var needChanges = false;
                 if (items["write_color_buffers"] == EnabledMark)
                 {
-                    notes.Add("⚠ `Write Color Buffers` is enabled, and can cause screen flicker");
+                    notes.Add("⚠️ `Write Color Buffers` is enabled, and can cause screen flicker");
                     needChanges = true;
                 }
                 if (items["read_color_buffer"] == DisabledMark)
                 {
-                    notes.Add("⚠ Please enable `Read Color Buffer`");
+                    notes.Add("⚠️ Please enable `Read Color Buffer`");
                     needChanges = true;
                 }
                 if (items["read_depth_buffer"] == DisabledMark)
                 {
-                    notes.Add("⚠ Please enable `Read Depth Buffer`");
+                    notes.Add("⚠️ Please enable `Read Depth Buffer`");
                     needChanges = true;
                 }
                 if (needChanges)
-                    generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
+                    generalNotes.Add("⚠️ Game version newer than v1.05 require additional settings to be enabled");
             }
             else
             {
                 var needChanges = false;
                 if (items["write_color_buffers"] == EnabledMark)
                 {
-                    notes.Add("⚠ `Write Color Buffers` is not required");
+                    notes.Add("⚠️ `Write Color Buffers` is not required");
                     needChanges = true;
                 }
                 if (items["read_color_buffer"] == EnabledMark)
                 {
-                    notes.Add("⚠ `Read Color Buffer` is not required");
+                    notes.Add("⚠️ `Read Color Buffer` is not required");
                     needChanges = true;
                 }
                 if (items["write_depth_buffers"] == EnabledMark)
                 {
-                    notes.Add("⚠ `Write Depth Buffers` is not required");
+                    notes.Add("⚠️ `Write Depth Buffers` is not required");
                     needChanges = true;
                 }
                 if (items["read_depth_buffer"] == EnabledMark)
                 {
-                    notes.Add("⚠ `Read Depth Buffer` is not required");
+                    notes.Add("⚠️ `Read Depth Buffer` is not required");
                     needChanges = true;
                 }
                 if (needChanges)
-                    generalNotes.Add("⚠ Game versions up to v1.05 do not require advanced settings");
+                    generalNotes.Add("⚠️ Game versions up to v1.05 do not require advanced settings");
             }
         }
         else
         {
-            generalNotes.Add("⚠ Game version newer than v1.05 require additional settings to be enabled");
+            generalNotes.Add("⚠️ Game version newer than v1.05 require additional settings to be enabled");
         }
     }
         
@@ -1210,7 +1210,7 @@ internal static partial class LogParserResult
             && resScaling > 100
             && items["cpu_blit"] == DisabledMark)
         {
-            notes.Add("⚠ Proper resolution scaling requires `Force CPU Blit` to be `Enabled`");
+            notes.Add("⚠️ Proper resolution scaling requires `Force CPU Blit` to be `Enabled`");
         }
     }
 
@@ -1226,7 +1226,7 @@ internal static partial class LogParserResult
             return;
 
         if (items["spu_loop_detection"] == EnabledMark)
-            notes.Add("⚠ Please disable `SPU Loop Detection` for this game");
+            notes.Add("⚠️ Please disable `SPU Loop Detection` for this game");
     }
 
     private static readonly HashSet<string> Lbp1Ids = new()
@@ -1260,7 +1260,7 @@ internal static partial class LogParserResult
 
         if (items["gpu_info"] is string gpu
             && (gpu.Contains("RTX ") || gpu.Contains("GTX 16")))
-            generalNotes.Add("⚠ LittleBigPlanet games may fail to boot on nVidia Turing or newer GPUs ");
+            generalNotes.Add("⚠️ LittleBigPlanet games may fail to boot on nVidia Turing or newer GPUs ");
 
         if (Lbp1Ids.Contains(serial))
         {
@@ -1268,7 +1268,7 @@ internal static partial class LogParserResult
                 && Version.TryParse(gameVer, out var v))
             {
                 if (v < new Version(1, 24))
-                    generalNotes.Add("⚠ Please update the game to prevent hang on boot");
+                    generalNotes.Add("⚠️ Please update the game to prevent hang on boot");
             }
         }
     }
@@ -1276,18 +1276,18 @@ internal static partial class LogParserResult
     private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
     {
         if (items["write_color_buffers"] is string wcb && wcb != EnabledMark)
-            notes.Add("ℹ `Write Color Buffers` should be enabled for proper visuals");
+            notes.Add("ℹ️ `Write Color Buffers` should be enabled for proper visuals");
         if (items["cpu_blit"] is string cpuBlit && cpuBlit != EnabledMark)
-            notes.Add("ℹ `Force CPU Blit` should be enabled for proper visuals");
+            notes.Add("ℹ️ `Force CPU Blit` should be enabled for proper visuals");
     }
 
     private static void CheckPs1ClassicsSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
     {
         if (items["spu_decoder"] is string spuDecoder
             && !spuDecoder.Contains("ASMJIT"))
-            notes.Add("⚠ Please set `SPU Decoder` to use `Recompiler (ASMJIT)`");
+            notes.Add("⚠️ Please set `SPU Decoder` to use `Recompiler (ASMJIT)`");
         if (items["cpu_blit"] == EnabledMark)
-            notes.Add("ℹ Please disable `Force CPU Blit` for PS1 Classics");
-        generalNotes.Add("ℹ PS1 Classics compatibility is subject to [official Sony emulator accuracy](https://www.psdevwiki.com/ps3/PS1_Classics_Emulator_Compatibility_List)");
+            notes.Add("ℹ️ Please disable `Force CPU Blit` for PS1 Classics");
+        generalNotes.Add("ℹ️ PS1 Classics compatibility is subject to [official Sony emulator accuracy](https://www.psdevwiki.com/ps3/PS1_Classics_Emulator_Compatibility_List)");
     }
 }

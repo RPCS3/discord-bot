@@ -79,7 +79,7 @@ internal static class Starbucks
         [DiscordEmoji.FromUnicode("❎")] = "X",
         [DiscordEmoji.FromUnicode("🅿")] = "P",
         [DiscordEmoji.FromUnicode("🚾")] = "WC",
-        [DiscordEmoji.FromUnicode("ℹ")] = "i",
+        [DiscordEmoji.FromUnicode("ℹ️")] = "i",
         [DiscordEmoji.FromUnicode("〰")] = "W",
     };
 

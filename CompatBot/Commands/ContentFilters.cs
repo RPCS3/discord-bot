@@ -910,7 +910,7 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         if (!string.IsNullOrEmpty(error))
             result.AddField("Entry error", error);
 
-        var validTrigger = string.IsNullOrEmpty(filter.String) || filter.String.Length < Config.MinimumPiracyTriggerLength ? "⚠ " : "";
+        var validTrigger = string.IsNullOrEmpty(filter.String) || filter.String.Length < Config.MinimumPiracyTriggerLength ? "⚠️ " : "";
         result.AddFieldEx(validTrigger + "Trigger", filter.String, highlight == field++, true)
             .AddFieldEx("Context", filter.Context.ToString(), highlight == field++, true)
             .AddFieldEx("Actions", filter.Actions.ToFlagsString(), highlight == field++, true)
@@ -920,7 +920,7 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         field++;
         if (filter.Actions.HasFlag(FilterAction.ShowExplain))
         {
-            var validExplainTerm = string.IsNullOrEmpty(filter.ExplainTerm) ? "⚠ " : "";
+            var validExplainTerm = string.IsNullOrEmpty(filter.ExplainTerm) ? "⚠️ " : "";
             result.AddFieldEx(validExplainTerm + "Explain", filter.ExplainTerm ?? "", highlight == field, true);
         }
 #if DEBUG
