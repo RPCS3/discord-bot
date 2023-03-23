@@ -243,7 +243,7 @@ internal static partial class LogParserResult
     private static readonly TimeSpan PrehistoricBuild = TimeSpan.FromDays(365);
 
     private static readonly char[] PrioritySeparator = {' '};
-    private static readonly string[] EmojiPriority = { "😱", "💢", "‼", "❗",  "❌", "⁉", "⚠", "❔", "✅", "ℹ" };
+    private static readonly string[] EmojiPriority = { "😱", "💢", "‼️", "❗",  "❌", "⁉️", "⚠️", "❔", "✅", "ℹ️" };
     private const string EnabledMark = "[x]";
     private const string DisabledMark = "[\u00a0]";
 

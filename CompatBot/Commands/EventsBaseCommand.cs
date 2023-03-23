@@ -605,7 +605,7 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
             result.WithFooter($"Ends in {FormatCountdown(evt.End.AsUtc() - currentTime)}");
         var eventDuration = evt.End.AsUtc() - start;
         var durationFormat = eventDuration.TotalDays > 0 ? @"d\d\ h\h\ m\m" : @"h\h\ m\m";
-        var startWarn = start < DateTime.UtcNow ? "⚠ " : "";
+        var startWarn = start < DateTime.UtcNow ? "⚠️ " : "";
         result
             .AddFieldEx(startWarn + "Start time", evt.Start == 0 ? "-" : start.ToString("u"), highlight == field++, true)
             .AddFieldEx("Duration", evt.Start == evt.End ? "-" : eventDuration.ToString(durationFormat), highlight == field++, true)

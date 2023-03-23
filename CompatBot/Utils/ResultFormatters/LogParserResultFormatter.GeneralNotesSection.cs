@@ -63,10 +63,10 @@ internal static partial class LogParserResult
             if (Version.TryParse(fw, out var fwv))
             {
                 if (fwv < MinimumFirmwareVersion)
-                    notes.Add($"⚠ Firmware version {MinimumFirmwareVersion} or later is recommended");
+                    notes.Add($"⚠️ Firmware version {MinimumFirmwareVersion} or later is recommended");
             }
             else
-                notes.Add("⚠ Custom firmware is not supported, please use the latest official one");
+                notes.Add("⚠️ Custom firmware is not supported, please use the latest official one");
         }
 
         if (items["os_type"] == "Windows")
@@ -86,7 +86,7 @@ internal static partial class LogParserResult
             {
                 if (p!.Length > maxPath)
                 {
-                    notes.Add($"⚠ Some file paths are longer than {maxPath} characters");
+                    notes.Add($"⚠️ Some file paths are longer than {maxPath} characters");
                     break;
                 }
                 else
@@ -94,12 +94,12 @@ internal static partial class LogParserResult
                     var baseDir = Path.GetDirectoryName(p) ?? p;
                     if (baseDir.Length > maxFolderPath)
                     {
-                        notes.Add($"⚠ Some folder paths are longer than {maxFolderPath} characters");
+                        notes.Add($"⚠️ Some folder paths are longer than {maxFolderPath} characters");
                         break;
                     }
                     else if (baseDir.Length + longestPath > maxPath)
                     {
-                        notes.Add($"⚠ Some file paths are potentially longer than {maxPath} characters");
+                        notes.Add($"⚠️ Some file paths are potentially longer than {maxPath} characters");
                         break;
                     }
                 }
@@ -122,26 +122,26 @@ internal static partial class LogParserResult
             && !string.IsNullOrEmpty(items["ldr_disc_serial"]))
             notes.Add("❌ Disc version of the game inside the `/dev_hdd0/game/` directory");
         if (!string.IsNullOrEmpty(serial) && isElf)
-            notes.Add($"⚠ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
+            notes.Add($"⚠️ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
         if (items["os_type"] == "Windows"
             && items["mounted_dev_bdvd"] is {Length: >0} mountedBdvd
             && mountedBdvd.TrimEnd('/').EndsWith(':'))
-            notes.Add("⚠ Booting directly from blu-ray disc is not supported, please make a proper game dump");
+            notes.Add("⚠️ Booting directly from blu-ray disc is not supported, please make a proper game dump");
 
         if (items["log_from_ui"] is not null)
-            notes.Add("ℹ The log is a copy from UI, please upload the full file created by RPCS3");
+            notes.Add("ℹ️ The log is a copy from UI, please upload the full file created by RPCS3");
         else if (string.IsNullOrEmpty(items["ppu_decoder"]) || string.IsNullOrEmpty(items["renderer"]))
         {
-            notes.Add("ℹ The log is empty");
-            notes.Add("ℹ Please boot the game and upload a new log");
+            notes.Add("ℹ️ The log is empty");
+            notes.Add("ℹ️ Please boot the game and upload a new log");
         }
         else if (string.IsNullOrEmpty(serial)
                  && items["game_title"] is null or "" or "sys"
                  && !string.IsNullOrEmpty(items["fw_installed_message"])
                  && items["fw_version_installed"] is string fwVersion)
         {
-            notes.Add($"ℹ The log contains only installation of firmware {fwVersion}");
-            notes.Add("ℹ Please boot the game and upload a new log");
+            notes.Add($"ℹ️ The log contains only installation of firmware {fwVersion}");
+            notes.Add("ℹ️ Please boot the game and upload a new log");
         }
 
         var category = items["game_category"];
@@ -171,28 +171,28 @@ internal static partial class LogParserResult
                 if (rpcs3FolderMissing)
                 {
                     if (desktop)
-                        notes.Add("ℹ RPCS3 installed directly on desktop, without folder");
+                        notes.Add("ℹ️ RPCS3 installed directly on desktop, without folder");
                     else if (programFiles)
-                        notes.Add("⚠ RPCS3 installed directly inside Program Files, without folder");
+                        notes.Add("⚠️ RPCS3 installed directly inside Program Files, without folder");
                     else
-                        notes.Add("⚠ RPCS3 installed in the drive root, please create a folder and move all files inside");
+                        notes.Add("⚠️ RPCS3 installed in the drive root, please create a folder and move all files inside");
                 }
 
                 if (programFiles)
-                    notes.Add("⚠ Program Files have special permissions, please move RPCS3 to another location");
+                    notes.Add("⚠️ Program Files have special permissions, please move RPCS3 to another location");
             }
 
             var pathSegments = PathUtils.GetSegments(compatDbPath);
             var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.OrdinalIgnoreCase));
             if (!string.IsNullOrEmpty(syncFolder))
-                notes.Add($"⚠ RPCS3 is installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
+                notes.Add($"⚠️ RPCS3 is installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
             var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
             if (!string.IsNullOrEmpty(rar))
                 notes.Add("❌ RPCS3 is launched from WinRAR; please extract all files instead");
         }
 
         if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
-            notes.Add($"⚠ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
+            notes.Add($"⚠️ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
 
         if (items["cpu_model"] is string cpu)
         {
@@ -201,15 +201,15 @@ internal static partial class LogParserResult
                 if (cpu.Contains("Ryzen") || cpu.Contains("Custom APU"))
                 {
                     if (threadCount < 12)
-                        notes.Add("⚠ Six cores or more is recommended for Ryzen CPUs");
+                        notes.Add("⚠️ Six cores or more is recommended for Ryzen CPUs");
                     if (cpu.EndsWith('U')
                         || cpu.EndsWith('H')
                         || cpu.EndsWith("HS")
                         || cpu.Contains("Custom APU"))
-                        notes.Add("⚠ Mobile Ryzen CPUs are only recommended for lighter games.");
+                        notes.Add("⚠️ Mobile Ryzen CPUs are only recommended for lighter games.");
                 }
                 else
-                    notes.Add("⚠ AMD CPUs before Ryzen are too weak for PS3 emulation");
+                    notes.Add("⚠️ AMD CPUs before Ryzen are too weak for PS3 emulation");
             }
 
             if (cpu.StartsWith("Intel") || cpu.StartsWith("Pentium"))
@@ -226,14 +226,14 @@ internal static partial class LogParserResult
                         || cpu[^2] == 'G'
                         || Regex.IsMatch(cpu, @"Xeon (([EXLW]C?|LV )?\d+|(E\d|AWS)-\d+\w?( (v[2-4]|0))?|D-1.+)( \(ES\))?$", DefaultSingleLine)
                         || threadCount < 6))
-                    notes.Add("⚠ This CPU is too weak and/or too old for PS3 emulation");
+                    notes.Add("⚠️ This CPU is too weak and/or too old for PS3 emulation");
             }
         }
 
         if (items["memory_amount"] is string ramSizeStr
             && double.TryParse(ramSizeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var ramSize)
             && ramSize < 6)
-            notes.Add("⚠ 8 GiB RAM or more is recommended for PS3 emulation");
+            notes.Add("⚠️ 8 GiB RAM or more is recommended for PS3 emulation");
 
         Version? oglVersion = null;
         if (items["opengl_version"] is string oglVersionString)
@@ -258,7 +258,7 @@ internal static partial class LogParserResult
         if (items["os_type"] == "Windows"
             && Version.TryParse(items["os_version"], out var winVersion)
             && (winVersion is { Major: < 10 } or { Build: < 19044 or (> 20000 and < 22000) }))
-            notes.Add("⚠ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to currently supported version");
+            notes.Add("⚠️ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to currently supported version");
             
         var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
         if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
@@ -271,10 +271,10 @@ internal static partial class LogParserResult
                     modelNumber = modelNumber[1..];
                 _ = int.TryParse(modelNumber, out var modelNumberInt);
                 if (family is "UHD" or "Iris Plus" or "Iris Xe" || modelNumberInt is > 500 and < 1000)
-                    notes.Add("⚠ Intel iGPUs are not officially supported; visual glitches are to be expected");
+                    notes.Add("⚠️ Intel iGPUs are not officially supported; visual glitches are to be expected");
                 else
                 {
-                    notes.Add("⚠ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
+                    notes.Add("⚠️ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
                     supportedGpu = false;
                 }
             }
@@ -295,13 +295,13 @@ internal static partial class LogParserResult
                         if (driverVersion >= NvidiaTextureMemoryBugMinVersion
                             && driverVersion < NvidiaTextureMemoryBugMaxVersion
                             && items["renderer"] == "Vulkan")
-                            notes.Add("ℹ 526 series nVidia drivers can cause out of memory errors, please upgrade the drivers");
+                            notes.Add("ℹ️ 526 series nVidia drivers can cause out of memory errors, please upgrade the drivers");
                         if (isWindows && buildVersion < NvidiaFullscreenBugFixed)
                         {
                             if (driverVersion >= NvidiaFullscreenBugMinVersion
                                 && driverVersion < NvidiaFullscreenBugMaxVersion
                                 && items["renderer"] == "Vulkan")
-                                notes.Add("ℹ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
+                                notes.Add("ℹ️ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
                         }
                     }
                     else if (IsAmd(gpuInfo) && items["os_type"] == "Windows")
@@ -334,13 +334,13 @@ internal static partial class LogParserResult
             && enqueueBufferErrorCount > 100)
         {
             if (items["os_type"] == "Windows")
-                notes.Add("⚠ Audio backend issues detected; it could be caused by a bad driver or 3rd party software");
+                notes.Add("⚠️ Audio backend issues detected; it could be caused by a bad driver or 3rd party software");
             else
-                notes.Add("⚠ Audio backend issues detected; check for high audio driver/sink latency");
+                notes.Add("⚠️ Audio backend issues detected; check for high audio driver/sink latency");
         }
 
         if (!string.IsNullOrEmpty(items["patch_error_file"])) 
-            notes.Add($"⚠ Failed to load `patch.yml`, check syntax around line {items["patch_error_line"]} column {items["patch_error_column"]}");
+            notes.Add($"⚠️ Failed to load `patch.yml`, check syntax around line {items["patch_error_line"]} column {items["patch_error_column"]}");
 
         var prxPatches = GetPatches(multiItems["prx_patch"], true);
         var ppuPatches = GetPatches(multiItems["ppu_patch"], true);
@@ -358,15 +358,15 @@ internal static partial class LogParserResult
                 patchCount += "SPU: " + string.Join('/', spuPatches.Values) + ", ";
             if (prxPatches.Count != 0)
                 patchCount += "PRX: " + string.Join('/', prxPatches.Values) + ", ";
-            notes.Add($"ℹ Game-specific patches were applied ({patchCount.TrimEnd(',', ' ')})");
+            notes.Add($"ℹ️ Game-specific patches were applied ({patchCount.TrimEnd(',', ' ')})");
         }
         var mlaaHashes = KnownMlaaSpuHashes.Intersect(allSpuPatches.Keys).ToList();
         if (mlaaHashes.Count != 0)
         {
             if (mlaaHashes.Any(h => allSpuPatches[h] != 0))
-                notes.Add("ℹ MLAA patch was applied");
+                notes.Add("ℹ️ MLAA patch was applied");
             else
-                notes.Add("ℹ This game has MLAA disable patch");
+                notes.Add("ℹ️ This game has MLAA disable patch");
         }
 
         var discInsideGame = false;
@@ -389,21 +389,21 @@ internal static partial class LogParserResult
         if (discInsideGame)
             notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
         if (discAsPkg)
-            notes.Add($"ℹ Disc game installed as a PKG ");
+            notes.Add($"ℹ️ Disc game installed as a PKG ");
 
         if (!string.IsNullOrEmpty(items["native_ui_input"]))
-            notes.Add("⚠ Pad initialization problem detected; try disabling `Native UI`");
+            notes.Add("⚠️ Pad initialization problem detected; try disabling `Native UI`");
         if (!string.IsNullOrEmpty(items["xaudio_init_error"]))
             notes.Add("❌ XAudio initialization failed; make sure you have a working audio output device");
         else if (items["audio_backend_init_error"] is string audioBackend) 
-            notes.Add($"⚠ {audioBackend} initialization failed; make sure you have a working audio output device");
+            notes.Add($"⚠️ {audioBackend} initialization failed; make sure you have a working audio output device");
 
         if (!string.IsNullOrEmpty(items["fw_missing_msg"])
             || !string.IsNullOrEmpty(items["fw_missing_something"]))
             notes.Add("❌ PS3 firmware is missing or corrupted");
 
         if (items["game_mod"] is string mod)
-            notes.Add($"ℹ Game files modification present: `{mod.Trim(10)}`");
+            notes.Add($"ℹ️ Game files modification present: `{mod.Trim(10)}`");
 
         var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
@@ -411,7 +411,7 @@ internal static partial class LogParserResult
             && (buildBranch is "master" or "head" or "spu_perf"
                 || string.IsNullOrEmpty(buildBranch) && updateInfo.CurrentBuild != null))
         {
-            string prefix = "⚠";
+            string prefix = "⚠️";
             string timeDeltaStr;
             if (updateInfo.GetUpdateDelta() is TimeSpan timeDelta)
             {
@@ -423,7 +423,7 @@ internal static partial class LogParserResult
                 //else if (timeDelta > VeryVeryOldBuild)
                 //    prefix = "💢";
                 else if (timeDelta > VeryOldBuild)
-                    prefix = "‼";
+                    prefix = "‼️";
                 else if (timeDelta > OldBuild)
                     prefix = "❗";
             }
@@ -436,11 +436,11 @@ internal static partial class LogParserResult
         }
 
         if (DesIds.Contains(serial))
-            notes.Add("ℹ If you experience infinite load screen, clear game cache via `File` → `All games` → `Remove Disk Cache`");
+            notes.Add("ℹ️ If you experience infinite load screen, clear game cache via `File` → `All games` → `Remove Disk Cache`");
 
         if (items["game_version"] is string gameVer)
         {
-            var msg = "ℹ Game version: v" + gameVer;
+            var msg = "ℹ️ Game version: v" + gameVer;
             if (items["game_update_version"] is string gameUpVer
                 && Version.TryParse(gameVer, out var gv)
                 && Version.TryParse(gameUpVer, out var guv)
@@ -457,13 +457,13 @@ internal static partial class LogParserResult
                 exe = "Main";
             else
                 exe = $"`{exe}`";
-            notes.Add($"ℹ {exe} hash: `PPU-{firstPpuHash}`");
+            notes.Add($"ℹ️ {exe} hash: `PPU-{firstPpuHash}`");
         }
 
         if (state.Error == LogParseState.ErrorCode.SizeLimit)
-            notes.Add("ℹ The log was too large, so only the last processed run is shown");
+            notes.Add("ℹ️ The log was too large, so only the last processed run is shown");
         if (state.Error == LogParseState.ErrorCode.UnknownError)
-            notes.Add("ℹ There was an error during log processing");
+            notes.Add("ℹ️ There was an error during log processing");
 
         BuildWeirdSettingsSection(builder, state, notes);
         BuildAppliedPatchesSection(builder, multiItems);
@@ -567,7 +567,7 @@ internal static partial class LogParserResult
                 }
                 else if (fatalError.Contains("Unknown primitive type"))
                 {
-                    notes.Add("⚠ RSX desync detected, it's probably random");
+                    notes.Add("⚠️ RSX desync detected, it's probably random");
                 }
                 if (!knownFatal)
                 {
@@ -597,9 +597,9 @@ internal static partial class LogParserResult
                 var fatalError = "Unimplemented syscall " + unimplementedSyscall;
                 builder.AddField("Fatal Error", $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
                 if (items["ppu_decoder"] is string ppuDecoder && ppuDecoder.Contains("Recompiler") && !Config.Colors.CompatStatusPlayable.Equals(builder.Color.Value))
-                    notes.Add("⚠ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
+                    notes.Add("⚠️ PPU desync detected; check your save data for corruption and/or try PPU Interpreter");
                 else
-                    notes.Add("⚠ PPU desync detected, most likely cause is corrupted save data");
+                    notes.Add("⚠️ PPU desync detected, most likely cause is corrupted save data");
             }*/
         }
         if (items["os_type"] == "Windows")
@@ -628,9 +628,9 @@ internal static partial class LogParserResult
                 else
                     link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
                 if (string.IsNullOrEmpty(error.description))
-                    notes.Add($"ℹ [Error 0x{code:x}]({link})");
+                    notes.Add($"ℹ️ [Error 0x{code:x}]({link})");
                 else
-                    notes.Add($"ℹ [Error 0x{code:x}]({link}): {error.description}");
+                    notes.Add($"ℹ️ [Error 0x{code:x}]({link}): {error.description}");
             }
         else if (items["os_type"] == "Linux" && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             foreach (var code in win32ErrorCodes)
@@ -638,7 +638,7 @@ internal static partial class LogParserResult
                 try
                 {
                     var e = new Win32Exception(code);
-                    notes.Add($"ℹ Error `{code}`: {e.Message}");
+                    notes.Add($"ℹ️ Error `{code}`: {e.Message}");
                 }
                 catch { }
             }
@@ -711,7 +711,7 @@ internal static partial class LogParserResult
                 generalNotes.Add($"🤔 That is a very interesting DLC collection from {dlcRegions.Length} different regions");
             if (KnownCustomLicenses.Overlaps(licenseNames))
                 generalNotes.Add("🤔 That is a very interesting license you're missing");
-            generalNotes.Add("⚠ DLC without a license is useless and may lead to game crash in some cases");
+            generalNotes.Add("⚠️ DLC without a license is useless and may lead to game crash in some cases");
         }
     }
 

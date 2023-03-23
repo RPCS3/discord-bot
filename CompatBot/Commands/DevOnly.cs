@@ -27,7 +27,7 @@ internal sealed class DevOnly : BaseCommandModuleCustom
         {
             var txt = "😾 lasjdf wqoieyr osdf `Vreoh Sdab` wohe `270`\n" +
                       "🤔 salfhiosfhsero hskfh shufwei oufhwehw e wkihrwe h\n" +
-                      "ℹ sakfjas f hs `ASfhewighehw safds` asfw\n" +
+                      "ℹ️ sakfjas f hs `ASfhewighehw safds` asfw\n" +
                       "🔮 ¯\\\\\\_(ツ)\\_/¯";
 
             emb.AddField("Random section", txt, false);
