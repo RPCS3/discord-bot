@@ -642,7 +642,6 @@ internal static partial class LogParserResult
                 }
                 catch { }
             }
-
     } 
         
     private static void BuildAppliedPatchesSection(DiscordEmbedBuilder builder, NameUniqueObjectCollection<string> items)
