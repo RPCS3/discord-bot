@@ -55,7 +55,7 @@ internal static partial class LogParserResult
                 && items["os_type"] != "Linux")
             {
                 if (Version.TryParse(items["os_version"], out var winVer)
-                    && (winVer.Major < 10 || (winVer.Major == 10 && winVer.Build < 18362))) // everything before win 10 1903
+                    && winVer is { Major: <10 } or { Major: 10, Build: <18362 }) // everything before win 10 1903
                 {
                     if (items["thread_scheduler"] == "OS")
                     {
@@ -106,10 +106,6 @@ internal static partial class LogParserResult
                             notes.Add("⚠️ NTSC PS1 Classics should use `Resolution` of `720x480`");
                     }
                 }
-                /*
-                if (items["aspect_ratio"] is string strAr && strAr != "4:3")
-                notes.Add("⚠️ PS1 Classics should use `Aspect Ratio` of 4:3");
-                */
             }
             else if (selectedRes != "1280x720")
             {
@@ -188,7 +184,7 @@ internal static partial class LogParserResult
 
         if (multiItems["rsx_not_supported_feature"].Contains("alpha-to-one for multisampling"))
         {
-            if (items["msaa"] is string msaa && msaa != "Disabled")
+            if (items["msaa"] is not null and not "Disabled")
                 generalNotes.Add("ℹ️ The driver or GPU does not support all required features for proper MSAA implementation, which may result in minor visual artifacts");
         }
         var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
@@ -200,7 +196,7 @@ internal static partial class LogParserResult
             if (!isWireframeBugPossible)
                 notes.Add("ℹ️ `Anti-aliasing` is disabled, which may result in visual artifacts");
         }
-        else if (items["msaa"] is string msaa && msaa != "Disabled")
+        else if (items["msaa"] is not null and not "Disabled")
         {
             if (isWireframeBugPossible)
                 notes.Add("⚠️ Please disable `Anti-aliasing` if you experience wireframe-like visual artifacts");
@@ -381,8 +377,8 @@ internal static partial class LogParserResult
             if (items["game_title"] != "vsh.self")
                 notes.Add("⚠️ Please use `Load liblv2.sprx only` as a `Library loader`");
         }
-        bool warnLibraryOverrides = items["library_list_hle"] is string hleLibList && hleLibList != "None";
-        if (items["library_list_lle"] is string lleLibList && lleLibList != "None")
+        bool warnLibraryOverrides = items["library_list_hle"] is not null and not "None";
+        if (items["library_list_lle"] is string lleLibList and not "None")
         {
             if (lleLibList.Contains("sysutil"))
                 notes.Add("❗ Never override `sysutil` firmware modules");
@@ -613,7 +609,7 @@ internal static partial class LogParserResult
         }
         if (items["spu_loop_detection"] == EnabledMark)
             notes.Add("ℹ️ If you have distorted audio, try disabling `SPU Loop Detection`");
-        if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+        if (items["frame_limit"] is not null and not "Off")
             notes.Add("⚠️ `Frame Limiter` is not required, please disable");
         if (items["write_color_buffers"] is EnabledMark)
             notes.Add("⚠️ `Write Color Buffers` is not required, please disable");
@@ -649,7 +645,7 @@ internal static partial class LogParserResult
                 && threshold < 500)
                 notes.Add("⚠️ `Resolution Scale` over 100% requires `Resolution Scale Threshold` set to `512x512`");
 
-            if (items["af_override"] is string af && af != "Auto")
+            if (items["af_override"] is not null and not "Auto")
                 notes.Add("⚠️ Please use `Auto` for `Anisotropic Filter Override`");
         }
     }
@@ -771,7 +767,7 @@ internal static partial class LogParserResult
     {
         if (serial is "NPEB00258" or "NPUB30162" or "NPJB00068")
         {
-            if (items["resolution"] is string res && res != "1920x1080")
+            if (items["resolution"] is not null and not "1920x1080")
                 notes.Add("⚠️ For perfect sprite scaling without borders set `Resolution` to `1920x1080`");
             if (items["game_version"] is string gameVer
                 && Version.TryParse(gameVer, out var v)
@@ -826,16 +822,16 @@ internal static partial class LogParserResult
         if (!DesIds.Contains(serial))
             return;
 
-        if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
+        if (items["spu_block_size"] is not null and not "Safe")
             notes.Add("ℹ️ Please set `SPU Block Size` to `Safe` to reduce crash rate");
 
-        if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+        if (items["frame_limit"] is not null and not "Off")
             notes.Add("⚠️ `Frame Limiter` should be `Off`");
 
         if (items["spu_loop_detection"] == EnabledMark)
             notes.Add("⚠️ `SPU Loop Detection` is `Enabled`, and can cause visual artifacts");
 
-        if (items["spu_threads"] is string spuThreads && spuThreads != "Auto")
+        if (items["spu_threads"] is not null and not "Auto")
             notes.Add("⚠️ Please set `SPU Thread Count` to `Auto` for best performance");
 
         if (serial != "BLES00932" && serial != "BLUS30443")
@@ -942,7 +938,7 @@ internal static partial class LogParserResult
         if (!TlouIds.Contains(serial))
             return;
 
-        if (items["spu_block_size"] is string spuBlockSize && spuBlockSize != "Safe")
+        if (items["spu_block_size"] is not null and not "Safe")
             notes.Add("ℹ️ Please set `SPU Block Size` to `Safe` to reduce crash rate");
         if (items["cpu_blit"] == EnabledMark)
             notes.Add("⚠️ Please disable `Force CPU Blit`");
@@ -1088,7 +1084,7 @@ internal static partial class LogParserResult
             else if (ppuHashes.Overlaps(KnownPdf2ndPatches))
                 generalNotes.Add("ℹ️ This game has an FPS unlock patch");
         }
-        if (items["frame_limit"] is string frameLimit && frameLimit != "Off")
+        if (items["frame_limit"] is not null and not "Off")
             notes.Add("⚠️ `Frame Limiter` should be `Off`");
             
         if (!ppuHashes.Overlaps(KnownPdf2ndPatches))
@@ -1110,7 +1106,8 @@ internal static partial class LogParserResult
 
         if (items["game_version"] is string gameVer
             && Version.TryParse(gameVer, out var v)
-            && v > new Version(1, 05) && v < new Version(1, 10))
+            && v > new Version(1, 05)
+            && v < new Version(1, 10))
             generalNotes.Add("ℹ️ Game versions between 1.05 and 1.10 can fail to boot with HDD space error");
     }
 
@@ -1258,9 +1255,11 @@ internal static partial class LogParserResult
         if (!AllLbpGames.Contains(serial))
             return;
 
+        /*
         if (items["gpu_info"] is string gpu
             && (gpu.Contains("RTX ") || gpu.Contains("GTX 16")))
             generalNotes.Add("⚠️ LittleBigPlanet games may fail to boot on nVidia Turing or newer GPUs ");
+        */
 
         if (Lbp1Ids.Contains(serial))
         {
@@ -1275,9 +1274,9 @@ internal static partial class LogParserResult
 
     private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)
     {
-        if (items["write_color_buffers"] is string wcb && wcb != EnabledMark)
+        if (items["write_color_buffers"] is not null and not EnabledMark)
             notes.Add("ℹ️ `Write Color Buffers` should be enabled for proper visuals");
-        if (items["cpu_blit"] is string cpuBlit && cpuBlit != EnabledMark)
+        if (items["cpu_blit"] is not null and not EnabledMark)
             notes.Add("ℹ️ `Force CPU Blit` should be enabled for proper visuals");
     }
 

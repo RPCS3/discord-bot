@@ -235,17 +235,17 @@ internal static partial class LogParserResult
             var linesToRemoveB = Math.Min(colBToRemove, Math.Max(linesToRemove, linesToRemove + colB.lines.Count - colA.lines.Count));
 
             var linesToSkip = colAToRemove - linesToRemoveA;
-            var tmp = colA.lines;
-            colA.lines = new(tmp.Count - linesToRemoveA);
-            foreach (var t in tmp)
-                if (!t.EndsWith("N/A") || linesToSkip-- > 0)
-                    colA.lines.Add(t);
+            var tmpLines = colA.lines;
+            colA.lines = new(tmpLines.Count - linesToRemoveA);
+            foreach (var l in tmpLines)
+                if (!l.EndsWith("N/A") || linesToSkip-- > 0)
+                    colA.lines.Add(l);
             linesToSkip = colBToRemove - linesToRemoveB;
-            tmp = colB.lines;
-            colB.lines = new(tmp.Count - linesToRemoveB);
-            for (var i = 0; i < tmp.Count; i++)
-                if (!tmp[i].EndsWith("N/A") || linesToSkip-- > 0)
-                    colB.lines.Add(tmp[i]);
+            tmpLines = colB.lines;
+            colB.lines = new(tmpLines.Count - linesToRemoveB);
+            for (var i = 0; i < tmpLines.Count; i++)
+                if (!tmpLines[i].EndsWith("N/A") || linesToSkip-- > 0)
+                    colB.lines.Add(tmpLines[i]);
 
             AddSettingsSection(builder, colA.name!, colA.lines, isCustomSettings);
             AddSettingsSection(builder, colB.name!, colB.lines, isCustomSettings);
