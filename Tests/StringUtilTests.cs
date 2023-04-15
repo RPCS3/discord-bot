@@ -23,9 +23,12 @@ public class StringUtilTests
     [Test]
     public void VisibleTrimTest()
     {
-        Assert.That("abc".TrimVisible(100), Is.EqualTo("abc"));
-        Assert.That("abc".TrimVisible(3), Is.EqualTo("abc"));
-        Assert.That("abc".TrimVisible(2), Is.EqualTo("a…"));
+        Assert.Multiple(() =>
+        {
+            Assert.That("abc".TrimVisible(100), Is.EqualTo("abc"));
+            Assert.That("abc".TrimVisible(3), Is.EqualTo("abc"));
+            Assert.That("abc".TrimVisible(2), Is.EqualTo("a…"));
+        });
     }
 
     [TestCase("cockatrice", "сockаtrice")]
@@ -115,10 +118,13 @@ ignorance the hard way.""
     [TestCase("camelCaseString13", "c", "cCS", "c13", "cCS13")]
     public void AcronymGenerationTest(string input, string expectedDefault, string expectedWithUpper, string expectedWithDigits, string expectedWithUpperAndDigits)
     {
-        Assert.That(input.GetAcronym(), Is.EqualTo(expectedDefault));
-        Assert.That(input.GetAcronym(includeAllCaps: true), Is.EqualTo(expectedWithUpper));
-        Assert.That(input.GetAcronym(includeAllDigits: true), Is.EqualTo(expectedWithDigits));
-        Assert.That(input.GetAcronym(includeAllCaps: true, includeAllDigits: true), Is.EqualTo(expectedWithUpperAndDigits));
+        Assert.Multiple(() =>
+        {
+            Assert.That(input.GetAcronym(), Is.EqualTo(expectedDefault));
+            Assert.That(input.GetAcronym(includeAllCaps: true), Is.EqualTo(expectedWithUpper));
+            Assert.That(input.GetAcronym(includeAllDigits: true), Is.EqualTo(expectedWithDigits));
+            Assert.That(input.GetAcronym(includeAllCaps: true, includeAllDigits: true), Is.EqualTo(expectedWithUpperAndDigits));
+        });
     }
 
     public static double DiceCoefficient(string input, string comparedTo)

@@ -12,7 +12,7 @@ public class IrdTests
     {
         var baseDir = TestContext.CurrentContext.TestDirectory;
         var testFiles = Directory.GetFiles(baseDir, "*.ird", SearchOption.AllDirectories);
-        Assert.That(testFiles.Length, Is.GreaterThan(0));
+        Assert.That(testFiles, Is.Not.Empty);
 
         foreach (var file in testFiles)
         {
@@ -26,7 +26,7 @@ public class IrdTests
     {
         var baseDir = TestContext.CurrentContext.TestDirectory;
         var testFiles = Directory.GetFiles(baseDir, "*.ird", SearchOption.AllDirectories);
-        Assert.That(testFiles.Length, Is.GreaterThan(0));
+        Assert.That(testFiles, Is.Not.Empty);
 
         foreach (var file in testFiles)
         {
@@ -35,7 +35,7 @@ public class IrdTests
             Assert.That(ird.FileCount, Is.GreaterThan(0));
 
             var fileList = ird.GetFilenames();
-            Assert.That(fileList.Count, Is.EqualTo(ird.FileCount));
+            Assert.That(fileList, Has.Count.EqualTo(ird.FileCount));
         }
     }
 }
