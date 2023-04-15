@@ -39,10 +39,10 @@
     <AdditionalFiles Include="..\win32_error_codes*.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.4.0-nightly-01386" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.0-nightly-01386" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.0-nightly-01386" />
-    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.0-nightly-01386" />
+    <PackageReference Include="DSharpPlus" Version="4.4.0" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.0" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.0" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.0" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.60.0.2986" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="5.2.1" />

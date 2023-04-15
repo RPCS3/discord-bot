@@ -25,66 +25,10 @@ internal static class DiscordInviteFilter
     private static readonly MemoryCache InviteCodeCache = new(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
-    public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
-        => args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
+    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreateEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
+    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
 
-    public static async Task OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args)
-        => args.Handled = !await CheckMessageForInvitesAsync(c, args.Message).ConfigureAwait(false);
-
-    public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
-    {
-        try
-        {
-            var botMember = client.GetMember(guild, client.CurrentUser);
-            if (botMember == null)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-                botMember = client.GetMember(guild, client.CurrentUser);
-                if (botMember == null)
-                {
-                    Config.Log.Error("Failed to resolve bot as the guild member for guild " + guild);
-                    return;
-                }
-            }
-
-            var after = DateTime.UtcNow - Config.ModerationBacklogThresholdInHours;
-            foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
-            {
-                var permissions = channel.PermissionsFor(botMember);
-                if (!permissions.HasPermission(Permissions.ReadMessageHistory))
-                {
-                    Config.Log.Warn($"No permissions to read message history in #{channel.Name}");
-                    continue;
-                }
-
-                if (!permissions.HasPermission(Permissions.AccessChannels))
-                {
-                    Config.Log.Warn($"No permissions to access #{channel.Name}");
-                    continue;
-                }
-
-                try
-                {
-                    var messages = await channel.GetMessagesCachedAsync(100).ConfigureAwait(false);
-                    var messagesToCheck = from msg in messages
-                        where msg.CreationTimestamp > after
-                        select msg;
-                    foreach (var message in messagesToCheck)
-                        await CheckMessageForInvitesAsync(client, message).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, $"Some missing permissions in #{channel.Name}");
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Config.Log.Error(e);
-        }
-    }
-
-    public static async Task<bool> CheckMessageForInvitesAsync(DiscordClient client, DiscordMessage message)
+    public static async Task<bool> CheckMessageInvitesAreSafeAsync(DiscordClient client, DiscordMessage message)
     {
         if (message.Channel.IsPrivate)
             return true;
@@ -185,6 +129,59 @@ internal static class DiscordInviteFilter
             }
         }
         return true;
+    }
+
+    public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
+    {
+        try
+        {
+            var botMember = client.GetMember(guild, client.CurrentUser);
+            if (botMember == null)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+                botMember = client.GetMember(guild, client.CurrentUser);
+                if (botMember == null)
+                {
+                    Config.Log.Error("Failed to resolve bot as the guild member for guild " + guild);
+                    return;
+                }
+            }
+
+            var after = DateTime.UtcNow - Config.ModerationBacklogThresholdInHours;
+            foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
+            {
+                var permissions = channel.PermissionsFor(botMember);
+                if (!permissions.HasPermission(Permissions.ReadMessageHistory))
+                {
+                    Config.Log.Warn($"No permissions to read message history in #{channel.Name}");
+                    continue;
+                }
+
+                if (!permissions.HasPermission(Permissions.AccessChannels))
+                {
+                    Config.Log.Warn($"No permissions to access #{channel.Name}");
+                    continue;
+                }
+
+                try
+                {
+                    var messages = await channel.GetMessagesCachedAsync(100).ConfigureAwait(false);
+                    var messagesToCheck = from msg in messages
+                        where msg.CreationTimestamp > after
+                        select msg;
+                    foreach (var message in messagesToCheck)
+                        await CheckMessageInvitesAreSafeAsync(client, message).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Some missing permissions in #{channel.Name}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Config.Log.Error(e);
+        }
     }
 
     public static async Task<(bool hasInvalidInvite, bool attemptToWorkaround, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, DiscordUser? author = null, bool tryMessageAsACode = false)

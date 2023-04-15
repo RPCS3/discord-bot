@@ -9,15 +9,8 @@ namespace CompatBot.EventHandlers;
 
 internal static class ContentFilterMonitor
 {
-    public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
-    {
-        args.Handled = !await ContentFilter.IsClean(c, args.Message).ConfigureAwait(false);
-    }
-
-    public static async Task OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args)
-    {
-        args.Handled = !await ContentFilter.IsClean(c, args.Message).ConfigureAwait(false);
-    }
+    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreateEventArgs args) => ContentFilter.IsClean(c, args.Message);
+    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args) => ContentFilter.IsClean(c, args.Message);
 
     public static async Task OnReaction(DiscordClient c, MessageReactionAddEventArgs e)
     {
