@@ -276,7 +276,7 @@ internal static partial class LogParserResult
             if (accurateXfloat == EnabledMark)
             {
                 if (!KnownGamesThatRequireAccurateXfloat.Contains(serial))
-                    notes.Add("ℹ️ `Accurate xfloat` is not required, and significantly impacts performance");
+                    notes.Add("⚠️ `Accurate xfloat` is not required, and significantly impacts performance");
             }
             else
             {
@@ -944,15 +944,27 @@ internal static partial class LogParserResult
             notes.Add("⚠️ Please disable `Force CPU Blit`");
         if (items["read_color_buffers"] == DisabledMark)
             notes.Add("⚠️ Please enable `Read Color Buffers`");
-        if (ppuPatches.Any() && patchNames.Count(n => n.Contains("depth buffer", StringComparison.OrdinalIgnoreCase)) > 1) // when all (two) depth buffer patches are applied
+        var depthBufferPatchesAreApplied = ppuPatches.Any() && patchNames.Count(n => n.Contains("depth buffer", StringComparison.OrdinalIgnoreCase)) > 1;
+
+        if (items["build_branch"] is "HEAD" or "master"
+            && Version.TryParse(items["build_full_version"], out var buildVersion)
+            && buildVersion < FixedTlouRcbBuild)
         {
             if (items["read_depth_buffer"] == EnabledMark)
-                notes.Add("⚠️ `Read Depth Buffer` is not required with applied patches");
+            {
+                if (depthBufferPatchesAreApplied)
+                    notes.Add("⚠️ `Read Depth Buffer` is not required with applied patches");
+            }
+            else
+            {
+                if (!depthBufferPatchesAreApplied)
+                    notes.Add("⚠️ Please enable `Read Depth Buffer` or appropriate patches");
+            }
         }
         else
         {
-            if (items["read_depth_buffer"] == DisabledMark)
-                notes.Add("⚠️ Please enable `Read Depth Buffer` or appropriate patches");
+            if (items["read_depth_buffer"] == EnabledMark)
+                notes.Add("⚠️ `Read Depth Buffer` is not required");
         }
         if (ppuPatches.Any() && patchNames.Any(n => n.Contains("MLAA", StringComparison.OrdinalIgnoreCase))) // when MLAA patch is applied
         {
