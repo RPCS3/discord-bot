@@ -17,6 +17,7 @@ using CompatBot.Utils.Extensions;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
@@ -254,28 +255,40 @@ internal static class Program
             client.MessageReactionAdded += Starbucks.Handler;
             client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
 
-            client.MessageCreated += Watchdog.OnMessageCreated;
-            client.MessageCreated += ContentFilterMonitor.OnMessageCreated; // should be first
-            client.MessageCreated += GlobalMessageCache.OnMessageCreated;
             var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
-            if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
-                client.MessageCreated += mediaScreenshotMonitor.OnMessageCreated;
-            client.MessageCreated += ProductCodeLookup.OnMessageCreated;
-            client.MessageCreated += LogParsingHandler.OnMessageCreated;
-            client.MessageCreated += LogAsTextMonitor.OnMessageCreated;
-            client.MessageCreated += DiscordInviteFilter.OnMessageCreated;
-            client.MessageCreated += PostLogHelpHandler.OnMessageCreated;
-            client.MessageCreated += BotReactionsHandler.OnMessageCreated;
-            client.MessageCreated += GithubLinksHandler.OnMessageCreated;
-            client.MessageCreated += NewBuildsMonitor.OnMessageCreated;
-            client.MessageCreated += TableFlipMonitor.OnMessageCreated;
-            client.MessageCreated += IsTheGamePlayableHandler.OnMessageCreated;
-            client.MessageCreated += EmpathySimulationHandler.OnMessageCreated;
+            client.MessageCreated += Watchdog.OnMessageCreated;
+            client.MessageCreated += new OrderedEventHandlerWrapper<MessageCreateEventArgs>(
+                new[]
+                {
+                    ContentFilterMonitor.OnMessageCreated, // should be first
+                    DiscordInviteFilter.OnMessageCreated,
+                },
+                new[]
+                {
+                    GlobalMessageCache.OnMessageCreated,
+                    mediaScreenshotMonitor.OnMessageCreated,
+                    ProductCodeLookup.OnMessageCreated,
+                    LogParsingHandler.OnMessageCreated,
+                    LogAsTextMonitor.OnMessageCreated,
+                    PostLogHelpHandler.OnMessageCreated,
+                    BotReactionsHandler.OnMessageCreated,
+                    GithubLinksHandler.OnMessageCreated,
+                    NewBuildsMonitor.OnMessageCreated,
+                    TableFlipMonitor.OnMessageCreated,
+                    IsTheGamePlayableHandler.OnMessageCreated,
+                    EmpathySimulationHandler.OnMessageCreated,
+                }).OnEvent;
 
-            client.MessageUpdated += GlobalMessageCache.OnMessageUpdated;
-            client.MessageUpdated += ContentFilterMonitor.OnMessageUpdated;
-            client.MessageUpdated += DiscordInviteFilter.OnMessageUpdated;
-            client.MessageUpdated += EmpathySimulationHandler.OnMessageUpdated;
+            client.MessageUpdated += new OrderedEventHandlerWrapper<MessageUpdateEventArgs>(new[]
+                {
+                    ContentFilterMonitor.OnMessageUpdated,
+                    DiscordInviteFilter.OnMessageUpdated,
+                },
+                new[]
+                {
+                    GlobalMessageCache.OnMessageUpdated,
+                    EmpathySimulationHandler.OnMessageUpdated,
+                }).OnEvent;
 
             client.MessageDeleted += GlobalMessageCache.OnMessageDeleted;
             if (Config.DeletedMessagesLogChannelId > 0)

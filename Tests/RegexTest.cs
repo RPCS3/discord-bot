@@ -16,8 +16,10 @@ public class RegexTest
 
         var latin = input.ToLatin8BitEncoding();
         var match = Regex.Match(latin, @"Rap file not found: (\xE2\x80\x9C)?(?<rap_file>.*?)(\xE2\x80\x9D)?\r?$", DefaultOptions);
-        Assert.That(match.Success, Is.True);
-        Assert.That(match.Groups["rap_file"].Value, Is.EqualTo("/dev_hdd0/home/00000001/exdata/EP4062-NPEB02436_00-ADDCONTENT000001.rap"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(match.Success, Is.True);
+            Assert.That(match.Groups["rap_file"].Value, Is.EqualTo("/dev_hdd0/home/00000001/exdata/EP4062-NPEB02436_00-ADDCONTENT000001.rap"));
+        });
     }
-        
 }

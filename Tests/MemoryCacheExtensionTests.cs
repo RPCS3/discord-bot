@@ -12,19 +12,19 @@ public class MemoryCacheExtensionTests
     public void GetCacheKeysTest()
     {
         var cache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
-        Assert.That(cache.GetCacheKeys<int>().Count, Is.EqualTo(0));
+        Assert.That(cache.GetCacheKeys<int>(), Is.Empty);
 
         cache.Set(13, "val13");
-        Assert.That(cache.GetCacheKeys<int>().Count, Is.EqualTo(1));
+        Assert.That(cache.GetCacheKeys<int>(), Has.Count.EqualTo(1));
     }
 
     [Test]
     public void GetCacheEntriesTest()
     {
         var cache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
-        Assert.That(cache.GetCacheKeys<int>().Count, Is.EqualTo(0));
+        Assert.That(cache.GetCacheKeys<int>(), Is.Empty);
 
         cache.Set(13, "val13");
-        Assert.That(cache.GetCacheKeys<int>().Count, Is.EqualTo(1));
+        Assert.That(cache.GetCacheKeys<int>(), Has.Count.EqualTo(1));
     }
 }

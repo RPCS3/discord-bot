@@ -238,7 +238,6 @@ internal sealed partial class Psn
                 if (e.User.Id != authorId)
                     return;
                     
-                e.Handled = true;
                 await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
                 await e.Message.DeleteAsync().ConfigureAwait(false);
                 var refMsg = await e.Channel.GetMessageAsync(refMsgId).ConfigureAwait(false);

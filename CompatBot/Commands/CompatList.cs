@@ -87,7 +87,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
             title = response.Result.Content.TrimEager().Truncate(40);
         }
 
-        if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
+        if (!await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
             return;
 
         if (!await ContentFilter.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))

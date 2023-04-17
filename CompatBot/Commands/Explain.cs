@@ -58,7 +58,7 @@ internal sealed class Explain: BaseCommandModuleCustom
             }
         }
 
-        if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
+        if (!await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
             return;
 
         if (!await ContentFilter.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
@@ -326,7 +326,7 @@ internal sealed class Explain: BaseCommandModuleCustom
             return;
         }
 
-        if (!await DiscordInviteFilter.CheckMessageForInvitesAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
+        if (!await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
             return;
 
         termOrLink = termOrLink.ToLowerInvariant().StripQuotes();

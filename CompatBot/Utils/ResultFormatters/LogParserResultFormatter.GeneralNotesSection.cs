@@ -288,7 +288,7 @@ internal static partial class LogParserResult
                     items["driver_version_parsed"] = driverVersion.ToString();
                     if (IsNvidia(gpuInfo))
                     {
-                        var isWindows = items["os_type"] is string os && os != "Linux";
+                        var isWindows = items["os_type"] is not null and not "Linux";
                         var minVersion = isWindows ? NvidiaRecommendedWindowsVersion : NvidiaRecommendedLinuxVersion;
                         if (driverVersion < minVersion)
                             notes.Add($"❗ Please update your nVidia GPU driver to at least version {minVersion}");

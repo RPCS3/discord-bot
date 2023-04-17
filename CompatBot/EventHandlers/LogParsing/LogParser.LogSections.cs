@@ -199,6 +199,7 @@ internal partial class LogParser
                 ["Renderer initialized on device"] = new(@"Renderer initialized on device '(?<vulkan_initialized_device>.+)'\r?$", DefaultOptions),
                 ["RSX: Failed to compile shader"] = new(@"RSX: Failed to compile shader: ERROR: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
                 ["RSX: Compilation failed"] = new(@"RSX: Compilation failed: ERROR: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
+                ["RSX: Linkage failed"] = new(@"RSX: Linkage failed: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
                 ["RSX: Unsupported device"] = new(@"RSX: Unsupported device: (?<rsx_unsupported_gpu>.+)\..+?\r?$", DefaultOptions),
                 ["RSX: Your GPU does not support"] = new(@"RSX: Your GPU does not support (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
                 ["RSX: GPU/driver lacks support"] = new(@"RSX: GPU/driver lacks support for (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),

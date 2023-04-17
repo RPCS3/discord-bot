@@ -10,9 +10,12 @@ public class FlagTests
     public void MultipleFlagTest()
     {
         var testVal = FilterAction.IssueWarning | FilterAction.MuteModQueue;
-        Assert.That(testVal.HasFlag(FilterAction.IssueWarning), Is.True);
-        Assert.That(testVal.HasFlag(FilterAction.IssueWarning | FilterAction.MuteModQueue), Is.True);
-        Assert.That(testVal.HasFlag(FilterAction.IssueWarning | FilterAction.MuteModQueue | FilterAction.RemoveContent), Is.False);
-        Assert.That(testVal.HasFlag(FilterAction.IssueWarning | FilterAction.SendMessage), Is.False);
+        Assert.Multiple(() =>
+        {
+            Assert.That(testVal.HasFlag(FilterAction.IssueWarning), Is.True);
+            Assert.That(testVal.HasFlag(FilterAction.IssueWarning | FilterAction.MuteModQueue), Is.True);
+            Assert.That(testVal.HasFlag(FilterAction.IssueWarning | FilterAction.MuteModQueue | FilterAction.RemoveContent), Is.False);
+            Assert.That(testVal.HasFlag(FilterAction.IssueWarning | FilterAction.SendMessage), Is.False);
+        });
     }
 }

@@ -33,6 +33,9 @@ internal sealed class MediaScreenshotMonitor
 
     public async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs evt)
     {
+        if (string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+            return;
+        
         var message = evt.Message;
         if (message == null)
             return;
