@@ -69,7 +69,7 @@ internal static class Config
 
     public static int ProductCodeLookupHistoryThrottle => config.GetValue(nameof(ProductCodeLookupHistoryThrottle), 7);
     public static int TopLimit => config.GetValue(nameof(TopLimit), 15);
-    public static int AttachmentSizeLimit => config.GetValue(nameof(AttachmentSizeLimit), 8 * 1024 * 1024);
+    public static int AttachmentSizeLimit => config.GetValue(nameof(AttachmentSizeLimit), 25 * 1024 * 1024);
     public static int LogSizeLimit => config.GetValue(nameof(LogSizeLimit), 64 * 1024 * 1024);
     public static int MinimumBufferSize => config.GetValue(nameof(MinimumBufferSize), 512);
     public static int MessageCacheSize => config.GetValue(nameof(MessageCacheSize), 1024);
