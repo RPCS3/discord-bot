@@ -43,7 +43,7 @@
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.0" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.0" />
     <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.0" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.60.0.2986" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.60.0.3024" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="5.2.1" />
     <PackageReference Include="MegaApiClient" Version="1.10.3" />
@@ -60,7 +60,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
-    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.170.0" />
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.205.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
     <PackageReference Include="Nerdbank.Streams" Version="2.9.112" />
     <PackageReference Include="NLog" Version="5.1.3" />
