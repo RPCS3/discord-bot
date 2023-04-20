@@ -18,20 +18,20 @@ public static class DbImporter
     public static async Task<bool> UpgradeAsync(CancellationToken cancellationToken)
     {
         await using (var db = new BotDb())
-            if (!await UpgradeAsync(db, Config.Cts.Token))
+            if (!await UpgradeAsync(db, cancellationToken).ConfigureAwait(false))
                 return false;
 
         await using (var db = new ThumbnailDb())
         {
-            if (!await UpgradeAsync(db, Config.Cts.Token))
+            if (!await UpgradeAsync(db,cancellationToken).ConfigureAwait(false))
                 return false;
 
-            if (!await ImportNamesPool(db, Config.Cts.Token))
+            if (!await ImportNamesPool(db, cancellationToken).ConfigureAwait(false))
                 return false;
         }
             
         await using (var db = new HardwareDb())
-            if (!await UpgradeAsync(db, Config.Cts.Token))
+            if (!await UpgradeAsync(db, cancellationToken).ConfigureAwait(false))
                 return false;
 
         return true;

@@ -18,15 +18,8 @@ public static class NamingStyles
         return value;
     }
 
-    public static string Dashed(string value)
-    {
-        return Delimitied(value, '-');
-    }
-
-    public static string Underscore(string value)
-    {
-        return Delimitied(value, '_');
-    }
+    public static string Dashed(string value) => Delimitied(value, '-');
+    public static string Underscore(string value) => Delimitied(value, '_');
 
     private static string Delimitied(string value, char separator)
     {

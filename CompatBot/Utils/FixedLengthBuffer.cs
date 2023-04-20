@@ -54,10 +54,10 @@ internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
 
     public void TrimExcess()
     {
-        if (Count <= FixedLengthBuffer<TKey, TValue>.MaxLength)
+        if (Count <= MaxLength)
             return;
 
-        TrimOldItems(Count - FixedLengthBuffer<TKey, TValue>.MaxLength);
+        TrimOldItems(Count - MaxLength);
     }
 
     public List<TValue> GetOldItems(int count)
@@ -65,9 +65,9 @@ internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
 
     public List<TValue> GetExcess()
     {
-        if (Count <= FixedLengthBuffer<TKey, TValue>.MaxLength)
-            return new List<TValue>(0);
-        return GetOldItems(Count - FixedLengthBuffer<TKey, TValue>.MaxLength);
+        if (Count <= MaxLength)
+            return new(0);
+        return GetOldItems(Count - MaxLength);
     }
 
     public TValue? Evict(TKey key)
@@ -116,7 +116,7 @@ internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
     public int Count => lookup.Count;
     public bool IsReadOnly => false;
 
-    public bool NeedTrimming => Count > FixedLengthBuffer<TKey, TValue>.MaxLength + 20;
+    public bool NeedTrimming => Count > MaxLength + 20;
     public TValue this[TKey index] => lookup[index];
 
     private static int MaxLength => Config.ChannelMessageHistorySize;

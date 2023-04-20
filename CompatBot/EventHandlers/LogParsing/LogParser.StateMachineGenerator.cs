@@ -60,8 +60,7 @@ internal partial class LogParser
         if (trigger == "{PPU[" || trigger == "⁂")
         {
             if (state.WipCollection["serial"] is string serial
-                && extractor.Match(buffer) is Match match
-                && match.Success
+                && extractor.Match(buffer) is { Success: true } match 
                 && match.Groups["syscall_name"].Value is string syscallName)
             {
                 lock (state)
@@ -81,8 +80,7 @@ internal partial class LogParser
             foreach (Match match in matches)
             foreach (Group group in match.Groups)
             {
-                if (string.IsNullOrEmpty(group.Name)
-                    || group.Name == "0"
+                if (group.Name is null or "" or "0"
                     || string.IsNullOrWhiteSpace(group.Value))
                     continue;
 

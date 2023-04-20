@@ -29,16 +29,8 @@ internal static class TitleInfoFormatter
             ? date.ToString(ApiConfig.DateOutputFormat)
             : null;
 
-    private static string? ToPrString(this TitleInfo info, string? defaultString, bool link = false)
-    {
-        if ((info.Pr ?? 0) == 0)
-            return defaultString;
-
-        if (link)
-            return $"[#{info.Pr}](https://github.com/RPCS3/rpcs3/pull/{info.Pr})";
-
-        return $"#{info.Pr}";
-    }
+    private static string ToPrString(this TitleInfo info)
+        => $"[#{info.Pr}](<https://github.com/RPCS3/rpcs3/pull/{info.Pr}>)";
 
     public static string AsString(this TitleInfo info, string titleId)
     {
@@ -56,9 +48,11 @@ internal static class TitleInfoFormatter
                 result += "                 ";
             else
                 result += $" since {info.ToUpdated(),-10}";
-            result += $" (PR {info.ToPrString("#????"),-5})`";
+            result += '`';
+            if (info.Pr > 0)
+                result += $" PR {info.ToPrString(),-5}";
             if (info.Thread > 0)
-                result += $" <https://forums.rpcs3.net/thread-{info.Thread}.html>";
+                result += $", [forum](<https://forums.rpcs3.net/thread-{info.Thread}.html>)";
             return result;
         }
 
@@ -77,7 +71,7 @@ internal static class TitleInfoFormatter
             var thumb = db.Thumbnail.FirstOrDefault(t => t.ProductCode == titleId);
             if (thumb?.CompatibilityStatus != null)
             {
-                info = new TitleInfo
+                info = new()
                 {
                     Date = thumb.CompatibilityChangeDate?.AsUtc().ToString("yyyy-MM-dd"),
                     Status = thumb.CompatibilityStatus.ToString(),
@@ -90,10 +84,9 @@ internal static class TitleInfoFormatter
         {
             // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
             var onlineOnlyPart = info.Network == 1 ? " 🌐" : "";
-            var pr = info.ToPrString(null, true);
             var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
-            if (pr != null)
-                desc += $" (PR {pr})";
+            if (info.Pr > 0)
+                desc += $" (PR {info.ToPrString()})";
             if (!forLog && !string.IsNullOrEmpty(info.AlternativeTitle))
                 desc = info.AlternativeTitle + Environment.NewLine + desc;
             if (!string.IsNullOrEmpty(info.WikiTitle))

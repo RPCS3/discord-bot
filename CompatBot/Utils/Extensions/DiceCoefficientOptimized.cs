@@ -14,11 +14,7 @@ public static class DiceCoefficientOptimized
 		var bgCount1 = input.Length - 1;
 		var bgCount2 = comparedTo.Length - 1;
 		if (comparedTo.Length < input.Length)
-		{
-			var tmp = input;
-			input = comparedTo;
-			comparedTo = tmp;
-		}
+			(input, comparedTo) = (comparedTo, input);
 		var matches = 0;
 		for (var i = 0; i < input.Length - 1; i++)
 		for (var j = 0; j < comparedTo.Length - 1; j++)

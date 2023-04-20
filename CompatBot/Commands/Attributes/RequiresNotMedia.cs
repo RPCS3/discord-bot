@@ -9,7 +9,5 @@ namespace CompatBot.Commands.Attributes;
 internal class RequiresNotMedia: CheckBaseAttribute
 {
 	public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
-	{
-		return Task.FromResult(ctx.Channel.Name != "media");
-	}
+		=> Task.FromResult(ctx.Channel.Name != "media");
 }

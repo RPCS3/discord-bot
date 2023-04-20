@@ -61,14 +61,18 @@ public static class OpenSslConfigurator
                     }
                 }
                     
-                await writer.WriteLineAsync("openssl_conf = default_conf").ConfigureAwait(false);
-                await writer.WriteLineAsync("[default_conf]").ConfigureAwait(false);
-                await writer.WriteLineAsync("ssl_conf = ssl_sect").ConfigureAwait(false);
-                await writer.WriteLineAsync("[ssl_sect]").ConfigureAwait(false);
-                await writer.WriteLineAsync("system_default = system_default_sect").ConfigureAwait(false);
-                await writer.WriteLineAsync("[system_default_sect]").ConfigureAwait(false);
-                await writer.WriteLineAsync("CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384").ConfigureAwait(false);
+                await writer.WriteLineAsync("""
+                    openssl_conf = default_conf
 
+                    [default_conf]
+                    ssl_conf = ssl_sect
+
+                    [ssl_sect]
+                    system_default = system_default_sect
+
+                    [system_default_sect]
+                    CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384
+                    """).ConfigureAwait(false);
                 if (content.Length > 0)
                     await writer.WriteAsync(content).ConfigureAwait(false);
                 await writer.FlushAsync().ConfigureAwait(false);

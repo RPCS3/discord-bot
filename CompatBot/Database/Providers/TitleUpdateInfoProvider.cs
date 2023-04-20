@@ -21,7 +21,7 @@ public static class TitleUpdateInfoProvider
 
         productId = productId.ToUpper();
         var (update, xml) = await Client.GetTitleUpdatesAsync(productId, cancellationToken).ConfigureAwait(false);
-        if (xml is string {Length: > 10})
+        if (xml is {Length: > 10})
         {
             var xmlChecksum = xml.GetStableHash();
             await using var db = new ThumbnailDb();
@@ -38,7 +38,7 @@ public static class TitleUpdateInfoProvider
                 updateInfo.Timestamp = DateTime.UtcNow.Ticks;
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
-        if ((update?.Tag?.Packages?.Length ?? 0) == 0)
+        if (update?.Tag?.Packages?.Length is null or 0)
         {
             await using var db = new ThumbnailDb();
             var updateInfo = db.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
@@ -50,8 +50,9 @@ public static class TitleUpdateInfoProvider
             update = (TitlePatch?)xmlSerializer.Deserialize(memStream);
             if (update is not null)
                 update.OfflineCacheTimestamp = updateInfo.Timestamp.AsUtc();
+
+            return update;
         }
-            
         return update;
     }
 
@@ -65,7 +66,7 @@ public static class TitleUpdateInfoProvider
             {
                 var updateInfo = db.GameUpdateInfo.AsNoTracking().FirstOrDefault(ui => ui.ProductCode == titleId);
                 if (!cancellationToken.IsCancellationRequested
-                    && ((updateInfo?.Timestamp ?? 0) == 0 || updateInfo!.Timestamp.AsUtc() < DateTime.UtcNow.AddMonths(-1)))
+                    && (updateInfo?.Timestamp is null or 0L || updateInfo.Timestamp.AsUtc() < DateTime.UtcNow.AddMonths(-1)))
                 {
                     await GetAsync(titleId, cancellationToken).ConfigureAwait(false);
                     await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);

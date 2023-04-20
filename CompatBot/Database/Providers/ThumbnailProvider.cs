@@ -25,13 +25,13 @@ internal static class ThumbnailProvider
             
         productCode = productCode.ToUpperInvariant();
         var tmdbInfo = await PsnClient.GetTitleMetaAsync(productCode, Config.Cts.Token).ConfigureAwait(false);
-        if (tmdbInfo?.Icon.Url is string tmdbIconUrl)
+        if (tmdbInfo is { Icon.Url: string tmdbIconUrl })
             return tmdbIconUrl;
 
         await using var db = new ThumbnailDb();
         var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
         //todo: add search task if not found
-        if (thumb?.EmbeddableUrl is string embeddableUrl && !string.IsNullOrEmpty(embeddableUrl))
+        if (thumb?.EmbeddableUrl is {Length: >0} embeddableUrl)
             return embeddableUrl;
 
         if (string.IsNullOrEmpty(thumb?.Url) || !ScrapeStateProvider.IsFresh(thumb.Timestamp))
@@ -40,7 +40,7 @@ internal static class ThumbnailProvider
             if (!string.IsNullOrEmpty(gameTdbCoverUrl))
             {
                 if (thumb is null)
-                    thumb = (await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false)).Entity;
+                    thumb = (await db.Thumbnail.AddAsync(new() {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false)).Entity;
                 else
                     thumb.Url = gameTdbCoverUrl;
                 thumb.Timestamp = DateTime.UtcNow.Ticks;
@@ -81,7 +81,7 @@ internal static class ThumbnailProvider
             if (!string.IsNullOrEmpty(title))
             {
                 if (thumb == null)
-                    await db.Thumbnail.AddAsync(new Thumbnail
+                    await db.Thumbnail.AddAsync(new()
                     {
                         ProductCode = productCode,
                         Name = title,
@@ -107,7 +107,7 @@ internal static class ThumbnailProvider
         contentId = contentId.ToUpperInvariant();
         await using var db = new ThumbnailDb();
         var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
-        info ??= new Thumbnail{Url = url};
+        info ??= new() {Url = url};
         if (info.Url is null)
             return (null, defaultColor);
 
@@ -139,7 +139,7 @@ internal static class ThumbnailProvider
                 await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
         }
-        var color = info.EmbedColor.HasValue ? new DiscordColor(info.EmbedColor.Value) : defaultColor;
+        var color = info.EmbedColor.HasValue ? new(info.EmbedColor.Value) : defaultColor;
         return (info.EmbeddableUrl, color);
     }
 

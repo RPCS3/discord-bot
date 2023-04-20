@@ -29,48 +29,47 @@ internal sealed class YandexDiskHandler: BaseSourceHandler
         using var client = HttpClientFactory.Create();
         foreach (Match m in matches)
         {
-            if (m.Groups["yadisk_link"].Value is string lnk
-                && !string.IsNullOrEmpty(lnk)
-                && Uri.TryCreate(lnk, UriKind.Absolute, out var webLink))
+            if (m.Groups["yadisk_link"].Value is not { Length: > 0 } lnk
+                || !Uri.TryCreate(lnk, UriKind.Absolute, out var webLink))
+                continue;
+            
+            try
             {
+                var filename = "";
+                var filesize = -1;
+
+                var resourceInfo = await Client.GetResourceInfoAsync(webLink, Config.Cts.Token).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(resourceInfo?.File))
+                    return (null, null);
+
+                if (resourceInfo.Size.HasValue)
+                    filesize = resourceInfo.Size.Value;
+                if (!string.IsNullOrEmpty(resourceInfo.Name))
+                    filename = resourceInfo.Name;
+
+                await using var stream = await client.GetStreamAsync(resourceInfo.File).ConfigureAwait(false);
+                var buf = BufferPool.Rent(SnoopBufferSize);
                 try
                 {
-                    var filename = "";
-                    var filesize = -1;
-
-                    var resourceInfo = await Client.GetResourceInfoAsync(webLink, Config.Cts.Token).ConfigureAwait(false);
-                    if (string.IsNullOrEmpty(resourceInfo?.File))
-                        return (null, null);
-
-                    if (resourceInfo.Size.HasValue)
-                        filesize = resourceInfo.Size.Value;
-                    if (!string.IsNullOrEmpty(resourceInfo.Name))
-                        filename = resourceInfo.Name;
-
-                    await using var stream = await client.GetStreamAsync(resourceInfo.File).ConfigureAwait(false);
-                    var buf = BufferPool.Rent(SnoopBufferSize);
-                    try
+                    var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                    foreach (var handler in handlers)
                     {
-                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                        foreach (var handler in handlers)
-                        {
-                            var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
-                            if (canHandle)
-                                return (new YaDiskSource(resourceInfo.File, handler, filename, filesize), null);
-                            else if (!string.IsNullOrEmpty(reason))
-                                return (null, reason);
-                        }
-                    }
-                    finally
-                    {
-                        BufferPool.Return(buf);
+                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                        if (canHandle)
+                            return (new YaDiskSource(resourceInfo.File, handler, filename, filesize), null);
+                        else if (!string.IsNullOrEmpty(reason))
+                            return (null, reason);
                     }
                 }
-
-                catch (Exception e)
+                finally
                 {
-                    Config.Log.Warn(e, $"Error sniffing {m.Groups["yadisk_link"].Value}");
+                    BufferPool.Return(buf);
                 }
+            }
+
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, $"Error sniffing {m.Groups["yadisk_link"].Value}");
             }
         }
         return (null, null);

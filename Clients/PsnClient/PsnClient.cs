@@ -38,8 +38,10 @@ public class Client
         "pl-PL", "pt-BR", "pt-PT", "ru-RU", "ru-UA", "sv-SE", "tr-TR", "zh-Hans-CN", "zh-Hans-HK", "zh-Hant-HK", "zh-Hant-TW",
     };
     // Dest=87;ImageVersion=0001091d;SystemSoftwareVersion=4.8500;CDN=http://duk01.ps3.update.playstation.net/update/ps3/image/uk/2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP;CDN_Timeout=30;
-    private static readonly Regex FwVersionInfo = new(@"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
-        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+    private static readonly Regex FwVersionInfo = new(
+        @"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
+        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase
+    );
 
     // directly from vsh.self
     private static readonly string[] KnownFwLocales = { "jp", "us", "eu", "kr", "uk", "mx", "au", "sa", "tw", "ru", "cn", "br", };
@@ -47,19 +49,19 @@ public class Client
     public Client()
     {
         client = HttpClientFactory.Create(new CustomTlsCertificatesHandler(), new CompressionMessageHandler());
-        dashedJson = new JsonSerializerOptions
+        dashedJson = new()
         {
             PropertyNamingPolicy = SpecialJsonNamingPolicy.Dashed,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             IncludeFields = true,
         };
-        snakeJson = new JsonSerializerOptions
+        snakeJson = new()
         {
             PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             IncludeFields = true,
         };
-        xmlFormatters = new MediaTypeFormatterCollection(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
+        xmlFormatters = new(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
     }
 
     public static string[] GetLocales() => KnownStoreLocales; // Sony removed the ability to get the full store list, now relying on geolocation service instead
@@ -101,7 +103,6 @@ public class Client
             {
                 message.Headers.Add("Cookie", sessionCookies);
                 response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
-
                 await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                 var tries = 0;
                 while (response.StatusCode == HttpStatusCode.Redirect && tries < 10 && !cancellationToken.IsCancellationRequested)
@@ -116,7 +117,7 @@ public class Client
                     tries++;
                 }
                 if (response.StatusCode == HttpStatusCode.Redirect)
-                    return new List<string>(0);
+                    return new(0);
             }
 
             using (response)
@@ -127,7 +128,7 @@ public class Client
                     var matches = ContainerIdLink.Matches(html);
                     var result = new List<string>();
                     foreach (Match m in matches)
-                        if (m.Groups["id"].Value is string id && !string.IsNullOrEmpty(id))
+                        if (m.Groups["id"].Value is {Length: >0} id)
                             result.Add(id);
                     return result;
                 }
@@ -344,7 +345,7 @@ public class Client
 
         allVersions = allVersions.OrderByDescending(fwi => fwi.Version).ToList();
         if (allVersions.Count == 0)
-            return new List<FirmwareInfo>(0);
+            return new(0);
 
         var maxFw = allVersions.First();
         var result = allVersions.Where(fwi => fwi.Version == maxFw.Version).ToList();
@@ -372,7 +373,7 @@ public class Client
                     {
                         ["country_code"] = country,
                         ["language_code"] = language,
-                    }!)
+                    })
                 };
                 using (authMessage)
                 using (response = await client.SendAsync(authMessage, cancellationToken).ConfigureAwait(false))
@@ -418,7 +419,7 @@ public class Client
                 if (string.IsNullOrEmpty(data))
                     return null;
 
-                if (FwVersionInfo.Match(data) is not Match m || !m.Success)
+                if (FwVersionInfo.Match(data) is not { Success: true } m)
                     return null;
                     
                 var ver = m.Groups["version"].Value;
@@ -429,7 +430,7 @@ public class Client
                     else
                         ver = ver[..4] + "." + ver[4..].TrimEnd('0'); //4.851 -> 4.85.1
                 }
-                return new FirmwareInfo { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
+                return new() { Version = ver, DownloadUrl = m.Groups["url"].Value, Locale = fwLocale};
 
             }
             catch (Exception e)

@@ -32,41 +32,38 @@ internal sealed class OneDriveSourceHandler : BaseSourceHandler
         {
             try
             {
-                if (m.Groups["onedrive_link"].Value is string lnk
-                    && !string.IsNullOrEmpty(lnk)
-                    && Uri.TryCreate(lnk, UriKind.Absolute, out var uri)
-                    && await Client.ResolveContentLinkAsync(uri, Config.Cts.Token).ConfigureAwait(false) is DriveItemMeta itemMeta
-                    && itemMeta.ContentDownloadUrl is string downloadUrl)
+                if (m.Groups["onedrive_link"].Value is not { Length: > 0 } lnk
+                    || !Uri.TryCreate(lnk, UriKind.Absolute, out var uri)
+                    || await Client.ResolveContentLinkAsync(uri, Config.Cts.Token).ConfigureAwait(false) is not { ContentDownloadUrl: { Length: > 0 } downloadUrl } itemMeta)
+                    continue;
+                try
                 {
+                    var filename = itemMeta.Name ?? "";
+                    var filesize = itemMeta.Size;
+                    uri = new(downloadUrl);
+
+                    await using var stream = await httpClient.GetStreamAsync(uri).ConfigureAwait(false);
+                    var buf = BufferPool.Rent(SnoopBufferSize);
                     try
                     {
-                        var filename = itemMeta.Name ?? "";
-                        var filesize = itemMeta.Size;
-                        uri = new Uri(downloadUrl);
-
-                        await using var stream = await httpClient.GetStreamAsync(uri).ConfigureAwait(false);
-                        var buf = BufferPool.Rent(SnoopBufferSize);
-                        try
+                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                        foreach (var handler in handlers)
                         {
-                            var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                            foreach (var handler in handlers)
-                            {
-                                var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
-                                if (canHandle)
-                                    return (new OneDriveSource(uri, handler, filename, filesize), null);
-                                else if (!string.IsNullOrEmpty(reason))
-                                    return (null, reason);
-                            }
-                        }
-                        finally
-                        {
-                            BufferPool.Return(buf);
+                            var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                            if (canHandle)
+                                return (new OneDriveSource(uri, handler, filename, filesize), null);
+                            else if (!string.IsNullOrEmpty(reason))
+                                return (null, reason);
                         }
                     }
-                    catch (Exception e)
+                    finally
                     {
-                        Config.Log.Warn(e, $"Error sniffing {m.Groups["link"].Value}");
+                        BufferPool.Return(buf);
                     }
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Error sniffing {m.Groups["link"].Value}");
                 }
             }
             catch (Exception e)

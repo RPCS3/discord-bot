@@ -187,7 +187,7 @@ internal static class DiscordInviteFilter
     public static async Task<(bool hasInvalidInvite, bool attemptToWorkaround, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, DiscordUser? author = null, bool tryMessageAsACode = false)
     {
         if (string.IsNullOrEmpty(message))
-            return (false, false, new List<DiscordInvite>(0));
+            return (false, false, new(0));
 
         var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => !string.IsNullOrEmpty(s)));
         var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
@@ -202,7 +202,7 @@ internal static class DiscordInviteFilter
                 }
         }
         if (inviteCodes.Count == 0 && discordMeLinks.Count == 0 && !tryMessageAsACode)
-            return (false, attemptedWorkaround, new List<DiscordInvite>(0));
+            return (false, attemptedWorkaround, new(0));
 
         var hasInvalidInvites = false;
         foreach (var meLink in discordMeLinks)
@@ -221,9 +221,9 @@ internal static class DiscordInviteFilter
                 using var handler = new HttpClientHandler {AllowAutoRedirect = false}; // needed to store cloudflare session cookies
                 using var httpClient = HttpClientFactory.Create(handler, new CompressionMessageHandler());
                 using var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/" + meLink);
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+                request.Headers.Accept.Add(new("text/html"));
                 request.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                request.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                request.Headers.UserAgent.Add(new("RPCS3CompatibilityBot", "2.0"));
                 using var response = await httpClient.SendAsync(request).ConfigureAwait(false);
                 var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
@@ -244,8 +244,8 @@ internal static class DiscordInviteFilter
                                 ["serverEid"] = serverEidMatch.Groups["server_eid"].Value,
                             }!),
                         };
-                        postRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
-                        postRequest.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                        postRequest.Headers.Accept.Add(new("text/html"));
+                        postRequest.Headers.UserAgent.Add(new("RPCS3CompatibilityBot", "2.0"));
                         using var postResponse = await httpClient.SendAsync(postRequest).ConfigureAwait(false);
                         if (postResponse.StatusCode == HttpStatusCode.Redirect)
                         {
@@ -254,7 +254,7 @@ internal static class DiscordInviteFilter
                             {
                                 using var getDiscordRequest = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/server/join/redirect/" + redirectId);
                                 getDiscordRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                                getDiscordRequest.Headers.UserAgent.Add(new ProductInfoHeaderValue("RPCS3CompatibilityBot", "2.0"));
+                                getDiscordRequest.Headers.UserAgent.Add(new("RPCS3CompatibilityBot", "2.0"));
                                 using var discordRedirect = await httpClient.SendAsync(getDiscordRequest).ConfigureAwait(false);
                                 if (discordRedirect.StatusCode == HttpStatusCode.Redirect)
                                 {

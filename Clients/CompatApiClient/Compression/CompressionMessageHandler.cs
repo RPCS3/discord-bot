@@ -31,8 +31,7 @@ public class CompressionMessageHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (isServer
-            && request.Content?.Headers.ContentEncoding != null
-            && request.Content.Headers.ContentEncoding.FirstOrDefault() is string serverEncoding
+            && request.Content?.Headers.ContentEncoding.FirstOrDefault() is string serverEncoding
             && Compressors.FirstOrDefault(c => c.EncodingType.Equals(serverEncoding, StringComparison.OrdinalIgnoreCase)) is ICompressor serverDecompressor)
         {
             request.Content = new DecompressedContent(request.Content, serverDecompressor);

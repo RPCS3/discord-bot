@@ -15,8 +15,10 @@ namespace CompatBot.EventHandlers;
 
 internal static class UnknownCommandHandler
 {
-    private static readonly Regex BinaryQuestion = new(@"^\s*(am I|(are|is|do(es)|did|can(?!\s+of\s+)|should|must|have)(n't)?|shall|shan't|may|will|won't)\b",
-        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
+    private static readonly Regex BinaryQuestion = new(
+        @"^\s*(am I|(are|is|do(es)|did|can(?!\s+of\s+)|should|must|have)(n't)?|shall|shan't|may|will|won't)\b",
+        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase
+    );
     
     public static Task OnError(CommandsNextExtension cne, CommandErrorEventArgs e)
     {

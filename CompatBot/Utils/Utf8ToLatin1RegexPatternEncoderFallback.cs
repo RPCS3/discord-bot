@@ -19,12 +19,12 @@ internal class Utf8ToLatin1RegexPatternEncoderFallback : EncoderFallback
         private readonly byte[] buffer = new byte[MaxBufferSize];
         private int size, remaining;
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
-        internal static readonly List<string> byteToHex = new(256);
+        internal static readonly List<string> ByteToHex = new(256);
 
         static CustomMapperFallbackBuffer()
         {
             for (var i = 0; i < 256; i++) 
-                byteToHex.Add(i.ToString("X2"));
+                ByteToHex.Add(i.ToString("X2"));
         }
 
         public CustomMapperFallbackBuffer()
@@ -59,7 +59,7 @@ internal class Utf8ToLatin1RegexPatternEncoderFallback : EncoderFallback
             for (var i = 0; i < count; i++)
             {
                 ref var b = ref tmp[i];
-                var s = byteToHex[b];
+                var s = ByteToHex[b];
                 var offset = i * 4 + 1;
                 buffer[offset + 0] = (byte)'\\';
                 buffer[offset + 2] =(byte)s[0];
@@ -81,7 +81,7 @@ internal class Utf8ToLatin1RegexPatternEncoderFallback : EncoderFallback
             for (var i = 0; i < count; i++)
             {
                 ref var b = ref tmp[i];
-                var s = byteToHex[b];
+                var s = ByteToHex[b];
                 var offset = i * 4 + 1;
                 buffer[offset + 0] = (byte)'\\';
                 buffer[offset + 2] =(byte)s[0];

@@ -219,42 +219,42 @@ public static class ProductCodeDecoder
         if (productCode.IsEmpty || productCode.Length < 2)
             return;
 
-        switch ((productCode[0], productCode[1]))
+        switch (productCode)
         {
-            case ('0', '0'):
-            case ('0', '1'):
-            case ('0', '2'):
+            case ['0', '0', ..]:
+            case ['0', '1', ..]:
+            case ['0', '2', ..]:
             {
                 result.Add("European code range");
                 break;
             }
-            case ('2', '0'):
+            case ['2', '0', ..]:
             {
                 result.Add("Korean code range");
                 break;
             }
-            case ('3', '0'):
-            case ('3', '1'):
-            case ('4', '1'):
-            case ('8', '1'):
-            case ('8', '2'):
-            case ('8', '3'):
-            case ('9', '0'):
-            case ('9', '1'):
-            case ('9', '4'):
-            case ('9', '8'):
-            case ('9', '9'):
+            case ['3', '0', ..]:
+            case ['3', '1', ..]:
+            case ['4', '1', ..]:
+            case ['8', '1', ..]:
+            case ['8', '2', ..]:
+            case ['8', '3', ..]:
+            case ['9', '0', ..]:
+            case ['9', '1', ..]:
+            case ['9', '4', ..]:
+            case ['9', '8', ..]:
+            case ['9', '9', ..]:
             {
                 result.Add("USA code range");
                 break;
             }
-            case ('5', '0'):
+            case ['5', '0', ..]:
             {
                 result.Add("Asian code range");
                 break;
             }
-            case ('6', '0'):
-            case ('6', '1'):
+            case ['6', '0', ..]:
+            case ['6', '1', ..]:
             {
                 result.Add("Japanese code range");
                 break;
@@ -561,9 +561,9 @@ public static class ProductCodeDecoder
 
     private static void DecodeMediaC(in ReadOnlySpan<char> productCode, List<string> result)
     {
-        switch ((productCode[0], productCode[1], productCode[2]))
+        switch (productCode)
         {
-            case ('U', 'S', 'A'):
+            case ['U', 'S', 'A', ..]:
             {
                 result.Add("Playstation 4 software");
                 return;

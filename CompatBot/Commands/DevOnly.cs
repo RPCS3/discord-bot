@@ -25,12 +25,12 @@ internal sealed class DevOnly : BaseCommandModuleCustom
 #pragma warning disable 8321
         static void addRandomStuff(DiscordEmbedBuilder emb)
         {
-            var txt = "😾 lasjdf wqoieyr osdf `Vreoh Sdab` wohe `270`\n" +
-                      "🤔 salfhiosfhsero hskfh shufwei oufhwehw e wkihrwe h\n" +
-                      "ℹ️ sakfjas f hs `ASfhewighehw safds` asfw\n" +
-                      "🔮 ¯\\\\\\_(ツ)\\_/¯";
-
-            emb.AddField("Random section", txt, false);
+            emb.AddField("Random section", """
+                😾 lasjdf wqoieyr osdf `Vreoh Sdab` wohe `270`
+                🤔 salfhiosfhsero hskfh shufwei oufhwehw e wkihrwe h
+                ℹ️ sakfjas f hs `ASfhewighehw safds` asfw
+                🔮 ¯\\\_(ツ)\_/¯
+                """, false);
         }
 #pragma warning restore 8321
         var embed = new DiscordEmbedBuilder()

@@ -81,7 +81,7 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
             var noEventMsg = $"No information about the upcoming {eventName?.Sanitize(replaceBackTicks: true)} at the moment";
             if (eventName?.Length > 10)
                 noEventMsg = "No information about such event at the moment";
-            else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
+            else if (ctx.User.Id is 259997001880436737ul or 377190919327318018ul)
             {
                 noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
                 promo = null;
@@ -114,7 +114,7 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
                     var noEventMsg = $"No information about the upcoming {eventName?.Sanitize(replaceBackTicks: true)} at the moment";
                     if (eventName?.Length > 10)
                         noEventMsg = "No information about such event at the moment";
-                    else if (ctx.User.Id == 259997001880436737ul || ctx.User.Id == 377190919327318018ul)
+                    else if (ctx.User.Id is 259997001880436737ul or 377190919327318018ul)
                     {
                         noEventMsg = $"Haha, very funny, {ctx.User.Mention}. So original. Never saw this joke before.";
                         promo = null;
@@ -301,7 +301,10 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
         saveEdit.SetEnabled(evt.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **start date and time**")
-            .WithEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm}`\nBy default all times use UTC, only limited number of time zones supported"))
+            .WithEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"""
+                Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm}`
+                By default all times use UTC, only limited number of time zones supported
+                """))
             .AddComponents(lastPage, nextPage)
             .AddComponents(saveEdit, abort);
         errorMsg = null;

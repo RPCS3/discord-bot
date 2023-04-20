@@ -11,7 +11,5 @@ internal class RequiresBotModRole: CheckBaseAttributeWithReactions
     public RequiresBotModRole() : base(reactOnFailure: Config.Reactions.Denied) { }
 
     protected override Task<bool> IsAllowed(CommandContext ctx, bool help)
-    {
-        return Task.FromResult(ModProvider.IsMod(ctx.User.Id));
-    }
+        => Task.FromResult(ModProvider.IsMod(ctx.User.Id));
 }

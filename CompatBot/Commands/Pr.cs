@@ -284,7 +284,10 @@ internal sealed class Pr: BaseCommandModuleCustom
                     var avgBuildTime = (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                     if (now < mergeTime + avgBuildTime)
                         waitTime = mergeTime + avgBuildTime - now;
-                    embed.AddField("Latest master build", $"This pull request has been merged, and will be part of `master` very soon.\nPlease check again in {waitTime.AsTimeDeltaDescription()}.");
+                    embed.AddField("Latest master build", $"""
+                        This pull request has been merged, and will be part of `master` very soon.
+                        Please check again in {waitTime.AsTimeDeltaDescription()}.
+                        """);
                 }
             }
         }

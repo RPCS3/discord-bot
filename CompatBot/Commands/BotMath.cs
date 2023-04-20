@@ -29,7 +29,10 @@ internal sealed class BotMath : BaseCommandModuleCustom
             return;
         }
 
-        var result = @"Something went wrong ¯\\_(ツ)\_/¯" + "\nMath is hard, yo";
+        var result = """
+            Something went wrong ¯\\\_(ツ)\_/¯
+            Math is hard, yo
+            """;
         try
         {
             var expr = new Expression(expression);
@@ -45,5 +48,5 @@ internal sealed class BotMath : BaseCommandModuleCustom
     [Command("help"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
     [Description("General math expression help, or description of specific math word")]
     public Task Help(CommandContext ctx)
-        => ctx.Channel.SendMessageAsync("Help for all the features and built-in constants and functions could be found at <https://mathparser.org/mxparser-math-collection/>");
+        => ctx.Channel.SendMessageAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)");
 }

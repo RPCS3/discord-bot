@@ -38,11 +38,10 @@ public static class EnumerableExtensions
     {
         if (collection.Count > 0)
         {
-            var rng = seed.HasValue ? new Random(seed.Value) : new Random();
+            var rng = seed.HasValue ? new(seed.Value) : new Random();
             return collection[rng.Next(collection.Count)];
         }
-        else
-            return default;
+        return default;
     }
 
     public static bool AnyPatchesApplied(this Dictionary<string, int> patches)

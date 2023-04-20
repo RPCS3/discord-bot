@@ -276,8 +276,7 @@ internal static class ContentFilter
     public static string? GetMatchedScope(Piracystring trigger, string? context)
         => context is { Length: >0 }
            && trigger.ValidatingRegex is { Length: >0 } pattern
-           && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is { Success: true } m
-           && m.Groups.Count > 0
+           && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is { Success: true, Groups.Count: > 0 } m
             ? m.Groups[0].Value.Trim(256)
             : null;
 }

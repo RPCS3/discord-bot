@@ -19,7 +19,7 @@ internal sealed class GzipHandler: IArchiveHandler
     {
         if (header.Length >= Header.Length)
         {
-            if (header.Slice(0, Header.Length).SequenceEqual(Header))
+            if (header[..Header.Length].SequenceEqual(Header))
                 return (true, null);
         }
         else if (fileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase)

@@ -18,7 +18,7 @@ internal sealed class PlainTextHandler: IArchiveHandler
         if (fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
             return (false, null);
 
-        if (header.Length > 10 && Encoding.UTF8.GetString(header.Slice(0, 30)).Contains("RPCS3 v"))
+        if (header.Length > 10 && Encoding.UTF8.GetString(header[..30]).Contains("RPCS3 v"))
             return (true, null);
 
         return (false, null);

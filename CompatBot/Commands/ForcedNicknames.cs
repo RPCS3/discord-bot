@@ -71,9 +71,8 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
                     else
                     {
                         if (enforceRules.Nickname == expectedNickname)
-                        {
                             continue;
-                        }
+                        
                         enforceRules.Nickname = expectedNickname;
                     }
                 }
@@ -187,7 +186,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         var hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
         var result = $"User ID: {discordUser.Id}\nUsername: {hex}";
         var member = ctx.Client.GetMember(ctx.Guild, discordUser);
-        if (member?.Nickname is string {Length: >0} nickname)
+        if (member is { Nickname: { Length: > 0 } nickname })
         {
             nameBytes = StringUtils.Utf8.GetBytes(nickname);
             hex = BitConverter.ToString(nameBytes).Replace('-', ' ');

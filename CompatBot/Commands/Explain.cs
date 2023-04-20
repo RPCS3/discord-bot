@@ -67,7 +67,7 @@ internal sealed class Explain: BaseCommandModuleCustom
         var hasMention = false;
         term = term.ToLowerInvariant();
         var result = await LookupTerm(term).ConfigureAwait(false);
-        if (result.explanation == null || !string.IsNullOrEmpty(result.fuzzyMatch))
+        if (result is {explanation: null} or {fuzzyMatch.Length: >0})
         {
             term = term.StripQuotes();
             var idx = term.LastIndexOf(" to ", StringComparison.Ordinal);
@@ -116,7 +116,7 @@ internal sealed class Explain: BaseCommandModuleCustom
             term = term.ToLowerInvariant().StripQuotes();
             byte[]? attachment = null;
             string? attachmentFilename = null;
-            if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment att)
+            if (ctx.Message.Attachments is [DiscordAttachment att, ..])
             {
                 attachmentFilename = att.FileName;
                 try
@@ -165,7 +165,7 @@ internal sealed class Explain: BaseCommandModuleCustom
         term = term.ToLowerInvariant().StripQuotes();
         byte[]? attachment = null;
         string? attachmentFilename = null;
-        if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment att)
+        if (ctx.Message.Attachments is [DiscordAttachment att, ..])
         {
             attachmentFilename = att.FileName;
             try
@@ -346,12 +346,12 @@ internal sealed class Explain: BaseCommandModuleCustom
         }
         else
         {
-            if (!string.IsNullOrEmpty(item.Text))
+            if (item is { Text.Length: > 0 })
             {
                 await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text));
                 await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{termOrLink}.txt", stream)).ConfigureAwait(false);
             }
-            if (!string.IsNullOrEmpty(item.AttachmentFilename) && item.Attachment?.Length > 0)
+            if (item is { AttachmentFilename.Length: > 0, Attachment.Length: > 0 })
             {
                 await using var stream = new MemoryStream(item.Attachment);
                 await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(item.AttachmentFilename, stream)).ConfigureAwait(false);

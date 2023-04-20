@@ -19,7 +19,6 @@ internal static class ModProvider
     }
 
     public static bool IsMod(ulong userId) => Moderators.ContainsKey(userId);
-
     public static bool IsSudoer(ulong userId) => Moderators.TryGetValue(userId, out var mod) && mod.Sudoer;
 
     public static async Task<bool> AddAsync(ulong userId)
@@ -34,6 +33,7 @@ internal static class ModProvider
         {
             if (IsMod(userId))
                 return false;
+            
             Moderators[userId] = newMod;
         }
         return true;

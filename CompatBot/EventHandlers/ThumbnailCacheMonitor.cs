@@ -21,7 +21,7 @@ internal static class ThumbnailCacheMonitor
 
         await using var db = new ThumbnailDb();
         var thumb = db.Thumbnail.FirstOrDefault(i => i.ContentId == args.Message.Content);
-        if (thumb?.EmbeddableUrl is string url && !string.IsNullOrEmpty(url) && args.Message.Attachments.Any(a => a.Url == url))
+        if (thumb is { EmbeddableUrl: { Length: > 0 } url } && args.Message.Attachments.Any(a => a.Url == url))
         {
             thumb.EmbeddableUrl = null;
             await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);

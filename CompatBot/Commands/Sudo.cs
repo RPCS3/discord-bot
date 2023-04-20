@@ -33,7 +33,6 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
     public async Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
     {
         var msgParts = message.Split(' ', 2, StringSplitOptions.TrimEntries);
-
         var channel = ctx.Channel;
         DiscordMessage? ogMsg = null;
         if (msgParts.Length > 1)

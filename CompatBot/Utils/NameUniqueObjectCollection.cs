@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
+
 namespace CompatBot.Utils;
 
 public class NameUniqueObjectCollection<TValue>: IDictionary<string, UniqueList<TValue>>
@@ -10,7 +11,7 @@ public class NameUniqueObjectCollection<TValue>: IDictionary<string, UniqueList<
 
 	public NameUniqueObjectCollection(IEqualityComparer<string>? keyComparer = null, IEqualityComparer<TValue>? valueComparer = null)
 	{
-		dict = new Dictionary<string, UniqueList<TValue>>(keyComparer);
+		dict = new(keyComparer);
 		this.valueComparer = valueComparer;
 	}
 
@@ -34,18 +35,21 @@ public class NameUniqueObjectCollection<TValue>: IDictionary<string, UniqueList<
 			c.Add(value);
 		else
 		{
-			dict[key] = c = new UniqueList<TValue>(valueComparer);
+			dict[key] = c = new(valueComparer);
 			c.Add(value);
 		}
 	}
 
 	public void Clear() => dict.Clear();
 
-	bool ICollection<KeyValuePair<string, UniqueList<TValue>>>.Contains(KeyValuePair<string, UniqueList<TValue>> item) => ((IDictionary<string, UniqueList<TValue>>)dict).Contains(item);
-
-	void ICollection<KeyValuePair<string, UniqueList<TValue>>>.CopyTo(KeyValuePair<string, UniqueList<TValue>>[] array, int arrayIndex) => ((IDictionary<string, UniqueList<TValue>>)dict).CopyTo(array, arrayIndex);
-
-	bool ICollection<KeyValuePair<string, UniqueList<TValue>>>.Remove(KeyValuePair<string, UniqueList<TValue>> item) => ((IDictionary<string, UniqueList<TValue>>)dict).Remove(item);
+	bool ICollection<KeyValuePair<string, UniqueList<TValue>>>.Contains(KeyValuePair<string, UniqueList<TValue>> item)
+		=> ((IDictionary<string, UniqueList<TValue>>)dict).Contains(item);
+	
+	void ICollection<KeyValuePair<string, UniqueList<TValue>>>.CopyTo(KeyValuePair<string, UniqueList<TValue>>[] array, int arrayIndex)
+		=> ((IDictionary<string, UniqueList<TValue>>)dict).CopyTo(array, arrayIndex);
+	
+	bool ICollection<KeyValuePair<string, UniqueList<TValue>>>.Remove(KeyValuePair<string, UniqueList<TValue>> item)
+		=> ((IDictionary<string, UniqueList<TValue>>)dict).Remove(item);
 
 	public int Count => dict.Count;
 	public bool IsReadOnly => false;
@@ -59,7 +63,7 @@ public class NameUniqueObjectCollection<TValue>: IDictionary<string, UniqueList<
 		if (dict.TryGetValue(key, out value!))
 			return true;
 
-		dict[key] = value = new UniqueList<TValue>(valueComparer);
+		dict[key] = value = new(valueComparer);
 		return false;
 	}
 

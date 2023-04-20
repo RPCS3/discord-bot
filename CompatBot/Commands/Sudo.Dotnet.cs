@@ -30,7 +30,7 @@ internal partial class Sudo
                     msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for dotnet updates...").ConfigureAwait(false);
                     var (updated, stdout) = await UpdateAsync(version).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(stdout))
-                        await ctx.SendAutosplitMessageAsync("```" + stdout + "```").ConfigureAwait(false);
+                        await ctx.SendAutosplitMessageAsync($"```{stdout}```").ConfigureAwait(false);
                     if (!updated)
                         return;
 

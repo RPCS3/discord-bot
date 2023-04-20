@@ -29,30 +29,29 @@ internal sealed class PastebinHandler : BaseSourceHandler
         {
             try
             {
-                if (m.Groups["pastebin_id"].Value is string pid
-                    && !string.IsNullOrEmpty(pid))
+                if (m.Groups["pastebin_id"].Value is not { Length: > 0 } pid)
+                    continue;
+                
+                var uri = new Uri("https://pastebin.com/raw/" + pid);
+                await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                var buf = BufferPool.Rent(SnoopBufferSize);
+                try
                 {
-                    var uri = new Uri("https://pastebin.com/raw/" + pid);
-                    await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
-                    var buf = BufferPool.Rent(SnoopBufferSize);
-                    try
+                    var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                    var filename = pid + ".log";
+                    var filesize = stream.CanSeek ? (int)stream.Length : 0;
+                    foreach (var handler in handlers)
                     {
-                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                        var filename = pid + ".log";
-                        var filesize = stream.CanSeek ? (int)stream.Length : 0;
-                        foreach (var handler in handlers)
-                        {
-                            var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
-                            if (canHandle)
-                                return (new PastebinSource(uri, filename, filesize, handler), null);
-                            else if (!string.IsNullOrEmpty(reason))
-                                return (null, reason);
-                        }
+                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                        if (canHandle)
+                            return (new PastebinSource(uri, filename, filesize, handler), null);
+                        else if (!string.IsNullOrEmpty(reason))
+                            return (null, reason);
                     }
-                    finally
-                    {
-                        BufferPool.Return(buf);
-                    }
+                }
+                finally
+                {
+                    BufferPool.Return(buf);
                 }
             }
             catch (Exception e)

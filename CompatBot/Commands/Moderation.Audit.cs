@@ -51,7 +51,7 @@ internal sealed partial class Moderation
                 await using var memoryStream = Config.MemoryStreamManager.GetStream();
                 await using var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true);
                 foreach (var member in members)
-                    await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{(string.Join(',', member.Roles.Select(r => r.Name)))}").ConfigureAwait(false);
+                    await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{string.Join(',', member.Roles.Select(r => r.Name))}").ConfigureAwait(false);
                 await writer.FlushAsync().ConfigureAwait(false);
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 if (memoryStream.Length <= ctx.GetAttachmentSizeLimit())
@@ -192,11 +192,13 @@ internal sealed partial class Moderation
             }
         }
 
-        /*
+#if DEBUG
         [Command("locales"), Aliases("locale", "languages", "language", "lang", "loc")]
         public async Task UserLocales(CommandContext ctx)
         {
+#pragma warning disable VSTHRD103
             if (!CheckLock.Wait(0))
+#pragma warning restore VSTHRD103
             {
                 await ctx.Channel.SendMessageAsync("Another check is already in progress").ConfigureAwait(false);
                 return;
@@ -236,7 +238,7 @@ internal sealed partial class Moderation
                 await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
             }
         }
-        */
+#endif
 
         private static List<DiscordMember> GetMembers(DiscordClient client)
         {

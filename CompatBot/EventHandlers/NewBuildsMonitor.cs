@@ -24,9 +24,8 @@ internal static class NewBuildsMonitor
         if (args.Author.IsBotSafeCheck()
             && !args.Author.IsCurrent
             && "github".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
-            && args.Message.Embeds.FirstOrDefault() is DiscordEmbed embed
-            && !string.IsNullOrEmpty(embed.Title)
-            && BuildResult.IsMatch(embed.Title)
+            && args.Message?.Embeds is [{ Title: { Length: > 0 } title }, ..] 
+            && BuildResult.IsMatch(title)
            )
         {
             Config.Log.Info("Found new PR merge message");

@@ -448,7 +448,7 @@ internal static partial class LogParserResult
                 msg += $" (update available: v{gameUpVer})";
             notes.Add(msg);
         }
-        if (multiItems["ppu_patch"].FirstOrDefault() is string firstPpuPatch
+        if (multiItems["ppu_patch"] is [string firstPpuPatch, ..]
             && ProgramHashPatch.Match(firstPpuPatch) is { Success: true } m 
             && m.Groups["hash"].Value is string firstPpuHash)
         {

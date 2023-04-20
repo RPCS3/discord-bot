@@ -31,9 +31,9 @@ internal partial class Sudo
                     foreach (var v in setVars)
                     {
 #if DEBUG
-                        result.Append(v.Key![SqlConfiguration.ConfigVarPrefix.Length ..]).Append(" = ").AppendLine(v.Value);
+                        result.Append(v.Key[SqlConfiguration.ConfigVarPrefix.Length ..]).Append(" = ").AppendLine(v.Value);
 #else
-                            result.AppendLine(v.Key![(SqlConfiguration.ConfigVarPrefix.Length)..]);
+                        result.AppendLine(v.Key[(SqlConfiguration.ConfigVarPrefix.Length)..]);
 #endif
                     }
                     await ctx.Channel.SendMessageAsync(result.ToString()).ConfigureAwait(false);
@@ -53,7 +53,7 @@ internal partial class Sudo
                 var stateValue = await db.BotState.FirstOrDefaultAsync(v => v.Key == key).ConfigureAwait(false);
                 if (stateValue == null)
                 {
-                    stateValue = new BotState {Key = key, Value = value};
+                    stateValue = new() {Key = key, Value = value};
                     await db.BotState.AddAsync(stateValue).ConfigureAwait(false);
                 }
                 else

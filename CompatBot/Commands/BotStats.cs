@@ -37,19 +37,33 @@ internal sealed class BotStats: BaseCommandModuleCustom
         var osInfo = RuntimeInformation.OSDescription;
         if (Environment.OSVersion.Platform is PlatformID.Unix or PlatformID.MacOSX)
             osInfo = RuntimeInformation.RuntimeIdentifier;
+        var gcMemInfo = GC.GetGCMemoryInfo();
+        var apiMsm = ApiConfig.MemoryStreamManager;
+        var botMsm = Config.MemoryStreamManager;
+        var apiLpsTotal = apiMsm.LargePoolInUseSize + apiMsm.LargePoolFreeSize;
+        var apiSpsTotal = apiMsm.SmallPoolInUseSize + apiMsm.SmallPoolFreeSize;
+        var botLpsTotal = botMsm.LargePoolInUseSize + botMsm.LargePoolFreeSize;
+        var botSpsTotal = botMsm.SmallPoolInUseSize + botMsm.SmallPoolFreeSize;
         embed.AddField("API Tokens", GetConfiguredApiStats(), true)
-            .AddField("Memory Usage", $"GC: {GC.GetGCMemoryInfo().HeapSizeBytes.AsStorageUnit()}/{GC.GetGCMemoryInfo().TotalAvailableMemoryBytes.AsStorageUnit()}\n" +
-                                      $"API pools: L: {ApiConfig.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.LargePoolInUseSize + ApiConfig.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
-                                      $" S: {ApiConfig.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(ApiConfig.MemoryStreamManager.SmallPoolInUseSize + ApiConfig.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}\n" +
-                                      $"Bot pools: L: {Config.MemoryStreamManager.LargePoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.LargePoolInUseSize + Config.MemoryStreamManager.LargePoolFreeSize).AsStorageUnit()}" +
-                                      $" S: {Config.MemoryStreamManager.SmallPoolInUseSize.AsStorageUnit()}/{(Config.MemoryStreamManager.SmallPoolInUseSize + Config.MemoryStreamManager.SmallPoolFreeSize).AsStorageUnit()}", true)
-            .AddField("GitHub Rate Limit", $"{GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available\nReset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}", true)
-            .AddField(".NET Info", $"{RuntimeInformation.FrameworkDescription}\n" +
-                                   $"{(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode", true)
-            .AddField("Runtime Info", $"Confinement: {SandboxDetector.Detect()}\n" +
-                                      $"OS: {osInfo}\n" +
-                                      $"CPUs: {Environment.ProcessorCount}\n" +
-                                      $"Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total", true);
+            .AddField("Memory Usage", $"""
+                GC: {gcMemInfo.HeapSizeBytes.AsStorageUnit()}/{gcMemInfo.TotalAvailableMemoryBytes.AsStorageUnit()}
+                API pools: L: {apiMsm.LargePoolInUseSize.AsStorageUnit()}/{apiLpsTotal.AsStorageUnit()} S: {apiMsm.SmallPoolInUseSize.AsStorageUnit()}/{apiSpsTotal.AsStorageUnit()}
+                Bot pools: L: {botMsm.LargePoolInUseSize.AsStorageUnit()}/{botLpsTotal.AsStorageUnit()} S: {botMsm.SmallPoolInUseSize.AsStorageUnit()}/{botSpsTotal.AsStorageUnit()}
+                """, true)
+            .AddField("GitHub Rate Limit", $"""
+                {GithubClient.Client.RateLimitRemaining} out of {GithubClient.Client.RateLimit} calls available
+                Reset in {(GithubClient.Client.RateLimitResetTime - DateTime.UtcNow).AsShortTimespan()}
+                """, true)
+            .AddField(".NET Info", $"""
+                {RuntimeInformation.FrameworkDescription}
+                {(System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation")} GC Mode
+                """, true)
+            .AddField("Runtime Info", $"""
+                Confinement: {SandboxDetector.Detect()}
+                OS: {osInfo}
+                CPUs: {Environment.ProcessorCount}
+                Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total
+                """, true);
         AppendPiracyStats(embed);
         AppendCmdStats(embed);
         AppendExplainStats(embed);
@@ -70,16 +84,13 @@ internal sealed class BotStats: BaseCommandModuleCustom
     public Task Hardware(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30) => Commands.Hardware.ShowStats(ctx, period);
     
     private static string GetConfiguredApiStats()
-    {
-        return new StringBuilder()
-            .Append(GoogleDriveHandler.ValidateCredentials() ? "✅" : "❌").AppendLine(" Google Drive")
-            .Append(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅").AppendLine(" Azure DevOps")
-            .Append(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅").AppendLine(" Computer Vision")
-            .Append(string.IsNullOrEmpty(Config.AzureAppInsightsConnectionString) ? "❌" : "✅").AppendLine(" AppInsights")
-            .Append(string.IsNullOrEmpty(Config.GithubToken) ? "❌" : "✅").AppendLine(" Github")
-            .ToString()
-            .Trim();
-    }
+        => $"""
+            {(GoogleDriveHandler.ValidateCredentials() ? "✅" : "❌")} Google Drive
+            {(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅")} Azure DevOps
+            {(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅")} Computer Vision
+            {(string.IsNullOrEmpty(Config.AzureAppInsightsConnectionString) ? "❌" : "✅")} AppInsights
+            {(string.IsNullOrEmpty(Config.GithubToken) ? "❌" : "✅")} GitHub
+            """;
 
     private static void AppendPiracyStats(DiscordEmbedBuilder embed)
     {
@@ -228,11 +239,11 @@ internal sealed class BotStats: BaseCommandModuleCustom
             var totalFuncCount = db.SyscallInfo.AsNoTracking().Select(sci => sci.Function).Distinct().Count();
             var fwCallCount = totalFuncCount - syscallCount;
             var gameCount = db.SyscallToProductMap.AsNoTracking().Select(m => m.ProductId).Distinct().Count();
-            embed.AddField("SceCall Stats",
-                $"Tracked game IDs: {gameCount}\n" +
-                $"Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")}\n" +
-                $"Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")}\n",
-                true);
+            embed.AddField("SceCall Stats", $"""
+                Tracked game IDs: {gameCount}
+                Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")}
+                Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")}
+                """, true);
         }
         catch (Exception e)
         {
@@ -258,15 +269,12 @@ internal sealed class BotStats: BaseCommandModuleCustom
                 .OrderByDescending(s => s.count)
                 .FirstOrDefault();
 
-            var cpuInfo = "";
-            if (cpu is not null)
-                cpuInfo = $"\nPopular CPU: {cpu.maker} {cpu.name} ({cpu.count*100.0/monthCount:0.##}%)";
-            embed.AddField("Hardware Stats",
-                $"Total: {totalCount} system{(totalCount == 1 ? "" : "s")}\n" +
-                $"Last 30 days: {monthCount} system{(monthCount == 1 ? "" : "s")}" +
-                cpuInfo,
-                true);
-
+            var cpuInfo = cpu is null ? "" : $"Popular CPU: {cpu.maker} {cpu.name} ({cpu.count * 100.0 / monthCount:0.##}%)";
+            embed.AddField("Hardware Stats", $"""
+                Total: {totalCount} system{(totalCount == 1 ? "" : "s")}
+                Last 30 days: {monthCount} system{(monthCount == 1 ? "" : "s")}
+                {cpuInfo}
+                """.TrimEnd(), true);
         }
         catch (Exception e)
         {

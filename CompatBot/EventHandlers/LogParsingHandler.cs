@@ -136,8 +136,10 @@ public static class LogParsingHandler
                     {
                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: new DiscordEmbedBuilder
                             {
-                                Description = "Log analysis failed, most likely cause is a truncated/invalid log.\n" +
-                                              "Please run the game again and re-upload a new copy.",
+                                Description = """
+                                    Log analysis failed, most likely cause is a truncated/invalid log.
+                                    Please run the game again and re-upload a new copy.
+                                    """,
                                 Color = Config.Colors.LogResultFailed,
                             }
                             .AddAuthor(client, message, source)
@@ -154,8 +156,8 @@ public static class LogParsingHandler
                             {
                                 if (result.SelectedFilter is null)
                                 {
-                                    Config.Log.Error("Piracy was detectedin log, but no trigger provided");
-                                    result.SelectedFilter = new Piracystring
+                                    Config.Log.Error("Piracy was detected in log, but no trigger provided");
+                                    result.SelectedFilter = new()
                                     {
                                         String = "Unknown trigger, plz kick 13xforever",
                                         Actions = FilterAction.IssueWarning | FilterAction.RemoveContent,
@@ -188,13 +190,14 @@ public static class LogParsingHandler
                                     try
                                     {
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                            $"{message.Author.Mention}, please read carefully:\n" +
-                                            "🏴‍☠️ **Pirated content detected** 🏴‍☠️\n" +
-                                            "__You are being denied further support until you legally dump the game__.\n" +
-                                            "Please note that the RPCS3 community and its developers do not support piracy.\n" +
-                                            "Most of the issues with pirated dumps occur due to them being modified in some way " +
-                                            "that prevent them from working on RPCS3.\n" +
-                                            "If you need help obtaining valid working dump of the game you own, please read the quickstart guide at <https://rpcs3.net/quickstart>"
+                                            $"""
+                                                # 🏴‍☠️ **Pirated content detected** 🏴‍☠️
+                                                {message.Author.Mention}, please read carefully:
+                                                __You are being denied further support until you legally dump the game__.
+                                                Please note that the RPCS3 community and its developers do not support piracy.
+                                                Most of the issues with pirated dumps occur due to them being modified in some way that prevent them from working on RPCS3.
+                                                If you need help obtaining valid working dump of the game you own, please read [the quickstart guide](<https://rpcs3.net/quickstart>).
+                                                """
                                         ).ConfigureAwait(false);
                                     }
                                     catch (Exception e)
@@ -233,8 +236,7 @@ public static class LogParsingHandler
                                         if (isHelpChannel)
                                             await botMsg.UpdateOrCreateMessageAsync(
                                                 channel,
-                                                $"{message.Author.Mention} please describe the issue if you require help, " +
-                                                $"or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
+                                                $"{message.Author.Mention} please describe the issue if you require help, or upload log in {botSpamChannel.Mention} if you only need to check your logs automatically"
                                             ).ConfigureAwait(false);
                                         else
                                         {
@@ -278,7 +280,11 @@ public static class LogParsingHandler
                 {
                     case "TXT":
                     {
-                        await channel.SendMessageAsync($"{message.Author.Mention} Please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file after closing the emulator instead of copying the logs from RPCS3's interface, as it doesn't contain all the required information.").ConfigureAwait(false);
+                        await channel.SendMessageAsync(
+                            $"{message.Author.Mention}, please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file " +
+                            "after closing the emulator instead of copying the logs from RPCS3's interface, " +
+                            "as it doesn't contain all the required information."
+                        ).ConfigureAwait(false);
                         Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.BadRequest.ToString(), true);
                         return;
                     }
@@ -398,7 +404,7 @@ public static class LogParsingHandler
     private static DiscordEmbedBuilder GetAnalyzingMsgEmbed(DiscordClient client)
     {
         var indicator = client.GetEmoji(":kannamag:", Config.Reactions.PleaseWait);
-        return new DiscordEmbedBuilder
+        return new()
         {
             Description = $"{indicator} Looking at the log, please wait... {indicator}",
             Color = Config.Colors.LogUnknown,

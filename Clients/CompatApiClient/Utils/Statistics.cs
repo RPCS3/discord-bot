@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace CompatApiClient.Utils;
 
@@ -7,7 +8,7 @@ public static class Statistics
 {
     public static long Mean(this IEnumerable<long> data)
     {
-        System.Numerics.BigInteger sum = 0;
+        BigInteger sum = 0;
         var itemCount = 0;
         foreach (var value in data)
         {
@@ -22,12 +23,12 @@ public static class Statistics
 
     public static double StdDev(this IEnumerable<long> data)
     {
-        System.Numerics.BigInteger σx = 0, σx2 = 0;
+        BigInteger σx = 0, σx2 = 0;
         var n = 0;
         foreach (var value in data)
         {
             σx += value;
-            σx2 += (System.Numerics.BigInteger)value * value;
+            σx2 += (BigInteger)value * value;
             n++;
         }
         if (n == 0)
