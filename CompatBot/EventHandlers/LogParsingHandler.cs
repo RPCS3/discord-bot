@@ -191,9 +191,9 @@ public static class LogParsingHandler
                                     {
                                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
                                             $"""
-                                                # 🏴‍☠️ **Pirated content detected** 🏴‍☠️
-                                                {message.Author.Mention}, please read carefully:
-                                                __You are being denied further support until you legally dump the game__.
+                                                # Pirated content detected 🏴‍☠️
+                                                {message.Author.Mention}, please read carefully
+                                                ### You are being denied further support until you legally dump the game
                                                 Please note that the RPCS3 community and its developers do not support piracy.
                                                 Most of the issues with pirated dumps occur due to them being modified in some way that prevent them from working on RPCS3.
                                                 If you need help obtaining valid working dump of the game you own, please read [the quickstart guide](<https://rpcs3.net/quickstart>).
