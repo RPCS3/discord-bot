@@ -82,7 +82,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
                     continue;
                 }
 
-                if (ctx.Client.GetMember(guild, discordUser) is DiscordMember discordMember)
+                if (await ctx.Client.GetMemberAsync(guild, discordUser).ConfigureAwait(false) is DiscordMember discordMember)
                     try
                     {
                         await discordMember.ModifyAsync(x => x.Nickname = expectedNickname).ConfigureAwait(false);
@@ -127,7 +127,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         {
             if (discordUser.IsBotSafeCheck())
             {
-                var mem = ctx.Client.GetMember(ctx.Guild.Id, discordUser);
+                var mem = await ctx.Client.GetMemberAsync(ctx.Guild.Id, discordUser).ConfigureAwait(false);
                 if (mem is not null)
                 {
                     await mem.ModifyAsync(m => m.Nickname = new(discordUser.Username)).ConfigureAwait(false);
@@ -158,7 +158,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
     [Description("Removes zalgo from specified user nickname")]
     public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordUser discordUser)
     {
-        if (ctx.Client.GetMember(discordUser) is not DiscordMember member)
+        if (await ctx.Client.GetMemberAsync(discordUser).ConfigureAwait(false) is not DiscordMember member)
         {
             await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}").ConfigureAwait(false);
             return;
@@ -191,7 +191,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         var nameBytes = StringUtils.Utf8.GetBytes(name);
         var hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
         var result = $"User ID: {discordUser.Id}\nUsername: {hex}";
-        var member = ctx.Client.GetMember(ctx.Guild, discordUser);
+        var member = await ctx.Client.GetMemberAsync(ctx.Guild, discordUser).ConfigureAwait(false);
         if (member is { Nickname: { Length: > 0 } nickname })
         {
             nameBytes = StringUtils.Utf8.GetBytes(nickname);
@@ -216,7 +216,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
         try
         {
-            if (ctx.Client.GetMember(discordUser) is { } member)
+            if (await ctx.Client.GetMemberAsync(discordUser).ConfigureAwait(false) is { } member)
             {
                 await member.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
@@ -224,9 +224,9 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
             else
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}").ConfigureAwait(false);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            Config.Log.Warn($"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
+            Config.Log.Warn(e, $"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
             await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);
         }
     }
@@ -253,7 +253,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         }
 
         var table = new AsciiTable(
-            new AsciiColumn("ID", !ctx.Channel.IsPrivate || !ctx.User.IsWhitelisted(ctx.Client)),
+            new AsciiColumn("ID", !ctx.Channel.IsPrivate || !await ctx.User.IsWhitelistedAsync(ctx.Client).ConfigureAwait(false)),
             new AsciiColumn("Username"),
             new AsciiColumn("Forced nickname")
         );

@@ -440,7 +440,9 @@ internal sealed class Vision: BaseCommandModuleCustom
                  || str.StartsWith("last")
                  || str.StartsWith("previous")
                  || str.StartsWith("^"))
-                && ctx.Channel.PermissionsFor(ctx.Client.GetMember(ctx.Guild, ctx.Client.CurrentUser)).HasPermission(Permissions.ReadMessageHistory))
+                && ctx.Channel.PermissionsFor(
+                    await ctx.Client.GetMemberAsync(ctx.Guild, ctx.Client.CurrentUser).ConfigureAwait(false)
+                ).HasPermission(Permissions.ReadMessageHistory))
                 try
                 {
                     var previousMessages = (await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false))!;

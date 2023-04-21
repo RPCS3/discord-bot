@@ -24,7 +24,7 @@ public static class UsernameZalgoMonitor
     {
         try
         {
-            if (c.GetMember(args.UserAfter) is DiscordMember m
+            if (await c.GetMemberAsync(args.UserAfter).ConfigureAwait(false) is DiscordMember m
                 && NeedsRename(m.DisplayName))
             {
                 var suggestedName = StripZalgo(m.DisplayName, m.Username, m.Id).Sanitize();

@@ -183,9 +183,9 @@ namespace CompatBot.EventHandlers
                 }
                 await args.Message.ReactWithAsync(emoji, sadMessage).ConfigureAwait(false);
 
-                if (args.Author.IsSmartlisted(c, args.Message.Channel.Guild))
+                if (await args.Author.IsSmartlistedAsync(c, args.Message.Channel.Guild).ConfigureAwait(false))
                 {
-                    var botMember = args.Guild?.CurrentMember ?? c.GetMember(c.CurrentUser);
+                    var botMember = args.Guild?.CurrentMember ?? await c.GetMemberAsync(c.CurrentUser).ConfigureAwait(false);
                     if (args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
                     {
                         var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.Add(-Config.ShutupTimeLimitInMin)).ConfigureAwait(false);

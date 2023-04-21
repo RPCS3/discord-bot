@@ -25,7 +25,7 @@ internal static class UsernameSpoofMonitor
         if (args.UserBefore.Username == args.UserAfter.Username)
             return;
 
-        var m = c.GetMember(args.UserAfter);
+        var m = await c.GetMemberAsync(args.UserAfter).ConfigureAwait(false);
         if (m is null)
             return;
             

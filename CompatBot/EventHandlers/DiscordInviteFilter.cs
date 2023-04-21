@@ -37,7 +37,7 @@ internal static class DiscordInviteFilter
             return true;
 
 #if !DEBUG
-            if (message.Author.IsWhitelisted(client, message.Channel.Guild))
+            if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
                 return true;
 #endif
 
@@ -110,7 +110,7 @@ internal static class DiscordInviteFilter
                 if (repeatedInvitePost || recentInvites.Count > 1)
                     try
                     {
-                        var member = client.GetMember(message.Channel.Guild, message.Author);
+                        var member = await client.GetMemberAsync(message.Channel.Guild, message.Author).ConfigureAwait(false);
                         if (member is not null)
                         {
                             await member.RemoveAsync("Multiple invites after being warned").ConfigureAwait(false);
@@ -119,7 +119,7 @@ internal static class DiscordInviteFilter
                     }
                     catch (Exception e)
                     {
-                        Config.Log.Warn(e, $"Failed to kick user {message.Author.GetUsernameWithNickname(client)} for repeated invite spam");
+                        Config.Log.Warn(e, $"Failed to kick user {await message.Author.GetUsernameWithNicknameAsync(client).ConfigureAwait(false)} for repeated invite spam");
                     }
                 
                 await message.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
@@ -135,11 +135,11 @@ internal static class DiscordInviteFilter
     {
         try
         {
-            var botMember = client.GetMember(guild, client.CurrentUser);
+            var botMember = await client.GetMemberAsync(guild, client.CurrentUser).ConfigureAwait(false);
             if (botMember == null)
             {
                 await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-                botMember = client.GetMember(guild, client.CurrentUser);
+                botMember = await client.GetMemberAsync(guild, client.CurrentUser).ConfigureAwait(false);
                 if (botMember == null)
                 {
                     Config.Log.Error("Failed to resolve bot as the guild member for guild " + guild);

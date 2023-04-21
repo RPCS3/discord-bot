@@ -268,7 +268,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
                     return false;
 
                 var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
-                var botMember = discordClient.GetMember(compatChannel.Guild, discordClient.CurrentUser);
+                var botMember = await discordClient.GetMemberAsync(compatChannel.Guild, discordClient.CurrentUser).ConfigureAwait(false);
                 if (botMember == null)
                     return false;
 

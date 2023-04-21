@@ -47,7 +47,7 @@ internal sealed class MediaScreenshotMonitor
             if (message.Author.IsBotSafeCheck())
                 return;
 
-            if (message.Author.IsSmartlisted(client))
+            if (await message.Author.IsSmartlistedAsync(client).ConfigureAwait(false))
                 return;
 #endif
 

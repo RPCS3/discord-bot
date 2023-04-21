@@ -234,7 +234,7 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
     {
         try
         {
-            var isWhitelisted = client.GetMember(message.Author)?.IsWhitelisted() is true;
+            var isWhitelisted = (await client.GetMemberAsync(message.Author).ConfigureAwait(false))?.IsWhitelisted() is true;
             if (message.Author.Id != userId && !isWhitelisted)
             {
                 Config.Log.Error($"Somehow {message.Author.Username} ({message.Author.Id}) triggered warning list for {userId}");

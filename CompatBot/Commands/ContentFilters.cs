@@ -127,7 +127,7 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
                 await db.Piracystring.AddAsync(filter).ConfigureAwait(false);
             await db.SaveChangesAsync().ConfigureAwait(false);
             await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id)).ConfigureAwait(false);
-            var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+            var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
             var reportMsg = $"{member?.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
             if (!string.IsNullOrEmpty(filter.ValidatingRegex))
                 reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
@@ -307,7 +307,7 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         else
         {
             await ctx.ReactWithAsync(Config.Reactions.Success, $"Trigger{StringUtils.GetSuffix(ids.Length)} successfully removed!").ConfigureAwait(false);
-            var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+            var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
             var s = removedFilters == 1 ? "" : "s";
             var filterList = removedTriggers.ToString();
             if (removedFilters == 1)
@@ -340,7 +340,7 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         }
 
         await ctx.ReactWithAsync(Config.Reactions.Success, "Trigger was removed").ConfigureAwait(false);
-        var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+        var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
         await ctx.Client.ReportAsync("📴 Content filter removed", $"{member?.GetMentionWithNickname()} removed 1 content filter: `{trigger.Sanitize()}`", null, ReportSeverity.Medium).ConfigureAwait(false);
         ContentFilter.RebuildMatcher();
     }
@@ -352,7 +352,7 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         {
             await db.SaveChangesAsync().ConfigureAwait(false);
             await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatFilter(filter).WithTitle("Updated content filter")).ConfigureAwait(false);
-            var member = ctx.Member ?? ctx.Client.GetMember(ctx.User);
+            var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
             var reportMsg = $"{member?.GetMentionWithNickname()} changed content filter #{filter.Id} (`{filter.Actions.ToFlagsString()}`): `{filter.String.Sanitize()}`";
             if (!string.IsNullOrEmpty(filter.ValidatingRegex))
                 reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
