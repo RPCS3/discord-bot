@@ -55,14 +55,12 @@ public static class TimeParser
                 if (TimeZoneAcronyms.ContainsKey(a))
                     continue;
                 
-                if (!standardNames.ContainsKey(a))
-                    standardNames[a] = tzi;
+                standardNames.TryAdd(a, tzi);
                 a = tzi.DaylightName.GetAcronym(includeAllCaps: true, includeAllDigits: true);
                 if (TimeZoneAcronyms.ContainsKey(a) || standardNames.ContainsKey(a))
                     continue;
                 
-                if (!daylightNames.ContainsKey(a))
-                    daylightNames[a] = tzi;
+                daylightNames.TryAdd(a, tzi);
             }
         }
         Config.Log.Trace("[TZI] Total matched acronyms: " + result.Count);

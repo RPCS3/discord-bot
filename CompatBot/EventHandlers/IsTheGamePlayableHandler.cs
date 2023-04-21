@@ -58,7 +58,7 @@ internal static class IsTheGamePlayableHandler
                 .Concat(matches.Select(m => m.Groups["game_title_2"].Value))
                 .Concat(matches.Select(m => m.Groups["game_title_3"].Value))
                 .FirstOrDefault(t => !string.IsNullOrEmpty(t));
-            if (string.IsNullOrEmpty(gameTitle) || gameTitle.Length < 2)
+            if (gameTitle is null or { Length: < 2 })
                 return;
 
             gameTitle = CompatList.FixGameTitleSearch(gameTitle);
@@ -89,7 +89,7 @@ internal static class IsTheGamePlayableHandler
                 if (!string.IsNullOrEmpty(info.Date))
                     msg += $" since {info.ToUpdated()}";
             }
-            msg += $"\nfor more results please use compatibility list (<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
+            msg += $"\nfor more results please use [compatibility list](<https://rpcs3.net/compatibility>) or `{Config.CommandPrefix}c` command in {botSpamChannel.Mention} (`!c {gameTitle.Sanitize()}`)";
             await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
             CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
         }

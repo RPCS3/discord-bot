@@ -14,21 +14,15 @@ public static class UriExtensions
     public static NameValueCollection ParseQueryString(Uri uri)
     {
         if (!uri.IsAbsoluteUri)
-            uri = new Uri(FakeHost, uri);
+            uri = new(FakeHost, uri);
         return uri.ParseQueryString();
     }
 
     public static string? GetQueryParameter(this Uri uri, string name)
-    {
-        var parameters = ParseQueryString(uri);
-        return parameters[name];
-    }
+        => ParseQueryString(uri)[name];
 
     public static Uri AddQueryParameter(this Uri uri, string name, string value)
-    {
-        var queryValue = WebUtility.UrlEncode(name) + "=" + WebUtility.UrlEncode(value);
-        return AddQueryValue(uri, queryValue);
-    }
+        => AddQueryValue(uri, WebUtility.UrlEncode(name) + "=" + WebUtility.UrlEncode(value));
 
     public static Uri AddQueryParameters(Uri uri, IEnumerable<KeyValuePair<string, string>> parameters)
     {
@@ -105,16 +99,16 @@ public static class UriExtensions
         if (isAbsolute)
         {
             var builder = new UriBuilder(uri) { Query = value };
-            return new Uri(builder.ToString());
+            return new(builder.ToString());
         }
         else
         {
             var startWithSlash = uri.OriginalString.StartsWith("/");
-            uri = new Uri(FakeHost, uri);
+            uri = new(FakeHost, uri);
             var builder = new UriBuilder(uri) { Query = value };
             var additionalStrip = startWithSlash ? 0 : 1;
             var newUri = builder.ToString()[(FakeHost.OriginalString.Length + additionalStrip)..];
-            return new Uri(newUri, UriKind.Relative);
+            return new(newUri, UriKind.Relative);
         }
     }
 }

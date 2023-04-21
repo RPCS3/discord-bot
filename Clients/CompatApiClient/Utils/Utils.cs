@@ -50,13 +50,11 @@ public static class Utils
         => AsStorageUnit((long)bytes);
 
     public static string AsStorageUnit(this long bytes)
-    {
-        if (bytes < UnderKB)
-            return $"{bytes} byte{(bytes == 1 ? "" : "s")}";
-        if (bytes < UnderMB)
-            return $"{bytes / 1024.0:0.##} KB";
-        if (bytes < UnderGB)
-            return $"{bytes / 1024.0 / 1024:0.##} MB";
-        return $"{bytes / 1024.0 / 1024 / 1024:0.##} GB";
-    }
+        => bytes switch
+        {
+            < UnderKB => $"{bytes} byte{(bytes == 1 ? "" : "s")}",
+            < UnderMB => $"{bytes / 1024.0:0.##} KB",
+            < UnderGB => $"{bytes / (1024.0 * 1024):0.##} MB",
+            _ => $"{bytes / (1024.0 * 1024 * 1024):0.##} GB"
+        };
 }

@@ -90,8 +90,8 @@ public static class ApiConfig
         catch (Exception e)
         {
             Log.Fatal(e);
-            ReverseDirections = new Dictionary<string, char>();
-            ReverseReleaseTypes = new Dictionary<string, char>();
+            ReverseDirections = new();
+            ReverseReleaseTypes = new();
         }
     }
 }

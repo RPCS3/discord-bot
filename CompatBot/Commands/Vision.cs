@@ -117,7 +117,7 @@ internal sealed class Vision: BaseCommandModuleCustom
             //resize and shrink file size to get under azure limits
             var quality = 90;
             var resized = false;
-            if (img.Width > 4000 || img.Height > 4000)
+            if (img is {Width: >4000} or {Height: >4000})
             {
                 img.Mutate(i => i.Resize(new ResizeOptions {Size = new(3840, 2160), Mode = ResizeMode.Min,}));
                 resized = true;

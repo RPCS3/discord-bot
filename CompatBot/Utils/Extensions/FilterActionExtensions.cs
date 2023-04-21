@@ -24,7 +24,7 @@ internal static class FilterActionExtensions
             .Cast<FilterAction>()
             .Select(fa => flags.HasFlag(fa) ? ActionFlags[fa] : '-')
             .ToArray();
-        return new string(result);
+        return new(result);
     }
 
     public static string GetLegend(string wrapChar = "`")

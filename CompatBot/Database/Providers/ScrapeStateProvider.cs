@@ -20,7 +20,7 @@ internal static class ScrapeStateProvider
         var id = GetId(locale, containerId);
         using var db = new ThumbnailDb();
         var timestamp = string.IsNullOrEmpty(id) ? db.State.OrderBy(s => s.Timestamp).FirstOrDefault() : db.State.FirstOrDefault(s => s.Locale == id);
-        if (timestamp?.Timestamp is long checkDate && checkDate > 0)
+        if (timestamp is { Timestamp: long checkDate and > 0 })
             return IsFresh(new DateTime(checkDate, DateTimeKind.Utc));
         return false;
     }
@@ -29,7 +29,7 @@ internal static class ScrapeStateProvider
     {
         using var db = new ThumbnailDb();
         var timestamp = string.IsNullOrEmpty(locale) ? db.State.OrderBy(s => s.Timestamp).FirstOrDefault() : db.State.FirstOrDefault(s => s.Locale == locale);
-        if (timestamp?.Timestamp is long checkDate && checkDate > 0)
+        if (timestamp is { Timestamp: long checkDate and > 0 })
             return new DateTime(checkDate, DateTimeKind.Utc) > dataTimestamp;
         return false;
     }

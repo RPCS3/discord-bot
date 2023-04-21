@@ -11,8 +11,10 @@ namespace CompatBot.Utils.ResultFormatters;
 internal static class FwInfoFormatter
 {
     //2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP
-    private static readonly Regex FwLinkInfo = new(@"(?<year>\d{4})_(?<month>\d\d)(?<day>\d\d)_(?<md5>[0-9a-f]+)",
-        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+    private static readonly Regex FwLinkInfo = new(
+        @"(?<year>\d{4})_(?<month>\d\d)(?<day>\d\d)_(?<md5>[0-9a-f]+)",
+        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase
+    );
     private static readonly Dictionary<string, string> RegionToFlagMap = new(StringComparer.InvariantCultureIgnoreCase)
     {
         ["us"] = "🇺🇸",
@@ -41,8 +43,10 @@ internal static class FwInfoFormatter
         {
             result.Description = $"Latest version is **{fwInfoList[0].Version}** released on {info.Groups["year"].Value}-{info.Groups["month"].Value}-{info.Groups["day"].Value}\n" +
                                  $"It is available in {fwInfoList.Count} region{(fwInfoList.Count == 1 ? "" : "s")} out of {RegionToFlagMap.Count}";
-            result.AddField("Checksums", $"MD5: `{info.Groups["md5"].Value}`\n" +
-                                         "You can use [HashCheck](https://github.com/gurnec/HashCheck/releases/latest) to verify your download");
+            result.AddField("Checksums", $"""
+                    MD5: `{info.Groups["md5"].Value}`
+                    You can use [HashCheck](https://github.com/gurnec/HashCheck/releases/latest) to verify your download
+                    """);
             var links = new StringBuilder();
             foreach (var fwi in fwInfoList)
             {

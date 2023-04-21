@@ -71,9 +71,8 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
                     else
                     {
                         if (enforceRules.Nickname == expectedNickname)
-                        {
                             continue;
-                        }
+                        
                         enforceRules.Nickname = expectedNickname;
                     }
                 }
@@ -157,9 +156,15 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
 
     [Command("cleanup"), Aliases("clean", "fix"), RequiresBotModRole]
     [Description("Removes zalgo from specified user nickname")]
-    public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordMember discordUser)
+    public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordUser discordUser)
     {
-        var name = discordUser.DisplayName;
+        if (ctx.Client.GetMember(discordUser) is not DiscordMember member)
+        {
+            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}").ConfigureAwait(false);
+            return;
+        }
+        
+        var name = member.DisplayName;
         var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Username, discordUser.Id);
         if (name == newName)
             await ctx.Channel.SendMessageAsync("Failed to remove any extra symbols").ConfigureAwait(false);
@@ -167,7 +172,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         {
             try
             {
-                await discordUser.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
+                await member.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
                 await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
             }
             catch (Exception)
@@ -187,7 +192,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         var hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
         var result = $"User ID: {discordUser.Id}\nUsername: {hex}";
         var member = ctx.Client.GetMember(ctx.Guild, discordUser);
-        if (member?.Nickname is string {Length: >0} nickname)
+        if (member is { Nickname: { Length: > 0 } nickname })
         {
             nameBytes = StringUtils.Utf8.GetBytes(nickname);
             hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
@@ -206,13 +211,18 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
 
     [Command("autorename"), Aliases("auto"), RequiresBotModRole]
     [Description("Sets automatically generated nickname without enforcing it")]
-    public async Task Autorename(CommandContext ctx, [Description("Discord user to rename")] DiscordMember discordUser)
+    public async Task Autorename(CommandContext ctx, [Description("Discord user to rename")] DiscordUser discordUser)
     {
         var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
         try
         {
-            await discordUser.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
-            await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
+            if (ctx.Client.GetMember(discordUser) is { } member)
+            {
+                await member.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
+                await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
+            }
+            else
+                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}").ConfigureAwait(false);
         }
         catch (Exception)
         {

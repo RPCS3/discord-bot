@@ -23,8 +23,7 @@ internal class LimitedToSpamChannel: CheckBaseAttribute
         try
         {
             var msgList = await ctx.Channel.GetMessagesCachedAsync(10).ConfigureAwait(false);
-            if (msgList.Any(m => m.Author.IsCurrent
-                                 && m.Content is string s
+            if (msgList.Any(m => m is {Author.IsCurrent: true, Content: {Length: >0} s } 
                                  && s.Contains(ctx.Command.QualifiedName, StringComparison.OrdinalIgnoreCase)))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);

@@ -9,7 +9,5 @@ internal class TriggersTyping: Attribute
     public bool InDmOnly { get; set; }
 
     public bool ExecuteCheck(CommandContext ctx)
-    {
-        return !InDmOnly || ctx.Channel.IsPrivate;
-    }
+        => !InDmOnly || ctx.Channel.IsPrivate;
 }

@@ -4,12 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using Microsoft.Extensions.Caching.Memory;
+using Octokit;
 
 namespace GithubClient;
 
 public class Client
 {
-    private readonly Octokit.GitHubClient client;
+    private readonly GitHubClient client;
 
     private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(3);
     private static readonly TimeSpan IssueStatusCacheTime = TimeSpan.FromMinutes(30);
@@ -22,26 +23,22 @@ public class Client
 
     public Client(string? githubToken)
     {
-        client = new Octokit.GitHubClient(new Octokit.ProductHeaderValue(ApiConfig.ProductName, ApiConfig.ProductVersion));
-        if (!string.IsNullOrEmpty(githubToken))
-        {
-            client.Credentials = new Octokit.Credentials(githubToken);
-        }
+        client = new(new ProductHeaderValue(ApiConfig.ProductName, ApiConfig.ProductVersion));
+        if (githubToken is {Length: >0})
+            client.Credentials = new(githubToken);
     }
 
-    public async Task<Octokit.PullRequest?> GetPrInfoAsync(int pr, CancellationToken cancellationToken)
+    public async Task<PullRequest?> GetPrInfoAsync(int pr, CancellationToken cancellationToken)
     {
-        if (StatusesCache.TryGetValue(pr, out Octokit.PullRequest? result))
+        if (StatusesCache.TryGetValue(pr, out PullRequest? result))
         {
-            ApiConfig.Log.Debug($"Returned {nameof(Octokit.PullRequest)} for {pr} from cache");
+            ApiConfig.Log.Debug($"Returned {nameof(PullRequest)} for {pr} from cache");
             return result;
         }
 
         try
         {
-            var request = client.PullRequest.Get("RPCS3", "rpcs3", pr);
-            request.Wait(cancellationToken);
-            result = (await request.ConfigureAwait(false));
+            result = await client.PullRequest.Get("RPCS3", "rpcs3", pr).WaitAsync(cancellationToken).ConfigureAwait(false);
             UpdateRateLimitStats();
         }
         catch (Exception e)
@@ -50,61 +47,53 @@ public class Client
         }
         if (result == null)
         {
-            ApiConfig.Log.Debug($"Failed to get {nameof(Octokit.PullRequest)}, returning empty result");
+            ApiConfig.Log.Debug($"Failed to get {nameof(PullRequest)}, returning empty result");
             return new(pr);
         }
 
         StatusesCache.Set(pr, result, PrStatusCacheTime);
-        ApiConfig.Log.Debug($"Cached {nameof(Octokit.PullRequest)} for {pr} for {PrStatusCacheTime}");
+        ApiConfig.Log.Debug($"Cached {nameof(PullRequest)} for {pr} for {PrStatusCacheTime}");
         return result;
     }
 
-    public async Task<Octokit.Issue?> GetIssueInfoAsync(int issue, CancellationToken cancellationToken)
+    public async Task<Issue?> GetIssueInfoAsync(int issue, CancellationToken cancellationToken)
     {
-        if (IssuesCache.TryGetValue(issue, out Octokit.Issue? result))
+        if (IssuesCache.TryGetValue(issue, out Issue? result))
         {
-            ApiConfig.Log.Debug($"Returned {nameof(Octokit.Issue)} for {issue} from cache");
+            ApiConfig.Log.Debug($"Returned {nameof(Issue)} for {issue} from cache");
             return result;
         }
 
         try
         {
-            var request = client.Issue.Get("RPCS3", "rpcs3", issue);
-            request.Wait(cancellationToken);
-            result = (await request.ConfigureAwait(false));
+            result = await client.Issue.Get("RPCS3", "rpcs3", issue).WaitAsync(cancellationToken).ConfigureAwait(false);
             UpdateRateLimitStats();
+            IssuesCache.Set(issue, result, IssueStatusCacheTime);
+            ApiConfig.Log.Debug($"Cached {nameof(Issue)} for {issue} for {IssueStatusCacheTime}");
+            return result;
         }
         catch (Exception e)
         {
             ApiConfig.Log.Error(e);
         }
-        if (result == null)
-        {
-            ApiConfig.Log.Debug($"Failed to get {nameof(Octokit.Issue)}, returning empty result");
-            return new() { };
-        }
-
-        IssuesCache.Set(issue, result, IssueStatusCacheTime);
-        ApiConfig.Log.Debug($"Cached {nameof(Octokit.Issue)} for {issue} for {IssueStatusCacheTime}");
-        return result;
+        ApiConfig.Log.Debug($"Failed to get {nameof(Issue)}, returning empty result");
+        return new();
     }
 
-    public Task<IReadOnlyList<Octokit.PullRequest>?> GetOpenPrsAsync(CancellationToken cancellationToken) => GetPrsWithStatusAsync(new Octokit.PullRequestRequest
+    public Task<IReadOnlyList<PullRequest>?> GetOpenPrsAsync(CancellationToken cancellationToken)
+        => GetPrsWithStatusAsync(new() { State = ItemStateFilter.Open }, cancellationToken);
+
+    public Task<IReadOnlyList<PullRequest>?> GetClosedPrsAsync(CancellationToken cancellationToken) => GetPrsWithStatusAsync(new()
     {
-        State = Octokit.ItemStateFilter.Open
+        State = ItemStateFilter.Closed,
+        SortProperty = PullRequestSort.Updated,
+        SortDirection = SortDirection.Descending
     }, cancellationToken);
 
-    public Task<IReadOnlyList<Octokit.PullRequest>?> GetClosedPrsAsync(CancellationToken cancellationToken) => GetPrsWithStatusAsync(new Octokit.PullRequestRequest
+    private async Task<IReadOnlyList<PullRequest>?> GetPrsWithStatusAsync(PullRequestRequest filter, CancellationToken cancellationToken)
     {
-        State = Octokit.ItemStateFilter.Closed,
-        SortProperty = Octokit.PullRequestSort.Updated,
-        SortDirection = Octokit.SortDirection.Descending
-    }, cancellationToken);
-
-    private async Task<IReadOnlyList<Octokit.PullRequest>?> GetPrsWithStatusAsync(Octokit.PullRequestRequest filter, CancellationToken cancellationToken)
-    {
-        var statusURI = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=" + filter.ToString();
-        if (StatusesCache.TryGetValue(statusURI, out IReadOnlyList<Octokit.PullRequest>? result))
+        var statusUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=" + filter;
+        if (StatusesCache.TryGetValue(statusUri, out IReadOnlyList<PullRequest>? result))
         {
             ApiConfig.Log.Debug("Returned list of opened PRs from cache");
             return result;
@@ -112,22 +101,16 @@ public class Client
 
         try
         {
-            var request = client.PullRequest.GetAllForRepository("RPCS3", "rpcs3", filter);
-            request.Wait(cancellationToken);
-
-            result = (await request.ConfigureAwait(false));
+            result = await client.PullRequest.GetAllForRepository("RPCS3", "rpcs3", filter).WaitAsync(cancellationToken).ConfigureAwait(false);
             UpdateRateLimitStats();
+            StatusesCache.Set(statusUri, result, PrStatusCacheTime);
+            foreach (var prInfo in result)
+                StatusesCache.Set(prInfo.Number, prInfo, PrStatusCacheTime);
+            ApiConfig.Log.Debug($"Cached list of open PRs for {PrStatusCacheTime}");
         }
         catch (Exception e)
         {
             ApiConfig.Log.Error(e);
-        }
-        if (result != null)
-        {
-            StatusesCache.Set(statusURI, result, PrStatusCacheTime);
-            foreach (var prInfo in result)
-                StatusesCache.Set(prInfo.Number, prInfo, PrStatusCacheTime);
-            ApiConfig.Log.Debug($"Cached list of open PRs for {PrStatusCacheTime}");
         }
         return result;
     }
@@ -136,16 +119,12 @@ public class Client
     {
         var apiInfo = client.GetLastApiInfo();
         if (apiInfo == null)
-        {
             return;
-        }
 
         RateLimit = apiInfo.RateLimit.Limit;
         RateLimitRemaining = apiInfo.RateLimit.Remaining;
         RateLimitResetTime = DateTimeOffset.FromUnixTimeSeconds(apiInfo.RateLimit.ResetAsUtcEpochSeconds).UtcDateTime;
-
         if (RateLimitRemaining < 10)
             ApiConfig.Log.Warn($"Github rate limit is low: {RateLimitRemaining} out of {RateLimit}, will be reset on {RateLimitResetTime:u}");
     }
-
 }

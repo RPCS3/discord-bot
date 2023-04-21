@@ -132,7 +132,7 @@ namespace CompatBot.EventHandlers
                 await using var db = new BotDb();
                 var matchedGroups = (from m in mc
                         from Group g in m.Groups
-                        where g.Success && !string.IsNullOrEmpty(g.Value)
+                        where g is { Success: true, Value.Length: > 0 }
                         select g.Name
                     ).Distinct()
                     .ToArray();
@@ -193,7 +193,7 @@ namespace CompatBot.EventHandlers
                             await msg.DeleteAsync("asked to shut up").ConfigureAwait(false);
                     }
                     else
-                        await args.Message.ReactWithAsync(DiscordEmoji.FromUnicode("🙅"), @"No can do, boss ¯\\_(ツ)\_/¯").ConfigureAwait(false);
+                        await args.Message.ReactWithAsync(DiscordEmoji.FromUnicode("🙅"), @"No can do, boss ¯\\\_(ツ)\_/¯").ConfigureAwait(false);
                 }
             }
         }

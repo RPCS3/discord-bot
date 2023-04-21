@@ -20,8 +20,8 @@ internal static class PostLogHelpHandler
     private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
     private static readonly Dictionary<string, Explanation> DefaultExplanation = new()
     {
-        ["log"] = new Explanation { Text = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon." },
-        ["vulkan-1"] = new Explanation { Text = "Please remove all the traces of video drivers using DDU, and then reinstall the latest driver version for your GPU." },
+        ["log"] = new() { Text = "To upload log, run the game, then completely close RPCS3, then drag and drop rpcs3.log.gz from the RPCS3 folder into Discord. The file may have a zip or rar icon." },
+        ["vulkan-1"] = new() { Text = "Please remove all the traces of video drivers using DDU, and then reinstall the latest driver version for your GPU." },
     };
     private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
 

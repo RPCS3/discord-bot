@@ -212,7 +212,7 @@ public static class StringUtils
             {
                 result.Append('(');
                 for (var i = 0; i < count; i++)
-                    result.Append(@"\x").Append(Utf8ToLatin1RegexPatternEncoderFallback.CustomMapperFallbackBuffer.byteToHex[tmp[i]]);
+                    result.Append(@"\x").Append(Utf8ToLatin1RegexPatternEncoderFallback.CustomMapperFallbackBuffer.ByteToHex[tmp[i]]);
                 result.Append(')');
             }
             span = span.Slice(1);

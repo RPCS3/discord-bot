@@ -164,8 +164,8 @@ internal sealed class Misc: BaseCommandModuleCustom
                 if (!int.TryParse(m.Groups["num"].Value, out var num))
                     num = 1;
                 if (int.TryParse(m.Groups["face"].Value, out var face)
-                    && 0 < num && num < 101
-                    && 1 < face && face < 1001)
+                    && num is > 0 and < 101 
+                    && face is > 1 and < 1001)
                 {
                     List<int> rolls;
                     lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
@@ -312,7 +312,7 @@ internal sealed class Misc: BaseCommandModuleCustom
     {
         try
         {
-            var funMult = DateTime.UtcNow.Month == 4 && DateTime.UtcNow.Day == 1 ? 100 : Config.FunMultiplier;
+            var funMult = DateTime.UtcNow is {Month: 4, Day: 1} ? 100 : Config.FunMultiplier;
             var choices = RateAnswers;
             var choiceFlags = new HashSet<char>();
             whatever = whatever.ToLowerInvariant().StripInvisibleAndDiacritics();

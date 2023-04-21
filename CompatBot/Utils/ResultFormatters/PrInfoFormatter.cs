@@ -1,10 +1,11 @@
 ﻿using DSharpPlus.Entities;
+using Octokit;
 
 namespace CompatBot.Utils.ResultFormatters;
 
 internal static class PrInfoFormatter
 {
-    public static DiscordEmbedBuilder AsEmbed(this Octokit.PullRequest prInfo)
+    public static DiscordEmbedBuilder AsEmbed(this PullRequest prInfo)
     {
         var state = prInfo.GetState();
         var stateLabel = state.state == null ? null : $"[{state.state}] ";
@@ -12,7 +13,7 @@ internal static class PrInfoFormatter
         return new() {Title = title, Url = prInfo.HtmlUrl, Description = prInfo.Title, Color = state.color};
     }
 
-    public static DiscordEmbedBuilder AsEmbed(this Octokit.Issue issueInfo)
+    public static DiscordEmbedBuilder AsEmbed(this Issue issueInfo)
     {
         var state = issueInfo.GetState();
         var stateLabel = state.state == null ? null : $"[{state.state}] ";
@@ -20,12 +21,12 @@ internal static class PrInfoFormatter
         return new() {Title = title, Url = issueInfo.HtmlUrl, Description = issueInfo.Title, Color = state.color};
     }
 
-    public static (string? state, DiscordColor color) GetState(this Octokit.PullRequest prInfo)
+    public static (string? state, DiscordColor color) GetState(this PullRequest prInfo)
     {
-        if (prInfo.State == Octokit.ItemState.Open)
+        if (prInfo.State == ItemState.Open)
             return ("Open", Config.Colors.PrOpen);
 
-        if (prInfo.State == Octokit.ItemState.Closed)
+        if (prInfo.State == ItemState.Closed)
         {
             if (prInfo.MergedAt.HasValue)
                 return ("Merged", Config.Colors.PrMerged);
@@ -36,12 +37,12 @@ internal static class PrInfoFormatter
         return (null, Config.Colors.DownloadLinks);
     }
 
-    public static (string? state, DiscordColor color) GetState(this Octokit.Issue issueInfo)
+    public static (string? state, DiscordColor color) GetState(this Issue issueInfo)
     {
-        if (issueInfo.State == Octokit.ItemState.Open)
+        if (issueInfo.State == ItemState.Open)
             return ("Open", Config.Colors.PrOpen);
 
-        if (issueInfo.State == Octokit.ItemState.Closed)
+        if (issueInfo.State == ItemState.Closed)
             return ("Closed", Config.Colors.PrClosed);
 
         return (null, Config.Colors.DownloadLinks);

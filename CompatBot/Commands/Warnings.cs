@@ -52,7 +52,6 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
         var interact = ctx.Client.GetInteractivity();
         await using var db = new BotDb();
         var warnings = await db.Warning.Where(w => id.Equals(w.Id)).ToListAsync().ConfigureAwait(false);
-
         if (warnings.Count == 0)
         {
             await ctx.ReactWithAsync(Config.Reactions.Denied, $"{ctx.Message.Author.Mention} Warn not found", true);
@@ -60,7 +59,6 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
         }
 
         var warningToEdit = warnings.First();
-
         if (warningToEdit.IssuerId != ctx.User.Id)
         {
             await ctx.ReactWithAsync(Config.Reactions.Denied, $"{ctx.Message.Author.Mention} This warn wasn't issued by you :(", true);
@@ -83,7 +81,6 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
         }
 
         warningToEdit.Reason = response.Result.Content;
-
         await db.SaveChangesAsync().ConfigureAwait(false);
         await ctx.Channel.SendMessageAsync($"Warning successfully edited!").ConfigureAwait(false);
     }
@@ -166,7 +163,7 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
     {
         await using var db = new BotDb();
         var warn = await db.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
-        if (warn?.Retracted is true)
+        if (warn is { Retracted: true })
         {
             warn.Retracted = false;
             warn.RetractedBy = null;

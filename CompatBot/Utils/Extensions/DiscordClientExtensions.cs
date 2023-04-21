@@ -15,12 +15,7 @@ namespace CompatBot.Utils;
 public static class DiscordClientExtensions
 {
     public static DiscordMember? GetMember(this DiscordClient client, DiscordGuild? guild, ulong userId)
-    {
-        if (guild is null)
-            return GetMember(client, userId);
-
-        return GetMember(client, guild.Id, userId);
-    }
+        => guild is null ? GetMember(client, userId) : GetMember(client, guild.Id, userId);
 
     public static DiscordMember? GetMember(this DiscordClient client, ulong guildId, ulong userId)
         => (from g in client.Guilds
@@ -87,15 +82,10 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static Task RemoveReactionAsync(this CommandContext ctx, DiscordEmoji emoji)
-    {
-        return RemoveReactionAsync(ctx.Message, emoji);
-    }
+    public static Task RemoveReactionAsync(this CommandContext ctx, DiscordEmoji emoji) => RemoveReactionAsync(ctx.Message, emoji);
 
     public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
-    {
-        return ReactWithAsync(ctx.Message, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
-    }
+        => ReactWithAsync(ctx.Message, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
 
     public static async Task<IReadOnlyCollection<DiscordMessage>> GetMessagesBeforeAsync(this DiscordChannel channel, ulong beforeMessageId, int limit = 100, DateTime? timeLimit = null)
     {
@@ -161,21 +151,20 @@ public static class DiscordClientExtensions
     }
 
     public static string GetMentionWithNickname(this DiscordMember member)
-        => string.IsNullOrEmpty(member.Nickname) ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)" : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
+        => string.IsNullOrEmpty(member.Nickname)
+            ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)"
+            : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
 
     public static string GetUsernameWithNickname(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
-    {
-        return client.GetMember(guild, user).GetUsernameWithNickname()
-               ?? $"`{user.Username.Sanitize()}#{user.Discriminator}`";
-    }
+        => client.GetMember(guild, user).GetUsernameWithNickname()
+           ?? $"`{user.Username.Sanitize()}#{user.Discriminator}`";
 
     public static string? GetUsernameWithNickname(this DiscordMember? member)
-    {
-        if (member == null)
-            return null;
-
-        return string.IsNullOrEmpty(member.Nickname) ? $"`{member.Username.Sanitize()}#{member.Discriminator}`" : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
-    }
+        => member is null
+            ? null
+            : string.IsNullOrEmpty(member.Nickname)
+                ? $"`{member.Username.Sanitize()}#{member.Discriminator}`"
+                : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
 
     public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, string? fallbackEmoji = null)
         => GetEmoji(client, emojiName, fallbackEmoji == null ? null : DiscordEmoji.FromUnicode(fallbackEmoji));
@@ -187,9 +176,11 @@ public static class DiscordClientExtensions
 
         if (DiscordEmoji.TryFromName(client, emojiName, true, out var result))
             return result;
-        else if (DiscordEmoji.TryFromName(client, $":{emojiName}:", true, out result))
+        
+        if (DiscordEmoji.TryFromName(client, $":{emojiName}:", true, out result))
             return result;
-        else if (DiscordEmoji.TryFromUnicode(emojiName, out result))
+        
+        if (DiscordEmoji.TryFromUnicode(emojiName, out result))
             return result;
         return fallbackEmoji;
     }

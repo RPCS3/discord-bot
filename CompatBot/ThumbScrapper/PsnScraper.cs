@@ -17,7 +17,10 @@ namespace CompatBot.ThumbScrapper;
 internal sealed class PsnScraper
 {
     private static readonly PsnClient.Client Client = new();
-    public static readonly Regex ContentIdMatcher = new(@"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+    public static readonly Regex ContentIdMatcher = new(
+        @"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
+    );
     private static readonly SemaphoreSlim LockObj = new(1, 1);
     private static List<string> psnStores = new();
     private static DateTime storeRefreshTimestamp = DateTime.MinValue;
@@ -63,7 +66,7 @@ internal sealed class PsnScraper
             await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                storesToScrape = new List<string>(psnStores);
+                storesToScrape = new(psnStores);
             }
             finally
             {
@@ -126,7 +129,7 @@ internal sealed class PsnScraper
         await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            storesToScrape = new List<string>(psnStores);
+            storesToScrape = new(psnStores);
         }
         finally
         {

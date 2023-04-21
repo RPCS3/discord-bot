@@ -23,8 +23,7 @@ public static class CirrusCi
     static CirrusCi()
     {
         var collection = new ServiceCollection();
-        collection.AddClient(ExecutionStrategy.CacheAndNetwork)
-            .ConfigureHttpClient(c => c.BaseAddress = new("https://api.cirrus-ci.com/graphql"));
+        collection.AddClient(ExecutionStrategy.CacheAndNetwork).ConfigureHttpClient(c => c.BaseAddress = new("https://api.cirrus-ci.com/graphql"));
         ServiceProvider = collection.BuildServiceProvider();
     }
 

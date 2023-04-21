@@ -8,16 +8,11 @@ public sealed class CompatApiCommitHashConverter : JsonConverter<string>
 {
     public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.Number
-            && !reader.HasValueSequence
-            && reader.ValueSpan.Length == 1
-            && reader.ValueSpan[0] == (byte)'0')
-        {
-            _ = reader.GetInt32();
-            return null;
-        }
-
-        return reader.GetString();
+        if (reader is not { TokenType: JsonTokenType.Number, HasValueSequence: false, ValueSpan: [(byte)'0'] })
+            return reader.GetString();
+        
+        _ = reader.GetInt32();
+        return null;
     }
 
     public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)

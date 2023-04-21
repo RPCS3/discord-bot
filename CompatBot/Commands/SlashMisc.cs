@@ -18,23 +18,19 @@ internal sealed class SlashMisc: BaseApplicationCommandModuleCustom
                 Title = "RPCS3 Compatibility Bot",
                 Url = "https://github.com/RPCS3/discord-bot",
                 Color = DiscordColor.Purple,
-            }.AddField("Made by",
-                $"""
+            }.AddField("Made by", $"""
                 💮 13xforever
                 🇭🇷 Roberto Anić Banić aka nicba1010
                 {clienthax} clienthax
                 """
-            )
-            .AddField("People who ~~broke~~ helped test the bot",
-                $"""
+            ).AddField("People who ~~broke~~ helped test the bot", $"""
                 🐱 Juhn
                 {hcorion} hcorion
                 🙃 TGE
                 🍒 Maru
                 ♋ Tourghool
                 """
-            )
-            .WithFooter($"Running {Config.GitRevision}");
+            ).WithFooter($"Running {Config.GitRevision}");
         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AddEmbed(embed.Build()).AsEphemeral());
     }
 }

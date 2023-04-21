@@ -406,10 +406,10 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         step1:
         // step 1: define trigger string
         var embed = FormatFilter(filter, errorMsg, 1)
-            .WithDescription(
-                "Any simple string that is used to flag potential content for a check using Validation regex.\n" +
-                "**Must** be sufficiently long to reduce the number of checks."
-            );
+            .WithDescription("""
+                Any simple string that is used to flag potential content for a check using Validation regex.
+                **Must** be sufficiently long to reduce the number of checks.
+                """);
         saveEdit.SetEnabled(filter.IsComplete());
         var messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **trigger**")
@@ -453,12 +453,12 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         step2:
         // step 2: context of the filter where it is applicable
         embed = FormatFilter(filter, errorMsg, 2)
-            .WithDescription(
-                "Context of the filter indicates where it is applicable.\n" +
-                $"**`C`** = **`{FilterContext.Chat}`** will apply it in filtering discord messages.\n" +
-                $"**`L`** = **`{FilterContext.Log}`** will apply it during log parsing.\n" +
-                "Reactions will toggle the context, text message will set the specified flags."
-            );
+            .WithDescription($"""
+                Context of the filter indicates where it is applicable.
+                **`C`** = **`{FilterContext.Chat}`** will apply it in filtering discord messages.
+                **`L`** = **`{FilterContext.Log}`** will apply it during log parsing.
+                Reactions will toggle the context, text message will set the specified flags.
+                """);
         saveEdit.SetEnabled(filter.IsComplete());
         contextChat.SetEmoji(filter.Context.HasFlag(FilterContext.Chat) ? minus : plus);
         contextLog.SetEmoji(filter.Context.HasFlag(FilterContext.Log) ? minus : plus);
@@ -529,16 +529,16 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         step3:
         // step 3: actions that should be performed on match
         embed = FormatFilter(filter, errorMsg, 3)
-            .WithDescription(
-                "Actions that will be executed on positive match.\n" +
-                $"**`R`** = **`{FilterAction.RemoveContent}`** will remove the message / log.\n" +
-                $"**`W`** = **`{FilterAction.IssueWarning}`** will issue a warning to the user.\n" +
-                $"**`M`** = **`{FilterAction.SendMessage}`** send _a_ message with an explanation of why it was removed.\n" +
-                $"**`E`** = **`{FilterAction.ShowExplain}`** show `explain` for the specified term (**not implemented**).\n" +
-                $"**`U`** = **`{FilterAction.MuteModQueue}`** mute mod queue reporting for this action.\n" +
-                $"**`K`** = **`{FilterAction.Kick}`** kick user from server.\n" +
-                "Buttons will toggle the action, text message will set the specified flags."
-            );
+            .WithDescription($"""
+                Actions that will be executed on positive match.
+                **`R`** = **`{FilterAction.RemoveContent}`** will remove the message / log.
+                **`W`** = **`{FilterAction.IssueWarning}`** will issue a warning to the user.
+                **`M`** = **`{FilterAction.SendMessage}`** send _a_ message with an explanation of why it was removed.
+                **`E`** = **`{FilterAction.ShowExplain}`** show `explain` for the specified term (**not implemented**).
+                **`U`** = **`{FilterAction.MuteModQueue}`** mute mod queue reporting for this action.
+                **`K`** = **`{FilterAction.Kick}`** kick user from server.
+                Buttons will toggle the action, text message will set the specified flags.
+                """);
         actionR.SetEmoji(filter.Actions.HasFlag(FilterAction.RemoveContent) ? minus : plus);
         actionW.SetEmoji(filter.Actions.HasFlag(FilterAction.IssueWarning) ? minus : plus);
         actionM.SetEmoji(filter.Actions.HasFlag(FilterAction.SendMessage) ? minus : plus);
@@ -666,11 +666,11 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         step4:
         // step 4: validation regex to filter out false positives of the plaintext triggers
         embed = FormatFilter(filter, errorMsg, 4)
-            .WithDescription(
-                "Validation [regex](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) to optionally perform more strict trigger check.\n" +
-                "**Please [test](https://regex101.com/) your regex**. Following flags are enabled: Multiline, IgnoreCase.\n" +
-                "Additional validation can help reduce false positives of a plaintext trigger match."
-            );
+            .WithDescription("""
+                Validation [regex](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) to optionally perform more strict trigger check.
+                **Please [test](https://regex101.com/) your regex**. Following flags are enabled: Multiline, IgnoreCase.
+                Additional validation can help reduce false positives of a plaintext trigger match.
+                """);
         var next = (filter.Actions & (FilterAction.SendMessage | FilterAction.ShowExplain)) == 0 ? firstPage : nextPage;
         trash.SetDisabled(string.IsNullOrEmpty(filter.ValidatingRegex));
         saveEdit.SetEnabled(filter.IsComplete());
@@ -775,10 +775,10 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
         step6:
         // step 6: show explanation for the term
         embed = FormatFilter(filter, errorMsg, 6)
-            .WithDescription(
-                "Explanation term that is used to show an explanation.\n" +
-                "**__Currently not implemented__**."
-            );
+            .WithDescription("""
+                Explanation term that is used to show an explanation.
+                **__Currently not implemented__**.
+                """);
         saveEdit.SetEnabled(filter.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify filter **explanation term**")

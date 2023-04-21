@@ -22,7 +22,10 @@ public sealed class CommandsManagement : BaseCommandModule
         var list = DisabledCommandsProvider.Get();
         if (list.Count > 0)
         {
-            var result = new StringBuilder("Currently disabled commands:").AppendLine().AppendLine("```");
+            var result = new StringBuilder("""
+                Currently disabled commands:
+                ```
+                """);
             foreach (var cmd in list)
                 result.AppendLine(cmd);
             await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);

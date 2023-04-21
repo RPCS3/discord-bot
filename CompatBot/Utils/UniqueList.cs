@@ -43,7 +43,6 @@ public class UniqueList<T>: IList<T>
 	}
 
 	public IEnumerator<T> GetEnumerator() => list.GetEnumerator();
-
 	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)list).GetEnumerator();
 
 	public void Add(T item)
@@ -65,7 +64,6 @@ public class UniqueList<T>: IList<T>
 	}
 
 	public bool Contains(T item) => set.Contains(item);
-
 	public void CopyTo(T[] array, int arrayIndex) => list.CopyTo(array, arrayIndex);
 
 	public bool Remove(T item)
@@ -75,9 +73,7 @@ public class UniqueList<T>: IList<T>
 	}
 
 	public int Count => list.Count;
-
 	public bool IsReadOnly => false;
-
 	public int IndexOf(T item) => list.IndexOf(item);
 
 	public void Insert(int index, T item)

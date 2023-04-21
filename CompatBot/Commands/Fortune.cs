@@ -46,20 +46,20 @@ internal sealed class Fortune : BaseCommandModuleCustom
             fortune = await db.Fortune.AsNoTracking().Skip(selectedId).FirstOrDefaultAsync().ConfigureAwait(false);
         } while (fortune is null);
 
-        var msg = fortune.Content.FixTypography();
-        var msgParts = msg.Split('\n');
         var tmp = new StringBuilder();
         var quote = true;
-        foreach (var l in msgParts)
+        foreach (var l in fortune.Content.FixTypography().Split('\n'))
         {
             quote &= !l.StartsWith("    ");
             if (quote)
                 tmp.Append("> ");
             tmp.Append(l).Append('\n');
         }
-        msg = tmp.ToString().TrimEnd().FixSpaces();
         var msgBuilder = new DiscordMessageBuilder()
-            .WithContent($"{user.Mention}, your fortune for today:\n{msg}")
+            .WithContent($"""
+                {user.Mention}, your fortune for today:
+                {tmp.ToString().TrimEnd().FixSpaces()}
+                """)
             .WithReply(message.Id);
         await message.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
     }
@@ -136,7 +136,7 @@ internal sealed class Fortune : BaseCommandModuleCustom
                        || buf.Length > 0)
                    && !Config.Cts.IsCancellationRequested)
             {
-                if (line == "%" || line is null)
+                if (line is "%" or null)
                 {
                     var content = buf.ToString().Replace("\r\n", "\n").Trim();
                     if (content.Length > 1900)
@@ -187,7 +187,7 @@ internal sealed class Fortune : BaseCommandModuleCustom
                     var progressMsg = $"Imported {count} fortune{(count == 1 ? "" : "s")}";
                     if (skipped > 0)
                         progressMsg += $", skipped {skipped}";
-                    if (response.Content.Headers.ContentLength is long len && len > 0)
+                    if (response.Content.Headers.ContentLength is long len and > 0)
                         progressMsg += $" ({stream.Position * 100.0 / len:0.##}%)";
                     await msg.UpdateOrCreateMessageAsync(ctx.Channel, progressMsg).ConfigureAwait(false);
                     stopwatch.Restart();
@@ -246,7 +246,7 @@ internal sealed class Fortune : BaseCommandModuleCustom
     [Description("Clears fortune database. Use with caution")]
     public async Task Clear(CommandContext ctx, [RemainingText, Description("Must be `with my blessing, I swear I exported the backup`")] string confirmation)
     {
-        if (confirmation != "with my blessing, I swear I exported the backup")
+        if (confirmation is not "with my blessing, I swear I exported the backup")
         {
             await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
             return;

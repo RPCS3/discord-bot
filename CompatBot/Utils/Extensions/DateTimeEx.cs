@@ -4,19 +4,8 @@ namespace CompatBot.Utils;
 
 public static class DateTimeEx
 {
-    public static DateTime AsUtc(this DateTime dateTime)
-    {
-        if (dateTime.Kind == DateTimeKind.Utc)
-            return dateTime;
-
-        return new DateTime(dateTime.Ticks, DateTimeKind.Utc);
-    }
-
-    public static DateTime AsUtc(this long ticks)
-    {
-        return new(ticks, DateTimeKind.Utc);
-    }
-
+    public static DateTime AsUtc(this DateTime dateTime) => dateTime.Kind == DateTimeKind.Utc ? dateTime : new(dateTime.Ticks, DateTimeKind.Utc);
+    public static DateTime AsUtc(this long ticks) => new(ticks, DateTimeKind.Utc);
 
     public static string AsShortTimespan(this TimeSpan timeSpan)
     {

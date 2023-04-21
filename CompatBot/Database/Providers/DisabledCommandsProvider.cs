@@ -26,7 +26,7 @@ internal static class DisabledCommandsProvider
             if (DisabledCommands.Add(command))
             {
                 using var db = new BotDb();
-                db.DisabledCommands.Add(new DisabledCommand {Command = command});
+                db.DisabledCommands.Add(new() {Command = command});
                 db.SaveChanges();
             }
     }

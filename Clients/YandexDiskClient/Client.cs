@@ -21,7 +21,7 @@ public sealed class Client
     public Client()
     {
         client = HttpClientFactory.Create(new CompressionMessageHandler());
-        jsonOptions = new JsonSerializerOptions
+        jsonOptions = new()
         {
             PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -36,7 +36,7 @@ public sealed class Client
     {
         try
         {
-            var uri = new Uri($"https://cloud-api.yandex.net/v1/disk/public/resources").SetQueryParameters(
+            var uri = new Uri("https://cloud-api.yandex.net/v1/disk/public/resources").SetQueryParameters(
                 ("public_key", publicUri.ToString()),
                 ("fields", "size,name,file")
             );

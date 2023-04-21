@@ -28,50 +28,49 @@ internal sealed class GenericLinkHandler : BaseSourceHandler
         using var client = HttpClientFactory.Create();
         foreach (Match m in matches)
         {
-            if (m.Groups["link"].Value is string lnk
-                && !string.IsNullOrEmpty(lnk)
-                && Uri.TryCreate(lnk, UriKind.Absolute, out var uri)
-                && !"tty.log".Equals(m.Groups["filename"].Value, StringComparison.InvariantCultureIgnoreCase))
+            if (m.Groups["link"].Value is not { Length: > 0 } lnk
+                || !Uri.TryCreate(lnk, UriKind.Absolute, out var uri)
+                || "tty.log".Equals(m.Groups["filename"].Value, StringComparison.InvariantCultureIgnoreCase))
+                continue;
+            
+            try
             {
+                var host = uri.Host;
+                var filename = Path.GetFileName(lnk);
+                var filesize = -1;
+
+                using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
+                {
+                    using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Config.Cts.Token);
+                    if (response.Content.Headers.ContentLength > 0)
+                        filesize = (int)response.Content.Headers.ContentLength.Value;
+                    if (response.Content.Headers.ContentDisposition?.FileNameStar is {Length: >0} fname)
+                        filename = fname;
+                    uri = response.RequestMessage?.RequestUri;
+                }
+
+                await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
+                var buf = BufferPool.Rent(SnoopBufferSize);
                 try
                 {
-                    var host = uri.Host;
-                    var filename = Path.GetFileName(lnk);
-                    var filesize = -1;
-
-                    using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
+                    var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                    foreach (var handler in handlers)
                     {
-                        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Config.Cts.Token);
-                        if (response.Content.Headers.ContentLength > 0)
-                            filesize = (int)response.Content.Headers.ContentLength.Value;
-                        if (response.Content.Headers.ContentDisposition?.FileNameStar is string fname && !string.IsNullOrEmpty(fname))
-                            filename = fname;
-                        uri = response.RequestMessage?.RequestUri;
-                    }
-
-                    await using var stream = await client.GetStreamAsync(uri).ConfigureAwait(false);
-                    var buf = BufferPool.Rent(SnoopBufferSize);
-                    try
-                    {
-                        var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                        foreach (var handler in handlers)
-                        {
-                            var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
-                            if (canHandle)
-                                return (new GenericSource(uri, handler, host, filename, filesize), null);
-                            else if (!string.IsNullOrEmpty(reason))
-                                return (null, reason);
-                        }
-                    }
-                    finally
-                    {
-                        BufferPool.Return(buf);
+                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                        if (canHandle)
+                            return (new GenericSource(uri, handler, host, filename, filesize), null);
+                        else if (!string.IsNullOrEmpty(reason))
+                            return (null, reason);
                     }
                 }
-                catch (Exception e)
+                finally
                 {
-                    Config.Log.Warn(e, $"Error sniffing {m.Groups["link"].Value}");
+                    BufferPool.Return(buf);
                 }
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, $"Error sniffing {m.Groups["link"].Value}");
             }
         }
         return (null, null);

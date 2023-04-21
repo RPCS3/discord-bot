@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -26,9 +27,10 @@ public static class Normalizer
     };
 
     // as per https://www.unicode.org/reports/tr39/#Confusable_Detection
-    private static string ToSkeletonString(this string input)
+    [return: NotNullIfNotNull(nameof(input))]
+    private static string? ToSkeletonString(this string? input)
     {
-        if (string.IsNullOrEmpty(input))
+        if (input is null or "")
             return input;
 
         // step 1: Convert X to NFD format, as described in [UAX15].
@@ -39,9 +41,10 @@ public static class Normalizer
         return input.Normalize(NormalizationForm.FormD);
     }
 
-    public static string ToCanonicalForm(this string input)
+    [return: NotNullIfNotNull(nameof(input))]
+    public static string? ToCanonicalForm(this string? input)
     {
-        if (string.IsNullOrEmpty(input))
+        if (input is null or "")
             return input;
 
         input = ToSkeletonString(input);

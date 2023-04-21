@@ -234,35 +234,32 @@ internal static class UpdateInfoFormatter
             var seconds = (int)delta.TotalSeconds;
             return $"{seconds} second{(seconds == 1 ? "" : "s")}";
         }
-        else if (delta.TotalHours < 1)
+        if (delta.TotalHours < 1)
         {
             var minutes = (int)delta.TotalMinutes;
             return $"{minutes} minute{(minutes == 1 ? "" : "s")}";
         }
-        else if (delta.TotalDays < 1)
+        if (delta.TotalDays < 1)
         {
             var hours = (int) delta.TotalHours;
             return $"{hours} hour{(hours == 1 ? "": "s")}";
         }
-        else if (delta.TotalDays < 7)
+        if (delta.TotalDays < 7)
         {
             var days = (int) delta.TotalDays;
             return $"{days} day{(days == 1 ? "": "s")}";
         }
-        else if (delta.TotalDays < 30)
+        if (delta.TotalDays < 30)
         {
             var weeks = (int)(delta.TotalDays/7);
             return $"{weeks} week{(weeks == 1 ? "" : "s")}";
         }
-        else if (delta.TotalDays < 365)
+        if (delta.TotalDays < 365)
         {
             var months = (int)(delta.TotalDays/30);
             return $"{months} month{(months == 1 ? "" : "s")}";
         }
-        else
-        {
-            var years = (int)(delta.TotalDays/365);
-            return $"{years} year{(years == 1 ? "" : "s")}";
-        }
+        var years = (int)(delta.TotalDays/365);
+        return $"{years} year{(years == 1 ? "" : "s")}";
     }
 }

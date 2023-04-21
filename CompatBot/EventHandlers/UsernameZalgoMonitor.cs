@@ -29,7 +29,10 @@ public static class UsernameZalgoMonitor
             {
                 var suggestedName = StripZalgo(m.DisplayName, m.Username, m.Id).Sanitize();
                 await c.ReportAsync("🔣 Potential display name issue",
-                    $"User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
+                    $"""
+                        User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**
+                        Automatically renamed to: **{suggestedName}**
+                        """,
                     null,
                     ReportSeverity.Low);
                 await DmAndRenameUserAsync(c, m, suggestedName).ConfigureAwait(false);
@@ -60,7 +63,10 @@ public static class UsernameZalgoMonitor
             {
                 var suggestedName = StripZalgo(name, fallback, args.Member.Id).Sanitize();
                 await c.ReportAsync("🔣 Potential display name issue",
-                    $"Member {member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
+                    $"""
+                        Member {member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**
+                        Automatically renamed to: **{suggestedName}**
+                        """,
                     null,
                     ReportSeverity.Low);
                 await DmAndRenameUserAsync(c, member, suggestedName).ConfigureAwait(false);
@@ -81,7 +87,10 @@ public static class UsernameZalgoMonitor
             {
                 var suggestedName = StripZalgo(name, args.Member.Username, args.Member.Id).Sanitize();
                 await c.ReportAsync("🔣 Potential display name issue",
-                    $"New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**\nAutomatically renamed to: **{suggestedName}**",
+                    $"""
+                        New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**
+                        Automatically renamed to: **{suggestedName}**
+                        """,
                     null,
                     ReportSeverity.Low);
                 await DmAndRenameUserAsync(c, args.Member, suggestedName).ConfigureAwait(false);
@@ -106,9 +115,11 @@ public static class UsernameZalgoMonitor
             var renameTask = member.ModifyAsync(m => m.Nickname = suggestedName);
             Config.Log.Info($"Renamed {member.Username}#{member.Discriminator} ({member.Id}) to {suggestedName}");
             var rulesChannel = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
-            var msg = $"Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, so you have been renamed to `{suggestedName}`.\n" +
-                      "I'm not perfect and can't clean all the junk in names in some cases, so change your nickname at your discretion.\n" +
-                      "You can change your _display name_ by clicking on the server name at the top left and selecting **Change Nickname**.";
+            var msg = $"""
+                Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, so you have been renamed to `{suggestedName}`.
+                I'm not perfect and can't clean all the junk in names in some cases, so change your nickname at your discretion.
+                You can change your _display name_ by clicking on the server name at the top left and selecting **Change Nickname**.
+                """;
             var dm = await member.CreateDmChannelAsync().ConfigureAwait(false);
             await dm.SendMessageAsync(msg).ConfigureAwait(false);
             await renameTask.ConfigureAwait(false);

@@ -23,7 +23,7 @@ internal class ThumbnailDb : DbContext
 #if DEBUG
         optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
 #endif
-        optionsBuilder.UseSqlite($"Data Source=\"{dbPath}\"");
+        optionsBuilder.UseSqlite($""" Data Source="{dbPath}" """);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

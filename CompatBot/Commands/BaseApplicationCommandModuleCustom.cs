@@ -15,8 +15,7 @@ internal class BaseApplicationCommandModuleCustom : ApplicationCommandModule
     public override async Task<bool> BeforeSlashExecutionAsync(InteractionContext ctx)
     {
         executionStart = DateTimeOffset.UtcNow;
-
-        if (ctx.Channel.Name == "media" && ctx.Interaction is { Type: InteractionType.ApplicationCommand, Data.Name: not ("warn" or "report") })
+        if (ctx is {Channel.Name: "media", Interaction: { Type: InteractionType.ApplicationCommand, Data.Name: not ("warn" or "report") } })
         {
             //todo: look what's available in data
             Config.Log.Info($"Ignoring slash command from {ctx.User.Username} (<@{ctx.User.Id}>) in #media: {ctx.Interaction.Data}");

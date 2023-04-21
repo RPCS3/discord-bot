@@ -39,41 +39,37 @@ internal sealed class GoogleDriveHandler: BaseSourceHandler
         {
             try
             {
-                if (m.Groups["gdrive_id"].Value is string fid
-                    && !string.IsNullOrEmpty(fid))
+                if (m.Groups["gdrive_id"].Value is not { Length: > 0 } fid)
+                    continue;
+                
+                var fileInfoRequest = client.Files.Get(fid);
+                fileInfoRequest.Fields = "name, size, kind";
+                var fileMeta = await fileInfoRequest.ExecuteAsync(Config.Cts.Token).ConfigureAwait(false);
+                if (fileMeta is not { Kind: "drive#file", Size: > 0 })
+                    continue;
+                
+                var buf = BufferPool.Rent(SnoopBufferSize);
+                try
                 {
-                    var fileInfoRequest = client.Files.Get(fid);
-                    fileInfoRequest.Fields = "name, size, kind";
-                    var fileMeta = await fileInfoRequest.ExecuteAsync(Config.Cts.Token).ConfigureAwait(false);
-                    if (fileMeta.Kind == "drive#file" && fileMeta.Size > 0)
-                    {
-                        var buf = BufferPool.Rent(SnoopBufferSize);
-                        try
-                        {
-                            int read;
-                            await using (var stream = new MemoryStream(buf, true))
-                            {
-                                var limit = Math.Min(SnoopBufferSize, fileMeta.Size.Value) - 1;
-                                var progress = await fileInfoRequest.DownloadRangeAsync(stream, new RangeHeaderValue(0, limit), Config.Cts.Token).ConfigureAwait(false);
-                                if (progress.Status != DownloadStatus.Completed)
-                                    continue;
+                    await using var stream = new MemoryStream(buf, true);
+                    var limit = Math.Min(SnoopBufferSize, fileMeta.Size.Value) - 1;
+                    var progress = await fileInfoRequest.DownloadRangeAsync(stream, new RangeHeaderValue(0, limit), Config.Cts.Token).ConfigureAwait(false);
+                    if (progress.Status != DownloadStatus.Completed)
+                        continue;
 
-                                read = (int)progress.BytesDownloaded;
-                            }
-                            foreach (var handler in handlers)
-                            {
-                                var (canHandle, reason) = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
-                                if (canHandle)
-                                    return (new GoogleDriveSource(client, fileInfoRequest, fileMeta, handler), null);
-                                else if (!string.IsNullOrEmpty(reason))
-                                    return(null, reason);
-                            }
-                        }
-                        finally
-                        {
-                            BufferPool.Return(buf);
-                        }
+                    var read = (int)progress.BytesDownloaded;
+                    foreach (var handler in handlers)
+                    {
+                        var (canHandle, reason) = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
+                        if (canHandle)
+                            return (new GoogleDriveSource(client, fileInfoRequest, fileMeta, handler), null);
+                        else if (!string.IsNullOrEmpty(reason))
+                            return(null, reason);
                     }
+                }
+                finally
+                {
+                    BufferPool.Return(buf);
                 }
             }
             catch (Exception e)

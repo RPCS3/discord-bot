@@ -11,7 +11,5 @@ internal class RequiresSupporterRole: CheckBaseAttributeWithReactions
     public RequiresSupporterRole() : base(reactOnFailure: Config.Reactions.Denied) { }
 
     protected override Task<bool> IsAllowed(CommandContext ctx, bool help)
-    {
-        return Task.FromResult(ctx.User.IsWhitelisted(ctx.Client, ctx.Guild) || ctx.User.IsSupporter(ctx.Client, ctx.Guild));
-    }
+        => Task.FromResult(ctx.User.IsWhitelisted(ctx.Client, ctx.Guild) || ctx.User.IsSupporter(ctx.Client, ctx.Guild));
 }

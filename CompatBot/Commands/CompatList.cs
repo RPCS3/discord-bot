@@ -41,7 +41,10 @@ internal sealed class CompatList : BaseCommandModuleCustom
     private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
     private const string Rpcs3UpdateBuildKey = "Rpcs3UpdateBuild";
     private static UpdateInfo? cachedUpdateInfo;
-    private static readonly Regex UpdateVersionRegex = new(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+    private static readonly Regex UpdateVersionRegex = new(
+        @"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b",
+        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture
+    );
 
     static CompatList()
     {
@@ -153,7 +156,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
             if (exactStatus)
                 result.Append(" only");
             result.Append(" games");
-            if (scoreType == "critic" || scoreType == "user")
+            if (scoreType is "critic" or "user")
                 result.Append($" according to {scoreType}s");
             result.AppendLine(":");
             foreach (var (title, score, _) in resultList)
@@ -170,17 +173,12 @@ internal sealed class CompatList : BaseCommandModuleCustom
     public sealed class UpdatesCheck: BaseCommandModuleCustom
     {
         [GroupCommand]
-        public Task Latest(CommandContext ctx)
-        {
-            return CheckForRpcs3Updates(ctx.Client, ctx.Channel);
-        }
+        public Task Latest(CommandContext ctx) => CheckForRpcs3Updates(ctx.Client, ctx.Channel);
 
         [Command("since")]
         [Description("Show additional info about changes since specified update")]
         public Task Since(CommandContext ctx, [Description("Commit hash of the update, such as `46abe0f31`")] string commit)
-        {
-            return CheckForRpcs3Updates(ctx.Client, ctx.Channel, commit);
-        }
+            => CheckForRpcs3Updates(ctx.Client, ctx.Channel, commit);
 
         [Command("clear"), RequiresBotModRole]
         [Description("Clears update info cache that is used to post new build announcements")]
@@ -345,7 +343,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
             {
                 var updateInfo = await Client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false)
                                  ?? new UpdateInfo {ReturnCode = -1};
-                if (updateInfo.ReturnCode == 0 || updateInfo.ReturnCode == 1) // latest or known build
+                if (updateInfo.ReturnCode is 0 or 1) // latest or known build
                 {
                     updateInfo.LatestBuild = updateInfo.CurrentBuild;
                     updateInfo.CurrentBuild = null;
@@ -503,7 +501,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
                 if (trimmedList.Count > 0)
                     sortedList = trimmedList;
 
-                var searchTerm = request.Search ?? @"¯\_(ツ)_/¯";
+                var searchTerm = request.Search ?? @"¯\\\_(ツ)\_/¯";
                 var searchHits = sortedList.Where(t => t.score > 0.5
                                                        || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
                                                        || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
@@ -684,8 +682,6 @@ internal sealed class CompatList : BaseCommandModuleCustom
                                 ProductCode = productCode,
                                 Name = titleInfo.Title,
                             }).ConfigureAwait(false)).Entity;
-                        if (dbItem is null)
-                            continue;
                             
                         dbItem.Name = titleInfo.Title;
                         if (Enum.TryParse(titleInfo.Status, out CompatStatus status))

@@ -29,7 +29,7 @@ public class IrdClient
     public IrdClient()
     {
         client = HttpClientFactory.Create(new CompressionMessageHandler());
-        jsonOptions = new JsonSerializerOptions
+        jsonOptions = new()
         {
             PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -209,9 +209,8 @@ public class IrdClient
 
         var idx = html.LastIndexOf("</span>", StringComparison.Ordinal);
         var result = html[(idx + 7)..].Trim();
-        if (string.IsNullOrEmpty(result))
-            return null;
-
-        return result;
+        if (result is {Length: >0})
+            return result;
+        return null;
     }
 }

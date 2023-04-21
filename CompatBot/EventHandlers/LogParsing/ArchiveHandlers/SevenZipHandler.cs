@@ -17,7 +17,7 @@ internal sealed class SevenZipHandler: IArchiveHandler
 
     public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
-        if (header.Length >= Header.Length && header.Slice(0, Header.Length).SequenceEqual(Header)
+        if (header.Length >= Header.Length && header[..Header.Length].SequenceEqual(Header)
             || header.Length == 0 && fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
         {
             if (fileSize > Config.AttachmentSizeLimit)

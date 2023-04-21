@@ -21,8 +21,10 @@ internal partial class Sudo
             if (await ModProvider.AddAsync(user.Id).ConfigureAwait(false))
             {
                 await ctx.ReactWithAsync(Config.Reactions.Success,
-                    $"{user.Mention} was successfully added as moderator!\n" +
-                    $"Try using `{ctx.Prefix}help` to see new commands available to you"
+                    $"""
+                    {user.Mention} was successfully added as moderator!
+                    Try using `{ctx.Prefix}help` to see new commands available to you
+                    """
                 ).ConfigureAwait(false);
             }
             else
@@ -36,7 +38,7 @@ internal partial class Sudo
             if (ctx.Client.CurrentApplication.Owners.Any(u => u.Id == user.Id))
             {
                 var dm = await user.CreateDmChannelAsync().ConfigureAwait(false);
-                await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your mod role ¯\\_(ツ)_/¯").ConfigureAwait(false);
+                await dm.SendMessageAsync($@"Just letting you know that {ctx.Message.Author.Mention} just tried to strip you off of your mod role ¯\\\_(ツ)\_/¯").ConfigureAwait(false);
                 await ctx.ReactWithAsync(Config.Reactions.Denied, $"{ctx.Message.Author.Mention} why would you even try this?! Alerting {user.Mention}", true).ConfigureAwait(false);
             }
             else if (await ModProvider.RemoveAsync(user.Id).ConfigureAwait(false))

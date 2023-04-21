@@ -33,33 +33,31 @@ internal sealed class MegaHandler : BaseSourceHandler
         {
             try
             {
-                if (m.Groups["mega_link"].Value is string lnk
-                    && !string.IsNullOrEmpty(lnk)
-                    && Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
+                if (m.Groups["mega_link"].Value is not { Length: > 0 } lnk
+                    || !Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
+                    continue;
+                
+                var node = await client.GetNodeFromLinkAsync(uri).ConfigureAwait(false);
+                if (node.Type is not NodeType.File)
+                    continue;
+                
+                var buf = BufferPool.Rent(SnoopBufferSize);
+                try
                 {
-                    var node = await client.GetNodeFromLinkAsync(uri).ConfigureAwait(false);
-                    if (node.Type == NodeType.File)
+                    await using var stream = await client.DownloadAsync(uri, Doodad, Config.Cts.Token).ConfigureAwait(false);
+                    var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
+                    foreach (var handler in handlers)
                     {
-                        var buf = BufferPool.Rent(SnoopBufferSize);
-                        try
-                        {
-                            int read;
-                            await using (var stream = await client.DownloadAsync(uri, Doodad, Config.Cts.Token).ConfigureAwait(false))
-                                read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
-                            foreach (var handler in handlers)
-                            {
-                                var (canHandle, reason) = handler.CanHandle(node.Name, (int)node.Size, buf.AsSpan(0, read));
-                                if (canHandle)
-                                    return (new MegaSource(client, uri, node, handler), null);
-                                else if (!string.IsNullOrEmpty(reason))
-                                    return (null, reason);
-                            }
-                        }
-                        finally
-                        {
-                            BufferPool.Return(buf);
-                        }
+                        var (canHandle, reason) = handler.CanHandle(node.Name, (int)node.Size, buf.AsSpan(0, read));
+                        if (canHandle)
+                            return (new MegaSource(client, uri, node, handler), null);
+                        else if (!string.IsNullOrEmpty(reason))
+                            return (null, reason);
                     }
+                }
+                finally
+                {
+                    BufferPool.Return(buf);
                 }
             }
             catch (Exception e)

@@ -130,13 +130,17 @@ internal sealed class Hardware: BaseCommandModuleCustom
         var lowRam = mem.Where(i => i.Mem < 4 * 1024 - margin).Sum(i => i.Count);
         var ram4to6 = mem.Where(i => i.Mem is >= 4 * 1024 - margin and < 6 * 1024 - margin).Sum(i => i.Count);
         var ram6to8 = mem.Where(i => i.Mem is >= 6 * 1024 - margin and < 8 * 1024 - margin).Sum(i => i.Count);
-        var highRam = mem.Where(i => i.Mem >= 8 * 1024 - margin).Sum(i => i.Count);
+        var ram8to16 = mem.Where(i => i.Mem is >= 8 * 1024 - margin and < 16 * 1024 - margin).Sum(i => i.Count);
+        var ram16to32 = mem.Where(i => i.Mem is >= 16 * 1024 - margin and < 32 * 1024 - margin).Sum(i => i.Count);
+        var highRam = mem.Where(i => i.Mem >= 32 * 1024 - margin).Sum(i => i.Count);
         var ramStats = new (int Count, string Mem)[]
             {
                 (lowRam, "less than 4 GB"),
                 (ram4to6, "4 to 6 GB"),
                 (ram6to8, "6 to 8 GB"),
-                (highRam, "8 GB or more"),
+                (ram8to16, "8 to 16 GB"),
+                (ram16to32, "16 to 32 GB"),
+                (highRam, "32 GB or more"),
             }
             .Where(i => i.Count > 0)
             .Take(top)
