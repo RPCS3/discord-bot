@@ -11,5 +11,5 @@ internal class RequiresWhitelistedRole: CheckBaseAttributeWithReactions
     public RequiresWhitelistedRole() : base(reactOnFailure: Config.Reactions.Denied) { }
 
     protected override Task<bool> IsAllowed(CommandContext ctx, bool help)
-        => Task.FromResult(ctx.User.IsWhitelisted(ctx.Client, ctx.Guild));
+        => ctx.User.IsWhitelistedAsync(ctx.Client, ctx.Guild);
 }

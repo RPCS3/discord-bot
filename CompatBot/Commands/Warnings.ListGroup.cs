@@ -164,7 +164,7 @@ internal sealed partial class Warnings
         [Description("Shows last issued warnings in chronological order")]
         public async Task Last(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
         {
-            var isMod = ctx.User.IsWhitelisted(ctx.Client, ctx.Guild);
+            var isMod = await ctx.User.IsWhitelistedAsync(ctx.Client, ctx.Guild).ConfigureAwait(false);
             var showRetractions = ctx.Channel.IsPrivate && isMod;
             if (number < 1)
                 number = 10;

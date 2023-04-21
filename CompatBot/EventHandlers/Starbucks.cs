@@ -149,7 +149,7 @@ internal static class Starbucks
         if (message.Reactions.Any(r => r.Emoji == emoji && (r.IsMe || r.Count < Config.Moderation.StarbucksThreshold)))
             return;
 
-        if (message.Author.IsWhitelisted(client, channel.Guild))
+        if (await message.Author.IsWhitelistedAsync(client, channel.Guild).ConfigureAwait(false))
             return;
 
         var users = await message.GetReactionsAsync(emoji).ConfigureAwait(false);
@@ -174,18 +174,18 @@ internal static class Starbucks
     }
 
 
-    private static Task ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)
+    private static async Task ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)
     {
         if (!message.Author.IsCurrent)
-            return Task.CompletedTask;
+            return;
 
         if (message.CreationTimestamp.Add(Config.ShutupTimeLimitInMin) < DateTime.UtcNow)
-            return Task.CompletedTask;
+            return;
 
-        if (!user.IsWhitelisted(client, message.Channel.Guild))
-            return Task.CompletedTask;
+        if (!await user.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
+            return;
 
-        return message.DeleteAsync();
+        await message.DeleteAsync().ConfigureAwait(false);
     }
 
     private static async Task BadUpdateAsync(DiscordClient client, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
@@ -193,7 +193,7 @@ internal static class Starbucks
         if (message.Channel.Id != Config.BotChannelId)
             return;
 
-        if (!user.IsSmartlisted(client, message.Channel.Guild))
+        if (!await user.IsSmartlistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
             return;
 
         await Moderation.ToggleBadUpdateAnnouncementAsync(message).ConfigureAwait(false);
@@ -207,7 +207,7 @@ internal static class Starbucks
 
     private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
     {
-        var bot = client.GetMember(channel.Guild, client.CurrentUser);
+        var bot = await client.GetMemberAsync(channel.Guild, client.CurrentUser).ConfigureAwait(false);
         var ch = channel.IsPrivate ? channel.Users.FirstOrDefault(u => u.Id != client.CurrentUser.Id)?.Username + "'s DM" : "#" + channel.Name;
         if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
         {

@@ -11,5 +11,5 @@ internal class RequiresBotSudoerRole: CheckBaseAttributeWithReactions
     public RequiresBotSudoerRole(): base(reactOnFailure: Config.Reactions.Denied) { }
 
     protected override Task<bool> IsAllowed(CommandContext ctx, bool help)
-        => Task.FromResult(ctx.User.IsModerator(ctx.Client, ctx.Guild));
+        => ctx.User.IsModeratorAsync(ctx.Client, ctx.Guild);
 }

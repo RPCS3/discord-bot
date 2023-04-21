@@ -71,7 +71,7 @@ public static class UsernameValidationMonitor
 
                         foreach (var forced in forcedNicknames)
                         {
-                            var member = client.GetMember(guild, forced.UserId);
+                            var member = await client.GetMemberAsync(guild, forced.UserId).ConfigureAwait(false);
                             if (member is null || member.DisplayName == forced.Nickname)
                                 continue;
                                 

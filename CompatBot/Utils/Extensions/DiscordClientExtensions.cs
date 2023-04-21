@@ -14,28 +14,39 @@ namespace CompatBot.Utils;
 
 public static class DiscordClientExtensions
 {
-    public static DiscordMember? GetMember(this DiscordClient client, DiscordGuild? guild, ulong userId)
-        => guild is null ? GetMember(client, userId) : GetMember(client, guild.Id, userId);
+    public static async Task<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong? guildId, ulong userId)
+    {
+        try
+        {
+            var query = client.Guilds.AsEnumerable();
+            if (guildId.HasValue)
+                query = query.Where(g => g.Key == guildId.Value);
+            var guildList = query.ToList();
+            var result = guildList.SelectMany(g => g.Value.Members.Values).FirstOrDefault(m => m.Id == userId);
+            if (result is not null)
+                return result;
 
-    public static DiscordMember? GetMember(this DiscordClient client, ulong guildId, ulong userId)
-        => (from g in client.Guilds
-                where g.Key == guildId
-                from u in g.Value.Members.Values
-                where u.Id == userId
-                select u
-            ).FirstOrDefault();
+            var fetchTasks = guildList.Select(async g => await g.Value.GetMemberAsync(userId)).ToList();
+            foreach (var task in fetchTasks)
+            {
+                result = await task.ConfigureAwait(false);
+                if (result is not null)
+                    return result;
+            }
+        }
+        catch (Exception e)
+        {
+            Config.Log.Error(e, "Failed to fetch member data");
+        }
+        return null;
+    }
 
-    public static DiscordMember? GetMember(this DiscordClient client, ulong guildId, DiscordUser user) => GetMember(client, guildId, user.Id);
-    public static DiscordMember? GetMember(this DiscordClient client, DiscordGuild? guild, DiscordUser user) => GetMember(client, guild, user.Id);
-
-    public static DiscordMember? GetMember(this DiscordClient client, ulong userId)
-        => (from g in client.Guilds
-                from u in g.Value.Members.Values
-                where u.Id == userId
-                select u
-            ).FirstOrDefault();
-
-    public static DiscordMember? GetMember(this DiscordClient client, DiscordUser user) => GetMember(client, user.Id);
+    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong userId) => GetMemberAsync(client, (ulong?)null, userId);
+    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordUser user) => GetMemberAsync(client, user.Id);
+    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong guildId, DiscordUser user) => GetMemberAsync(client, guildId, user.Id);
+    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, DiscordUser user) => GetMemberAsync(client, guild, user.Id);
+    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, ulong userId)
+        => guild is null ? GetMemberAsync(client, userId) : GetMemberAsync(client, guild.Id, userId);
 
     public static async Task<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
     {
@@ -103,7 +114,7 @@ public static class DiscordClientExtensions
         if (logChannel is null)
             return null;
 
-        var embedBuilder = MakeReportTemplate(client, infraction, filterId, message, severity, actionList);
+        var embedBuilder = await MakeReportTemplateAsync(client, infraction, filterId, message, severity, actionList).ConfigureAwait(false);
         var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn ?? trigger}`{Environment.NewLine}";
         if (!string.IsNullOrEmpty(context))
             reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
@@ -127,7 +138,7 @@ public static class DiscordClientExtensions
     public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember?> reporters, string? comment, ReportSeverity severity)
     {
         var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-        var embedBuilder = MakeReportTemplate(client, infraction, null, message, severity);
+        var embedBuilder = await MakeReportTemplateAsync(client, infraction, null, message, severity).ConfigureAwait(false);
         var reportText = string.IsNullOrEmpty(comment) ? "" : comment.Sanitize() + Environment.NewLine;
         embedBuilder.Description = (reportText + embedBuilder.Description).Trim(EmbedPager.MaxDescriptionLength);
         var mentions = reporters.Where(m => m is not null).Select(GetMentionWithNickname!);
@@ -155,8 +166,8 @@ public static class DiscordClientExtensions
             ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)"
             : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
 
-    public static string GetUsernameWithNickname(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
-        => client.GetMember(guild, user).GetUsernameWithNickname()
+    public static async Task<string> GetUsernameWithNicknameAsync(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
+        => (await client.GetMemberAsync(guild, user).ConfigureAwait(false)).GetUsernameWithNickname()
            ?? $"`{user.Username.Sanitize()}#{user.Discriminator}`";
 
     public static string? GetUsernameWithNickname(this DiscordMember? member)
@@ -192,7 +203,7 @@ public static class DiscordClientExtensions
         return channel.SendMessageAsync(message);
     }
 
-    private static DiscordEmbedBuilder MakeReportTemplate(DiscordClient client, string infraction, int? filterId, DiscordMessage message, ReportSeverity severity, string? actionList = null)
+    private static async Task<DiscordEmbedBuilder> MakeReportTemplateAsync(DiscordClient client, string infraction, int? filterId, DiscordMessage message, ReportSeverity severity, string? actionList = null)
     {
         var content = message.Content;
         if (message.Channel.IsPrivate)
@@ -220,7 +231,7 @@ public static class DiscordClientExtensions
         DiscordMember? author = null;
         try
         {
-            author = client.GetMember(message.Author);
+            author = await client.GetMemberAsync(message.Author).ConfigureAwait(false);
         }
         catch (Exception e)
         {

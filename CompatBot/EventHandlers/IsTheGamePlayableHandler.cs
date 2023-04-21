@@ -44,7 +44,7 @@ internal static class IsTheGamePlayableHandler
                 && DateTime.UtcNow - lastCheck < CooldownThreshold)
                 return;
 
-            if (args.Author.IsSmartlisted(c, args.Guild))
+            if (await args.Author.IsSmartlistedAsync(c, args.Guild).ConfigureAwait(false))
                 return;
 #endif
 

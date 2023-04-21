@@ -329,8 +329,7 @@ internal static partial class LogParserResult
             if (state.TotalBytes < 2048 || state.ReadBytes < 2048)
                 builder.Description = "Log analysis failed, most likely cause is an empty log. Please try again.";
         }
-        builder.AddAuthor(client, message, source, state);
-        return builder;
+        return await builder.AddAuthorAsync(client, message, source, state).ConfigureAwait(false);
     }
 
     private static void CleanupValues(LogParseState state)
@@ -991,13 +990,13 @@ internal static partial class LogParserResult
         return result;
     }
 
-    internal static DiscordEmbedBuilder AddAuthor(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage? message, ISource source, LogParseState? state = null)
+    internal static async Task<DiscordEmbedBuilder> AddAuthorAsync(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage? message, ISource source, LogParseState? state = null)
     {
         if (message == null || state?.Error == LogParseState.ErrorCode.PiracyDetected)
             return builder;
 
         var author = message.Author;
-        var member = client.GetMember(message.Channel?.Guild, author);
+        var member = await client.GetMemberAsync(message.Channel?.Guild, author).ConfigureAwait(false);
         string msg;
         if (member == null)
             msg = $"Log from {author.Username.Sanitize()} | {author.Id}\n";

@@ -123,7 +123,7 @@ internal static class ContentFilter
 
         var suppressActions = (FilterAction)0;
 #if !DEBUG
-        if (message.Author.IsWhitelisted(client, message.Channel.Guild))
+        if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
         {
             if (message.Content.StartsWith('>'))
                 suppressActions = FilterAction.IssueWarning | FilterAction.RemoveContent | FilterAction.Kick;
@@ -175,8 +175,8 @@ internal static class ContentFilter
             }
             try
             {
-                var author = client.GetMember(message.Author);
-                var username = author?.GetMentionWithNickname() ?? message.Author.GetUsernameWithNickname(client);
+                var author = await client.GetMemberAsync(message.Author).ConfigureAwait(false);
+                var username = author?.GetMentionWithNickname() ?? await message.Author.GetUsernameWithNicknameAsync(client).ConfigureAwait(false);
                 Config.Log.Debug($"Removed message from {username} in #{message.Channel.Name}: {message.Content}");
             }
             catch (Exception e)
@@ -236,7 +236,7 @@ internal static class ContentFilter
         {
             try
             {
-                if (client.GetMember(message.Channel.Guild, message.Author) is DiscordMember mem
+                if (await client.GetMemberAsync(message.Channel.Guild, message.Author).ConfigureAwait(false) is DiscordMember mem
                     && !mem.Roles.Any())
                 {
                     await mem.RemoveAsync("Filter action for trigger " + trigger.String).ConfigureAwait(false);

@@ -10,6 +10,7 @@ internal class RequiresSupporterRole: CheckBaseAttributeWithReactions
 {
     public RequiresSupporterRole() : base(reactOnFailure: Config.Reactions.Denied) { }
 
-    protected override Task<bool> IsAllowed(CommandContext ctx, bool help)
-        => Task.FromResult(ctx.User.IsWhitelisted(ctx.Client, ctx.Guild) || ctx.User.IsSupporter(ctx.Client, ctx.Guild));
+    protected override async Task<bool> IsAllowed(CommandContext ctx, bool help)
+        => await ctx.User.IsWhitelistedAsync(ctx.Client, ctx.Guild).ConfigureAwait(false)
+           || await ctx.User.IsSupporterAsync(ctx.Client, ctx.Guild).ConfigureAwait(false);
 }

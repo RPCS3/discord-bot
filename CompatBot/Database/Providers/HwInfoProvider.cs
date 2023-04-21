@@ -20,7 +20,7 @@ internal static class HwInfoProvider
 
     public static async Task AddOrUpdateSystemAsync(DiscordClient client, DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
     {
-        var ignoreAuthor = msg.Author.IsWhitelisted(client, msg.Channel.Guild);
+        var ignoreAuthor = await msg.Author.IsWhitelistedAsync(client, msg.Channel.Guild).ConfigureAwait(false);
         byte counter = 0;
         if (!ignoreAuthor
             && UserCache.TryGetValue(msg.Author.Id, out counter)

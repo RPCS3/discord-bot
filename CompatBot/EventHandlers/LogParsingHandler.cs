@@ -111,7 +111,7 @@ public static class LogParsingHandler
                     Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
                     var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
                     var msgBuilder = new DiscordMessageBuilder()
-                        .WithEmbed(analyzingProgressEmbed.AddAuthor(client, message, source))
+                        .WithEmbed(await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false))
                         .WithReply(message.Id);
                     botMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                     parsedLog = true;
@@ -125,7 +125,10 @@ public static class LogParsingHandler
                         {
                             tmpResult = await ParseLogAsync(
                                 source,
-                                async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: analyzingProgressEmbed.AddAuthor(client, message, source)).ConfigureAwait(false),
+                                async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(
+                                    channel,
+                                    embed: await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false)
+                                ).ConfigureAwait(false),
                                 combinedTokenSource.Token
                             ).ConfigureAwait(false);
                             result ??= tmpResult;
@@ -134,7 +137,7 @@ public static class LogParsingHandler
                     }
                     if (result == null)
                     {
-                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: new DiscordEmbedBuilder
+                        botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: (await new DiscordEmbedBuilder
                             {
                                 Description = """
                                     Log analysis failed, most likely cause is a truncated/invalid log.
@@ -142,7 +145,7 @@ public static class LogParsingHandler
                                     """,
                                 Color = Config.Colors.LogResultFailed,
                             }
-                            .AddAuthor(client, message, source)
+                            .AddAuthorAsync(client, message, source).ConfigureAwait(false))
                             .Build()
                         ).ConfigureAwait(false);
                         Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
@@ -166,7 +169,7 @@ public static class LogParsingHandler
                                 }
                                 var yarr = client.GetEmoji(":piratethink:", "☠");
                                 result.ReadBytes = 0;
-                                if (message.Author.IsWhitelisted(client, channel.Guild))
+                                if (await message.Author.IsWhitelistedAsync(client, channel.Guild).ConfigureAwait(false))
                                 {
                                     var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                     piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
@@ -225,7 +228,10 @@ public static class LogParsingHandler
                                     await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter, ignoreFlags, result.SelectedFilterContext!).ConfigureAwait(false);
                                 }
 
-                                if (!force && string.IsNullOrEmpty(message.Content) && !isSpamChannel && !message.Author.IsSmartlisted(client, message.Channel.Guild))
+                                if (!force
+                                    && string.IsNullOrEmpty(message.Content)
+                                    && !isSpamChannel
+                                    && !await message.Author.IsSmartlistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
                                 {
                                     var threshold = DateTime.UtcNow.AddMinutes(-15);
                                     var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
@@ -241,7 +247,7 @@ public static class LogParsingHandler
                                         else
                                         {
                                             Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
-                                            var helpChannel = LimitedToHelpChannel.GetHelpChannel(client, channel, message.Author);
+                                            var helpChannel = await LimitedToHelpChannel.GetHelpChannelAsync(client, channel, message.Author).ConfigureAwait(false);
                                             if (helpChannel is not null)
                                                 await botMsg.UpdateOrCreateMessageAsync(
                                                     channel,

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using CompatBot.Database.Providers;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -8,7 +9,7 @@ namespace CompatBot.Utils;
 
 internal static class RolesExtensions
 {
-    public static bool IsModerator(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async Task<bool> IsModeratorAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;
@@ -16,11 +17,11 @@ internal static class RolesExtensions
         if (ModProvider.IsSudoer(user.Id))
             return true;
 
-        var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
+        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsModerator() is true;
     }
 
-    public static bool IsWhitelisted(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async Task<bool> IsWhitelistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;
@@ -28,11 +29,11 @@ internal static class RolesExtensions
         if (ModProvider.IsMod(user.Id))
             return true;
 
-        var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
+        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsWhitelisted() is true;
     }
 
-    public static bool IsSmartlisted(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async Task<bool> IsSmartlistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;
@@ -40,16 +41,16 @@ internal static class RolesExtensions
         if (ModProvider.IsMod(user.Id))
             return true;
 
-        var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
+        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsSmartlisted() is true;
     }
 
-    public static bool IsSupporter(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async Task<bool> IsSupporterAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;
 
-        var member = guild == null ? client.GetMember(user) : client.GetMember(guild, user);
+        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsSupporter() is true;
     }
 

@@ -34,7 +34,7 @@ internal static class DeletedMessagesMonitor
 		if (RemovedByBotCache.TryGetValue(msg.Id, out _))
 			return;
 
-		var usernameWithNickname = msg.Author.GetUsernameWithNickname(c, e.Guild);
+		var usernameWithNickname = await msg.Author.GetUsernameWithNicknameAsync(c, e.Guild).ConfigureAwait(false);
 		var logMsg = msg.Content;
 		if (msg.Attachments.Any())
 			logMsg += Environment.NewLine + Environment.NewLine + string.Join(Environment.NewLine, msg.Attachments.Select(a => $"📎 {a.FileName}"));

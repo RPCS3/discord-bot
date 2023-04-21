@@ -31,11 +31,11 @@ internal class LimitedToHelpChannel: CheckBaseAttribute
                || channel.Name.Equals("donors", StringComparison.OrdinalIgnoreCase);
     }
 
-    internal static DiscordChannel? GetHelpChannel(DiscordClient client, DiscordChannel channel, DiscordUser user)
+    internal static async Task<DiscordChannel?> GetHelpChannelAsync(DiscordClient client, DiscordChannel channel, DiscordUser user)
     {
         var guild = channel.Guild;
-        if (client.GetMember(guild, user) is {} member
-            && member.IsSupporter(client, guild)
+        if (await client.GetMemberAsync(guild, user).ConfigureAwait(false) is {} member
+            && await member.IsSupporterAsync(client, guild).ConfigureAwait(false)
             && guild.Channels.Values.FirstOrDefault(ch => ch.Type == ChannelType.Text && "donors".Equals(ch.Name, StringComparison.OrdinalIgnoreCase)) is {} donorsCh)
             return donorsCh;
         
