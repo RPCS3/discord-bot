@@ -99,21 +99,25 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
 
     [Command("add"), Aliases("create")]
     [Description("Adds a new content filter")]
-    public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string trigger)
+    public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string? trigger)
     {
+        trigger ??= "";
         await using var db = new BotDb();
         Piracystring? filter;
+        var isNewFilter = true;
         if (string.IsNullOrEmpty(trigger))
-            filter = new Piracystring();
+            filter = new() {String = trigger};
         else
         {
             filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled).ConfigureAwait(false);
             if (filter == null)
-                filter = new Piracystring {String = trigger};
+                filter = new() {String = trigger};
             else
+            {
                 filter.Disabled = false;
+                isNewFilter = false;
+            }
         }
-        var isNewFilter = filter.Id == default;
         if (isNewFilter)
         {
             filter.Context = FilterContext.Chat | FilterContext.Log;
