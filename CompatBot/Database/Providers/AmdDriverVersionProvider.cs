@@ -130,24 +130,24 @@ internal static class AmdDriverVersionProvider
 
         if (Version.TryParse(vulkanVersion, out var vkVer))
         {
-            var vkVersions = new List<(Version vkVer, string driverVer)>(VulkanToDriver.Count);
+            var vkVersions = new List<(Version vkVer, List<string> driverVers)>(VulkanToDriver.Count);
             foreach (var key in VulkanToDriver.Keys)
             {
                 if (Version.TryParse(key, out var ver))
-                    vkVersions.Add((ver, VulkanToDriver[key].First()));
+                    vkVersions.Add((ver, VulkanToDriver[key]));
             }
             if (vkVersions.Count == 0)
                 return vulkanVersion;
 
             vkVersions.Sort((l, r) => l.vkVer < r.vkVer ? -1 : l.vkVer > r.vkVer ? 1 : 0);
             if (vkVer < vkVersions[0].vkVer)
-                return $"older than {vkVersions[0].driverVer} ({vulkanVersion})";
+                return $"older than {vkVersions[0].driverVers.First()} ({vulkanVersion})";
 
-            var (version, driverVer) = vkVersions.Last();
+            var (version, driverVers) = vkVersions.Last();
             if (vkVer > version)
             {
                 if (!autoRefresh)
-                    return $"newer than {driverVer} ({vulkanVersion})";
+                    return $"newer than {driverVers.Last()} ({vulkanVersion})";
                     
                 await RefreshAsync().ConfigureAwait(false);
                 return await GetFromVulkanAsync(vulkanVersion, false).ConfigureAwait(false);
@@ -163,11 +163,10 @@ internal static class AmdDriverVersionProvider
                 if (mapKey is null)
                     continue;
 
-                if (!VulkanToDriver.TryGetValue(mapKey, out var driverList))
+                if (!VulkanToDriver.TryGetValue(mapKey, out var oldestDriverList))
                     continue;
-                    
-                var oldestLowerVersion = driverList.Select(Version.Parse).OrderByDescending(v => v).First();
-                return $"unknown version between {oldestLowerVersion} and {vkVersions[i].driverVer} ({vulkanVersion})";
+
+                return $"unknown version between {oldestDriverList.First()} and {vkVersions[i].driverVers.Last()} ({vulkanVersion})";
             }
         }
 
