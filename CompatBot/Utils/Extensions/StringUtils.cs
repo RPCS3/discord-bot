@@ -205,9 +205,9 @@ public static class StringUtils
         var result = new StringBuilder(regexPattern.Length);
         while (!span.IsEmpty)
         {
-            var count = encoder.GetBytes(span.Slice(0, 1), tmp, false);
+            var count = encoder.GetBytes(span[..1], tmp, false);
             if (count == 1)
-                result.Append(Encoding.Latin1.GetString(tmp.Slice(0, count)));
+                result.Append(Encoding.Latin1.GetString(tmp[..count]));
             else if (count > 1)
             {
                 result.Append('(');
@@ -215,7 +215,7 @@ public static class StringUtils
                     result.Append(@"\x").Append(Utf8ToLatin1RegexPatternEncoderFallback.CustomMapperFallbackBuffer.ByteToHex[tmp[i]]);
                 result.Append(')');
             }
-            span = span.Slice(1);
+            span = span[1..];
         }
         return result.ToString();
     }
