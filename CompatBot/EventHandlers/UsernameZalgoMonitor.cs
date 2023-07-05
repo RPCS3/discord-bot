@@ -158,6 +158,7 @@ public static class UsernameZalgoMonitor
 
                 case UnicodeCategory.Control:
                 case UnicodeCategory.Format:
+                case UnicodeCategory.PrivateUse:
                     break;
 
                 case UnicodeCategory.Surrogate:

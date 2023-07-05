@@ -81,6 +81,7 @@ public class ZalgoTests
     [TestCase("𐎄𐎝𐎪𐎼", true, "Ugaritic and Old Persian blocks")]
     [TestCase("͔", true, "Combining marks")]
     [TestCase("҉҉҉҉", true, "Combining sign")]
+    [TestCase("᲼᲼᲼᲼᲼᲼᲼᲼᲼ ", true, "Private block")]
     public void ZalgoDetectionTest(string name, bool isBad, string comment = null)
     {
         Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad), comment);
