@@ -490,8 +490,6 @@ internal static partial class LogParserResult
         {
             if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
                 notes.Add("⚠️ `Multithreaded RSX` is enabled, please disable for this game");
-            else if (items["write_color_buffers"] == EnabledMark)
-                notes.Add("⚠️ `Multithreaded RSX` is enabled along with `Write Color Buffers` which may cause crashes");
             else if (threadCount < 6)
                 notes.Add("⚠️ `Multithreaded RSX` is enabled on a CPU with few threads");
             else
