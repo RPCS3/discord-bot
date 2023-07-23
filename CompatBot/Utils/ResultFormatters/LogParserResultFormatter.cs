@@ -190,20 +190,20 @@ internal static partial class LogParserResult
         "BLES00887", "NPEB00907", "NPUB30704", "BLUS30524", "BLJM60235", // Grand Theft Auto: Episodes from Liberty City
         "BLJS10286, BLAS50770", // Gundam Breaker 2
         "BCES00797", "BCES00802", "BCUS98164", "BCAS20107", "BCES00458", "BCES01293", "BCJS30040", "NPEA90076", "NPUA70112", "NPHA80118", "NPEA90053", "NPUA70088", "NPJA90129", "NPHA80086", // Heavy Rain
-        "NPEB01341", "NPUB31200" // Hotline Miami
+        "NPEB01341", "NPUB31200", // Hotline Miami
         "NPEB02007", "NPUB31481", // Hotline Miami 2: Wrong Number
         "BLUS30924", "NPUA80227", // Jeopardy!
         "BLUS30084", "BLES00143", "BLJM60058", "BLJM60127", "NPUB90053", // Juiced 2: Hot Import Nights
         "BLUS30215", // Karaoke Revolution Presents: American Idol Encore 2
         "BCAS20066", "BCES00081", "BCUS98116", "NPUA98116", "NPUA70034", "NPJA90092", "NPEA90034", "NPUA70034", // Killzone 2 / demo
         "BCES01007", "BCUS98234", "BCAS25008", "BCJS30066", "NPUA70167", "NPEA00321", "NPJA00071", "NPEA90084", "NPUA70133", "NPJA90176", "NPHA80140", "NPEA90085", "NPJA90178", "NPUA70134", "NPHA80141", "BCET01007", "NPEA90086", "BCET70024", "NPUA70118", "NPUA70138", // Killzone 3 / Demo / Beta / MP
-        "BLES01251", "BLUS30710", "NPEB01055", "BLJS10191", "NPUB90707" // Kingdoms of Amalur: Reckoning
+        "BLES01251", "BLUS30710", "NPEB01055", "BLJS10191", "NPUB90707", // Kingdoms of Amalur: Reckoning
         "BCES00141", "BCUS98148", "NPEA00241", "NPUA80472", "BCAS20058", "BCJS30018", "BCUS98199", "BCJS70009", "BCKS10059", "BCES00611", "BCUS98208", "BCAS20078", "NPEA00147", "NPUA70045", "NPJA90097", "NPHA80067", "BCUS70030", "BCET70002", "BCET70011", // LittleBigPlanet
         "BCES01422", "BCUS98254", "NPUA80848", "NPEA00421", "NPHA80239", "NPJA90244", "NPEA90117", "NPUA70249", // LittleBigPlanet Karting / demo
         "BLES01525", "BLUS30917", "BLJS10125", "NPJB00273", "BLJS10168", // Lollipop Chainsaw
         "BLES00710", "BLUS30434", "BLJM60177", "BLAS50173", "NPEB90189", "NPUB90321", "NPHB00138", "NPEB90181", "NPUB90300", // Lost Planet 2
         "BLJS10184", // Macross 30 Ginga o Tsunagu Utagoe
-        "BLES00285", "BLUS30146", "BLJM60088", "BLUS30170", "NPUB90138" // Madden NFL 09
+        "BLES00285", "BLUS30146", "BLJM60088", "BLUS30170", "NPUB90138", // Madden NFL 09
         "BLUS31178", "NPUB31183", "BLES01850", "BLAS50622", "NPEB90493", "NPUB90953", // Madden NFL 25
         "BLES00546", "BLUS30294", // Marvel: Ultimate Alliance 2
         "BLES00867", "BLUS30518", // Megamind
@@ -244,15 +244,15 @@ internal static partial class LogParserResult
         "BLUS30464", "BLES00760", "BLJM60296", "NPEB90226", "NPUB90375", "NPHB00200", // Skate 3
         "BLES01981", "BLUS31401", "NPEB01905", "BLES02145", "BLUS31532", // Sniper Elite 3
         "BLES01290", "BLUS30798", "NPEB01009", "BLJM60503", "NPUB31291", "BLES01812", "NPEB90404", "NPUB90749", // Sniper Elite V2
-        "BLES01646", "BLUS30839", "NPEB01232", "BLJM61145", "NPUB31090", "NPJB00535", "NPEB90471", "NPUB90928"", "// Sonic & All-Stars Racing Transformed / demo
+        "BLES01646", "BLUS30839", "NPEB01232", "BLJM61145", "NPUB31090", "NPJB00535", "NPEB90471", "NPUB90928", // Sonic & All-Stars Racing Transformed / demo
         "BLES00750", "BLUS30342", "NPEB90229", "NPUB90275", // Sonic & SEGA All-Stars Racing
-        "BLES00296", "BLUS30160", "BLJS10026", "NPEB90099", "NPJB90130"", "// SoulCalibur IV / Demo
+        "BLES00296", "BLUS30160", "BLJS10026", "NPEB90099", "NPJB90130", // SoulCalibur IV / Demo
         "BLUS30736", "BLES01250", "NPEB01363", "NPUB31195", // SoulCalibur V
         "BLES00055", "BLES00056", "BLUS30031 (IRD)", "BLUS30030", // Spider-Man 3
         "BLES01702", "BLJS10187", "BLUS31002", "NPEB01140", "NPJB00236", "NPUB30899", // Tekken Tag Tournament 2
-        "BLUS30527", "BLES00884" // Test Drive Unlimited 2 - Needs RCB Also
+        "BLUS30527", "BLES00884", // Test Drive Unlimited 2 - Needs RCB Also
         "BLES01987", "BLUS30964", "BLJS10160", // The Witch and the Hundred Knight
-        "BLES01329", "BLES01330", "BLUS30778", "BLJM60413", "BLAS50546", "BLES01885", "BLES01886", "BLUS31202", "BLJM61086", "BLAS50624" // The Elder Scrolls V: Skyrim
+        "BLES01329", "BLES01330", "BLUS30778", "BLJM60413", "BLAS50546", "BLES01885", "BLES01886", "BLUS31202", "BLJM61086", "BLAS50624", // The Elder Scrolls V: Skyrim
         "BCES00057", "BLUS30093", // Time Crisis 4
         "BCES01070", "BLUS30528", "BLJS10091", "NPEA90078", "NPUB90464", // Time Crisis: Razing Storm
         "BLES00326", "BLUS30180", "NPEB01170", "NPUB30913", "BLES00487", "NPEB90118", "NPUB90171", // Tom Clancy's EndWar
