@@ -139,7 +139,6 @@ internal static partial class LogParserResult
 
     private static readonly HashSet<string> KnownWriteColorBuffersIds = new()
     {
-        "BLJM60528", "NPJB00235", "NPHB00522", "NPJB90534", //E.X. Troopers / demo
         "BLUS30235", "BLES00453", // AC/DC Live: Rock Band Track Pack
         "BLUS30399", "BCJS30021", "BCAS20050", // Afrika
         "BLUS30607", "BLES0126", "NPUB30545", "BLJM60359", // Alice: Madness Returns
