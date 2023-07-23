@@ -164,7 +164,7 @@ internal static partial class LogParserResult
         "BLES00759", "BLUS30295", "BLJM60244", "NPEB90250", "NPUB90428", // Blur
         "NPUB30505", "NPEB00563", // Castlevania: Harmony of Despair
         "NPUB30722", // Closure
-        "BLES00673", "BLUS30313", "NPEB90176", "NPUB90294" // Colin McRae: DiRT 2
+        "BLES00673", "BLUS30313", "NPEB90176", "NPUB90294", // Colin McRae: DiRT 2
         "BLUS30782", "BLES01402", "BLES01396", "BLJM60993", "BLAS50397", "BLES01765", "BLJM60517", // Dark Souls
         "NPEB00409", // Deadstorm Pirates
         "BLUS30024", "BLES00042", "BLAS50012", "BLJM60029", "NPUB90004", // Def Jam: Icon
@@ -188,7 +188,7 @@ internal static partial class LogParserResult
         "BLES00229", "BLUS30127", "NPEB00882, NPUB30702, BLES00258", "BLJM60093", "BLES01128", "BLUS30682", // Grand Theft Auto IV
         "BLES01807", "BLUS31156", "NPEB01283", "NPUB31154", "BLJM61019", "BLJM61182", "BLJM61304", "NPJB00516", // Grand Theft Auto V
         "BLES00887", "NPEB00907", "NPUB30704", "BLUS30524", "BLJM60235", // Grand Theft Auto: Episodes from Liberty City
-        "BLJS10286, BLAS50770", // Gundam Breaker 2
+        "BLJS10286", "BLAS50770", // Gundam Breaker 2
         "BCES00797", "BCES00802", "BCUS98164", "BCAS20107", "BCES00458", "BCES01293", "BCJS30040", "NPEA90076", "NPUA70112", "NPHA80118", "NPEA90053", "NPUA70088", "NPJA90129", "NPHA80086", // Heavy Rain
         "NPEB01341", "NPUB31200", // Hotline Miami
         "NPEB02007", "NPUB31481", // Hotline Miami 2: Wrong Number
@@ -248,7 +248,7 @@ internal static partial class LogParserResult
         "BLES00750", "BLUS30342", "NPEB90229", "NPUB90275", // Sonic & SEGA All-Stars Racing
         "BLES00296", "BLUS30160", "BLJS10026", "NPEB90099", "NPJB90130", // SoulCalibur IV / Demo
         "BLUS30736", "BLES01250", "NPEB01363", "NPUB31195", // SoulCalibur V
-        "BLES00055", "BLES00056", "BLUS30031 (IRD)", "BLUS30030", // Spider-Man 3
+        "BLES00055", "BLES00056", "BLUS30031", "BLUS30030", // Spider-Man 3
         "BLES01702", "BLJS10187", "BLUS31002", "NPEB01140", "NPJB00236", "NPUB30899", // Tekken Tag Tournament 2
         "BLUS30527", "BLES00884", // Test Drive Unlimited 2 - Needs RCB Also
         "BLES01987", "BLUS30964", "BLJS10160", // The Witch and the Hundred Knight
