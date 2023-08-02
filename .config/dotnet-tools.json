@@ -3,13 +3,13 @@
   "isRoot": true,
   "tools": {
     "strawberryshake.tools": {
-      "version": "13.0.5",
+      "version": "13.4.0",
       "commands": [
         "dotnet-graphql"
       ]
     },
     "dotnet-ef": {
-      "version": "7.0.3",
+      "version": "7.0.9",
       "commands": [
         "dotnet-ef"
       ]
