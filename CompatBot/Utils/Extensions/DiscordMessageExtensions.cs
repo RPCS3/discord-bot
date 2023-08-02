@@ -47,7 +47,7 @@ public static class DiscordMessageExtensions
                 lastException = e;
                 if (i == 2 || e is NullReferenceException)
                 {
-                    Config.Log.Error(e);
+                    Config.Log.Error(e, "Failed to updated previous message content, will try to delete old message and create a new one");
                     if (botMsg is not null)
                         try { await botMsg.DeleteAsync().ConfigureAwait(false); } catch { }
                     return await channel.SendMessageAsync(messageBuilder).ConfigureAwait(false);
