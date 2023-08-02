@@ -57,7 +57,7 @@ internal partial class LogParser
 
     private static void OnExtractorHit(string buffer, string trigger, Regex extractor, LogParseState state)
     {
-        if (trigger == "{PPU[" || trigger == "⁂")
+        if (trigger is "{PPU[" or "⁂")
         {
             if (state.WipCollection["serial"] is string serial
                 && extractor.Match(buffer) is { Success: true } match 
