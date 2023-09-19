@@ -37,9 +37,7 @@ internal static partial class LogParserResult
         var serial = items["serial"] ?? "";
         BuildFatalErrorSection(builder, items, multiItems, notes);
 
-        Version? buildVersion = null;
-        if (items["build_branch"] is "HEAD" or "master")
-            Version.TryParse(items["build_full_version"], out buildVersion);
+        TryGetRpcs3Version(items, out var buildVersion);
         var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]) && items["supported_gpu"] != DisabledMark;
         var unsupportedGpuDriver = false;
         if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
@@ -541,8 +539,7 @@ internal static partial class LogParserResult
                 }
                 else if (fatalError.Contains("RSX Decompiler Thread"))
                 {
-                    if (items["build_branch"] is "HEAD" or "master"
-                        && Version.TryParse(items["build_full_version"], out var v)
+                    if (TryGetRpcs3Version(items, out var v)
                         && v >= DecompilerIssueStartVersion
                         && v < DecompilerIssueEndVersion)
                     {

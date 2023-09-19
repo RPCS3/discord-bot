@@ -73,9 +73,8 @@ internal static partial class LogParserResult
     private static readonly Version IntelThreadSchedulerBuildVersion  = new(0, 0, 15, 12008);
     private static readonly Version PsnDiscFixBuildVersion  = new(0, 0, 18, 12783);
     private static readonly Version CubebBuildVersion  = new(0, 0, 19, 13050);
-    private static readonly Version FixedTlouRcbBuild = new Version(0, 0, 21, 13432); // the best I got was "it was fixed more than a year ago", so it's just a random build from a year ago
-
-
+    private static readonly Version FixedTlouRcbBuild = new(0, 0, 21, 13432); // the best I got was "it was fixed more than a year ago", so it's just a random build from a year ago
+    private static readonly Version FixedSimpsonsBuild = new(0, 0, 29, 15470);
 
     private static readonly Dictionary<string, string> RsxPresentModeMap = new()
     {
@@ -432,7 +431,7 @@ internal static partial class LogParserResult
         }
         else
         {
-            builder = new DiscordEmbedBuilder
+            builder = new()
             {
                 Description = "Log analysis failed. Please try again.",
                 Color = Config.Colors.LogResultFailed,
@@ -1188,5 +1187,11 @@ internal static partial class LogParserResult
             }
         }
         return result;
+    }
+
+    private static bool TryGetRpcs3Version(NameValueCollection items, out Version? version)
+    {
+        version = null;
+        return items["build_branch"] is "HEAD" or "master" && Version.TryParse(items["build_full_version"], out version);
     }
 }
