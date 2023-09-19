@@ -604,26 +604,30 @@ internal static partial class LogParserResult
         if (items["cpu_preempt_count"] is "0")
             items["cpu_preempt_count"] = "Disabled";
 
-        if (items["relaxed_xfloat"] is null)
+        if (items["xfloat_mode"] is null) // accurate, approximate, relaxed, inaccurate
         {
-            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"]) switch
+            if (items["relaxed_xfloat"] is null)
             {
-                ( "true",       _) => "Accurate",
-                (      _,  "true") => "Approximate",
-                (      _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}]",
-            };
-        }
-        else
-        {
-            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"], items["relaxed_xfloat"]) switch
+                items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"]) switch
+                {
+                    ("true", _) => "Accurate",
+                    (_, "true") => "Approximate",
+                    (_, _) v => $"[{(v.Item1 == "true" ? "a" : "-")}{(v.Item2 == "true" ? "x" : "-")}]",
+                };
+            }
+            else
             {
-                ( "true", "false",  "true") => "Accurate",
-                ("false",  "true",  "true") => "Approximate",
-                ("false", "false",  "true") => "Relaxed",
-                (      _,       _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}{(v.Item3 == "true"? "r" : "-")}]",
-            };
+                items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"], items["relaxed_xfloat"]) switch
+                    {
+                        ("true", "false", "true") => "Accurate",
+                        ("false", "true", "true") => "Approximate",
+                        ("false", "false", "true") => "Relaxed",
+                        ("false", "false", "false") => "Inaccurate",
+                        (_, _, _) v => $"[{(v.Item1 == "true" ? "a" : "-")}{(v.Item2 == "true" ? "x" : "-")}{(v.Item3 == "true" ? "r" : "-")}]",
+                    };
+            }
         }
-        
+
         static string? reformatDecoder(string? dec)
         {
             if (string.IsNullOrEmpty(dec))

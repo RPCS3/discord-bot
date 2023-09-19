@@ -269,33 +269,14 @@ internal static partial class LogParserResult
         if (items["accurate_rsx_reservation"] == EnabledMark)
             notes.Add("ℹ️ `Accurate RSX Reservation Access` is enabled");
 
-        if (items["accurate_xfloat"] is string accurateXfloat)
-        {
-            if (accurateXfloat == EnabledMark)
-            {
-                if (!KnownGamesThatRequireAccurateXfloat.Contains(serial))
-                    notes.Add("⚠️ `Accurate xfloat` is not required, and significantly impacts performance");
-            }
-            else
-            {
-                if (KnownGamesThatRequireAccurateXfloat.Contains(serial))
-                    notes.Add("⚠️ `Accurate xfloat` is required for this game, but it will significantly impact performance");
-            }
-        }
-        if (items["relaxed_xfloat"] is DisabledMark)
-        {
-            if (KnownNoRelaxedXFloatIds.Contains(serial))
-                notes.Add("ℹ️ `Relaxed xfloat` is disabled");
-            else
-                notes.Add("⚠️ `Relaxed xfloat` is disabled, please enable");
-        } 
-        if (items["approximate_xfloat"] is DisabledMark)
-        {
-            if (KnownNoApproximateXFloatIds.Contains(serial))
-                notes.Add("ℹ️ `Approximate xfloat` is disabled");
-            else
-                notes.Add("⚠️ `Approximate xfloat` is disabled, please enable");
-        }
+        if (KnownGamesThatRequireAccurateXfloat.Contains(serial) && items["xfloat_mode"] is not "Accurate")
+            notes.Add("⚠️ `Accurate xfloat` is required for this game");
+        else if (items["xfloat_mode"] is "Accurate" && !KnownGamesThatRequireAccurateXfloat.Contains(serial))
+            notes.Add("⚠️ `Accurate xfloat` is not required, and significantly impacts performance");
+        else if (items["xfloat_mode"] is "Relaxed" or "Inaccurate" && !KnownNoApproximateXFloatIds.Contains(serial))
+            notes.Add("⚠️ `Approximate xfloat` is disabled, please enable");
+        else if (items["xfloat_mode"] is "Inaccurate" && !KnownNoRelaxedXFloatIds.Contains(serial))
+            notes.Add("⚠️ `Relaxed xfloat` is disabled, please enable");
         if (items["resolution_scale"] is string resScale
             && int.TryParse(resScale, out var resScaleFactor))
         {
