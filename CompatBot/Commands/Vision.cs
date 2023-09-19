@@ -109,9 +109,7 @@ internal sealed class Vision: BaseCommandModuleCustom
             await using (var stream = await httpClient.GetStreamAsync(imageUrl).ConfigureAwait(false))
                 await stream.CopyToAsync(imageStream).ConfigureAwait(false);
             imageStream.Seek(0, SeekOrigin.Begin);
-#pragma warning disable VSTHRD103
-            using var img = Image.Load(imageStream, out var imgFormat);
-#pragma warning restore VSTHRD103
+            using var img = await Image.LoadAsync(imageStream).ConfigureAwait(false);
             imageStream.Seek(0, SeekOrigin.Begin);
 
             //resize and shrink file size to get under azure limits
@@ -123,7 +121,7 @@ internal sealed class Vision: BaseCommandModuleCustom
                 resized = true;
             }
             img.Mutate(i => i.AutoOrient());
-            if (resized || imgFormat.Name != JpegFormat.Instance.Name)
+            if (resized || img.Metadata.DecodedImageFormat?.Name != JpegFormat.Instance.Name)
             {
                 imageStream.SetLength(0);
                 await img.SaveAsync(imageStream, new JpegEncoder {Quality = 90}).ConfigureAwait(false);
@@ -236,7 +234,7 @@ internal sealed class Vision: BaseCommandModuleCustom
                     var complementaryColor = complementaryPalette[i % complementaryPalette.Count];
                     var textOptions = new TextOptions(font)
                     {
-                        KerningMode = KerningMode.Normal,
+                        KerningMode = KerningMode.Standard,
 #if LABELS_INSIDE
                             WrapTextWidth = r.W - 10,
 #endif
@@ -244,7 +242,7 @@ internal sealed class Vision: BaseCommandModuleCustom
                     var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop/*, TextOptions = textOptions*/};
                     //var brush = Brushes.Solid(Color.Black);
                     //var pen = Pens.Solid(color, 2);
-                    var textBox = TextMeasurer.Measure(label, textOptions);
+                    var textBox = TextMeasurer.MeasureBounds(label, textOptions);
 #if LABELS_INSIDE
                         var textHeightScale = (int)Math.Ceiling(textBox.Width / Math.Min(img.Width - r.X - 10 - 4 * scale, r.W - 4 * scale));
 #endif
