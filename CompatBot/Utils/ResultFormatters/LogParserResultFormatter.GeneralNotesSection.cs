@@ -313,7 +313,7 @@ internal static partial class LogParserResult
                 else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (IsAmd(gpuInfo))
-                        notes.Add($"❗ Please update your AMD GPU driver to version {AmdLastGoodOpenGLWindowsVersion} or newer");
+                        notes.Add($"❗ Please update your AMD GPU driver to version {AmdRecommendedOldWindowsVersion} or newer");
                 }
             }
         }
