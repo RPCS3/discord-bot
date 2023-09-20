@@ -1035,6 +1035,7 @@ internal static partial class LogParserResult
             11 => "macOS Big Sur",
             12 => "macOS Monterey",
             13 => "macOS Ventura",
+            14 => "macOS Sonoma",
             _ => null,
         };
 
