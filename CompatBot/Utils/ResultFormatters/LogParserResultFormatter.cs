@@ -65,8 +65,7 @@ internal static partial class LogParserResult
     private static readonly Version NvidiaRecommendedWindowsVersion = new(512, 16);
     private static readonly Version NvidiaRecommendedLinuxVersion = new(515, 57);
 
-    private static readonly Version AmdRecommendedOldWindowsVersion = new(22, 5, 2);
-    private static readonly Version AmdLastGoodOpenGLWindowsVersion = new(22, 5, 2);
+    private static readonly Version AmdRecommendedOldWindowsVersion = new(23, 2, 1);
 
     private static readonly Version NvidiaFullscreenBugFixed = new(0, 0, 6, 8204);
     private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
@@ -74,9 +73,8 @@ internal static partial class LogParserResult
     private static readonly Version IntelThreadSchedulerBuildVersion  = new(0, 0, 15, 12008);
     private static readonly Version PsnDiscFixBuildVersion  = new(0, 0, 18, 12783);
     private static readonly Version CubebBuildVersion  = new(0, 0, 19, 13050);
-    private static readonly Version FixedTlouRcbBuild = new Version(0, 0, 21, 13432); // the best I got was "it was fixed more than a year ago", so it's just a random build from a year ago
-
-
+    private static readonly Version FixedTlouRcbBuild = new(0, 0, 21, 13432); // the best I got was "it was fixed more than a year ago", so it's just a random build from a year ago
+    private static readonly Version FixedSimpsonsBuild = new(0, 0, 29, 15470);
 
     private static readonly Dictionary<string, string> RsxPresentModeMap = new()
     {
@@ -433,7 +431,7 @@ internal static partial class LogParserResult
         }
         else
         {
-            builder = new DiscordEmbedBuilder
+            builder = new()
             {
                 Description = "Log analysis failed. Please try again.",
                 Color = Config.Colors.LogResultFailed,
@@ -606,26 +604,30 @@ internal static partial class LogParserResult
         if (items["cpu_preempt_count"] is "0")
             items["cpu_preempt_count"] = "Disabled";
 
-        if (items["relaxed_xfloat"] is null)
+        if (items["xfloat_mode"] is null) // accurate, approximate, relaxed, inaccurate
         {
-            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"]) switch
+            if (items["relaxed_xfloat"] is null)
             {
-                ( "true",       _) => "Accurate",
-                (      _,  "true") => "Approximate",
-                (      _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}]",
-            };
-        }
-        else
-        {
-            items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"], items["relaxed_xfloat"]) switch
+                items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"]) switch
+                {
+                    ("true", _) => "Accurate",
+                    (_, "true") => "Approximate",
+                    (_, _) v => $"[{(v.Item1 == "true" ? "a" : "-")}{(v.Item2 == "true" ? "x" : "-")}]",
+                };
+            }
+            else
             {
-                ( "true", "false",  "true") => "Accurate",
-                ("false",  "true",  "true") => "Approximate",
-                ("false", "false",  "true") => "Relaxed",
-                (      _,       _,       _) v => $"[{(v.Item1 == "true"? "a" : "-")}{(v.Item2 == "true"? "x" : "-")}{(v.Item3 == "true"? "r" : "-")}]",
-            };
+                items["xfloat_mode"] = (items["accurate_xfloat"], items["approximate_xfloat"], items["relaxed_xfloat"]) switch
+                    {
+                        ("true", "false", "true") => "Accurate",
+                        ("false", "true", "true") => "Approximate",
+                        ("false", "false", "true") => "Relaxed",
+                        ("false", "false", "false") => "Inaccurate",
+                        (_, _, _) v => $"[{(v.Item1 == "true" ? "a" : "-")}{(v.Item2 == "true" ? "x" : "-")}{(v.Item3 == "true" ? "r" : "-")}]",
+                    };
+            }
         }
-        
+
         static string? reformatDecoder(string? dec)
         {
             if (string.IsNullOrEmpty(dec))
@@ -959,6 +961,7 @@ internal static partial class LogParserResult
                 22000 => "11 21H2",
                 < 22621 => "11 22H2 Insider Build " + windowsVersion.Build,
                 22621 => "11 22H2",
+                22631 => "11 23H2",
                 < 23000 => "11 Beta Build " + windowsVersion.Build, // 22k series
                 < 24000 => "11 Dev Build " + windowsVersion.Build, // 23k series
                 < 25000 => "11 ??? Build " + windowsVersion.Build,
@@ -1032,6 +1035,7 @@ internal static partial class LogParserResult
             11 => "macOS Big Sur",
             12 => "macOS Monterey",
             13 => "macOS Ventura",
+            14 => "macOS Sonoma",
             _ => null,
         };
 
@@ -1188,5 +1192,11 @@ internal static partial class LogParserResult
             }
         }
         return result;
+    }
+
+    private static bool TryGetRpcs3Version(NameValueCollection items, out Version? version)
+    {
+        version = null;
+        return items["build_branch"] is "HEAD" or "master" && Version.TryParse(items["build_full_version"], out version);
     }
 }

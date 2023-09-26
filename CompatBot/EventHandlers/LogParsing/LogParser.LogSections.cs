@@ -76,6 +76,7 @@ internal partial class LogParser
                 ["Accurate xfloat:"] = new(@"Accurate xfloat: (?<accurate_xfloat>.*?)\r?$", DefaultOptions),
                 ["Approximate xfloat:"] = new(@"Approximate xfloat: (?<approximate_xfloat>.*?)\r?$", DefaultOptions),
                 ["Relaxed xfloat:"] = new(@"Relaxed xfloat: (?<relaxed_xfloat>.*?)\r?$", DefaultOptions),
+                ["XFloat Accuracy:"] = new(@"XFloat Accuracy: (?<xfloat_mode>.*?)\r?$", DefaultOptions),
                 ["Accurate GETLLAR:"] = new(@"Accurate GETLLAR: (?<accurate_getllar>.*?)\r?$", DefaultOptions),
                 ["Accurate PUTLLUC:"] = new(@"Accurate PUTLLUC: (?<accurate_putlluc>.*?)\r?$", DefaultOptions),
                 ["Accurate RSX reservation access:"] = new(@"Accurate RSX reservation access: (?<accurate_rsx_reservation>.*?)\r?$", DefaultOptions),

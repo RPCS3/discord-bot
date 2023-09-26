@@ -29,9 +29,7 @@ internal static partial class LogParserResult
         var hasTsxFa = items["cpu_extensions"]?.Contains("TSX-FA") ?? false;
         items["has_tsx"] = hasTsx ? EnabledMark : DisabledMark;
         items["has_tsx_fa"] = hasTsxFa ? EnabledMark : DisabledMark;
-        Version? buildVersion = null;
-        if (items["build_branch"] is "HEAD" or "master"
-            && Version.TryParse(items["build_full_version"], out buildVersion)
+        if (TryGetRpcs3Version(items, out var buildVersion)
             && buildVersion < TsxFaFixedVersion)
         {
             if (items["enable_tsx"] == "Disabled" && hasTsx && !hasTsxFa)
@@ -271,33 +269,14 @@ internal static partial class LogParserResult
         if (items["accurate_rsx_reservation"] == EnabledMark)
             notes.Add("ℹ️ `Accurate RSX Reservation Access` is enabled");
 
-        if (items["accurate_xfloat"] is string accurateXfloat)
-        {
-            if (accurateXfloat == EnabledMark)
-            {
-                if (!KnownGamesThatRequireAccurateXfloat.Contains(serial))
-                    notes.Add("⚠️ `Accurate xfloat` is not required, and significantly impacts performance");
-            }
-            else
-            {
-                if (KnownGamesThatRequireAccurateXfloat.Contains(serial))
-                    notes.Add("⚠️ `Accurate xfloat` is required for this game, but it will significantly impact performance");
-            }
-        }
-        if (items["relaxed_xfloat"] is DisabledMark)
-        {
-            if (KnownNoRelaxedXFloatIds.Contains(serial))
-                notes.Add("ℹ️ `Relaxed xfloat` is disabled");
-            else
-                notes.Add("⚠️ `Relaxed xfloat` is disabled, please enable");
-        } 
-        if (items["approximate_xfloat"] is DisabledMark)
-        {
-            if (KnownNoApproximateXFloatIds.Contains(serial))
-                notes.Add("ℹ️ `Approximate xfloat` is disabled");
-            else
-                notes.Add("⚠️ `Approximate xfloat` is disabled, please enable");
-        }
+        if (KnownGamesThatRequireAccurateXfloat.Contains(serial) && items["xfloat_mode"] is not "Accurate")
+            notes.Add("⚠️ `Accurate xfloat` is required for this game");
+        else if (items["xfloat_mode"] is "Accurate" && !KnownGamesThatRequireAccurateXfloat.Contains(serial))
+            notes.Add("⚠️ `Accurate xfloat` is not required, and significantly impacts performance");
+        else if (items["xfloat_mode"] is "Relaxed" or "Inaccurate" && !KnownNoApproximateXFloatIds.Contains(serial))
+            notes.Add("⚠️ `Approximate xfloat` is disabled, please enable");
+        else if (items["xfloat_mode"] is "Inaccurate" && !KnownNoRelaxedXFloatIds.Contains(serial))
+            notes.Add("⚠️ `Relaxed xfloat` is disabled, please enable");
         if (items["resolution_scale"] is string resScale
             && int.TryParse(resScale, out var resScaleFactor))
         {
@@ -403,7 +382,7 @@ internal static partial class LogParserResult
             CheckP5Settings(serial, items, notes, generalNotes, ppuHashes, ppuPatches, patchNames);
             CheckAsurasWrathSettings(serial, items, notes);
             CheckJojoSettings(serial, state, notes, ppuPatches, ppuHashes, generalNotes);
-            CheckSimpsonsSettings(serial, generalNotes);
+            CheckSimpsonsSettings(serial, items, generalNotes, ppuPatches, patchNames);
             CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckScottPilgrimSettings(serial, items, notes, generalNotes);
@@ -700,9 +679,14 @@ internal static partial class LogParserResult
         }
     }
 
-    private static void CheckSimpsonsSettings(string serial, List<string> generalNotes)
+    private static void CheckSimpsonsSettings(string serial, NameValueCollection items, List<string> generalNotes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
     {
-        if (serial is "BLES00142" or "BLUS30065")
+        if (serial is not ("BLES00142" or "BLUS30065"))
+            return;
+
+        var hasPatch = ppuPatches.Any() && patchNames.Any(n => n.Contains("Fix pad initialization", StringComparison.OrdinalIgnoreCase));
+        if ((!TryGetRpcs3Version(items, out var v) || v < FixedSimpsonsBuild)
+            && !hasPatch)
             generalNotes.Add("ℹ️ This game has a controller initialization bug. Please use [the patch](https://wiki.rpcs3.net/index.php?title=The_Simpsons_Game#Patches).");
     }
 
@@ -944,8 +928,7 @@ internal static partial class LogParserResult
             notes.Add("⚠️ Please enable `Read Color Buffers`");
         var depthBufferPatchesAreApplied = ppuPatches.Any() && patchNames.Count(n => n.Contains("depth buffer", StringComparison.OrdinalIgnoreCase)) > 1;
 
-        if (items["build_branch"] is "HEAD" or "master"
-            && Version.TryParse(items["build_full_version"], out var buildVersion)
+        if (TryGetRpcs3Version(items, out var buildVersion)
             && buildVersion < FixedTlouRcbBuild)
         {
             if (items["read_depth_buffer"] == EnabledMark)
