@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using CirrusCiClient;
 using CompatBot.Commands;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
@@ -122,7 +121,6 @@ internal static class Program
                 CompatList.ImportCompatListAsync(),
                 Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),
                 Config.GetCurrentGitRevisionAsync(Config.Cts.Token),
-                CirrusCi.GetPipelineDurationAsync(Config.Cts.Token),
                 Sudo.Bot.UpdateCheckScheduledAsync(Config.Cts.Token)
             );
 
