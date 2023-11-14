@@ -87,7 +87,7 @@ internal partial class Sudo
             ).ConfigureAwait(false);
             Config.Log.Info($"Shutting down by request from {ctx.User.Username}#{ctx.User.Discriminator}");
             Config.InMemorySettings["shutdown"] = "true";
-            Config.Cts.Cancel();
+            await Config.Cts.CancelAsync().ConfigureAwait(false);
         }
 
         [Command("status")]
