@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <TieredCompilation>true</TieredCompilation>
     <RootNamespace>CompatBot</RootNamespace>
     <UserSecretsId>c2e6548b-b215-4a18-a010-958ef294b310</UserSecretsId>

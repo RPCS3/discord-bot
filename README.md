@@ -9,7 +9,7 @@ You can read the design and implementation notes by visiting the folders in the 
 
 Development Requirements
 ------------------------
-* [.NET 7.0 SDK](https://dotnet.microsoft.com/download) or newer
+* [.NET 8.0 SDK](https://dotnet.microsoft.com/download) or newer
 * Any text editor, but here are some recommends:
   * [Visual Studio](https://visualstudio.microsoft.com/) (Windows and Mac only, has free Community edition)
   * [Visual Studio Code](https://code.visualstudio.com/) (cross-platform, free)
@@ -17,7 +17,7 @@ Development Requirements
 
 Runtime Requirements
 --------------------
-* [.NET 7.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
+* [.NET 8.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
   * bot needs `dotnet` command to be available (i.e. alias for the Snap package)
 * Optionally Google API credentials to access Google Drive:
   * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
