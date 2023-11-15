@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CirrusCiClient;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Utils;
@@ -12,7 +11,8 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using TaskStatus = CirrusCiClient.Generated.TaskStatus;
+using Microsoft.TeamFoundation.Build.WebApi;
+using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands;
 
@@ -134,13 +134,13 @@ internal sealed class Pr: BaseCommandModuleCustom
             string? macDownloadText = null;
             string? buildTime = null;
 
-            if (prInfo.Head?.Sha is string commit)
+            if (azureClient != null && prInfo.Head?.Sha is string commit)
                 try
                 {
                     windowsDownloadText = "⏳ Pending...";
                     linuxDownloadText = "⏳ Pending...";
                     macDownloadText = "⏳ Pending...";
-                    var latestBuild = await CirrusCi.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
+                    var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
                     if (latestBuild == null)
                     {
                         if (state == "Open")
@@ -155,20 +155,23 @@ internal sealed class Pr: BaseCommandModuleCustom
                     {
                         bool shouldHaveArtifacts = false;
 
-                        if ((latestBuild.WindowsBuild?.Status is TaskStatus.Completed
-                             || latestBuild.LinuxBuild?.Status is TaskStatus.Completed
-                             || latestBuild.MacBuild?.Status is TaskStatus.Completed)
-                            && latestBuild.FinishTime.HasValue)
+                        if (latestBuild is
+                            {
+                                Status: BuildStatus.Completed,
+                                Result: BuildResult.Succeeded or BuildResult.PartiallySucceeded,
+                                FinishTime: not null
+                            })
                         {
                             buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
                             shouldHaveArtifacts = true;
                         }
 
                         // Check for subtask errors (win/lin/mac)
-                        if (latestBuild.WindowsBuild?.Status is TaskStatus.Aborted or TaskStatus.Failed or TaskStatus.Skipped)
+                        if (latestBuild.Result is BuildResult.Failed or BuildResult.Canceled)
                         {
-                            windowsDownloadText = $"❌ {latestBuild.WindowsBuild?.Status}";
+                            windowsDownloadText = $"❌ {latestBuild.Result}";
                         }
+                        /*
                         if (latestBuild.LinuxBuild?.Status is TaskStatus.Aborted or TaskStatus.Failed or TaskStatus.Skipped)
                         {
                             linuxDownloadText = $"❌ {latestBuild.LinuxBuild?.Status}";
@@ -177,17 +180,20 @@ internal sealed class Pr: BaseCommandModuleCustom
                         {
                             macDownloadText = $"❌ {latestBuild.MacBuild?.Status}";
                         }
+                        */
 
                         // Check estimated time for pending builds
-                        if (latestBuild.WindowsBuild?.Status is TaskStatus.Executing
-                            || latestBuild.LinuxBuild?.Status is TaskStatus.Executing
-                            || latestBuild.MacBuild?.Status is TaskStatus.Executing)
+                        if (latestBuild is { Status: BuildStatus.InProgress, StartTime: not null })
                         {
-                            var estimatedCompletionTime = latestBuild.StartTime + (await CirrusCi.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
+                            var estimatedCompletionTime = latestBuild.StartTime.Value + (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                             var estimatedTime = TimeSpan.FromMinutes(1);
                             if (estimatedCompletionTime > DateTime.UtcNow)
                                 estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
+                            windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                            linuxDownloadText = windowsDownloadText;
+                            macDownloadText = windowsDownloadText;
 
+                            /*
                             if (latestBuild.WindowsBuild?.Status is TaskStatus.Executing)
                             {
                                 windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
@@ -200,13 +206,14 @@ internal sealed class Pr: BaseCommandModuleCustom
                             {
                                 macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
                             }
+                        */
                         }
 
                         // windows build
-                        var name = latestBuild.WindowsBuild?.Filename ?? "Windows PR Build";
+                        var name = latestBuild.WindowsFilename ?? "Windows PR Build";
                         name = name.Replace("rpcs3-", "").Replace("_win64", "");
-                        if (!string.IsNullOrEmpty(latestBuild.WindowsBuild?.DownloadLink))
-                            windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuild?.DownloadLink})";
+                        if (!string.IsNullOrEmpty(latestBuild.WindowsBuildDownloadLink))
+                            windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuildDownloadLink})";
                         else if (shouldHaveArtifacts)
                         {
                             if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
@@ -214,10 +221,10 @@ internal sealed class Pr: BaseCommandModuleCustom
                         }
 
                         // linux build
-                        name = latestBuild.LinuxBuild?.Filename ?? "Linux PR Build";
+                        name = latestBuild.LinuxFilename ?? "Linux PR Build";
                         name = name.Replace("rpcs3-", "").Replace("_linux64", "");
-                        if (!string.IsNullOrEmpty(latestBuild.LinuxBuild?.DownloadLink))
-                            linuxDownloadText = $"[⏬ {name}]({latestBuild.LinuxBuild?.DownloadLink})";
+                        if (!string.IsNullOrEmpty(latestBuild.LinuxBuildDownloadLink))
+                            linuxDownloadText = $"[⏬ {name}]({latestBuild.LinuxBuildDownloadLink})";
                         else if (shouldHaveArtifacts)
                         {
                             if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
@@ -225,10 +232,10 @@ internal sealed class Pr: BaseCommandModuleCustom
                         }
 
                         // mac build
-                        name = latestBuild.MacBuild?.Filename ?? "Mac PR Build";
+                        name = latestBuild.MacFilename ?? "Mac PR Build";
                         name = name.Replace("rpcs3-", "").Replace("_macos", "");
-                        if (!string.IsNullOrEmpty(latestBuild.MacBuild?.DownloadLink))
-                            macDownloadText = $"[⏬ {name}]({latestBuild.MacBuild?.DownloadLink})";
+                        if (!string.IsNullOrEmpty(latestBuild.MacBuildDownloadLink))
+                            macDownloadText = $"[⏬ {name}]({latestBuild.MacBuildDownloadLink})";
                         else if (shouldHaveArtifacts)
                         {
                             if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
@@ -236,7 +243,7 @@ internal sealed class Pr: BaseCommandModuleCustom
                         }
 
                         // Neatify PR's with missing builders
-                        if (latestBuild.WindowsBuild?.Status is null)
+                        /*if (latestBuild.WindowsBuild?.Status is null)
                         {
                             windowsDownloadText = null;
                         }
@@ -247,9 +254,7 @@ internal sealed class Pr: BaseCommandModuleCustom
                         if (latestBuild.MacBuild?.Status is null)
                         {
                             macDownloadText = null;
-                        }
-
-
+                        }*/
                     }
                 }
                 catch (Exception e)

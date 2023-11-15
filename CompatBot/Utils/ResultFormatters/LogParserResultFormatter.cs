@@ -958,7 +958,7 @@ internal static partial class LogParserResult
                 < 21390 => "10 Dev Build " + windowsVersion.Build,
                 21390 => "10 21H2 Insider",
                 < 22000 => "11 Internal Build " + windowsVersion.Build,
-                22000 => "11 21H2",
+                22000 => "11 21H2", // deprecated
                 < 22621 => "11 22H2 Insider Build " + windowsVersion.Build,
                 22621 => "11 22H2",
                 22631 => "11 23H2",

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <TieredCompilation>true</TieredCompilation>
     <RootNamespace>CompatBot</RootNamespace>
     <UserSecretsId>c2e6548b-b215-4a18-a010-958ef294b310</UserSecretsId>
@@ -39,36 +39,36 @@
     <AdditionalFiles Include="..\win32_error_codes*.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.4.2" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.2" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.2" />
-    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.2" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.62.0.3155" />
+    <PackageReference Include="DSharpPlus" Version="4.4.3" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.3" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.3" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.3" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.63.0.3155" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="5.2.1" />
     <PackageReference Include="MegaApiClient" Version="1.10.3" />
     <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.21.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.21.0" />
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.ComputerVision" Version="7.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.205.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.10.69" />
-    <PackageReference Include="NLog" Version="5.2.4" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.4" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.10.72" />
+    <PackageReference Include="NLog" Version="5.2.5" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.5" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
-    <PackageReference Include="SharpCompress" Version="0.34.0" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.0.0" />
-    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+    <PackageReference Include="SharpCompress" Version="0.34.1" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.0.1" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Clients\CirrusCiClient\CirrusCiClient.csproj" />

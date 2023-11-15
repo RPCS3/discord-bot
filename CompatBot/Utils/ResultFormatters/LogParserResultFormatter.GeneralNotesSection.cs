@@ -255,7 +255,7 @@ internal static partial class LogParserResult
 
         if (items["os_type"] == "Windows"
             && Version.TryParse(items["os_version"], out var winVersion)
-            && (winVersion is { Major: < 10 } or { Build: < 19045 or (> 20000 and < 22000) }))
+            && (winVersion is { Major: < 10 } or { Build: < 19045 or (> 20000 and < 22621) }))
             notes.Add("⚠️ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to currently supported version");
             
         var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
@@ -265,12 +265,14 @@ internal static partial class LogParserResult
             {
                 var family = intelMatch.Groups["gpu_family"].Value.TrimEnd();
                 var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
+                if (modelNumber is null or "" && family.Split(' ', 2, StringSplitOptions.TrimEntries) is [string fp, string mp])
+                    (family, modelNumber) = (fp, mp);
                 if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
                     modelNumber = modelNumber[1..];
                 _ = int.TryParse(modelNumber, out var modelNumberInt);
                 if (family is "UHD" or "Iris Plus" or "Iris Xe" || modelNumberInt is > 500 and < 1000)
                     notes.Add("⚠️ Intel iGPUs are not officially supported; visual glitches are to be expected");
-                else
+                else if (family is not "Arc")
                 {
                     notes.Add("⚠️ Intel iGPUs before Skylake do not fully comply with OpenGL 4.3");
                     supportedGpu = false;
