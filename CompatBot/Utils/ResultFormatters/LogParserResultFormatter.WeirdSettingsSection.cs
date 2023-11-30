@@ -1035,7 +1035,7 @@ internal static partial class LogParserResult
     {
         "BLAS55005", "BLES00246", "BLJM57001", "BLJM67001", "BLKS25001", "BLUS30109", "BLUS30148",
         "NPEB02182", "NPJB00698", "NPUB31633",
-        "NPEB90116", "NPHB00065", "NPHB00067", "NPJB90149", "NPUB90176" // demos
+        "NPEB90116", "NPHB00065", "NPHB00067", "NPJB90149", "NPUB90176", // demos
         "NPEB00027", "NPJB90113", "NPUB90126", // database
     };
 
@@ -1083,7 +1083,7 @@ internal static partial class LogParserResult
     private static readonly HashSet<string> PdfIds = new()
     {
         "BLJM60527", "BLUS31319", "BLAS50576",
-        "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287"
+        "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287",
     };
 
 
