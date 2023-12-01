@@ -388,11 +388,11 @@ internal static partial class LogParserResult
             CheckScottPilgrimSettings(serial, items, notes, generalNotes);
             CheckGoWSettings(serial, items, notes, generalNotes);
             CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-            CheckTlouSettings(serial, items, notes, ppuPatches, ppuHashes, patchNames, generalNotes);
+            CheckTlouSettings(serial, items, notes, ppuPatches, ppuHashes, patchNames);
             CheckRdrSettings(serial, items, notes);
-            CheckMgs4Settings(serial, items, ppuHashes, generalNotes);
+            CheckMgs4Settings(serial, items, ppuPatches, ppuHashes, generalNotes);
             CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-            CheckGt5Settings(serial, items, ppuHashes, generalNotes);
+            CheckGt5Settings(serial, items, generalNotes);
             CheckGt6Settings(serial, items, notes, generalNotes);
             //CheckRatchetSettings(serial, items, notes, generalNotes);
             CheckSly4Settings(serial, items, notes);
