@@ -933,7 +933,7 @@ internal static partial class LogParserResult
         "2a02b9850cacca089914273ed0e76bfc2edebcc6", // NPEA00454
     };
 
-    private static void CheckTlouSettings(string serial, NameValueCollection items, HashSet<string> ppuHashes, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
+    private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, UniqueList<string> patchNames)
     {
         if (!TlouIds.Contains(serial))
             return;
