@@ -388,9 +388,9 @@ internal static partial class LogParserResult
             CheckScottPilgrimSettings(serial, items, notes, generalNotes);
             CheckGoWSettings(serial, items, notes, generalNotes);
             CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
-            CheckTlouSettings(serial, items, notes, ppuPatches, patchNames);
+            CheckTlouSettings(serial, items, notes, ppuPatches, ppuHashes, patchNames);
             CheckRdrSettings(serial, items, notes);
-            CheckMgs4Settings(serial, items, generalNotes);
+            CheckMgs4Settings(serial, items, ppuPatches, ppuHashes, generalNotes);
             CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckGt5Settings(serial, items, generalNotes);
             CheckGt6Settings(serial, items, notes, generalNotes);
@@ -789,14 +789,17 @@ internal static partial class LogParserResult
 
     private static readonly HashSet<string> DesIds = new()
     {
-        "BLES00932", "BLUS30443", "BCJS30022", "BCJS70013",
+        "BLES00932", "BLUS30443", "BCJS30022", "BCAS20071",
         "NPEB01202", "NPUB30910", "NPJA00102",
+        "BLUD80018", // trade demo
     };
 
     private static readonly HashSet<string> KnownDesPatches = new(StringComparer.InvariantCultureIgnoreCase)
     {
-        "83681f6110d33442329073b72b8dc88a2f677172",
-        "5446a2645880eefa75f7e374abd6b7818511e2ef",
+        "83681f6110d33442329073b72b8dc88a2f677172", // BLUS30443 1.00
+        "5446a2645880eefa75f7e374abd6b7818511e2ef", // BLES00932 1.00
+        "9403fe1678487def5d7f3c380b4c4fb275035378", // BCAS20071 1.04
+        "f965a746d844cd0c572a7e8731b5b3b7a81f7bdd", // BLUD80018 1.01
     };
 
     private static void CheckDesSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
@@ -912,10 +915,25 @@ internal static partial class LogParserResult
     private static readonly HashSet<string> TlouIds = new()
     {
         "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174",
-        "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175", 
+        "NPEA00435", "NPJA00096", "NPHA80243", "NPUA80960",
+        "NPEA00521", "NPJA00129", "NPHA80279", "NPUA81175", // left behind
+        "NPEA90122", "NPHA80246", "NPUA70257", // demos
+        "NPEA00454", "NPUA30134", "NPEA00517", // soundtrack
+        "NPJM00012", // bonus video
+        "NPUO30130" // manual
     };
 
-    private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, UniqueList<string> patchNames)
+    private static readonly HashSet<string> KnownTlouPatches = new(StringComparer.InvariantCultureIgnoreCase)
+    {
+        "9df60dc1aa5005a0c80e9066e4951dc0471553e6", // 1.00
+        "120fb71f7352d62521c639b0e99f960018c10a56", // 1.11
+        "9e5c67eaf69077c591b7c503bed2b48617643134", // 1.00 left behind
+        "e71d82fa70d09b7df9493f0336717dd9a4977216", // demo
+        "4c92d2f16d69b0c43c941279b59d124c16952ac0", // NPJM00012
+        "2a02b9850cacca089914273ed0e76bfc2edebcc6", // NPEA00454
+    };
+
+    private static void CheckTlouSettings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, UniqueList<string> patchNames)
     {
         if (!TlouIds.Contains(serial))
             return;
@@ -1016,11 +1034,36 @@ internal static partial class LogParserResult
     private static readonly HashSet<string> Mgs4Ids = new()
     {
         "BLAS55005", "BLES00246", "BLJM57001", "BLJM67001", "BLKS25001", "BLUS30109", "BLUS30148",
-        "NPEB00027", "NPEB02182", "NPEB90116", "NPJB00698", "NPJB90149", "NPUB31633",
-        "NPHB00065", "NPHB00067",
+        "NPEB02182", "NPJB00698", "NPUB31633",
+        "NPEB90116", "NPHB00065", "NPHB00067", "NPJB90149", "NPUB90176", // demos
+        "NPEB00027", "NPJB90113", "NPUB90126", // database
     };
 
-    private static void CheckMgs4Settings(string serial, NameValueCollection items, List<string> generalNotes)
+    private static readonly HashSet<string> KnownMgs4Patches = new(StringComparer.InvariantCultureIgnoreCase)
+    {
+        "6e1a0a58a43ad437488e88e402e9ac16a0b23caa", // BLES00246 / BLUS30109 1.00 eboot
+        "9712144d93487f0b62e39f55e175af783b58af72", // BLUS30109 1.00
+        "33e09a0bd8fa2a3b28780a3feeb7b0e018bae381", // BLUS30109 2.00
+        "a79a75426fc84a407265f91f8818681c864231b9", // BLES00246 1.00
+        "c937999ea44fb6260455b85c9f25eea55b1208b9", // BLES00246 2.00
+        "0d33f5054f70a738799bd5da86d8baa10635f623", // BLJM67001 2.00 eboot
+        "7ddd13b8a7e9ff386659bfbccd183dc7f7f701f4", // BLJM67001 1.00
+        "c19b3b57017488d9bd126a4b6cfba3566e0905fb", // BLJM67001 2.00
+        "6886ae8f4270fe3fa4c7cf4299307044ad4ce989", // NPUB31633 / NPEB02182 eboot
+        "bbf4c85f1c01e182e7f96d34f734772c4430a426", // NPUB31633
+        "347d16fbdb0a12f1083c0fb98343c4642d4641cb", // NPEB02182
+        "2b65154021bb8c3b25616324975af795720c5f78", // NPJB00698
+        "044d68440c37065c5248a3a08a0e6da6082435df", // NPEB00027
+        "3685929dd4a6e62ff8a61d43871c6b4714a76136", // NPUB90126
+        "c09e68e24682720027d194ef4f6dd067dc2e0908", // NPJB90113
+        "07cb711984e305c27108848d5f6579d4dd7f6c47", // NPEB90116
+        "7efe5774b7325c8346539489b41cb132857af1f7", // NPJB90149
+        "30bdcdc31c75c737b8e699c0f22516488a7a50c0", // NPHB00065
+        "158a56cf4bdad65fa6e01a338a25500d6953cd68", // NPHB00067
+        "fb73182c2590843c6c5bc39c9292d887716006e7", // NPUB90176
+    };
+
+    private static void CheckMgs4Settings(string serial, NameValueCollection items, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
     {
         if (!Mgs4Ids.Contains(serial))
             return;
@@ -1031,12 +1074,16 @@ internal static partial class LogParserResult
             generalNotes.Add("⚠️ Custom RPCS3 builds are not officially supported");
             generalNotes.Add("⚠️ This custom build comes with pre-configured settings, don't change anything");
         }
+        if (ppuHashes.Overlaps(KnownMgs4Patches))
+            generalNotes.Add("ℹ️ This game has an FPS unlock patch");
+         else if (ppuHashes.Any())
+            generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
     private static readonly HashSet<string> PdfIds = new()
     {
         "BLJM60527", "BLUS31319", "BLAS50576",
-        "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287"
+        "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287",
     };
 
 
@@ -1090,6 +1137,23 @@ internal static partial class LogParserResult
         "BCES00569",
         "BCJS30001", "BCJS30050", "BCJS30100",
         "BCUS98114", "BCUS98272", "BCUS98394",
+        "NPEA90052", "NPHA80080", "NPUA70087", // time trial
+        "NPUA70115", // kiosk demo
+    };
+
+    private static readonly HashSet<string> KnownGt5Patches = new(StringComparer.InvariantCultureIgnoreCase)
+    {
+        "5eb226d8430cf943cca1344fcf0c76db15aaaeb7",
+        "9216b03cf8f4ff27a57ff44ede2bc43a9d3087c0",
+        "ef552ab6594271862d9c6ab62e982c92380ad6cd",
+        "223cc85fc80a6667fae775c7c02f7f65e6b2871f",
+        "d73f342bf28ee016ef3d0ccb309b1acb03d8ecce",
+        "a5e547ce3ce25092ac6cae85631f50ba5d9ea914",
+        "7a5ee7bc2fef9566dd80e35893fe2c5571197726",
+        "0f0c629a7365cd77974a0ff48b734f98a43785cd", // NPUA70115
+        "a2df55fc8f07504eb44a5ba3c8db056ca93bb3e9", // NPEA90052
+        "582c850bac9b5f92ed94ab9f8a58fc5474eff6c9", // NPUA70087
+        "6386fe7c2a3b97d05fbe58473e595c6223382c0b", // NPHA80080
     };
 
     private static void CheckGt5Settings(string serial, NameValueCollection items, List<string> generalNotes)
