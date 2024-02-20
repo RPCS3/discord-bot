@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.IO.Hashing;
 using System.Text;
 using CompatApiClient;
-using Force.Crc32;
 
 namespace IrdLibraryClient.IrdFormat;
 
@@ -70,7 +70,8 @@ public static class IrdParser
         result.Uid = reader.ReadInt32();
         var dataLength = reader.BaseStream.Position;
         result.Crc32 = reader.ReadUInt32();
-        var crc32 = Crc32Algorithm.Compute(content, 0, (int)dataLength);
+        var crc32Bytes = Crc32.Hash(content.AsSpan(0, (int)dataLength));
+        var crc32 = BitConverter.ToUInt32(crc32Bytes);
         if (result.Crc32 != crc32)
             throw new InvalidDataException($"Corrupted IRD data, expected {result.Crc32:x8}, but was {crc32:x8}");
         return result;
