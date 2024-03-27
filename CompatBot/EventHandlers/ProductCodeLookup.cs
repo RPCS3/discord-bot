@@ -19,7 +19,7 @@ namespace CompatBot.EventHandlers;
 internal static class ProductCodeLookup
 {
     // see http://www.psdevwiki.com/ps3/Productcode
-    public static readonly Regex ProductCode = new(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABJKLMPQRST]|MRTC)[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    public static readonly Regex ProductCode = new(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABDJKLMPQRSTX]|MRTC)[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Client CompatClient = new();
 
     public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
