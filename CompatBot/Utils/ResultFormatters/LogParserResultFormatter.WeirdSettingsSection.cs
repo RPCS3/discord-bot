@@ -866,19 +866,30 @@ internal static partial class LogParserResult
     {
         "BLUS31197", "NPUB31251",
         "NPEB01407",
-        "BLJM61043", "BCAS20311",
+        "BLJM61043", "NPJB00380",
+        "BCAS20311", "NPHB00633", "NPHB00639",
     };
 
     private static readonly HashSet<string> KnownDod3Patches = new(StringComparer.InvariantCultureIgnoreCase)
     {
-        "f2f7f7ea0444353884bb715152147c3a29f4e790",
-        "2b393f064786e5895d5a576621deb4c9107a8f0b",
-        "b18834a8f21cd29a091b287a66656a279ccba507",
-        "9c04f427625a0064282432e4edfefe9e0956c303",
-        "e1a44e5d3fb03a37f0445e92ed13abce8d6efdd4",
-        "a017576369165f3746730724c8ae762ed9bc64d8",
-        "c09c496514f6dc591434575b04eb7c003826c11d",
-        "5eb979631fbbe531db5d20f0622dca5a8b64090e",
+        "2b393f064786e5895d5a576621deb4c9107a8f0b", // BLUS31197 1.00
+        "f2f7f7ea0444353884bb715152147c3a29f4e790", // BLUS31197 1.01
+        "b18834a8f21cd29a091b287a66656a279ccba507", // NPUB31251 1.00
+        "9c04f427625a0064282432e4edfefe9e0956c303", // NPUB31251 1.01
+        "e1a44e5d3fb03a37f0445e92ed13abce8d6efdd4", // NPEB01407
+        "60d4a7e2b5efa835e16f51de649c3e3b202e072e", // NPEB01407 delisted
+        "a017576369165f3746730724c8ae762ed9bc64d8", // BLJM61043 1.00
+        "eda0339b931f6fe15420b053703ddd89b27d615b", // BLJM61043 1.01
+        "62eb0f5d8f0f929cb23309311b89ce21eaa3bc9e", // BLJM61043 1.02
+        "384a28c62ff179a4ae815ab7b711e76fbb1167b4", // BLJM61043 1.03
+        "c09c496514f6dc591434575b04eb7c003826c11d", // BLJM61043 1.04
+        "5eb979631fbbe531db5d20f0622dca5a8b64090e", // unknown prob BCAS20311 1.00
+        "56cc988f7d5b5127049f28ed9278b98de2e4ff1f", // BCAS20311 1.01
+        "ac64494f4ea31f8b0f82584c48916d30dad16300", // BCAS20311 1.02
+        "20183817f17fb358d28131e195c5af1fc9579ada", // NPHB00633 1.00
+        "def0c4b28e5c35da73fcc07731ec0cc3d7fe9485", // NPHB00633 1.01
+        "8342766aab0791f480d0a6f8984cc5c199455c64", // NPHB00633 1.02
+        // missing NPJB00380, NPHB00639
     };
 
     private static void CheckDod3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
