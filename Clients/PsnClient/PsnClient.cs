@@ -29,13 +29,13 @@ public partial class Client
     private static readonly MemoryCache ResponseCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
     private static readonly TimeSpan ResponseCacheDuration = TimeSpan.FromHours(1);
     private static readonly string[] KnownStoreLocales =
-    {
+    [
         "en-US", "en-GB", "en-AE", "en-AU", "en-BG", "en-BH", "en-CA", "en-CY", "en-CZ", "en-DK", "en-FI", "en-GR", "en-HK", "en-HR", "en-HU", "en-ID", "en-IE", "en-IL", "en-IN", "en-IS",
         "en-KW", "en-LB", "en-MT", "en-MY", "en-NO", "en-NZ", "en-OM", "en-PL", "en-QA", "en-RO", "en-SA", "en-SE", "en-SG", "en-SI", "en-SK", "en-TH", "en-TR", "en-TW", "en-ZA", "ja-JP",
         "ar-AE", "ar-BH", "ar-KW", "ar-LB", "ar-OM", "ar-QA", "ar-SA", "da-DK", "de-AT", "de-CH", "de-DE", "de-LU", "es-AR", "es-BO", "es-CL", "es-CO", "es-CR", "es-EC", "es-ES", "es-GT",
         "es-HN", "es-MX", "es-NI", "es-PA", "es-PE", "es-PY", "es-SV", "es-UY", "fi-FI", "fr-BE", "fr-CA", "fr-CH", "fr-FR", "fr-LU", "it-CH", "it-IT", "ko-KR", "nl-BE", "nl-NL", "no-NO",
         "pl-PL", "pt-BR", "pt-PT", "ru-RU", "ru-UA", "sv-SE", "tr-TR", "zh-Hans-CN", "zh-Hans-HK", "zh-Hant-HK", "zh-Hant-TW",
-    };
+    ];
 
     [GeneratedRegex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)")]
     private static partial Regex ContainerIdLink();
@@ -48,7 +48,7 @@ public partial class Client
     private static partial Regex FwVersionInfo();
 
     // directly from vsh.self
-    private static readonly string[] KnownFwLocales = { "jp", "us", "eu", "kr", "uk", "mx", "au", "sa", "tw", "ru", "cn", "br", };
+    private static readonly string[] KnownFwLocales = ["jp", "us", "eu", "kr", "uk", "mx", "au", "sa", "tw", "ru", "cn", "br",];
 
     public Client()
     {
@@ -121,7 +121,7 @@ public partial class Client
                     tries++;
                 }
                 if (response.StatusCode == HttpStatusCode.Redirect)
-                    return new(0);
+                    return [];
             }
 
             using (response)
@@ -349,7 +349,7 @@ public partial class Client
 
         allVersions = allVersions.OrderByDescending(fwi => fwi.Version).ToList();
         if (allVersions.Count == 0)
-            return new(0);
+            return [];
 
         var maxFw = allVersions.First();
         var result = allVersions.Where(fwi => fwi.Version == maxFw.Version).ToList();

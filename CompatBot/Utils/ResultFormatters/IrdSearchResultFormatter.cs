@@ -28,7 +28,7 @@ public static class IrdSearchResultFormatter
 
             string[] parts = item.Filename.Split('-');
             if (parts.Length == 1)
-                parts = new[] {"", item.Filename};
+                parts = ["", item.Filename];
             result.AddField(
                 $"[{parts[0]} v{item.GameVersion}] {item.Title?.Sanitize().Trim(EmbedPager.MaxFieldTitleLength)}",
                 $"[⏬ `{parts[1].Sanitize().Trim(200)}`]({IrdClient.GetDownloadLink(item.Filename)})"

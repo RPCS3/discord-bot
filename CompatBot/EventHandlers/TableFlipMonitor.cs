@@ -16,7 +16,7 @@ internal static partial class TableFlipMonitor
 {
     [GeneratedRegex(@"(🎲|\s)+")]
     private static partial Regex DiceRoll();
-    private static readonly char[] OpenParen = {'(', '（', 'ʕ'};
+    private static readonly char[] OpenParen = ['(', '（', 'ʕ'];
 
     public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
     {

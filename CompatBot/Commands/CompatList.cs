@@ -430,7 +430,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
 #endif
         var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
         if (result?.Results?.Count == 1)
-            await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, new(result.Results.Keys)).ConfigureAwait(false);
+            await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, [..result.Results.Keys]).ConfigureAwait(false);
         else if (result != null)
             foreach (var msg in FormatSearchResults(ctx, result))
                 await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
@@ -597,7 +597,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
             }
         }
 
-        var scoreList = JsonSerializer.Deserialize<List<Metacritic>>(json) ?? new();
+        var scoreList = JsonSerializer.Deserialize<List<Metacritic>>(json) ?? [];
             
         Config.Log.Debug($"Importing {scoreList.Count} Metacritic items");
         var duplicates = new List<Metacritic>();
@@ -666,7 +666,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
                                                 .Where(i => i.coef > 0.85)
                                                 .OrderByDescending(i => i.coef)
                                                 .ToList()
-                                            ?? new List<(string productCode, TitleInfo titleInfo, double coef)>();
+                                            ?? [];
                     if (compatListMatches.Any(i => i.coef > 0.99))
                         compatListMatches = compatListMatches.Where(i => i.coef > 0.99).ToList();
                     else if (compatListMatches.Any(i => i.coef > 0.95))

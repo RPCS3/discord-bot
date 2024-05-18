@@ -32,7 +32,7 @@ namespace CompatBot.Commands;
 internal sealed partial class ContentFilters: BaseCommandModuleCustom
 {
     private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
-    private static readonly char[] Separators = {' ', ',', ';', '|'};
+    private static readonly char[] Separators = [' ', ',', ';', '|'];
     private static readonly SemaphoreSlim ImportLock = new(1, 1);
 
     // match for "complex" names with several regions, or region-languages, or explicit revision

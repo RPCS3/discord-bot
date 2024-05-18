@@ -308,7 +308,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
         }
     }
 
-    internal static readonly string[] GoodDog = {"🐶", "🐕", "🐩", "🐕‍🦺",};
-    internal static readonly string[] GoodKot = {"😸", "😺", "😻", "😽",};
-    private static readonly string[] MeanKot = {"🙀", "😿", "😾",};
+    internal static readonly string[] GoodDog = ["🐶", "🐕", "🐩", "🐕‍🦺",];
+    internal static readonly string[] GoodKot = ["😸", "😺", "😻", "😽",];
+    private static readonly string[] MeanKot = ["🙀", "😿", "😾",];
 }

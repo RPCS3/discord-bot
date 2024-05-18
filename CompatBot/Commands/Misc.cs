@@ -20,8 +20,8 @@ internal sealed partial class Misc: BaseCommandModuleCustom
 {
     private static readonly Random rng = new();
 
-    private static readonly List<string> EightBallAnswers = new()
-    {
+    private static readonly List<string> EightBallAnswers =
+    [
         // keep this at 2:1:1 ratio 
         // 70
         "It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it",
@@ -40,7 +40,7 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         "Bones said yes", "Tea leaves settled in a 'yes' pattern", "Dice roll was solid, so yes", "No doubt about it", "Hmmm, I think so", // 70
 
         // 30
-        "Reply hazy, try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", 
+        "Reply hazy, try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again",
         "Maybe", "I don't know", "I don't care", "Who cares", "Maybe yes, maybe not", // 10
         "Maybe not, maybe yes", "Ugh", "Probably", "Error 404: answer not found", "Crystal ball is cloudy as milk, ask later",
         "Don't ask me that again", "You should think twice before asking", "You what now?", "Ask Neko", "Ask Ani", // 20
@@ -55,11 +55,11 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         "Nein!", "I think not", "I'm afraid not", "Nay", "Yesn't",
         "No way", "Certainly not", "I must say no", "Nah", "Negative", // 30
         "Definitely not", "No way, Jose", "Not today", "No no no no no no no no no no. No.", "Not in a million years",
-        "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means", "👎", // 40
-    };
+        "I'm afraid I can't let you do that Dave.", "This mission is too important for me to allow you to jeopardize it.", "Oh, I don't think so", "By *no* means", "👎" // 40
+    ];
 
-    private static readonly List<string> EightBallSnarkyComments = new()
-    {
+    private static readonly List<string> EightBallSnarkyComments =
+    [
         "Can't answer the question that wasn't asked",
         "Having issues with my mind reading attachment, you'll have to state your question explicitly",
         "Bad reception on your brain waves today, can't read the question",
@@ -67,18 +67,17 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         "In Discord no one can read your question if you don't type it",
         "In space no one can hear you scream; that's what you're doing right now",
         "Unfortunately there's no technology to transmit your question telepathically just yet",
-        "I'd say maybe, but I'd need to see your question first",
-    };
+        "I'd say maybe, but I'd need to see your question first"
+    ];
 
-    private static readonly List<string> EightBallTimeUnits = new()
-    {
+    private static readonly List<string> EightBallTimeUnits =
+    [
         "second", "minute", "hour", "day", "week", "month", "year", "decade", "century", "millennium",
-        "night", "moon cycle", "solar eclipse", "blood moon", "complete emulator rewrite",
-    };
+        "night", "moon cycle", "solar eclipse", "blood moon", "complete emulator rewrite"
+    ];
 
-    private static readonly List<string> RateAnswers = new()
-    {
-        // 60
+    private static readonly List<string> RateAnswers =
+    [
         "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
         "Glorious!", "Very good", "Excellent...", "Magnificent", "Rate bot says he likes, so you like too",
         "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "Belissimo!",
@@ -109,11 +108,11 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         "Boring", "Easily forgettable", "An Abomination", "A Monstrosity", "Truly horrific",
         "Filled with despair!", "Eroded by despair", "Hopeless…", "It's pretty foolish to want to rate this", "Cursed with misfortune",
         "Nothing but terror", "Not good, at all", "A waste of time",
-    };
+    ];
 
-    private static readonly char[] Separators = { ' ', '　', '\r', '\n' };
-    private static readonly char[] Suffixes = {',', '.', ':', ';', '!', '?', ')', '}', ']', '>', '+', '-', '/', '*', '=', '"', '\'', '`'};
-    private static readonly char[] Prefixes = {'@', '(', '{', '[', '<', '!', '`', '"', '\'', '#'};
+    private static readonly char[] Separators = [' ', '　', '\r', '\n'];
+    private static readonly char[] Suffixes = [',', '.', ':', ';', '!', '?', ')', '}', ']', '>', '+', '-', '/', '*', '=', '"', '\'', '`'];
+    private static readonly char[] Prefixes = ['@', '(', '{', '[', '<', '!', '`', '"', '\'', '#'];
     private static readonly char[] EveryTimable = Separators.Concat(Suffixes).Concat(Prefixes).Distinct().ToArray();
 
     private static readonly HashSet<string> Me = new(StringComparer.InvariantCultureIgnoreCase)
@@ -126,7 +125,7 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         "your", "you're", "yor", "ur", "yours", "your's",
     };
 
-    private static readonly HashSet<char> Vowels = new() {'a', 'e', 'i', 'o', 'u'};
+    private static readonly HashSet<char> Vowels = ['a', 'e', 'i', 'o', 'u'];
 
     [GeneratedRegex("rate (?<instead>.+) instead", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
     private static partial Regex Instead();
@@ -244,7 +243,7 @@ internal sealed partial class Misc: BaseCommandModuleCustom
                     return;
                 }
 
-                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, new() {productCode.ProductCode}).ConfigureAwait(false);
+                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, [productCode.ProductCode]).ConfigureAwait(false);
                 break;
             }
             default:

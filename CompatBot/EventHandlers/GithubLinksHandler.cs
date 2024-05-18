@@ -90,13 +90,16 @@ internal static partial class GithubLinksHandler
     }
     public static HashSet<int> GetIssueIdsFromLinks(string input)
     {
-        return new(
-            IssueLink().Matches(input)
+        return
+        [
+
+            ..IssueLink().Matches(input)
                 .Select(match =>
                 {
                     _ = int.TryParse(match.Groups["number"].Value, out var n);
                     return n;
                 })
-        );
+
+        ];
     }
 }

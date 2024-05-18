@@ -21,7 +21,7 @@ namespace CompatBot.Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "stats_category_bucket_key",
                 table: "stats",
-                columns: new[] { "category", "bucket", "key" },
+                columns: ["category", "bucket", "key"],
                 unique: true);
         }
 
@@ -38,7 +38,7 @@ namespace CompatBot.Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "stats_category_key",
                 table: "stats",
-                columns: new[] { "category", "key" },
+                columns: ["category", "key"],
                 unique: true);
         }
     }

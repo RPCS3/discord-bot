@@ -30,12 +30,12 @@ public static class ApiConfig
         {-3, (false, false, false, "Illegal characters found, please try again with a different search term.") },
     };
 
-    public static readonly List<int> ResultAmount = new(){25, 50, 100, 200};
+    public static readonly List<int> ResultAmount = [25, 50, 100, 200];
 
     public static readonly Dictionary<char, string[]> Directions = new()
     {
-        {'a', new []{"a", "asc", "ascending"}},
-        {'d', new []{"d", "desc", "descending"} },
+        {'a', ["a", "asc", "ascending"] },
+        {'d', ["d", "desc", "descending"] },
     };
 
     public static readonly Dictionary<string, int> Statuses = new()
@@ -58,8 +58,8 @@ public static class ApiConfig
 
     public static readonly Dictionary<char, string[]> ReleaseTypes = new()
     {
-        {'b', new[] {"b", "d", "disc", "disk", "bluray", "blu-ray"}},
-        {'n', new[] {"n", "p", "PSN"}},
+        {'b', ["b", "d", "disc", "disk", "bluray", "blu-ray"] },
+        {'n', ["n", "p", "PSN"] },
     };
 
     public static readonly Dictionary<string, char> ReverseDirections;

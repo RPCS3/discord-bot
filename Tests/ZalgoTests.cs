@@ -108,7 +108,7 @@ internal class UserInfo
             Username = parts[0],
             Nickname = parts[1],
             JoinDate = DateTime.Parse(parts[2], CultureInfo.InvariantCulture),
-            Roles = parts[3]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>(),
+            Roles = parts[3]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [],
         };
     }
 }

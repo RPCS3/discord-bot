@@ -24,7 +24,7 @@ internal sealed partial class PsnScraper
     )]
     public static partial Regex ContentIdMatcher();
     private static readonly SemaphoreSlim LockObj = new(1, 1);
-    private static List<string> psnStores = new();
+    private static List<string> psnStores = [];
     private static DateTime storeRefreshTimestamp = DateTime.MinValue;
     private static readonly SemaphoreSlim QueueLimiter = new(32, 32);
 
@@ -68,7 +68,7 @@ internal sealed partial class PsnScraper
             await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                storesToScrape = new(psnStores);
+                storesToScrape = [..psnStores];
             }
             finally
             {
@@ -131,7 +131,7 @@ internal sealed partial class PsnScraper
         await LockObj.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            storesToScrape = new(psnStores);
+            storesToScrape = [..psnStores];
         }
         finally
         {

@@ -22,8 +22,8 @@ public static partial class StringUtils
     [GeneratedRegex(@"\b(?<cat>cat)s?\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture)]
     private static partial Regex KotFixPattern();
 
-    internal static readonly HashSet<char> SpaceCharacters = new()
-    {
+    internal static readonly HashSet<char> SpaceCharacters =
+    [
         '\u00a0',
         '\u2002', '\u2003', '\u2004', '\u2005', '\u2006',
         '\u2007', '\u2008', '\u2009', '\u200a', '\u200b',
@@ -35,7 +35,7 @@ public static partial class StringUtils
         '\u2069', '\u206a', '\u206b', '\u206c', '\u206d',
         '\u206e', '\u206f',
         '\u3000', '\u303f',
-    };
+    ];
 
     public static string StripMarks(this string str)
     {

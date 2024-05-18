@@ -10,7 +10,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
 internal sealed class SevenZipHandler: IArchiveHandler
 {
-    private static readonly byte[] Header = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
+    private static readonly byte[] Header = [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C]; //7z....
 
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }

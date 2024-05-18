@@ -9,7 +9,7 @@ public static class PathUtils
     public static string[] GetSegments(string? path)
     {
         if (string.IsNullOrEmpty(path))
-            return Array.Empty<string>();
+            return [];
 
         var result = new List<string>();
         string segment;

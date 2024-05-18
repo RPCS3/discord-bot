@@ -20,7 +20,7 @@ internal sealed partial class GoogleDriveHandler: BaseSourceHandler
 {
     [GeneratedRegex(@"(?<gdrive_link>(https?://)?drive\.google\.com/(open\?id=|file/d/)(?<gdrive_id>[^/>\s]+))", DefaultOptions)]
     private static partial Regex ExternalLink();
-    private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
+    private static readonly string[] Scopes = [DriveService.Scope.DriveReadonly];
     private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
 
     public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)

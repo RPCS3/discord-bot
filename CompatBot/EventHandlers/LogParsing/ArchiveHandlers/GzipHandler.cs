@@ -10,7 +10,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
 internal sealed class GzipHandler: IArchiveHandler
 {
-    private static readonly byte[] Header = { 0x1F, 0x8B, 0x08 };
+    private static readonly byte[] Header = [0x1F, 0x8B, 0x08];
 
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }

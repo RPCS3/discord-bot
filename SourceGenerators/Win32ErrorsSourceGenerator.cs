@@ -12,7 +12,7 @@ namespace SourceGenerators;
 public class Win32ErrorsSourceGenerator : ISourceGenerator
 {
     private const string Indent = "    ";
-    private static readonly char[] Separator = {'\t'};
+    private static readonly char[] Separator = ['\t'];
         
     private static readonly DiagnosticDescriptor Win32ErrorFormatError = new(
         id: "WIN32CODE001",

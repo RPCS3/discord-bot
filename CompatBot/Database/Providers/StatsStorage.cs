@@ -20,11 +20,11 @@ internal static class StatsStorage
     private static readonly SemaphoreSlim Barrier = new(1, 1);
     private static readonly SemaphoreSlim BucketLock = new(1, 1);
     private static readonly (string name, MemoryCache cache)[] AllCaches =
-    {
+    [
         (nameof(CmdStatCache), CmdStatCache),
         (nameof(ExplainStatCache), ExplainStatCache),
         (nameof(GameStatCache), GameStatCache),
-    };
+    ];
 
     private static ((int y, int m, int d, int h) Key, string Value) bucketPrefix = ((0, 0, 0, 0), "");
 

@@ -18,8 +18,8 @@ internal partial class LogParser
      * If any data was captured, it will be stored in the current collection of items with the key of the explicit capture group of regex
      *
      */
-    private static readonly List<LogSection> LogSections = new()
-    {
+    private static readonly List<LogSection> LogSections =
+    [
         new()
         {
             Extractors = new()
@@ -49,8 +49,9 @@ internal partial class LogParser
                 ["custom config:"] = CustomConfigPath(),
                 ["patch_log: Failed to load patch file"] = FailedPatchPath(),
             },
-            EndTrigger = new[] {"Used configuration:"},
+            EndTrigger = ["Used configuration:"],
         },
+
         new()
         {
             Extractors = new()
@@ -86,16 +87,18 @@ internal partial class LogParser
                 ["Max CPU Preempt Count:"] = CpuPreemptCount(),
                 ["Sleep Timers Accuracy:"] = SleepTimersMode(),
             },
-            EndTrigger = new[] {"VFS:"},
+            EndTrigger = ["VFS:"],
         },
+
         new()
         {
             Extractors = new()
             {
                 ["Enable /host_root/:"] = EnableHostRoot(),
             },
-            EndTrigger = new[] {"Video:"},
+            EndTrigger = ["Video:"],
         },
+
         new()
         {
             Extractors = new()
@@ -134,8 +137,9 @@ internal partial class LogParser
                 ["Asynchronous Texture Streaming"] = AsyncTextureStreaming(),
                 ["Asynchronous Queue Scheduler:"] = AsyncQueueScheduler(),
             },
-            EndTrigger = new[] {"Audio:"},
+            EndTrigger = ["Audio:"],
         },
+
         new() // Audio, Input/Output, System, Net, Miscellaneous
         {
             Extractors = new()
@@ -154,23 +158,25 @@ internal partial class LogParser
                 ["Use native user interface:"] = NativeUIMode(),
                 ["Silence All Logs:"] = SilenceAllLogs(),
             },
-            EndTrigger = new[] {"Log:"},
+            EndTrigger = ["Log:"],
         },
+
         new()
         {
             Extractors = new()
             {
                 ["Log:"] = LogChannelList(),
             },
-            EndTrigger = new[] {"·"},
+            EndTrigger = ["·"],
             OnSectionEnd = MarkAsComplete,
         },
+
         new()
         {
             Extractors = new()
             {
                 ["LDR: Game:"] = GamePathLdr(),
-                ["LDR: Disc"]  = DiscPathLdr(),
+                ["LDR: Disc"] = DiscPathLdr(),
                 ["LDR: Path:"] = DigitalPathLdr(),
                 ["LDR: Boot path:"] = BootPathInBodyLdr(),
                 ["SYS: Game:"] = GamePathSys(),
@@ -227,17 +233,17 @@ internal partial class LogParser
                 ["Verification failed"] = VerificationFailed(),
                 ["sys_tty_write():"] = SysTtyWrite(),
                 ["⁂"] = SyscallDump(),
-                ["undub"] =  UndubFlag(),
+                ["undub"] = UndubFlag(),
                 ["Input: Pad"] = InputDeviceGamepad(),
                 ["SDL: Found game controller"] = SdlControllerName(),
             },
             OnSectionEnd = MarkAsCompleteAndReset,
-            EndTrigger = new[] { "Stopping emulator...", "All threads stopped...", "LDR: Booting from"},
+            EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from"],
         }
-    };
+    ];
 
-    private static readonly HashSet<string> MultiValueItems = new()
-    {
+    private static readonly HashSet<string> MultiValueItems =
+    [
         "pad_handler",
         "pad_controller_name",
         "pad_has_gyro",
@@ -261,9 +267,9 @@ internal partial class LogParser
         "verification_error_hex",
         "verification_error",
         "tty_line",
-    };
+    ];
 
-    private static readonly string[] CountValueItems = {"enqueue_buffer_error"};
+    private static readonly string[] CountValueItems = ["enqueue_buffer_error"];
 
     private static async Task PiracyCheckAsync(string line, LogParseState state)
     {
@@ -319,7 +325,7 @@ internal partial class LogParser
                     state.WipMultiValueCollection[key] = collection;
             }
         }
-        state.WipCollection = new();
+        state.WipCollection = [];
         state.WipMultiValueCollection = new();
         Copy(
             "build_and_specs", "fw_version_installed",

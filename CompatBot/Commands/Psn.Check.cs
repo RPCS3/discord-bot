@@ -108,15 +108,15 @@ internal sealed partial class Psn
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to get title update info");
-                embeds = new()
-                {
+                embeds =
+                [
                     new()
                     {
                         Color = Config.Colors.Maintenance,
                         Title = "Service is unavailable",
                         Description = "There was an error communicating with the service. Try again in a few minutes.",
                     }
-                };
+                ];
             }
 
             if (ctx.IsOnionLike()

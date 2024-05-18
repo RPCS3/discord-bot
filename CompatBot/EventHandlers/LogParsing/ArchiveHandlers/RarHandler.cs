@@ -11,7 +11,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
 internal sealed class RarHandler: IArchiveHandler
 {
-    private static readonly byte[] Header = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07};
+    private static readonly byte[] Header = [0x52, 0x61, 0x72, 0x21, 0x1A, 0x07]; // Rar!..
 
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
