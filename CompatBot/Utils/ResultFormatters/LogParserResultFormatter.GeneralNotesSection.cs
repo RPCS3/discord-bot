@@ -294,7 +294,7 @@ internal static partial class LogParserResult
                     if (IsNvidia(gpuInfo))
                     {
                         var isWindows = items["os_type"] is not null and not "Linux";
-                        var minVersion = isWindows ? NvidiaRecommendedWindowsVersion : NvidiaRecommendedLinuxVersion;
+                        var minVersion = isWindows ? NvidiaRecommendedWindowsDriverVersion : NvidiaRecommendedLinuxDriverVersion;
                         if (driverVersion < minVersion)
                             notes.Add($"❗ Please update your nVidia GPU driver to at least version {minVersion}");
                         if (driverVersion >= NvidiaTextureMemoryBugMinVersion
@@ -311,14 +311,14 @@ internal static partial class LogParserResult
                     }
                     else if (IsAmd(gpuInfo) && items["os_type"] == "Windows")
                     {
-                        if (driverVersion < AmdRecommendedOldWindowsVersion)
-                            notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
+                        if (driverVersion < AmdRecommendedWindowsDriverVersion)
+                            notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedWindowsDriverVersion}");
                     }
                 }
                 else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (IsAmd(gpuInfo))
-                        notes.Add($"❗ Please update your AMD GPU driver to version {AmdRecommendedOldWindowsVersion} or newer");
+                        notes.Add($"❗ Please update your AMD GPU driver to version {AmdRecommendedWindowsDriverVersion} or newer");
                 }
             }
         }
