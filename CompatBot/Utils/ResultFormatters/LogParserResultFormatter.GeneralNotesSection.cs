@@ -258,10 +258,14 @@ internal static partial class LogParserResult
             }
         }
 
-        if (items["os_type"] == "Windows"
+        if (items["os_type"] is "Windows"
             && Version.TryParse(items["os_version"], out var winVersion)
             && (winVersion is { Major: < 10 } or { Build: < 19045 or (> 20000 and < 22621) }))
             notes.Add("⚠️ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to currently supported version");
+        else if (items["os_type"] is "MacOS"
+                 && Version.TryParse(items["os_version"], out var macVersion)
+                 && macVersion is {Major: 14, Minor: >=0 and <=2})
+            notes.Add("❌️ Please update your OS to version 14.3 or newer");
             
         var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
         if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
