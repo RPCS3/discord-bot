@@ -13,6 +13,9 @@ namespace CompatBot.Utils.ResultFormatters;
 
 internal static partial class LogParserResult
 {
+    [GeneratedRegex(@"Radeon RX 5\d{3}", RegexOptions.IgnoreCase)]
+    private static partial Regex RadeonRx5xxPattern();
+    
     private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, LogParseState state, List<string> generalNotes)
     {
         var items = state.CompletedCollection!;
@@ -187,7 +190,7 @@ internal static partial class LogParserResult
         }
         var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
                                      && buildVersion < RdnaMsaaFixedVersion
-                                     && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
+                                     && RadeonRx5xxPattern().IsMatch(gpuInfo) // RX 590 is a thing 😔
                                      && !gpuInfo.Contains("RADV");
         if (items["msaa"] == "Disabled")
         {
@@ -534,11 +537,11 @@ internal static partial class LogParserResult
         PageSection(builder, notesContent.ToString().Trim(), "Important Settings to Review");
     }
 
-    private static readonly HashSet<string> P5Ids = new()
-    {
+    private static readonly HashSet<string> P5Ids =
+    [
         "BLES02247", "BLUS31604", "BLJM61346",
         "NPEB02436", "NPUB31848", "NPJB00769",
-    };
+    ];
 
         
     private static readonly HashSet<string> KnownP5Patches = new(StringComparer.InvariantCultureIgnoreCase)
@@ -627,11 +630,11 @@ internal static partial class LogParserResult
         }
     }
 
-    private static readonly HashSet<string> AllStarBattleIds = new()
-    {
+    private static readonly HashSet<string> AllStarBattleIds =
+    [
         "BLES01986", "BLUS31405", "BLJS10217",
         "NPEB01922", "NPUB31391", "NPJB00331",
-    };
+    ];
 
     private static readonly HashSet<string> KnownJojoPatches = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -758,23 +761,23 @@ internal static partial class LogParserResult
         }
     }
 
-    private static readonly HashSet<string> Gow3Ids = new()
-    {
+    private static readonly HashSet<string> Gow3Ids =
+    [
         "BCAS25003", "BCES00510", "BCES00516", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003",
-    };
+    ];
 
-    private static readonly HashSet<string> GowHDIds = new()
-    {
+    private static readonly HashSet<string> GowHDIds =
+    [
         "BCAS20102", "BCES00791", "BCES00800", "BLJM60200", "BCUS98229", // collection except volume II
         "NPUA80491", "NPUA80490", "NPEA00255", "NPEA00256", "NPJA00062", "NPJA00061", "NPJA00066",
-    };
+    ];
 
-    private static readonly HashSet<string> GowAscIds = new()
-    {
+    private static readonly HashSet<string> GowAscIds =
+    [
         "BCAS25016", "BCES01741", "BCES01742", "BCUS98232",
         "NPEA00445", "NPEA90123", "NPUA70216", "NPUA70269", "NPUA80918",
         "NPHA80258",
-    };
+    ];
 
     private static void CheckGoWSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
     {
@@ -787,12 +790,12 @@ internal static partial class LogParserResult
             generalNotes.Add("ℹ️ This game is known to be very unstable");
     }
 
-    private static readonly HashSet<string> DesIds = new()
-    {
+    private static readonly HashSet<string> DesIds =
+    [
         "BLES00932", "BLUS30443", "BCJS30022", "BCAS20071",
         "NPEB01202", "NPUB30910", "NPJA00102",
         "BLUD80018", // trade demo
-    };
+    ];
 
     private static readonly HashSet<string> KnownDesPatches = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -862,13 +865,13 @@ internal static partial class LogParserResult
         }
     }
 
-    private static readonly HashSet<string> Dod3Ids = new()
-    {
+    private static readonly HashSet<string> Dod3Ids =
+    [
         "BLUS31197", "NPUB31251",
         "NPEB01407",
         "BLJM61043", "NPJB00380",
         "BCAS20311", "NPHB00633", "NPHB00639",
-    };
+    ];
 
     private static readonly HashSet<string> KnownDod3Patches = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -877,13 +880,11 @@ internal static partial class LogParserResult
         "b18834a8f21cd29a091b287a66656a279ccba507", // NPUB31251 1.00
         "9c04f427625a0064282432e4edfefe9e0956c303", // NPUB31251 1.01
         "e1a44e5d3fb03a37f0445e92ed13abce8d6efdd4", // NPEB01407
-        "60d4a7e2b5efa835e16f51de649c3e3b202e072e", // NPEB01407 delisted
         "a017576369165f3746730724c8ae762ed9bc64d8", // BLJM61043 1.00
         "eda0339b931f6fe15420b053703ddd89b27d615b", // BLJM61043 1.01
         "62eb0f5d8f0f929cb23309311b89ce21eaa3bc9e", // BLJM61043 1.02
         "384a28c62ff179a4ae815ab7b711e76fbb1167b4", // BLJM61043 1.03
         "c09c496514f6dc591434575b04eb7c003826c11d", // BLJM61043 1.04
-        "5eb979631fbbe531db5d20f0622dca5a8b64090e", // unknown prob BCAS20311 1.00
         "56cc988f7d5b5127049f28ed9278b98de2e4ff1f", // BCAS20311 1.01
         "ac64494f4ea31f8b0f82584c48916d30dad16300", // BCAS20311 1.02
         "20183817f17fb358d28131e195c5af1fc9579ada", // NPHB00633 1.00
@@ -923,16 +924,16 @@ internal static partial class LogParserResult
         }
     }
 
-    private static readonly HashSet<string> TlouIds = new()
-    {
+    private static readonly HashSet<string> TlouIds =
+    [
         "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174",
         "NPEA00435", "NPJA00096", "NPHA80243", "NPUA80960",
         "NPEA00521", "NPJA00129", "NPHA80279", "NPUA81175", // left behind
         "NPEA90122", "NPHA80246", "NPUA70257", // demos
         "NPEA00454", "NPUA30134", "NPEA00517", // soundtrack
         "NPJM00012", // bonus video
-        "NPUO30130" // manual
-    };
+        "NPUO30130", // manual
+    ];
 
     private static readonly HashSet<string> KnownTlouPatches = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -1003,11 +1004,11 @@ internal static partial class LogParserResult
         }
     }
 
-    private static readonly HashSet<string> Killzone3Ids = new()
-    {
+    private static readonly HashSet<string> Killzone3Ids =
+    [
         "BCAS20157", "BCAS25008", "BCES01007", "BCJS30066", "BCJS37003", "BCJS70016", "BCJS75002", "BCUS98234",
         "NPEA00321", "NPEA90084", "NPEA90085", "NPEA90086", "NPHA80140", "NPJA90178", "NPUA70133",
-    };
+    ];
 
     private static void CheckKillzone3Settings(string serial, NameValueCollection items, List<string> notes, UniqueList<string> patchNames)
     {
@@ -1025,13 +1026,13 @@ internal static partial class LogParserResult
                 notes.Add("⚠️ Please enable MLAA patch (recommended) or `Write Color Buffers`");
         }
     }
-    private static readonly HashSet<string> RdrIds = new()
-    {
+    private static readonly HashSet<string> RdrIds =
+    [
         "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758",
         "BLJM60314", "BLJM60403", "BLJM61181", "BLKS20315",
         "NPEB00833", "NPHB00465", "NPHB00466", "NPUB30638", "NPUB30639",
         "NPUB50139", // max payne 3 / rdr bundle???
-    };
+    ];
 
     private static void CheckRdrSettings(string serial, NameValueCollection items, List<string> notes)
     {
@@ -1042,13 +1043,13 @@ internal static partial class LogParserResult
             notes.Add("ℹ️ `Write Color Buffers` is required for proper visuals at night");
     }
 
-    private static readonly HashSet<string> Mgs4Ids = new()
-    {
+    private static readonly HashSet<string> Mgs4Ids =
+    [
         "BLAS55005", "BLES00246", "BLJM57001", "BLJM67001", "BLKS25001", "BLUS30109", "BLUS30148",
         "NPEB02182", "NPJB00698", "NPUB31633",
         "NPEB90116", "NPHB00065", "NPHB00067", "NPJB90149", "NPUB90176", // demos
         "NPEB00027", "NPJB90113", "NPUB90126", // database
-    };
+    ];
 
     private static readonly HashSet<string> KnownMgs4Patches = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -1091,11 +1092,11 @@ internal static partial class LogParserResult
             generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
-    private static readonly HashSet<string> PdfIds = new()
-    {
+    private static readonly HashSet<string> PdfIds =
+    [
         "BLJM60527", "BLUS31319", "BLAS50576",
         "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287",
-    };
+    ];
 
 
     private static readonly HashSet<string> KnownPdfPatches = new(StringComparer.InvariantCultureIgnoreCase)
@@ -1105,11 +1106,11 @@ internal static partial class LogParserResult
         "1105af0a4d6a4a1481930c6f3090c476cde06c4c",
     };
 
-    private static readonly HashSet<string> Pdf2ndIds = new()
-    {
+    private static readonly HashSet<string> Pdf2ndIds =
+    [
         "BCAS50693", "BLAS50693", "BLES02029", "BLJM61079",
         "NPUB31488", "NPHB00671", "NPHB00662", "NPEB02013", "NPJB00435",
-    };
+    ];
 
     private static readonly HashSet<string> KnownPdf2ndPatches = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -1142,15 +1143,15 @@ internal static partial class LogParserResult
             generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
-    private static readonly HashSet<string> Gt5Ids = new()
-    {
+    private static readonly HashSet<string> Gt5Ids =
+    [
         "BCAS20108", "BCAS20151", "BCAS20154", "BCAS20164", "BCAS20229", "BCAS20267",
         "BCES00569",
         "BCJS30001", "BCJS30050", "BCJS30100",
         "BCUS98114", "BCUS98272", "BCUS98394",
         "NPEA90052", "NPHA80080", "NPUA70087", // time trial
         "NPUA70115", // kiosk demo
-    };
+    ];
 
     private static readonly HashSet<string> KnownGt5Patches = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -1179,12 +1180,12 @@ internal static partial class LogParserResult
             generalNotes.Add("ℹ️ Game versions between 1.05 and 1.10 can fail to boot with HDD space error");
     }
 
-    private static readonly HashSet<string> Gt6Ids = new()
-    {
+    private static readonly HashSet<string> Gt6Ids =
+    [
         "BCAS20519", "BCAS20520", "BCAS20521", "BCAS25018", "BCAS25019",
         "BCES01893", "BCES01905", "BCJS37016", "BCUS98296", "BCUS99247",
         "NPEA00502", "NPJA00113", "NPUA81049",
-    };
+    ];
 
     private static void CheckGt6Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
     {
@@ -1251,19 +1252,19 @@ internal static partial class LogParserResult
         }
     }
         
-    private static readonly HashSet<string> RatchetToDIds = new()
-    {
+    private static readonly HashSet<string> RatchetToDIds =
+    [
         "BCAS20045", "BCES00052", "BCJS30014", "BCJS70004", "BCJS70012", "BCKS10054", "BCUS98127", "BCUS98153",
-        "NPEA00452", "NPEA90017", "NPHA20002", "NPUA80965", "NPUA98153", 
-    };
+        "NPEA00452", "NPEA90017", "NPHA20002", "NPUA80965", "NPUA98153",
+    ];
 
-    private static readonly HashSet<string> Sly4Ids = new()
-    {
+    private static readonly HashSet<string> Sly4Ids =
+    [
         "BCES01284", "BCUS98247", "BCUS99142",
         "NPEA00429", "NPUA80875",
         "NPEA90120", "NPUA70250", // demos
         "NPUA30123", // soundtrack ???
-    };
+    ];
 
     private static void CheckSly4Settings(string serial, NameValueCollection items, List<string> notes)
     {
@@ -1279,11 +1280,11 @@ internal static partial class LogParserResult
         }
     }
 
-    private static readonly HashSet<string> DragonsCrownIds = new()
-    {
+    private static readonly HashSet<string> DragonsCrownIds =
+    [
         "BCAS20290", "BCAS20298", "BLES01950", "BLJM61041", "BLUS30767",
         "NPEB01836", "NPUB31235",
-    };
+    ];
 
     private static void CheckDragonsCrownSettings(string serial, NameValueCollection items, List<string> notes)
     {
@@ -1294,29 +1295,33 @@ internal static partial class LogParserResult
             notes.Add("⚠️ Please disable `SPU Loop Detection` for this game");
     }
 
-    private static readonly HashSet<string> Lbp1Ids = new()
-    {
-        "BCAS20058", "BCAS20078", "BCAS20091", "BCES00611", "BCES00141", "BCJS70009", "BCKS10059", "BCUS98148", "BCUS98199", "BCUS98208",
+    private static readonly HashSet<string> Lbp1Ids =
+    [
+        "BCAS20058", "BCAS20078", "BCAS20091", "BCES00611", "BCES00141", "BCJS70009", "BCKS10059", "BCUS98148",
+        "BCUS98199", "BCUS98208",
         "NPEA00241", "NPHA80093", "NPUA80472", "NPUA80479",
-    };
+    ];
 
-    private static readonly HashSet<string> Lbp2Ids = new()
-    {
-        "BCAS20201", "BCES00850", "BCES01086", "BCES01345", "BCES01346", "BCES01693", "BCES01694", "BCJS70024", "BCUS90260", "BCUS98249", "BCUS98372",
+    private static readonly HashSet<string> Lbp2Ids =
+    [
+        "BCAS20201", "BCES00850", "BCES01086", "BCES01345", "BCES01346", "BCES01693", "BCES01694", "BCJS70024",
+        "BCUS90260", "BCUS98249", "BCUS98372",
         "NPEA00324", "NPHA80161", "NPUA80662",
-    };
+    ];
 
-    private static readonly HashSet<string> Lbp3Ids = new()
-    {
+    private static readonly HashSet<string> Lbp3Ids =
+    [
         "BCAS20322", "BCES01663", "BCES02068", "BCUS98245", "BCUS98362",
         "NPEA00515", "NPHA80277", "NPUA81116",
-    };
+    ];
 
-    private static readonly HashSet<string> AllLbpGames = new(Lbp1Ids.Concat(Lbp2Ids).Concat(Lbp3Ids))
-    {
-        "NPEA00147", "NPJA90074", "NPJA90097", "NPUA70045", // lbp1 demos and betas
+    private static readonly HashSet<string> AllLbpGames =
+    [
+        ..Lbp1Ids, ..Lbp2Ids, ..Lbp3Ids,
+        "NPEA00147", "NPJA90074", "NPJA90097",
+        "NPUA70045", // lbp1 demos and betas
         "NPUA70117", "NPHA80163", // lbp2 demo and beta
-    };
+    ];
 
     private static void CheckLbpSettings(string serial, NameValueCollection items, List<string> generalNotes)
     {

@@ -1,19 +1,14 @@
 ﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.Utils;
-using CompatBot.Utils.ResultFormatters;
 
 namespace CompatBot.EventHandlers.LogParsing;
 
 internal partial class LogParser
 {
-    private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.ExplicitCapture;
-    private const RegexOptions DefaultSingleLineOptions = RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-
     /*
      * Extractors are defined in terms of trigger-extractor
      *
@@ -23,228 +18,232 @@ internal partial class LogParser
      * If any data was captured, it will be stored in the current collection of items with the key of the explicit capture group of regex
      *
      */
-    private static readonly List<LogSection> LogSections = new()
-    {
+    private static readonly List<LogSection> LogSections =
+    [
         new()
         {
             Extractors = new()
             {
-                ["RPCS3 v"] = new(@"(^|.+\d:\d\d:\d\d\.\d{6})\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n·|$)", DefaultSingleLineOptions),
-                ["0:00:00.0"] = new(@"(?<first_unicode_dot>·).+\r?$", DefaultOptions),
-                ["Operating system:"] = LogParserResult.OsInfoInLog,
-                ["Current Time:"] = new(@"Current Time: (?<log_start_timestamp>.+)\r?$", DefaultOptions),
-                ["Installation ID:"] = new(@"Installation ID: (?<hw_id>.+)\r?$", DefaultOptions),
-                ["Physical device in"] = new(@"Physical device ini?tialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
-                ["Found vulkan-compatible GPU:"] = new(@"Found [Vv]ulkan-compatible GPU: (?<vulkan_found_device>'(?<vulkan_compatible_device_name>.+)' running.+)\r?$", DefaultOptions),
-                ["Finished reading database from file:"] = new(@"Finished reading database from file: (?<compat_database_path>.*compat_database.dat).*\r?$", DefaultOptions),
-                ["Database file not found:"] = new(@"Database file not found: (?<compat_database_path>.*compat_database.dat).*\r?$", DefaultOptions),
-                ["Successfully installed PS3 firmware"] = new(@"(?<fw_installed_message>Successfully installed PS3 firmware) version (?<fw_version_installed>\d+\.\d+).*\r?$", DefaultOptions),
-                ["Firmware version:"] = new(@"Firmware version: (?<fw_version_installed>\d+\.\d+).*\r?$", DefaultOptions),
-                ["Title:"] = new(@"(?:LDR|SYS): Title: (?<game_title>.*)?\r?$", DefaultOptions),
-                ["Serial:"] = new(@"Serial: (?<serial>[A-z]{4}\d{5})\r?$", DefaultOptions),
-                ["Category:"] = new(@"Category: (?<game_category>.*)?\r?$", DefaultOptions),
-                ["LDR: Version:"] = new(@"Version: (?<disc_app_version>\S+) / (?<disc_package_version>\S+).*?\r?$", DefaultOptions),
-                ["SYS: Version:"] = new(@"Version: (APP_VER=)?(?<disc_app_version>\S+) (/ |VERSION=)(?<disc_package_version>\S+).*?\r?$", DefaultOptions),
-                ["LDR: Cache"] = new(@"Cache: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
-                ["SYS: Cache"] = new(@"Cache: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
-                ["LDR: Path"] = new(@"Path: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
-                ["SYS: Path"] = new(@"Path: ((?<win_path>\w:/)|(?<lin_path>/[^/])).*?\r?$", DefaultOptions),
-                ["LDR: Path:"] = new(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["SYS: Path:"] = new(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["custom config:"] = new(@"custom config: (?<custom_config>.*?)\r?$", DefaultOptions),
-                ["patch_log: Failed to load patch file"] = new(@"patch_log: Failed to load patch file (?<patch_error_file>\S*)\r?\n.* line (?<patch_error_line>\d+), column (?<patch_error_column>\d+): (?<patch_error_text>.*?)$", DefaultOptions),
+                ["RPCS3 v"] = Rpcs3LogHeader(),
+                ["0:00:00.0"] = FirstLineWithDot(),
+                ["Operating system:"] = OsInfo(),
+                ["Current Time:"] = CurrentTime(),
+                ["Installation ID:"] = InstallationId(),
+                ["Physical device in"] = PhysicalDeviceName(),
+                ["Found vulkan-compatible GPU:"] = VulkanDeviceName(),
+                ["Finished reading database from file:"] = CompatDbFoundPath(),
+                ["Database file not found:"] = CompatDbNotFoundPath(),
+                ["Successfully installed PS3 firmware"] = FwInstallMessage(),
+                ["Firmware version:"] = FwVersion(),
+                ["Title:"] = GameTitle(),
+                ["Serial:"] = GameSerial(),
+                ["Category:"] = GameCategory(),
+                ["LDR: Version:"] = DiscVersionLdr(),
+                ["SYS: Version:"] = DiscVersionSys(),
+                ["LDR: Cache"] = CachePathLdr(),
+                ["SYS: Cache"] = CachePathSys(),
+                ["LDR: Path"] = BootPathLdr(),
+                ["SYS: Path"] = BootPathSys(),
+                ["LDR: Path:"] = BootPathDigitalLdr(),
+                ["SYS: Path:"] = BootPathDigitalSys(),
+                ["custom config:"] = CustomConfigPath(),
+                ["patch_log: Failed to load patch file"] = FailedPatchPath(),
             },
-            EndTrigger = new[] {"Used configuration:"},
+            EndTrigger = ["Used configuration:"],
         },
+
         new()
         {
             Extractors = new()
             {
-                ["PPU Decoder:"] = new(@"PPU Decoder: (?<ppu_decoder>.*?)\r?$", DefaultOptions),
-                ["PPU Threads:"] = new(@"PPU Threads: (?<ppu_threads>.*?)\r?$", DefaultOptions),
-                ["Use LLVM CPU:"] = new("Use LLVM CPU: \\\"?(?<llvm_arch>.*?)\\\"?\r?$", DefaultOptions),
-                ["thread scheduler"] = new(@"[Ss]cheduler( Mode)?: (?<thread_scheduler>.*?)\r?$", DefaultOptions),
-                ["SPU Decoder:"] = new(@"SPU Decoder: (?<spu_decoder>.*?)\r?$", DefaultOptions),
-                ["secondary cores:"] = new(@"secondary cores: (?<spu_secondary_cores>.*?)\r?$", DefaultOptions),
-                //["priority:"] = new(@"priority: (?<spu_lower_thread_priority>.*?)\r?$", DefaultOptions),
-                ["SPU Threads:"] = new(@"SPU Threads: (?<spu_threads>.*?)\r?$", DefaultOptions),
-                ["SPU delay penalty:"] = new(@"SPU delay penalty: (?<spu_delay_penalty>.*?)\r?$", DefaultOptions),
-                ["SPU loop detection:"] = new(@"SPU loop detection: (?<spu_loop_detection>.*?)\r?$", DefaultOptions),
-                ["Max SPURS Threads:"] = new(@"Max SPURS Threads: (?<spurs_threads>\d*?)\r?$", DefaultOptions),
-                ["SPU Block Size:"] = new(@"SPU Block Size: (?<spu_block_size>.*?)\r?$", DefaultOptions),
-                ["Enable TSX:"] = new(@"Enable TSX: (?<enable_tsx>.*?)\r?$", DefaultOptions),
-                ["Accurate xfloat:"] = new(@"Accurate xfloat: (?<accurate_xfloat>.*?)\r?$", DefaultOptions),
-                ["Approximate xfloat:"] = new(@"Approximate xfloat: (?<approximate_xfloat>.*?)\r?$", DefaultOptions),
-                ["Relaxed xfloat:"] = new(@"Relaxed xfloat: (?<relaxed_xfloat>.*?)\r?$", DefaultOptions),
-                ["XFloat Accuracy:"] = new(@"XFloat Accuracy: (?<xfloat_mode>.*?)\r?$", DefaultOptions),
-                ["Accurate GETLLAR:"] = new(@"Accurate GETLLAR: (?<accurate_getllar>.*?)\r?$", DefaultOptions),
-                ["Accurate PUTLLUC:"] = new(@"Accurate PUTLLUC: (?<accurate_putlluc>.*?)\r?$", DefaultOptions),
-                ["Accurate RSX reservation access:"] = new(@"Accurate RSX reservation access: (?<accurate_rsx_reservation>.*?)\r?$", DefaultOptions),
-                ["RSX FIFO Accuracy:"] = new(@"RSX FIFO Accuracy: (?<rsx_fifo_mode>.*?)\r?$", DefaultOptions),
-                ["Debug Console Mode:"] = new(@"Debug Console Mode: (?<debug_console_mode>.*?)\r?$", DefaultOptions),
-                ["Lib Loader:"] = new(@"[Ll]oader: (?<lib_loader>.*?)\r?$", DefaultOptions),
-                ["Hook static functions:"] = new(@"Hook static functions: (?<hook_static_functions>.*?)\r?$", DefaultOptions),
-                ["Load libraries:"] = new(@"libraries:\r?\n(?<library_list>(.*?(- .*?|\[\])\r?\n)+)", DefaultOptions),
-                ["Libraries Control:"] = new(@"Libraries Control:\r?\n(?<library_list>(.*?(- .*?|\[\])\r?\n)+)", DefaultOptions),
-                ["HLE lwmutex:"] = new(@"HLE lwmutex: (?<hle_lwmutex>.*?)\r?$", DefaultOptions),
-                ["Clocks scale:"] = new(@"Clocks scale: (?<clock_scale>.*?)\r?$", DefaultOptions),
-                ["Max CPU Preempt Count:"] = new(@"Max CPU Preempt Count: (?<cpu_preempt_count>.*?)\r?$", DefaultOptions),
-                ["Sleep Timers Accuracy:"] = new(@"Sleep Timers Accuracy: (?<sleep_timer>.*?)\r?$", DefaultOptions),
+                ["PPU Decoder:"] = PpuDecoderType(),
+                ["PPU Threads:"] = PpuThreadCount(),
+                ["Use LLVM CPU:"] = LlvmCpuArch(),
+                ["thread scheduler"] = ThreadSchedulerMode(),
+                ["SPU Decoder:"] = SpuDecoderType(),
+                ["secondary cores:"] = SecondaryCores(),
+                //["priority:"] = LowerThreadPriority(),
+                ["SPU Threads:"] = SpuThreadCount(),
+                ["SPU delay penalty:"] = SpuDelayPenalty(),
+                ["SPU loop detection:"] = SpuLoopDetection(),
+                ["Max SPURS Threads:"] = SpursThreadCount(),
+                ["SPU Block Size:"] = SpuBlockSize(),
+                ["Enable TSX:"] = TsxMode(),
+                ["Accurate xfloat:"] = AccurateXfloat(),
+                ["Approximate xfloat:"] = ApproximateXfloat(),
+                ["Relaxed xfloat:"] = RelaxedXfloat(),
+                ["XFloat Accuracy:"] = XfloatMode(),
+                ["Accurate GETLLAR:"] = GetLlarMode(),
+                ["Accurate PUTLLUC:"] = PutLlucMode(),
+                ["Accurate RSX reservation access:"] = RsxReservationAccessMode(),
+                ["RSX FIFO Accuracy:"] = RsxFifoMode(),
+                ["Debug Console Mode:"] = DebugConsoleMode(),
+                ["Lib Loader:"] = LibLoaderMode(),
+                ["Hook static functions:"] = HookStaticFunctions(),
+                ["Load libraries:"] = LoadLibrariesList(),
+                ["Libraries Control:"] = LibrariesControlList(),
+                ["HLE lwmutex:"] = HleLwmutex(),
+                ["Clocks scale:"] = ClockScale(),
+                ["Max CPU Preempt Count:"] = CpuPreemptCount(),
+                ["Sleep Timers Accuracy:"] = SleepTimersMode(),
             },
-            EndTrigger = new[] {"VFS:"},
+            EndTrigger = ["VFS:"],
         },
+
         new()
         {
             Extractors = new()
             {
-                ["Enable /host_root/:"] = new(@"Enable /host_root/: (?<host_root>.*?)\r?$", DefaultOptions),
+                ["Enable /host_root/:"] = EnableHostRoot(),
             },
-            EndTrigger = new[] {"Video:"},
+            EndTrigger = ["Video:"],
         },
+
         new()
         {
             Extractors = new()
             {
-                ["Renderer:"] = new("Renderer: (?<renderer>.*?)\r?$", DefaultOptions),
-                ["Resolution:"] = new("Resolution: (?<resolution>.*?)\r?$", DefaultOptions),
-                ["Aspect ratio:"] = new("Aspect ratio: (?<aspect_ratio>.*?)\r?$", DefaultOptions),
-                ["Frame limit:"] = new("Frame limit: (?<frame_limit>.*?)\r?$", DefaultOptions),
-                ["MSAA:"] = new("MSAA: (?<msaa>.*?)\r?$", DefaultOptions),
-                ["Write Color Buffers:"] = new("Write Color Buffers: (?<write_color_buffers>.*?)\r?$", DefaultOptions),
-                ["Write Depth Buffer:"] = new("Write Depth Buffer: (?<write_depth_buffer>.*?)\r?$", DefaultOptions),
-                ["Read Color Buffers:"] = new("Read Color Buffers: (?<read_color_buffers>.*?)\r?$", DefaultOptions),
-                ["Read Depth Buffer:"] = new("Read Depth Buffer: (?<read_depth_buffer>.*?)\r?$", DefaultOptions),
-                ["VSync:"] = new("VSync: (?<vsync>.*?)\r?$", DefaultOptions),
-                ["GPU texture scaling:"] = new("Use GPU texture scaling: (?<gpu_texture_scaling>.*?)\r?$", DefaultOptions),
-                ["Stretch To Display Area:"] = new("Stretch To Display Area: (?<stretch_to_display>.*?)\r?$", DefaultOptions),
-                ["Strict Rendering Mode:"] = new("Strict Rendering Mode: (?<strict_rendering_mode>.*?)\r?$", DefaultOptions),
-                ["Occlusion Queries:"] = new("Occlusion Queries: (?<zcull>.*?)\r?$", DefaultOptions),
-                ["Vertex Cache:"] = new("Disable Vertex Cache: (?<vertex_cache>.*?)\r?$", DefaultOptions),
-                ["Frame Skip:"] = new("Enable Frame Skip: (?<frame_skip>.*?)\r?$", DefaultOptions),
-                ["Blit:"] = new("Blit: (?<cpu_blit>.*?)\r?$", DefaultOptions),
-                ["Disable Asynchronous Shader Compiler:"] = new("Disable Asynchronous Shader Compiler: (?<disable_async_shaders>.*?)\r?$", DefaultOptions),
-                ["Shader Mode:"] = new("Shader Mode: (?<shader_mode>.*?)\r?$", DefaultOptions),
-                ["Disable native float16 support:"] = new("Disable native float16 support: (?<disable_native_float16>.*?)\r?$", DefaultOptions),
-                ["Multithreaded RSX:"] = new("Multithreaded RSX: (?<mtrsx>.*?)\r?$", DefaultOptions),
-                ["Relaxed ZCULL Sync:"] = new("Relaxed ZCULL Sync: (?<relaxed_zcull>.*?)\r?$", DefaultOptions),
-                ["Resolution Scale:"] = new("Resolution Scale: (?<resolution_scale>.*?)\r?$", DefaultOptions),
-                ["Anisotropic Filter"] = new("Anisotropic Filter Override: (?<af_override>.*?)\r?$", DefaultOptions),
-                ["Scalable Dimension:"] = new("Minimum Scalable Dimension: (?<texture_scale_threshold>.*?)\r?$", DefaultOptions),
-                ["Driver Recovery Timeout:"] = new("Driver Recovery Timeout: (?<driver_recovery_timeout>.*?)\r?$", DefaultOptions),
-                ["Driver Wake-Up Delay:"] = new("Driver Wake-Up Delay: (?<driver_wakeup_delay>.*?)\r?$", DefaultOptions),
-                ["Vblank Rate:"] = new("Vblank Rate: (?<vblank_rate>.*?)\r?$", DefaultOptions),
-                ["12:"] = new(@"(D3D12|DirectX 12):\s*\r?\n\s*Adapter: (?<d3d_gpu>.*?)\r?$", DefaultOptions),
-                ["Vulkan:"] = new(@"Vulkan:\s*\r?\n\s*Adapter: (?<vulkan_gpu>.*?)\r?$", DefaultOptions),
-                ["Force FIFO present mode:"] = new(@"Force FIFO present mode: (?<force_fifo_present>.*?)\r?$", DefaultOptions),
-                ["Asynchronous Texture Streaming"] = new(@"Asynchronous Texture Streaming( 2)?: (?<async_texture_streaming>.*?)\r?$", DefaultOptions),
-                ["Asynchronous Queue Scheduler:"] = new(@"Asynchronous Queue Scheduler: (?<async_queue_scheduler>.*?)\r?$", DefaultOptions),
+                ["Renderer:"] = RendererBackend(),
+                ["Resolution:"] = ResolutionMode(),
+                ["Aspect ratio:"] = AspectRatioMode(),
+                ["Frame limit:"] = FrameLimit(),
+                ["MSAA:"] = MsaaMode(),
+                ["Write Color Buffers:"] = Wcb(),
+                ["Write Depth Buffer:"] = Wdb(),
+                ["Read Color Buffers:"] = Rcb(),
+                ["Read Depth Buffer:"] = Rdb(),
+                ["VSync:"] = VsyncMode(),
+                ["GPU texture scaling:"] = GpuTextureScaling(),
+                ["Stretch To Display Area:"] = StretchToDisplay(),
+                ["Strict Rendering Mode:"] = StrictRendering(),
+                ["Occlusion Queries:"] = OcclusionQueriesMode(),
+                ["Vertex Cache:"] = VertexCache(),
+                ["Frame Skip:"] = FrameSkip(),
+                ["Blit:"] = BlitMode(),
+                ["Disable Asynchronous Shader Compiler:"] = DisableAsyncShaders(),
+                ["Shader Mode:"] = ShaderMode(),
+                ["Disable native float16 support:"] = DisableNativeF16(),
+                ["Multithreaded RSX:"] = RsxMultithreadMode(),
+                ["Relaxed ZCULL Sync:"] = RelaxedZcull(),
+                ["Resolution Scale:"] = ResolutionScaling(),
+                ["Anisotropic Filter"] = AnisoFilter(),
+                ["Scalable Dimension:"] = ScalableDimensions(),
+                ["Driver Recovery Timeout:"] = DriverRecoveryTimeout(),
+                ["Driver Wake-Up Delay:"] = DriverWakeupDelay(),
+                ["Vblank Rate:"] = VblankRate(),
+                ["12:"] = SelectedD3d12Device(),
+                ["Vulkan:"] = SelectedVulkanDevice(),
+                ["Force FIFO present mode:"] = FifoPresentMode(),
+                ["Asynchronous Texture Streaming"] = AsyncTextureStreaming(),
+                ["Asynchronous Queue Scheduler:"] = AsyncQueueScheduler(),
             },
-            EndTrigger = new[] {"Audio:"},
+            EndTrigger = ["Audio:"],
         },
+
         new() // Audio, Input/Output, System, Net, Miscellaneous
         {
             Extractors = new()
             {
-                ["Renderer:"] = new("Renderer: (?<audio_backend>.*?)\r?$", DefaultOptions),
-                ["Downmix to Stereo:"] = new("Downmix to Stereo: (?<audio_stereo>.*?)\r?$", DefaultOptions),
-                ["Master Volume:"] = new("Master Volume: (?<audio_volume>.*?)\r?$", DefaultOptions),
-                ["Enable Buffering:"] = new("Enable Buffering: (?<audio_buffering>.*?)\r?$", DefaultOptions),
-                ["Desired Audio Buffer Duration:"] = new("Desired Audio Buffer Duration: (?<audio_buffer_duration>.*?)\r?$", DefaultOptions),
-                ["Enable Time Stretching:"] = new("Enable Time Stretching: (?<audio_stretching>.*?)\r?$", DefaultOptions),
+                ["Renderer:"] = AudioBackend(),
+                ["Downmix to Stereo:"] = DownmixToStereo(),
+                ["Master Volume:"] = MasterVolume(),
+                ["Enable Buffering:"] = AudioBuffering(),
+                ["Desired Audio Buffer Duration:"] = AudioBufferLength(),
+                ["Enable Time Stretching:"] = AudioTimeStretching(),
 
-                ["Pad:"] = new("Pad: (?<pad_handler>.*?)\r?$", DefaultOptions),
+                ["Pad:"] = GamepadType(),
 
-                ["Automatically start games after boot:"] = new("Automatically start games after boot: (?<auto_start_on_boot>.*?)\r?$", DefaultOptions),
-                ["Always start after boot:"] = new("Always start after boot: (?<always_start_on_boot>.*?)\r?$", DefaultOptions),
-                ["Use native user interface:"] = new("Use native user interface: (?<native_ui>.*?)\r?$", DefaultOptions),
-                ["Silence All Logs:"] = new("Silence All Logs: (?<disable_logs>.*?)\r?$", DefaultOptions),
+                ["Automatically start games after boot:"] = AutoStartAfterBoot(),
+                ["Always start after boot:"] = AlwaysStartAfterBoot(),
+                ["Use native user interface:"] = NativeUIMode(),
+                ["Silence All Logs:"] = SilenceAllLogs(),
             },
-            EndTrigger = new[] {"Log:"},
+            EndTrigger = ["Log:"],
         },
+
         new()
         {
             Extractors = new()
             {
-                ["Log:"] = new(@"Log:\s*\r?\n?\s*(\{(?<log_disabled_channels>.*?)\}|(?<log_disabled_channels_multiline>(\s+\w+\:\s*\w+\r?\n)+))\r?$", DefaultOptions),
+                ["Log:"] = LogChannelList(),
             },
-            EndTrigger = new[] {"·"},
+            EndTrigger = ["·"],
             OnSectionEnd = MarkAsComplete,
         },
+
         new()
         {
             Extractors = new()
             {
-                ["LDR: Game:"] = new(@"Game: (?<ldr_game_full>.*(?<ldr_game>/dev_hdd0/game/(?<ldr_game_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["LDR: Disc"]  = new(@"Disc( path)?: (?<ldr_disc_full>.*(?<ldr_disc>/dev_hdd0/game/(?<ldr_disc_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["LDR: Path:"] = new(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["LDR: Boot path:"] = new(@"Boot path: (?<ldr_boot_path_full>.*(?<ldr_boot_path>/dev_hdd0/game/(?<ldr_boot_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["SYS: Game:"] = new(@"Game: (?<ldr_game_full>.*(?<ldr_game>/dev_hdd0/game/(?<ldr_game_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["SYS: Path:"] = new(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["SYS: Boot path:"] = new(@"Boot path: (?<ldr_boot_path_full>.*(?<ldr_boot_path>/dev_hdd0/game/(?<ldr_boot_path_serial>[^/\r\n]+)).*|.*)\r?$", DefaultOptions),
-                ["Elf path:"] = new(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path_full>(?<elf_boot_path>/dev_hdd0/game/(?<elf_boot_path_serial>[^/\r\n]+)/USRDIR/EBOOT\.BIN|.*?))\r?$", DefaultOptions),
-                ["VFS: Mounted path \"/dev_bdvd\""] = new(@"Mounted path ""/dev_bdvd"" to ""(?<mounted_dev_bdvd>[^""]+)""", DefaultOptions),
-                ["Invalid or unsupported file format:"] = new(@"Invalid or unsupported file format: (?<failed_to_boot>.*?)\r?$", DefaultOptions),
-                ["SELF:"] = new(@"(?<failed_to_decrypt>Failed to decrypt)? SELF: (?<failed_to_decrypt>Failed to (decrypt|load SELF))?.*\r?$", DefaultOptions),
-                ["SYS: Version:"] = new(@"Version: (APP_VER=)?(?<disc_app_version>\S+) (/ |VERSION=)(?<disc_package_version>\S+).*?\r?$", DefaultOptions),
-                ["sceNp: npDrmIsAvailable(): Failed to verify"] = new(@"Failed to verify (?<failed_to_verify_npdrm>(sce|npd)) file.*\r?$", DefaultOptions),
-                ["{rsx::thread} RSX: 4"] = new(@"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?" +
-                                               @"RSX: [^\n]+\r?\n[^\n]*?" +
-                                               @"RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?" +
-                                               @"RSX: Supported texel buffer size", DefaultOptions),
-                ["GL RENDERER:"] = new(@"GL RENDERER: (?<driver_manuf_new>.*?)\r?$", DefaultOptions),
-                ["GL VERSION:"] = new(@"GL VERSION: (?<opengl_version>(\d|\.)+)(\d|\.|\s|\w|-)*?( (?<driver_version_new>(\d+\.)*\d+))?\r?$", DefaultOptions),
-                ["GLSL VERSION:"] = new(@"GLSL VERSION: (?<glsl_version>(\d|\.)+).*?\r?$", DefaultOptions),
-                ["texel buffer size reported:"] = new(@"RSX: Supported texel buffer size reported: (?<texel_buffer_size_new>\d*?) bytes", DefaultOptions),
-                ["Physical device in"] = new(@"Physical device ini?tialized\. GPU=(?<vulkan_gpu>.+), driver=(?<vulkan_driver_version_raw>-?\d+)\r?$", DefaultOptions),
-                ["Found vulkan-compatible GPU:"] = new(@"Found [Vv]ulkan-compatible GPU: (?<vulkan_found_device>.+)\r?$", DefaultOptions),
-                ["Renderer initialized on device"] = new(@"Renderer initialized on device '(?<vulkan_initialized_device>.+)'\r?$", DefaultOptions),
-                ["RSX: Failed to compile shader"] = new(@"RSX: Failed to compile shader: ERROR: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
-                ["RSX: Compilation failed"] = new(@"RSX: Compilation failed: ERROR: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
-                ["RSX: Linkage failed"] = new(@"RSX: Linkage failed: (?<shader_compile_error>.+?)\r?$", DefaultOptions),
-                ["RSX: Unsupported device"] = new(@"RSX: Unsupported device: (?<rsx_unsupported_gpu>.+)\..+?\r?$", DefaultOptions),
-                ["RSX: Your GPU does not support"] = new(@"RSX: Your GPU does not support (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
-                ["RSX: GPU/driver lacks support"] = new(@"RSX: GPU/driver lacks support for (?<rsx_not_supported_feature>.+)\..+?\r?$", DefaultOptions),
-                ["RSX: Swapchain:"] = new(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions),
-                ["F "] = new(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*(Thread terminated due to fatal error: )?|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|·|$)", DefaultSingleLineOptions),
-                ["Failed to load RAP file:"] = new(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions),
-                ["Rap file not found:"] = new(@"Rap file not found: “?(?<rap_file>.*?\.rap)”?\r?$", DefaultOptions),
-                ["Pad handler expected but none initialized"] = new(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions),
-                ["Failed to bind device"] = new(@"Failed to bind device (?<failed_pad>.+) to handler (?<failed_pad_handler>.+).*\r?$", DefaultOptions),
-                ["Input:"] = new(@"Input: (?<pad_handler>.*?) device .+ connected\r?$", DefaultOptions),
-                ["XAudio2Thread"] = new(@"XAudio2Thread\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
-                ["cellAudio Thread"] = new(@"XAudio2Backend\s*: (?<xaudio_init_error>.+failed\s*\((?<xaudio_error_code>0x.+)\).*)\r?$", DefaultOptions),
-                ["using a Null renderer instead"] = new(@"Audio renderer (?<audio_backend_init_error>.+) could not be initialized\r?$", DefaultOptions),
-                ["PPU executable hash:"] = new(@"PPU executable hash: PPU-(?<ppu_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
-                ["OVL executable hash:"] = new(@"OVL executable hash: OVL-(?<ovl_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
-                ["SPU executable hash:"] = new(@"SPU executable hash: SPU-(?<spu_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
-                ["PRX library hash:"] = new(@"PRX library hash: PRX-(?<prx_patch>\w+-\d+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
-                ["OVL hash of"] = new(@"OVL hash of (\w|[\.\[\]])+: OVL-(?<ovl_patch>\w+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
-                ["PRX hash of"] = new(@"PRX hash of (\w|[\.\[\]])+: PRX-(?<prx_patch>\w+-\d+( \(<-\s*\d+\))?).*?\r?$", DefaultOptions),
-                [": Applied patch"] = new(@"Applied patch \(hash='(?:\w{3}-\w+(-\d+)?)', description='(?<patch_desc>.+?)', author='(?:.+?)', patch_version='(?:.+?)', file_version='(?:.+?)'\) \(<- (?:[1-9]\d*)\).*\r?$", DefaultOptions),
-                ["Loaded SPU image:"] = new(@"Loaded SPU image: SPU-(?<spu_patch>\w+ \(<-\s*\d+\)).*?\r?$", DefaultOptions),
-                ["'sys_fs_stat' failed"] = new(@"'sys_fs_stat' failed (?!with 0x8001002c).+“(/dev_bdvd/(?<broken_filename_or_dir>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))”.*?\r?$", DefaultOptions),
-                ["'sys_fs_open' failed"] = new(@"'sys_fs_open' failed (?!with 0x8001002c).+“(/dev_bdvd/(?<broken_filename>.+)|/dev_hdd0/game/NP\w+/(?<broken_digital_filename>.+))”.*?\r?$", DefaultOptions),
-                ["'sys_fs_opendir' failed"] = new(@"'sys_fs_opendir' failed .+“/dev_bdvd/(?<broken_directory>.+)”.*?\r?$", DefaultOptions),
-                ["EDAT: "] = new(@"EDAT: Block at offset (?<edat_block_offset>0x[0-9a-f]+) has invalid hash!.*?\r?$", DefaultOptions),
-                ["PS3 firmware is not installed"] = new(@"(?<fw_missing_msg>PS3 firmware is not installed.+)\r?$", DefaultOptions),
-                ["do you have the PS3 firmware installed"] = new(@"(?<fw_missing_something>do you have the PS3 firmware installed.*)\r?$", DefaultOptions),
-                ["Unimplemented syscall"] = new(@"U \d+:\d+:\d+\.\d+ ({(?<unimplemented_syscall_context>.+?)} )?.*Unimplemented syscall (?<unimplemented_syscall>.*)\r?$", DefaultOptions),
-                ["Could not enqueue"] = new(@"cellAudio: Could not enqueue buffer onto audio backend(?<enqueue_buffer_error>.).*\r?$", DefaultOptions),
-                ["{PPU["] = new(@"{PPU\[.+\]} (?<log_channel>[^ :]+)( TODO)?: (?!“)(?<syscall_name>[^ :]+?)\(.*\r?$", DefaultOptions),
-                ["Verification failed"] = new(@"Verification failed.+\(e=0x(?<verification_error_hex>[0-9a-f]+)\[(?<verification_error>\d+)\]\)", DefaultOptions),
-                ["sys_tty_write():"] = new(@"sys_tty_write\(\)\: “(?<tty_line>.*?)”\r?(\n|$)", DefaultSingleLineOptions),
-                ["⁂"] = new(@"⁂ (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions),
-                ["undub"] =  new(@"(\b|_)(?<game_mod>(undub|translation patch))(\b|_)", DefaultOptions | RegexOptions.IgnoreCase),
-                ["Input: Pad"] = new(@"Input: Pad (?<pad_id>\d): device='(?<pad_controller_name>(?!Null).+?)', handler=(?<pad_handler>.+?), VID=.+?\r?$", DefaultOptions),
-                ["SDL: Found game controller"] = new(@"Found game controller \d: .+ has_accel=(?<pad_has_accel>.+?), has_gyro=(?<pad_has_gyro>.+?)\r?$", DefaultOptions),
+                ["LDR: Game:"] = GamePathLdr(),
+                ["LDR: Disc"] = DiscPathLdr(),
+                ["LDR: Path:"] = DigitalPathLdr(),
+                ["LDR: Boot path:"] = BootPathInBodyLdr(),
+                ["SYS: Game:"] = GamePathSys(),
+                ["SYS: Path:"] = DigitalPathSys(),
+                ["SYS: Boot path:"] = BootPathInBodySys(),
+                ["Elf path:"] = ElfPath(),
+                ["VFS: Mounted path \"/dev_bdvd\""] = VfsMountPath(),
+                ["Invalid or unsupported file format:"] = InvalidFileFormat(),
+                ["SELF:"] = DecryptFailedSelfPath(),
+                ["SYS: Version:"] = GameVersion(),
+                ["sceNp: npDrmIsAvailable(): Failed to verify"] = FailedToVerifyNpDrm(),
+                ["{rsx::thread} RSX: 4"] = RsxDriverInfoLegacy(),
+                ["{rsx::thread} RSX: 3"] = RsxDriverInfoLegacy(),
+                ["GL RENDERER:"] = GlRenderer(),
+                ["GL VERSION:"] = GlVersion(),
+                ["GLSL VERSION:"] = GlslVersion(),
+                ["texel buffer size reported:"] = GlTexelBufferSize(),
+                ["Physical device in"] = PhysicalDeviceFound(),
+                ["Found vulkan-compatible GPU:"] = VulkanDeviceFound(),
+                ["Renderer initialized on device"] = RenderDeviceInitialized(),
+                ["RSX: Failed to compile shader"] = FailedToCompileShader(),
+                ["RSX: Compilation failed"] = ShaderCompilationFailed(),
+                ["RSX: Linkage failed"] = ShaderLinkageFailed(),
+                ["RSX: Unsupported device"] = UnsupportedDevice(),
+                ["RSX: Your GPU does not support"] = UnsupportedDeviceFeatures(),
+                ["RSX: GPU/driver lacks support"] = UnsupportedDriverFeatures(),
+                ["RSX: Swapchain:"] = SwapchainMode(),
+                ["F "] = FatalError(),
+                ["Failed to load RAP file:"] = FailedToLoadRap(),
+                ["Rap file not found:"] = RapNotFound(),
+                ["Pad handler expected but none initialized"] = MissingGamepad(),
+                ["Failed to bind device"] = FailedToBindGamepad(),
+                ["Input:"] = InputDeviceConnected(),
+                ["XAudio2Thread"] = XAudio2Thread(),
+                ["cellAudio Thread"] = CellAudioThread(),
+                ["using a Null renderer instead"] = AudioBackendFailed(),
+                ["PPU executable hash:"] = PpuHash(),
+                ["OVL executable hash:"] = OvlHash(),
+                ["SPU executable hash:"] = SpuHash(),
+                ["PRX library hash:"] = PrxHash(),
+                ["OVL hash of"] = OvlHash2(),
+                ["PRX hash of"] = PrxHash2(),
+                [": Applied patch"] = AppliedPatch(),
+                ["Loaded SPU image:"] = SpuImageLoad(),
+                ["'sys_fs_stat' failed"] = SysFsStatFailed(),
+                ["'sys_fs_open' failed"] = SysFsOpenFailed(),
+                ["'sys_fs_opendir' failed"] = SysFsOpenDirFailed(),
+                ["EDAT: "] = InvalidEdat(),
+                ["PS3 firmware is not installed"] = FwNotInstalled(),
+                ["do you have the PS3 firmware installed"] = FwNotInstalled2(),
+                ["Unimplemented syscall"] = UnimplementedSyscall(),
+                ["Could not enqueue"] = CellAudioEnqueueFailed(),
+                ["{PPU["] = PpuSyscallTodo(),
+                ["Verification failed"] = VerificationFailed(),
+                ["sys_tty_write():"] = SysTtyWrite(),
+                ["⁂"] = SyscallDump(),
+                ["undub"] = UndubFlag(),
+                ["Input: Pad"] = InputDeviceGamepad(),
+                ["SDL: Found game controller"] = SdlControllerName(),
             },
             OnSectionEnd = MarkAsCompleteAndReset,
-            EndTrigger = new[] { "Stopping emulator...", "All threads stopped...", "LDR: Booting from"},
+            EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from"],
         }
-    };
+    ];
 
-    private static readonly HashSet<string> MultiValueItems = new()
-    {
+    private static readonly HashSet<string> MultiValueItems =
+    [
         "pad_handler",
         "pad_controller_name",
         "pad_has_gyro",
@@ -268,9 +267,9 @@ internal partial class LogParser
         "verification_error_hex",
         "verification_error",
         "tty_line",
-    };
+    ];
 
-    private static readonly string[] CountValueItems = {"enqueue_buffer_error"};
+    private static readonly string[] CountValueItems = ["enqueue_buffer_error"];
 
     private static async Task PiracyCheckAsync(string line, LogParseState state)
     {
@@ -326,7 +325,7 @@ internal partial class LogParser
                     state.WipMultiValueCollection[key] = collection;
             }
         }
-        state.WipCollection = new();
+        state.WipCollection = [];
         state.WipMultiValueCollection = new();
         Copy(
             "build_and_specs", "fw_version_installed",

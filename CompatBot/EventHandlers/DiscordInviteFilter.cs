@@ -18,10 +18,14 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
 
-internal static class DiscordInviteFilter
+internal static partial class DiscordInviteFilter
 {
-    private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline;
-    private static readonly Regex InviteLink = new(@"(https?://)?discord((((app)?\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|>|$))", DefaultOptions);
+    [GeneratedRegex(@"(https?://)?discord((((app)?\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|>|$))", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex InviteLink();
+    [GeneratedRegex(@"name=""csrf-token"" content=""(?<csrf_token>\w+)""")]
+    private static partial Regex CsrfTokenPattern();
+    [GeneratedRegex(@"name=""serverEid"" value=""(?<server_eid>\w+)""")]
+    private static partial Regex ServerEidPattern();
     private static readonly MemoryCache InviteCodeCache = new(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
@@ -189,8 +193,8 @@ internal static class DiscordInviteFilter
         if (string.IsNullOrEmpty(message))
             return (false, false, new(0));
 
-        var inviteCodes = new HashSet<string>(InviteLink.Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => !string.IsNullOrEmpty(s)));
-        var discordMeLinks = InviteLink.Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+        var inviteCodes = new HashSet<string>(InviteLink().Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => !string.IsNullOrEmpty(s)));
+        var discordMeLinks = InviteLink().Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
         var attemptedWorkaround = false;
         if (author != null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string>? recentInvites) && recentInvites is not null)
         {
@@ -232,8 +236,8 @@ internal static class DiscordInviteFilter
                         continue;
 
                     hasInvalidInvites = true;
-                    var csrfTokenMatch = Regex.Match(html, @"name=""csrf-token"" content=""(?<csrf_token>\w+)""");
-                    var serverEidMatch = Regex.Match(html, @"name=""serverEid"" value=""(?<server_eid>\w+)""");
+                    var csrfTokenMatch = CsrfTokenPattern().Match(html);
+                    var serverEidMatch = ServerEidPattern().Match(html);
                     if (csrfTokenMatch.Success && serverEidMatch.Success)
                     {
                         using var postRequest = new HttpRequestMessage(HttpMethod.Post, "https://discord.me/server/join")

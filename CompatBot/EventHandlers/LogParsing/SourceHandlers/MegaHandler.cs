@@ -11,11 +11,12 @@ using System.Threading;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
-internal sealed class MegaHandler : BaseSourceHandler
+internal sealed partial class MegaHandler : BaseSourceHandler
 {
     // mega.nz/#!8IJHBYyB!jw21m-GCs85uzj9E5XRysqyJCsNfZS0Zx4Eu9_zvuUM
     // mega.nz/file/8IJHBYyB#jw21m-GCs85uzj9E5XRysqyJCsNfZS0Zx4Eu9_zvuUM
-    private static readonly Regex ExternalLink = new(@"(?<mega_link>(https?://)?mega(\.co)?\.nz/(#(?<mega_id>[^/>\s]+)|file/(?<new_mega_id>[^/>\s]+)))", DefaultOptions);
+    [GeneratedRegex(@"(?<mega_link>(https?://)?mega(\.co)?\.nz/(#(?<mega_id>[^/>\s]+)|file/(?<new_mega_id>[^/>\s]+)))", DefaultOptions)]
+    private static partial Regex ExternalLink();
     private static readonly IProgress<double> Doodad = new Progress<double>(_ => { });
 
     public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
@@ -23,7 +24,7 @@ internal sealed class MegaHandler : BaseSourceHandler
         if (string.IsNullOrEmpty(message.Content))
             return (null, null);
 
-        var matches = ExternalLink.Matches(message.Content);
+        var matches = ExternalLink().Matches(message.Content);
         if (matches.Count == 0)
             return (null, null);
 

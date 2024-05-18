@@ -11,9 +11,10 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
-internal static class NewBuildsMonitor
+internal static partial class NewBuildsMonitor
 {
-    private static readonly Regex BuildResult = new(@"\[rpcs3:master\] \d+ new commit", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    [GeneratedRegex(@"\[rpcs3:master\] \d+ new commit", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    private static partial Regex BuildResult();
     private static readonly TimeSpan PassiveCheckInterval = TimeSpan.FromMinutes(20);
     private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
@@ -25,7 +26,7 @@ internal static class NewBuildsMonitor
             && !args.Author.IsCurrent
             && "github".Equals(args.Channel.Name, StringComparison.InvariantCultureIgnoreCase)
             && args.Message?.Embeds is [{ Title: { Length: > 0 } title }, ..] 
-            && BuildResult.IsMatch(title)
+            && BuildResult().IsMatch(title)
            )
         {
             Config.Log.Info("Found new PR merge message");

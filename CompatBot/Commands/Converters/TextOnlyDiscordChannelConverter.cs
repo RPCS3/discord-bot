@@ -10,9 +10,10 @@ using DSharpPlus.Entities;
 
 namespace CompatBot.Commands.Converters;
 
-internal sealed class TextOnlyDiscordChannelConverter : IArgumentConverter<DiscordChannel>
+internal sealed partial class TextOnlyDiscordChannelConverter : IArgumentConverter<DiscordChannel>
 {
-    private static Regex ChannelRegex { get; } = new(@"^<#(\d+)>$", RegexOptions.ECMAScript | RegexOptions.Compiled);
+    [GeneratedRegex(@"^<#(\d+)>$", RegexOptions.ECMAScript)]
+    private static partial Regex ChannelRegex();
 
     Task<Optional<DiscordChannel>> IArgumentConverter<DiscordChannel>.ConvertAsync(string value, CommandContext ctx)
         => ConvertAsync(value, ctx);
@@ -20,7 +21,7 @@ internal sealed class TextOnlyDiscordChannelConverter : IArgumentConverter<Disco
     public static async Task<Optional<DiscordChannel>> ConvertAsync(string value, CommandContext ctx)
     {
         var guildList = new List<DiscordGuild>(ctx.Client.Guilds.Count);
-        if (ctx.Guild == null)
+        if (ctx.Guild is null)
             foreach (var g in ctx.Client.Guilds.Keys)
                 guildList.Add(await ctx.Client.GetGuildAsync(g).ConfigureAwait(false));
         else
@@ -37,7 +38,7 @@ internal sealed class TextOnlyDiscordChannelConverter : IArgumentConverter<Disco
             return ret;
         }
 
-        var m = ChannelRegex.Match(value);
+        var m = ChannelRegex().Match(value);
         if (m.Success && ulong.TryParse(m.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out cid))
         {
             var result = (

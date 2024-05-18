@@ -8,9 +8,13 @@ using DSharpPlus.Entities;
 
 namespace CompatBot.Utils;
 
-public static class CommandContextExtensions
+public static partial class CommandContextExtensions
 {
-    internal static readonly Regex MessageLinkRegex = new(@"(?:https?://)?discord(app)?\.com/channels/(?<guild>\d+)/(?<channel>\d+)/(?<message>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    [GeneratedRegex(
+        @"(?:https?://)?discord(app)?\.com/channels/(?<guild>\d+)/(?<channel>\d+)/(?<message>\d+)",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline
+    )]
+    internal static partial Regex MessageLinkPattern();
 
     public static async Task<DiscordMember?> ResolveMemberAsync(this CommandContext ctx, string word)
     {
@@ -37,7 +41,7 @@ public static class CommandContextExtensions
 
     public static Task<DiscordMessage?> GetMessageAsync(this CommandContext ctx, string messageLink)
     {
-        if (MessageLinkRegex.Match(messageLink) is Match m
+        if (MessageLinkPattern().Match(messageLink) is Match m
             && ulong.TryParse(m.Groups["guild"].Value, out var guildId)
             && ulong.TryParse(m.Groups["channel"].Value, out var channelId)
             && ulong.TryParse(m.Groups["message"].Value, out var msgId)

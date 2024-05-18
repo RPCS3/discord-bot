@@ -13,9 +13,9 @@ namespace SourceGenerators;
 [Generator]
 public class ConfusablesSourceGenerator : ISourceGenerator
 {
-    private static readonly char[] CommentSplitter = {'#'};
-    private static readonly char[] FieldSplitter = {';'};
-    private static readonly char[] PairSplitter = {' '};
+    private static readonly char[] CommentSplitter = ['#'];
+    private static readonly char[] FieldSplitter = [';'];
+    private static readonly char[] PairSplitter = [' '];
 
     private static readonly DiagnosticDescriptor ConfusablesCheckWarning = new(
         id: "CONFUSABLES001",

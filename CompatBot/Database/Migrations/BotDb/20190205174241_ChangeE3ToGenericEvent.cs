@@ -26,7 +26,7 @@ namespace CompatBot.Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "event_schedule_year_event_name",
                 table: "event_schedule",
-                columns: new[] { "year", "event_name" });
+                columns: ["year", "event_name"]);
 
             migrationBuilder.Sql("INSERT INTO event_schedule SELECT id, year, start, end, name, 'E3' AS event_name FROM e3_schedule");
 

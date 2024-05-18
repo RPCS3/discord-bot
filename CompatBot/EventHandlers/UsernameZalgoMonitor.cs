@@ -15,10 +15,10 @@ namespace CompatBot.EventHandlers;
 
 public static class UsernameZalgoMonitor
 {
-    private static readonly HashSet<char> OversizedChars = new()
-    {
+    private static readonly HashSet<char> OversizedChars =
+    [
         '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄', '˞',
-    };
+    ];
 
     public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
     {

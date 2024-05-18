@@ -17,13 +17,13 @@ namespace Tests;
 public class LogParsingProfiler
 {
     private static readonly IArchiveHandler[] ArchiveHandlers =
-    {
+    [
         new GzipHandler(),
         new ZipHandler(),
         new RarHandler(),
         new SevenZipHandler(),
         new PlainTextHandler(),
-    };
+    ];
 
     [Explicit("For performance profiling only")]
     [TestCase(@"C:\Documents\Downloads\RPCS3_20.log", TestName = "Plaintext")]

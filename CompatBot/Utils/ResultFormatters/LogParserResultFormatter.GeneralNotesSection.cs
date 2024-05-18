@@ -24,6 +24,11 @@ internal static partial class LogParserResult
     private static readonly Version DecompilerIssueStartVersion = new(0, 0, 9, 10307);
     private static readonly Version DecompilerIssueEndVersion = new(0, 0, 10, 10346);
 
+    [GeneratedRegex(@"\(e(rror)?=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)")]
+    private static partial Regex VerificationErrorPattern();
+    [GeneratedRegex(@"Xeon (([EXLW]C?|LV )?\d+|(E\d|AWS)-\d+\w?( (v[2-4]|0))?|D-1.+)( \(ES\))?$", DefaultSingleLine)]
+    private static partial Regex XeonModelPattern();
+
     private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
     {
         var items = state.CompletedCollection!;
@@ -143,7 +148,7 @@ internal static partial class LogParserResult
         }
 
         var category = items["game_category"];
-        if (category is "PE" or "PP" || serial.StartsWith('U') && ProductCodeLookup.ProductCode.IsMatch(serial))
+        if (category is "PE" or "PP" || serial.StartsWith('U') && ProductCodeLookup.Pattern().IsMatch(serial))
         {
             builder.Color = Config.Colors.CompatStatusNothing;
             notes.Add("❌ PSP software is not supported");
@@ -161,7 +166,7 @@ internal static partial class LogParserResult
 
         if (items["compat_database_path"] is string compatDbPath)
         {
-            if (InstallPath.Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is { Success: true } installPathMatch)
+            if (InstallPath().Match(compatDbPath.Replace('\\', '/').Replace("//", "/").Trim()) is { Success: true } installPathMatch)
             {
                 var rpcs3FolderMissing = string.IsNullOrEmpty(installPathMatch.Groups["rpcs3_folder"].Value);
                 var desktop = !string.IsNullOrEmpty(installPathMatch.Groups["desktop"].Value);
@@ -222,7 +227,7 @@ internal static partial class LogParserResult
                         || cpu.EndsWith('M')
                         || cpu.Contains('Y')
                         || cpu[^2] == 'G'
-                        || Regex.IsMatch(cpu, @"Xeon (([EXLW]C?|LV )?\d+|(E\d|AWS)-\d+\w?( (v[2-4]|0))?|D-1.+)( \(ES\))?$", DefaultSingleLine)
+                        || XeonModelPattern().IsMatch(cpu)
                         || threadCount < 6))
                     notes.Add("⚠️ This CPU is too weak and/or too old for PS3 emulation");
             }
@@ -253,15 +258,19 @@ internal static partial class LogParserResult
             }
         }
 
-        if (items["os_type"] == "Windows"
+        if (items["os_type"] is "Windows"
             && Version.TryParse(items["os_version"], out var winVersion)
             && (winVersion is { Major: < 10 } or { Build: < 19045 or (> 20000 and < 22621) }))
             notes.Add("⚠️ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to currently supported version");
+        else if (items["os_type"] is "MacOS"
+                 && Version.TryParse(items["os_version"], out var macVersion)
+                 && macVersion is {Major: 14, Minor: >=0 and <=2})
+            notes.Add("❌️ Please update your OS to version 14.3 or newer");
             
         var gpuInfo = items["gpu_info"] ?? items["discrete_gpu_info"];
         if (supportedGpu && !string.IsNullOrEmpty(gpuInfo))
         {
-            if (IntelGpuModel.Match(gpuInfo) is {Success: true} intelMatch)
+            if (IntelGpuModel().Match(gpuInfo) is {Success: true} intelMatch)
             {
                 var family = intelMatch.Groups["gpu_family"].Value.TrimEnd();
                 var modelNumber = intelMatch.Groups["gpu_model_number"].Value;
@@ -289,7 +298,7 @@ internal static partial class LogParserResult
                     if (IsNvidia(gpuInfo))
                     {
                         var isWindows = items["os_type"] is not null and not "Linux";
-                        var minVersion = isWindows ? NvidiaRecommendedWindowsVersion : NvidiaRecommendedLinuxVersion;
+                        var minVersion = isWindows ? NvidiaRecommendedWindowsDriverVersion : NvidiaRecommendedLinuxDriverVersion;
                         if (driverVersion < minVersion)
                             notes.Add($"❗ Please update your nVidia GPU driver to at least version {minVersion}");
                         if (driverVersion >= NvidiaTextureMemoryBugMinVersion
@@ -306,14 +315,14 @@ internal static partial class LogParserResult
                     }
                     else if (IsAmd(gpuInfo) && items["os_type"] == "Windows")
                     {
-                        if (driverVersion < AmdRecommendedOldWindowsVersion)
-                            notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedOldWindowsVersion}");
+                        if (driverVersion < AmdRecommendedWindowsDriverVersion)
+                            notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedWindowsDriverVersion}");
                     }
                 }
                 else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (IsAmd(gpuInfo))
-                        notes.Add($"❗ Please update your AMD GPU driver to version {AmdRecommendedOldWindowsVersion} or newer");
+                        notes.Add($"❗ Please update your AMD GPU driver to version {AmdRecommendedWindowsDriverVersion} or newer");
                 }
             }
         }
@@ -449,7 +458,7 @@ internal static partial class LogParserResult
             notes.Add(msg);
         }
         if (multiItems["ppu_patch"] is [string firstPpuPatch, ..]
-            && ProgramHashPatch.Match(firstPpuPatch) is { Success: true } m 
+            && ProgramHashPatch().Match(firstPpuPatch) is { Success: true } m 
             && m.Groups["hash"].Value is string firstPpuHash)
         {
             var exe = Path.GetFileName(items["elf_boot_path"] ?? "");
@@ -577,7 +586,7 @@ internal static partial class LogParserResult
 #else
                             : $"Fatal Error (x{count})";
 #endif
-                    if (Regex.Match(fatalError, @"\(e(rror)?=(0x(?<verification_error_hex>[0-9a-f]+)|(?<verification_error>\d+))(\[\d+\])?\)") is {Success: true} match)
+                    if (VerificationErrorPattern().Match(fatalError) is {Success: true} match)
                     {
                         if (int.TryParse(match.Groups["verification_error"].Value, out var decCode))
                             win32ErrorCodes.Add(decCode);

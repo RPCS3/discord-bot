@@ -49,12 +49,12 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
             List<DiscordGuild> guilds;
             if (ctx.Guild == null)
             {
-                guilds = ctx.Client.Guilds?.Values.ToList() ?? new List<DiscordGuild>(0);
+                guilds = ctx.Client.Guilds?.Values.ToList() ?? [];
                 if (guilds.Count > 1)
                     await ctx.Channel.SendMessageAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
             }
             else
-                guilds = new(){ctx.Guild};
+                guilds = [ctx.Guild];
 
             int changed = 0, noPermissions = 0, failed = 0;
             await using var db = new BotDb();

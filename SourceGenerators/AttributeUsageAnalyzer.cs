@@ -22,7 +22,8 @@ public class AttributeUsageAnalyzer : DiagnosticAnalyzer
         description: "GroupCommand methods will silently ignore any access check attributes, so instead create an instance of the required check attribute and call it explicitly inside the method."
     );
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(AccessCheckAttributeOnGroupCommandRule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
+        [AccessCheckAttributeOnGroupCommandRule];
 
     public override void Initialize(AnalysisContext context)
     {

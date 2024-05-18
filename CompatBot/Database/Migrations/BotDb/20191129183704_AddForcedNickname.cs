@@ -24,7 +24,7 @@ namespace CompatBot.Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "forced_nickname_guild_id_user_id",
                 table: "forced_nicknames",
-                columns: new[] { "guild_id", "user_id" },
+                columns: ["guild_id", "user_id"],
                 unique: true);
         }
 

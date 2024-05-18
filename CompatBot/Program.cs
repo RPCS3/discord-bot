@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands;
@@ -38,6 +39,9 @@ internal static class Program
     {
         Config.TelemetryClient?.TrackEvent("startup");
 
+        //AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromMilliseconds(100));
+        Regex.CacheSize = 200; // default is 15, we need more for content filter
+        
         Console.WriteLine("Confinement: " + SandboxDetector.Detect());
         if (args.Length > 0 && args[0] == "--dry-run")
         {

@@ -10,14 +10,14 @@ public static class TimeParser
         
     public static readonly Dictionary<string, string[]> TimeZoneAcronyms = new()
     {
-        ["PT"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },
-        ["PST"] = new[] { "Pacific Standard Time", "America/Los_Angeles" },
-        ["PDT"] = new[] { "Pacific Standard Time", "Pacific Daylight Time", "America/Los_Angeles" },
-        ["EST"] = new[] { "Eastern Standard Time", "America/New_York" },
-        ["EDT"] = new[] { "Eastern Standard Time", "Eastern Daylight Time", "America/New_York" },
-        ["CEST"] = new[] { "Central European Standard Time", "Europe/Berlin" },
-        ["BST"] = new[] { "British Summer Time", "GMT Standard Time", "Europe/London" },
-        ["JST"] = new[] { "Japan Standard Time", "Tokyo Standard Time", "Asia/Tokyo" },
+        ["PT"] = ["Pacific Standard Time", "America/Los_Angeles"],
+        ["PST"] = ["Pacific Standard Time", "America/Los_Angeles"],
+        ["PDT"] = ["Pacific Standard Time", "Pacific Daylight Time", "America/Los_Angeles"],
+        ["EST"] = ["Eastern Standard Time", "America/New_York"],
+        ["EDT"] = ["Eastern Standard Time", "Eastern Daylight Time", "America/New_York"],
+        ["CEST"] = ["Central European Standard Time", "Europe/Berlin"],
+        ["BST"] = ["British Summer Time", "GMT Standard Time", "Europe/London"],
+        ["JST"] = ["Japan Standard Time", "Tokyo Standard Time", "Asia/Tokyo"],
     };
 
     static TimeParser()

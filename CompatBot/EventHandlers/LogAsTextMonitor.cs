@@ -10,9 +10,10 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
-internal static class LogAsTextMonitor
+internal static partial class LogAsTextMonitor
 {
-    private static readonly Regex LogLine = new(@"^[`""]?(·|(\w|!)) ({(rsx|PPU|SPU)|LDR:)|E LDR:", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+    [GeneratedRegex(@"^[`""]?(·|(\w|!)) ({(rsx|PPU|SPU)|LDR:)|E LDR:", RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex LogLine();
 
     public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
     {
@@ -25,7 +26,7 @@ internal static class LogAsTextMonitor
         if ((args.Message.Author as DiscordMember)?.Roles.Any() ?? false)
             return;
 
-        if (LogLine.IsMatch(args.Message.Content))
+        if (LogLine().IsMatch(args.Message.Content))
         {
             var brokenDump = false;
             string msg = "";

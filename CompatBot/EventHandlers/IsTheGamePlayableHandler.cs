@@ -17,15 +17,15 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
-internal static class IsTheGamePlayableHandler
+internal static partial class IsTheGamePlayableHandler
 {
-    private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-    private static readonly Regex GameNameStatusMention1 = new(
-        @"(\b((is|does|can I play|any(one|1) tr(y|ied)|how's|(wonder(ing)?|me|knows?) if)\s+)(?<game_title_1>.+?)\s+((now|currently|at all|possibly|fully|(on (this|the) )emu(lator))\s+)?((it?s )?playable|work(s|ing)?|runs?|doing))\b" +
-        @"|(\b(((can I|possible to) (play|run)|any(one|1) tr(y|ied)|compat[ai]bility (with|of))\s+)(?<game_title_2>.+?)(\s+((now|currently|at all|possibly|fully)\s+)?((it?s )?playable|work(s|ing)?|on (it|this))\b|\?|$))" +
+    [GeneratedRegex(
+        @"(\b((is|does|can I play|any(one|1) tr(y|ied)|how's|(wonder(ing)?|me|knows?) if)\s+)(?<game_title_1>.+?)\s+((now|currently|at all|possibly|fully|(on (this|the) )emu(lator))\s+)?((it?s )?playable|work(s|ing)?|runs?|doing))\b"+
+        @"|(\b(((can I|possible to) (play|run)|any(one|1) tr(y|ied)|compat[ai]bility (with|of))\s+)(?<game_title_2>.+?)(\s+((now|currently|at all|possibly|fully)\s+)?((it?s )?playable|work(s|ing)?|on (it|this))\b|\?|$))"+
         @"|(^(?<game_title_3>.+?)\s+((is )?(playable|work(s|ing)?))\?)",
-        DefaultOptions
-    );
+        RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
+    )]
+    private static partial Regex GameNameStatusMention();
     private static readonly ConcurrentDictionary<ulong, DateTime> CooldownBuckets = new();
     private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
     private static readonly Client Client = new();
@@ -48,7 +48,7 @@ internal static class IsTheGamePlayableHandler
                 return;
 #endif
 
-        var matches = GameNameStatusMention1.Matches(args.Message.Content);
+        var matches = GameNameStatusMention().Matches(args.Message.Content);
         if (!matches.Any())
             return;
 
@@ -65,7 +65,7 @@ internal static class IsTheGamePlayableHandler
             if (gameTitle.Length < 4)
                 return;
 
-            if (ProductCodeLookup.ProductCode.IsMatch(args.Message.Content))
+            if (ProductCodeLookup.Pattern().IsMatch(args.Message.Content))
                 return;
 
             var (_, info) = await LookupGameAsync(args.Channel, args.Message, gameTitle).ConfigureAwait(false);

@@ -27,9 +27,9 @@ namespace CompatBot.EventHandlers;
 
 public static class LogParsingHandler
 {
-    private static readonly char[] LinkSeparator = { ' ', '>', '\r', '\n' };
+    private static readonly char[] LinkSeparator = [' ', '>', '\r', '\n'];
     private static readonly ISourceHandler[] SourceHandlers =
-    {
+    [
         new DiscordAttachmentHandler(),
         new GoogleDriveHandler(),
         new DropboxHandler(),
@@ -39,15 +39,15 @@ public static class LogParsingHandler
         new MediafireHandler(),
         new GenericLinkHandler(),
         new PastebinHandler(),
-    };
+    ];
     private static readonly IArchiveHandler[] ArchiveHandlers =
-    {
+    [
         new GzipHandler(),
         new ZipHandler(),
         new RarHandler(),
         new SevenZipHandler(),
         new PlainTextHandler(),
-    };
+    ];
 
     private static readonly SemaphoreSlim QueueLimiter = new(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
     private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);

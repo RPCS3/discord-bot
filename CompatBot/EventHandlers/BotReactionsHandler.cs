@@ -15,7 +15,7 @@ using System.Collections.Generic;
 
 namespace CompatBot.EventHandlers
 {
-    internal static class BotReactionsHandler
+    internal static partial class BotReactionsHandler
     {
         private static readonly AhoCorasickDoubleArrayTrie<bool> ChillCheck = new(new[]
         {
@@ -47,10 +47,10 @@ namespace CompatBot.EventHandlers
         }.Select(DiscordEmoji.FromUnicode).ToArray();
 
         private static readonly string[] SadMessages =
-        {
+        [
             "Okay (._.)", "As you wish", "My bad", "I only wanted to help", "Dobby will learn, master",
             "Sorry...", "I'll try to be smarter next time", "Your wish is my command", "Done.",
-        };
+        ];
 
         private static readonly DiscordEmoji[] ThankYouReactions = new[]
         {
@@ -63,15 +63,14 @@ namespace CompatBot.EventHandlers
         }.Select(DiscordEmoji.FromUnicode).ToArray();
 
         private static readonly string[] ThankYouMessages =
-        {
+        [
             "Aww", "I'm here to help", "Always a pleasure", "Thank you", "Good word is always appreciated",
             "Glad I could help", "I try my best", "Blessed day", "It is officially a good day today", "I will remember you when the uprising starts",
-        };
+        ];
 
-        private static readonly Regex Paws = new(
-            @"\b((?<kot>kot(to)?)|(?<doggo>doggo|jarves))\b",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
-        );
+
+        [GeneratedRegex(@"\b((?<kot>kot(to)?)|(?<doggo>doggo|jarves))\b", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture)]
+        private static partial Regex Paws();
         private static readonly Random Rng = new();
         private static readonly object TheDoor = new();
 
@@ -127,7 +126,7 @@ namespace CompatBot.EventHandlers
             }
 #endif
 
-            if (!string.IsNullOrEmpty(args.Message.Content) && Paws.Matches(args.Message.Content) is MatchCollection mc)
+            if (!string.IsNullOrEmpty(args.Message.Content) && Paws().Matches(args.Message.Content) is MatchCollection mc)
             {
                 await using var db = new BotDb();
                 var matchedGroups = (from m in mc

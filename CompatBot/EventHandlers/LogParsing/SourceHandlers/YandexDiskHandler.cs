@@ -12,9 +12,10 @@ using YandexDiskClient;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
-internal sealed class YandexDiskHandler: BaseSourceHandler
+internal sealed partial class YandexDiskHandler: BaseSourceHandler
 {
-    private static readonly Regex ExternalLink = new(@"(?<yadisk_link>(https?://)?(www\.)?yadi\.sk/d/(?<share_key>[^/>\s]+))\b", DefaultOptions);
+    [GeneratedRegex(@"(?<yadisk_link>(https?://)?(www\.)?yadi\.sk/d/(?<share_key>[^/>\s]+))\b", DefaultOptions)]
+    private static partial Regex ExternalLink();
     private static readonly Client Client = new();
 
     public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
@@ -22,7 +23,7 @@ internal sealed class YandexDiskHandler: BaseSourceHandler
         if (string.IsNullOrEmpty(message.Content))
             return (null, null);
 
-        var matches = ExternalLink.Matches(message.Content);
+        var matches = ExternalLink().Matches(message.Content);
         if (matches.Count == 0)
             return (null, null);
 

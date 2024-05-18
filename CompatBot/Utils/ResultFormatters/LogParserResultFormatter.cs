@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -25,34 +24,32 @@ internal static partial class LogParserResult
     private static readonly IrdClient IrdClient = new();
     private static readonly PsnClient.Client PsnClient = new();
 
-    private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
+    private const RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
     // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
     // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
     // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
     // RPCS3 v0.0.5-42b4ce13a Alpha | minor
     // RPCS3 v0.0.18-local_build Alpha | local_build
-    private static readonly Regex BuildInfoInLog = new(
-        @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-z_]+|unknown))( (?<stage>\w+))?( \| (?<branch>[^|\r\n]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$",
-        DefaultSingleLine);
-    private static readonly Regex CpuInfoInLog = new(
-        @"(\d{1,2}(th|rd|nd|st) Gen)?(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU with|(with )?Radeon|R\d, \d+ Compute) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$",
-        DefaultSingleLine);
-    // Operating system: Windows, Major: 10, Minor: 0, Build: 22000, Service Pack: none, Compatibility mode: 0
-    // Operating system: POSIX, Name: Linux, Release: 5.15.11-zen1-1-zen, Version: #1 ZEN SMP PREEMPT Wed, 22 Dec 2021 09:23:53 +0000
-    // Operating system: macOS, Version 12.1.0
-    internal static readonly Regex OsInfoInLog = new(
-        @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+)|Version: (?<macos_version>[^\r\n]+))\r?$",
-        DefaultSingleLine);
-    private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+)", DefaultSingleLine);
-    private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+(-\d+)?)( \(<-\s*(?<patch_count>\d+)\))?", DefaultSingleLine);
-    private static readonly char[] NewLineChars = {'\r', '\n'};
-
+    [GeneratedRegex(@"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-z_]+|unknown))( (?<stage>\w+))?( \| (?<branch>[^|\r\n]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$", DefaultSingleLine)]
+    private static partial Regex BuildInfoInLog();
+    [GeneratedRegex(@"(\d{1,2}(th|rd|nd|st) Gen)?(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU with|(with )?Radeon|R\d, \d+ Compute) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$", DefaultSingleLine)]
+    private static partial Regex CpuInfoInLog();
+    [GeneratedRegex(@"(?<version>\d+\.\d+\.\d+)", DefaultSingleLine)]
+    private static partial Regex LinuxKernelVersion();
+    [GeneratedRegex(@"(?<hash>\w+(-\d+)?)( \(<-\s*(?<patch_count>\d+)\))?", DefaultSingleLine)]
+    private static partial Regex ProgramHashPatch();
     // rpcs3-v0.0.5-7105-064d0619_win64.7z
     // rpcs3-v0.0.5-7105-064d0619_linux64.AppImage
-    private static readonly Regex BuildInfoInUpdate = new(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
-    private static readonly Regex VulkanDeviceInfo = new(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
-    private static readonly Regex IntelGpuModel = new(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
-    private static readonly Regex InstallPath = new(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine);
+    [GeneratedRegex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine)]
+    private static partial Regex BuildInfoInUpdate();
+    [GeneratedRegex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine)]
+    private static partial Regex VulkanDeviceInfo();
+    [GeneratedRegex(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine)]
+    private static partial Regex IntelGpuModel();
+    [GeneratedRegex(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine)]
+    private static partial Regex InstallPath();
+
+    private static readonly char[] NewLineChars = ['\r', '\n'];
 
     private static readonly Version MinimumOpenGLVersion = new(4, 3);
     private static readonly Version MinimumFirmwareVersion = new(4, 80);
@@ -62,10 +59,9 @@ internal static partial class LogParserResult
     private static readonly Version NvidiaTextureMemoryBugMinVersion = new(526, 0);
     private static readonly Version NvidiaTextureMemoryBugMaxVersion = new(526, 99);
     
-    private static readonly Version NvidiaRecommendedWindowsVersion = new(512, 16);
-    private static readonly Version NvidiaRecommendedLinuxVersion = new(515, 57);
-
-    private static readonly Version AmdRecommendedOldWindowsVersion = new(23, 2, 1);
+    private static readonly Version NvidiaRecommendedWindowsDriverVersion = new(512, 16);
+    private static readonly Version NvidiaRecommendedLinuxDriverVersion = new(515, 57);
+    private static readonly Version AmdRecommendedWindowsDriverVersion = new(24, 2, 1);
 
     private static readonly Version NvidiaFullscreenBugFixed = new(0, 0, 6, 8204);
     private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
@@ -108,35 +104,35 @@ internal static partial class LogParserResult
     };
 
     private static readonly string[] Known1080pIds =
-    {
+    [
         "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
-    };
+    ];
 
     private static readonly string[] KnownDisableVertexCacheIds =
-    {
+    [
         "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
         "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
-    };
+    ];
 
-    private static readonly HashSet<string> KnownNoRelaxedXFloatIds = new();
+    private static readonly HashSet<string> KnownNoRelaxedXFloatIds = [];
     
-    private static readonly HashSet<string> KnownNoApproximateXFloatIds = new()
-    {
+    private static readonly HashSet<string> KnownNoApproximateXFloatIds =
+    [
         "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
         "BLES00932", "BLUS30443", // DeS
-    };
+    ];
 
-    private static readonly HashSet<string> KnownFpsUnlockPatchIds = new()
-    {
+    private static readonly HashSet<string> KnownFpsUnlockPatchIds =
+    [
         "BLES00932", "BLUS30443", // DeS
         "BLUS30481", "BLES00826", "BLJM60223", // Nier
         "BLUS31197", "NPUB31251", "NPEB01407", "BLJM61043", "BCAS20311", // DoD3
         "BLUS31405", // jojo asb
         "BLJS10318", // jojo eoh
-    };
+    ];
 
-    private static readonly HashSet<string> KnownWriteColorBuffersIds = new()
-    {
+    private static readonly HashSet<string> KnownWriteColorBuffersIds =
+    [
         "BLUS30235", "BLES00453", // AC/DC Live: Rock Band Track Pack
         "BLUS30399", "BCJS30021", "BCAS20050", // Afrika
         "BLUS30607", "BLES0126", "NPUB30545", "BLJM60359", // Alice: Madness Returns
@@ -158,7 +154,7 @@ internal static partial class LogParserResult
         "BLES00286", "BLUS30154", "NPEB90097", "NPUB90151", // Beijing 2008
         "NPEB00435", "NPUB30394", // Beyond Good & Evil HD
         "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "BCUS99134", "BCJS37009", "NPEA00513", "NPUA81087", "NPHA80260", "BCES01888", "NPUA81088", "NPJA00097", "NPEA90127", "NPJA90259", "NPUA72074", // Beyond: Two Souls
-        "BLES01397", "BLUS30831", "NPEB01119", "NPEB90417",  // Birds of Steel
+        "BLES01397", "BLUS30831", "NPEB01119", "NPEB90417", // Birds of Steel
         "BLES00759", "BLUS30295", "BLJM60244", "NPEB90250", "NPUB90428", // Blur
         "NPUB30505", "NPEB00563", // Castlevania: Harmony of Despair
         "NPUB30722", // Closure
@@ -268,40 +264,40 @@ internal static partial class LogParserResult
         "BLES01721", "BLUS31168", "NPEB01072", "NPUB31153", "BLJM60575", "NPEB90467", // WRC 3: FIA World Rally Championship
         "BLES01874", "BLUS31509", "NPEB01381", "NPUB31452", "NPJB00624", "BLJM61195", "NPEB90523", // WRC 4: FIA World Rally Championship
         "BLES01937", "NPEB01815", "BLUS31277", // WWE 2K14
-    };
+    ];
 
-    private static readonly HashSet<string> KnownResScaleThresholdIds = new()
-    {
+    private static readonly HashSet<string> KnownResScaleThresholdIds =
+    [
         "BCAS20270", "BCES01584", "BCES01585", "BCJS37010", "BCUS98174", // The Last of Us
-        "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175", 
-    };
+        "NPEA00435", "NPEA90122", "NPHA80243", "NPHA80279", "NPJA00096", "NPJA00129", "NPUA70257", "NPUA80960", "NPUA81175",
+    ];
 
-    private static readonly HashSet<string> KnownMotionControlsIds = new()
-    {
+    private static readonly HashSet<string> KnownMotionControlsIds =
+    [
         "BCES00797", "BCES00802", "BCUS98164", "BCJS30040", "NPEA90053", "NPEA90076", "NPUA70088", "NPUA70112", // heavy rain
         "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
         "NPEA00094", "NPEA00250", "NPJA00039", "NPUA80083", // flower
         "NPEA00036", "NPUA80069", "NPJA00004", // locoroco
         "BCES01284", "BCUS98247", "BCUS99142", "NPEA00429", "NPUA80875", "NPEA90120", "NPUA70250", // sly cooper 4
         "BCAS20112", "BCAS20189", "BCKS10112", "BLES01101", "BLJS10072", "BLJS10114", "BLJS50026", "BLUS30652", "NPEB90321", // no more heroes
-    };
+    ];
 
-    private static readonly HashSet<string> KnownGamesThatRequireInterpreter = new()
-    {
+    private static readonly HashSet<string> KnownGamesThatRequireInterpreter =
+    [
         "NPEB00630", "NPUB30493", "NPJB00161", // daytona usa
         "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
-    };
+    ];
 
-    private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat = new()
-    {
+    private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat =
+    [
         "BLES00229", "BLES00258", "BLES00887", "BLES01128", // gta4 + efls
         "BLJM55011", "BLJM60235", "BLJM60459", "BLJM60525", "BLJM61180", "BLKS20073", "BLKS20198", // gta4 + efls
         "BLUS30127", "BLUS30149", "BLUS30524", "BLUS30682", // gta4 + efls
         "NPEB00882", "NPUB30702", "NPUB30704", "NPEB00511", // gta4 + efls
-    };
+    ];
 
-    private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull = new()
-    {
+    private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull =
+    [
         "BLAS50296", "BLES00680", "BLES01179", "BLES01294", "BLUS30418", "BLUS30711", "BLUS30758", //rdr
         "BLJM60314", "BLJM60403", "BLJM61181", "BLKS20315",
         "NPEB00833", "NPHB00465", "NPHB00466", "NPUB30638", "NPUB30639",
@@ -310,7 +306,7 @@ internal static partial class LogParserResult
         "NPEB00027", "NPEB02182", "NPEB90116", "NPJB00698", "NPJB90149", "NPUB31633",
         "NPHB00065", "NPHB00067",
         "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
-    };
+    ];
 
     private static readonly HashSet<string> KnownBogusLicenses = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -354,7 +350,7 @@ internal static partial class LogParserResult
     private static readonly TimeSpan AncientBuild = TimeSpan.FromDays(180);
     private static readonly TimeSpan PrehistoricBuild = TimeSpan.FromDays(365);
 
-    private static readonly char[] PrioritySeparator = {' '};
+    private static readonly char[] PrioritySeparator = [' '];
     private static readonly string[] EmojiPriority = new[]{ "😱", "💢", "‼️", "❗",  "❌", "⁉️", "⚠️", "❔", "✅", "ℹ️" }
         .Select(e => e.TrimEnd('\ufe0f'))
         .ToArray();
@@ -734,7 +730,7 @@ internal static partial class LogParserResult
         if (string.IsNullOrEmpty(link))
             return null;
 
-        var latestBuildInfo = BuildInfoInUpdate.Match(link.ToLowerInvariant());
+        var latestBuildInfo = BuildInfoInUpdate().Match(link.ToLowerInvariant());
         if (latestBuildInfo.Success && VersionIsTooOld(items, latestBuildInfo, updateInfo))
             return updateInfo;
 
@@ -796,7 +792,7 @@ internal static partial class LogParserResult
             return null;
 
         var info = (from line in foundDevices
-                let m = VulkanDeviceInfo.Match(line)
+                let m = VulkanDeviceInfo().Match(line)
                 where m.Success
                 select m
             ).FirstOrDefault(m => m.Groups["device_name"].Value == gpu);
@@ -978,7 +974,7 @@ internal static partial class LogParserResult
             return null;
             
         var kernelVersion = release;
-        if (LinuxKernelVersion.Match(release) is {Success: true} m)
+        if (LinuxKernelVersion().Match(release) is {Success: true} m)
             kernelVersion = m.Groups["version"].Value;
         if (version.Contains("Ubuntu", StringComparison.OrdinalIgnoreCase))
             return "Ubuntu " + kernelVersion;
@@ -1096,7 +1092,7 @@ internal static partial class LogParserResult
         var result = new Dictionary<string, int>(patchList.Count);
         foreach (var patch in patchList)
         {
-            var match = ProgramHashPatch.Match(patch);
+            var match = ProgramHashPatch().Match(patch);
             if (match.Success)
             {
                 _ = int.TryParse(match.Groups["patch_count"].Value, out var pCount);

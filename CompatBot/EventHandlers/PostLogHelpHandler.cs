@@ -12,10 +12,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.EventHandlers;
 
-internal static class PostLogHelpHandler
+internal static partial class PostLogHelpHandler
 {
-    private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-    private static readonly Regex UploadLogMention = new(@"\b((?<vulkan>(vul[ck][ae]n(-?1)?))|(?<help>(post|upload|send|give)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full|game)\s+)*\blogs?))\b", DefaultOptions);
+    [GeneratedRegex(
+        @"\b((?<vulkan>(vul[ck][ae]n(-?1)?))|(?<help>(post|upload|send|give)(ing)?\s+((a|the|rpcs3('s)?|your|you're|ur|my|full|game)\s+)*\blogs?))\b",
+        RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline
+    )]
+    private static partial Regex UploadLogMention();
     private static readonly SemaphoreSlim TheDoor = new(1, 1);
     private static readonly TimeSpan ThrottlingThreshold = TimeSpan.FromSeconds(5);
     private static readonly Dictionary<string, Explanation> DefaultExplanation = new()
@@ -36,7 +39,7 @@ internal static class PostLogHelpHandler
         if (DateTime.UtcNow - lastMention < ThrottlingThreshold)
             return;
 
-        var match = UploadLogMention.Match(args.Message.Content);
+        var match = UploadLogMention().Match(args.Message.Content);
         if (!match.Success || string.IsNullOrEmpty(match.Groups["help"].Value))
             return;
 

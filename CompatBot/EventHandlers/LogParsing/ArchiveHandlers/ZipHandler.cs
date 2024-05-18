@@ -11,7 +11,7 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
 internal sealed class ZipHandler: IArchiveHandler
 {
-    private static readonly byte[] Header = { 0x50, 0x4B, 0x03, 0x04 };
+    private static readonly byte[] Header = [0x50, 0x4B, 0x03, 0x04]; //PK..
 
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }

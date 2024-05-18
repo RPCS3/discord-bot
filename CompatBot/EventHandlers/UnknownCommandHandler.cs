@@ -13,12 +13,13 @@ using DSharpPlus.Interactivity.Extensions;
 
 namespace CompatBot.EventHandlers;
 
-internal static class UnknownCommandHandler
+internal static partial class UnknownCommandHandler
 {
-    private static readonly Regex BinaryQuestion = new(
+    [GeneratedRegex(
         @"^\s*(am I|(are|is|do(es)|did|can(?!\s+of\s+)|should|must|have)(n't)?|shall|shan't|may|will|won't)\b",
-        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase
-    );
+        RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase
+    )]
+    private static partial Regex BinaryQuestion();
     
     public static Task OnError(CommandsNextExtension cne, CommandErrorEventArgs e)
     {
@@ -49,7 +50,7 @@ internal static class UnknownCommandHandler
             if (e.Context.Prefix != Config.CommandPrefix
                 && e.Context.Prefix != Config.AutoRemoveCommandPrefix
                 && e.Context.Message.Content is string msgTxt
-                && (msgTxt.EndsWith("?") || BinaryQuestion.IsMatch(msgTxt.AsSpan(e.Context.Prefix.Length)))
+                && (msgTxt.EndsWith("?") || BinaryQuestion().IsMatch(msgTxt.AsSpan(e.Context.Prefix.Length)))
                 && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
             {
                 var updatedContext = e.Context.CommandsNext.CreateContext(

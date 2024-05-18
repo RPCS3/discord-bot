@@ -16,10 +16,11 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
-internal static class ProductCodeLookup
+internal static partial class ProductCodeLookup
 {
     // see http://www.psdevwiki.com/ps3/Productcode
-    public static readonly Regex ProductCode = new(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABDJKLMPQRSTX]|MRTC)[ \-]?(?<numbers>\d{5})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(?<letters>(?:[BPSUVX][CL]|P[ETU]|NP)[AEHJKPUIX][ABDJKLMPQRSTX]|MRTC)[ \-]?(?<numbers>\d{5})", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-GB")]
+    public static partial Regex Pattern();
     private static readonly Client CompatClient = new();
 
     public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
@@ -101,7 +102,7 @@ internal static class ProductCodeLookup
         if (string.IsNullOrEmpty(input))
             return new(0);
 
-        return ProductCode.Matches(input)
+        return Pattern().Matches(input)
             .Select(match => (match.Groups["letters"].Value + match.Groups["numbers"]).ToUpper())
             .Distinct()
             .ToList();

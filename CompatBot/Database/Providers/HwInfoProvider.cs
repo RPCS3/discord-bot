@@ -50,9 +50,9 @@ internal static class HwInfoProvider
 
         if (gpuStringParts[0].ToLower() is not ("nvidia" or "amd" or "ati" or "intel" or "apple"))
             if (LogParserResult.IsNvidia(gpuString))
-                gpuStringParts = new[] { "NVIDIA", gpuString };
+                gpuStringParts = ["NVIDIA", gpuString];
             else if (LogParserResult.IsAmd(gpuString))
-                gpuStringParts = new[] { "AMD", gpuString };
+                gpuStringParts = ["AMD", gpuString];
             else
             {
                 Config.Log.Warn($"Unknown GPU maker {gpuStringParts[0]}, plz fix");

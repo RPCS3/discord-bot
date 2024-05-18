@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -107,15 +108,15 @@ internal sealed partial class Psn
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to get title update info");
-                embeds = new()
-                {
+                embeds =
+                [
                     new()
                     {
                         Color = Config.Colors.Maintenance,
                         Title = "Service is unavailable",
                         Description = "There was an error communicating with the service. Try again in a few minutes.",
                     }
-                };
+                ];
             }
 
             if (ctx.IsOnionLike()
@@ -158,7 +159,7 @@ internal sealed partial class Psn
                 return;
             }
 
-            var matches = PsnScraper.ContentIdMatcher.Matches(contentIds.ToUpperInvariant());
+            var matches = PsnScraper.ContentIdMatcher().Matches(contentIds.ToUpperInvariant());
             var itemsToCheck = matches.Select(m => m.Groups["content_id"].Value).ToList();
             if (itemsToCheck.Count == 0)
             {

@@ -18,7 +18,7 @@ public static class TmdbHasher
     public static byte[] FromHexString(this string hexString)
     {
         if (hexString.Length == 0)
-            return Array.Empty<byte>();
+            return [];
 
         if (hexString.Length % 2 != 0)
             throw new ArgumentException("Invalid hex string format: odd number of octets", nameof(hexString));

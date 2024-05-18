@@ -20,7 +20,7 @@ using PsnClient.Utils;
 
 namespace PsnClient;
 
-public class Client
+public partial class Client
 {
     private readonly HttpClient client;
     private readonly JsonSerializerOptions dashedJson;
@@ -28,23 +28,27 @@ public class Client
     private readonly MediaTypeFormatterCollection xmlFormatters;
     private static readonly MemoryCache ResponseCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
     private static readonly TimeSpan ResponseCacheDuration = TimeSpan.FromHours(1);
-    private static readonly Regex ContainerIdLink = new(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)");
     private static readonly string[] KnownStoreLocales =
-    {
+    [
         "en-US", "en-GB", "en-AE", "en-AU", "en-BG", "en-BH", "en-CA", "en-CY", "en-CZ", "en-DK", "en-FI", "en-GR", "en-HK", "en-HR", "en-HU", "en-ID", "en-IE", "en-IL", "en-IN", "en-IS",
         "en-KW", "en-LB", "en-MT", "en-MY", "en-NO", "en-NZ", "en-OM", "en-PL", "en-QA", "en-RO", "en-SA", "en-SE", "en-SG", "en-SI", "en-SK", "en-TH", "en-TR", "en-TW", "en-ZA", "ja-JP",
         "ar-AE", "ar-BH", "ar-KW", "ar-LB", "ar-OM", "ar-QA", "ar-SA", "da-DK", "de-AT", "de-CH", "de-DE", "de-LU", "es-AR", "es-BO", "es-CL", "es-CO", "es-CR", "es-EC", "es-ES", "es-GT",
         "es-HN", "es-MX", "es-NI", "es-PA", "es-PE", "es-PY", "es-SV", "es-UY", "fi-FI", "fr-BE", "fr-CA", "fr-CH", "fr-FR", "fr-LU", "it-CH", "it-IT", "ko-KR", "nl-BE", "nl-NL", "no-NO",
         "pl-PL", "pt-BR", "pt-PT", "ru-RU", "ru-UA", "sv-SE", "tr-TR", "zh-Hans-CN", "zh-Hans-HK", "zh-Hant-HK", "zh-Hant-TW",
-    };
+    ];
+
+    [GeneratedRegex(@"(?<id>STORE-(\w|\d)+-(\w|\d)+)")]
+    private static partial Regex ContainerIdLink();
+    
     // Dest=87;ImageVersion=0001091d;SystemSoftwareVersion=4.8500;CDN=http://duk01.ps3.update.playstation.net/update/ps3/image/uk/2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP;CDN_Timeout=30;
-    private static readonly Regex FwVersionInfo = new(
+    [GeneratedRegex(
         @"Dest=(?<dest>\d+);ImageVersion=(?<image>[0-9a-f]+);SystemSoftwareVersion=(?<version>\d+\.\d+);CDN=(?<url>http[^;]+);CDN_Timeout=(?<timeout>\d+)",
-        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase
-    );
+        RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase
+    )]
+    private static partial Regex FwVersionInfo();
 
     // directly from vsh.self
-    private static readonly string[] KnownFwLocales = { "jp", "us", "eu", "kr", "uk", "mx", "au", "sa", "tw", "ru", "cn", "br", };
+    private static readonly string[] KnownFwLocales = ["jp", "us", "eu", "kr", "uk", "mx", "au", "sa", "tw", "ru", "cn", "br",];
 
     public Client()
     {
@@ -117,7 +121,7 @@ public class Client
                     tries++;
                 }
                 if (response.StatusCode == HttpStatusCode.Redirect)
-                    return new(0);
+                    return [];
             }
 
             using (response)
@@ -125,7 +129,7 @@ public class Client
                 {
                     await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                     var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                    var matches = ContainerIdLink.Matches(html);
+                    var matches = ContainerIdLink().Matches(html);
                     var result = new List<string>();
                     foreach (Match m in matches)
                         if (m.Groups["id"].Value is {Length: >0} id)
@@ -345,7 +349,7 @@ public class Client
 
         allVersions = allVersions.OrderByDescending(fwi => fwi.Version).ToList();
         if (allVersions.Count == 0)
-            return new(0);
+            return [];
 
         var maxFw = allVersions.First();
         var result = allVersions.Where(fwi => fwi.Version == maxFw.Version).ToList();
@@ -419,7 +423,7 @@ public class Client
                 if (string.IsNullOrEmpty(data))
                     return null;
 
-                if (FwVersionInfo.Match(data) is not { Success: true } m)
+                if (FwVersionInfo().Match(data) is not { Success: true } m)
                     return null;
                     
                 var ver = m.Groups["version"].Value;
