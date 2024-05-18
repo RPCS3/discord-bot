@@ -24,7 +24,6 @@ public class IrdClient
 
     private readonly HttpClient client;
     private readonly JsonSerializerOptions jsonOptions;
-    private static readonly Regex IrdFilename = new(@"ird/(?<filename>\w{4}\d{5}-[A-F0-9]+\.ird)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
 
     public IrdClient()
     {

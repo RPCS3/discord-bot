@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Database.Providers;
 using CompatBot.ThumbScrapper;
@@ -74,7 +75,7 @@ internal static class TitlePatchFormatter
         var fname = Path.GetFileName(link);
         try
         {
-            var match = PsnScraper.ContentIdMatcher.Match(fname);
+            var match = PsnScraper.ContentIdMatcher().Match(fname);
             if (match.Success)
                 return fname[20..];
         }

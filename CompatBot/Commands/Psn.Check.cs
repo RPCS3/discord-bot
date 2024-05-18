@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -158,7 +159,7 @@ internal sealed partial class Psn
                 return;
             }
 
-            var matches = PsnScraper.ContentIdMatcher.Matches(contentIds.ToUpperInvariant());
+            var matches = PsnScraper.ContentIdMatcher().Matches(contentIds.ToUpperInvariant());
             var itemsToCheck = matches.Select(m => m.Groups["content_id"].Value).ToList();
             if (itemsToCheck.Count == 0)
             {

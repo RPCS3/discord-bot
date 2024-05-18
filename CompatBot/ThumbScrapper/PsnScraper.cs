@@ -14,13 +14,15 @@ using PsnClient.Utils;
 
 namespace CompatBot.ThumbScrapper;
 
-internal sealed class PsnScraper
+internal sealed partial class PsnScraper
 {
     private static readonly PsnClient.Client Client = new();
-    public static readonly Regex ContentIdMatcher = new(
-        @"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
-    );
+
+    [GeneratedRegex(
+        @"(?<content_id>(?<service_id>(?<service_letters>\w\w)(?<service_number>\d{4}))-(?<product_id>(?<product_letters>\w{4})(?<product_number>\d{5}))_(?<part>\d\d)-(?<label>\w{16}))", 
+        RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture
+    )]
+    public static partial Regex ContentIdMatcher();
     private static readonly SemaphoreSlim LockObj = new(1, 1);
     private static List<string> psnStores = new();
     private static DateTime storeRefreshTimestamp = DateTime.MinValue;
@@ -52,7 +54,7 @@ internal sealed class PsnScraper
         if (string.IsNullOrEmpty(contentId))
             return;
 
-        var match = ContentIdMatcher.Match(contentId);
+        var match = ContentIdMatcher().Match(contentId);
         if (!match.Success)
             return;
 
@@ -329,7 +331,7 @@ internal sealed class PsnScraper
                             .Concat(item.Attributes?.Entitlements ?? Enumerable.Empty<GameSkuRelation>())
                             .Select(sku => sku.Id)
                             .Distinct()
-                            .Where(id => ProductCodeLookup.ProductCode.IsMatch(id) && NeedLookup(id))
+                            .Where(id => ProductCodeLookup.Pattern().IsMatch(id) && NeedLookup(id))
                             .ToList();
                         foreach (var relatedSku in relatedSkus)
                         {
@@ -344,12 +346,12 @@ internal sealed class PsnScraper
 
     private static async Task AddOrUpdateThumbnailAsync(string contentId, string? name, string? url, CancellationToken cancellationToken)
     {
-        var match = ContentIdMatcher.Match(contentId);
+        var match = ContentIdMatcher().Match(contentId);
         if (!match.Success)
             return;
 
         var productCode = match.Groups["product_id"].Value;
-        if (!ProductCodeLookup.ProductCode.IsMatch(productCode))
+        if (!ProductCodeLookup.Pattern().IsMatch(productCode))
             return;
 
         name = string.IsNullOrEmpty(name) ? null : name;

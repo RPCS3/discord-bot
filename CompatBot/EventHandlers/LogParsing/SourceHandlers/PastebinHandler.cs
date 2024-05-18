@@ -11,16 +11,17 @@ using System.Threading;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
-internal sealed class PastebinHandler : BaseSourceHandler
+internal sealed partial class PastebinHandler : BaseSourceHandler
 {
-    private static readonly Regex ExternalLink = new(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions);
+    [GeneratedRegex(@"(?<pastebin_link>(https?://)pastebin.com/(raw/)?(?<pastebin_id>[^/>\s]+))", DefaultOptions)]
+    private static partial Regex ExternalLink();
 
     public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
         if (string.IsNullOrEmpty(message.Content))
             return (null, null);
 
-        var matches = ExternalLink.Matches(message.Content);
+        var matches = ExternalLink().Matches(message.Content);
         if (matches.Count == 0)
             return (null, null);
 

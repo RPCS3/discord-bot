@@ -32,7 +32,7 @@ using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace CompatBot.Commands;
 
-internal sealed class CompatList : BaseCommandModuleCustom
+internal sealed partial class CompatList : BaseCommandModuleCustom
 {
     private static readonly Client Client = new();
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
@@ -41,10 +41,10 @@ internal sealed class CompatList : BaseCommandModuleCustom
     private const string Rpcs3UpdateStateKey = "Rpcs3UpdateState";
     private const string Rpcs3UpdateBuildKey = "Rpcs3UpdateBuild";
     private static UpdateInfo? cachedUpdateInfo;
-    private static readonly Regex UpdateVersionRegex = new(
-        @"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b",
-        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture
-    );
+    [GeneratedRegex(@"v(?<version>\d+\.\d+\.\d+)-(?<build>\d+)-(?<commit>[0-9a-f]+)\b", RegexOptions.Singleline | RegexOptions.ExplicitCapture)]
+    private static partial Regex UpdateVersionRegex();
+    [GeneratedRegex(@"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    internal static partial Regex TrialNamePattern();
 
     static CompatList()
     {
@@ -247,7 +247,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
             var latestUpdatePr = info?.LatestBuild?.Pr?.ToString();
             var match = (
                 from field in embed.Fields
-                let m = UpdateVersionRegex.Match(field.Value)
+                let m = UpdateVersionRegex().Match(field.Value)
                 where m.Success
                 select m
             ).FirstOrDefault();
@@ -697,7 +697,7 @@ internal sealed class CompatList : BaseCommandModuleCustom
                     Config.Log.Warn(e);
                 }
             }
-            matches = matches.Where(i => !Regex.IsMatch(i.thumb.Name ?? "", @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline)).ToList();
+            matches = matches.Where(i => !TrialNamePattern().IsMatch(i.thumb.Name ?? "")).ToList();
             //var bestMatch = matches.FirstOrDefault();
             //Config.Log.Trace($"Best title match for [{item.Title}] is [{bestMatch.thumb.Name}] with score {bestMatch.coef:0.0000}");
             if (matches.Count > 0)

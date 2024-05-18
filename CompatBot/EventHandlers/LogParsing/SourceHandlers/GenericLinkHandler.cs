@@ -12,16 +12,17 @@ using System.Threading;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
-internal sealed class GenericLinkHandler : BaseSourceHandler
+internal sealed partial class GenericLinkHandler : BaseSourceHandler
 {
-    private static readonly Regex ExternalLink = new(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z|log)))", DefaultOptions);
+    [GeneratedRegex(@"(?<link>(https?://)?(github\.com/RPCS3/rpcs3|cdn\.discordapp\.com/attachments)/.*/(?<filename>[^/\?\s]+\.(gz|zip|rar|7z|log)))", DefaultOptions)]
+    private static partial Regex ExternalLink();
 
     public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
         if (string.IsNullOrEmpty(message.Content))
             return (null, null);
 
-        var matches = ExternalLink.Matches(message.Content);
+        var matches = ExternalLink().Matches(message.Content);
         if (matches.Count == 0)
             return (null, null);
 

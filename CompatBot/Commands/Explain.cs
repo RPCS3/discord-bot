@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
@@ -330,7 +331,7 @@ internal sealed class Explain: BaseCommandModuleCustom
             return;
 
         termOrLink = termOrLink.ToLowerInvariant().StripQuotes();
-        var isLink = CommandContextExtensions.MessageLinkRegex.IsMatch(termOrLink);
+        var isLink = CommandContextExtensions.MessageLinkPattern().IsMatch(termOrLink);
         if (isLink)
         {
             await DumpLink(ctx, termOrLink).ConfigureAwait(false);

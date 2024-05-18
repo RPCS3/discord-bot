@@ -8,13 +8,11 @@ using PsnClient.POCOs;
 
 namespace CompatBot.Utils.ResultFormatters;
 
-internal static class FwInfoFormatter
+internal static partial class FwInfoFormatter
 {
     //2019_0828_c975768e5d70e105a72656f498cc9be9/PS3UPDAT.PUP
-    private static readonly Regex FwLinkInfo = new(
-        @"(?<year>\d{4})_(?<month>\d\d)(?<day>\d\d)_(?<md5>[0-9a-f]+)",
-        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase
-    );
+    [GeneratedRegex(@"(?<year>\d{4})_(?<month>\d\d)(?<day>\d\d)_(?<md5>[0-9a-f]+)", RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+    private static partial Regex FwLinkInfo();
     private static readonly Dictionary<string, string> RegionToFlagMap = new(StringComparer.InvariantCultureIgnoreCase)
     {
         ["us"] = "🇺🇸",
@@ -39,7 +37,7 @@ internal static class FwInfoFormatter
             .WithColor(Config.Colors.DownloadLinks);
 
         if (fwInfoList.Count > 0
-            && fwInfoList.Select(fwi => FwLinkInfo.Match(fwi.DownloadUrl)).FirstOrDefault(m => m.Success) is Match info)
+            && fwInfoList.Select(fwi => FwLinkInfo().Match(fwi.DownloadUrl)).FirstOrDefault(m => m.Success) is Match info)
         {
             result.Description = $"Latest version is **{fwInfoList[0].Version}** released on {info.Groups["year"].Value}-{info.Groups["month"].Value}-{info.Groups["day"].Value}\n" +
                                  $"It is available in {fwInfoList.Count} region{(fwInfoList.Count == 1 ? "" : "s")} out of {RegionToFlagMap.Count}";

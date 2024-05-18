@@ -17,7 +17,7 @@ using MediafireClient.POCOs;
 
 namespace MediafireClient;
 
-public sealed class Client
+public sealed partial class Client
 {
     private readonly HttpClient client;
     private readonly JsonSerializerOptions jsonOptions;
@@ -25,7 +25,8 @@ public sealed class Client
     //var optSecurityToken = "1605819132.376f3d84695f46daa7b69ee67fbc5edb0a00843a8b2d5ac7d3d1b1ad8a4212b0";
     //private static readonly Regex SecurityTokenRegex = new(@"(var\s+optSecurityToken|name=""security"" value)\s*=\s*""(?<security_token>.+)""", RegexOptions.ExplicitCapture);
     //var optDirectURL = "https://download1499.mediafire.com/12zqzob7gbfg/tmybrjpmtrpcejl/DemonsSouls_CrashLog_Nov.19th.zip";
-    private static readonly Regex DirectUrlRegex = new(@"(var\s+optDirectURL|href)\s*=\s*""(?<direct_link>https?://download\d+\.mediafire\.com/.+)""");
+    [GeneratedRegex(@"(var\s+optDirectURL|href)\s*=\s*""(?<direct_link>https?://download\d+\.mediafire\.com/.+)""")]
+    private static partial Regex DirectUrlRegex();
 
     public Client()
     {
@@ -81,7 +82,7 @@ public sealed class Client
             {
                 await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
                 var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                var m = DirectUrlRegex.Match(html);
+                var m = DirectUrlRegex().Match(html);
                 if (m.Success)
                     return new(m.Groups["direct_link"].Value);
             }

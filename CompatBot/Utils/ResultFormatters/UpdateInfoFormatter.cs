@@ -55,7 +55,7 @@ internal static class UpdateInfoFormatter
         desc = desc?.Trim();
         if (!string.IsNullOrEmpty(desc))
         {
-            if (GithubLinksHandler.IssueMention.Matches(desc) is { Count: >0 } issueMatches)
+            if (GithubLinksHandler.IssueMention().Matches(desc) is { Count: >0 } issueMatches)
             {
                 var uniqueLinks = new HashSet<string>(10);
                 foreach (Match m in issueMatches)
@@ -84,7 +84,7 @@ internal static class UpdateInfoFormatter
                     }
                 }
             }
-            if (GithubLinksHandler.CommitMention.Matches(desc) is { Count: >0 } commitMatches)
+            if (GithubLinksHandler.CommitMention().Matches(desc) is { Count: >0 } commitMatches)
             {
                 var uniqueLinks = new HashSet<string>(2);
                 foreach (Match m in commitMatches)
@@ -102,7 +102,7 @@ internal static class UpdateInfoFormatter
                 }
             }
         }
-        if (!string.IsNullOrEmpty(desc) && GithubLinksHandler.ImageMarkup.Matches(desc) is {Count: >0} imgMatches)
+        if (!string.IsNullOrEmpty(desc) && GithubLinksHandler.ImageMarkup().Matches(desc) is {Count: >0} imgMatches)
         {
             var uniqueLinks = new HashSet<string>(10);
             foreach (Match m in imgMatches)

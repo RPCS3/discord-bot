@@ -11,7 +11,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Utils;
 
-public static class StringUtils
+public static partial class StringUtils
 {
     public static readonly Encoding Utf8 = new UTF8Encoding(false);
     private static readonly MemoryCache FuzzyPairCache = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(10)});
@@ -19,6 +19,8 @@ public static class StringUtils
     private const char StrikeThroughChar = '\u0336'; // 0x0335 = short dash, 0x0336 = long dash, 0x0337 = short slash, 0x0338 = long slash
     public const char InvisibleSpacer = '\u206a';
     public const char Nbsp = '\u00a0';
+    [GeneratedRegex(@"\b(?<cat>cat)s?\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture)]
+    private static partial Regex KotFixPattern();
 
     internal static readonly HashSet<char> SpaceCharacters = new()
     {
@@ -103,7 +105,7 @@ public static class StringUtils
 
     public static string FixKot(this string str)
     {
-        var matches = Regex.Matches(str, @"\b(?<cat>cat)s?\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
+        var matches = KotFixPattern().Matches(str);
         foreach (Match m in matches)
         {
             var idx = m.Index;

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -25,34 +24,32 @@ internal static partial class LogParserResult
     private static readonly IrdClient IrdClient = new();
     private static readonly PsnClient.Client PsnClient = new();
 
-    private static readonly RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
+    private const RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Singleline;
     // RPCS3 v0.0.3-3-3499d08 Alpha | HEAD
     // RPCS3 v0.0.4-6422-95c6ac699 Alpha | HEAD
     // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
     // RPCS3 v0.0.5-42b4ce13a Alpha | minor
     // RPCS3 v0.0.18-local_build Alpha | local_build
-    private static readonly Regex BuildInfoInLog = new(
-        @"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-z_]+|unknown))( (?<stage>\w+))?( \| (?<branch>[^|\r\n]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$",
-        DefaultSingleLine);
-    private static readonly Regex CpuInfoInLog = new(
-        @"(\d{1,2}(th|rd|nd|st) Gen)?(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU with|(with )?Radeon|R\d, \d+ Compute) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$",
-        DefaultSingleLine);
-    // Operating system: Windows, Major: 10, Minor: 0, Build: 22000, Service Pack: none, Compatibility mode: 0
-    // Operating system: POSIX, Name: Linux, Release: 5.15.11-zen1-1-zen, Version: #1 ZEN SMP PREEMPT Wed, 22 Dec 2021 09:23:53 +0000
-    // Operating system: macOS, Version 12.1.0
-    internal static readonly Regex OsInfoInLog = new(
-        @"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+)|Version: (?<macos_version>[^\r\n]+))\r?$",
-        DefaultSingleLine);
-    private static readonly Regex LinuxKernelVersion = new(@"(?<version>\d+\.\d+\.\d+)", DefaultSingleLine);
-    private static readonly Regex ProgramHashPatch = new(@"(?<hash>\w+(-\d+)?)( \(<-\s*(?<patch_count>\d+)\))?", DefaultSingleLine);
-    private static readonly char[] NewLineChars = {'\r', '\n'};
-
+    [GeneratedRegex(@"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-z_]+|unknown))( (?<stage>\w+))?( \| (?<branch>[^|\r\n]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$", DefaultSingleLine)]
+    private static partial Regex BuildInfoInLog();
+    [GeneratedRegex(@"(\d{1,2}(th|rd|nd|st) Gen)?(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU with|(with )?Radeon|R\d, \d+ Compute) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$", DefaultSingleLine)]
+    private static partial Regex CpuInfoInLog();
+    [GeneratedRegex(@"(?<version>\d+\.\d+\.\d+)", DefaultSingleLine)]
+    private static partial Regex LinuxKernelVersion();
+    [GeneratedRegex(@"(?<hash>\w+(-\d+)?)( \(<-\s*(?<patch_count>\d+)\))?", DefaultSingleLine)]
+    private static partial Regex ProgramHashPatch();
     // rpcs3-v0.0.5-7105-064d0619_win64.7z
     // rpcs3-v0.0.5-7105-064d0619_linux64.AppImage
-    private static readonly Regex BuildInfoInUpdate = new(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine);
-    private static readonly Regex VulkanDeviceInfo = new(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine);
-    private static readonly Regex IntelGpuModel = new(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine);
-    private static readonly Regex InstallPath = new(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine);
+    [GeneratedRegex(@"rpcs3-v(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-f]+)_", DefaultSingleLine)]
+    private static partial Regex BuildInfoInUpdate();
+    [GeneratedRegex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine)]
+    private static partial Regex VulkanDeviceInfo();
+    [GeneratedRegex(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine)]
+    private static partial Regex IntelGpuModel();
+    [GeneratedRegex(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine)]
+    private static partial Regex InstallPath();
+
+    private static readonly char[] NewLineChars = {'\r', '\n'};
 
     private static readonly Version MinimumOpenGLVersion = new(4, 3);
     private static readonly Version MinimumFirmwareVersion = new(4, 80);
@@ -734,7 +731,7 @@ internal static partial class LogParserResult
         if (string.IsNullOrEmpty(link))
             return null;
 
-        var latestBuildInfo = BuildInfoInUpdate.Match(link.ToLowerInvariant());
+        var latestBuildInfo = BuildInfoInUpdate().Match(link.ToLowerInvariant());
         if (latestBuildInfo.Success && VersionIsTooOld(items, latestBuildInfo, updateInfo))
             return updateInfo;
 
@@ -796,7 +793,7 @@ internal static partial class LogParserResult
             return null;
 
         var info = (from line in foundDevices
-                let m = VulkanDeviceInfo.Match(line)
+                let m = VulkanDeviceInfo().Match(line)
                 where m.Success
                 select m
             ).FirstOrDefault(m => m.Groups["device_name"].Value == gpu);
@@ -978,7 +975,7 @@ internal static partial class LogParserResult
             return null;
             
         var kernelVersion = release;
-        if (LinuxKernelVersion.Match(release) is {Success: true} m)
+        if (LinuxKernelVersion().Match(release) is {Success: true} m)
             kernelVersion = m.Groups["version"].Value;
         if (version.Contains("Ubuntu", StringComparison.OrdinalIgnoreCase))
             return "Ubuntu " + kernelVersion;
@@ -1096,7 +1093,7 @@ internal static partial class LogParserResult
         var result = new Dictionary<string, int>(patchList.Count);
         foreach (var patch in patchList)
         {
-            var match = ProgramHashPatch.Match(patch);
+            var match = ProgramHashPatch().Match(patch);
             if (match.Success)
             {
                 _ = int.TryParse(match.Groups["patch_count"].Value, out var pCount);

@@ -13,9 +13,10 @@ using OneDriveClient.POCOs;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
-internal sealed class OneDriveSourceHandler : BaseSourceHandler
+internal sealed partial class OneDriveSourceHandler : BaseSourceHandler
 {
-    private static readonly Regex ExternalLink = new(@"(?<onedrive_link>(https?://)?(1drv\.ms|onedrive\.live\.com)/[^>\s]+)", DefaultOptions);
+    [GeneratedRegex(@"(?<onedrive_link>(https?://)?(1drv\.ms|onedrive\.live\.com)/[^>\s]+)", DefaultOptions)]
+    private static partial Regex ExternalLink();
     private static readonly Client Client = new();
 
     public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
@@ -23,7 +24,7 @@ internal sealed class OneDriveSourceHandler : BaseSourceHandler
         if (string.IsNullOrEmpty(message.Content))
             return (null, null);
 
-        var matches = ExternalLink.Matches(message.Content);
+        var matches = ExternalLink().Matches(message.Content);
         if (matches.Count == 0)
             return (null, null);
 

@@ -144,7 +144,7 @@ internal sealed partial class Sudo
             {
                 if (demosOnly
                     && thumb.Name != null
-                    && !Regex.IsMatch(thumb.Name, @"\b(demo|trial)\b", RegexOptions.IgnoreCase | RegexOptions.Singleline))
+                    && !CompatList.TrialNamePattern().IsMatch(thumb.Name))
                     continue;
                     
                 thumb.MetacriticId = null;

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -39,8 +40,8 @@ internal sealed partial class Psn: BaseCommandModuleCustom
     public async Task Add(CommandContext ctx, [Description("Product code such as BLUS12345")] string contentId, [RemainingText, Description("New game title to save in the database")] string title)
     {
         contentId = contentId.ToUpperInvariant();
-        var productCodeMatch = ProductCodeLookup.ProductCode.Match(contentId);
-        var contentIdMatch = PsnScraper.ContentIdMatcher.Match(contentId);
+        var productCodeMatch = ProductCodeLookup.Pattern().Match(contentId);
+        var contentIdMatch = PsnScraper.ContentIdMatcher().Match(contentId);
         string productCode;
         if (contentIdMatch.Success)
         {

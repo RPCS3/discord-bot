@@ -13,6 +13,9 @@ namespace CompatBot.Utils.ResultFormatters;
 
 internal static partial class LogParserResult
 {
+    [GeneratedRegex(@"Radeon RX 5\d{3}", RegexOptions.IgnoreCase)]
+    private static partial Regex RadeonRx5xxPattern();
+    
     private static void BuildWeirdSettingsSection(DiscordEmbedBuilder builder, LogParseState state, List<string> generalNotes)
     {
         var items = state.CompletedCollection!;
@@ -187,7 +190,7 @@ internal static partial class LogParserResult
         }
         var isWireframeBugPossible = items["gpu_info"] is string gpuInfo
                                      && buildVersion < RdnaMsaaFixedVersion
-                                     && Regex.IsMatch(gpuInfo, @"Radeon RX 5\d{3}", RegexOptions.IgnoreCase) // RX 590 is a thing 😔
+                                     && RadeonRx5xxPattern().IsMatch(gpuInfo) // RX 590 is a thing 😔
                                      && !gpuInfo.Contains("RADV");
         if (items["msaa"] == "Disabled")
         {

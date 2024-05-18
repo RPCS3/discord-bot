@@ -12,8 +12,10 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
 
-internal static class TableFlipMonitor
+internal static partial class TableFlipMonitor
 {
+    [GeneratedRegex(@"(🎲|\s)+")]
+    private static partial Regex DiceRoll();
     private static readonly char[] OpenParen = {'(', '（', 'ʕ'};
 
     public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
@@ -38,8 +40,7 @@ internal static class TableFlipMonitor
         try
         {
             var content = args.Message.Content;
-
-            if (content.Contains("🎲") && Regex.IsMatch(content, @"(🎲|\s)+"))
+            if (content.Contains("🎲") && DiceRoll().IsMatch(content))
             {
                 var count = 1;
                 var idx = content.IndexOf("🎲");

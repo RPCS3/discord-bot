@@ -17,6 +17,9 @@ internal partial class Sudo
     [Description("Commands to manage dotnet")]
     public sealed partial class Dotnet : BaseCommandModuleCustom
     {
+        [GeneratedRegex(@"\.NET( Core)? (?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(-.+)?", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
+        private static partial Regex DotnetVersionPattern();
+
         [Command("update"), Aliases("upgrade")]
         [Description("Updates dotnet, and then restarts the bot")]
         public async Task Update(CommandContext ctx, [Description("Dotnet SDK version (e.g. `5.1`)")] string version = "")
@@ -67,11 +70,7 @@ internal partial class Sudo
 
             if (string.IsNullOrEmpty(version))
             {
-                var versionMatch = Regex.Match(
-                    System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
-                    @"\.NET( Core)? (?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(-.+)?",
-                    RegexOptions.Singleline | RegexOptions.ExplicitCapture
-                );
+                var versionMatch = DotnetVersionPattern().Match(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
                 if (!versionMatch.Success)
                     throw new InvalidOperationException("Failed to resolve required dotnet sdk version");
                     
@@ -102,6 +101,5 @@ internal partial class Sudo
 
             return (true, stdout);
         }
-
     }
 }

@@ -16,9 +16,10 @@ using FileMeta = Google.Apis.Drive.v3.Data.File;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
-internal sealed class GoogleDriveHandler: BaseSourceHandler
+internal sealed partial class GoogleDriveHandler: BaseSourceHandler
 {
-    private static readonly Regex ExternalLink = new(@"(?<gdrive_link>(https?://)?drive\.google\.com/(open\?id=|file/d/)(?<gdrive_id>[^/>\s]+))", DefaultOptions);
+    [GeneratedRegex(@"(?<gdrive_link>(https?://)?drive\.google\.com/(open\?id=|file/d/)(?<gdrive_id>[^/>\s]+))", DefaultOptions)]
+    private static partial Regex ExternalLink();
     private static readonly string[] Scopes = { DriveService.Scope.DriveReadonly };
     private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
 
@@ -30,7 +31,7 @@ internal sealed class GoogleDriveHandler: BaseSourceHandler
         if (string.IsNullOrEmpty(Config.GoogleApiCredentials))
             return (null, null);
 
-        var matches = ExternalLink.Matches(message.Content);
+        var matches = ExternalLink().Matches(message.Content);
         if (matches.Count == 0)
             return (null, null);
 

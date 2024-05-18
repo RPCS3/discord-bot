@@ -19,11 +19,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal class EventsBaseCommand: BaseCommandModuleCustom
+internal partial class EventsBaseCommand: BaseCommandModuleCustom
 {
     private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
-    private static readonly Regex Duration = new(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+
+    [GeneratedRegex(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture)]
+    private static partial Regex Duration();
 
     protected static async Task NearestEvent(CommandContext ctx, string? eventName = null)
     {
@@ -546,7 +547,7 @@ internal class EventsBaseCommand: BaseCommandModuleCustom
 
     private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration, bool react = true)
     {
-        var d = Duration.Match(duration);
+        var d = Duration().Match(duration);
         if (!d.Success)
         {
             if (react)

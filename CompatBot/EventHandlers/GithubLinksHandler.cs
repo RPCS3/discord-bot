@@ -11,13 +11,17 @@ using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
-internal static class GithubLinksHandler
+internal static partial class GithubLinksHandler
 {
-    private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
-    public static readonly Regex IssueMention = new(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|\B#(?<also_number>1?\d{4})|(https?://)github.com/RPCS3/rpcs3/(issues|pull)/(?<another_number>\d+)(#issuecomment-(?<comment_id>\d+))?)\b", DefaultOptions);
-    public static readonly Regex CommitMention = new(@"(?<commit_mention>(https?://)github.com/RPCS3/rpcs3/commit/(?<commit_hash>[0-9a-f]+))\b", DefaultOptions);
-    public static readonly Regex ImageMarkup = new(@"(?<img_markup>!\[(?<img_caption>[^\]]+)\]\((?<img_link>\w+://[^\)]+)\))", DefaultOptions);
-    private static readonly Regex IssueLink = new(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions);
+    private const RegexOptions DefaultOptions = RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
+    [GeneratedRegex(@"(?<issue_mention>\b(issue|pr|pull[ \-]request|bug)\s*#?\s*(?<number>\d+)|\B#(?<also_number>1?\d{4})|(https?://)github.com/RPCS3/rpcs3/(issues|pull)/(?<another_number>\d+)(#issuecomment-(?<comment_id>\d+))?)\b", DefaultOptions)]
+    internal static partial Regex IssueMention();
+    [GeneratedRegex(@"(?<commit_mention>(https?://)github.com/RPCS3/rpcs3/commit/(?<commit_hash>[0-9a-f]+))\b", DefaultOptions)]
+    internal static partial Regex CommitMention();
+    [GeneratedRegex(@"(?<img_markup>!\[(?<img_caption>[^\]]+)\]\((?<img_link>\w+://[^\)]+)\))", DefaultOptions)]
+    internal static partial Regex ImageMarkup();
+    [GeneratedRegex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions)]
+    internal static partial Regex IssueLink();
 
     public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
     {
@@ -72,7 +76,7 @@ internal static class GithubLinksHandler
 
     public static List<int> GetIssueIds(string input)
     {
-        return IssueMention.Matches(input)
+        return IssueMention().Matches(input)
             .SelectMany(match => new[]
             {
                 match.Groups["number"].Value,
@@ -87,7 +91,7 @@ internal static class GithubLinksHandler
     public static HashSet<int> GetIssueIdsFromLinks(string input)
     {
         return new(
-            IssueLink.Matches(input)
+            IssueLink().Matches(input)
                 .Select(match =>
                 {
                     _ = int.TryParse(match.Groups["number"].Value, out var n);

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
+using CompatBot.EventHandlers.LogParsing;
 using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.ResultFormatters;
@@ -27,9 +29,9 @@ internal static partial class LogParserResult
                 systemInfo = systemInfo[..idxStart] + systemInfo[idxEnd..];
         }
         var sysInfoParts = systemInfo.Split(NewLineChars, StringSplitOptions.RemoveEmptyEntries);
-        var buildInfo = sysInfoParts.Length > 0 ? BuildInfoInLog.Match(sysInfoParts[0]) : BuildInfoInLog.Match(systemInfo);
-        var cpuInfo = sysInfoParts.Length > 1 ? CpuInfoInLog.Match(sysInfoParts[1]) : CpuInfoInLog.Match(systemInfo);
-        var osInfo = sysInfoParts.Length > 2 ? OsInfoInLog.Match(sysInfoParts[2]) : OsInfoInLog.Match(systemInfo);
+        var buildInfo = BuildInfoInLog().Match(sysInfoParts.Length > 0 ? sysInfoParts[0] : systemInfo);
+        var cpuInfo = CpuInfoInLog().Match(sysInfoParts.Length > 1 ? sysInfoParts[1] : systemInfo);
+        var osInfo = LogParser.OsInfo().Match(sysInfoParts.Length > 2 ? sysInfoParts[2] : systemInfo);
         if (buildInfo.Success)
         {
             items["build_version"] = buildInfo.Groups["version"].Value.Trim();

@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal sealed class Misc: BaseCommandModuleCustom
+internal sealed partial class Misc: BaseCommandModuleCustom
 {
     private static readonly Random rng = new();
 
@@ -128,7 +128,10 @@ internal sealed class Misc: BaseCommandModuleCustom
 
     private static readonly HashSet<char> Vowels = new() {'a', 'e', 'i', 'o', 'u'};
 
-    private static readonly Regex Instead = new("rate (?<instead>.+) instead", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+    [GeneratedRegex("rate (?<instead>.+) instead", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
+    private static partial Regex Instead();
+    [GeneratedRegex(@"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?")]
+    private static partial Regex DiceNotationPattern();
 
     [Command("roll")]
     [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
@@ -155,7 +158,7 @@ internal sealed class Misc: BaseCommandModuleCustom
     {
         var result = "";
         var embed = new DiscordEmbedBuilder();
-        if (dices is string dice && Regex.Matches(dice, @"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?") is {Count: > 0 and <= EmbedPager.MaxFields } matches)
+        if (dices is string dice && DiceNotationPattern().Matches(dice) is {Count: > 0 and <= EmbedPager.MaxFields } matches)
         {
             var grandTotal = 0;
             foreach (Match m in matches)
@@ -318,7 +321,7 @@ internal sealed class Misc: BaseCommandModuleCustom
             var choiceFlags = new HashSet<char>();
             whatever = whatever.ToLowerInvariant().StripInvisibleAndDiacritics();
             var originalWhatever = whatever;
-            var matches = Instead.Matches(whatever);
+            var matches = Instead().Matches(whatever);
             if (matches.Any())
             {
                 var insteadWhatever = matches.Last().Groups["instead"].Value.TrimEager();

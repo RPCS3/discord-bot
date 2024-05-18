@@ -13,10 +13,11 @@ using MediafireClient;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
-internal sealed class MediafireHandler : BaseSourceHandler
+internal sealed partial class MediafireHandler : BaseSourceHandler
 {
     //http://www.mediafire.com/file/tmybrjpmtrpcejl/DemonsSouls_CrashLog_Nov.19th.zip/file
-    private static readonly Regex ExternalLink = new(@"(?<mediafire_link>(https?://)?(www\.)?mediafire\.com/file/(?<quick_key>[^/\s]+)/(?<filename>[^/\?\s]+)(/file)?)", DefaultOptions);
+    [GeneratedRegex(@"(?<mediafire_link>(https?://)?(www\.)?mediafire\.com/file/(?<quick_key>[^/\s]+)/(?<filename>[^/\?\s]+)(/file)?)", DefaultOptions)]
+    private static partial Regex ExternalLink();
     private static readonly Client Client = new();
 
     public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
@@ -24,7 +25,7 @@ internal sealed class MediafireHandler : BaseSourceHandler
         if (string.IsNullOrEmpty(message.Content))
             return (null, null);
 
-        var matches = ExternalLink.Matches(message.Content);
+        var matches = ExternalLink().Matches(message.Content);
         if (matches.Count == 0)
             return (null, null);
 

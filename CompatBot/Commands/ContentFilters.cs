@@ -29,11 +29,15 @@ namespace CompatBot.Commands;
 
 [Group("filters"), Aliases("piracy", "filter"), RequiresBotSudoerRole, RequiresDm]
 [Description("Used to manage content filters. **Works only in DM**")]
-internal sealed class ContentFilters: BaseCommandModuleCustom
+internal sealed partial class ContentFilters: BaseCommandModuleCustom
 {
     private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
     private static readonly char[] Separators = {' ', ',', ';', '|'};
     private static readonly SemaphoreSlim ImportLock = new(1, 1);
+
+    // match for "complex" names with several regions, or region-languages, or explicit revision
+    [GeneratedRegex(@" (\(.+\)\s*\(.+\)|\(\w+(,\s*\w+)+\))\.iso$")]
+    private static partial Regex ExtraIsoInfoPattern();
 
     [Command("list")]
     [Description("Lists all filters")]
@@ -202,8 +206,8 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
                     if (string.IsNullOrEmpty(name))
                         continue;
 
-                    // only match for "complex" names with several regions, or region-languages, or explicit revision
-                    if (!Regex.IsMatch(name, @" (\(.+\)\s*\(.+\)|\(\w+(,\s*\w+)+\))\.iso$"))
+                    
+                    if (!ExtraIsoInfoPattern().IsMatch(name))
                         continue;
 
                     name = name[..^4]; //-.iso
@@ -710,7 +714,12 @@ internal sealed class ContentFilters: BaseCommandModuleCustom
             {
                 try
                 {
-                    _ = Regex.IsMatch("test", txt.Content, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                    _ = Regex.IsMatch(
+                        filter.String ?? "test",
+                        txt.Content, 
+                        RegexOptions.Multiline | RegexOptions.IgnoreCase, 
+                        TimeSpan.FromMilliseconds(100)
+                    );
                 }
                 catch (Exception e)
                 {
