@@ -100,10 +100,10 @@ internal static partial class LogParserResult
         //{"BCJS70013", "NPJA00102"},
 
         // White Knight Chronicles II
-        {"BCJS30042", "NPJA00104"}
+        {"BCJS30042", "NPJA00104"},
 
         // Aquanaut's Holiday: Hidden Memories
-        {"BCJS30023", "NPJA00103"}
+        {"BCJS30023", "NPJA00103"},
     };
 
     private static readonly string[] Known1080pIds =
