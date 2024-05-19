@@ -101,6 +101,9 @@ internal static partial class LogParserResult
 
         // White Knight Chronicles II
         {"BCJS30042", "NPJA00104"}
+
+        // Aquanaut's Holiday: Hidden Memories
+        {"BCJS30023", "NPJA00103"}
     };
 
     private static readonly string[] Known1080pIds =
@@ -110,8 +113,19 @@ internal static partial class LogParserResult
 
     private static readonly string[] KnownDisableVertexCacheIds =
     [
+        "BLES01219", "BLUS30616", // penguins blowhole
+        "NPEB00754", "NPUB30605", // real steel
+        "BLES01379", "BLUS30813", // marvel comic combat
+        "BLES00895", "BLUS30525", "BLAS50277", // marvel infinity gauntlet
+        "BLES01446", "BLUS30565", "BLJM60391", // sh downpour
+        "BLES02070", "BLUS31460", "BLJM61220", // kh2.5
         "NPEB00258", "NPUB30162", "NPJB00068", // scott pilgrim
         "NPEB00303", "NPUB30242", "NPHB00229", // crazy taxi
+        "NPEB00630", "NPUB30493", "NPJB00161", "NPHB00383", // daytona usa
+        "BLES00712", "BLUS30398", "BLJS10039", "BLJS50009", // way samurai 3
+        "NPEB00304", "NPUB30249", "NPJB00083", "NPHB00228", // sonic adventure
+        "BLES00024", "BLUS30032", "NPEB00788", "NPUB30636", "NPHB00481", // splinter cell double agent
+        "BLES01342", "BLUS30666", "BLES01343", "BLKS20333", "BLES01747", "BLES01748", "BLUS31062", "NPEB00890", "NPUB30700", // saints row 3
     ];
 
     private static readonly HashSet<string> KnownNoRelaxedXFloatIds = [];
@@ -280,12 +294,29 @@ internal static partial class LogParserResult
         "NPEA00036", "NPUA80069", "NPJA00004", // locoroco
         "BCES01284", "BCUS98247", "BCUS99142", "NPEA00429", "NPUA80875", "NPEA90120", "NPUA70250", // sly cooper 4
         "BCAS20112", "BCAS20189", "BCKS10112", "BLES01101", "BLJS10072", "BLJS10114", "BLJS50026", "BLUS30652", "NPEB90321", // no more heroes
+        "BCUS98116", "BCES00081", "BCAS20066", "BCJS30032", // killzone 2
     ];
 
     private static readonly HashSet<string> KnownGamesThatRequireInterpreter =
     [
-        "NPEB00630", "NPUB30493", "NPJB00161", // daytona usa
-        "BCAS25017", "BCES01121", "BCES01122", "BCES01123", "BCUS98298", "NPEA00513", "NPUA81087", "NPEA90127", "NPJA90259", "NPUA72074", "NPJA00097", // beyond two souls
+        "BLJS10301", "NPJB00685", // ukiyo no shishi
+        "NPEB02126", "NPUB31590", // don't starve
+        "BLES00023", "BLUS30006", "BLJS10007", // Blazing Angels: Squadrons of WWII
+        "NPEB00220", "NPUB30254", "NPHB00297", // Landit Bandit
+        "BLES00189", "BLES00190", "BLUS30105", // Soldier of Fortune: Payback
+        "BLES02185", "NPEB02302", "NPUB31776", // Rugby League Live 3
+        "NPEB01386", "NPJB00562", "NPUB31244", "NPUB31569", // Assassin's Creed lib
+        "BCUS98144", "BCES00112", "NPEA90021", "NPUA80112", // NBA08
+        "BLUS31152", "BLES01793", "BLJM60486", "NPUB31115", "NPEB01262", // Atelier Ayesha: The Alchemist of Dusk
+        "BLES00103", "BLUS30052", "BLJM60072", "NPEB90043", "NPUB90063", // Blazing Angels 2: Secret Missions of WWII
+        "BLES00783", "BLUS30416", "BCAS25005", "BLJM67005", "MRTC00003", "BLJX94005", // FF13 remove after #8911 & #13231 is fixed
+        "BLES00249", "BLES00250", "BLES00263", "BLUS30137", "NPEB90066", "NPUB90051", // robert ludlum remove after #14845 is fixed
+        "BLES01796", "BLUS31381", "BLJM61068", "NPEB01332", "NPUB31231", "NPJB00415", // farming simulator
+        "BLUS31465", "BLES02061", "BLES02062", "BLJM61208", "NPEB02064", "NPUB31547", // Assassin's Creed Rogue
+        "BLES01667", "BLES01668", "BLES01669", "BLES01968", "BLUS30991", "BLJM61174", "BLJM60516", "NPEB01099", "NPUB30826", // Assassin's Creed 3
+        "BLES01882", "BLES01883", "BLES01884", "BLUS31193", "BLJM61056", "BLES02085", "BLUS31483", "NPEB01396", "NPUB31246", // Assassin's Creed 4
+        "BLES01466", "BLES01467", "BLUS30905", "BLUS31145", "BLKS20325", "NPEB00880", "NPUB30707", "BLET70017", "NPUB90674", // Assassin's Creed rev
+        "BLES00909", "BLES00910", "BLES00911", "BLUS30537", "BLJM60250", "BLKS20231", "NPEB00600", "NPUB30522", "BLET70013", "NPUB90483", // Assassin's Creed bro
     ];
 
     private static readonly HashSet<string> KnownGamesThatRequireAccurateXfloat =
