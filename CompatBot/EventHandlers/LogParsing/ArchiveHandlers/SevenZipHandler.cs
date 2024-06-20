@@ -40,7 +40,7 @@ internal sealed class SevenZipHandler: IArchiveHandler
             using var zipReader = zipArchive.ExtractAllEntries();
             while (zipReader.MoveToNextEntry())
                 if (!zipReader.Entry.IsDirectory
-                    && zipReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                    && zipReader.Entry.Key!.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                     && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                 {
                     LogSize = zipReader.Entry.Size;

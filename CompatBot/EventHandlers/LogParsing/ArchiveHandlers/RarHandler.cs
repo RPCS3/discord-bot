@@ -40,7 +40,7 @@ internal sealed class RarHandler: IArchiveHandler
             while (rarReader.MoveToNextEntry())
             {
                 if (!rarReader.Entry.IsDirectory
-                    && rarReader.Entry.Key.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
+                    && rarReader.Entry.Key!.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                     && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                 {
                     LogSize = rarReader.Entry.Size;

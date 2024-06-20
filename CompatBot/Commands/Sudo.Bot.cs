@@ -12,6 +12,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 
 namespace CompatBot.Commands;
 
@@ -248,7 +249,7 @@ internal partial class Sudo
             if (SandboxDetector.Detect() != SandboxType.Docker)
             {
                 Config.Log.Info("Restarting...");
-                Config.Log.Factory.Flush();
+                LogManager.LogFactory.Flush();
                 using var self = new Process {StartInfo = RestartInfo};
                 self.Start();
                 Config.InMemorySettings["shutdown"] = "true";

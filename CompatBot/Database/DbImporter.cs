@@ -75,8 +75,10 @@ public static class DbImporter
         {
             // __EFMigrationsHistory table will be already created by the failed migration attempt
 #pragma warning disable EF1001 // Internal EF Core API usage.
+#pragma warning disable EF1002 // Using raw sql
             await db.ExecuteSqlRawAsync($"INSERT INTO `__EFMigrationsHistory`(`MigrationId`,`ProductVersion`) VALUES ({new InitialCreate().GetId()},'manual')", cancellationToken);
             await db.ExecuteSqlRawAsync($"INSERT INTO `__EFMigrationsHistory`(`MigrationId`,`ProductVersion`) VALUES ({new Explanations().GetId()},'manual')", cancellationToken);
+#pragma warning restore EF1002
 #pragma warning restore EF1001 // Internal EF Core API usage.
             // create constraints on moderator
             await db.ExecuteSqlRawAsync(@"CREATE TABLE `temp_new_moderator` (
