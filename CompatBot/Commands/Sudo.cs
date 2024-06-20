@@ -16,6 +16,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 using SharpCompress.Common;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.Deflate;
@@ -134,7 +135,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
     {
         try
         {
-            Config.Log.Factory.Flush();
+            LogManager.LogFactory.Flush();
             string[] logPaths = [Config.CurrentLogPath];
             if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
             {

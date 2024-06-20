@@ -218,7 +218,7 @@ internal static class AzureDevOpsClientExtensions
                     using var zipStream = ReaderFactory.Open(stream);
                     while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                     {
-                        if (zipStream.Entry.Key.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
+                        if (zipStream.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
                             result = result with {WindowsFilename = Path.GetFileName(zipStream.Entry.Key)};
                             break;
@@ -248,7 +248,7 @@ internal static class AzureDevOpsClientExtensions
                     using var zipStream = ReaderFactory.Open(stream);
                     while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                     {
-                        if (zipStream.Entry.Key.EndsWith(".AppImage", StringComparison.InvariantCultureIgnoreCase))
+                        if (zipStream.Entry.Key?.EndsWith(".AppImage", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
                             result = result with {LinuxFilename = Path.GetFileName(zipStream.Entry.Key)};
                             break;
@@ -275,7 +275,7 @@ internal static class AzureDevOpsClientExtensions
                     using var zipStream = ReaderFactory.Open(stream);
                     while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                     {
-                        if (zipStream.Entry.Key.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase))
+                        if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
                             result = result with { MacFilename = Path.GetFileName(zipStream.Entry.Key) };
                             break;

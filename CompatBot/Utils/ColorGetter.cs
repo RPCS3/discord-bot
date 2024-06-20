@@ -50,7 +50,7 @@ internal static class ColorGetter
                 return defaultColor;
 
             // TODO .net6 breaks this for linux
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!OperatingSystem.IsWindowsVersionAtLeast(6, 1))
                 return defaultColor;
 
             var analyzer = new ColorThief();
