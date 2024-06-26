@@ -326,7 +326,8 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
                     table.Add(warning.Id.ToString(), "+", issuerName, timestamp, warning.Reason, warning.FullReason);
                 }
             }
-            var result = new StringBuilder("Warning list for ").Append(userName);
+            
+            var result = new StringBuilder("Warning list for ").Append(Formatter.Sanitize(userName));
             if (!isPrivate && !isWhitelisted && count > maxWarningsInPublicChannel)
                 result.Append($" (last {showCount} of {count}, full list in DMs)");
             result.AppendLine(":").Append(table);

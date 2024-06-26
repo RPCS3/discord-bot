@@ -1032,13 +1032,14 @@ internal static partial class LogParserResult
                 13 => "macOS High Sierra",
                 14 => "macOS Mojave",
                 15 => "macOS Catalina",
-                _ => null,
+                _ => "Unknown Apple OS",
             },
             11 => "macOS Big Sur",
             12 => "macOS Monterey",
             13 => "macOS Ventura",
             14 => "macOS Sonoma",
-            _ => null,
+            15 => "macOS Sequoia",
+            _ => "Unknown Apple OS",
         };
 
     internal static bool IsAmd(string gpuInfo)

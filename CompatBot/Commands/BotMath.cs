@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using DSharpPlus.CommandsNext;
@@ -12,6 +13,11 @@ namespace CompatBot.Commands;
 [Description("Math, here you go Juhn. Use `math help` for syntax help")]
 internal sealed class BotMath : BaseCommandModuleCustom
 {
+    static BotMath()
+    {
+        License.iConfirmNonCommercialUse("RPCS3");
+    }
+    
     [GroupCommand, Priority(9)]
     public async Task Expression(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
     {
@@ -35,8 +41,23 @@ internal sealed class BotMath : BaseCommandModuleCustom
             """;
         try
         {
+            mXparser.resetCancelCurrentCalculationFlag();
             var expr = new Expression(expression);
-            result = expr.calculate().ToString(CultureInfo.InvariantCulture);
+            const int timeout = 1_000;
+            var cts = new CancellationTokenSource(timeout);
+            // ReSharper disable once MethodSupportsCancellation
+            var delayTask = Task.Delay(timeout);
+            var calcTask = Task.Run(() => expr.calculate().ToString(CultureInfo.InvariantCulture), cts.Token);
+            await Task.WhenAny(calcTask, delayTask).ConfigureAwait(false);
+            if (calcTask.IsCompletedSuccessfully)
+            {
+                result = await calcTask;
+            }
+            else
+            {
+                mXparser.cancelCurrentCalculation();
+                result = "Calculation took too much time and all operations were cancelled";
+            }
         }
         catch (Exception e)
         {
