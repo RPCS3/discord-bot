@@ -27,7 +27,7 @@ namespace CompatBot.Utils.ResultFormatters
                 if (string.IsNullOrEmpty(item.Link))
                     continue;
                 result.AddField(
-                    $"[ {item.Title} v{item.GameVer} FW {item.FwVer} ]",
+                    $"{item.Title} [v{item.GameVer} FW {item.FwVer}]",
                     $"[⏬ {Path.GetFileName(item.Link)}]({IrdClient.GetDownloadLink(item.Link)})"
                 );
             }
