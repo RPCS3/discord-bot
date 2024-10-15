@@ -14,7 +14,14 @@ public class MemoryCacheExtensionTests
         var cache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
         Assert.That(cache.GetCacheKeys<int>(), Is.Empty);
 
-        cache.Set(13, "val13");
+        const string testVal = "vale13";
+        cache.Set(13, testVal);
+        Assert.Multiple(() =>
+            {
+                Assert.That(cache.TryGetValue(13, out string expectedVal), Is.True);
+                Assert.That(expectedVal, Is.EqualTo(testVal));
+            }
+        );
         Assert.That(cache.GetCacheKeys<int>(), Has.Count.EqualTo(1));
     }
 
