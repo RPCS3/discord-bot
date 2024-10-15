@@ -11,59 +11,65 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using IrdLibraryClient.IrdFormat;
 using IrdLibraryClient.POCOs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace IrdLibraryClient
 {
     public class IrdClient
     {
-        public static readonly string JsonUrl = "https://flexby420.github.io/playstation_3_ird_database/all.json";
-        private readonly HttpClient client;
-        private readonly JsonSerializerOptions jsonOptions;
-        private static readonly string BaseDownloadUri = "https://github.com/FlexBy420/playstation_3_ird_database/raw/main/";
-
-        public IrdClient()
+        private static readonly Uri BaseDownloadUri = new("https://github.com/FlexBy420/playstation_3_ird_database/raw/main/");
+        private static readonly HttpClient Client = HttpClientFactory.Create(new CompressionMessageHandler());
+        private static readonly JsonSerializerOptions JsonOptions= new()
         {
-            client = HttpClientFactory.Create(new CompressionMessageHandler());
-            jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                IncludeFields = true,
-            };
-        }
+            PropertyNamingPolicy = JsonNamingPolicy.KebabCaseLower,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            IncludeFields = true,
+        };
+        private static readonly MemoryCache JsonCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromHours(1) });
+
+        public static readonly Uri JsonUrl = new("https://flexby420.github.io/playstation_3_ird_database/all.json");
 
         public async Task<List<IrdInfo>> SearchAsync(string query, CancellationToken cancellationToken)
-        {
-            query = query.ToUpper();
-            try
+        {            
+            List<IrdInfo> result = [];
+            if (!JsonCache.TryGetValue("json", out Dictionary<string, List<IrdInfo>>? irdData)
+                || irdData is not { Count: > 0 })
             {
-                using var response = await client.GetAsync(JsonUrl, cancellationToken).ConfigureAwait(false);
-                if (!response.IsSuccessStatusCode)
+                try
                 {
-                    ApiConfig.Log.Error($"Failed to fetch IRD data: {response.StatusCode}");
-                    return new List<IrdInfo>();
-                }
+                    using var response = await Client.GetAsync(JsonUrl, cancellationToken).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        ApiConfig.Log.Error($"Failed to fetch IRD data: {response.StatusCode}");
+                        return result;
+                    }
 
-                var jsonResult = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                var irdData = JsonSerializer.Deserialize<Dictionary<string, List<IrdInfo>>>(jsonResult, jsonOptions);
-                if (irdData == null)
+                    var jsonResult = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                    irdData = JsonSerializer.Deserialize<Dictionary<string, List<IrdInfo>>>(jsonResult, JsonOptions);
+                    JsonCache.Set("json", irdData, TimeSpan.FromHours(4));
+                }
+                catch (Exception e)
                 {
-                    ApiConfig.Log.Error("Failed to deserialize IRD JSON data.");
-                    return new List<IrdInfo>();
+                    ApiConfig.Log.Error(e, "Failed to fetch IRD data.");
+                    return result;
                 }
-
-                if (irdData.TryGetValue(query, out var items))
-                {
-                    return items;
-                }
-
-                return new List<IrdInfo>();
             }
-            catch (Exception e)
+
+            if (irdData is null)
             {
-                ApiConfig.Log.Error(e);
-                return new List<IrdInfo>();
+                ApiConfig.Log.Error("Failed to deserialize IRD JSON data.");
+                return result;
             }
+
+            if (irdData.TryGetValue(query.ToUpperInvariant(), out var items))
+                result.AddRange(items);
+            result.AddRange(
+                from lst in irdData.Values
+                from irdInfo in lst
+                where irdInfo.Title?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false
+                select irdInfo 
+            );
+            return result;
         }
 
         public async Task<List<Ird>> DownloadAsync(string productCode, string localCachePath, CancellationToken cancellationToken)
@@ -72,7 +78,7 @@ namespace IrdLibraryClient
             try
             {
                 var searchResults = await SearchAsync(productCode, cancellationToken).ConfigureAwait(false);
-                if (searchResults == null || !searchResults.Any())
+                if (searchResults is not {Count: >0})
                 {
                     ApiConfig.Log.Debug($"No IRD files found for {productCode}");
                     return result;
@@ -81,22 +87,34 @@ namespace IrdLibraryClient
                 foreach (var item in searchResults)
                 {
                     var localFilePath = Path.Combine(localCachePath, $"{productCode}-{item.Link.Split('/').Last()}.ird");
-                    if (!File.Exists(localFilePath))
+                    if (File.Exists(localFilePath))
+                    {
+                        var irdData = await File.ReadAllBytesAsync(localFilePath, cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            result.Add(IrdParser.Parse(irdData));
+                        }
+                        catch (Exception e)
+                        {
+                            ApiConfig.Log.Warn(e, $"Failed to parse locally cached IRD file {localFilePath}");
+                            try { File.Delete(localFilePath); } catch {}
+                        }
+                    }
+                    else
                     {
                         try
                         {
                             var downloadLink = GetDownloadLink(item.Link);
-                            var fileBytes = await client.GetByteArrayAsync(downloadLink, cancellationToken).ConfigureAwait(false);
+                            var fileBytes = await Client.GetByteArrayAsync(downloadLink, cancellationToken).ConfigureAwait(false);
                             await File.WriteAllBytesAsync(localFilePath, fileBytes, cancellationToken).ConfigureAwait(false);
                             result.Add(IrdParser.Parse(fileBytes));
                         }
-                        catch (Exception ex)
+                        catch (Exception e)
                         {
-                            ApiConfig.Log.Warn(ex, $"Failed to download {item.Link}: {ex.Message}");
+                            ApiConfig.Log.Warn(e, $"Failed to download {item.Link}: {e.Message}");
                         }
                     }
                 }
-
                 ApiConfig.Log.Debug($"Returning {result.Count} .ird files for {productCode}");
                 return result;
             }
@@ -106,24 +124,7 @@ namespace IrdLibraryClient
                 return result;
             }
         }
-        public static string GetDownloadLink(string relativeLink)
-        {
-            var fullUrl = new Uri(new Uri(BaseDownloadUri), relativeLink);
-            return Uri.EscapeUriString(fullUrl.ToString());
-        }
-    }
-
-    public class IrdInfo
-    {
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = null!;
-    [JsonPropertyName("fw-ver")]
-    public string? FwVer { get; set; }
-    [JsonPropertyName("game-ver")]
-    public string? GameVer { get; set; }
-    [JsonPropertyName("app-ver")]
-    public string? AppVer { get; set; }
-    [JsonPropertyName("link")]
-    public string Link { get; set; } = null!;
+        
+        public static Uri GetDownloadLink(string relativeLink) => new(BaseDownloadUri, relativeLink);
     }
 }
