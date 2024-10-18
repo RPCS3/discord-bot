@@ -6,7 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DiscUtils.OpticalDisk" Version="0.16.13" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.65" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageReference Include="System.IO.Hashing" Version="8.0.0" />
   </ItemGroup>
