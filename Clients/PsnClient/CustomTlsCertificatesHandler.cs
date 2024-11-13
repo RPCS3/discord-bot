@@ -37,7 +37,7 @@ public class CustomTlsCertificatesHandler: HttpClientHandler
                 if (certData.Length == 0)
                     continue;
                     
-                var cert = new X509Certificate2(certData);
+                var cert = X509CertificateLoader.LoadCertificate(certData);
                 var cn = cert.GetNameInfo(X509NameType.SimpleName, false);
                 if (!cn.StartsWith("SCEI DNAS Root"))
                     continue;
