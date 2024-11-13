@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
+using System.Threading;
 
 namespace CompatBot.Utils;
 
@@ -14,7 +15,7 @@ internal class BufferCopyStream : Stream, IDisposable
     private readonly byte[] writeBuf;
     private readonly byte[] readBuf;
     private int bufStart, bufLength;
-    private readonly object sync = new();
+    private readonly Lock sync = new();
     private bool disposed;
 
     public BufferCopyStream(Stream? baseStream, int bufferSize = 4096)

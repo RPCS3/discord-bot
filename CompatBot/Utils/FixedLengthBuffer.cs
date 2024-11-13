@@ -2,13 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace CompatBot.Utils;
 
 internal class FixedLengthBuffer<TKey, TValue>: IList<TValue>
     where TKey: notnull
 {
-    internal readonly object SyncObj = new();
+    internal readonly Lock SyncObj = new();
         
     public FixedLengthBuffer(Func<TValue, TKey> keyGenerator)
     {
