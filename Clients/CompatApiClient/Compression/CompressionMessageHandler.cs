@@ -21,11 +21,7 @@ public class CompressionMessageHandler : DelegatingHandler
     {
         this.isServer = isServer;
         isClient = !isServer;
-        Compressors = new ICompressor[]
-        {
-            new GZipCompressor(),
-            new DeflateCompressor(),
-        };
+        Compressors = [new GZipCompressor(), new DeflateCompressor()];
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

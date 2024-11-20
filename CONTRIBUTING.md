@@ -16,8 +16,3 @@ Recommended development setup
 See [readme](README.md) for detailed requirement and recommended IDE setup.
 
 **Note** that Docker image is currently experimental and wasn't tested in any way.
-
-IntelliCode Model Link
-======================
-You can use [this link](https://prod.intellicode.vsengsaas.visualstudio.com/get?m=7127523297134326920E959DF01AF224) for the pre-trained IntelliCode model based on this project.
-In Visual Code 2019.1 or later, you can do this by navigatin `View` → `Other Windows` → `IntelliCode Model Management` → `Add Model`.

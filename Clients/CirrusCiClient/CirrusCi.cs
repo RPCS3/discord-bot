@@ -37,27 +37,27 @@ public static class CirrusCi
         queryResult.EnsureNoErrors();
         if (queryResult.Data?.OwnerRepository?.Builds?.Edges is {Count: > 0} edgeList)
         {
-            var node = edgeList.LastOrDefault(e => e?.Node?.ChangeIdInRepo  == commit)?.Node;
+            var node = edgeList.LastOrDefault(e => e.Node.ChangeIdInRepo  == commit)?.Node;
             if (node is null)
                 return null;
 
-            var winTask = node.Tasks?.FirstOrDefault(t => t?.Name.Contains("Windows") ?? false);
-            var winArtifact = winTask?.Artifacts?
-                .Where(a => a?.Files is {Count: >0})
-                .SelectMany(a => a!.Files!)
-                .FirstOrDefault(f => f?.Path.EndsWith(".7z") ?? false);
+            var winTask = node.Tasks.FirstOrDefault(t => t.Name.Contains("Windows"));
+            var winArtifact = winTask?.Artifacts
+                .Where(a => a.Files is {Count: >0})
+                .SelectMany(a => a.Files)
+                .FirstOrDefault(f => f.Path.EndsWith(".7z"));
 
-            var linTask = node.Tasks?.FirstOrDefault(t => t is {} lt && lt.Name.Contains("Linux") && lt.Name.Contains("GCC"));
-            var linArtifact = linTask?.Artifacts?
-                .Where(a => a?.Files is {Count: >0})
-                .SelectMany(a => a!.Files!)
-                .FirstOrDefault(a => a?.Path.EndsWith(".AppImage") ?? false);
+            var linTask = node.Tasks.FirstOrDefault(t => t is {} lt && lt.Name.Contains("Linux") && lt.Name.Contains("GCC"));
+            var linArtifact = linTask?.Artifacts
+                .Where(a => a.Files is {Count: >0})
+                .SelectMany(a => a.Files)
+                .FirstOrDefault(a => a.Path.EndsWith(".AppImage"));
 
-            var macTask = node.Tasks?.FirstOrDefault(t => t?.Name.Contains("macOS") ?? false);
-            var macArtifact = macTask?.Artifacts?
-                .Where(a => a?.Files is { Count: > 0 })
-                .SelectMany(a => a!.Files!)
-                .FirstOrDefault(a => a?.Path.EndsWith(".dmg") ?? false);
+            var macTask = node.Tasks.FirstOrDefault(t => t.Name.Contains("macOS"));
+            var macArtifact = macTask?.Artifacts
+                .Where(a => a.Files is { Count: > 0 })
+                .SelectMany(a => a.Files)
+                .FirstOrDefault(a => a.Path.EndsWith(".dmg"));
 
             var startTime = FromTimestamp(node.BuildCreatedTimestamp);
             var finishTime = GetFinishTime(node);
@@ -142,7 +142,7 @@ public static class CirrusCi
             ? FromTimestamp(finalTimes.Max()!.Value)
             : node.ClockDurationInSeconds > 0
                 ? FromTimestamp(node.BuildCreatedTimestamp).AddSeconds(node.ClockDurationInSeconds.Value)
-                : (DateTime?)null;
+                : null;
 
     [return: NotNullIfNotNull(nameof(DateTime))]
     private static string? ToTimestamp(this DateTime? dateTime) => dateTime.HasValue ? (dateTime.Value.ToUniversalTime() - DateTime.UnixEpoch).TotalMilliseconds.ToString("0") : null;

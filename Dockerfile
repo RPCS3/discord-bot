@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS base
+FROM mcr.microsoft.com/dotnet/sdk:9.0-noble AS base
 
 # Native libgdiplus dependencies
 RUN apt-get update

@@ -22,7 +22,7 @@ public class Client: IDisposable
     public Client()
     {
         client = HttpClientFactory.Create(new CompressionMessageHandler());
-        jsonOptions = new JsonSerializerOptions
+        jsonOptions = new()
         {
             PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -46,7 +46,7 @@ public class Client: IDisposable
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    await response.Content.LoadIntoBufferAsync(cancellationToken).ConfigureAwait(false);
                     var result = await response.Content.ReadFromJsonAsync<CompatResult>(jsonOptions, cancellationToken).ConfigureAwait(false);
                     if (result != null)
                     {
@@ -84,7 +84,7 @@ public class Client: IDisposable
                 using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+                    await response.Content.LoadIntoBufferAsync(cancellationToken).ConfigureAwait(false);
                     result = await response.Content.ReadFromJsonAsync<CompatResult>(jsonOptions, cancellationToken).ConfigureAwait(false);
                     if (result != null)
                         ResponseCache.Set(url, result, TimeSpan.FromDays(1));

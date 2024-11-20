@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
@@ -72,7 +73,7 @@ namespace CompatBot.EventHandlers
         [GeneratedRegex(@"\b((?<kot>kot(to)?)|(?<doggo>doggo|jarves))\b", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture)]
         private static partial Regex Paws();
         private static readonly Random Rng = new();
-        private static readonly object TheDoor = new();
+        private static readonly Lock TheDoor = new();
 
         public static DiscordEmoji RandomNegativeReaction { get { lock (TheDoor) return SadReactions[Rng.Next(SadReactions.Length)]; } }
         public static DiscordEmoji RandomPositiveReaction { get { lock (TheDoor) return ThankYouReactions[Rng.Next(ThankYouReactions.Length)]; } }

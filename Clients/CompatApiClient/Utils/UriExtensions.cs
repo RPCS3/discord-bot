@@ -76,7 +76,7 @@ public static class UriExtensions
             if (value == null)
                 continue;
 
-            result.AppendFormat("&{0}={1}", Uri.EscapeDataString(key), Uri.EscapeDataString(value));
+            result.Append($"&{Uri.EscapeDataString(key)}={Uri.EscapeDataString(value)}");
         }
         if (result.Length == 0)
             return "";
@@ -103,7 +103,7 @@ public static class UriExtensions
         }
         else
         {
-            var startWithSlash = uri.OriginalString.StartsWith("/");
+            var startWithSlash = uri.OriginalString.StartsWith('/');
             uri = new(FakeHost, uri);
             var builder = new UriBuilder(uri) { Query = value };
             var additionalStrip = startWithSlash ? 0 : 1;
