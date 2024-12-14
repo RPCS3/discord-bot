@@ -125,6 +125,11 @@ namespace IrdLibraryClient
             }
         }
         
-        public static string GetDownloadLink(string relativeLink) => Uri.EscapeUriString(new Uri(BaseDownloadUri, relativeLink).ToString());
+        public static string GetDownloadLink(string relativeLink)
+        {
+            var encodedLink = Uri.EscapeDataString(relativeLink);
+            var fullUri = new Uri(BaseDownloadUri, encodedLink);
+            return fullUri.AbsoluteUri;
+        }
     }
 }
