@@ -254,7 +254,7 @@ internal static partial class LogParserResult
             if (KnownGamesThatRequireInterpreter.Contains(serial))
             {
                 if (ppuDecoder.Contains("Recompiler", StringComparison.InvariantCultureIgnoreCase))
-                    notes.Add("⚠️ This game requires `PPU Decoder` to use `Interpreter (fast)`");
+                    notes.Add("⚠️ This game requires `PPU Decoder` to use `Interpreter (static)`");
             }
             else
             {
