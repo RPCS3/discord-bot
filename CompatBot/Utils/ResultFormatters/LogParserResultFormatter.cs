@@ -143,6 +143,19 @@ internal static partial class LogParserResult
         "BLUS31197", "NPUB31251", "NPEB01407", "BLJM61043", "BCAS20311", // DoD3
         "BLUS31405", // jojo asb
         "BLJS10318", // jojo eoh
+        "BLES00148", "BLES00149", "BLES00154", "BLES00155", "BLES00156", "BLUS30072", "BLJS10013", "BLKS20048", "NPEB00740", "NPUB30588", // Call of Duty 4: Modern Warfare
+        "BLES01329", "BLES01330", "BLUS30778", "BLJM60413", "BLAS50546", "BLES01885", "BLES01886", "BLUS31202", "BLJM61086", "BLAS50624", // The Elder Scrolls V: Skyrim
+        "BLJM61211", "BLJM55085", "BLAS50763", "NPEB02076", "NPUB31552", "NPJB00653", // Resident Evil HD
+        "BLJM61272", "NPEB02226", "NPUB31689", "NPJB00726", // Resident Evil 0
+        "BLES01773", "BLUS31051", "NPEB90478", // Resident Evil: Revelations
+        "BLES00875", "BLUS30490", "BLJM60180", "BLUD80019", // 3D Dot Game Heroes
+        "BLES01265", "NPEB00625", // Alice: Madness Returns
+        "NPEB01088", // Alien Rage
+        "NPEB01224", // Aliens: Colonial Marines
+        "NPEB00316", // All Zombies Must Die!
+        "BLES00704", // Alpha Protocol
+        "BLES01227", "BLUS30721", "BLJM60409", // Asura's Wrath
+        "BLES00827", "BLUS30515", "NPEB01156", "NPEB90170", // Batman: Arkham Asylum
     ];
 
     private static readonly HashSet<string> KnownWriteColorBuffersIds =
@@ -325,6 +338,7 @@ internal static partial class LogParserResult
         "BLJM55011", "BLJM60235", "BLJM60459", "BLJM60525", "BLJM61180", "BLKS20073", "BLKS20198", // gta4 + efls
         "BLUS30127", "BLUS30149", "BLUS30524", "BLUS30682", // gta4 + efls
         "NPEB00882", "NPUB30702", "NPUB30704", "NPEB00511", // gta4 + efls
+        "BLES01867", "BLUS31184", "BLJS10218", "NPEB01369", "NPUB31219", "BLES01999", "NPEB01955", "NPUB50339", // metro LL
     ];
 
     private static readonly HashSet<string> KnownGamesThatWorkWithRelaxedZcull =
@@ -337,6 +351,22 @@ internal static partial class LogParserResult
         "NPEB00027", "NPEB02182", "NPEB90116", "NPJB00698", "NPJB90149", "NPUB31633",
         "NPHB00065", "NPHB00067",
         "BCAS20100", "BCES00664", "NPEA00057", "NPJA00031", "NPUA80105", // wipeout hd
+        "BCES01584", "BCES01585", "BCUS98174", "BCJS37010", "BCAS20270", "NPEA00435", "NPUA80960", "NPJA00096", "NPHA80243", "NPEA00521", "NPUA81175", "NPJA00129", "NPHA80279", "NPEA90122", "NPUA70257", "NPHA80246", // tlou
+        "BCES01175", "BCES01176", "BCUS98233", "BCJS37004", "BCAS25009", "BCES01670", "BCES01692", "BCUS99086", "BCAS25014", "NPEA00422", "NPUA80858", "NPUA70183", "BCET70034", "BCET70043", "NPUA70153", "NPUA70180", "NPHA80158", // uc3
+        "BLJM61211", "BLJM55085", "BLAS50763", "NPEB02076", "NPUB31552", "NPJB00653", // Resident Evil HD
+        "BLJM61272", "NPEB02226", "NPUB31689", "NPJB00726", // Resident Evil 0
+        "BLES01773", "BLJM60518", "BLUS31051", "NPEB01187", "NPUB30991", "NPJB00310", "NPEB90478", "NPUB90938", "NPJB90584", "NPHB00545", // Resident Evil: Revelations
+        "BLJM61249", "BLAS50796", "NPJB00684", "NPHB00720", "NPJB90764", "NPHB00719", // Yakuza 0
+        "BLJM61149", "NPJB00532", "NPHB00654", "NPJB90690", // Yakuza Ishin!
+        "BLJM61313", "NPJB00772", // Yakuza Kiwami
+        "BLES00148", "BLES00149", "BLES00154", "BLES00155", "BLES00156", "BLUS30072", "BLJS10013", "BLKS20048", "NPEB00740", "NPUB30588", // Call of Duty 4: Modern Warfare
+        "BLES01356", "BLUS30720", "BLJM60379", "BLES01794", "BLUS31155", "BLJM61012", "NPEB01268", "NPUB31117", "NPJB00335", "NPEB90366", "NPEB90439", "NPJB90524", "NPJB90581", "NPUB90813", // Dragon's Dogma
+        "BLUS30089", "BLES00199", "BLES00158", "BLJM60050", "BLKS20049", "NPUB30451", "NPEB00393", // Assassin's Creed
+        "BLES01898", "BLUS31194", "BLJM61014", "NPUB31245", "NPEB01428", // Armored Core: Verdict Day
+        "BCES01007", "BCUS98234", "BCAS25008", "BCJS30066", "NPUA70167", "NPEA00321", "NPJA00071", "NPEA90084", "NPUA70133", "NPJA90176", "NPHA80140", "NPEA90085", "NPJA90178", "NPUA70134", "NPHA80141", "BCET01007", "NPEA90086", "BCET70024", "NPUA70118", "NPUA70138", // Killzone 3
+        "BLES00362", "BLUS30190", "BLJS10046", "BLJM60368", "BLES00652", "BLUS30442", "NPEB00546", "NPUB30471", "NPJB00503", "NPHB00411", // Midnight Club: Los Angeles
+        "BCUS98167", "BCJS30041", "BCES00701", "NPUA80535", "NPEA00291", "NPUA70096", "NPEA90062", "NPUA70074", // Modnation Racers
+        "BCES00484", "BCUS98242", "NPEA00315", "NPUA80661", // Motorstorm Apocalypse
     ];
 
     private static readonly HashSet<string> KnownBogusLicenses = new(StringComparer.InvariantCultureIgnoreCase)
