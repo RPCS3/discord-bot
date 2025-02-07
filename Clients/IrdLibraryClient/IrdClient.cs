@@ -124,11 +124,16 @@ namespace IrdLibraryClient
                 return result;
             }
         }
-        
-        public static Uri GetDownloadLink(string relativeLink)
+
+        private static string EscapeSegments(string relativePath)
         {
-            var encodedLink = Uri.EscapeDataString(relativeLink);
-            return new(BaseDownloadUri, encodedLink);
+            var segments = relativePath.Split('/');
+            for (var i = 0; i < segments.Length; i++)
+                segments[i] = Uri.EscapeDataString(segments[i]);
+            return string.Join("/", segments);
         }
+        
+        public static Uri GetDownloadLink(string relativeLink) => new(BaseDownloadUri, EscapeSegments(relativeLink));
+        public static string GetEscapedDownloadLink(string relativeLink) => GetDownloadLink(relativeLink).AbsoluteUri;
     }
 }
