@@ -32,7 +32,7 @@ namespace CompatBot.Utils.ResultFormatters
                 {
                     result.AddField(
                         $"{item.Title.Sanitize().Trim(EmbedPager.MaxFieldTitleLength - 18)} [v{item.GameVer} FW {item.FwVer}]",
-                        $"[⏬ {Path.GetFileName(item.Link)}]({IrdClient.GetDownloadLink(item.Link)})"
+                        $"[⏬ {Path.GetFileName(item.Link).Replace("]", @"\]")}]({IrdClient.GetEscapedDownloadLink(item.Link)})"
                     );
                 }
                 catch (Exception e)
