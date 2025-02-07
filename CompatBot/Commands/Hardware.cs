@@ -132,7 +132,8 @@ internal sealed class Hardware: BaseCommandModuleCustom
         var ram6to8 = mem.Where(i => i.Mem is >= 6 * 1024 - margin and < 8 * 1024 - margin).Sum(i => i.Count);
         var ram8to16 = mem.Where(i => i.Mem is >= 8 * 1024 - margin and < 16 * 1024 - margin).Sum(i => i.Count);
         var ram16to32 = mem.Where(i => i.Mem is >= 16 * 1024 - margin and < 32 * 1024 - margin).Sum(i => i.Count);
-        var highRam = mem.Where(i => i.Mem >= 32 * 1024 - margin).Sum(i => i.Count);
+        var ram32to48 = mem.Where(i => i.Mem is >= 32 * 1024 - margin and < 48 * 1024 - margin).Sum(i => i.Count);
+        var highRam = mem.Where(i => i.Mem >= 48 * 1024 - margin).Sum(i => i.Count);
         var ramStats = new (int Count, string Mem)[]
             {
                 (lowRam, "less than 4 GB"),
@@ -140,11 +141,13 @@ internal sealed class Hardware: BaseCommandModuleCustom
                 (ram6to8, "6 to 8 GB"),
                 (ram8to16, "8 to 16 GB"),
                 (ram16to32, "16 to 32 GB"),
-                (highRam, "32 GB or more"),
+                (ram32to48, "32 to 48 GB"),
+                (highRam, "48 GB or more"),
             }
             .Where(i => i.Count > 0)
-            .Take(top)
+            //.Reverse()
             .OrderByDescending(i => i.Count)
+            .Take(top)
             .ToList();
         
         var embed = new DiscordEmbedBuilder()
@@ -205,7 +208,7 @@ internal sealed class Hardware: BaseCommandModuleCustom
             CpuFeatures.Avx => "AVX",
             CpuFeatures.Avx2 => "AVX2",
             CpuFeatures.Avx512 => "AVX-512",
-            CpuFeatures.Avx512IL => "AVX-512IL",
+            CpuFeatures.Avx512IL => "AVX-512+",
             CpuFeatures.Fma3 => "FMA3",
             CpuFeatures.Fma4 => "FMA4",
             CpuFeatures.Xop => "XOP",
