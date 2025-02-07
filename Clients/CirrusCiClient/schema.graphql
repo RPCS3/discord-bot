@@ -1,4 +1,4 @@
-﻿schema {
+schema {
   query: Query
   mutation: Mutation
   subscription: Subscription
@@ -44,6 +44,7 @@ type AuditEventType implements Node {
   timestamp: Long!
   repository: Repository
   actor: UserBasicInfo
+  actorLocationIP: String
 }
 
 "A connection to a list of items."
@@ -88,6 +89,7 @@ type Build implements Node {
   durationInSeconds: Long
   clockDurationInSeconds: Long
   pullRequest: Long
+  pullRequestDraft: Boolean
   pullRequestLabels: [String!]!
   isSenderUserCollaborator: Boolean!
   senderUserPermissions: String!
@@ -96,6 +98,7 @@ type Build implements Node {
   status: BuildStatus!
   notifications: [Notification!]!
   parsingResult: ParsingResult
+  hasPausedTasks: Boolean!
   tasks: [Task!]!
   executingTasks: [Task!]!
   taskGroupsAmount: Long!
@@ -716,7 +719,9 @@ input RepositoryCreateBuildInput {
   repositoryId: ID!
   branch: String!
   sha: String
+  message: String
   configOverride: String
+  scriptOverride: String
   clientMutationId: String!
 }
 
@@ -829,8 +834,7 @@ type RepositorySettingsPayload {
 input SaveWebHookSettingsInput {
   platform: String!
   ownerUid: ID!
-  webhookURL: String
-  secretToken: String
+  deliveryEndpoints: [WebHookDeliveryEndpointInput!]
   clientMutationId: String!
 }
 
@@ -891,6 +895,8 @@ type Task implements Node {
   dependencies: [Task!]!
   automaticReRun: Boolean!
   automaticallyReRunnable: Boolean!
+  manualRerunCount: Long!
+  instanceType: String!
   experimental: Boolean!
   stateful: Boolean!
   useComputeCredits: Boolean!
@@ -1067,6 +1073,7 @@ type User implements Node & UserBasicInfo {
   id: ID!
   category: User!
   avatarURL: String!
+  username: String!
   builds("fetching only nodes before this node (exclusive)" before: String "fetching only nodes after this node (exclusive)" after: String "fetching only the first certain number of nodes" first: Int "fetching only the last certain number of nodes" last: Int "fetching only builds with the specified statuses" statuses: [BuildStatus!]): UserBuildsConnection!
   topActiveRepositories: [Repository!]!
   balanceInCredits: String!
@@ -1081,6 +1088,7 @@ interface UserBasicInfo {
   id: ID!
   category: User!
   avatarURL: String
+  username: String
 }
 
 "An edge in a connection"
@@ -1125,6 +1133,16 @@ type WebHookDelivery implements Node {
   response: WebHookDeliveryResponse!
 }
 
+type WebHookDeliveryEndpoint {
+  webhookURL: String!
+  maskedSecretToken: String
+}
+
+input WebHookDeliveryEndpointInput {
+  webhookURL: String!
+  secretToken: String
+}
+
 type WebHookDeliveryPayload {
   event: String!
   action: String!
@@ -1139,6 +1157,5 @@ type WebHookDeliveryResponse {
 
 type WebHookSettings {
   ownerUid: ID!
-  webhookURL: String
-  maskedSecretToken: String!
+  endpoints: [WebHookDeliveryEndpoint!]!
 }
