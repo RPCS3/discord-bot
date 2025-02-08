@@ -312,7 +312,6 @@ internal static partial class LogParserResult
 
     private static readonly HashSet<string> KnownGamesThatRequireInterpreter =
     [
-        "BLJS10301", "NPJB00685", // ukiyo no shishi
         "NPEB02126", "NPUB31590", // don't starve
         "BLES00023", "BLUS30006", "BLJS10007", // Blazing Angels: Squadrons of WWII
         "NPEB00220", "NPUB30254", "NPHB00297", // Landit Bandit
