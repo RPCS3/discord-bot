@@ -122,6 +122,9 @@ internal static class ContentFilter
             return true;
 
         var suppressActions = (FilterAction)0;
+        if (message.Timestamp.UtcDateTime.AddHours(1) < DateTime.UtcNow)
+            suppressActions = FilterAction.SendMessage | FilterAction.ShowExplain;
+
 #if !DEBUG
         if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
         {
