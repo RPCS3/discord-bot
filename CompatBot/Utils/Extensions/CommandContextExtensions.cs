@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CompatBot.Commands.Attributes;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
@@ -49,5 +50,11 @@ public static partial class CommandContextExtensions
             && guild.GetChannel(channelId) is DiscordChannel channel)
             return channel.GetMessageAsync(msgId);
         return Task.FromResult((DiscordMessage?)null);
+    }
+
+    public static async Task<DiscordMessage?> GetMessageAsync(this DiscordClient client, DiscordChannel channel, ulong messageId)
+    {
+        
+        return await channel.GetMessageAsync(messageId).ConfigureAwait(false);
     }
 }
