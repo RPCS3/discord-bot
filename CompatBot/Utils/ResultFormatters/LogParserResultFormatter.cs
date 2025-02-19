@@ -291,6 +291,7 @@ internal static partial class LogParserResult
         "BLES01721", "BLUS31168", "NPEB01072", "NPUB31153", "BLJM60575", "NPEB90467", // WRC 3: FIA World Rally Championship
         "BLES01874", "BLUS31509", "NPEB01381", "NPUB31452", "NPJB00624", "BLJM61195", "NPEB90523", // WRC 4: FIA World Rally Championship
         "BLES01937", "NPEB01815", "BLUS31277", // WWE 2K14
+        "BLES00694", "BLUS30378", // Karaoke Revolution
     ];
 
     private static readonly HashSet<string> KnownResScaleThresholdIds =
