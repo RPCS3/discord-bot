@@ -22,13 +22,14 @@ param(
 #$ProgressPreference = "SilentlyContinue"
 
 $page = $startpage
-$total = 3971
+$total = 4528
 $result = @()
 $hasNextPage = $false
+$delay = 3.5
 
 # get anonymous sesssion
 Invoke-WebRequest "https://anidb.net" -SessionVariable 'Session' | Out-Null
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds $delay
 
 function Request-Page($num)
 {
@@ -37,7 +38,7 @@ function Request-Page($num)
     $url = "https://anidb.net/character/?noalias=1&orderby.name=0.1&page=$num&view=list"
     $response = Invoke-WebRequest $url -WebSession $Session
     #$links = @($response.links | Where-Object { $_.href -match '/character/\d+$' } | Where-Object { $_.outerHTML -match '^<a [^>]+>[^<][^\n]+</a>$' })
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds $delay
     return $response.Content
 }
 
@@ -101,8 +102,8 @@ do
                 Write-Host 'Saving the results...'
                 '# https://anidb.net/character' | Out-File -LiteralPath $output
                 $result | Sort-Object | Get-Unique | Out-File -LiteralPath $output -Append
-                Read-Host -Prompt 'Rate limited, plz unban...'
-                continue
+                Write-Host 'Rate limited, plz unban...'
+                break
             }
             else
             {
@@ -123,7 +124,7 @@ do
             $pos = $html.IndexOf('<a href=', $pos)
             $pos = $html.IndexOf('>', $pos)
             $endPos = $html.IndexOf('</a></td>', $pos)
-            $name = $html.Substring($pos + 1, $endPos - $pos - 1).Replace('  ', ' ').Trim()
+            $name = $html.Substring($pos + 1, $endPos - $pos - 1).Replace('  ', ' ').Replace('`', "'").Trim()
 
             $pos = $html.IndexOf('<td data-label="Type"', $endPos)
             $pos = $html.IndexOf('>', $pos)
@@ -163,7 +164,7 @@ do
         $hasNextPage = $false
     }
 } while ($hasNextPage)
-Write-Host "Stopped on page $page"
+Write-Host "Stopped on page $page/$total"
 Write-Progress -Activity "Downloading" -Completed
 
 Write-Host 'Saving the results...'

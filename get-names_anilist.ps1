@@ -20,15 +20,16 @@ param(
 
 $requestTemplate = '{ "query": "query { Page (page: {0}, perPage: 50) { characters { name { full } } pageInfo { hasNextPage lastPage } } }" }'
 $page = $startPage
-$total = 2565
+$total = 3171
 $result = @()
 $hasNextPage = $false
+$delay = 3
 
 function Request-Page($num)
 {
     $json = $requestTemplate.Replace('{0}', $num)
     $response = Invoke-RestMethod 'https://graphql.anilist.co' -Method Post -Body $json -ContentType "application/json" -TimeoutSec 30
-    Start-Sleep -Seconds 1.5
+    Start-Sleep -Seconds $delay
     return $response.data.Page
 }
 
@@ -89,7 +90,7 @@ do
             $name = $char.name.full
             if ($null -eq $name) { continue }
             
-            $name = $char.name.full.Replace('  ', ' ').Trim()
+            $name = $char.name.full.Replace('  ', ' ').Replace('`', "'").Trim()
             if (($name.Length -lt 2) -or ("$name" -match '^\d+$'))
             {
                 Write-Host "Skipping $name"
@@ -115,7 +116,7 @@ do
         $hasNextPage = $false
     }    
 } while ($hasNextPage)
-Write-Host "Stopped on page $page"
+Write-Host "Stopped on page $page/$total"
 Write-Progress -Activity "Downloading" -Completed
 
 Write-Host 'Saving the results...'
