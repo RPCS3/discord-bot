@@ -13,6 +13,7 @@ using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 using NReco.Text;
 using Microsoft.Extensions.Caching.Memory;
+using NLog;
 
 namespace CompatBot.Database.Providers;
 
@@ -134,7 +135,21 @@ internal static class ContentFilter
                 return true;
         }
 #endif
-
+        
+        if (message.Reference is {} refMsg)
+        {
+            try
+            {
+                var msg = await client.GetMessageAsync(refMsg.Channel, refMsg.Message.Id).ConfigureAwait(false);
+                if (msg is not null)
+                    message = msg;
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to get message reference content");
+            }
+        }
+        
         var content = new StringBuilder(message.Content).AppendLine();
         if (message.Attachments is not null)
             foreach (var attachment in message.Attachments.Where(a => a is not null))
