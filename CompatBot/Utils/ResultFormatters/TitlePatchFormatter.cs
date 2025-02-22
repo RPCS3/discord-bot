@@ -34,10 +34,11 @@ internal static class TitlePatchFormatter
             var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
             if (pages > 1)
                 embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxFieldTitleLength);
-            var desc = $"ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}.\n" +
-                       "\n" +
-                       "⚠️ You **must** install updates starting with the first. You **can not** install only the latest update.";
-            embedBuilder.Description = desc;
+            embedBuilder.Description = $"""
+                ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}.
+
+                ⚠️ You **must** install listed updates in order, starting with the first one. You **can not** skip intermediate versions.
+                """;
             var i = 0;
             do
             {
