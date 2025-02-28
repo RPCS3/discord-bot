@@ -172,7 +172,7 @@ internal static partial class ProductCodeLookup
             var sqvat = client.GetEmoji(":sqvat:", Config.Reactions.No)!;
             titleInfoEmbed.Title = "How about no (๑•ิཬ•ั๑)";
             if (!string.IsNullOrEmpty(titleInfoEmbed.Thumbnail?.Url))
-                titleInfoEmbed.WithThumbnail("https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png");
+                titleInfoEmbed.WithThumbnail(Config.ImgSrcNoCompatAbuse);
             await message.ReactWithAsync(sqvat).ConfigureAwait(false);
         }
     }

@@ -43,7 +43,7 @@
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.5.0" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.5.0" />
     <PackageReference Include="DSharpPlus.SlashCommands" Version="4.5.0" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3693" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3699" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="6.1.0" />
     <PackageReference Include="MegaApiClient" Version="1.10.4" />
