@@ -46,8 +46,8 @@ internal static class Config
     public static string? GitRevision { get; private set; }
     
     // these settings could be configured either through `$ dotnet user-secrets`, or through environment variables (e.g. launchSettings.json, etc)
-    public static string CommandPrefix => config.GetValue(nameof(CommandPrefix), "!")!;
-    public static string AutoRemoveCommandPrefix => config.GetValue(nameof(AutoRemoveCommandPrefix), ".")!;
+    public static string CommandPrefix => config.GetValue(nameof(CommandPrefix), "!");
+    public static string AutoRemoveCommandPrefix => config.GetValue(nameof(AutoRemoveCommandPrefix), ".");
     public static ulong BotGuildId => config.GetValue(nameof(BotGuildId), 272035812277878785ul);                  // discord server where the bot is supposed to be
     public static ulong BotGeneralChannelId => config.GetValue(nameof(BotGeneralChannelId), 272035812277878785ul);// #rpcs3; main or general channel where noobs come first thing
     public static ulong BotChannelId => config.GetValue(nameof(BotChannelId), 291679908067803136ul);              // #build-updates; this is used for new build announcements
@@ -79,20 +79,23 @@ internal static class Config
     public static int ChannelMessageHistorySize => config.GetValue(nameof(ChannelMessageHistorySize), 100);
     public static int FunMultiplier => config.GetValue(nameof(FunMultiplier), 1);
     public static int MaxPositionsForHwSurveyResults => config.GetValue(nameof(MaxPositionsForHwSurveyResults), 10);
-    public static string Token => config.GetValue(nameof(Token), "")!;
-    public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "")!;
-    public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "")!;
-    public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/")!;
+    public static string Token => config.GetValue(nameof(Token), "");
+    public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
+    public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");
+    public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/");
     public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
-    public static string AzureAppInsightsConnectionString => config.GetValue(nameof(AzureAppInsightsConnectionString), "")!;
-    public static string GithubToken => config.GetValue(nameof(GithubToken), "")!;
-    public static string GoogleApiCredentials => config.GetValue(nameof(GoogleApiCredentials), "")!;
-    public static string PreferredFontFamily => config.GetValue(nameof(PreferredFontFamily), "")!;
-    public static string LogPath => config.GetValue(nameof(LogPath), "./logs/")!; // paths are relative to the working directory
-    public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/")!;
+    public static string AzureAppInsightsConnectionString => config.GetValue(nameof(AzureAppInsightsConnectionString), "");
+    public static string GithubToken => config.GetValue(nameof(GithubToken), "");
+    public static string GoogleApiCredentials => config.GetValue(nameof(GoogleApiCredentials), "");
+    public static string PreferredFontFamily => config.GetValue(nameof(PreferredFontFamily), "");
+    public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
+    public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
-    public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), "")!);
-    public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)")!;
+    public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
+    public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)");
+    
+    public static string ImgSrcNotInPublic => config.GetValue(nameof(ImgSrcNotInPublic), "https://cdn.discordapp.com/attachments/1207384388602560562/1344880816886517810/24qx11.jpg");
+    public static string ImgSrcNoCompatAbuse => config.GetValue(nameof(ImgSrcNoCompatAbuse), "https://cdn.discordapp.com/attachments/1207384388602560562/1344881154528116777/onionoff.png");
 
     internal static class AllowedMentions
     {
