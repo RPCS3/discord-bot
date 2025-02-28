@@ -131,7 +131,7 @@ internal sealed partial class Psn
                         newTitle += embed.Title[partStart..];
                     embed.Title = newTitle;
                     if (!string.IsNullOrEmpty(embed.Thumbnail?.Url))
-                        embed.WithThumbnail("https://cdn.discordapp.com/attachments/417347469521715210/516340151589535745/onionoff.png");
+                        embed.WithThumbnail(Config.ImgSrcNoCompatAbuse);
                 }
                 var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No)!;
                 await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
