@@ -4,7 +4,6 @@ using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Utils.ResultFormatters;
 

@@ -16,10 +16,8 @@ using SixLabors.ImageSharp.Processing;
 using Color = SixLabors.ImageSharp.Color;
 using FontStyle = SixLabors.Fonts.FontStyle;
 using Image = SixLabors.ImageSharp.Image;
-using PointF = SixLabors.ImageSharp.PointF;
 using Rectangle = SixLabors.ImageSharp.Rectangle;
 using RectangleF = SixLabors.ImageSharp.RectangleF;
-using Size = SixLabors.ImageSharp.Size;
 using SystemFonts = SixLabors.Fonts.SystemFonts;
 
 namespace CompatBot.Commands;

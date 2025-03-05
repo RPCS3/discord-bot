@@ -9,7 +9,6 @@ using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using SharpCompress.Common;
-using SharpCompress.Compressors;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
 using SharpCompress.Writers.Zip;

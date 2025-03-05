@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Database.Providers;
 using CompatBot.ThumbScrapper;

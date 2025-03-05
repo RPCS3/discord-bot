@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using OneDriveClient;
-using OneDriveClient.POCOs;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 

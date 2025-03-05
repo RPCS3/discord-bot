@@ -6,7 +6,6 @@ using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Download;
 using Google.Apis.Drive.v3;
-using Google.Apis.Services;
 using FileMeta = Google.Apis.Drive.v3.Data.File;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;

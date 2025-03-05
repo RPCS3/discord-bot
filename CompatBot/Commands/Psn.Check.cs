@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using CompatApiClient;
+﻿using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;

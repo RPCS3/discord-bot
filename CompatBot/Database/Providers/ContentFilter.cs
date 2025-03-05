@@ -4,7 +4,6 @@ using CompatBot.Commands;
 using CompatBot.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using NLog;
 using NReco.Text;
 
 namespace CompatBot.Database.Providers;

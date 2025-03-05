@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatBot.Database;

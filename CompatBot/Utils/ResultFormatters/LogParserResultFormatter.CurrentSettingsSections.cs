@@ -1,5 +1,4 @@
 ﻿using System.Collections.Specialized;
-using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers.LogParsing;
 
