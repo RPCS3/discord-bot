@@ -287,7 +287,7 @@ internal static partial class LogParserResult
             if (items["driver_version_info"] is string driverVersionString)
             {
                 if (driverVersionString.Contains('-'))
-                    driverVersionString = driverVersionString.Split(new[] {' ', '-'}, StringSplitOptions.RemoveEmptyEntries).Last();
+                    driverVersionString = driverVersionString.Split([' ', '-'], StringSplitOptions.RemoveEmptyEntries).Last();
                 if (Version.TryParse(driverVersionString, out var driverVersion) && buildVersion is not null)
                 {
                     items["driver_version_parsed"] = driverVersion.ToString();

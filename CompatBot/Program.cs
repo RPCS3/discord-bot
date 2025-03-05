@@ -137,7 +137,7 @@ internal static class Program
             using var client = new DiscordClient(config);
             var commands = client.UseCommandsNext(new()
             {
-                StringPrefixes = new[] {Config.CommandPrefix, Config.AutoRemoveCommandPrefix},
+                StringPrefixes = [Config.CommandPrefix, Config.AutoRemoveCommandPrefix],
                 Services = new ServiceCollection().BuildServiceProvider(),
             });
             commands.RegisterConverter(new TextOnlyDiscordChannelConverter());
@@ -248,13 +248,11 @@ internal static class Program
             var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
             client.MessageCreated += Watchdog.OnMessageCreated;
             client.MessageCreated += new OrderedEventHandlerWrapper<MessageCreateEventArgs>(
-                new[]
-                {
+                [
                     ContentFilterMonitor.OnMessageCreated, // should be first
-                    DiscordInviteFilter.OnMessageCreated,
-                },
-                new[]
-                {
+                    DiscordInviteFilter.OnMessageCreated
+                ],
+                [
                     GlobalMessageCache.OnMessageCreated,
                     mediaScreenshotMonitor.OnMessageCreated,
                     ProductCodeLookup.OnMessageCreated,
@@ -266,19 +264,17 @@ internal static class Program
                     NewBuildsMonitor.OnMessageCreated,
                     TableFlipMonitor.OnMessageCreated,
                     IsTheGamePlayableHandler.OnMessageCreated,
-                    EmpathySimulationHandler.OnMessageCreated,
-                }).OnEvent;
+                    EmpathySimulationHandler.OnMessageCreated
+                ]).OnEvent;
 
-            client.MessageUpdated += new OrderedEventHandlerWrapper<MessageUpdateEventArgs>(new[]
-                {
+            client.MessageUpdated += new OrderedEventHandlerWrapper<MessageUpdateEventArgs>([
                     ContentFilterMonitor.OnMessageUpdated,
-                    DiscordInviteFilter.OnMessageUpdated,
-                },
-                new[]
-                {
+                    DiscordInviteFilter.OnMessageUpdated
+                ],
+                [
                     GlobalMessageCache.OnMessageUpdated,
-                    EmpathySimulationHandler.OnMessageUpdated,
-                }).OnEvent;
+                    EmpathySimulationHandler.OnMessageUpdated
+                ]).OnEvent;
 
             client.MessageDeleted += GlobalMessageCache.OnMessageDeleted;
             if (Config.DeletedMessagesLogChannelId > 0)

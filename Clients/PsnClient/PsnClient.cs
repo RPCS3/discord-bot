@@ -65,7 +65,7 @@ public partial class Client
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             IncludeFields = true,
         };
-        xmlFormatters = new(new[] {new XmlMediaTypeFormatter {UseXmlSerializer = true}});
+        xmlFormatters = new([new XmlMediaTypeFormatter {UseXmlSerializer = true}]);
     }
 
     public static string[] GetLocales() => KnownStoreLocales; // Sony removed the ability to get the full store list, now relying on geolocation service instead

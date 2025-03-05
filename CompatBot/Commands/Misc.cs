@@ -323,13 +323,16 @@ internal sealed partial class Misc: BaseCommandModuleCustom
 
             var nekoUser = await ctx.Client.GetUserAsync(272032356922032139ul).ConfigureAwait(false);
             var nekoMember = await ctx.Client.GetMemberAsync(nekoUser).ConfigureAwait(false);
-            var nekoMatch = new HashSet<string>(new[] {nekoUser.Id.ToString(), nekoUser.Username, nekoMember?.DisplayName ?? "neko", "neko", "nekotekina",});
+            var nekoMatch = new HashSet<string>([nekoUser.Id.ToString(), nekoUser.Username, nekoMember?.DisplayName ?? "neko", "neko", "nekotekina"
+            ]);
             var kdUser = await ctx.Client.GetUserAsync(272631898877198337ul).ConfigureAwait(false);
             var kdMember = await ctx.Client.GetMemberAsync(kdUser).ConfigureAwait(false);
-            var kdMatch = new HashSet<string>(new[] {kdUser.Id.ToString(), kdUser.Username, kdMember?.DisplayName ?? "kd-11", "kd", "kd-11", "kd11", });
+            var kdMatch = new HashSet<string>([kdUser.Id.ToString(), kdUser.Username, kdMember?.DisplayName ?? "kd-11", "kd", "kd-11", "kd11"
+            ]);
             var botUser = ctx.Client.CurrentUser;
             var botMember = await ctx.Client.GetMemberAsync(botUser).ConfigureAwait(false);
-            var botMatch = new HashSet<string>(new[] {botUser.Id.ToString(), botUser.Username, botMember?.DisplayName ?? "RPCS3 bot", "yourself", "urself", "yoself",});
+            var botMatch = new HashSet<string>([botUser.Id.ToString(), botUser.Username, botMember?.DisplayName ?? "RPCS3 bot", "yourself", "urself", "yoself"
+            ]);
 
             var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
             var words = whatever.Split(Separators);

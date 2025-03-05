@@ -277,7 +277,7 @@ internal sealed partial class PsnScraper
         }
         var orderedLocales = new[] {"en-US", "en-GB"}
             .Concat(en)
-            .Concat(new[] {"ja-JP"})
+            .Concat(["ja-JP"])
             .Concat(ja)
             .Concat(locales);
         var countries = new HashSet<string>();

@@ -135,7 +135,7 @@ internal static partial class UnknownCommandHandler
 
         static void dumpCmd(List<(string alias, string fqn)> commandList, Command cmd, string qualifiedPrefix)
         {
-            foreach (var alias in cmd.Aliases.Concat(new[] {cmd.Name}))
+            foreach (var alias in cmd.Aliases.Concat([cmd.Name]))
             {
                 var qualifiedAlias = qualifiedPrefix + alias;
                 if (cmd is CommandGroup g)

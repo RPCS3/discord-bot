@@ -362,7 +362,7 @@ internal static partial class LogParserResult
 
             if (lleLibList.Contains("libvdec"))
             {
-                var weirdModules = lleLibList.Split(',', StringSplitOptions.TrimEntries).Except(new[] {"libvdec.sprx"}).ToArray();
+                var weirdModules = lleLibList.Split(',', StringSplitOptions.TrimEntries).Except(["libvdec.sprx"]).ToArray();
                 if (weirdModules.Length > 0)
                 {
                     notes.Add("⚠️ Please do not override Firmware Libraries that you weren't asked to");
