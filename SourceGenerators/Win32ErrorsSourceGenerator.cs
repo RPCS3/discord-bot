@@ -95,7 +95,7 @@ public class Win32ErrorsSourceGenerator : ISourceGenerator
             previousPos = (int)stream.Position;
 
             var name = nameDescParts[0];
-            var desc = nameDescParts[1].Replace("\\", "\\\\").Replace("\"", "\\\"");
+            var desc = nameDescParts[1].Replace(@"\", @"\\").Replace("\"", "\\\"");
             result.AppendLine($"{Indent}{Indent}{Indent}[{errorCodeLine.Trim()}] = (\"{name.Trim()}\", \"{desc.Trim()}\"),");
         }
 

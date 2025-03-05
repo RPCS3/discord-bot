@@ -4,6 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <NoWarn>1701;1702;RS2008;RS1036</NoWarn>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

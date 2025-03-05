@@ -65,13 +65,13 @@ public class AttributeUsageAnalyzer : DiagnosticAnalyzer
     private static bool IsDescendantOfAttribute(AttributeData attributeData, string baseAttributeClassNameWithNamespace)
     {
         var attrClass = attributeData.AttributeClass;
-        do
+        while (attrClass is not null)
         {
             if (attrClass.ToDisplayString() == baseAttributeClassNameWithNamespace)
                 return true;
 
             attrClass = attrClass.BaseType;
-        } while (attrClass != null);
+        } 
         return false;
     }
 }
