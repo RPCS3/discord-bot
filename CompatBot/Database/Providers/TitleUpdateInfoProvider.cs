@@ -1,10 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-using CompatBot.Utils;
+﻿using System.Xml.Serialization;
 using Microsoft.EntityFrameworkCore;
 using PsnClient.POCOs;
 

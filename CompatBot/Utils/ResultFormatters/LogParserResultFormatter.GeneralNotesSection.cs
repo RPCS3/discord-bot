@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using IrdLibraryClient.IrdFormat;
 
 namespace CompatBot.Utils.ResultFormatters;

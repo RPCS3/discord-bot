@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using DSharpPlus.Entities;
+﻿using System.Collections.ObjectModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers;

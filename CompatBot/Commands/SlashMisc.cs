@@ -1,10 +1,4 @@
-﻿using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.SlashCommands;
-using System.Threading.Tasks;
-
-namespace CompatBot.Commands;
+﻿namespace CompatBot.Commands;
 
 internal sealed class SlashMisc: BaseApplicationCommandModuleCustom
 {

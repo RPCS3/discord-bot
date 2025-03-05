@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using CompatApiClient;
-using CompatApiClient.Utils;
 using CompatApiClient.POCOs;
+using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using DSharpPlus.Entities;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Utils.ResultFormatters;

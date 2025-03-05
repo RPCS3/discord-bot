@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Pipelines;
+﻿using System.IO.Pipelines;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
-using CompatBot.Utils;
-using DSharpPlus.Entities;
 using OneDriveClient;
 using OneDriveClient.POCOs;
 

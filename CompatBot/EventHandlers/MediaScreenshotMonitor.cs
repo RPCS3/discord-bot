@@ -1,18 +1,9 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 

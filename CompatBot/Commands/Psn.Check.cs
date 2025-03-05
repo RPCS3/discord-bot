@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
@@ -11,14 +6,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
-using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Interactivity.Extensions;
 using PsnClient.POCOs;
 
 namespace CompatBot.Commands;

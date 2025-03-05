@@ -1,12 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
+﻿using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 
 namespace CompatBot.Commands;
 
@@ -166,7 +159,7 @@ internal sealed partial class Moderation: BaseCommandModuleCustom
         }
 
         var member = await ctx.Client.GetMemberAsync(ctx.Message.Author).ConfigureAwait(false);
-        await ctx.Client.ReportAsync("👀 Message report", msg, new[] { member }, comment, ReportSeverity.Medium).ConfigureAwait(false);
+        await ctx.Client.ReportAsync("👀 Message report", msg, [member], comment, ReportSeverity.Medium).ConfigureAwait(false);
         await msg.ReactWithAsync(Config.Reactions.Moderated).ConfigureAwait(false);
         await ctx.ReactWithAsync(Config.Reactions.Success, "Message reported").ConfigureAwait(false);
     }

@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 using Microsoft.ApplicationInsights;
 using NLog;
 

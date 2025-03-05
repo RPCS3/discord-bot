@@ -1,10 +1,5 @@
-﻿using System;
-using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using CompatBot.Commands.Attributes;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
 using org.mariuszgromada.math.mxparser;
 
 namespace CompatBot.Commands;

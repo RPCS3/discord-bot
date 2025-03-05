@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using DSharpPlus.Entities;
-using PsnClient.Utils;
+﻿using PsnClient.Utils;
 
 namespace CompatBot.Utils.Extensions;
 

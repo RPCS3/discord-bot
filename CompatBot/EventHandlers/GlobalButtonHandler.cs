@@ -1,7 +1,4 @@
-﻿using System.Threading.Tasks;
-using CompatBot.Commands;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
+﻿using CompatBot.Commands;
 
 namespace CompatBot.EventHandlers;
 

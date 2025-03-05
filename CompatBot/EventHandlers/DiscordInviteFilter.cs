@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;

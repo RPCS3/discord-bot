@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
+﻿using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
@@ -12,8 +8,6 @@ using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using IrdLibraryClient;
 
 namespace CompatBot.Utils.ResultFormatters;

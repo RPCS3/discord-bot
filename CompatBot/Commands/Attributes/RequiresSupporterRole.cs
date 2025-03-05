@@ -1,9 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-
-namespace CompatBot.Commands.Attributes;
+﻿namespace CompatBot.Commands.Attributes;
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
 internal class RequiresSupporterRole: CheckBaseAttributeWithReactions

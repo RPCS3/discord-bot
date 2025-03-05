@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;

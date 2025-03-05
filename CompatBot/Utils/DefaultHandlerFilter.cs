@@ -1,7 +1,4 @@
-﻿using System;
-using CompatBot.Utils.Extensions;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.Entities;
+﻿using CompatBot.Utils.Extensions;
 
 namespace CompatBot.Utils;
 

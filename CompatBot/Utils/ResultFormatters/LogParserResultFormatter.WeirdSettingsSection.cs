@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.Globalization;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.ResultFormatters;
 

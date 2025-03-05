@@ -1,14 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatBot.Database.Providers;
-using CompatBot.Utils;
+﻿using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;

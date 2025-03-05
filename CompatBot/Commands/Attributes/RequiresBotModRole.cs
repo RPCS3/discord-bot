@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using CompatBot.Database.Providers;
-using DSharpPlus.CommandsNext;
+﻿using CompatBot.Database.Providers;
 
 namespace CompatBot.Commands.Attributes;
 

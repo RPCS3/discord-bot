@@ -1,10 +1,7 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using ColorThiefDotNet;
-using DSharpPlus.Entities;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace CompatBot.Utils;

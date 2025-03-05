@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.EventHandlers;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
-using NReco.Text;
 using Microsoft.Extensions.Caching.Memory;
 using NLog;
+using NReco.Text;
 
 namespace CompatBot.Database.Providers;
 

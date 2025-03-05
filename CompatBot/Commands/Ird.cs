@@ -1,9 +1,5 @@
-﻿using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
-using CompatBot.Utils;
+﻿using CompatBot.Commands.Attributes;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
 using IrdLibraryClient;
 
 namespace CompatBot.Commands;

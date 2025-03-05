@@ -1,10 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CompatApiClient.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.Entities;
+﻿using CompatApiClient.Utils;
 
 namespace CompatBot.Utils;
 

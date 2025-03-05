@@ -1,7 +1,5 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.IO;
-using System.Threading;
 
 namespace CompatBot.Utils;
 

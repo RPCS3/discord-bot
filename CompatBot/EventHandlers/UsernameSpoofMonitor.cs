@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatApiClient.Utils;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+﻿using CompatApiClient.Utils;
 using HomoglyphConverter;
 using Microsoft.Extensions.Caching.Memory;
 

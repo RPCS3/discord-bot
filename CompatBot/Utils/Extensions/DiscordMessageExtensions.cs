@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
 using CompatApiClient.Compression;
-using DSharpPlus.Entities;
 
 namespace CompatBot.Utils;
 

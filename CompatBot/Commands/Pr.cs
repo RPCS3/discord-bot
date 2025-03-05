@@ -1,16 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CompatApiClient.Utils;
+﻿using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
-using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 using Microsoft.TeamFoundation.Build.WebApi;
 using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 

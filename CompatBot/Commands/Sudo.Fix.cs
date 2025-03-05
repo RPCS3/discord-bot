@@ -1,13 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
 
 namespace CompatBot.Commands;
 

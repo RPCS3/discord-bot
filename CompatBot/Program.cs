@@ -1,25 +1,13 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Interactivity.Extensions;
-using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +19,7 @@ internal static class Program
 {
     private static readonly SemaphoreSlim InstanceCheck = new(0, 1);
     private static readonly SemaphoreSlim ShutdownCheck = new(0, 1);
-    // pre-load the assembly so it won't fail after framework update while the process is still running
+    // preload the assembly so it won't fail after framework update while the process is still running
     private static readonly Assembly DiagnosticsAssembly = Assembly.Load(typeof(Process).Assembly.GetName());
     internal const ulong InvalidChannelId = 13;
 
@@ -118,8 +106,8 @@ internal static class Program
             var backgroundTasks = Task.WhenAll(
                 AmdDriverVersionProvider.RefreshAsync(),
 #if !DEBUG
-                    ThumbScrapper.GameTdbScraper.RunAsync(Config.Cts.Token),
-                    //TitleUpdateInfoProvider.RefreshGameUpdateInfoAsync(Config.Cts.Token),
+                ThumbScrapper.GameTdbScraper.RunAsync(Config.Cts.Token),
+                //TitleUpdateInfoProvider.RefreshGameUpdateInfoAsync(Config.Cts.Token),
 #endif
                 StatsStorage.BackgroundSaveAsync(),
                 CompatList.ImportCompatListAsync(),
@@ -218,8 +206,8 @@ internal static class Program
 #if DEBUG
                     Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})");
 #else
-                         Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...");
-                         await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
+                    Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...");
+                    await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
 #endif
                     return;
                 }
@@ -247,11 +235,11 @@ internal static class Program
             };
 #if !DEBUG
 /*
-                client.GuildDownloadCompleted += async gdcArgs =>
-                                                 {
-                                                     foreach (var guild in gdcArgs.Guilds)
-                                                         await ModProvider.SyncRolesAsync(guild.Value).ConfigureAwait(false);
-                                                 };
+            client.GuildDownloadCompleted += async gdcArgs =>
+                                             {
+                                                 foreach (var guild in gdcArgs.Guilds)
+                                                     await ModProvider.SyncRolesAsync(guild.Value).ConfigureAwait(false);
+                                             };
 */
 #endif
             client.MessageReactionAdded += Starbucks.Handler;

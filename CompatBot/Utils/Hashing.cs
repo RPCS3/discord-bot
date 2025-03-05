@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace CompatBot.Utils;
+﻿namespace CompatBot.Utils;
 
 public static class Hashing
 {

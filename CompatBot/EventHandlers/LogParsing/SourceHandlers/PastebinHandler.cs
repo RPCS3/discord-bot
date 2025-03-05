@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
-using DSharpPlus.Entities;
-using CompatBot.Utils;
-using System.IO.Pipelines;
+﻿using System.IO.Pipelines;
 using System.Net.Http;
-using System.Threading;
+using System.Text.RegularExpressions;
+using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 

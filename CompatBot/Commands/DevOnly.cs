@@ -1,13 +1,4 @@
-﻿using System;
-using System.Text;
-using System.Threading.Tasks;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-
-namespace CompatBot.Commands;
+﻿namespace CompatBot.Commands;
 
 internal sealed class DevOnly : BaseCommandModuleCustom
 {

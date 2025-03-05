@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using CompatApiClient.Utils;
 using CompatBot.Database.Providers;
 using CompatBot.ThumbScrapper;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using PsnClient.POCOs;
-using CompatApiClient.Utils;
 
 namespace CompatBot.Utils.ResultFormatters;
 

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
-
-namespace CompatBot.EventHandlers;
+﻿namespace CompatBot.EventHandlers;
 
 public static class UsernameRaidMonitor
 {

@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 

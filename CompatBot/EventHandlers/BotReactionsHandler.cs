@@ -1,17 +1,8 @@
-﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using NReco.Text;
 #if DEBUG
-using System.Collections.Generic;
 #endif
 
 namespace CompatBot.EventHandlers

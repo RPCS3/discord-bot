@@ -1,10 +1,4 @@
-﻿using System.Threading.Tasks;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-
-namespace CompatBot.Commands.Attributes;
+﻿namespace CompatBot.Commands.Attributes;
 
 internal abstract class CheckBaseAttributeWithReactions: CheckBaseAttribute
 {

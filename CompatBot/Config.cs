@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatBot.Utils;
-using DSharpPlus.Entities;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -280,11 +274,10 @@ internal static class Config
             ClassName = typeof(Watchdog).AssemblyQualifiedName,
             MethodName = nameof(Watchdog.OnLogHandler),
         };
-        watchdogTarget.Parameters.AddRange(new[]
-        {
+        watchdogTarget.Parameters.AddRange([
             new MethodCallParameter("${level}"),
-            new MethodCallParameter("${message}"),
-        });
+            new MethodCallParameter("${message}")
+        ]);
 #if DEBUG
         loggingConfig.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
 #else

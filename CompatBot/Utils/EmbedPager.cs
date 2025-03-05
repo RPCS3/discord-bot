@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CompatApiClient.Utils;
-using DSharpPlus.Entities;
+﻿using CompatApiClient.Utils;
 
 namespace CompatBot.Utils;
 

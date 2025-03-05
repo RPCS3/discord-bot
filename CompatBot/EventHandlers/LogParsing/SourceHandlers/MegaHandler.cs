@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.IO.Pipelines;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
-using DSharpPlus.Entities;
 using CG.Web.MegaApiClient;
-using CompatBot.Utils;
-using System.IO.Pipelines;
-using System.Threading;
+using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 

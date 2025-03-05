@@ -1,10 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using CompatBot.EventHandlers;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+﻿using CompatBot.EventHandlers;
 using DSharpPlus.Interactivity;
 using Microsoft.Extensions.Caching.Memory;
 

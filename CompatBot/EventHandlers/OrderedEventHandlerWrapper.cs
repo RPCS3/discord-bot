@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
-
-namespace CompatBot.EventHandlers;
+﻿namespace CompatBot.EventHandlers;
 
 public class OrderedEventHandlerWrapper<T> where T: DiscordEventArgs
 {

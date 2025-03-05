@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using CompatBot.Utils;
 using NReco.Text;
 
 namespace CompatBot.EventHandlers.LogParsing;

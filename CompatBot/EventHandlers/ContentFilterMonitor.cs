@@ -1,9 +1,5 @@
-﻿using System.Threading.Tasks;
-using CompatBot.Database.Providers;
-using CompatBot.Utils;
+﻿using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 

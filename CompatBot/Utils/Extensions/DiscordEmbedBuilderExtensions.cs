@@ -1,6 +1,4 @@
-﻿using DSharpPlus.Entities;
-
-namespace CompatBot.Utils;
+﻿namespace CompatBot.Utils;
 
 public static class DiscordEmbedBuilderExtensions
 {

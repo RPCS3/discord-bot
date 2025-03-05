@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CompatBot.Database.Providers;
-using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using CompatBot.Database.Providers;
 
 namespace CompatBot.Utils;
 

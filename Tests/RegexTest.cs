@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
-using NUnit.Framework;
 using CompatBot.Utils;
+using NUnit.Framework;
 
 namespace Tests;
 

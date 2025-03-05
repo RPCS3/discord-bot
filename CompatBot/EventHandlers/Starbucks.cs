@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CompatBot.Commands;
-using CompatBot.Utils;
+﻿using CompatBot.Commands;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 

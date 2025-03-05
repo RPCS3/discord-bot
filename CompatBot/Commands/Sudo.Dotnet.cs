@@ -1,13 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 
 namespace CompatBot.Commands;
 

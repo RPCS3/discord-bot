@@ -1,13 +1,8 @@
-﻿using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
 using PsnClient;
 
 namespace CompatBot.Commands;

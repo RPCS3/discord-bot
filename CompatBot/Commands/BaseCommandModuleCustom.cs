@@ -1,14 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
+﻿using System.Net;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands;

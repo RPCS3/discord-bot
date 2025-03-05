@@ -1,9 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
+﻿using DSharpPlus.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers;

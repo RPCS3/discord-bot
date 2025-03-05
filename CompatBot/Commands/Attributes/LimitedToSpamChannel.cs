@@ -1,11 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using CompatBot.EventHandlers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
+﻿using CompatBot.EventHandlers;
 
 namespace CompatBot.Commands.Attributes;
 

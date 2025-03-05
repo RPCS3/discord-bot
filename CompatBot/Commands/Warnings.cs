@@ -1,16 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CompatApiClient.Utils;
+﻿using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
