@@ -89,6 +89,11 @@ internal static class Watchdog
         }
         else if (level == nameof(LogLevel.Fatal))
         {
+            if (message.Contains("Connection closed (-1, '')"))
+            {
+                Config.Log.Warn("Potential dangling socket, restarting…");
+                Sudo.Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential dangling socket");
+            }
             if (message.Contains("Socket connection terminated")
                 || message.Contains("heartbeats were skipped. Issuing reconnect."))
                 DisconnectTimestamps.Enqueue(DateTime.UtcNow);
