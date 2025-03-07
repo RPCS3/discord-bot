@@ -73,10 +73,10 @@ internal static class Program
 
             if (SandboxDetector.Detect() == SandboxType.Docker)
             {
-                Config.Log.Info("Checking OpenSSL system configuration...");
+                Config.Log.Info("Checking OpenSSL system configuration…");
                 await OpenSslConfigurator.CheckAndFixSystemConfigAsync().ConfigureAwait(false);
                     
-                Config.Log.Info("Checking for updates...");
+                Config.Log.Info("Checking for updates…");
                 try
                 {
                     var (updated, stdout) = await Sudo.Bot.GitPullAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -206,14 +206,14 @@ internal static class Program
 #if DEBUG
                     Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})");
 #else
-                    Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving...");
+                    Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving…");
                     await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
 #endif
                     return;
                 }
 
                 Config.Log.Info($"Server {gaArgs.Guild.Name} is available now");
-                Config.Log.Info($"Checking moderation backlogs in {gaArgs.Guild.Name}...");
+                Config.Log.Info($"Checking moderation backlogs in {gaArgs.Guild.Name}…");
                 try
                 {
                     await Task.WhenAll(
@@ -386,7 +386,7 @@ internal static class Program
         catch (Exception e)
         {
             if (!Config.InMemorySettings.ContainsKey("shutdown"))
-                Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart...");
+                Config.Log.Fatal(e, "Experienced catastrophic failure, attempting to restart…");
         }
         finally
         {

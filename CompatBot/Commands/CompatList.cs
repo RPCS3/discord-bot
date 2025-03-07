@@ -572,7 +572,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
             json = await File.ReadAllTextAsync(scoreJson).ConfigureAwait(false);
         else
         {
-            Config.Log.Warn($"Missing {scoreJson}, trying to get an online copy...");
+            Config.Log.Warn($"Missing {scoreJson}, trying to get an online copy…");
             using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
             try
             {

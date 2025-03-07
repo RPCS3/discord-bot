@@ -70,7 +70,7 @@ internal sealed partial class Misc: BaseCommandModuleCustom
     private static readonly List<string> RateAnswers =
     [
         "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
-        "Glorious!", "Very good", "Excellent...", "Magnificent", "Rate bot says he likes, so you like too",
+        "Glorious!", "Very good", "Excellent…", "Magnificent", "Rate bot says he likes, so you like too",
         "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "Belissimo!",
         "Cool. Cool cool cool", "I am in awe", "Incredible!", "Radiates gloriousness", "Like a breath of fresh air",
         "Sunshine for my digital soul 🌞", "Fantastic like petrichor 🌦", "Joyous like a rainbow 🌈", "Unbelievably good", "Can't recommend enough",
@@ -84,8 +84,8 @@ internal sealed partial class Misc: BaseCommandModuleCustom
 
         // 22
         "Ask MsLow", "Could be worse", "I need more time to think about it", "It's ok, nothing and no one is perfect", "🆗",
-        "You already know, my boi", "Unexpected like a bouquet of sunflowers 🌻", "Hard to measure precisely...", "Requires more data to analyze", "Passable",
-        "Quite unique 🤔", "Less like an orange, and more like an apple", "I don't know, man...", "It is so tiring to grade everything...", "...",
+        "You already know, my boi", "Unexpected like a bouquet of sunflowers 🌻", "Hard to measure precisely…", "Requires more data to analyze", "Passable",
+        "Quite unique 🤔", "Less like an orange, and more like an apple", "I don't know, man…", "It is so tiring to grade everything…", "…",
         "Bland like porridge", "🤔", "Ok-ish?", "Not _bad_, but also not _good_", "Why would you want to _rate_ this?", "meh",
         "I've seen worse",
 

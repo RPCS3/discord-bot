@@ -34,7 +34,7 @@ public static class DbImporter
     {
         try
         {
-            Config.Log.Info($"Upgrading {dbContext.GetType().Name} database if needed...");
+            Config.Log.Info($"Upgrading {dbContext.GetType().Name} database if needed…");
             await dbContext.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (SqliteException e)
@@ -43,11 +43,11 @@ public static class DbImporter
             if (dbContext is not BotDb botDb)
                 return false;
 
-            Config.Log.Info("Trying to apply a manual fixup...");
+            Config.Log.Info("Trying to apply a manual fixup…");
             try
             {
                 await ImportAsync(botDb, cancellationToken).ConfigureAwait(false);
-                Config.Log.Info("Manual fixup worked great. Let's try migrations again...");
+                Config.Log.Info("Manual fixup worked great. Let's try migrations again…");
                 await botDb.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -146,7 +146,7 @@ public static class DbImporter
             {
                 if (File.Exists(dbName))
                 {
-                    Config.Log.Info($"Found local {dbName}, moving...");
+                    Config.Log.Info($"Found local {dbName}, moving…");
                     if (File.Exists(dbPath))
                     {
                         Config.Log.Error($"{dbPath} already exists, please reslove the conflict manually");
@@ -169,7 +169,7 @@ public static class DbImporter
 
     private static async Task<bool> ImportNamesPool(ThumbnailDb db, CancellationToken cancellationToken)
     {
-        Config.Log.Debug("Importing name pool...");
+        Config.Log.Debug("Importing name pool…");
         var rootDir = Environment.CurrentDirectory;
         while (rootDir is not null && !Directory.EnumerateFiles(rootDir, "names_*.txt", SearchOption.TopDirectoryOnly).Any())
             rootDir = Path.GetDirectoryName(rootDir);
@@ -211,7 +211,7 @@ public static class DbImporter
             return true;
         }
 
-        Config.Log.Info("Updating name pool...");
+        Config.Log.Info("Updating name pool…");
         try
         {
             var names = new HashSet<string>();

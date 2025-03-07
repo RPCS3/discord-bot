@@ -78,14 +78,14 @@ internal sealed partial class Sudo
         {
             try
             {
-                await ctx.Channel.SendMessageAsync("Fixing invalid function names...").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Fixing invalid function names…").ConfigureAwait(false);
                 var result = await SyscallInfoProvider.FixInvalidFunctionNamesAsync().ConfigureAwait(false);
                 if (result.funcs > 0)
                     await ctx.Channel.SendMessageAsync($"Successfully fixed {result.funcs} function name{(result.funcs == 1 ? "" : "s")} and {result.links} game link{(result.links == 1 ? "" : "s")}").ConfigureAwait(false);
                 else
                     await ctx.Channel.SendMessageAsync("No invalid syscall functions detected").ConfigureAwait(false);
 
-                await ctx.Channel.SendMessageAsync("Fixing duplicates...").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync("Fixing duplicates…").ConfigureAwait(false);
                 result = await SyscallInfoProvider.FixDuplicatesAsync().ConfigureAwait(false);
                 if (result.funcs > 0)
                     await ctx.Channel.SendMessageAsync($"Successfully merged {result.funcs} function{(result.funcs == 1 ? "" : "s")} and {result.links} game link{(result.links == 1 ? "" : "s")}").ConfigureAwait(false);

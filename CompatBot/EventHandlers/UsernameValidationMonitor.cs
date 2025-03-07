@@ -27,7 +27,7 @@ public static class UsernameValidationMonitor
             if (guildMember.DisplayName == forcedNickname.Nickname)
                 return;
 
-            Config.Log.Debug($"Expected nickname {forcedNickname.Nickname}, but was {guildMember.Nickname}. Renaming...");
+            Config.Log.Debug($"Expected nickname {forcedNickname.Nickname}, but was {guildMember.Nickname}. Renaming…");
             await guildMember.ModifyAsync(mem => mem.Nickname = forcedNickname.Nickname).ConfigureAwait(false);
             Config.Log.Info($"Enforced nickname {forcedNickname.Nickname} for user {guildMember.Id} ({guildMember.Username}#{guildMember.Discriminator})");
         }

@@ -22,17 +22,17 @@ internal partial class Sudo
                 DiscordMessage? msg = null;
                 try
                 {
-                    Config.Log.Info("Checking for available dotnet updates...");
-                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for dotnet updates...").ConfigureAwait(false);
+                    Config.Log.Info("Checking for available dotnet updates…");
+                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Checking for dotnet updates…").ConfigureAwait(false);
                     var (updated, stdout) = await UpdateAsync(version).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(stdout))
                         await ctx.SendAutosplitMessageAsync($"```{stdout}```").ConfigureAwait(false);
                     if (!updated)
                         return;
 
-                    msg = await ctx.Channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
+                    msg = await ctx.Channel.SendMessageAsync("Saving state…").ConfigureAwait(false);
                     await StatsStorage.SaveAsync(true).ConfigureAwait(false);
-                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
+                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting…").ConfigureAwait(false);
                     Bot.Restart(ctx.Channel.Id, "Restarted after successful dotnet update");
                 }
                 catch (Exception e)

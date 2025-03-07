@@ -51,9 +51,9 @@ internal partial class Sudo
                 DiscordMessage? msg = null;
                 try
                 {
-                    msg = await ctx.Channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
+                    msg = await ctx.Channel.SendMessageAsync("Saving state…").ConfigureAwait(false);
                     await StatsStorage.SaveAsync(true).ConfigureAwait(false);
-                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting...").ConfigureAwait(false);
+                    msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Restarting…").ConfigureAwait(false);
                     Restart(ctx.Channel.Id, "Restarted due to command request");
                 }
                 catch (Exception e)
@@ -74,8 +74,8 @@ internal partial class Sudo
         public async Task Stop(CommandContext ctx)
         {
             await ctx.Channel.SendMessageAsync(ctx.Channel.IsPrivate
-                ? $"Shutting down bot instance on {Environment.MachineName}..."
-                : "Shutting down the bot..."
+                ? $"Shutting down bot instance on {Environment.MachineName}…"
+                : "Shutting down the bot…"
             ).ConfigureAwait(false);
             Config.Log.Info($"Shutting down by request from {ctx.User.Username}#{ctx.User.Discriminator}");
             Config.InMemorySettings["shutdown"] = "true";
@@ -158,9 +158,9 @@ internal partial class Sudo
                 DiscordMessage? msg = null;
                 try
                 {
-                    Config.Log.Info("Checking for available bot updates...");
+                    Config.Log.Info("Checking for available bot updates…");
                     if (channel is not null)
-                        msg = await msg.UpdateOrCreateMessageAsync(channel, "Checking for bot updates...").ConfigureAwait(false);
+                        msg = await msg.UpdateOrCreateMessageAsync(channel, "Checking for bot updates…").ConfigureAwait(false);
                     var (updated, stdout) = await GitPullAsync(cancellationToken).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(stdout))
                     {
@@ -172,10 +172,10 @@ internal partial class Sudo
                         return;
 
                     if (channel is not null)
-                        msg = await channel.SendMessageAsync("Saving state...").ConfigureAwait(false);
+                        msg = await channel.SendMessageAsync("Saving state…").ConfigureAwait(false);
                     await StatsStorage.SaveAsync(true).ConfigureAwait(false);
                     if (channel is not null)
-                        msg = await msg.UpdateOrCreateMessageAsync(channel, "Restarting...").ConfigureAwait(false);
+                        msg = await msg.UpdateOrCreateMessageAsync(channel, "Restarting…").ConfigureAwait(false);
                     Restart(channel?.Id ?? Config.BotLogId, "Restarted after successful bot update");
                 }
                 catch (Exception e)
@@ -212,7 +212,7 @@ internal partial class Sudo
 
         internal static void Restart(ulong channelId, string? restartMsg)
         {
-            Config.Log.Info($"Saving channelId {channelId} into settings...");
+            Config.Log.Info($"Saving channelId {channelId} into settings…");
             using var db = new BotDb();
             var ch = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
             if (ch is null)
@@ -239,7 +239,7 @@ internal partial class Sudo
         {
             if (SandboxDetector.Detect() != SandboxType.Docker)
             {
-                Config.Log.Info("Restarting...");
+                Config.Log.Info("Restarting…");
                 LogManager.LogFactory.Flush();
                 using var self = new Process {StartInfo = RestartInfo};
                 self.Start();

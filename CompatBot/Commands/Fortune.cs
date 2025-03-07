@@ -93,7 +93,7 @@ internal sealed class Fortune : BaseCommandModuleCustom
     [Description("Imports new fortunes from specified URL or attachment. Data should be formatted as standard UNIX fortune source file.")]
     public async Task Import(CommandContext ctx, string? url = null)
     {
-        var msg = await ctx.Channel.SendMessageAsync("Please wait...").ConfigureAwait(false);
+        var msg = await ctx.Channel.SendMessageAsync("Please wait…").ConfigureAwait(false);
         if (!await ImportCheck.WaitAsync(0).ConfigureAwait(false))
         {
             await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);

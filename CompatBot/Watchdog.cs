@@ -27,7 +27,7 @@ internal static class Watchdog
             try
             {
                 Config.TelemetryClient?.TrackEvent("socket-deadlock-potential");
-                Config.Log.Warn("Potential socket deadlock detected, reconnecting...");
+                Config.Log.Warn("Potential socket deadlock detected, reconnecting…");
                 await client.ReconnectAsync(true).ConfigureAwait(false);
                 await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
                 if (IsOk)
@@ -37,7 +37,7 @@ internal static class Watchdog
                 }
 
                 Config.TelemetryClient?.TrackEvent("socket-deadlock-for-sure");
-                Config.Log.Error("Hard reconnect failed, restarting...");
+                Config.Log.Error("Hard reconnect failed, restarting…");
                 Sudo.Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential socket deadlock (last incoming message event: {TimeSinceLastIncomingMessage.Elapsed:h\:mm\:ss} ago)");
             }
             catch (Exception e)

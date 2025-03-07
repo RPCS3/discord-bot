@@ -145,7 +145,7 @@ internal sealed partial class PsnScraper
                 continue;
             }
 
-            Config.Log.Debug($"Scraping {locale} PSN for PS3 games...");
+            Config.Log.Debug($"Scraping {locale} PSN for PS3 games…");
             var knownContainers = new HashSet<string>();
             // get containers from the left side navigation panel on the main page
             var containerIds = await Client.GetMainPageNavigationContainerIdsAsync(locale, cancellationToken).ConfigureAwait(false);
@@ -186,7 +186,7 @@ internal sealed partial class PsnScraper
                 }
 
                 var currentPercent = storeIdx * percentPerStore + containerIdx * percentPerStore * percentPerContainer;
-                Config.Log.Debug($"\tScraping {locale} container {containerId} ({currentPercent*100:##0.00}%)...");
+                Config.Log.Debug($"\tScraping {locale} container {containerId} ({currentPercent*100:##0.00}%)…");
                 var total = -1;
                 var start = 0;
                 do

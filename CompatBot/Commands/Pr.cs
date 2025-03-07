@@ -128,9 +128,9 @@ internal sealed class Pr: BaseCommandModuleCustom
             if (azureClient != null && prInfo.Head?.Sha is string commit)
                 try
                 {
-                    windowsDownloadText = "⏳ Pending...";
-                    linuxDownloadText = "⏳ Pending...";
-                    macDownloadText = "⏳ Pending...";
+                    windowsDownloadText = "⏳ Pending…";
+                    linuxDownloadText = "⏳ Pending…";
+                    macDownloadText = "⏳ Pending…";
                     var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
                     if (latestBuild == null)
                     {
@@ -180,22 +180,22 @@ internal sealed class Pr: BaseCommandModuleCustom
                             var estimatedTime = TimeSpan.FromMinutes(1);
                             if (estimatedCompletionTime > DateTime.UtcNow)
                                 estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
-                            windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                            windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             linuxDownloadText = windowsDownloadText;
                             macDownloadText = windowsDownloadText;
 
                             /*
                             if (latestBuild.WindowsBuild?.Status is TaskStatus.Executing)
                             {
-                                windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             }
                             if (latestBuild.LinuxBuild?.Status is TaskStatus.Executing)
                             {
-                                linuxDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                linuxDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             }
                             if (latestBuild.MacBuild?.Status is TaskStatus.Executing)
                             {
-                                macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             }
                         */
                         }

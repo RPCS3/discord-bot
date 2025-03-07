@@ -21,7 +21,7 @@ internal static class SqlConfiguration
             {
                 if (Path.Exists(Config.GoogleApiConfigPath))
                 {
-                    Config.Log.Info("Migrating Google API credentials storage from file to db...");
+                    Config.Log.Info("Migrating Google API credentials storage from file to db…");
                     try
                     {
                         googleCreds = await File.ReadAllTextAsync(Config.GoogleApiConfigPath).ConfigureAwait(false);

@@ -100,7 +100,7 @@ public static class LogParsingHandler
                     
                 if (source != null)
                 {
-                    Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
+                    Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)…");
                     var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
                     var msgBuilder = new DiscordMessageBuilder()
                         .WithEmbed(await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false))
@@ -384,7 +384,7 @@ public static class LogParsingHandler
                 functionCount += funcStats.Count;
             Config.Log.Debug("Product keys: " + serialCount);
             Config.Log.Debug("Functions: " + functionCount);
-            Config.Log.Debug("Saving syscall information...");
+            Config.Log.Debug("Saving syscall information…");
             var sw = Stopwatch.StartNew();
 #endif
             await SyscallInfoProvider.SaveAsync(result.Syscalls).ConfigureAwait(false);
@@ -404,7 +404,7 @@ public static class LogParsingHandler
         var indicator = client.GetEmoji(":kannamag:", Config.Reactions.PleaseWait);
         return new()
         {
-            Description = $"{indicator} Looking at the log, please wait... {indicator}",
+            Description = $"{indicator} Looking at the log, please wait… {indicator}",
             Color = Config.Colors.LogUnknown,
         };
     }

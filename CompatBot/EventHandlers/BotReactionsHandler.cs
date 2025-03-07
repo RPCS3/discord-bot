@@ -41,7 +41,7 @@ namespace CompatBot.EventHandlers
         private static readonly string[] SadMessages =
         [
             "Okay (._.)", "As you wish", "My bad", "I only wanted to help", "Dobby will learn, master",
-            "Sorry...", "I'll try to be smarter next time", "Your wish is my command", "Done.",
+            "Sorry…", "I'll try to be smarter next time", "Your wish is my command", "Done.",
         ];
 
         private static readonly DiscordEmoji[] ThankYouReactions = new[]
