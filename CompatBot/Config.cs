@@ -274,14 +274,11 @@ internal static class Config
             ClassName = typeof(Watchdog).AssemblyQualifiedName,
             MethodName = nameof(Watchdog.OnLogHandler),
         };
-        watchdogTarget.Parameters.AddRange([
-            new MethodCallParameter("${level}"),
-            new MethodCallParameter("${message}")
-        ]);
+        watchdogTarget.Parameters.AddRange([new MethodCallParameter("${level}"), new("${message}")]);
 #if DEBUG
         loggingConfig.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
 #else
-            loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
+        loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
 #endif
         loggingConfig.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
         loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, watchdogTarget);

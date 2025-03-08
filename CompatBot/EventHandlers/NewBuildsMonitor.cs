@@ -14,7 +14,7 @@ internal static partial class NewBuildsMonitor
     private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
     private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new();
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (args.Author.IsBotSafeCheck()
             && !args.Author.IsCurrent

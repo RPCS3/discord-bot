@@ -69,7 +69,7 @@ namespace CompatBot.EventHandlers
         public static DiscordEmoji RandomNegativeReaction { get { lock (TheDoor) return SadReactions[Rng.Next(SadReactions.Length)]; } }
         public static DiscordEmoji RandomPositiveReaction { get { lock (TheDoor) return ThankYouReactions[Rng.Next(ThankYouReactions.Length)]; } }
 
-        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;

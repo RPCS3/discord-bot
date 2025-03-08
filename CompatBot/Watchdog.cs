@@ -77,7 +77,7 @@ internal static class Watchdog
         }
     }
 
-    public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         if (Config.TelemetryClient is TelemetryClient tc)
         {

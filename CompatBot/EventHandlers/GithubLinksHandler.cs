@@ -15,7 +15,7 @@ internal static partial class GithubLinksHandler
     [GeneratedRegex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions)]
     internal static partial Regex IssueLink();
 
-    public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;

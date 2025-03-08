@@ -14,7 +14,7 @@ internal static partial class ProductCodeLookup
     public static partial Regex Pattern();
     private static readonly Client CompatClient = new();
 
-    public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;

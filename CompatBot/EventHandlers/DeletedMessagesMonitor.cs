@@ -11,9 +11,9 @@ internal static class DeletedMessagesMonitor
 	public static readonly TimeSpan CacheRetainTime = TimeSpan.FromMinutes(1);
 	private static readonly SemaphoreSlim PostLock = new(1);
 
-	public static async Task OnMessageDeleted(DiscordClient c, MessageDeleteEventArgs e)
+	public static async Task OnMessageDeleted(DiscordClient c, MessageDeletedEventArgs e)
 	{
-		if (e.Channel.IsPrivate)
+		if (Config.DeletedMessagesLogChannelId is 0 || e.Channel.IsPrivate)
 			return;
 
 		var msg = e.Message;

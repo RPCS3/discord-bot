@@ -10,7 +10,7 @@ internal static class GlobalMessageCache
     private static readonly TCache MessageQueue = new();
     private static readonly Func<DiscordMessage, ulong> KeyGen = m => m.Id;
 
-    public static Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (args.Channel.IsPrivate)
             return Task.CompletedTask;
@@ -30,7 +30,7 @@ internal static class GlobalMessageCache
         return Task.CompletedTask;
     }
 
-    public static Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs args)
+    public static Task OnMessageDeleted(DiscordClient _, MessageDeletedEventArgs args)
     {
         if (args.Channel?.IsPrivate ?? true)
             return Task.CompletedTask;
@@ -43,7 +43,7 @@ internal static class GlobalMessageCache
         return Task.CompletedTask;
     }
 
-    public static Task OnMessagesBulkDeleted(DiscordClient _, MessageBulkDeleteEventArgs args)
+    public static Task OnMessagesBulkDeleted(DiscordClient _, MessagesBulkDeletedEventArgs args)
     {
         if (args.Channel.IsPrivate)
             return Task.CompletedTask;
@@ -57,7 +57,7 @@ internal static class GlobalMessageCache
         return Task.CompletedTask;
     }
 
-    public static Task OnMessageUpdated(DiscordClient _, MessageUpdateEventArgs args)
+    public static Task OnMessageUpdated(DiscordClient _, MessageUpdatedEventArgs args)
     {
         if (args.Channel.IsPrivate)
             return Task.CompletedTask;

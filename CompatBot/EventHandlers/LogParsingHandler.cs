@@ -45,7 +45,7 @@ public static class LogParsingHandler
     private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);
     private static event OnLog OnNewLog = EnqueueLogProcessing;
 
-    public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         var message = args.Message;
         if (message.Author.IsBotSafeCheck())

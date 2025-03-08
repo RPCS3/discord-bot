@@ -5,10 +5,10 @@ namespace CompatBot.EventHandlers;
 
 internal static class ContentFilterMonitor
 {
-    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreateEventArgs args) => ContentFilter.IsClean(c, args.Message);
-    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args) => ContentFilter.IsClean(c, args.Message);
+    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args) => ContentFilter.IsClean(c, args.Message);
+    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdatedEventArgs args) => ContentFilter.IsClean(c, args.Message);
 
-    public static async Task OnReaction(DiscordClient c, MessageReactionAddEventArgs e)
+    public static async Task OnReaction(DiscordClient c, MessageReactionAddedEventArgs e)
     {
         if (e.User.IsBotSafeCheck())
             return;

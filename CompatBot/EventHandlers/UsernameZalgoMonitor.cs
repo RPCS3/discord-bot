@@ -11,7 +11,7 @@ public static class UsernameZalgoMonitor
         '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄', '˞',
     ];
 
-    public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
+    public static async Task OnUserUpdated(DiscordClient c, UserUpdatedEventArgs args)
     {
         try
         {
@@ -35,7 +35,7 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdateEventArgs args)
+    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdatedEventArgs args)
     {
         try
         {
@@ -69,7 +69,7 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddEventArgs args)
+    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddedEventArgs args)
     {
         try
         {

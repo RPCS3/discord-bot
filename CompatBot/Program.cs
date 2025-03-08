@@ -8,9 +8,12 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
-using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using NLog.Extensions.Logging;
 using Fortune = CompatBot.Commands.Fortune;
 
 namespace CompatBot;
@@ -126,186 +129,177 @@ internal static class Program
                 Config.Log.Warn(e, $"Failed to create new folder {Config.IrdCachePath}: {e.Message}");
             }
 
-            var config = new DiscordConfiguration
-            {
-                Token = Config.Token,
-                TokenType = TokenType.Bot,
-                MessageCacheSize = Config.MessageCacheSize,
-                LoggerFactory = Config.LoggerFactory,
-                Intents = DiscordIntents.All,
-            };
-            using var client = new DiscordClient(config);
-            var commands = client.UseCommandsNext(new()
-            {
-                StringPrefixes = [Config.CommandPrefix, Config.AutoRemoveCommandPrefix],
-                Services = new ServiceCollection().BuildServiceProvider(),
-            });
-            commands.RegisterConverter(new TextOnlyDiscordChannelConverter());
+            var clientInfoLogged = false;
+            var mediaScreenshotMonitor = new MediaScreenshotMonitor();
+            var clientBuilder = DiscordClientBuilder
+                .CreateDefault(Config.Token, DiscordIntents.All)
+                .UseCommands((services, extension) =>
+                {
+                    var textCommandProcessor = new TextCommandProcessor(new()
+                    {
+                        PrefixResolver = new DefaultPrefixResolver(
+                            true,
+                            Config.CommandPrefix,
+                            Config.AutoRemoveCommandPrefix
+                        ).ResolvePrefixAsync,
+                    });
+                    textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();
+                    extension.AddProcessor(textCommandProcessor);
 #if DEBUG
-            commands.RegisterCommands<DevOnly>();
+                    extension.AddCommands<DevOnly>();
 #endif
-            commands.RegisterCommands<Misc>();
-            commands.RegisterCommands<CompatList>();
-            commands.RegisterCommands<Sudo>();
-            commands.RegisterCommands<CommandsManagement>();
-            commands.RegisterCommands<ContentFilters>();
-            commands.RegisterCommands<Warnings>();
-            commands.RegisterCommands<Explain>();
-            commands.RegisterCommands<Psn>();
-            commands.RegisterCommands<Invites>();
-            commands.RegisterCommands<Moderation>();
-            commands.RegisterCommands<Ird>();
-            commands.RegisterCommands<BotMath>();
-            commands.RegisterCommands<Pr>();
-            commands.RegisterCommands<Events>();
-            commands.RegisterCommands<E3>();
-            commands.RegisterCommands<BotStats>();
-            commands.RegisterCommands<Hardware>();
-            commands.RegisterCommands<Syscall>();
-            commands.RegisterCommands<ForcedNicknames>();
-            commands.RegisterCommands<Minesweeper>();
-            commands.RegisterCommands<Fortune>();
-            if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
-                commands.RegisterCommands<Vision>();
+                    extension.AddCommands<Misc>();
+                    extension.AddCommands<SlashMisc>();
+                    extension.AddCommands<CompatList>();
+                    extension.AddCommands<Sudo>();
+                    extension.AddCommands<CommandsManagement>();
+                    extension.AddCommands<ContentFilters>();
+                    extension.AddCommands<Warnings>();
+                    extension.AddCommands<Explain>();
+                    extension.AddCommands<Psn>();
+                    extension.AddCommands<Invites>();
+                    extension.AddCommands<Moderation>();
+                    extension.AddCommands<Ird>();
+                    extension.AddCommands<BotMath>();
+                    extension.AddCommands<Pr>();
+                    extension.AddCommands<Events>();
+                    extension.AddCommands<E3>();
+                    extension.AddCommands<BotStats>();
+                    extension.AddCommands<Hardware>();
+                    extension.AddCommands<Syscall>();
+                    extension.AddCommands<ForcedNicknames>();
+                    extension.AddCommands<Minesweeper>();
+                    extension.AddCommands<Fortune>();
+                    if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+                        extension.AddCommands<Vision>();
 
-            var slashCommands = client.UseSlashCommands();
-            // Only register to rpcs3 guild for now.
-            slashCommands.RegisterCommands<SlashMisc>(Config.BotGuildId);
-
-            commands.CommandErrored += UnknownCommandHandler.OnError;
-
-            client.UseInteractivity(new());
-
-            client.Ready += async (c, _) =>
-            {
-                Config.Log.Info("Bot is ready to serve!");
-                Config.Log.Info("");
-                Config.Log.Info($"Bot user id : {c.CurrentUser.Id} ({c.CurrentUser.Username})");
-                var owners = c.CurrentApplication.Owners.ToList();
-                var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
-                if (owners.Count > 1)
-                    msg.AppendLine();
-                await using var db = new BotDb();
-                foreach (var owner in owners)
+                    extension.CommandErrored += UnknownCommandHandler.OnError;
+                }, new()
                 {
-                    msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
-                    if (!await db.Moderator.AnyAsync(m => m.DiscordId == owner.Id, Config.Cts.Token).ConfigureAwait(false))
-                        await db.Moderator.AddAsync(new() {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
-                }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-                Config.Log.Info(msg.ToString().TrimEnd);
-                Config.Log.Info("");
-            };
-            client.GuildAvailable += async (c, gaArgs) =>
-            {
-                await BotStatusMonitor.RefreshAsync(c).ConfigureAwait(false);
-                Watchdog.DisconnectTimestamps.Clear();
-                Watchdog.TimeSinceLastIncomingMessage.Restart();
-                if (gaArgs.Guild.Id != Config.BotGuildId)
-                {
+                    RegisterDefaultCommandProcessors = true,
+                    UseDefaultCommandErrorHandler = false,
 #if DEBUG
-                    Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})");
-#else
-                    Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving…");
-                    await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
+                    DebugGuildId = Config.BotGuildId,
 #endif
-                    return;
-                }
-
-                Config.Log.Info($"Server {gaArgs.Guild.Name} is available now");
-                Config.Log.Info($"Checking moderation backlogs in {gaArgs.Guild.Name}…");
-                try
+                })
+                .UseInteractivity()
+                .ConfigureLogging(builder => builder.AddNLog(LogManager.Configuration))
+                .ConfigureEventHandlers(config =>
                 {
-                    await Task.WhenAll(
-                        Starbucks.CheckBacklogAsync(c, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default),
-                        DiscordInviteFilter.CheckBacklogAsync(c, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)
-                    ).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, "Error running backlog tasks");
-                }
-                Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
-            };
-            client.GuildAvailable += (c, _) => UsernameValidationMonitor.MonitorAsync(c, true);
-            client.GuildUnavailable += (_, guArgs) =>
-            {
-                Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
-                return Task.CompletedTask;
-            };
+                    config.HandleSessionCreated(async (c, sceArgs) =>
+                    {
+                        if (clientInfoLogged)
+                            return;
+                        
+                        Config.Log.Info("Bot is ready to serve!");
+                        Config.Log.Info("");
+                        Config.Log.Info($"Bot user id : {c.CurrentUser.Id} ({c.CurrentUser.Username})");
+                        var owners = c.CurrentApplication.Owners?.ToList() ?? [];
+                        var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
+                        if (owners.Count > 1)
+                            msg.AppendLine();
+                        await using var db = new BotDb();
+                        foreach (var owner in owners)
+                        {
+                            msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
+                            if (!await db.Moderator.AnyAsync(m => m.DiscordId == owner.Id, Config.Cts.Token).ConfigureAwait(false))
+                                await db.Moderator.AddAsync(new() {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
+                        }
+                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                        Config.Log.Info(msg.ToString().TrimEnd);
+                        Config.Log.Info("");
+                        clientInfoLogged = true;
+                    });
+                    config.HandleGuildAvailable(MultiEventHandlerWrapper<GuildAvailableEventArgs>.CreateUnordered([
+                        OnGuildAvailableAsync,
+                        (c, _) => UsernameValidationMonitor.MonitorAsync(c, true)
+                    ]));
+                    config.HandleGuildUnavailable((_, guArgs) =>
+                    {
+                        Config.Log.Warn($"{guArgs.Guild.Name} is unavailable");
+                        return Task.CompletedTask;
+                    });
 #if !DEBUG
-/*
-            client.GuildDownloadCompleted += async gdcArgs =>
-                                             {
-                                                 foreach (var guild in gdcArgs.Guilds)
-                                                     await ModProvider.SyncRolesAsync(guild.Value).ConfigureAwait(false);
-                                             };
-*/
+                    config.HandleGuildDownloadCompleted(async (_, gdcArgs) =>
+                    {
+                        foreach (var guild in gdcArgs.Guilds)
+                            await ModProvider.SyncRolesAsync(guild.Value).ConfigureAwait(false);
+                    });
 #endif
-            client.MessageReactionAdded += Starbucks.Handler;
-            client.MessageReactionAdded += ContentFilterMonitor.OnReaction;
-
-            var mediaScreenshotMonitor = new MediaScreenshotMonitor(client);
-            client.MessageCreated += Watchdog.OnMessageCreated;
-            client.MessageCreated += new OrderedEventHandlerWrapper<MessageCreateEventArgs>(
-                [
-                    ContentFilterMonitor.OnMessageCreated, // should be first
-                    DiscordInviteFilter.OnMessageCreated
-                ],
-                [
-                    GlobalMessageCache.OnMessageCreated,
-                    mediaScreenshotMonitor.OnMessageCreated,
-                    ProductCodeLookup.OnMessageCreated,
-                    LogParsingHandler.OnMessageCreated,
-                    LogAsTextMonitor.OnMessageCreated,
-                    PostLogHelpHandler.OnMessageCreated,
-                    BotReactionsHandler.OnMessageCreated,
-                    GithubLinksHandler.OnMessageCreated,
-                    NewBuildsMonitor.OnMessageCreated,
-                    TableFlipMonitor.OnMessageCreated,
-                    IsTheGamePlayableHandler.OnMessageCreated,
-                    EmpathySimulationHandler.OnMessageCreated
-                ]).OnEvent;
-
-            client.MessageUpdated += new OrderedEventHandlerWrapper<MessageUpdateEventArgs>([
-                    ContentFilterMonitor.OnMessageUpdated,
-                    DiscordInviteFilter.OnMessageUpdated
-                ],
-                [
-                    GlobalMessageCache.OnMessageUpdated,
-                    EmpathySimulationHandler.OnMessageUpdated
-                ]).OnEvent;
-
-            client.MessageDeleted += GlobalMessageCache.OnMessageDeleted;
-            if (Config.DeletedMessagesLogChannelId > 0)
-                client.MessageDeleted += DeletedMessagesMonitor.OnMessageDeleted;
-            client.MessageDeleted += ThumbnailCacheMonitor.OnMessageDeleted;
-            client.MessageDeleted += EmpathySimulationHandler.OnMessageDeleted;
-
-            client.MessagesBulkDeleted += GlobalMessageCache.OnMessagesBulkDeleted;
-                
-            client.UserUpdated += UsernameSpoofMonitor.OnUserUpdated;
-            client.UserUpdated += UsernameZalgoMonitor.OnUserUpdated;
-
-            client.GuildMemberAdded += Greeter.OnMemberAdded;
-            client.GuildMemberAdded += UsernameSpoofMonitor.OnMemberAdded;
-            client.GuildMemberAdded += UsernameZalgoMonitor.OnMemberAdded;
-            client.GuildMemberAdded += UsernameValidationMonitor.OnMemberAdded;
-            client.GuildMemberAdded += UsernameRaidMonitor.OnMemberAdded;
-
-            client.GuildMemberUpdated += UsernameSpoofMonitor.OnMemberUpdated;
-            client.GuildMemberUpdated += UsernameZalgoMonitor.OnMemberUpdated;
-            client.GuildMemberUpdated += UsernameValidationMonitor.OnMemberUpdated;
-            client.GuildMemberUpdated += UsernameRaidMonitor.OnMemberUpdated;
+                    config.HandleMessageReactionAdded(MultiEventHandlerWrapper<MessageReactionAddedEventArgs>.CreateUnordered([
+                            Starbucks.Handler,
+                            ContentFilterMonitor.OnReaction,
+                    ]));
+                    config.HandleMessageCreated(new MultiEventHandlerWrapper<MessageCreatedEventArgs>(
+                        [
+                            ContentFilterMonitor.OnMessageCreated, // should be first
+                            DiscordInviteFilter.OnMessageCreated,
+                        ],
+                        [
+                            Watchdog.OnMessageCreated,
+                            GlobalMessageCache.OnMessageCreated,
+                            mediaScreenshotMonitor.OnMessageCreated,
+                            ProductCodeLookup.OnMessageCreated,
+                            LogParsingHandler.OnMessageCreated,
+                            LogAsTextMonitor.OnMessageCreated,
+                            PostLogHelpHandler.OnMessageCreated,
+                            BotReactionsHandler.OnMessageCreated,
+                            GithubLinksHandler.OnMessageCreated,
+                            NewBuildsMonitor.OnMessageCreated,
+                            TableFlipMonitor.OnMessageCreated,
+                            IsTheGamePlayableHandler.OnMessageCreated,
+                            EmpathySimulationHandler.OnMessageCreated,
+                        ]
+                    ).OnEvent);
+                    config.HandleMessageUpdated(new MultiEventHandlerWrapper<MessageUpdatedEventArgs>(
+                        [
+                            ContentFilterMonitor.OnMessageUpdated,
+                            DiscordInviteFilter.OnMessageUpdated,
+                        ],
+                        [
+                            GlobalMessageCache.OnMessageUpdated,
+                            EmpathySimulationHandler.OnMessageUpdated,
+                        ]
+                    ).OnEvent);
+                    config.HandleMessageDeleted(MultiEventHandlerWrapper<MessageDeletedEventArgs>.CreateUnordered([
+                        //todo: make this ordered?
+                        EmpathySimulationHandler.OnMessageDeleted,
+                        ThumbnailCacheMonitor.OnMessageDeleted,
+                        DeletedMessagesMonitor.OnMessageDeleted,
+                        GlobalMessageCache.OnMessageDeleted,
+                    ]));
+                    config.HandleMessagesBulkDeleted(GlobalMessageCache.OnMessagesBulkDeleted);
+                    config.HandleUserUpdated(MultiEventHandlerWrapper<UserUpdatedEventArgs>.CreateUnordered([
+                        UsernameSpoofMonitor.OnUserUpdated,
+                        UsernameZalgoMonitor.OnUserUpdated,
+                    ]));
+                    config.HandleGuildMemberAdded(MultiEventHandlerWrapper<GuildMemberAddedEventArgs>.CreateUnordered([
+                        Greeter.OnMemberAdded,
+                        UsernameSpoofMonitor.OnMemberAdded,
+                        UsernameZalgoMonitor.OnMemberAdded,
+                        UsernameValidationMonitor.OnMemberAdded,
+                        UsernameRaidMonitor.OnMemberAdded,
+                    ]));
+                    config.HandleGuildMemberUpdated(MultiEventHandlerWrapper<GuildMemberUpdatedEventArgs>.CreateUnordered([
+                        UsernameSpoofMonitor.OnMemberUpdated,
+                        UsernameZalgoMonitor.OnMemberUpdated,
+                        UsernameValidationMonitor.OnMemberUpdated,
+                        UsernameRaidMonitor.OnMemberUpdated,
+                    ]));
+                    config.HandleComponentInteractionCreated(MultiEventHandlerWrapper<ComponentInteractionCreatedEventArgs>.CreateUnordered([
+                        GlobalButtonHandler.OnComponentInteraction,
 #if DEBUG
-            client.ComponentInteractionCreated += (_, args) =>
-            {
-                Config.Log.Debug($"ComponentInteraction: type: {args.Interaction.Type}, id: {args.Interaction.Data.CustomId}, user: {args.Interaction.User}");
-                return Task.CompletedTask;
-            };
+                        (_, args) =>
+                        {
+                            Config.Log.Debug($"ComponentInteraction: type: {args.Interaction.Type}, id: {args.Interaction.Data.CustomId}, user: {args.Interaction.User}");
+                            return Task.CompletedTask;
+                        },
 #endif
-            client.ComponentInteractionCreated += GlobalButtonHandler.OnComponentInteraction;
-                
+                    ]));
+                });
+            using var client = clientBuilder.Build();
+            mediaScreenshotMonitor.Client = client;
+
             Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
 
             try
@@ -377,8 +371,9 @@ internal static class Program
 
             while (!Config.Cts.IsCancellationRequested)
             {
-                if (client.Ping > 1000)
-                    Config.Log.Warn($"High ping detected: {client.Ping}");
+                var latency = client.GetConnectionLatency(Config.BotGuildId);
+                if (latency.TotalSeconds > 1)
+                    Config.Log.Warn($"High ping detected: {latency}");
                 await Task.Delay(TimeSpan.FromMinutes(1), Config.Cts.Token).ContinueWith(_ => {/* in case it was cancelled */}, TaskScheduler.Default).ConfigureAwait(false);
             }
             await backgroundTasks.ConfigureAwait(false);
@@ -397,5 +392,34 @@ internal static class Program
         }
         if (!Config.InMemorySettings.ContainsKey("shutdown"))
             Sudo.Bot.Restart(InvalidChannelId, null);
+    }
+
+    private static async Task OnGuildAvailableAsync(DiscordClient c, GuildAvailableEventArgs gaArgs)
+    {
+        await BotStatusMonitor.RefreshAsync(c).ConfigureAwait(false);
+        Watchdog.DisconnectTimestamps.Clear();
+        Watchdog.TimeSinceLastIncomingMessage.Restart();
+        if (gaArgs.Guild.Id != Config.BotGuildId)
+        {
+#if DEBUG
+            Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name})");
+#else
+            Config.Log.Warn($"Unknown discord server {gaArgs.Guild.Id} ({gaArgs.Guild.Name}), leaving…");
+            await gaArgs.Guild.LeaveAsync().ConfigureAwait(false);
+#endif
+            return;
+        }
+
+        Config.Log.Info($"Server {gaArgs.Guild.Name} is available now");
+        Config.Log.Info($"Checking moderation backlogs in {gaArgs.Guild.Name}…");
+        try
+        {
+            await Task.WhenAll(Starbucks.CheckBacklogAsync(c, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Starbucks backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default), DiscordInviteFilter.CheckBacklogAsync(c, gaArgs.Guild).ContinueWith(_ => Config.Log.Info($"Discord invites backlog checked in {gaArgs.Guild.Name}."), TaskScheduler.Default)).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            Config.Log.Warn(e, "Error running backlog tasks");
+        }
+        Config.Log.Info($"All moderation backlogs checked in {gaArgs.Guild.Name}.");
     }
 }

@@ -11,7 +11,7 @@ internal static class UsernameSpoofMonitor
     private static readonly MemoryCache SpoofingReportThrottlingCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
     private static readonly TimeSpan SnoozeDuration = TimeSpan.FromHours(1);
 
-    public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
+    public static async Task OnUserUpdated(DiscordClient c, UserUpdatedEventArgs args)
     {
         if (args.UserBefore.Username == args.UserAfter.Username)
             return;
@@ -35,7 +35,7 @@ internal static class UsernameSpoofMonitor
             ReportSeverity.Medium);
     }
 
-    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdateEventArgs args)
+    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdatedEventArgs args)
     {
         if (args.NicknameBefore == args.NicknameAfter)
             return;
@@ -55,7 +55,7 @@ internal static class UsernameSpoofMonitor
             ReportSeverity.Medium);
     }
 
-    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddEventArgs args)
+    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddedEventArgs args)
     {
         var potentialTargets = GetPotentialVictims(c, args.Member, true, true);
         if (!potentialTargets.Any())

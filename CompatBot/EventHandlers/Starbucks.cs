@@ -75,7 +75,7 @@ internal static class Starbucks
         [DiscordEmoji.FromUnicode("〰")] = "W",
     };
 
-    public static Task Handler(DiscordClient c, MessageReactionAddEventArgs args)
+    public static Task Handler(DiscordClient c, MessageReactionAddedEventArgs args)
         => CheckMessageAsync(c, args.Channel, args.User, args.Message, args.Emoji, false);
 
     public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)

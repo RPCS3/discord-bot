@@ -4,7 +4,7 @@ namespace CompatBot.EventHandlers;
 
 internal static class ThumbnailCacheMonitor
 {
-    public static async Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs args)
+    public static async Task OnMessageDeleted(DiscordClient _, MessageDeletedEventArgs args)
     {
         if (args.Channel.Id != Config.ThumbnailSpamId)
             return;

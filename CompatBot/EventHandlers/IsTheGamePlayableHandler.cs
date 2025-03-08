@@ -23,7 +23,7 @@ internal static partial class IsTheGamePlayableHandler
     private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
     private static readonly Client Client = new();
 
-    public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message) || args.Channel is null)
             return;

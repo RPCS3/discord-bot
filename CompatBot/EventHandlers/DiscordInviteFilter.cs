@@ -21,8 +21,8 @@ internal static partial class DiscordInviteFilter
     private static readonly MemoryCache InviteCodeCache = new(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
-    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreateEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
-    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
+    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
+    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdatedEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
 
     public static async Task<bool> CheckMessageInvitesAreSafeAsync(DiscordClient client, DiscordMessage message)
     {

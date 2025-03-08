@@ -2,7 +2,7 @@
 
 public static class UsernameRaidMonitor
 {
-    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdateEventArgs args)
+    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdatedEventArgs args)
     {
         try
         {
@@ -28,7 +28,7 @@ public static class UsernameRaidMonitor
         }
     }
 
-    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddEventArgs args)
+    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddedEventArgs args)
     {
         try
         {

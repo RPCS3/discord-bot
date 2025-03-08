@@ -11,7 +11,7 @@ internal static class EmpathySimulationHandler
     internal static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
     internal static readonly MemoryCache Throttling = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
@@ -60,8 +60,8 @@ internal static class EmpathySimulationHandler
         }
     }
 
-    public static Task OnMessageUpdated(DiscordClient _, MessageUpdateEventArgs e) => Backtrack(e.Channel, e.MessageBefore, false);
-    public static Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs e) => Backtrack(e.Channel, e.Message, true);
+    public static Task OnMessageUpdated(DiscordClient _, MessageUpdatedEventArgs e) => Backtrack(e.Channel, e.MessageBefore, false);
+    public static Task OnMessageDeleted(DiscordClient _, MessageDeletedEventArgs e) => Backtrack(e.Channel, e.Message, true);
 
     private static async Task Backtrack(DiscordChannel channel, DiscordMessage message, bool removeFromQueue)
     {

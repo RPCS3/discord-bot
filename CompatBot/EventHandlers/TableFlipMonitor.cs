@@ -11,7 +11,7 @@ internal static partial class TableFlipMonitor
     private static partial Regex DiceRoll();
     private static readonly char[] OpenParen = ['(', '（', 'ʕ'];
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;

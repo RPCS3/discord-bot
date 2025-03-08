@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using CompatBot.Utils.Extensions;
-using DSharpPlus.CommandsNext.Exceptions;
+using DSharpPlus.Commands.EventArgs;
+using DSharpPlus.Commands.Exceptions;
 
 namespace CompatBot.EventHandlers;
 
@@ -12,13 +13,13 @@ internal static partial class UnknownCommandHandler
     )]
     private static partial Regex BinaryQuestion();
     
-    public static Task OnError(CommandsNextExtension cne, CommandErrorEventArgs e)
+    public static Task OnError(CommandsExtension cne, CommandErroredEventArgs e)
     {
         OnErrorInternal(cne, e);
         return Task.CompletedTask;
     }
 
-    public static async void OnErrorInternal(CommandsNextExtension cne, CommandErrorEventArgs e)
+    public static async void OnErrorInternal(CommandsExtension cne, CommandErroredEventArgs e)
     {
         try
         {
