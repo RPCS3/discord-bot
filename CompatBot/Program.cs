@@ -173,11 +173,11 @@ internal static class Program
                     if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                         extension.AddCommands<Vision>();
 
-                    extension.CommandErrored += UnknownCommandHandler.OnError;
+                    //extension.CommandErrored += UnknownCommandHandler.OnError;
                 }, new()
                 {
                     RegisterDefaultCommandProcessors = true,
-                    UseDefaultCommandErrorHandler = false,
+                    //UseDefaultCommandErrorHandler = false,
 #if DEBUG
                     DebugGuildId = Config.BotGuildId,
 #endif

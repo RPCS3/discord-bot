@@ -1,7 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿//todo: rewrite this whole thing
+/*
+using System.Text.RegularExpressions;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.EventArgs;
 using DSharpPlus.Commands.Exceptions;
+using DSharpPlus.Commands.Processors.TextCommands;
 
 namespace CompatBot.EventHandlers;
 
@@ -23,12 +26,15 @@ internal static partial class UnknownCommandHandler
     {
         try
         {
-            if (e.Context.User.IsBotSafeCheck())
+            if (e.Context is not TextCommandContext ctx)
                 return;
 
+            if (ctx.User.IsBotSafeCheck())
+                return;
+           
             var ex = e.Exception;
             if (ex is InvalidOperationException && ex.Message.Contains("No matching subcommands were found"))
-                ex = new CommandNotFoundException(e.Command?.Name ?? "unknown command name");
+                ex = new CommandNotFoundException(ctx.Command.Name);
 
             if (ex is not CommandNotFoundException cnfe)
             {
@@ -39,29 +45,29 @@ internal static partial class UnknownCommandHandler
             if (string.IsNullOrEmpty(cnfe.CommandName))
                 return;
 
-            if (e.Context.Prefix != Config.CommandPrefix
-                && e.Context.Prefix != Config.AutoRemoveCommandPrefix
-                && e.Context.Message.Content is string msgTxt
-                && (msgTxt.EndsWith("?") || BinaryQuestion().IsMatch(msgTxt.AsSpan(e.Context.Prefix.Length)))
-                && e.Context.CommandsNext.RegisteredCommands.TryGetValue("8ball", out var cmd))
+            if (ctx.Prefix != Config.CommandPrefix
+                && ctx.Prefix != Config.AutoRemoveCommandPrefix
+                && ctx.Message.Content is string msgTxt
+                && (msgTxt.EndsWith("?") || BinaryQuestion().IsMatch(msgTxt.AsSpan(ctx.Prefix.Length)))
+                && ctx.Extension.Commands.TryGetValue("8ball", out var cmd))
             {
-                var updatedContext = e.Context.CommandsNext.CreateContext(
-                    e.Context.Message,
-                    e.Context.Prefix,
+                var updatedContext = ctx.CommandsNext.CreateContext(
+                    ctx.Message,
+                    ctx.Prefix,
                     cmd,
-                    msgTxt[e.Context.Prefix.Length ..].Trim()
+                    msgTxt[ctx.Prefix.Length ..].Trim()
                 );
                 try { await cmd.ExecuteAsync(updatedContext).ConfigureAwait(false); } catch { }
                 return;
             }
 
-            var content = e.Context.Message.Content;
+            var content = ctx.Message.Content;
             if (content is null or {Length: <3})
                 return;
 
-            if (e.Context.Prefix == Config.CommandPrefix)
+            if (ctx.Prefix == Config.CommandPrefix)
             {
-                var knownCmds = GetAllRegisteredCommands(e.Context);
+                var knownCmds = GetAllRegisteredCommands(ctx);
                 var termParts = content.Split(' ', 4, StringSplitOptions.RemoveEmptyEntries);
                 var normalizedTerm = string.Join(' ', termParts);
                 var terms = new string[termParts.Length];
@@ -94,8 +100,8 @@ internal static partial class UnknownCommandHandler
                         msgBuilder.AddComponents(btn);
                 }
                 var interactivity = cne.Client.GetInteractivity();
-                var botMsg = await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, e.Context.Channel, msgBuilder).ConfigureAwait(false);
-                var (_, reaction) = await interactivity.WaitForMessageOrButtonAsync(botMsg, e.Context.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
+                var botMsg = await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, ctx.Channel, msgBuilder).ConfigureAwait(false);
+                var (_, reaction) = await interactivity.WaitForMessageOrButtonAsync(botMsg, ctx.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
                 string? newCmd = null, newArg = content;
                 if (reaction?.Id is string btnId)
                 {
@@ -118,7 +124,7 @@ internal static partial class UnknownCommandHandler
                 if (newCmd is not null)
                 {
                     var botCommand = cne.FindCommand(newCmd, out _);
-                    var commandCtx = cne.CreateContext(e.Context.Message, e.Context.Prefix, botCommand, newArg);
+                    var commandCtx = cne.CreateContext(ctx.Message, ctx.Prefix, botCommand, newArg);
                     await cne.ExecuteCommandAsync(commandCtx).ConfigureAwait(false);
                 }
             }
@@ -168,3 +174,4 @@ internal static partial class UnknownCommandHandler
 
     private static List<(string alias, string fqn)>? allKnownBotCommands;
 }
+*/
