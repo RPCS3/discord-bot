@@ -124,13 +124,13 @@ internal sealed partial class Psn
                 await ctx.Message.ReactWithAsync(sqvat).ConfigureAwait(false);
             }
             var resultMsgBuilder = new DiscordMessageBuilder()
-                .WithEmbed(embeds[0])
+                .AddEmbed(embeds[0])
                 .WithReply(ctx.Message.Id);
             await botMsg.UpdateOrCreateMessageAsync(ctx.Channel, resultMsgBuilder).ConfigureAwait(false);
             foreach (var embed in embeds.Skip(1))
             {
                 resultMsgBuilder = new DiscordMessageBuilder()
-                    .WithEmbed(embed)
+                    .AddEmbed(embed)
                     .WithReply(ctx.Message.Id);
                 await ctx.Channel.SendMessageAsync(resultMsgBuilder).ConfigureAwait(false);
             }
@@ -208,7 +208,7 @@ internal sealed partial class Psn
             }
         }
 
-        internal static async Task OnCheckUpdatesButtonClick(DiscordClient client, ComponentInteractionCreateEventArgs e)
+        internal static async Task OnCheckUpdatesButtonClick(DiscordClient client, ComponentInteractionCreatedEventArgs e)
         {
             var btnId = e.Interaction.Data.CustomId;
             var parts = btnId.Split(':');

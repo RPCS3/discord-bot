@@ -59,7 +59,7 @@ public static class DiscordMessageExtensions
         if (content is {Length: >0})
             msgBuilder.WithContent(content);
         if (embed is not null)
-            msgBuilder.WithEmbed(embed);
+            msgBuilder.AddEmbed(embed);
         if (refMsg is not null)
             msgBuilder.WithReply(refMsg.Id);
         return botMsg.UpdateOrCreateMessageAsync(channel, msgBuilder);

@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Linq;
+using System.Linq.Expressions;
+using System.Collections.Concurrent;
 using Microsoft.VisualStudio.Services.Common;
 
 namespace CompatBot.EventHandlers;
@@ -70,7 +72,7 @@ internal static class GlobalMessageCache
         return Task.CompletedTask;
     }
 
-    internal static Task<List<DiscordMessage>> GetMessagesCachedAsync(this DiscordChannel ch, int count = 100)
+    internal static async Task<List<DiscordMessage>> GetMessagesCachedAsync(this DiscordChannel ch, int count = 100)
     {
         if (!MessageQueue.TryGetValue(ch.Id, out var queue))
             lock (MessageQueue)
@@ -83,11 +85,12 @@ internal static class GlobalMessageCache
         var fetchCount = Math.Max(count - cacheCount, 0);
         if (fetchCount > 0)
         {
-            IReadOnlyList<DiscordMessage> fetchedList;
-            if (result.Any())
-                fetchedList = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ConfigureAwait(false).GetAwaiter().GetResult();
+            IAsyncEnumerable<DiscordMessage> fetchStream;
+            if (result.Count > 0)
+                fetchStream = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount);
             else
-                fetchedList = ch.GetMessagesAsync(fetchCount).ConfigureAwait(false).GetAwaiter().GetResult();
+                fetchStream = ch.GetMessagesAsync(fetchCount);
+            var fetchedList = await fetchStream.ToListAsync();
             result.AddRange(fetchedList);
             if (queue.Count < Config.ChannelMessageHistorySize)
                 lock (queue.SyncObj)
@@ -98,10 +101,10 @@ internal static class GlobalMessageCache
                     queue.AddRange(freshCopy.Concat(fetchedList).Distinct().Reverse());
                 }
         }
-        return Task.FromResult(result);
+        return result;
     }
 
-    internal static Task<List<DiscordMessage>> GetMessagesBeforeCachedAsync(this DiscordChannel ch, ulong msgId, int count = 100)
+    internal static async Task<List<DiscordMessage>> GetMessagesBeforeCachedAsync(this DiscordChannel ch, ulong msgId, int count = 100)
     {
         if (!MessageQueue.TryGetValue(ch.Id, out var queue))
             lock (MessageQueue)
@@ -117,7 +120,7 @@ internal static class GlobalMessageCache
             IReadOnlyList<DiscordMessage> fetchedList;
             if (result.Any())
             {
-                fetchedList = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ConfigureAwait(false).GetAwaiter().GetResult();
+                fetchedList = await ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ToListAsync();
                 if (queue.Count < Config.ChannelMessageHistorySize)
                     lock (queue.SyncObj)
                     {
@@ -128,10 +131,10 @@ internal static class GlobalMessageCache
                     }
             }
             else
-                fetchedList = ch.GetMessagesBeforeAsync(msgId, fetchCount).ConfigureAwait(false).GetAwaiter().GetResult();
+                fetchedList = await ch.GetMessagesBeforeAsync(msgId, fetchCount).ToListAsync();
             result.AddRange(fetchedList);
         }
-        return Task.FromResult(result);
+        return result;
 
     }
 }

@@ -9,9 +9,9 @@ using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using DSharpPlus.CommandsNext.Converters;
+using DSharpPlus.Commands.Converters;
 using Microsoft.EntityFrameworkCore;
-using Description = DSharpPlus.CommandsNext.Attributes.DescriptionAttribute; 
+using Description = DSharpPlus.Commands.Attributes.DescriptionAttribute; 
 
 namespace CompatBot.Commands;
 

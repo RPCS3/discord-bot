@@ -51,7 +51,7 @@ internal static class DeletedMessagesMonitor
 			await PostLock.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embed.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+				await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embed.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
 				if (attachmentContent?.Count > 0)
 					await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddFiles(attachmentContent).WithContent(msg.Content).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
 				else if (!string.IsNullOrEmpty(msg.Content))

@@ -49,5 +49,12 @@ public static class EnumerableExtensions
             .GroupBy(x => x.inx / maxItems)
             .Select(g => g.Select(x => x.item));
     }
-        
+
+    public static async Task<List<T>> ToListAsync<T>(this IAsyncEnumerable<T> items)
+    {
+        var result = new List<T>();
+        await foreach(var item in items.ConfigureAwait(false))
+            result.Add(item);
+        return result;
+    }
 }

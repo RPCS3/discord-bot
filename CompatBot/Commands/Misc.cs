@@ -200,7 +200,7 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         if (string.IsNullOrEmpty(result) && embed == null)
             await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
         else if (embed != null)
-            await message.Channel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embed).WithReply(message.Id)).ConfigureAwait(false);
+            await message.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embed).WithReply(message.Id)).ConfigureAwait(false);
         else
             await message.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(result).WithReply(message.Id)).ConfigureAwait(false);
     }

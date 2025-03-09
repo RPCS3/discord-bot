@@ -92,7 +92,7 @@ internal static class Starbucks
                     select msg;
                 foreach (var message in messagesToCheck)
                 {
-                    var reactionUsers = await message.GetReactionsAsync(Config.Reactions.Starbucks).ConfigureAwait(false);
+                    var reactionUsers = await message.GetReactionsAsync(Config.Reactions.Starbucks).ToListAsync();
                     if (reactionUsers.Count > 0)
                         checkTasks.Add(CheckMessageAsync(client, channel, reactionUsers[0], message, Config.Reactions.Starbucks, true));
                 }
@@ -144,7 +144,7 @@ internal static class Starbucks
         if (await message.Author.IsWhitelistedAsync(client, channel.Guild).ConfigureAwait(false))
             return;
 
-        var users = await message.GetReactionsAsync(emoji).ConfigureAwait(false);
+        var users = await message.GetReactionsAsync(emoji).ToListAsync();
         if (users.Any(u => u.IsCurrent))
             return;
 
@@ -201,7 +201,7 @@ internal static class Starbucks
     {
         var bot = await client.GetMemberAsync(channel.Guild, client.CurrentUser).ConfigureAwait(false);
         var ch = channel.IsPrivate ? channel.Users.FirstOrDefault(u => u.Id != client.CurrentUser.Id)?.Username + "'s DM" : "#" + channel.Name;
-        if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
+        if (!channel.PermissionsFor(bot).HasPermission(DiscordPermission.AddReactions))
         {
             Config.Log.Debug($"No permissions to react in {ch}");
             return;

@@ -28,8 +28,17 @@ internal static class Watchdog
             {
                 Config.TelemetryClient?.TrackEvent("socket-deadlock-potential");
                 Config.Log.Warn("Potential socket deadlock detected, reconnecting…");
-                await client.ReconnectAsync(true).ConfigureAwait(false);
-                await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
+                //await client.ReconnectAsync(true).ConfigureAwait(false);
+                try
+                {
+                    await client.DisconnectAsync().ConfigureAwait(false);
+                    await client.ConnectAsync().ConfigureAwait(false);
+                    await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, "Failed to manually reconnect");
+                }
                 if (IsOk)
                 {
                     Config.Log.Info("Looks like we're back in business");
@@ -82,7 +91,8 @@ internal static class Watchdog
         if (Config.TelemetryClient is TelemetryClient tc)
         {
             var userToBotDelay = (DateTime.UtcNow - args.Message.Timestamp.UtcDateTime).TotalMilliseconds;
-            tc.TrackMetric("gw-latency", c.Ping);
+            var latency = c.GetConnectionLatency(Config.BotGuildId);
+            tc.TrackMetric("gw-latency", latency.TotalMilliseconds);
             tc.TrackMetric("user-to-bot-latency", userToBotDelay);
             tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
         }
@@ -99,7 +109,8 @@ internal static class Watchdog
             if (Config.TelemetryClient is not TelemetryClient tc)
                 continue;
                 
-            tc.TrackMetric("gw-latency", client.Ping);
+            var latency = client.GetConnectionLatency(Config.BotGuildId);
+            tc.TrackMetric("gw-latency", latency.TotalMilliseconds);
             tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
             tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
             tc.TrackMetric("memory-gc-committed", gcMemInfo.TotalCommittedBytes);

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
+using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Exceptions;
 
 namespace CompatBot.Utils;
@@ -74,7 +75,7 @@ public static class DiscordClientExtensions
         try
         {
             showBoth ??= message.Channel.IsPrivate;
-            var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(Permissions.AddReactions);
+            var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(DiscordPermission.AddReactions);
             if (canReact)
                 await message.CreateReactionAsync(emoji).ConfigureAwait(false);
             if ((!canReact || showBoth.Value) && !string.IsNullOrEmpty(fallbackMessage))
@@ -86,9 +87,9 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static Task RemoveReactionAsync(this CommandContext ctx, DiscordEmoji emoji) => RemoveReactionAsync(ctx.Message, emoji);
+    public static Task RemoveReactionAsync(this TextCommandContext ctx, DiscordEmoji emoji) => RemoveReactionAsync(ctx.Message, emoji);
 
-    public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
+    public static Task ReactWithAsync(this TextCommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
         => ReactWithAsync(ctx.Message, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
 
     public static async Task<IReadOnlyCollection<DiscordMessage>> GetMessagesBeforeAsync(this DiscordChannel channel, ulong beforeMessageId, int limit = 100, DateTime? timeLimit = null)
@@ -116,9 +117,18 @@ public static class DiscordClientExtensions
         try
         {
             if (contents?.Count > 0)
-                return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).AddFiles(contents).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+                return await logChannel.SendMessageAsync(
+                    new DiscordMessageBuilder()
+                        .AddEmbed(embedBuilder.Build())
+                        .AddFiles(contents)
+                        .WithAllowedMentions(Config.AllowedMentions.Nothing)
+                ).ConfigureAwait(false);
             else
-                return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+                return await logChannel.SendMessageAsync(
+                    new DiscordMessageBuilder()
+                        .AddEmbed(embedBuilder.Build())
+                        .WithAllowedMentions(Config.AllowedMentions.Nothing)
+                ).ConfigureAwait(false);
         }
         finally
         {
@@ -137,7 +147,11 @@ public static class DiscordClientExtensions
         var mentions = reporters.Where(m => m is not null).Select(GetMentionWithNickname!);
         embedBuilder.AddField("Reporters", string.Join(Environment.NewLine, mentions));
         var logChannel = await getLogChannelTask.ConfigureAwait(false);
-        return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+        return await logChannel.SendMessageAsync(
+            new DiscordMessageBuilder()
+                .AddEmbed(embedBuilder.Build())
+                .WithAllowedMentions(Config.AllowedMentions.Nothing)
+        ).ConfigureAwait(false);
     }
 
     public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember>? potentialVictims, ReportSeverity severity)
@@ -151,7 +165,11 @@ public static class DiscordClientExtensions
         if (potentialVictims?.Count > 0)
             result.AddField("Potential Targets", string.Join(Environment.NewLine, potentialVictims.Select(GetMentionWithNickname)).Trim(EmbedPager.MaxFieldLength));
         var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-        return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(result.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+        return await logChannel.SendMessageAsync(
+            new DiscordMessageBuilder()
+                .AddEmbed(result.Build())
+                .WithAllowedMentions(Config.AllowedMentions.Nothing)
+        ).ConfigureAwait(false);
     }
 
     public static string GetMentionWithNickname(this DiscordMember member)

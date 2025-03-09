@@ -79,17 +79,17 @@ internal static partial class UnknownCommandHandler
                     .DistinctBy(i => i.fqn)
                     .Take(4)
                     .ToList();
-                var btnExplain = new DiscordButtonComponent(cmdMatches.Count == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:explain", "Explain this", emoji: new(DiscordEmoji.FromUnicode("🔍")));
-                var btnCompat = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:compat", "Is this game playable?", emoji: new(DiscordEmoji.FromUnicode("🔍")));
-                var btnHelp = new DiscordButtonComponent(ButtonStyle.Secondary, "unk:cmd:help", "Show bot commands", emoji: new(DiscordEmoji.FromUnicode("❔")));
-                var btnCancel = new DiscordButtonComponent(ButtonStyle.Danger, "unk:cmd:cancel", "Ignore", emoji: new(DiscordEmoji.FromUnicode("✖")));
+                var btnExplain = new DiscordButtonComponent(cmdMatches.Count == 0 ? DiscordButtonStyle.Primary : DiscordButtonStyle.Secondary, "unk:cmd:explain", "Explain this", emoji: new(DiscordEmoji.FromUnicode("🔍")));
+                var btnCompat = new DiscordButtonComponent(DiscordButtonStyle.Secondary, "unk:cmd:compat", "Is this game playable?", emoji: new(DiscordEmoji.FromUnicode("🔍")));
+                var btnHelp = new DiscordButtonComponent(DiscordButtonStyle.Secondary, "unk:cmd:help", "Show bot commands", emoji: new(DiscordEmoji.FromUnicode("❔")));
+                var btnCancel = new DiscordButtonComponent(DiscordButtonStyle.Danger, "unk:cmd:cancel", "Ignore", emoji: new(DiscordEmoji.FromUnicode("✖")));
                 var cmdEmoji = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("🤖"));
                 var msgBuilder = new DiscordMessageBuilder()
                     .WithContent("I'm afraid the intended command didn't spell out quite right")
                     .AddComponents(btnExplain, btnCompat, btnHelp, btnCancel);
                 if (cmdMatches.Count > 0)
                 {
-                    var btnSuggest = cmdMatches.Select((m, i) => new DiscordButtonComponent(i == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.fqn + m.arg, emoji: cmdEmoji));
+                    var btnSuggest = cmdMatches.Select((m, i) => new DiscordButtonComponent(i == 0 ? DiscordButtonStyle.Primary : DiscordButtonStyle.Secondary, "unk:cmd:s:" + m.cmd, Config.CommandPrefix + m.fqn + m.arg, emoji: cmdEmoji));
                     foreach (var btn in btnSuggest)
                         msgBuilder.AddComponents(btn);
                 }

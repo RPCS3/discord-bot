@@ -144,16 +144,16 @@ internal static partial class DiscordInviteFilter
             }
 
             var after = DateTime.UtcNow - Config.ModerationBacklogThresholdInHours;
-            foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
+            foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != DiscordChannelType.Voice))
             {
                 var permissions = channel.PermissionsFor(botMember);
-                if (!permissions.HasPermission(Permissions.ReadMessageHistory))
+                if (!permissions.HasPermission(DiscordPermission.ReadMessageHistory))
                 {
                     Config.Log.Warn($"No permissions to read message history in #{channel.Name}");
                     continue;
                 }
 
-                if (!permissions.HasPermission(Permissions.AccessChannels))
+                if (!permissions.HasPermission(DiscordPermission.ViewChannel))
                 {
                     Config.Log.Warn($"No permissions to access #{channel.Name}");
                     continue;

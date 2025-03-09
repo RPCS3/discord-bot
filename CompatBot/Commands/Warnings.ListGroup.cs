@@ -2,7 +2,7 @@
 using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using DSharpPlus.CommandsNext.Converters;
+using DSharpPlus.Commands.Converters;
 
 namespace CompatBot.Commands;
 

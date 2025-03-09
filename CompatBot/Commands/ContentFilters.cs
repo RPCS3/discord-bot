@@ -263,7 +263,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
             return;
         }
 
-        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
+        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
     }
         
     [Command("view")]
@@ -278,7 +278,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
             return;
         }
 
-        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(FormatFilter(filter))).ConfigureAwait(false);
+        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
     }
 
     [Command("remove"), Aliases("delete", "del")]
@@ -408,7 +408,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         saveEdit.SetEnabled(filter.IsComplete());
         var messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **trigger**")
-            .WithEmbed(embed)
+            .AddEmbed(embed)
             .AddComponents(lastPage, nextPage, saveEdit, abort);
         errorMsg = null;
         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
@@ -459,7 +459,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         contextLog.SetEmoji(filter.Context.HasFlag(FilterContext.Log) ? minus : plus);
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify filter **context(s)**")
-            .WithEmbed(embed)
+            .AddEmbed(embed)
             .AddComponents(previousPage, nextPage, saveEdit, abort)
             .AddComponents(contextChat, contextLog);
         errorMsg = null;
@@ -543,7 +543,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         saveEdit.SetEnabled(filter.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify filter **action(s)**")
-            .WithEmbed(embed)
+            .AddEmbed(embed)
             .AddComponents(previousPage, nextPage, saveEdit, abort)
             .AddComponents(actionR, actionW, actionM, actionE, actionU)
             .AddComponents(actionK);
@@ -671,7 +671,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         saveEdit.SetEnabled(filter.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify filter **validation regex**")
-            .WithEmbed(embed)
+            .AddEmbed(embed)
             .AddComponents(previousPage, next, trash, saveEdit, abort);
         errorMsg = null;
         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
@@ -738,7 +738,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         saveEdit.SetEnabled(filter.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify filter **validation regex**")
-            .WithEmbed(embed)
+            .AddEmbed(embed)
             .AddComponents(previousPage, next, saveEdit, abort);
         errorMsg = null;
         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
@@ -782,7 +782,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         saveEdit.SetEnabled(filter.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify filter **explanation term**")
-            .WithEmbed(embed)
+            .AddEmbed(embed)
             .AddComponents(previousPage, firstPage, saveEdit, abort);
         errorMsg = null;
         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);
@@ -833,7 +833,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         saveEdit.SetEnabled(filter.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Does this look good? (y/n)")
-            .WithEmbed(FormatFilter(filter, errorMsg))
+            .AddEmbed(FormatFilter(filter, errorMsg))
             .AddComponents(previousPage, firstPage, saveEdit, abort);
         errorMsg = null;
         msg = await msg.UpdateOrCreateMessageAsync(ctx.Channel, messageBuilder).ConfigureAwait(false);

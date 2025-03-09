@@ -16,7 +16,7 @@ public static class UsernameValidationMonitor
             if (guildMember.IsWhitelisted())
                 return;
 
-            if (guild.Permissions?.HasFlag(Permissions.ChangeNickname) is false)
+            if (guild.Permissions?.HasFlag(DiscordPermission.ChangeNickname) is false)
                 return;
 
             await using var db = new BotDb();
@@ -51,7 +51,7 @@ public static class UsernameValidationMonitor
                 foreach (var guild in client.Guilds.Values)
                     try
                     {
-                        if (guild.Permissions?.HasFlag(Permissions.ChangeNickname) is false)
+                        if (guild.Permissions?.HasFlag(DiscordPermission.ChangeNickname) is false)
                             continue;
 
                         await using var db = new BotDb();

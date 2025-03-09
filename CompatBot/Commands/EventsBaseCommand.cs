@@ -291,7 +291,7 @@ internal partial class EventsBaseCommand: BaseCommandModuleCustom
         saveEdit.SetEnabled(evt.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **start date and time**")
-            .WithEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"""
+            .AddEmbed(FormatEvent(evt, errorMsg, 1).WithDescription($"""
                 Example: `{DateTime.UtcNow:yyyy-MM-dd HH:mm}`
                 By default all times use UTC, only limited number of time zones supported
                 """))
@@ -334,7 +334,7 @@ internal partial class EventsBaseCommand: BaseCommandModuleCustom
         saveEdit.SetEnabled(evt.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **event duration**")
-            .WithEmbed(FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`"))
+            .AddEmbed(FormatEvent(evt, errorMsg, 2).WithDescription("Example: `2d 1h 15m`, or `2.1:00`"))
             .AddComponents(previousPage, nextPage)
             .AddComponents(saveEdit, abort);
         errorMsg = null;
@@ -374,7 +374,7 @@ internal partial class EventsBaseCommand: BaseCommandModuleCustom
         trash.SetDisabled(string.IsNullOrEmpty(evt.EventName));
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **event name**")
-            .WithEmbed(FormatEvent(evt, errorMsg, 3))
+            .AddEmbed(FormatEvent(evt, errorMsg, 3))
             .AddComponents(previousPage, nextPage, trash)
             .AddComponents(saveEdit, abort);
         errorMsg = null;
@@ -404,7 +404,7 @@ internal partial class EventsBaseCommand: BaseCommandModuleCustom
         saveEdit.SetEnabled(evt.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Please specify a new **schedule entry title**")
-            .WithEmbed(FormatEvent(evt, errorMsg, 4))
+            .AddEmbed(FormatEvent(evt, errorMsg, 4))
             .AddComponents(previousPage, firstPage)
             .AddComponents(saveEdit, abort);
         errorMsg = null;
@@ -448,7 +448,7 @@ internal partial class EventsBaseCommand: BaseCommandModuleCustom
         saveEdit.SetEnabled(evt.IsComplete());
         messageBuilder = new DiscordMessageBuilder()
             .WithContent("Does this look good? (y/n)")
-            .WithEmbed(FormatEvent(evt, errorMsg))
+            .AddEmbed(FormatEvent(evt, errorMsg))
             .AddComponents(previousPage, firstPage)
             .AddComponents(saveEdit, abort);
         errorMsg = null;

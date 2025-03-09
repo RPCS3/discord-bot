@@ -44,7 +44,7 @@ public class AttributeUsageAnalyzer : DiagnosticAnalyzer
 
         var hasGroupCommand = false;
         foreach (var attr in methodAttributes)
-            if (IsDescendantOfAttribute(attr, "DSharpPlus.CommandsNext.Attributes.GroupCommandAttribute"))
+            if (IsDescendantOfAttribute(attr, "DSharpPlus.Commands.Attributes.GroupCommandAttribute"))
             {
                 hasGroupCommand = true;
                 break;
@@ -54,7 +54,7 @@ public class AttributeUsageAnalyzer : DiagnosticAnalyzer
             return;
 
         foreach (var attr in methodAttributes)
-            if (IsDescendantOfAttribute(attr, "DSharpPlus.CommandsNext.Attributes.CheckBaseAttribute"))
+            if (IsDescendantOfAttribute(attr, "DSharpPlus.Commands.Attributes.CheckBaseAttribute"))
             {
                 var attrLocation = attr.ApplicationSyntaxReference?.SyntaxTree.GetLocation(attr.ApplicationSyntaxReference.Span);
                 var diagnostic = Diagnostic.Create(AccessCheckAttributeOnGroupCommandRule, attrLocation ?? methodSymbol.Locations[0], attr.AttributeClass?.Name ?? methodSymbol.Name);

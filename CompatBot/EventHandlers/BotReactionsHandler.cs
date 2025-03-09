@@ -177,7 +177,7 @@ namespace CompatBot.EventHandlers
                 if (await args.Author.IsSmartlistedAsync(c, args.Message.Channel.Guild).ConfigureAwait(false))
                 {
                     var botMember = args.Guild?.CurrentMember ?? await c.GetMemberAsync(c.CurrentUser).ConfigureAwait(false);
-                    if (args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
+                    if (args.Channel.PermissionsFor(botMember).HasPermission(DiscordPermission.ReadMessageHistory))
                     {
                         var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.Add(-Config.ShutupTimeLimitInMin)).ConfigureAwait(false);
                         if (lastBotMessages.OrderByDescending(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)

@@ -71,10 +71,9 @@ internal static partial class ProductCodeLookup
             foreach (var result in formattedResults)
                 try
                 {
-                    await FixAfrikaAsync(client, message, result.builder).ConfigureAwait(false);
-                    var messageBuilder = new DiscordMessageBuilder().WithEmbed(result.builder);
+                    var messageBuilder = new DiscordMessageBuilder().AddEmbed(result.builder);
                     if (LimitedToSpamChannel.IsSpamChannel(channel))
-                        messageBuilder.AddComponents(new DiscordButtonComponent(ButtonStyle.Secondary, $"replace with game updates:{message.Author.Id}:{message.Id}:{result.code}", "Check for updates", emoji: lookupEmoji));
+                        messageBuilder.AddComponents(new DiscordButtonComponent(DiscordButtonStyle.Secondary, $"replace with game updates:{message.Author.Id}:{message.Id}:{result.code}", "Check for updates", emoji: lookupEmoji));
                     await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -149,22 +148,6 @@ internal static partial class ProductCodeLookup
         {
             Config.Log.Warn(e, $"Couldn't get compat result for {code}");
             return (TitleInfo.CommunicationError.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
-        }
-    }
-
-    public static async Task FixAfrikaAsync(DiscordClient client, DiscordMessage message, DiscordEmbedBuilder titleInfoEmbed)
-    {
-        if (message.IsOnionLike()
-            && (
-                titleInfoEmbed.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase)
-                || titleInfoEmbed.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
-            ))
-        {
-            var sqvat = client.GetEmoji(":sqvat:", Config.Reactions.No)!;
-            titleInfoEmbed.Title = "How about no (๑•ิཬ•ั๑)";
-            if (!string.IsNullOrEmpty(titleInfoEmbed.Thumbnail?.Url))
-                titleInfoEmbed.WithThumbnail(Config.ImgSrcNoCompatAbuse);
-            await message.ReactWithAsync(sqvat).ConfigureAwait(false);
         }
     }
 }

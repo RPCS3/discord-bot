@@ -6,14 +6,14 @@ namespace CompatBot.Utils;
 
 public static class InteractivityExtensions
 {
-    public static Task<(DiscordMessage? message, DiscordMessage? text, MessageReactionAddEventArgs? reaction)> WaitForMessageOrReactionAsync(
+    public static Task<(DiscordMessage? message, DiscordMessage? text, MessageReactionAddedEventArgs? reaction)> WaitForMessageOrReactionAsync(
         this InteractivityExtension interactivity,
         DiscordMessage message,
         DiscordUser user,
         params DiscordEmoji?[] reactions)
         => WaitForMessageOrReactionAsync(interactivity, message, user, null, reactions);
 
-    public static async Task<(DiscordMessage? message, DiscordMessage? text, MessageReactionAddEventArgs? reaction)> WaitForMessageOrReactionAsync(
+    public static async Task<(DiscordMessage? message, DiscordMessage? text, MessageReactionAddedEventArgs? reaction)> WaitForMessageOrReactionAsync(
         this InteractivityExtension interactivity,
         DiscordMessage message,
         DiscordUser user,
@@ -46,7 +46,7 @@ public static class InteractivityExtensions
                 result = null;
             }
             DiscordMessage? text = null;
-            MessageReactionAddEventArgs? reaction = null;
+            MessageReactionAddedEventArgs? reaction = null;
             if (waitTextResponseTask.IsCompletedSuccessfully)
                 text = (await waitTextResponseTask).Result;
             if (waitReactionResponse.IsCompletedSuccessfully)
@@ -67,7 +67,7 @@ public static class InteractivityExtensions
         }
     }
 
-    public static async Task<(DiscordMessage? text, ComponentInteractionCreateEventArgs? reaction)> WaitForMessageOrButtonAsync(
+    public static async Task<(DiscordMessage? text, ComponentInteractionCreatedEventArgs? reaction)> WaitForMessageOrButtonAsync(
         this InteractivityExtension interactivity,
         DiscordMessage message,
         DiscordUser user,
@@ -87,14 +87,14 @@ public static class InteractivityExtensions
                 waitButtonTask
             ).ConfigureAwait(false);
             DiscordMessage? text = null;
-            ComponentInteractionCreateEventArgs? reaction = null;
+            ComponentInteractionCreatedEventArgs? reaction = null;
             if (waitTextResponseTask.IsCompletedSuccessfully)
                 text = (await waitTextResponseTask).Result;
             if (waitButtonTask.IsCompletedSuccessfully)
             {
                 reaction = (await waitButtonTask).Result;
                 if (reaction is not null)
-                    await reaction.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
+                    await reaction.Interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
             }
             if (text != null && !message.Channel.IsPrivate)
                 try
