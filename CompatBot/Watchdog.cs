@@ -26,20 +26,6 @@ internal static class Watchdog
         do
         {
             await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
-            foreach (var sudoer in ModProvider.Mods.Values.Where(m => m.Sudoer))
-            {
-                var user = await client.GetUserAsync(sudoer.DiscordId).ConfigureAwait(false);
-                if (user?.Presence?.Activity?.CustomStatus?.Name is string cmd && cmd.StartsWith("restart"))
-                {
-                    var instance = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
-                    if (ulong.TryParse(instance, out var botId) && botId == client.CurrentUser.Id)
-                    {
-                        Config.Log.Warn($"Found request to restart on {user.Username}#{user.Discriminator}'s custom status");
-                        Sudo.Bot.Restart(Program.InvalidChannelId, $"Restarted by request from {user.Username}#{user.Discriminator}'s custom status");
-                    }
-                }
-            }
-
             if (IsOk)
                 continue;
 
@@ -89,7 +75,8 @@ internal static class Watchdog
         }
         else if (level == nameof(LogLevel.Fatal))
         {
-            if (message.Contains("Socket connection terminated")
+            if (message.Contains("Connection closed (-1, '')")
+                || message.Contains("Socket connection terminated")
                 || message.Contains("heartbeats were skipped. Issuing reconnect."))
                 DisconnectTimestamps.Enqueue(DateTime.UtcNow);
         }
