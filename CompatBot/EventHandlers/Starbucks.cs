@@ -92,7 +92,7 @@ internal static class Starbucks
                     select msg;
                 foreach (var message in messagesToCheck)
                 {
-                    var reactionUsers = await message.GetReactionsAsync(Config.Reactions.Starbucks).ToListAsync();
+                    var reactionUsers = message.GetReactionsAsync(Config.Reactions.Starbucks).ToList();
                     if (reactionUsers.Count > 0)
                         checkTasks.Add(CheckMessageAsync(client, channel, reactionUsers[0], message, Config.Reactions.Starbucks, true));
                 }
@@ -144,7 +144,7 @@ internal static class Starbucks
         if (await message.Author.IsWhitelistedAsync(client, channel.Guild).ConfigureAwait(false))
             return;
 
-        var users = await message.GetReactionsAsync(emoji).ToListAsync();
+        var users = message.GetReactionsAsync(emoji).ToList();
         if (users.Any(u => u.IsCurrent))
             return;
 

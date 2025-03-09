@@ -25,12 +25,13 @@ public static partial class CommandContextExtensions
             await using var scope = tctx.Extension.ServiceProvider.CreateAsyncScope();
             var cctx = new TextConverterContext
             {
-                User = ctx.User,
-                Channel = ctx.Channel,
+                User = tctx.User,
+                Channel = tctx.Channel,
                 Message = tctx.Message,
                 Command = tctx.Command,
                 RawArguments = word,
                 
+                PrefixLength = tctx.Prefix?.Length ?? 0,
                 Splicer = DefaultTextArgumentSplicer.Splice,
                 Extension = tctx.Extension,
                 ServiceScope = scope,

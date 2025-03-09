@@ -85,12 +85,11 @@ internal static class GlobalMessageCache
         var fetchCount = Math.Max(count - cacheCount, 0);
         if (fetchCount > 0)
         {
-            IAsyncEnumerable<DiscordMessage> fetchStream;
+            List<DiscordMessage> fetchedList;
             if (result.Count > 0)
-                fetchStream = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount);
+                fetchedList = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ToList();
             else
-                fetchStream = ch.GetMessagesAsync(fetchCount);
-            var fetchedList = await fetchStream.ToListAsync();
+                fetchedList = ch.GetMessagesAsync(fetchCount).ToList();
             result.AddRange(fetchedList);
             if (queue.Count < Config.ChannelMessageHistorySize)
                 lock (queue.SyncObj)
@@ -120,7 +119,7 @@ internal static class GlobalMessageCache
             IReadOnlyList<DiscordMessage> fetchedList;
             if (result.Any())
             {
-                fetchedList = await ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ToListAsync();
+                fetchedList = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ToList();
                 if (queue.Count < Config.ChannelMessageHistorySize)
                     lock (queue.SyncObj)
                     {
@@ -131,7 +130,7 @@ internal static class GlobalMessageCache
                     }
             }
             else
-                fetchedList = await ch.GetMessagesBeforeAsync(msgId, fetchCount).ToListAsync();
+                fetchedList = ch.GetMessagesBeforeAsync(msgId, fetchCount).ToList();
             result.AddRange(fetchedList);
         }
         return result;

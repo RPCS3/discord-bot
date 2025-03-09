@@ -74,11 +74,12 @@ public static class DiscordClientExtensions
     {
         try
         {
-            showBoth ??= message.Channel.IsPrivate;
-            var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(DiscordPermission.AddReactions);
+            var isDm = message.Channel?.IsPrivate ?? true;
+            showBoth ??= isDm;
+            var canReact = isDm || (message.Channel?.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(DiscordPermission.AddReactions) ?? false);
             if (canReact)
                 await message.CreateReactionAsync(emoji).ConfigureAwait(false);
-            if ((!canReact || showBoth.Value) && !string.IsNullOrEmpty(fallbackMessage))
+            if ((!canReact || showBoth.Value) && !string.IsNullOrEmpty(fallbackMessage) && message.Channel is not null)
                 await message.Channel.SendMessageAsync(fallbackMessage).ConfigureAwait(false);
         }
         catch (Exception e)

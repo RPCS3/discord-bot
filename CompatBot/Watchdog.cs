@@ -28,17 +28,8 @@ internal static class Watchdog
             {
                 Config.TelemetryClient?.TrackEvent("socket-deadlock-potential");
                 Config.Log.Warn("Potential socket deadlock detected, reconnecting…");
-                //await client.ReconnectAsync(true).ConfigureAwait(false);
-                try
-                {
-                    await client.DisconnectAsync().ConfigureAwait(false);
-                    await client.ConnectAsync().ConfigureAwait(false);
-                    await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Error(e, "Failed to manually reconnect");
-                }
+                await client.ReconnectAsync().ConfigureAwait(false);
+                await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
                 if (IsOk)
                 {
                     Config.Log.Info("Looks like we're back in business");

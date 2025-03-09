@@ -39,9 +39,9 @@
     <AdditionalFiles Include="..\win32_error_codes*.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02463" />
-    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02463" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02463" />
+    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02465" />
+    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02465" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02465" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3703" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="6.1.0" />
