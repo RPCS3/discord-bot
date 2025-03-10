@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -87,7 +88,7 @@ internal sealed class Explain: BaseCommandModuleCustom
             return;
 
         string? inSpecificLocation = null;
-        if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+        if (!LimitedToSpecificChannelsCheck.IsSpamChannel(ctx.Channel))
         {
             var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
             inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";

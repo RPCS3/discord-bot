@@ -35,7 +35,7 @@ internal class BaseCommandModuleCustom : BaseCommandModule
                 await dm.SendMessageAsync($"Only `{Config.CommandPrefix}warn` and `{Config.CommandPrefix}report` are allowed in {ctx.Channel.Mention}").ConfigureAwait(false);
             }
             Config.TelemetryClient?.TrackRequest(ctx.Command.QualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.Forbidden.ToString(), true);
-            throw new DSharpPlus.Commands.Exceptions.ChecksFailedException(ctx.Command, ctx, [new RequiresNotMedia()
+            throw new DSharpPlus.Commands.Exceptions.ChecksFailedException(ctx.Command, ctx, [new RequiresNotMediaAttribute()
             ]);
         }
 
@@ -44,7 +44,7 @@ internal class BaseCommandModuleCustom : BaseCommandModule
         {
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder {Color = Config.Colors.Maintenance, Description = "Command is currently disabled"}).ConfigureAwait(false);
             Config.TelemetryClient?.TrackRequest(ctx.Command.QualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.Locked.ToString(), true);
-            throw new DSharpPlus.Commands.Exceptions.ChecksFailedException(ctx.Command, ctx, [new RequiresDm()]);
+            throw new DSharpPlus.Commands.Exceptions.ChecksFailedException(ctx.Command, ctx, [new RequiresDmAttribute()]);
         }
 
         if (TriggersTyping(ctx))

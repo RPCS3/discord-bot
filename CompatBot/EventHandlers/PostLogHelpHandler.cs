@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ internal static partial class PostLogHelpHandler
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
-        if (!LimitedToHelpChannel.IsHelpChannel(args.Channel))
+        if (!LimitedToSpecificChannelsCheck.IsHelpChannel(args.Channel))
             return;
 
         if (DateTime.UtcNow - lastMention < ThrottlingThreshold)

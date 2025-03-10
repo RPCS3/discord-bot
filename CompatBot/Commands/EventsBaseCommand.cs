@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
@@ -151,7 +152,7 @@ internal partial class EventsBaseCommand: BaseCommandModuleCustom
             await db.EventSchedule.AddAsync(evt).ConfigureAwait(false);
             await db.SaveChangesAsync().ConfigureAwait(false);
             await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
-            if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+            if (LimitedToSpecificChannelsCheck.IsSpamChannel(ctx.Channel))
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Created new event schedule entry #" + evt.Id)).ConfigureAwait(false);
             else
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Added a new schedule entry").ConfigureAwait(false);
@@ -202,7 +203,7 @@ internal partial class EventsBaseCommand: BaseCommandModuleCustom
         if (success)
         {
             await db.SaveChangesAsync().ConfigureAwait(false);
-            if (LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
+            if (LimitedToSpecificChannelsCheck.IsSpamChannel(ctx.Channel))
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, embed: FormatEvent(evt).WithTitle("Updated event schedule entry #" + evt.Id)).ConfigureAwait(false);
             else
                 await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Updated the schedule entry").ConfigureAwait(false);

@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 using DSharpPlus.Commands.Converters;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
@@ -50,7 +51,7 @@ public static partial class CommandContextExtensions
         => ctx.Channel.IsPrivate || ctx.Member is null ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
 
     public static Task<DiscordChannel> GetChannelForSpamAsync(this CommandContext ctx)
-        => LimitedToSpamChannel.IsSpamChannel(ctx.Channel) ? Task.FromResult(ctx.Channel) : ctx.CreateDmAsync();
+        => LimitedToSpecificChannelsCheck.IsSpamChannel(ctx.Channel) ? Task.FromResult(ctx.Channel) : ctx.CreateDmAsync();
 
     public static Task<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
         => ctx.Client.GetUserNameAsync(ctx.Channel, userId, forDmPurposes, defaultName);

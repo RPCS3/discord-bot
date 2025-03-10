@@ -14,7 +14,7 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
     public async Task Warn(CommandContext ctx, [Description("User to warn. Can also use @id")] DiscordUser user, [RemainingText, Description("Warning explanation")] string reason)
     {
         //need to do manual check of the attribute in all GroupCommand overloads :(
-        if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
+        if (!await new RequiresBotModRoleAttribute().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
             return;
 
         if (await AddAsync(ctx, user.Id, user.Username.Sanitize(), ctx.Message.Author, reason).ConfigureAwait(false))
@@ -26,7 +26,7 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
     [GroupCommand]
     public async Task Warn(CommandContext ctx, [Description("ID of a user to warn")] ulong userId, [RemainingText, Description("Warning explanation")] string reason)
     {
-        if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
+        if (!await new RequiresBotModRoleAttribute().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
             return;
 
         if (await AddAsync(ctx, userId, $"<@{userId}>", ctx.Message.Author, reason).ConfigureAwait(false))

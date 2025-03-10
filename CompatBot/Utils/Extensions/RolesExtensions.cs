@@ -4,7 +4,7 @@ namespace CompatBot.Utils;
 
 internal static class RolesExtensions
 {
-    public static async Task<bool> IsModeratorAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async ValueTask<bool> IsModeratorAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;
@@ -16,7 +16,7 @@ internal static class RolesExtensions
         return member?.Roles.IsModerator() is true;
     }
 
-    public static async Task<bool> IsWhitelistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async ValueTask<bool> IsWhitelistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;
@@ -28,7 +28,7 @@ internal static class RolesExtensions
         return member?.Roles.IsWhitelisted() is true;
     }
 
-    public static async Task<bool> IsSmartlistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async ValueTask<bool> IsSmartlistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;
@@ -40,7 +40,7 @@ internal static class RolesExtensions
         return member?.Roles.IsSmartlisted() is true;
     }
 
-    public static async Task<bool> IsSupporterAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
+    public static async ValueTask<bool> IsSupporterAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
         if (user == null)
             return false;

@@ -5,6 +5,7 @@ using System.Net;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers.LogParsing;
@@ -60,8 +61,8 @@ public static class LogParsingHandler
                 || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
             return Task.CompletedTask;
 
-        var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
-        var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(args.Channel);
+        var isSpamChannel = LimitedToSpecificChannelsCheck.IsSpamChannel(args.Channel);
+        var isHelpChannel = LimitedToSpecificChannelsCheck.IsHelpChannel(args.Channel);
         var checkExternalLinks = isHelpChannel || isSpamChannel;
         OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
         return Task.CompletedTask;
@@ -95,9 +96,8 @@ public static class LogParsingHandler
                     s?.Dispose();
                 }
                     
-                var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
-                var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(channel);
-                    
+                var isSpamChannel = LimitedToSpecificChannelsCheck.IsSpamChannel(channel);
+                var isHelpChannel = LimitedToSpecificChannelsCheck.IsHelpChannel(channel);
                 if (source != null)
                 {
                     Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)…");
@@ -239,7 +239,7 @@ public static class LogParsingHandler
                                         else
                                         {
                                             Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
-                                            var helpChannel = await LimitedToHelpChannel.GetHelpChannelAsync(client, channel, message.Author).ConfigureAwait(false);
+                                            var helpChannel = await LimitedToSpecificChannelsCheck.GetHelpChannelAsync(client, channel, message.Author).ConfigureAwait(false);
                                             if (helpChannel is not null)
                                                 await botMsg.UpdateOrCreateMessageAsync(
                                                     channel,

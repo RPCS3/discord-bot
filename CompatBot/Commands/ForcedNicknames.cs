@@ -16,7 +16,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
         [Description("Nickname which should be displayed."), RemainingText] string expectedNickname)
     {
-        if (!await new RequiresBotModRole().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
+        if (!await new RequiresBotModRoleAttribute().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
             return;
             
         try

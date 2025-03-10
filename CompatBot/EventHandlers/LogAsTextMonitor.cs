@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 
 namespace CompatBot.EventHandlers;
 
@@ -13,7 +14,7 @@ internal static partial class LogAsTextMonitor
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
-        if (!LimitedToHelpChannel.IsHelpChannel(args.Channel))
+        if (!LimitedToSpecificChannelsCheck.IsHelpChannel(args.Channel))
             return;
 
         if ((args.Message.Author as DiscordMember)?.Roles.Any() ?? false)

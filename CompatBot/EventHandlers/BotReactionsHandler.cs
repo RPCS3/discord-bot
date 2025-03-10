@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using NReco.Text;
 #if DEBUG
@@ -156,8 +157,8 @@ namespace CompatBot.EventHandlers
                 lock (TheDoor)
                 {
                     emoji = ThankYouReactions[Rng.Next(ThankYouReactions.Length)];
-                    thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel)
-                                      || LimitedToOfftopicChannel.IsOfftopicChannel(args.Channel)
+                    thankYouMessage = LimitedToSpecificChannelsCheck.IsSpamChannel(args.Channel)
+                                      || LimitedToSpecificChannelsCheck.IsOfftopicChannel(args.Channel)
                         ? ThankYouMessages[Rng.Next(ThankYouMessages.Length)]
                         : null;
                 }
