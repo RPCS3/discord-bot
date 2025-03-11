@@ -1,13 +1,11 @@
-﻿using CompatBot.Commands.Attributes;
+﻿namespace CompatBot.Commands;
 
-namespace CompatBot.Commands;
-
-[Group("event"), Aliases("events", "e")]
+[Command("event"), TextAlias("events", "e")]
 [Description("Provides information about the various events in the game industry")]
 internal sealed class Events: EventsBaseCommand
 {
-    [GroupCommand]
-    public Task NearestGenericEvent(CommandContext ctx, [Description("Optional event name"), RemainingText] string? eventName = null)
+    [Command("show"), DefaultGroupCommand]
+    public Task Show(CommandContext ctx, [Description("Optional event name"), RemainingText] string? eventName = null)
         => NearestEvent(ctx, eventName);
 
     [Command("add"), RequiresBotModRole]
@@ -15,22 +13,22 @@ internal sealed class Events: EventsBaseCommand
     public Task AddGeneric(CommandContext ctx)
         => Add(ctx);
 
-    [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
+    [Command("remove"), TextAlias("delete", "del"), RequiresBotModRole]
     [Description("Removes schedule entries with the specified IDs")]
     public Task RemoveGeneric(CommandContext ctx, [Description("Event IDs to remove separated with space")] params int[] ids)
         => Remove(ctx, ids);
 
-    [Command("clean"), Aliases("cleanup", "Clear"), RequiresBotModRole]
+    [Command("clean"), TextAlias("cleanup", "Clear"), RequiresBotModRole]
     [Description("Removes past events")]
     public Task ClearGeneric(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
         => Clear(ctx, year);
 
-    [Command("edit"), Aliases("adjust", "change", "modify", "update"), RequiresBotModRole]
+    [Command("edit"), TextAlias("adjust", "change", "modify", "update"), RequiresBotModRole]
     [Description("Updates the event entry properties")]
     public Task AdjustGeneric(CommandContext ctx, [Description("Event ID")] int id)
         => Update(ctx, id);
 
-    [Command("schedule"), Aliases("show", "list")]
+    [Command("schedule"), TextAlias("show", "list")]
     [Description("Outputs current schedule")]
     public Task ListGeneric(CommandContext ctx)
         => List(ctx);

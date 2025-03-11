@@ -1,15 +1,14 @@
 ﻿using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("warn")]
+[Command("warn")]
 [Description("Command used to manage warnings")]
-internal sealed partial class Warnings: BaseCommandModuleCustom
+internal sealed partial class Warnings
 {
-    [GroupCommand] //attributes on overloads do not work, so no easy permission checks
+    [DefaultGroupCommand] //attributes on overloads do not work, so no easy permission checks
     [Description("Command used to issue a new warning")]
     public async Task Warn(CommandContext ctx, [Description("User to warn. Can also use @id")] DiscordUser user, [RemainingText, Description("Warning explanation")] string reason)
     {
@@ -23,7 +22,7 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
             await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't save the warning, please try again").ConfigureAwait(false);
     }
 
-    [GroupCommand]
+    [DefaultGroupCommand]
     public async Task Warn(CommandContext ctx, [Description("ID of a user to warn")] ulong userId, [RemainingText, Description("Warning explanation")] string reason)
     {
         if (!await new RequiresBotModRoleAttribute().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
@@ -75,7 +74,7 @@ internal sealed partial class Warnings: BaseCommandModuleCustom
         await ctx.Channel.SendMessageAsync($"Warning successfully edited!").ConfigureAwait(false);
     }
 
-    [Command("remove"), Aliases("delete", "del"), RequiresBotModRole]
+    [Command("remove"), TextAlias("delete", "del"), RequiresBotModRole]
     [Description("Removes specified warnings")]
     public async Task Remove(CommandContext ctx, [Description("Warning IDs to remove separated with space")] params int[] ids)
     {

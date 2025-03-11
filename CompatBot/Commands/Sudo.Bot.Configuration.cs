@@ -1,5 +1,4 @@
-﻿using CompatBot.Commands.Attributes;
-using CompatBot.Database;
+﻿using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,11 +8,11 @@ internal partial class Sudo
 {
     public sealed partial class Bot
     {
-        [Group("config"), RequiresBotSudoerRole]
+        [Command("config"), RequiresBotSudoerRole]
         [Description("Commands to set or clear bot configuration variables")]
-        public sealed class Configuration : BaseCommandModule
+        public sealed class Configuration
         {
-            [Command("list"), Aliases("show")]
+            [Command("list"), TextAlias("show")]
             [Description("Lists set variable names")]
             public async Task List(CommandContext ctx)
             {
@@ -56,7 +55,7 @@ internal partial class Sudo
                 await ctx.ReactWithAsync(Config.Reactions.Success, "Set variable successfully").ConfigureAwait(false);
             }
 
-            [Command("clear"), Aliases("unset", "remove", "reset")]
+            [Command("clear"), TextAlias("unset", "remove", "reset")]
             [Description("Removes configuration variable")]
             public async Task Clear(CommandContext ctx, string key)
             {

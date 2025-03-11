@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -8,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("invite"), Aliases("invites"), RequiresBotModRole]
+[Command("invite"), TextAlias("invites"), RequiresBotModRole]
 [Description("Used to manage Discord invites whitelist")]
-internal sealed class Invites: BaseCommandModuleCustom
+internal sealed class Invites
 {
-    [Command("list"), Aliases("show")]
+    [Command("list"), TextAlias("show")]
     [Description("Lists all filters")]
     public async Task List(CommandContext ctx)
     {
@@ -67,7 +66,7 @@ internal sealed class Invites: BaseCommandModuleCustom
         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("invites.txt", output)).ConfigureAwait(false);
     }
 
-    [Command("whitelist"), Aliases("add", "allow"), Priority(10)]
+    [Command("whitelist"), TextAlias("add", "allow")]
     [Description("Adds a new guild to the whitelist")]
     public async Task Add(CommandContext ctx, [Description("A Discord server IDs to whitelist")] params ulong[] guildIds)
     {
@@ -82,7 +81,7 @@ internal sealed class Invites: BaseCommandModuleCustom
             await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to add {errors} invite{StringUtils.GetSuffix(errors)} to the whitelist").ConfigureAwait(false);
     }
 
-    [Command("whitelist"), Priority(0)]
+    [Command("whitelist")]
     [Description("Adds a new guild to the whitelist")]
     public async Task Add(CommandContext ctx, [RemainingText, Description("An invite link or just an invite token")] string invite)
     {
@@ -129,7 +128,7 @@ internal sealed class Invites: BaseCommandModuleCustom
         await List(ctx).ConfigureAwait(false);
     }
 
-    [Command("rename"), Aliases("name")]
+    [Command("rename"), TextAlias("name")]
     [Description("Give a custom name for a Discord server")]
     public async Task Rename(CommandContext ctx, [Description("Filter ID to rename")] int id, [RemainingText, Description("Custom server name")] string name)
     {
@@ -153,7 +152,7 @@ internal sealed class Invites: BaseCommandModuleCustom
         await List(ctx).ConfigureAwait(false);
     }
 
-    [Command("remove"), Aliases("delete", "del")]
+    [Command("remove"), TextAlias("delete", "del")]
     [Description("Removes server from whitelist")]
     public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
     {

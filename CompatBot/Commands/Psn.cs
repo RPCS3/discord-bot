@@ -1,18 +1,17 @@
-﻿using CompatBot.Commands.Attributes;
-using CompatBot.Database;
+﻿using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
 using PsnClient;
 
 namespace CompatBot.Commands;
 
-[Group("psn")]
+[Command("psn")]
 [Description("Commands related to PSN metadata")]
-internal sealed partial class Psn: BaseCommandModuleCustom
+internal sealed partial class Psn
 {
     private static readonly Client Client = new();
 
-    [Command("rename"), Aliases("setname", "settitle"), RequiresBotModRole]
+    [Command("rename"), TextAlias("setname", "settitle"), RequiresBotModRole]
     [Description("Command to set or change game title for specific product code")]
     public async Task Rename(CommandContext ctx, [Description("Product code such as BLUS12345")] string productCode, [RemainingText, Description("New game title to save in the database")] string title)
     {

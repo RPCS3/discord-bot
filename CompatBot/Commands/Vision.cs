@@ -2,7 +2,6 @@
 using System.Net;
 using System.Net.Http;
 using ColorThiefDotNet;
-using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
@@ -22,8 +21,8 @@ using SystemFonts = SixLabors.Fonts.SystemFonts;
 
 namespace CompatBot.Commands;
 
-[Cooldown(1, 5, CooldownBucketType.Channel)]
-internal sealed class Vision: BaseCommandModuleCustom
+//[Cooldown(1, 5, CooldownBucketType.Channel)]
+internal sealed class Vision
 {
     static Vision()
     {

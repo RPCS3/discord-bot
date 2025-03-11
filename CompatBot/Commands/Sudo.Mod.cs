@@ -4,9 +4,9 @@ namespace CompatBot.Commands;
 
 internal partial class Sudo
 {
-    [Group("mod")]
+    [Command("mod")]
     [Description("Used to manage bot moderators")]
-    public sealed class Mod : BaseCommandModuleCustom
+    public sealed class Mod
     {
         [Command("add")]
         [Description("Adds a new moderator")]
@@ -25,7 +25,7 @@ internal partial class Sudo
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"{user.Mention} is already a moderator").ConfigureAwait(false);
         }
 
-        [Command("remove"), Aliases("delete", "del")]
+        [Command("remove"), TextAlias("delete", "del")]
         [Description("Removes a moderator")]
         public async Task Remove(CommandContext ctx, [Description("Discord user to remove from the bot mod list")] DiscordMember user)
         {
@@ -41,7 +41,7 @@ internal partial class Sudo
                 await ctx.ReactWithAsync(Config.Reactions.Failure, $"{user.Mention} is not a moderator").ConfigureAwait(false);
         }
 
-        [Command("list"), Aliases("show")]
+        [Command("list"), TextAlias("show")]
         [Description("Lists all moderators")]
         public async Task List(CommandContext ctx)
         {

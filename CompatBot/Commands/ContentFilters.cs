@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
@@ -14,9 +13,9 @@ using Exception = System.Exception;
 
 namespace CompatBot.Commands;
 
-[Group("filters"), Aliases("piracy", "filter"), RequiresBotSudoerRole, RequiresDm]
+[Command("filters"), TextAlias("piracy", "filter"), RequiresBotSudoerRole, RequiresDm]
 [Description("Used to manage content filters. **Works only in DM**")]
-internal sealed partial class ContentFilters: BaseCommandModuleCustom
+internal sealed partial class ContentFilters
 {
     private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
     private static readonly char[] Separators = [' ', ',', ';', '|'];
@@ -88,7 +87,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("filters.txt", output)).ConfigureAwait(false);
     }
 
-    [Command("add"), Aliases("create")]
+    [Command("add"), TextAlias("create")]
     [Description("Adds a new content filter")]
     public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string? trigger)
     {
@@ -222,7 +221,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         }
     }
         
-    [Command("edit"), Aliases("fix", "update", "change")]
+    [Command("edit"), TextAlias("fix", "update", "change")]
     [Description("Modifies the specified content filter")]
     public async Task Edit(CommandContext ctx, [Description("Filter ID")] int id)
     {
@@ -251,7 +250,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
     }
         
-    [Command("view"), Aliases("show")]
+    [Command("view"), TextAlias("show")]
     [Description("Shows the details of the specified content filter")]
     public async Task View(CommandContext ctx, [Description("Filter ID")] int id)
     {
@@ -281,7 +280,7 @@ internal sealed partial class ContentFilters: BaseCommandModuleCustom
         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
     }
 
-    [Command("remove"), Aliases("delete", "del")]
+    [Command("remove"), TextAlias("delete", "del")]
     [Description("Removes a content filter trigger")]
     public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
     {

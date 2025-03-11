@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using Microsoft.Extensions.Caching.Memory;
@@ -35,8 +34,7 @@ internal class BaseCommandModuleCustom : BaseCommandModule
                 await dm.SendMessageAsync($"Only `{Config.CommandPrefix}warn` and `{Config.CommandPrefix}report` are allowed in {ctx.Channel.Mention}").ConfigureAwait(false);
             }
             Config.TelemetryClient?.TrackRequest(ctx.Command.QualifiedName, executionStart, DateTimeOffset.UtcNow - executionStart, HttpStatusCode.Forbidden.ToString(), true);
-            throw new DSharpPlus.Commands.Exceptions.ChecksFailedException(ctx.Command, ctx, [new RequiresNotMediaAttribute()
-            ]);
+            throw new DSharpPlus.Commands.Exceptions.ChecksFailedException(ctx.Command, ctx, [new RequiresNotMediaAttribute()]);
         }
 
         var disabledCmds = DisabledCommandsProvider.Get();

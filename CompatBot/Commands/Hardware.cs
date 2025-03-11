@@ -3,12 +3,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("hardware"), Aliases("hw")]
+[Command("hardware"), TextAlias("hw")]
 [Description("Various hardware stats from uploaded log files")]
-[Cooldown(1, 5, CooldownBucketType.Guild)]
-internal sealed class Hardware: BaseCommandModuleCustom
+//[Cooldown(1, 5, CooldownBucketType.Guild)]
+internal sealed class Hardware
 {
-    [GroupCommand]
+    [Command("show"), DefaultGroupCommand]
     public Task Show(CommandContext ctx) => ShowStats(ctx);
 
     [Command("stats")]

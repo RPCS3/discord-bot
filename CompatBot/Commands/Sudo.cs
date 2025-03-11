@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Http;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
@@ -15,9 +14,9 @@ using SharpCompress.Writers.Zip;
 
 namespace CompatBot.Commands;
 
-[Group("sudo"), RequiresBotSudoerRole]
+[Command("sudo"), RequiresBotSudoerRole]
 [Description("Used to manage bot moderators and sudoers")]
-internal sealed partial class Sudo : BaseCommandModuleCustom
+internal sealed partial class Sudo
 {
     [Command("say")]
     [Description("Make bot say things. Specify #channel or put message link in the beginning to specify where to reply")]
@@ -161,7 +160,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         }
     }
 
-    [Command("dbbackup"), Aliases("dbb"), TriggersTyping]
+    [Command("dbbackup"), TextAlias("dbb"), TriggersTyping]
     [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
     public async Task DbBackup(CommandContext ctx, [Description("Name of the database")]string name = "")
     {

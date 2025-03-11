@@ -1,20 +1,19 @@
 ﻿using System.IO;
 using System.IO.Compression;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers;
 
 namespace CompatBot.Commands;
 
 internal sealed partial class Moderation
 {
-    [Group("audit"), RequiresBotModRole]
+    [Command("audit"), RequiresBotModRole]
     [Description("Commands to audit server things")]
-    public sealed class Audit: BaseCommandModuleCustom
+    public sealed class Audit
     {
         public static readonly SemaphoreSlim CheckLock = new(1, 1);
 
-        [Command("spoofing"), Aliases("impersonation"), RequireDirectMessage]
+        [Command("spoofing"), TextAlias("impersonation"), RequiresDm]
         [Description("Checks every user on the server for name spoofing")]
         public Task Spoofing(CommandContext ctx)
         {
@@ -22,7 +21,7 @@ internal sealed partial class Moderation
             return Task.CompletedTask;
         }
 
-        [Command("members"), Aliases("users"), RequireDirectMessage]
+        [Command("members"), TextAlias("users"), RequiresDm]
         [Description("Dumps server member information, including usernames, nicknames, and roles")]
         public async Task Members(CommandContext ctx)
         {
@@ -125,7 +124,7 @@ internal sealed partial class Moderation
         }
 
 
-        [Command("zalgo"), Aliases("diacritics")]
+        [Command("zalgo"), TextAlias("diacritics")]
         [Description("Checks every member's display name for discord and rule #7 requirements")]
         public async Task Zalgo(CommandContext ctx)
         {
@@ -182,7 +181,7 @@ internal sealed partial class Moderation
         }
 
 #if DEBUG
-        [Command("locales"), Aliases("locale", "languages", "language", "lang", "loc")]
+        [Command("locales"), TextAlias("locale", "languages", "language", "lang", "loc")]
         public async Task UserLocales(CommandContext ctx)
         {
 #pragma warning disable VSTHRD103

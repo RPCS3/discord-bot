@@ -2,19 +2,18 @@
 using System.IO;
 using System.Net.Http;
 using CompatApiClient.Compression;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("fortune"), Aliases("fortunes")]
+[Command("fortune"), TextAlias("fortunes")]
 [Description("Gives you a fortune once a day")]
-internal sealed class Fortune : BaseCommandModuleCustom
+internal sealed class Fortune
 {
     private static readonly SemaphoreSlim ImportCheck = new(1, 1);
 
-    [GroupCommand]
+    [Command("open"), TextAlias("show"), DefaultGroupCommand]
     public Task ShowFortune(CommandContext ctx)
         => ShowFortune(ctx.Message, ctx.User);
 
@@ -72,7 +71,7 @@ internal sealed class Fortune : BaseCommandModuleCustom
         await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
     }
 
-    [Command("remove"), Aliases("delete"), RequiresBotModRole]
+    [Command("remove"), TextAlias("delete"), RequiresBotModRole]
     [Description("Removes fortune with specified ID")]
     public async Task Remove(CommandContext ctx, int id)
     {
@@ -89,7 +88,7 @@ internal sealed class Fortune : BaseCommandModuleCustom
         await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
     }
 
-    [Command("import"), Aliases("append"), RequiresBotModRole, TriggersTyping]
+    [Command("import"), TextAlias("append"), RequiresBotModRole, TriggersTyping]
     [Description("Imports new fortunes from specified URL or attachment. Data should be formatted as standard UNIX fortune source file.")]
     public async Task Import(CommandContext ctx, string? url = null)
     {

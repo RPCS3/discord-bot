@@ -1,13 +1,12 @@
-﻿using CompatBot.Commands.Attributes;
-using CompatBot.Database.Providers;
+﻿using CompatBot.Database.Providers;
 
 namespace CompatBot.Commands;
 
-[Group("commands"), Aliases("command"), RequiresBotModRole]
+[Command("commands"), TextAlias("command"), RequiresBotModRole]
 [Description("Used to enable and disable bot commands at runtime")]
-public sealed class CommandsManagement : BaseCommandModule
+public sealed class CommandsManagement
 {
-    [Command("list"), Aliases("show")]
+    [Command("list"), TextAlias("show")]
     [Description("Lists the disabled commands")]
     public async Task List(CommandContext ctx)
     {
@@ -26,7 +25,7 @@ public sealed class CommandsManagement : BaseCommandModule
             await ctx.Channel.SendMessageAsync("All commands are enabled").ConfigureAwait(false);
     }
 
-    [Command("disable"), Aliases("add")]
+    [Command("disable"), TextAlias("add")]
     [Description("Disables the specified command")]
     public async Task Disable(CommandContext ctx, [RemainingText, Description("Fully qualified command to disable, e.g. `explain add` or `sudo mod *`")] string? command)
     {
@@ -89,7 +88,7 @@ public sealed class CommandsManagement : BaseCommandModule
         }
     }
 
-    [Command("enable"), Aliases("reenable", "remove", "delete", "del", "clear")]
+    [Command("enable"), TextAlias("reenable", "remove", "delete", "del", "clear")]
     [Description("Enables the specified command")]
     public async Task Enable(CommandContext ctx, [RemainingText, Description("Fully qualified command to enable, e.g. `explain add` or `sudo mod *`")] string? command)
     {

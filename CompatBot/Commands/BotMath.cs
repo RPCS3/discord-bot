@@ -1,32 +1,24 @@
 ﻿using System.Globalization;
-using CompatBot.Commands.Attributes;
 using org.mariuszgromada.math.mxparser;
+using License = org.mariuszgromada.math.mxparser.License;
 
 namespace CompatBot.Commands;
 
-[Group("math")]
+[Command("math")]
 [Description("Math, here you go Juhn. Use `math help` for syntax help")]
-internal sealed class BotMath : BaseCommandModuleCustom
+internal sealed class BotMath
 {
     static BotMath()
     {
         License.iConfirmNonCommercialUse("RPCS3");
     }
     
-    [GroupCommand, Priority(9)]
-    public async Task Expression(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
+    [Command("calculate"), TextAlias("calc"), DefaultGroupCommand]
+    public async ValueTask Calc(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
     {
         if (string.IsNullOrEmpty(expression))
         {
-            try
-            {
-                if (ctx.CommandsNext.FindCommand("math help", out _) is Command helpCmd)
-                {
-                    var helpCtx = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, helpCmd);
-                    await helpCmd.ExecuteAsync(helpCtx).ConfigureAwait(false);
-                }
-            }
-            catch { }
+            await Help(ctx).ConfigureAwait(false);
             return;
         }
 
@@ -61,7 +53,8 @@ internal sealed class BotMath : BaseCommandModuleCustom
         await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
     }
 
-    [Command("help"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
+    [Command("help"), LimitedToSpamChannel]
+    //[Cooldown(1, 5, CooldownBucketType.Channel)]
     [Description("General math expression help, or description of specific math word")]
     public Task Help(CommandContext ctx)
         => ctx.Channel.SendMessageAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)");

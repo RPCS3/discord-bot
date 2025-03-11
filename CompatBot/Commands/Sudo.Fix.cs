@@ -12,9 +12,10 @@ internal sealed partial class Sudo
     private static readonly Regex Timestamp = new(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
     private static readonly Regex Channel = new(@"(?<id><#\d+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
-    [Group("fix"), Hidden]
+    [Command("fix")]
+    //[Hidden]
     [Description("Commands to fix various stuff")]
-    public sealed class Fix: BaseCommandModuleCustom
+    public sealed class Fix
     {
         [Command("timestamps")]
         [Description("Fixes `timestamp` column in the `warning` table")]
@@ -99,7 +100,7 @@ internal sealed partial class Sudo
             }
         }
 
-        [Command("title_marks"), Aliases("trademarks", "tms")]
+        [Command("title_marks"), TextAlias("trademarks", "tms")]
         [Description("Strips trade marks and similar cruft from game titles in local database")]
         public async Task TitleMarks(CommandContext ctx)
         {
@@ -128,7 +129,7 @@ internal sealed partial class Sudo
             await ctx.Channel.SendMessageAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
-        [Command("metacritic_links"), Aliases("mcl")]
+        [Command("metacritic_links"), TextAlias("mcl")]
         [Description("Cleans up Metacritic links")]
         public async Task MetacriticLinks(CommandContext ctx, [Description("Remove links for trial and demo versions only")] bool demosOnly = true)
         {

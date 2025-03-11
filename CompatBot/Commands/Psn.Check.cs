@@ -1,6 +1,5 @@
 ﻿using CompatApiClient;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -12,13 +11,13 @@ namespace CompatBot.Commands;
 
 internal sealed partial class Psn
 {
-    [Group("check")]
+    [Command("check")]
     [Description("Commands to check for various stuff on PSN")]
-    public sealed class Check: BaseCommandModuleCustom
+    public sealed class Check
     {
         private static string? latestFwVersion;
 
-        [Command("updates"), Aliases("update"), LimitedToSpamChannel]
+        [Command("updates"), TextAlias("update"), LimitedToSpamChannel]
         [Description("Checks if specified product has any updates")]
         public async Task Updates(CommandContext ctx, [RemainingText, Description("Product code such as `BLUS12345`")] string productCode)
         {
@@ -136,7 +135,8 @@ internal sealed partial class Psn
             }
         }
 
-        [Command("content"), Hidden]
+        [Command("content")]
+        //[Hidden]
         [Description("Adds PSN content id to the scraping queue")]
         public async Task Content(CommandContext ctx, [RemainingText, Description("Content IDs to scrape, such as `UP0006-NPUB30592_00-MONOPOLYPSNNA000`")] string contentIds)
         {
@@ -160,8 +160,8 @@ internal sealed partial class Psn
             await ctx.ReactWithAsync(Config.Reactions.Success, $"Added {itemsToCheck.Count} ID{StringUtils.GetSuffix(itemsToCheck.Count)} to the scraping queue").ConfigureAwait(false);
         }
 
-        [Command("firmware"), Aliases("fw")]
-        [Cooldown(1, 10, CooldownBucketType.Channel)]
+        [Command("firmware"), TextAlias("fw")]
+        //[Cooldown(1, 10, CooldownBucketType.Channel)]
         [Description("Checks for latest PS3 firmware version")]
         public Task Firmware(CommandContext ctx) => GetFirmwareAsync(ctx);
 

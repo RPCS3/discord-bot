@@ -1,5 +1,4 @@
-﻿using CompatBot.Commands.Attributes;
-using DSharpPlus.Commands.ContextChecks;
+﻿using DSharpPlus.Commands.ContextChecks;
 
 namespace CompatBot.Commands.Checks;
 

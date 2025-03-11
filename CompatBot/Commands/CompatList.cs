@@ -8,7 +8,6 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -20,7 +19,7 @@ using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class CompatList : BaseCommandModuleCustom
+internal sealed partial class CompatList
 {
     private static readonly Client Client = new();
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
@@ -57,7 +56,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
         }
     }
 
-    [Command("compat"), Aliases("c", "compatibility")]
+    [Command("compatibility"), TextAlias("c", "compat")]
     [Description("Searches the compatibility database, USE: !compat search term")]
     public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string? title)
     {
@@ -102,7 +101,8 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
         }
     }
 
-    [Command("top"), LimitedToOfftopicChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
+    [Command("top"), LimitedToOfftopicChannel]
+    //[Cooldown(1, 5, CooldownBucketType.Channel)]
     [Description("Provides top game lists based on Metacritic and compatibility lists")]
     public async Task Top(CommandContext ctx,
         [Description("Number of entries in the list")] int number = 10,
@@ -155,12 +155,12 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
             await ctx.Channel.SendMessageAsync("Failed to generate list").ConfigureAwait(false);
     }
 
-    [Group("latest"), TriggersTyping]
+    [Command("latest"), TriggersTyping]
     [Description("Provides links to the latest RPCS3 build")]
-    [Cooldown(1, 30, CooldownBucketType.Channel)]
-    public sealed class UpdatesCheck: BaseCommandModuleCustom
+    //[Cooldown(1, 30, CooldownBucketType.Channel)]
+    public sealed class UpdatesCheck
     {
-        [GroupCommand]
+        [Command("build"), DefaultGroupCommand]
         public Task Latest(CommandContext ctx) => CheckForRpcs3Updates(ctx.Client, ctx.Channel);
 
         [Command("since")]

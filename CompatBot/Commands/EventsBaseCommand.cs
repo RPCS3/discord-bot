@@ -1,6 +1,5 @@
 ﻿using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
@@ -9,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal partial class EventsBaseCommand: BaseCommandModuleCustom
+internal partial class EventsBaseCommand
 {
     private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
 

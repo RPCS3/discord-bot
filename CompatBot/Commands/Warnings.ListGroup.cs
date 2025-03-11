@@ -1,5 +1,4 @@
 ﻿using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using DSharpPlus.Commands.Converters;
@@ -8,11 +7,16 @@ namespace CompatBot.Commands;
 
 internal sealed partial class Warnings
 {
-    [Group("list"), Aliases("show")]
+    [Command("list"), TextAlias("show")]
     [Description("Allows to list warnings in various ways. Users can only see their own warnings.")]
-    public class ListGroup : BaseCommandModuleCustom
+    public class ListGroup
     {
-        [GroupCommand, Priority(10)]
+        [Command("me"), DefaultGroupCommand]
+        [Description("List your own warning list")]
+        public async Task List(CommandContext ctx)
+            => await List(ctx, ctx.Message.Author).ConfigureAwait(false);
+
+        [Command("user")]
         [Description("Show warning list for a user. Default is to show warning list for yourself")]
         public async Task List(CommandContext ctx, [Description("Discord user to list warnings for")] DiscordUser user)
         {
@@ -20,19 +24,14 @@ internal sealed partial class Warnings
                 await ListUserWarningsAsync(ctx.Client, ctx.Message, user.Id, user.Username.Sanitize(), false);
         }
 
-        [GroupCommand]
+        [Command("user")]
         public async Task List(CommandContext ctx, [Description("Id of the user to list warnings for")] ulong userId)
         {
             if (await CheckListPermissionAsync(ctx, userId).ConfigureAwait(false))
                 await ListUserWarningsAsync(ctx.Client, ctx.Message, userId, $"<@{userId}>", false);
         }
 
-        [GroupCommand]
-        [Description("List your own warning list")]
-        public async Task List(CommandContext ctx)
-            => await List(ctx, ctx.Message.Author).ConfigureAwait(false);
-
-        [Command("users"), Aliases("top"), RequiresBotModRole, TriggersTyping]
+        [Command("users"), TextAlias("top"), RequiresBotModRole, TriggersTyping]
         [Description("List users with warnings, sorted from most warned to least")]
         public async Task Users(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
         {
@@ -67,7 +66,7 @@ internal sealed partial class Warnings
             }
         }
 
-        [Command("mods"), Aliases("mtop"), RequiresBotModRole, TriggersTyping]
+        [Command("mods"), TextAlias("mtop"), RequiresBotModRole, TriggersTyping]
         [Description("List bot mods, sorted by the number of warnings issued")]
         public async Task Mods(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
         {
@@ -134,7 +133,7 @@ internal sealed partial class Warnings
 
         }
 
-        [Command("by"), Priority(1), RequiresBotModRole]
+        [Command("by"), RequiresBotModRole]
         public async Task By(CommandContext ctx, string me, [Description("Optional number of items to show. Default is 10")] int number = 10)
         {
             if (me.ToLowerInvariant() == "me")
@@ -148,11 +147,11 @@ internal sealed partial class Warnings
                 await By(ctx, user.Value, number).ConfigureAwait(false);
         }
 
-        [Command("by"), Priority(10), RequiresBotModRole]
+        [Command("by"), RequiresBotModRole]
         public Task By(CommandContext ctx, DiscordUser moderator, [Description("Optional number of items to show. Default is 10")] int number = 10)
             => By(ctx, moderator.Id, number);
 
-        [Command("recent"), Aliases("last", "all"), RequiresBotModRole]
+        [Command("recent"), TextAlias("last", "all"), RequiresBotModRole]
         [Description("Shows last issued warnings in chronological order")]
         public async Task Last(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
         {

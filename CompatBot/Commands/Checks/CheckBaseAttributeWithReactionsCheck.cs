@@ -1,5 +1,4 @@
-﻿using CompatBot.Commands.Attributes;
-using CompatBot.Database.Providers;
+﻿using CompatBot.Database.Providers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.TextCommands;
 

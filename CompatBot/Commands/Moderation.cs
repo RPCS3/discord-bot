@@ -1,9 +1,8 @@
-﻿using CompatBot.Commands.Attributes;
-using CompatBot.EventHandlers;
+﻿using CompatBot.EventHandlers;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class Moderation: BaseCommandModuleCustom
+internal sealed partial class Moderation
 {
     [Command("report"), RequiresWhitelistedRole]
     [Description("Adds specified message to the moderation queue")]
@@ -41,7 +40,7 @@ internal sealed partial class Moderation: BaseCommandModuleCustom
         }
     }
 
-    [Command("analyze"), Aliases("reanalyze", "parse", "a")]
+    [Command("analyze"), TextAlias("reanalyze", "parse", "a")]
     [Description("Make bot to look at the attached log again")]
     public async Task Reanalyze(CommandContext ctx, [Description("Message ID from the same channel")]ulong messageId)
     {
@@ -96,7 +95,7 @@ internal sealed partial class Moderation: BaseCommandModuleCustom
         }
     }
 
-    [Command("badupdate"), Aliases("bad", "recall"), RequiresBotModRole]
+    [Command("badupdate"), TextAlias("bad", "recall"), RequiresBotModRole]
     [Description("Toggles new update announcement as being bad")]
     public async Task BadUpdate(CommandContext ctx, [Description("Link to the update announcement")] string updateMessageLink)
     {

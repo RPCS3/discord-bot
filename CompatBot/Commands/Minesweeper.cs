@@ -1,11 +1,6 @@
-﻿using CompatBot.Commands.Attributes;
+﻿namespace CompatBot.Commands;
 
-namespace CompatBot.Commands;
-
-[Group("minesweeper"), Aliases("msgen")]
-[LimitedToOfftopicChannel, Cooldown(1, 30, CooldownBucketType.Channel)]
-[Description("Generates a minesweeper field with specified parameters")]
-internal sealed class Minesweeper : BaseCommandModuleCustom
+internal sealed class Minesweeper
 {
 	//private static readonly string[] Numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
 	private static readonly string[] Numbers = ["０", "１", "２", "３", "４", "５", "６", "７", "８", "９"];
@@ -34,7 +29,10 @@ internal sealed class Minesweeper : BaseCommandModuleCustom
 		Mine = 255,
 	}
 
-	[GroupCommand]
+	[Command("minesweeper"), TextAlias("msgen")]
+	[LimitedToOfftopicChannel]
+	//[Cooldown(1, 30, CooldownBucketType.Channel)]
+	[Description("Generates a minesweeper field with specified parameters")]
 	public async Task Generate(CommandContext ctx,
 		[Description("Width of the field")] int width = 14,
 		[Description("Height of the field")] int height = 14,

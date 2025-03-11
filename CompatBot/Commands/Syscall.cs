@@ -1,17 +1,16 @@
 ﻿using System.IO;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("syscall"), Aliases("syscalls", "cell", "sce", "scecall", "scecalls"), LimitedToSpamChannel]
+[Command("syscall"), TextAlias("syscalls", "cell", "sce", "scecall", "scecalls"), LimitedToSpamChannel]
 [Description("Provides information about syscalls used by games")]
-internal sealed class Syscall: BaseCommandModuleCustom
+internal sealed class Syscall
 {
-    [GroupCommand]
+    [Command("search"), DefaultGroupCommand]
     public async Task Search(CommandContext ctx, [RemainingText, Description("Product ID, module, or function name. **Case sensitive**")] string search)
     {
         if (string.IsNullOrEmpty(search))

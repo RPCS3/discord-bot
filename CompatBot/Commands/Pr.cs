@@ -1,5 +1,4 @@
 ﻿using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -7,17 +6,17 @@ using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands;
 
-[Group("pr"), TriggersTyping]
+[Command("pr"), TriggersTyping]
 [Description("Commands to list opened pull requests information")]
-internal sealed class Pr: BaseCommandModuleCustom
+internal sealed class Pr
 {
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
     private static readonly CompatApiClient.Client CompatApiClient = new();
 
-    [GroupCommand]
+    [Command("search"), DefaultGroupCommand]
     public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
 
-    [GroupCommand]
+    [Command("search"), DefaultGroupCommand]
     public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string? searchStr = null)
     {
         var openPrList = await GithubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
@@ -81,7 +80,7 @@ internal sealed class Pr: BaseCommandModuleCustom
         await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
     }
 
-    [Command("link"), Aliases("old")]
+    [Command("link"), TextAlias("old")]
     [Description("Links to the official binary builds produced after specified PR was merged")]
     public Task Link(CommandContext ctx, [Description("PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr, true);
     

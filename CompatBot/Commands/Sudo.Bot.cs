@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +12,9 @@ internal partial class Sudo
     private static readonly SemaphoreSlim ImportLockObj = new(1, 1);
     private static readonly ProcessStartInfo RestartInfo = new("dotnet", $"run -c Release");
 
-    [Group("bot"), Aliases("kot")]
+    [Command("bot"), TextAlias("kot")]
     [Description("Commands to manage the bot instance")]
-    public sealed partial class Bot: BaseCommandModuleCustom
+    public sealed partial class Bot
     {
         [Command("version")]
         [Description("Returns currently checked out bot commit")]
@@ -38,11 +37,11 @@ internal partial class Sudo
                 await ctx.Channel.SendMessageAsync("```" + stdout + "```").ConfigureAwait(false);
         }
 
-        [Command("update"), Aliases("upgrade", "pull", "pet")]
+        [Command("update"), TextAlias("upgrade", "pull", "pet")]
         [Description("Updates the bot, and then restarts it")]
         public Task Update(CommandContext ctx) => UpdateCheckAsync(ctx.Channel, Config.Cts.Token);
 
-        [Command("restart"), Aliases("reboot")]
+        [Command("restart"), TextAlias("reboot")]
         [Description("Restarts the bot")]
         public async Task Restart(CommandContext ctx)
         {
@@ -69,7 +68,7 @@ internal partial class Sudo
                 await ctx.Channel.SendMessageAsync("Update is in progress").ConfigureAwait(false);
         }
 
-        [Command("stop"), Aliases("exit", "shutdown", "terminate")]
+        [Command("stop"), TextAlias("exit", "shutdown", "terminate")]
         [Description("Stops the bot. Useful if you can't find where you left one running")]
         public async Task Stop(CommandContext ctx)
         {
@@ -118,7 +117,7 @@ internal partial class Sudo
             }
         }
 
-        [Command("import_metacritic"), Aliases("importmc", "imc"), TriggersTyping]
+        [Command("import_metacritic"), TextAlias("importmc", "imc"), TriggersTyping]
         [Description("Imports Metacritic database dump and links it to existing items")]
         public async Task ImportMc(CommandContext ctx)
         {

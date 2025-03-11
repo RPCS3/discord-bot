@@ -145,33 +145,11 @@ internal static class Program
                     });
                     textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();
                     extension.AddProcessor(textCommandProcessor);
-#if DEBUG
-                    extension.AddCommands<DevOnly>();
-#endif
-                    extension.AddCommands<Misc>();
-                    extension.AddCommands<SlashMisc>();
-                    extension.AddCommands<CompatList>();
-                    extension.AddCommands<Sudo>();
-                    extension.AddCommands<CommandsManagement>();
-                    extension.AddCommands<ContentFilters>();
-                    extension.AddCommands<Warnings>();
-                    extension.AddCommands<Explain>();
-                    extension.AddCommands<Psn>();
-                    extension.AddCommands<Invites>();
-                    extension.AddCommands<Moderation>();
-                    extension.AddCommands<Ird>();
-                    extension.AddCommands<BotMath>();
-                    extension.AddCommands<Pr>();
-                    extension.AddCommands<Events>();
-                    extension.AddCommands<E3>();
-                    extension.AddCommands<BotStats>();
-                    extension.AddCommands<Hardware>();
-                    extension.AddCommands<Syscall>();
-                    extension.AddCommands<ForcedNicknames>();
-                    extension.AddCommands<Minesweeper>();
-                    extension.AddCommands<Fortune>();
+                    extension.AddCommands(Assembly.GetAssembly(typeof(CompatList))!);
+                    /*
                     if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                         extension.AddCommands<Vision>();
+                    */
 
                     //extension.CommandErrored += UnknownCommandHandler.OnError;
                 }, new()

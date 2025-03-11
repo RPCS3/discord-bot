@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class Misc: BaseCommandModuleCustom
+internal sealed partial class Misc
 {
     private static readonly Random rng = new();
 
@@ -123,6 +123,32 @@ internal sealed partial class Misc: BaseCommandModuleCustom
     [GeneratedRegex(@"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?")]
     private static partial Regex DiceNotationPattern();
 
+    [Command("about"), Description("Bot information")]
+    public async Task About(CommandContext ctx)
+    {
+        var hcorion = ctx.Client.GetEmoji(":hcorion:", DiscordEmoji.FromUnicode("🍁"));
+        var clienthax = ctx.Client.GetEmoji(":gooseknife:", DiscordEmoji.FromUnicode("🐱"));
+        var embed = new DiscordEmbedBuilder
+        {
+            Title = "RPCS3 Compatibility Bot",
+            Url = "https://github.com/RPCS3/discord-bot",
+            Color = DiscordColor.Purple,
+        }.AddField("Made by", $"""
+                               💮 13xforever
+                               🇭🇷 Roberto Anić Banić aka nicba1010
+                               {clienthax} clienthax
+                               """
+        ).AddField("People who ~~broke~~ helped test the bot", $"""
+                                                                🐱 Juhn
+                                                                {hcorion} hcorion
+                                                                🙃 TGE
+                                                                🍒 Maru
+                                                                ♋ Tourghool
+                                                                """
+        ).WithFooter($"Running {Config.GitRevision}");
+        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AddEmbed(embed.Build()).AsEphemeral());
+    }
+    
     [Command("roll")]
     [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
     public Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)
@@ -205,7 +231,8 @@ internal sealed partial class Misc: BaseCommandModuleCustom
             await message.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(result).WithReply(message.Id)).ConfigureAwait(false);
     }
 
-    [Command("random"), Aliases("rng"), Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
+    [Command("random"), TextAlias("rng")]
+    //[Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
     [Description("Provides random stuff")]
     public async Task RandomShit(CommandContext ctx, string stuff)
     {
@@ -243,7 +270,8 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         }
     }
 
-    [Command("8ball"), Cooldown(20, 60, CooldownBucketType.Channel)]
+    [Command("8ball")]
+    //[Cooldown(20, 60, CooldownBucketType.Channel)]
     [Description("Provides a ~~random~~ objectively best answer to your question")]
     public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
     {
@@ -261,7 +289,8 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         }
     }
 
-    [Command("when"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
+    [Command("when")]
+    //[Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
     [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
     public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string something = "")
     {
@@ -282,11 +311,12 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
     }
 
-    [Group("how"), Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
+    [Command("how")]
+    //[Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
     [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
-    public class How: BaseCommandModuleCustom
+    public class How
     {
-        [Command("much"), Aliases("many")]
+        [Command("much"), TextAlias("many")]
         [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
         public async Task Much(CommandContext ctx, [RemainingText, Description("much or many ")] string ofWhat = "")
         {
@@ -300,7 +330,8 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         }
     }
 
-    [Command("rate"), Cooldown(20, 60, CooldownBucketType.Channel)]
+    [Command("rate")]
+    //[Cooldown(20, 60, CooldownBucketType.Channel)]
     [Description("Gives a ~~random~~ expert judgment on the matter at hand")]
     public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever = "")
     {
@@ -478,7 +509,8 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         }
     }
 
-    [Command("meme"), Aliases("memes"), Cooldown(1, 30, CooldownBucketType.Channel), Hidden]
+    [Command("meme"), TextAlias("memes")]
+    //[Cooldown(1, 30, CooldownBucketType.Channel), Hidden]
     [Description("No, memes are not implemented yet")]
     public async Task Memes(CommandContext ctx, [RemainingText] string? _ = null)
     {
@@ -490,11 +522,13 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         await ch.SendMessageAsync(msgBuilder).ConfigureAwait(false);
     }
 
-    [Command("firmware"), Aliases("fw"), Cooldown(1, 10, CooldownBucketType.Channel)]
+    [Command("firmware"), TextAlias("fw")]
+    //[Cooldown(1, 10, CooldownBucketType.Channel)]
     [Description("Checks for latest PS3 firmware version")]
     public Task Firmware(CommandContext ctx) => Psn.Check.GetFirmwareAsync(ctx);
 
-    [Command("compare"), Hidden]
+    [Command("compare")]
+    //[Hidden]
     [Description("Calculates the similarity metric of two phrases from 0 (completely different) to 1 (identical)")]
     public Task Compare(CommandContext ctx, string strA, string strB)
     {
@@ -502,7 +536,7 @@ internal sealed partial class Misc: BaseCommandModuleCustom
         return ctx.Channel.SendMessageAsync($"Similarity score is {result:0.######}");
     }
 
-    [Command("productcode"), Aliases("pci", "decode")]
+    [Command("productcode"), TextAlias("pci", "decode")]
     [Description("Describe Playstation product code")]
     public async Task ProductCode(CommandContext ctx, [RemainingText, Description("Product code such as BLUS12345 or SCES")] string productCode)
     {

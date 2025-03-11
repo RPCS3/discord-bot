@@ -9,19 +9,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("stats"), Aliases("status")]
-internal sealed class BotStats: BaseCommandModuleCustom
+[Command("stats"), TextAlias("status")]
+internal sealed class BotStats
 {
-    [GroupCommand]
+    [Command("show"), DefaultGroupCommand]
     [Description("Use to look at various runtime stats")]
     public async Task Show(CommandContext ctx)
     {
+        var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
         var embed = new DiscordEmbedBuilder
             {
                 Color = DiscordColor.Purple,
             }
             .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
-            .AddField("Discord Latency", $"{ctx.Client.Ping} ms", true);
+            .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true);
         if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
             embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
         var osInfo = RuntimeInformation.OSDescription;
@@ -68,9 +69,9 @@ internal sealed class BotStats: BaseCommandModuleCustom
         await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
 
-    [Command("hw"), Aliases("hardware")]
+    [Command("hw"), TextAlias("hardware")]
     [Description("Various hardware stats from uploaded log files")]
-    [Cooldown(1, 5, CooldownBucketType.Guild)]
+    //[Cooldown(1, 5, CooldownBucketType.Guild)]
     public Task Hardware(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30) => Commands.Hardware.ShowStats(ctx, period);
     
     private static string GetConfiguredApiStats()

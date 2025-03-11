@@ -6,14 +6,14 @@ namespace CompatBot.Commands;
 
 internal partial class Sudo
 {
-    [Group("dotnet")]
+    [Command("dotnet")]
     [Description("Commands to manage dotnet")]
-    public sealed partial class Dotnet : BaseCommandModuleCustom
+    public sealed partial class Dotnet
     {
         [GeneratedRegex(@"\.NET( Core)? (?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(-.+)?", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
         private static partial Regex DotnetVersionPattern();
 
-        [Command("update"), Aliases("upgrade")]
+        [Command("update"), TextAlias("upgrade")]
         [Description("Updates dotnet, and then restarts the bot")]
         public async Task Update(CommandContext ctx, [Description("Dotnet SDK version (e.g. `5.1`)")] string version = "")
         {

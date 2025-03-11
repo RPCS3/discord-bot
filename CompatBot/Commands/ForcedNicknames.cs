@@ -1,16 +1,15 @@
-﻿using CompatBot.Commands.Attributes;
-using CompatBot.Database;
+﻿using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("rename")]
+[Command("rename")]
 [Description("Manage users who has forced nickname.")]
-internal sealed class ForcedNicknames : BaseCommandModuleCustom
+internal sealed class ForcedNicknames
 {
-    [GroupCommand]
+    [Command("user"), DefaultGroupCommand]
     [Description("Enforces specific nickname for particular user.")]
     public async Task Rename(CommandContext ctx,
         [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
@@ -110,7 +109,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         }
     }
 
-    [Command("clear"), Aliases("remove"), RequiresBotModRole]
+    [Command("clear"), TextAlias("remove"), RequiresBotModRole]
     [Description("Removes nickname restriction from particular user.")]
     public async Task Remove(CommandContext ctx, [Description("Discord user to remove from forced nickname list.")] DiscordUser discordUser)
     {
@@ -145,7 +144,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         }
     }
 
-    [Command("cleanup"), Aliases("clean", "fix"), RequiresBotModRole]
+    [Command("cleanup"), TextAlias("clean", "fix"), RequiresBotModRole]
     [Description("Removes zalgo from specified user nickname")]
     public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordUser discordUser)
     {
@@ -192,7 +191,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
     }
 
-    [Command("generate"), Aliases("gen", "suggest")]
+    [Command("generate"), TextAlias("gen", "suggest")]
     [Description("Generates random name for specified user")]
     public async Task Generate(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
     {
@@ -200,7 +199,7 @@ internal sealed class ForcedNicknames : BaseCommandModuleCustom
         await ctx.Channel.SendMessageAsync(newName).ConfigureAwait(false);
     }
 
-    [Command("autorename"), Aliases("auto"), RequiresBotModRole]
+    [Command("autorename"), TextAlias("auto"), RequiresBotModRole]
     [Description("Sets automatically generated nickname without enforcing it")]
     public async Task Autorename(CommandContext ctx, [Description("Discord user to rename")] DiscordUser discordUser)
     {

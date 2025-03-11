@@ -1,10 +1,9 @@
-﻿using CompatBot.Commands.Attributes;
-using CompatBot.Utils.ResultFormatters;
+﻿using CompatBot.Utils.ResultFormatters;
 using IrdLibraryClient;
 
 namespace CompatBot.Commands;
 
-internal sealed class Ird: BaseCommandModuleCustom
+internal sealed class Ird
 {
     private static readonly IrdClient Client = new();
 

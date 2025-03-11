@@ -5,6 +5,7 @@ using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using PsnClient.POCOs;
 using PsnClient.Utils;
+using Container = PsnClient.POCOs.Container;
 
 namespace CompatBot.ThumbScrapper;
 
