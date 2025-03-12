@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
+/*
 internal partial class EventsBaseCommand
 {
     private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
@@ -610,3 +611,4 @@ internal partial class EventsBaseCommand
         return result;
     }
 }
+*/

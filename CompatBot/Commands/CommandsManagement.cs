@@ -25,6 +25,7 @@ public sealed class CommandsManagement
             await ctx.Channel.SendMessageAsync("All commands are enabled").ConfigureAwait(false);
     }
 
+    /*
     [Command("disable"), TextAlias("add")]
     [Description("Disables the specified command")]
     public async Task Disable(CommandContext ctx, [RemainingText, Description("Fully qualified command to disable, e.g. `explain add` or `sudo mod *`")] string? command)
@@ -187,4 +188,5 @@ public sealed class CommandsManagement
             foreach (var subCmd in group.Children)
                 EnableSubcommands(ctx, subCmd);
     }
+*/
 }

@@ -6,6 +6,7 @@ using NLog;
 
 namespace CompatBot.Commands;
 
+
 internal partial class Sudo
 {
     private static readonly SemaphoreSlim LockObj = new(1, 1);
@@ -90,7 +91,7 @@ internal partial class Sudo
                 await using var db = new BotDb();
                 var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
                 var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
-                if (Enum.TryParse(activity, true, out ActivityType activityType)
+                if (Enum.TryParse(activity, true, out DiscordActivityType activityType)
                     && !string.IsNullOrEmpty(message))
                 {
                     if (status == null)
@@ -101,7 +102,7 @@ internal partial class Sudo
                         await db.BotState.AddAsync(new() {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
                     else
                         txt.Value = message;
-                    await ctx.Client.UpdateStatusAsync(new(message, activityType), UserStatus.Online).ConfigureAwait(false);
+                    await ctx.Client.UpdateStatusAsync(new(message, activityType), DiscordUserStatus.Online).ConfigureAwait(false);
                 }
                 else
                 {

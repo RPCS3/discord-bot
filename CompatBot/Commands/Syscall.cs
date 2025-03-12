@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
+/*
 [Command("syscall"), TextAlias("syscalls", "cell", "sce", "scecall", "scecalls"), LimitedToSpamChannel]
 [Description("Provides information about syscalls used by games")]
 internal sealed class Syscall
@@ -166,3 +167,4 @@ internal sealed class Syscall
             await ctx.Channel.SendMessageAsync($"No information available for `{title}`").ConfigureAwait(false);
     }
 }
+*/

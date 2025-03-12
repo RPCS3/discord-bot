@@ -3,6 +3,7 @@ using IrdLibraryClient;
 
 namespace CompatBot.Commands;
 
+/*
 internal sealed class Ird
 {
     private static readonly IrdClient Client = new();
@@ -22,3 +23,4 @@ internal sealed class Ird
         await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
 }
+*/

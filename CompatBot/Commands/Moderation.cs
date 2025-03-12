@@ -4,6 +4,7 @@ namespace CompatBot.Commands;
 
 internal sealed partial class Moderation
 {
+    /*
     [Command("report"), RequiresWhitelistedRole]
     [Description("Adds specified message to the moderation queue")]
     public async Task Report(CommandContext ctx, [Description("Message ID from current channel to report")] ulong messageId, [RemainingText, Description("Optional report comment")] string? comment = null)
@@ -76,7 +77,6 @@ internal sealed partial class Moderation
         }
     }
         
-        
     [Command("analyze")]
     public async Task Reanalyze(CommandContext ctx)
     {
@@ -110,6 +110,7 @@ internal sealed partial class Moderation
         await ToggleBadUpdateAnnouncementAsync(msg).ConfigureAwait(false);
         await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
     }
+    */
 
     public static async Task ToggleBadUpdateAnnouncementAsync(DiscordMessage? message)
     {
@@ -149,6 +150,7 @@ internal sealed partial class Moderation
         await message.UpdateOrCreateMessageAsync(message.Channel, embed: result).ConfigureAwait(false);
     }
 
+    /*
     private static async Task ReportMessage(CommandContext ctx, string? comment, DiscordMessage msg)
     {
         if (msg.Reactions.Any(r => r.IsMe && r.Emoji == Config.Reactions.Moderated))
@@ -162,4 +164,5 @@ internal sealed partial class Moderation
         await msg.ReactWithAsync(Config.Reactions.Moderated).ConfigureAwait(false);
         await ctx.ReactWithAsync(Config.Reactions.Success, "Message reported").ConfigureAwait(false);
     }
+    */
 }

@@ -7,12 +7,13 @@ namespace CompatBot.Commands;
 
 internal sealed partial class Moderation
 {
-    [Command("audit"), RequiresBotModRole]
+//    [Command("audit"), RequiresBotModRole]
     [Description("Commands to audit server things")]
     public sealed class Audit
     {
         public static readonly SemaphoreSlim CheckLock = new(1, 1);
 
+        /*
         [Command("spoofing"), TextAlias("impersonation"), RequiresDm]
         [Description("Checks every user on the server for name spoofing")]
         public Task Spoofing(CommandContext ctx)
@@ -20,7 +21,9 @@ internal sealed partial class Moderation
             SpoofingCheck(ctx);
             return Task.CompletedTask;
         }
+        */
 
+        /*
         [Command("members"), TextAlias("users"), RequiresDm]
         [Description("Dumps server member information, including usernames, nicknames, and roles")]
         public async Task Members(CommandContext ctx)
@@ -179,7 +182,9 @@ internal sealed partial class Moderation
                 await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
             }
         }
+        */
 
+/*
 #if DEBUG
         [Command("locales"), TextAlias("locale", "languages", "language", "lang", "loc")]
         public async Task UserLocales(CommandContext ctx)
@@ -227,7 +232,9 @@ internal sealed partial class Moderation
             }
         }
 #endif
+*/
 
+        /*
         private static List<DiscordMember> GetMembers(DiscordClient client)
         {
             //owner -> white name
@@ -309,5 +316,6 @@ internal sealed partial class Moderation
                 await ctx.RemoveReactionAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
             }
         }
+        */
     }
 }

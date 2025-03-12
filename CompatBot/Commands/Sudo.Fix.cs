@@ -5,6 +5,7 @@ using CompatBot.Database.Providers;
 
 namespace CompatBot.Commands;
 
+/*
 internal sealed partial class Sudo
 {
     // '2018-06-09 08:20:44.968000 - '
@@ -168,3 +169,4 @@ internal sealed partial class Sudo
         }
     }
 }
+*/

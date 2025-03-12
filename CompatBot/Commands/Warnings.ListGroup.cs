@@ -5,6 +5,7 @@ using DSharpPlus.Commands.Converters;
 
 namespace CompatBot.Commands;
 
+/*
 internal sealed partial class Warnings
 {
     [Command("list"), TextAlias("show")]
@@ -208,3 +209,4 @@ internal sealed partial class Warnings
         }
     }
 }
+*/

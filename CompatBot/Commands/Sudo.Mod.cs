@@ -2,6 +2,7 @@
 
 namespace CompatBot.Commands;
 
+/*
 internal partial class Sudo
 {
     [Command("mod")]
@@ -91,3 +92,4 @@ internal partial class Sudo
         }
     }
 }
+*/

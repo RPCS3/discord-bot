@@ -196,7 +196,6 @@ internal static class Starbucks
         catch { }
     }
 
-
     private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
     {
         var bot = await client.GetMemberAsync(channel.Guild, client.CurrentUser).ConfigureAwait(false);

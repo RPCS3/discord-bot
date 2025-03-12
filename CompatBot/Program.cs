@@ -8,6 +8,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using Microsoft.EntityFrameworkCore;
@@ -143,9 +144,16 @@ internal static class Program
                             Config.AutoRemoveCommandPrefix
                         ).ResolvePrefixAsync,
                     });
+                    var appCommandProcessor = new SlashCommandProcessor(new()
+                    {
+                        //NamingPolicy = new CamelCaseNamingPolicy(),
+                        RegisterCommands = true,
+                    });
                     textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();
                     extension.AddProcessor(textCommandProcessor);
-                    extension.AddCommands(Assembly.GetAssembly(typeof(CompatList))!);
+                    extension.AddProcessor(appCommandProcessor);
+                    extension.AddCommands(Assembly.GetExecutingAssembly());
+                    extension.AddParameterChecks(Assembly.GetExecutingAssembly());
                     /*
                     if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                         extension.AddCommands<Vision>();
@@ -154,7 +162,7 @@ internal static class Program
                     //extension.CommandErrored += UnknownCommandHandler.OnError;
                 }, new()
                 {
-                    RegisterDefaultCommandProcessors = true,
+                    RegisterDefaultCommandProcessors = false,
                     //UseDefaultCommandErrorHandler = false,
 #if DEBUG
                     DebugGuildId = Config.BotGuildId,

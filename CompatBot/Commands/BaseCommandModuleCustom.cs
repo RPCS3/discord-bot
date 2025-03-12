@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Commands;
 
+/*
 internal class BaseCommandModuleCustom : BaseCommandModule
 {
     private DateTimeOffset executionStart;
@@ -68,3 +69,4 @@ internal class BaseCommandModuleCustom : BaseCommandModule
     private static bool TriggersTyping(CommandContext ctx)
         => ctx.Command?.CustomAttributes.OfType<TriggersTyping>().FirstOrDefault() is TriggersTyping a && a.ExecuteCheck(ctx);
 }
+*/

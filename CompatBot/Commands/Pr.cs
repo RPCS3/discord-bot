@@ -6,13 +6,14 @@ using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands;
 
-[Command("pr"), TriggersTyping]
+//[Command("pr"), TriggersTyping]
 [Description("Commands to list opened pull requests information")]
 internal sealed class Pr
 {
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
     private static readonly CompatApiClient.Client CompatApiClient = new();
 
+    /*
     [Command("search"), DefaultGroupCommand]
     public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
 
@@ -101,6 +102,7 @@ internal sealed class Pr
         ).ConfigureAwait(false);
     }
 #endif
+*/
         
     public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr, bool linkOld = false)
     {

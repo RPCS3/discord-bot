@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
+/*
 internal partial class Sudo
 {
     public sealed partial class Bot
@@ -74,3 +75,4 @@ internal partial class Sudo
         }
     }
 }
+*/

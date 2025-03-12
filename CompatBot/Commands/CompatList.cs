@@ -56,6 +56,7 @@ internal sealed partial class CompatList
         }
     }
 
+    /*
     [Command("compatibility"), TextAlias("c", "compat")]
     [Description("Searches the compatibility database, USE: !compat search term")]
     public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string? title)
@@ -100,6 +101,7 @@ internal sealed partial class CompatList
             Config.Log.Error(e, "Failed to get compat list info");
         }
     }
+    */
 
     [Command("top"), LimitedToOfftopicChannel]
     //[Cooldown(1, 5, CooldownBucketType.Channel)]
@@ -260,7 +262,7 @@ internal sealed partial class CompatList
                 if (botMember == null)
                     return false;
 
-                if (!compatChannel.PermissionsFor(botMember).HasPermission(Permissions.SendMessages))
+                if (!compatChannel.PermissionsFor(botMember).HasPermission(DiscordPermission.SendMessages))
                 {
                     NewBuildsMonitor.Reset();
                     return false;
@@ -392,6 +394,7 @@ internal sealed partial class CompatList
         }
     }
 
+    /*
     private static async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
     {
         Config.Log.Info(requestBuilder.Build());
@@ -423,6 +426,7 @@ internal sealed partial class CompatList
             foreach (var msg in FormatSearchResults(ctx, result))
                 await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
     }
+    */
 
     internal static CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
     {
@@ -453,6 +457,7 @@ internal sealed partial class CompatList
         return result;
     }
 
+    /*
     private static IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
     {
         var returnCode = ApiConfig.ReturnCodes[compatResult.ReturnCode];
@@ -507,6 +512,7 @@ internal sealed partial class CompatList
             }
         }
     }
+    */
 
     public static string FixGameTitleSearch(string title)
     {

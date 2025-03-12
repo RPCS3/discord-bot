@@ -123,6 +123,7 @@ internal sealed partial class Misc
     [GeneratedRegex(@"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?")]
     private static partial Regex DiceNotationPattern();
 
+    /*
     [Command("about"), Description("Bot information")]
     public async Task About(CommandContext ctx)
     {
@@ -148,7 +149,7 @@ internal sealed partial class Misc
         ).WithFooter($"Running {Config.GitRevision}");
         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AddEmbed(embed.Build()).AsEphemeral());
     }
-    
+
     [Command("roll")]
     [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
     public Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)
@@ -157,7 +158,7 @@ internal sealed partial class Misc
     [Command("roll")]
     public Task Roll(CommandContext ctx, [RemainingText, Description("Dices to roll (i.e. 2d6+1 for two 6-sided dices with a bonus 1)")] string dices)
         => RollImpl(ctx.Message, dices);
-
+    */
         
     internal static async Task RollImpl(DiscordMessage message, int maxValue = 6)
     {
@@ -231,6 +232,7 @@ internal sealed partial class Misc
             await message.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(result).WithReply(message.Id)).ConfigureAwait(false);
     }
 
+    /*
     [Command("random"), TextAlias("rng")]
     //[Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
     [Description("Provides random stuff")]
@@ -269,6 +271,7 @@ internal sealed partial class Misc
                 break;
         }
     }
+    */
 
     [Command("8ball")]
     //[Cooldown(20, 60, CooldownBucketType.Channel)]
@@ -330,6 +333,7 @@ internal sealed partial class Misc
         }
     }
 
+    /*
     [Command("rate")]
     //[Cooldown(20, 60, CooldownBucketType.Channel)]
     [Description("Gives a ~~random~~ expert judgment on the matter at hand")]
@@ -521,11 +525,14 @@ internal sealed partial class Misc
             msgBuilder.WithReply(ctx.Message.Id);
         await ch.SendMessageAsync(msgBuilder).ConfigureAwait(false);
     }
+    */
 
+    /*
     [Command("firmware"), TextAlias("fw")]
     //[Cooldown(1, 10, CooldownBucketType.Channel)]
     [Description("Checks for latest PS3 firmware version")]
     public Task Firmware(CommandContext ctx) => Psn.Check.GetFirmwareAsync(ctx);
+    */
 
     [Command("compare")]
     //[Hidden]
@@ -536,6 +543,7 @@ internal sealed partial class Misc
         return ctx.Channel.SendMessageAsync($"Similarity score is {result:0.######}");
     }
 
+    /*
     [Command("productcode"), TextAlias("pci", "decode")]
     [Description("Describe Playstation product code")]
     public async Task ProductCode(CommandContext ctx, [RemainingText, Description("Product code such as BLUS12345 or SCES")] string productCode)
@@ -558,4 +566,5 @@ internal sealed partial class Misc
         else
             await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid product code").ConfigureAwait(false);
     }
+    */
 }

@@ -87,6 +87,7 @@ internal sealed partial class ContentFilters
         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("filters.txt", output)).ConfigureAwait(false);
     }
 
+    /*
     [Command("add"), TextAlias("create")]
     [Description("Adds a new content filter")]
     public async Task Add(CommandContext ctx, [RemainingText, Description("A plain string to match")] string? trigger)
@@ -192,7 +193,7 @@ internal sealed partial class ContentFilters
                     if (string.IsNullOrEmpty(name))
                         continue;
 
-                    
+
                     if (!ExtraIsoInfoPattern().IsMatch(name))
                         continue;
 
@@ -220,7 +221,7 @@ internal sealed partial class ContentFilters
             ImportLock.Release();
         }
     }
-        
+
     [Command("edit"), TextAlias("fix", "update", "change")]
     [Description("Modifies the specified content filter")]
     public async Task Edit(CommandContext ctx, [Description("Filter ID")] int id)
@@ -249,6 +250,7 @@ internal sealed partial class ContentFilters
 
         await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
     }
+    */
         
     [Command("view"), TextAlias("show")]
     [Description("Shows the details of the specified content filter")]
@@ -280,6 +282,7 @@ internal sealed partial class ContentFilters
         await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
     }
 
+    /*
     [Command("remove"), TextAlias("delete", "del")]
     [Description("Removes a content filter trigger")]
     public async Task Remove(CommandContext ctx, [Description("Filter IDs to remove, separated with spaces")] params int[] ids)
@@ -897,6 +900,7 @@ internal sealed partial class ContentFilters
         }
         return (false, msg);
     }
+    */
 
     private static DiscordEmbedBuilder FormatFilter(Piracystring filter, string? error = null, int highlight = -1)
     {

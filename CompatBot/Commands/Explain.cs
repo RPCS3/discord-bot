@@ -20,6 +20,7 @@ internal sealed class Explain
 {
     private const string TermListTitle = "Defined terms";
 
+    /*
     [Command("show"), DefaultGroupCommand]
     public async Task Show(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
     {
@@ -218,6 +219,7 @@ internal sealed class Explain
         else
             await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
     }
+    */
 
     [Command("list")]
     [Description("List all known terms that could be used for !explain command")]
@@ -240,6 +242,7 @@ internal sealed class Explain
             }
     }
 
+    /*
     [Command("remove"), TextAlias("delete", "del", "erase", "obliterate"), RequiresBotModRole]
     [Description("Removes an explanation from the definition list")]
     internal sealed class Remove
@@ -347,6 +350,7 @@ internal sealed class Explain
             }
         }
     }
+    */
 
     [Command("error")]
     [Description("Provides additional information about Win32 and Linux system error")]
@@ -455,6 +459,7 @@ internal sealed class Explain
         return false;
     }
 
+    /*
     private static async Task DumpLink(CommandContext ctx, string messageLink)
     {
         string? explanation = null;
@@ -476,4 +481,5 @@ internal sealed class Explain
             await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("explanation.txt", stream)).ConfigureAwait(false);
         }
     }
+    */
 }

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
+/*
 [Command("rename")]
 [Description("Manage users who has forced nickname.")]
 internal sealed class ForcedNicknames
@@ -258,3 +259,4 @@ internal sealed class ForcedNicknames
         await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
     } 
 }
+*/

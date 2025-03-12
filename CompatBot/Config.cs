@@ -276,7 +276,8 @@ internal static class Config
         };
         watchdogTarget.Parameters.AddRange([new MethodCallParameter("${level}"), new("${message}")]);
 #if DEBUG
-        loggingConfig.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // only echo messages from default logger to the console
+        loggingConfig.AddRule(LogLevel.Error, LogLevel.Fatal, consoleTarget);
+        loggingConfig.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // echo all messages from default logger to the console
 #else
         loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");
 #endif
@@ -320,7 +321,7 @@ internal static class Config
             telemetryConfig.TelemetryInitializers.Add(new HttpDependenciesParsingTelemetryInitializer());
             DependencyTrackingTelemetryModule.Initialize(telemetryConfig);
             PerformanceCollectorModule.Initialize(telemetryConfig);
-            return telemetryClient = new TelemetryClient(telemetryConfig);
+            return telemetryClient = new(telemetryConfig);
         }
     }
 

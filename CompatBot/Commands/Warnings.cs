@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Command("warn")]
+//[Command("warn")]
 [Description("Command used to manage warnings")]
 internal sealed partial class Warnings
 {
+    /*
     [DefaultGroupCommand] //attributes on overloads do not work, so no easy permission checks
     [Description("Command used to issue a new warning")]
     public async Task Warn(CommandContext ctx, [Description("User to warn. Can also use @id")] DiscordUser user, [RemainingText, Description("Warning explanation")] string reason)
@@ -170,9 +171,11 @@ internal sealed partial class Warnings
         reason = await Sudo.Fix.FixChannelMentionAsync(ctx, reason).ConfigureAwait(false);
         return await AddAsync(ctx.Client, ctx.Message, userId, userName, issuer, reason, fullReason);
     }
+    */
 
     internal static async Task<bool> AddAsync(DiscordClient client, DiscordMessage message, ulong userId, string userName, DiscordUser issuer, string? reason, string? fullReason = null)
     {
+        /*
         if (string.IsNullOrEmpty(reason))
         {
             var interact = client.GetInteractivity();
@@ -191,6 +194,7 @@ internal sealed partial class Warnings
             await msg.DeleteAsync().ConfigureAwait(false);
             reason = response.Result.Content;
         }
+        */
         try
         {
             await using var db = new BotDb();

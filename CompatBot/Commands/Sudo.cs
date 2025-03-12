@@ -14,6 +14,7 @@ using SharpCompress.Writers.Zip;
 
 namespace CompatBot.Commands;
 
+/*
 [Command("sudo"), RequiresBotSudoerRole]
 [Description("Used to manage bot moderators and sudoers")]
 internal sealed partial class Sudo
@@ -251,3 +252,4 @@ internal sealed partial class Sudo
         }
     }
 }
+*/

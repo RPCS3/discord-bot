@@ -4,6 +4,7 @@ using System.Net.Http;
 using ColorThiefDotNet;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
+using DSharpPlus.Commands.Processors.TextCommands;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 using SixLabors.Fonts;
@@ -58,6 +59,7 @@ internal sealed class Vision
         ["strawberry"] = ["🍓",],
     };
 
+    /*
     [Command("describe"), TriggersTyping]
     [Description("Generates an image description from the attached image, or from the url")]
     public Task Describe(CommandContext ctx, [RemainingText] string? imageUrl = null)
@@ -66,7 +68,9 @@ internal sealed class Vision
             return Tag(ctx, imageUrl[3..].TrimStart());
         return Tag(ctx, imageUrl);
     }
+    */
 
+    /*
     [Command("tag"), TriggersTyping]
     [Description("Tags recognized objects in the image")]
     public async Task Tag(CommandContext ctx, string? imageUrl = null)
@@ -226,7 +230,7 @@ internal sealed class Vision
                             WrapTextWidth = r.W - 10,
 #endif
                     };
-                    var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop/*, TextOptions = textOptions*/};
+                    var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop/*, TextOptions = textOptions#1#};
                     //var brush = Brushes.Solid(Color.Black);
                     //var pen = Pens.Solid(color, 2);
                     var textBox = TextMeasurer.MeasureBounds(label, textOptions);
@@ -346,6 +350,7 @@ internal sealed class Vision
             await ctx.Channel.SendMessageAsync("Can't do anything with this image").ConfigureAwait(false);
         }
     }
+    */
 
     internal static IEnumerable<string> GetImagesFromEmbeds(DiscordMessage msg)
     {
@@ -409,7 +414,10 @@ internal sealed class Vision
 
     private static async Task<string?> GetImageUrlAsync(CommandContext ctx, string? imageUrl)
     {
-        var reactMsg = ctx.Message;
+        if (ctx is not TextCommandContext tctx)
+            return null;
+        
+        var reactMsg = tctx.Message;
         if (GetImageAttachments(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
             imageUrl = attachment.Url;
         imageUrl = imageUrl?.Trim() ?? "";
@@ -427,10 +435,10 @@ internal sealed class Vision
                  || str.StartsWith("^"))
                 && ctx.Channel.PermissionsFor(
                     await ctx.Client.GetMemberAsync(ctx.Guild, ctx.Client.CurrentUser).ConfigureAwait(false)
-                ).HasPermission(Permissions.ReadMessageHistory))
+                ).HasPermission(DiscordPermission.ReadMessageHistory))
                 try
                 {
-                    var previousMessages = (await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false))!;
+                    var previousMessages = (await ctx.Channel.GetMessagesBeforeCachedAsync(tctx.Message.Id, 10).ConfigureAwait(false))!;
                     imageUrl = (
                         from m in previousMessages
                         where m.Attachments?.Count > 0

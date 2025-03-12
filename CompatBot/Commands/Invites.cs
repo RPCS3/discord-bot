@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
+/*
 [Command("invite"), TextAlias("invites"), RequiresBotModRole]
 [Description("Used to manage Discord invites whitelist")]
 internal sealed class Invites
@@ -53,7 +54,7 @@ internal sealed class Invites
             if (!string.IsNullOrEmpty(item.InviteCode))
                 link = linkPrefix + item.InviteCode;
             //discord expands invite links even if they're inside the code block for some reason
-            table.Add(item.Id.ToString(), item.GuildId.ToString(), link /* + StringUtils.InvisibleSpacer*/, guildName.Sanitize());
+            table.Add(item.Id.ToString(), item.GuildId.ToString(), link /* + StringUtils.InvisibleSpacer#1#, guildName.Sanitize());
         }
         var result = new StringBuilder()
             .AppendLine("Whitelisted discord servers:")
@@ -167,3 +168,4 @@ internal sealed class Invites
         await List(ctx).ConfigureAwait(false);
     }
 }
+*/

@@ -17,6 +17,7 @@ internal sealed partial class Psn
     {
         private static string? latestFwVersion;
 
+        /*
         [Command("updates"), TextAlias("update"), LimitedToSpamChannel]
         [Description("Checks if specified product has any updates")]
         public async Task Updates(CommandContext ctx, [RemainingText, Description("Product code such as `BLUS12345`")] string productCode)
@@ -159,6 +160,7 @@ internal sealed partial class Psn
 
             await ctx.ReactWithAsync(Config.Reactions.Success, $"Added {itemsToCheck.Count} ID{StringUtils.GetSuffix(itemsToCheck.Count)} to the scraping queue").ConfigureAwait(false);
         }
+        */
 
         [Command("firmware"), TextAlias("fw")]
         //[Cooldown(1, 10, CooldownBucketType.Channel)]
@@ -226,13 +228,15 @@ internal sealed partial class Psn
                 if (e.User.Id != authorId)
                     return;
                     
-                await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
+                await e.Interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
                 await e.Message.DeleteAsync().ConfigureAwait(false);
                 var refMsg = await e.Channel.GetMessageAsync(refMsgId).ConfigureAwait(false);
+                /*
                 var cne = client.GetCommandsNext();
                 var cmd = cne.FindCommand("psn check updates", out _);
                 var context = cne.CreateContext(refMsg, Config.CommandPrefix, cmd, productCode);
                 await cne.ExecuteCommandAsync(context).ConfigureAwait(false);
+                */
             }
             catch (Exception ex)
             {

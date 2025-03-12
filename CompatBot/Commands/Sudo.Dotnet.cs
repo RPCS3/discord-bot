@@ -4,6 +4,7 @@ using CompatBot.Database.Providers;
 
 namespace CompatBot.Commands;
 
+/*
 internal partial class Sudo
 {
     [Command("dotnet")]
@@ -96,3 +97,4 @@ internal partial class Sudo
         }
     }
 }
+*/

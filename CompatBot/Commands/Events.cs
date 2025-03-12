@@ -1,5 +1,6 @@
 ﻿namespace CompatBot.Commands;
 
+/*
 [Command("event"), TextAlias("events", "e")]
 [Description("Provides information about the various events in the game industry")]
 internal sealed class Events: EventsBaseCommand
@@ -54,3 +55,4 @@ internal sealed class Events: EventsBaseCommand
     public Task Countdown(CommandContext ctx, string? eventName = null)
         => NearestEvent(ctx, eventName);
 }
+*/

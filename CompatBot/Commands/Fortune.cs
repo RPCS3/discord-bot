@@ -7,15 +7,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Command("fortune"), TextAlias("fortunes")]
+//[Command("fortune"), TextAlias("fortunes")]
 [Description("Gives you a fortune once a day")]
 internal sealed class Fortune
 {
     private static readonly SemaphoreSlim ImportCheck = new(1, 1);
 
+    /*
     [Command("open"), TextAlias("show"), DefaultGroupCommand]
     public Task ShowFortune(CommandContext ctx)
         => ShowFortune(ctx.Message, ctx.User);
+    */
 
     public static async Task ShowFortune(DiscordMessage message, DiscordUser user)
     {
@@ -54,6 +56,7 @@ internal sealed class Fortune
         await message.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
     }
 
+    /*
     [Command("add"), RequiresBotModRole]
     [Description("Add a new fortune")]
     public async Task Add(CommandContext ctx, [RemainingText] string text)
@@ -247,4 +250,5 @@ internal sealed class Fortune
         var count = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed {count} fortune{(count == 1 ? "" : "s")}", true).ConfigureAwait(false);
     }
+    */
 }
