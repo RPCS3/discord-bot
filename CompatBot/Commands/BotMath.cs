@@ -14,7 +14,6 @@ internal sealed class BotMath
     }
     
     [Command("calculate"), TextAlias("calc"), DefaultGroupCommand]
-    [Description("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")]
     public async ValueTask Calc(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
     {
         if (string.IsNullOrEmpty(expression))

@@ -294,7 +294,7 @@ internal sealed partial class Misc
 
     [Command("when")]
     //[Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
-    [Description("Provides advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
+    [Description("Advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
     public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string something = "")
     {
         var question = something.Trim().TrimEnd('?').ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
@@ -316,11 +316,11 @@ internal sealed partial class Misc
 
     [Command("how")]
     //[Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
-    [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
+    [Description("Advanced clairvoyance services to predict the exact amount of anything that could be measured")]
     public class How
     {
         [Command("much"), TextAlias("many")]
-        [Description("Provides advanced clairvoyance services to predict the exact amount of anything that could be measured")]
+        [Description("Advanced clairvoyance services to predict the exact amount of anything that could be measured")]
         public async Task Much(CommandContext ctx, [RemainingText, Description("much or many ")] string ofWhat = "")
         {
             var question = ofWhat.Trim().TrimEnd('?').ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();

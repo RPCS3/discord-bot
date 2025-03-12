@@ -251,35 +251,38 @@ internal sealed partial class ContentFilters
         await EditFilterCmd(ctx, db, filter).ConfigureAwait(false);
     }
     */
-        
+
     [Command("view"), TextAlias("show")]
     [Description("Shows the details of the specified content filter")]
-    public async Task View(CommandContext ctx, [Description("Filter ID")] int id)
+    public sealed class View
     {
-        await using var db = new BotDb();
-        var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
-        if (filter is null)
+        [Command("id")]
+        public async Task ViewById(CommandContext ctx, [Description("Filter ID")] int id)
         {
-            await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
-            return;
-        }
+            await using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
+            if (filter is null)
+            {
+                await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
+            }
 
-        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
-    }
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
+        }
         
-    [Command("view")]
-    [Description("Shows the details of the specified content filter")]
-    public async Task View(CommandContext ctx, [Description("Trigger to view"), RemainingText] string trigger)
-    {
-        await using var db = new BotDb();
-        var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && !ps.Disabled).ConfigureAwait(false);
-        if (filter is null)
+        [Command("trigger")]
+        public async Task ViewByTrigger(CommandContext ctx, [Description("Trigger to view"), RemainingText] string trigger)
         {
-            await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
-            return;
-        }
+            await using var db = new BotDb();
+            var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && !ps.Disabled).ConfigureAwait(false);
+            if (filter is null)
+            {
+                await ctx.Channel.SendMessageAsync("Specified filter does not exist").ConfigureAwait(false);
+                return;
+            }
 
-        await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(FormatFilter(filter))).ConfigureAwait(false);
+        }
     }
 
     /*
