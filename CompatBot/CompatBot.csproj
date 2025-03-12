@@ -11,6 +11,7 @@
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     <Nullable>enable</Nullable>
     <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
+    <RunCodeAnalysis>True</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
     <CompilerVisibleProperty Include="RootNamespace" />
