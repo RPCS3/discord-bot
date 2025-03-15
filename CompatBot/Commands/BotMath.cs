@@ -1,11 +1,10 @@
 ﻿using System.Globalization;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using org.mariuszgromada.math.mxparser;
 using License = org.mariuszgromada.math.mxparser.License;
 
 namespace CompatBot.Commands;
 
-[Command("math")]
-[Description("Math, here you go Juhn. Use `math help` for syntax help")]
 internal sealed class BotMath
 {
     static BotMath()
@@ -13,12 +12,13 @@ internal sealed class BotMath
         License.iConfirmNonCommercialUse("RPCS3");
     }
     
-    [Command("calculate"), TextAlias("calc"), DefaultGroupCommand]
-    public async ValueTask Calc(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
+    [Command("calculate"), DefaultGroupCommand]
+    [Description("Math; there you go, Juhn")]
+    public async ValueTask Calc(SlashCommandContext ctx, [RemainingText, Description("Math expression or `help` for syntax link")] string expression)
     {
-        if (string.IsNullOrEmpty(expression))
+        if (expression.Equals("help", StringComparison.OrdinalIgnoreCase))
         {
-            await Help(ctx).ConfigureAwait(false);
+            await ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)", true);
             return;
         }
 
@@ -50,12 +50,6 @@ internal sealed class BotMath
         {
             Config.Log.Warn(e, "Math failed");
         }
-        await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
+        await ctx.RespondAsync(result, true).ConfigureAwait(false);
     }
-
-    [Command("help"), LimitedToSpamChannel]
-    //[Cooldown(1, 5, CooldownBucketType.Channel)]
-    [Description("General math expression help, or description of specific math word")]
-    public Task Help(CommandContext ctx)
-        => ctx.Channel.SendMessageAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)");
 }
