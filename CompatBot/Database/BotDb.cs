@@ -23,9 +23,8 @@ internal class BotDb: DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
-#if DEBUG
-        optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
-#endif
+        if (Config.EnableEfDebugLogging)
+            optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
         optionsBuilder.UseSqlite($""" Data Source="{dbPath}" """);
     }
 
