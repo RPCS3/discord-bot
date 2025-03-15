@@ -9,20 +9,6 @@ internal class LimitedToSpecificChannelsCheck:
     IContextCheck<RequiresDmAttribute>,
     IContextCheck<RequiresNotMediaAttribute>
 {
-    internal static bool IsHelpChannel(DiscordChannel channel)
-        => channel.IsPrivate
-           || channel.Name.Contains("help", StringComparison.OrdinalIgnoreCase)
-           || channel.Name.Equals("donors", StringComparison.OrdinalIgnoreCase);
-
-    internal static bool IsOfftopicChannel(DiscordChannel channel)
-        => channel.Name.Contains("off-topic", StringComparison.InvariantCultureIgnoreCase)
-           || channel.Name.Contains("offtopic", StringComparison.InvariantCultureIgnoreCase);
-
-    internal static bool IsSpamChannel(DiscordChannel channel)
-        => channel.IsPrivate
-           || channel.Name.Contains("spam", StringComparison.OrdinalIgnoreCase)
-           || channel.Name.Equals("testers", StringComparison.OrdinalIgnoreCase);
-
     internal static async Task<DiscordChannel?> GetHelpChannelAsync(DiscordClient client, DiscordChannel channel, DiscordUser user)
     {
         var guild = channel.Guild;
@@ -35,21 +21,21 @@ internal class LimitedToSpecificChannelsCheck:
     
     public ValueTask<string?> ExecuteCheckAsync(LimitedToHelpChannelAttribute attr, CommandContext ctx)
     {
-        if (ctx.Channel.IsPrivate || IsHelpChannel(ctx.Channel))
+        if (ctx.Channel.IsPrivate || ctx.Channel.IsHelpChannel())
             return ValueTask.FromResult<string?>(null);
         return ValueTask.FromResult("This command is limited to help channel and DMs")!;
     }
 
     public ValueTask<string?> ExecuteCheckAsync(LimitedToOfftopicChannelAttribute attr, CommandContext ctx)
     {
-        if (IsSpamChannel(ctx.Channel) || IsOfftopicChannel(ctx.Channel))
+        if (ctx.Channel.IsSpamChannel() || ctx.Channel.IsOfftopicChannel())
             return ValueTask.FromResult<string?>(null);
         return ValueTask.FromResult("This command is limited to off-topic channels and DMs")!;
     }
 
     public async ValueTask<string?> ExecuteCheckAsync(LimitedToSpamChannelAttribute attr, CommandContext ctx)
     {
-        if (IsSpamChannel(ctx.Channel))
+        if (ctx.Channel.IsSpamChannel())
             return null;
 
         var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);

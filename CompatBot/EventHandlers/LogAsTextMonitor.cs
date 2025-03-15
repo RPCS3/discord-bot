@@ -14,7 +14,7 @@ internal static partial class LogAsTextMonitor
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
-        if (!LimitedToSpecificChannelsCheck.IsHelpChannel(args.Channel))
+        if (!args.Channel.IsHelpChannel())
             return;
 
         if ((args.Message.Author as DiscordMember)?.Roles.Any() ?? false)

@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using CompatApiClient;
 using CompatApiClient.Utils;
+using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -9,12 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Command("stats"), TextAlias("status")]
-internal sealed class BotStats
+internal sealed class BotStatus
 {
-    [Command("show"), DefaultGroupCommand]
-    [Description("Use to look at various runtime stats")]
-    public async Task Show(CommandContext ctx)
+    [Command("status")]
+    [Description("Bot subsystem configuration status and various runtime stats")]
+    public async Task Show(SlashCommandContext ctx)
     {
         var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
         var embed = new DiscordEmbedBuilder
@@ -65,15 +65,9 @@ internal sealed class BotStats
 #if DEBUG
         embed.WithFooter("Test Instance");
 #endif
-        var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-        await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
+        await ctx.RespondAsync(embed: embed, ephemeral: !ctx.Channel.IsSpamChannel());
     }
 
-    [Command("hw"), TextAlias("hardware")]
-    [Description("Various hardware stats from uploaded log files")]
-    //[Cooldown(1, 5, CooldownBucketType.Guild)]
-    public Task Hardware(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30) => Commands.Hardware.ShowStats(ctx, period);
-    
     private static string GetConfiguredApiStats()
         => $"""
             {(GoogleDriveHandler.ValidateCredentials() ? "✅" : "❌")} Google Drive

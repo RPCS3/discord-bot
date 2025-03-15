@@ -12,9 +12,9 @@ global using CompatBot.Utils;
 global using DSharpPlus;
 global using DSharpPlus.Commands;
 global using DSharpPlus.Commands.ArgumentModifiers;
+global using DSharpPlus.Commands.Processors.SlashCommands;
 global using DSharpPlus.Commands.Trees;
 global using DSharpPlus.Commands.Trees.Metadata;
 global using DSharpPlus.Entities;
 global using DSharpPlus.EventArgs;
 global using DSharpPlus.Interactivity.Extensions;
-

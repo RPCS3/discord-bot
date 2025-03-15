@@ -61,8 +61,8 @@ public static class LogParsingHandler
                 || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
             return Task.CompletedTask;
 
-        var isSpamChannel = LimitedToSpecificChannelsCheck.IsSpamChannel(args.Channel);
-        var isHelpChannel = LimitedToSpecificChannelsCheck.IsHelpChannel(args.Channel);
+        var isSpamChannel = args.Channel.IsSpamChannel();
+        var isHelpChannel = args.Channel.IsHelpChannel();
         var checkExternalLinks = isHelpChannel || isSpamChannel;
         OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
         return Task.CompletedTask;
@@ -96,8 +96,8 @@ public static class LogParsingHandler
                     s?.Dispose();
                 }
                     
-                var isSpamChannel = LimitedToSpecificChannelsCheck.IsSpamChannel(channel);
-                var isHelpChannel = LimitedToSpecificChannelsCheck.IsHelpChannel(channel);
+                var isSpamChannel = channel.IsSpamChannel();
+                var isHelpChannel = channel.IsHelpChannel();
                 if (source != null)
                 {
                     Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)…");

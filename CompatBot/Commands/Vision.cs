@@ -35,8 +35,8 @@ internal sealed class Vision
 
     private static readonly Dictionary<string, string[]> Reactions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["cat"] = BotStats.GoodKot,
-        ["dog"] = BotStats.GoodDog,
+        ["cat"] = BotStatus.GoodKot,
+        ["dog"] = BotStatus.GoodDog,
         ["hedgehog"] = ["🦔",],
         ["flower"] = ["🌷", "🌸", "🌹", "🌺", "🌼", "🥀", "💐", "🌻", "💮",],
         ["lizard"] = ["🦎",],

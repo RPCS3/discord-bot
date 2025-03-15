@@ -73,7 +73,7 @@ internal static partial class ProductCodeLookup
                 try
                 {
                     var messageBuilder = new DiscordMessageBuilder().AddEmbed(result.builder);
-                    if (LimitedToSpecificChannelsCheck.IsSpamChannel(channel))
+                    if (channel.IsSpamChannel())
                         messageBuilder.AddComponents(new DiscordButtonComponent(DiscordButtonStyle.Secondary, $"replace with game updates:{message.Author.Id}:{message.Id}:{result.code}", "Check for updates", emoji: lookupEmoji));
                     await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);
                 }

@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using DSharpPlus.Commands.Processors.SlashCommands;
 using org.mariuszgromada.math.mxparser;
 using License = org.mariuszgromada.math.mxparser.License;
 
@@ -16,9 +15,10 @@ internal sealed class BotMath
     [Description("Math; there you go, Juhn")]
     public async ValueTask Calc(SlashCommandContext ctx, [RemainingText, Description("Math expression or `help` for syntax link")] string expression)
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel();
         if (expression.Equals("help", StringComparison.OrdinalIgnoreCase))
         {
-            await ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)", true);
+            await ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)", ephemeral);
             return;
         }
 
@@ -50,6 +50,6 @@ internal sealed class BotMath
         {
             Config.Log.Warn(e, "Math failed");
         }
-        await ctx.RespondAsync(result, true).ConfigureAwait(false);
+        await ctx.RespondAsync(result, ephemeral).ConfigureAwait(false);
     }
 }

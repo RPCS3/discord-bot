@@ -51,7 +51,7 @@ public static partial class CommandContextExtensions
         => ctx.Channel.IsPrivate || ctx.Member is null ? ctx.Channel : await ctx.Member.CreateDmChannelAsync().ConfigureAwait(false);
 
     public static Task<DiscordChannel> GetChannelForSpamAsync(this CommandContext ctx)
-        => LimitedToSpecificChannelsCheck.IsSpamChannel(ctx.Channel) ? Task.FromResult(ctx.Channel) : ctx.CreateDmAsync();
+        => ctx.Channel.IsSpamChannel() ? Task.FromResult(ctx.Channel) : ctx.CreateDmAsync();
 
     public static Task<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
         => ctx.Client.GetUserNameAsync(ctx.Channel, userId, forDmPurposes, defaultName);
