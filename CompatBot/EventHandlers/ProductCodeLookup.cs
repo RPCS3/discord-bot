@@ -46,35 +46,21 @@ internal static partial class ProductCodeLookup
 
         await LookupAndPostProductCodeEmbedAsync(c, args.Message, args.Channel, codesToLookup).ConfigureAwait(false);
     }
-
-    public static async Task LookupAndPostProductCodeEmbedAsync(DiscordClient client, DiscordMessage message, DiscordChannel channel, List<string> codesToLookup)
+    
+    public static async ValueTask LookupAndPostProductCodeEmbedAsync(DiscordClient client, DiscordMessage message, DiscordChannel channel, List<string> codesToLookup)
     {
         await message.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
         try
         {
-            var results = new List<(string code, Task<DiscordEmbedBuilder> task)>(codesToLookup.Count);
-            foreach (var code in codesToLookup)
-                results.Add((code, client.LookupGameInfoAsync(code)));
-            var formattedResults = new List<(string code, DiscordEmbedBuilder builder)>(results.Count);
-            foreach (var (code, task) in results)
-                try
-                {
-                    formattedResults.Add((code, await task.ConfigureAwait(false)));
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Warn(e, $"Couldn't get product code info for {code}");
-                }
-
-            // get only results with unique titles
-            formattedResults = formattedResults.DistinctBy(e => e.builder.Title).ToList();
             var lookupEmoji = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("🔍"));
+            var formattedResults = await LookupProductCodeAndFormatAsync(client, codesToLookup).ConfigureAwait(false);
             foreach (var result in formattedResults)
                 try
                 {
                     var messageBuilder = new DiscordMessageBuilder().AddEmbed(result.builder);
-                    if (channel.IsSpamChannel())
-                        messageBuilder.AddComponents(new DiscordButtonComponent(DiscordButtonStyle.Secondary, $"replace with game updates:{message.Author.Id}:{message.Id}:{result.code}", "Check for updates", emoji: lookupEmoji));
+                    //todo: pass author from context and update OnCheckUpdatesButtonClick in psn check updates
+                    if (message is {Author: not null} && channel.IsSpamChannel())
+                        messageBuilder.AddComponents(new DiscordButtonComponent(DiscordButtonStyle.Secondary, $"{GlobalButtonHandler.ReplaceWithUpdatesPrefix}{message.Author.Id}:{message.Id}:{result.code}", "Check for updates", emoji: lookupEmoji));
                     await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -88,10 +74,27 @@ internal static partial class ProductCodeLookup
         }
     }
 
+    internal static async ValueTask<List<(string code, DiscordEmbedBuilder builder)>> LookupProductCodeAndFormatAsync(DiscordClient client, List<string> codesToLookup)
+    {
+        var results = codesToLookup.Select(code => (code, client.LookupGameInfoAsync(code))).ToList();
+        var formattedResults = new List<(string code, DiscordEmbedBuilder builder)>(results.Count);
+        foreach (var (code, task) in results)
+            try
+            {
+                formattedResults.Add((code, await task.ConfigureAwait(false)));
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, $"Couldn't get product code info for {code}");
+            }
+        // get only results with unique titles
+        return formattedResults.DistinctBy(e => e.builder.Title).ToList();
+    }
+
     public static List<string> GetProductIds(string? input)
     {
         if (string.IsNullOrEmpty(input))
-            return new(0);
+            return [];
 
         return Pattern().Matches(input)
             .Select(match => (match.Groups["letters"].Value + match.Groups["numbers"]).ToUpper())
@@ -102,7 +105,7 @@ internal static partial class ProductCodeLookup
     public static async Task<DiscordEmbedBuilder> LookupGameInfoAsync(this DiscordClient client, string? code, string? gameTitle = null, bool forLog = false, string? category = null)
         => (await LookupGameInfoWithEmbedAsync(client, code, gameTitle, forLog, category).ConfigureAwait(false)).embedBuilder;
         
-    public static async Task<(DiscordEmbedBuilder embedBuilder, CompatResult? compatResult)> LookupGameInfoWithEmbedAsync(this DiscordClient client, string? code, string? gameTitle = null, bool forLog = false, string? category = null)
+    public static async ValueTask<(DiscordEmbedBuilder embedBuilder, CompatResult? compatResult)> LookupGameInfoWithEmbedAsync(this DiscordClient client, string? code, string? gameTitle = null, bool forLog = false, string? category = null)
     {
         if (string.IsNullOrEmpty(code))
             return (TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog), null);

@@ -14,7 +14,7 @@ internal sealed class BotStatus
 {
     [Command("status")]
     [Description("Bot subsystem configuration status and various runtime stats")]
-    public async Task Show(SlashCommandContext ctx)
+    public async ValueTask Show(SlashCommandContext ctx)
     {
         var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
         var embed = new DiscordEmbedBuilder

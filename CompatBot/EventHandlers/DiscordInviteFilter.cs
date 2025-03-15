@@ -33,8 +33,8 @@ internal static partial class DiscordInviteFilter
             return true;
 
 #if !DEBUG
-            if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
-                return true;
+        if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
+            return true;
 #endif
 
         if (message.Reactions.Any(r => r.Emoji == Config.Reactions.Moderated && r.IsMe))

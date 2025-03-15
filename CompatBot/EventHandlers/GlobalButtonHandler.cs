@@ -4,7 +4,7 @@ namespace CompatBot.EventHandlers;
 
 internal static class GlobalButtonHandler
 {
-    private const string ReplaceWithUpdatesPrefix = "replace with game updates:";
+    internal const string ReplaceWithUpdatesPrefix = "replace with game updates:";
 
     public static async Task OnComponentInteraction(DiscordClient sender, ComponentInteractionCreatedEventArgs e)
     {
