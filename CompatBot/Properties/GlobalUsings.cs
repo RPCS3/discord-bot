@@ -18,3 +18,4 @@ global using DSharpPlus.Commands.Trees.Metadata;
 global using DSharpPlus.Entities;
 global using DSharpPlus.EventArgs;
 global using DSharpPlus.Interactivity.Extensions;
+global using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;

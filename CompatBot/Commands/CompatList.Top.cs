@@ -1,6 +1,6 @@
 ﻿using CompatApiClient.Utils;
+using CompatBot.Commands.ChoiceProviders;
 using CompatBot.Database;
-using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
@@ -68,36 +68,6 @@ internal static partial class CompatList
             }
             else
                 await ctx.RespondAsync("Failed to generate list", ephemeral).ConfigureAwait(false);
-        }
-        
-        public class CompatListStatusChoiceProvider : IChoiceProvider
-        {
-            private static readonly IReadOnlyList<DiscordApplicationCommandOptionChoice> compatListStatus =
-            [
-                new("playable", "playable"),
-                new("ingame or better", "ingame"),
-                new("intro or better", "intro"),
-                new("loadable or better", "loadable"),
-                new("only ingame", "ingameOnly"),
-                new("only intro", "introOnly"),
-                new("only loadable", "loadableOnly"),
-            ];
-
-            public ValueTask<IEnumerable<DiscordApplicationCommandOptionChoice>> ProvideAsync(CommandParameter parameter)
-                => ValueTask.FromResult<IEnumerable<DiscordApplicationCommandOptionChoice>>(compatListStatus);
-        }
-        
-        public class ScoreTypeChoiceProvider : IChoiceProvider
-        {
-            private static readonly IReadOnlyList<DiscordApplicationCommandOptionChoice> scoreType =
-            [
-                new("combined", "both"),
-                new("critic score", "critic"),
-                new("user score", "user"),
-            ];
-
-            public ValueTask<IEnumerable<DiscordApplicationCommandOptionChoice>> ProvideAsync(CommandParameter parameter)
-                => ValueTask.FromResult<IEnumerable<DiscordApplicationCommandOptionChoice>>(scoreType);
         }
     }
 }

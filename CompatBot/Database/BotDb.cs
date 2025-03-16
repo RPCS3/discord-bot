@@ -93,6 +93,7 @@ public class SuspiciousString
 [Flags]
 public enum FilterContext: byte
 {
+    //None = 0b_0000_0000, do NOT add this
     Chat = 0b_0000_0001,
     Log  = 0b_0000_0010,
 }

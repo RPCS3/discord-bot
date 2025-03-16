@@ -10,6 +10,7 @@ using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.SlashCommands.RemoteRecordRetentionPolicies;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using Microsoft.EntityFrameworkCore;
@@ -149,6 +150,9 @@ internal static class Program
                     {
                         //NamingPolicy = new CamelCaseNamingPolicy(),
                         RegisterCommands = true,
+#if DEBUG
+                        //UnconditionallyOverwriteCommands = true,
+#endif
                     });
                     textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();
                     extension.AddProcessor(textCommandProcessor);
@@ -168,7 +172,7 @@ internal static class Program
                     RegisterDefaultCommandProcessors = false,
                     //UseDefaultCommandErrorHandler = false,
 #if DEBUG
-                    DebugGuildId = Config.BotGuildId,
+                    //DebugGuildId = Config.BotGuildId, // this forces app commands to be guild-limited, which doesn't work well
 #endif
                 })
                 .UseInteractivity()

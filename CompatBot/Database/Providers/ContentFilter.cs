@@ -2,6 +2,7 @@
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.EventHandlers;
+using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using NReco.Text;
@@ -59,7 +60,7 @@ internal static class ContentFilter
     {
         var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
         using var db = new BotDb();
-        foreach (FilterContext ctx in Enum.GetValues(typeof(FilterContext)))
+        foreach (FilterContext ctx in Enum.GetValues<FilterContext>())
         {
             var triggerList = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking()
                 .AsEnumerable()
@@ -259,7 +260,7 @@ internal static class ContentFilter
         }
 
         var actionList = "";
-        foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
+        foreach (FilterAction fa in FilterActionExtensions.ActionFlagValues)
         {
             if (trigger.Actions.HasFlag(fa) && !ignoreFlags.HasFlag(fa))
                 actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + ' ';

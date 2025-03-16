@@ -85,7 +85,7 @@ internal sealed class Hardware
             .ToListAsync()
             .ConfigureAwait(false);
         var featureStats = new Dictionary<CpuFeatures, int>();
-        foreach (CpuFeatures feature in Enum.GetValues(typeof(CpuFeatures)))
+        foreach (CpuFeatures feature in Enum.GetValues<CpuFeatures>())
         {
             if (feature == CpuFeatures.None)
                 continue;
