@@ -10,23 +10,23 @@ using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class CompatList
+internal static partial class CompatList
 {
     [Command("latest")]
     [Description("Links to the latest RPCS3 build")]
-    public sealed class LatestBuild
+    public static class LatestBuild
     {
         [Command("build"), DefaultGroupCommand]
-        public ValueTask Latest(SlashCommandContext ctx) => CheckForRpcs3UpdatesAsync(ctx, respond: true);
+        public static ValueTask Latest(SlashCommandContext ctx) => CheckForRpcs3UpdatesAsync(ctx, respond: true);
 
         [Command("since")]
         [Description("Show additional info about changes since specified update")]
-        public ValueTask Since(TextCommandContext ctx, [Description("Commit hash of the update, such as `46abe0f31`")] string commit)
+        public static ValueTask Since(TextCommandContext ctx, [Description("Commit hash of the update, such as `46abe0f31`")] string commit)
             => CheckForRpcs3UpdatesAsync(ctx, respond: true, sinceCommit: commit);
 
         [Command("clear"), RequiresBotModRole]
         [Description("Clears update info cache that is used to post new build announcements")]
-        public ValueTask Clear(TextCommandContext ctx)
+        public static ValueTask Clear(TextCommandContext ctx)
         {
             lastUpdateInfo = null;
             lastFullBuildNumber = null;
@@ -35,7 +35,7 @@ internal sealed partial class CompatList
 
         [Command("set"), RequiresBotModRole]
         [Description("Sets update info cache that is used to check if new updates are available")]
-        public ValueTask Set(TextCommandContext ctx, string lastUpdatePr)
+        public static ValueTask Set(TextCommandContext ctx, string lastUpdatePr)
         {
             lastUpdateInfo = lastUpdatePr;
             lastFullBuildNumber = null;

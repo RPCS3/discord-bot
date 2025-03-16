@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class CompatList
+internal static partial class CompatList
 {
     private static readonly Client Client = new();
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
@@ -54,7 +54,7 @@ internal sealed partial class CompatList
 
     [Command("compatibility")]
     [Description("Search the game compatibility list")]
-    public async ValueTask Compat(SlashCommandContext ctx, [Description("Game title or product code to look up")] string title)
+    public static async ValueTask Compat(SlashCommandContext ctx, [Description("Game title or product code to look up")] string title)
     {
         if (await ContentFilter.FindTriggerAsync(FilterContext.Chat, title).ConfigureAwait(false) is not null)
         {

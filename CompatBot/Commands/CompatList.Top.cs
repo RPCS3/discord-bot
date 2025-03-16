@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class CompatList
+internal static partial class CompatList
 {
-    public sealed class Top
+    public static class Top
     {
         [Command("top")]
         [Description("Top game lists based on Metacritic scores and compatibility status")]
-        public async ValueTask Show(SlashCommandContext ctx,
+        public static async ValueTask Show(SlashCommandContext ctx,
             [Description("Number of entries in the list")] int number = 10,
             [Description("Filter by compatibility status"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "playable",
             [Description("Listing type"), SlashChoiceProvider<ScoreTypeChoiceProvider>] string type = "both")

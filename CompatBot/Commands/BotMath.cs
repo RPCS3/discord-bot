@@ -4,7 +4,7 @@ using License = org.mariuszgromada.math.mxparser.License;
 
 namespace CompatBot.Commands;
 
-internal sealed class BotMath
+internal static class BotMath
 {
     static BotMath()
     {
@@ -13,7 +13,7 @@ internal sealed class BotMath
     
     [Command("calculate"), DefaultGroupCommand]
     [Description("Math; there you go, Juhn")]
-    public async ValueTask Calc(SlashCommandContext ctx, [Description("Math expression or `help` for syntax link")] string expression)
+    public static async ValueTask Calc(SlashCommandContext ctx, [Description("Math expression or `help` for syntax link")] string expression)
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
         if (expression.Equals("help", StringComparison.OrdinalIgnoreCase))

@@ -10,11 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal sealed class BotStatus
+internal static class BotStatus
 {
     [Command("status")]
     [Description("Bot subsystem configuration status and various runtime stats")]
-    public async ValueTask Show(SlashCommandContext ctx)
+    public static async ValueTask Show(SlashCommandContext ctx)
     {
         var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
         var embed = new DiscordEmbedBuilder
