@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using CompatBot.Commands;
+using CompatBot.Commands.Checks;
 using CompatBot.Commands.Converters;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
@@ -153,7 +154,9 @@ internal static class Program
                     extension.AddProcessor(textCommandProcessor);
                     extension.AddProcessor(appCommandProcessor);
                     extension.AddCommands(Assembly.GetExecutingAssembly());
-                    extension.AddParameterChecks(Assembly.GetExecutingAssembly());
+                    //extension.AddChecks(Assembly.GetExecutingAssembly()); //todo: use this after the bug is fixed
+                    extension.AddCheck<LimitedToSpecificChannelsCheck>();
+                    extension.AddCheck<RequiredRoleContextCheck>();
                     /*
                     if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
                         extension.AddCommands<Vision>();

@@ -54,7 +54,7 @@ internal static partial class NewBuildsMonitor
             {
                 try
                 {
-                    await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
+                    await CompatList.LatestBuild.CheckForRpcs3UpdatesAsync(discordClient: client).ConfigureAwait(false);
                     lastCheck = DateTime.UtcNow;
                 }
                 catch (Exception e)

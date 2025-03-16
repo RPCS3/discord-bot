@@ -4,13 +4,13 @@ using DSharpPlus.Commands.Processors.TextCommands;
 
 namespace CompatBot.Commands.Checks;
 
-internal class CheckBaseAttributeWithReactionsCheck:
+internal class RequiredRoleContextCheck:
     IContextCheck<RequiresBotModRoleAttribute>,
     IContextCheck<RequiresBotSudoerRoleAttribute>,
     IContextCheck<RequiresSupporterRoleAttribute>,
     IContextCheck<RequiresWhitelistedRoleAttribute>
 {
-    public async ValueTask<string?> CheckAsync<T>(T attr, CommandContext ctx, bool isAllowed)
+    private async ValueTask<string?> CheckAsync<T>(T attr, CommandContext ctx, bool isAllowed)
         where T: CheckAttributeWithReactions
     {
         Config.Log.Debug($"Check for {GetType().Name} and user {ctx.User.Username}#{ctx.User.Discriminator} ({ctx.User.Id}) resulted in {isAllowed}");
