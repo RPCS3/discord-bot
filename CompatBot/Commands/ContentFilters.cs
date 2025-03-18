@@ -131,7 +131,7 @@ internal sealed partial class ContentFilters
             }
             catch (Exception e)
             {
-                await ctx.RespondAsync($"❌ Invalid regex expression: {e.Message}", ephemeral: ephemeral).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid regex expression: {e.Message}", ephemeral: ephemeral).ConfigureAwait(false);
                 return;
             }
         }
@@ -412,7 +412,7 @@ internal sealed partial class ContentFilters
             await ctx.RespondAsync("Nothing was removed.", ephemeral: ephemeral).ConfigureAwait(false);
         else
         {
-            await ctx.RespondAsync($"✅ Content filter was successfully removed", ephemeral: ephemeral).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Content filter was successfully removed", ephemeral: ephemeral).ConfigureAwait(false);
             
             var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
             var s = removedFilters == 1 ? "" : "s";

@@ -31,7 +31,7 @@ public class ExplainAutoCompleteProvider: IAutoCompleteProvider
             var substringMatches= db.Explanation
                 .Where(e => e.Keyword.Contains(prefix))
                 .OrderBy(e => e.Keyword)
-                .Take(25)
+                .Take(50)
                 .Select(e => e.Keyword)
                 .AsNoTracking()
                 .AsEnumerable();
