@@ -15,7 +15,7 @@ internal static partial class Events
     private static partial Regex Duration();
 
     [Command("countdown"), DefaultGroupCommand]
-    [Description("Provides countdown for the nearest known event")]
+    [Description("Show countdown for the nearest known event")]
     public static async ValueTask Countdown(
         SlashCommandContext ctx,
         [Description("Event or schedule entry name (E3, game release, etc)"), SlashAutoCompleteProvider<EventNameAutoCompleteProvider>]
@@ -158,7 +158,7 @@ internal static partial class Events
     }
 
     [Command("add"), RequiresBotModRole]
-    [Description("Adds a new entry to the schedule")]
+    [Description("Add a new entry to the schedule")]
     public static async ValueTask Add(
         SlashCommandContext ctx,
         [Description("Date and time, e.g. `2069-04-20 12:34 EDT` (default timezone = UTC)")]
@@ -210,7 +210,7 @@ internal static partial class Events
     }
 
     [Command("remove"), RequiresBotModRole]
-    [Description("Removes schedule entries with the specified IDs")]
+    [Description("Remove schedule entry")]
     public static async ValueTask RemoveGeneric(
         SlashCommandContext ctx,
         [Description("Event ID to remove"), SlashAutoCompleteProvider<EventIdAutoCompleteProvider>]
@@ -247,7 +247,7 @@ internal static partial class Events
     */
 
     [Command("update"), RequiresBotModRole]
-    [Description("Updates the event entry properties")]
+    [Description("Update an event entry")]
     public static async ValueTask Update(
         SlashCommandContext ctx,
         [Description("Event ID"), SlashAutoCompleteProvider<EventIdAutoCompleteProvider>] int id,
@@ -301,6 +301,7 @@ internal static partial class Events
     }
 
     [Command("list")]
+    [Description("List all scheduled entries")]
     public static async ValueTask List(
         SlashCommandContext ctx,
         [Description("Event name to list the schedule for, e.g. `E3` or `all`")]

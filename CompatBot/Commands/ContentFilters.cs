@@ -19,7 +19,7 @@ using Exception = System.Exception;
 namespace CompatBot.Commands;
 
 [Command("filter"), RequiresBotSudoerRole]
-[Description("Used to manage content filters. **Works only in DM**")]
+[Description("Manage content filters")]
 internal sealed partial class ContentFilters
 {
     private static readonly TimeSpan InteractTimeout = TimeSpan.FromMinutes(5);
@@ -31,7 +31,7 @@ internal sealed partial class ContentFilters
     private static partial Regex ExtraIsoInfoPattern();
 
     [Command("dump")]
-    [Description("Saves all filters as a text file attachment")]
+    [Description("Save all filters as a text file attachment")]
     public static async ValueTask List(SlashCommandContext ctx)
     {
         var ephemeral = !ctx.Channel.IsPrivate;
@@ -98,7 +98,7 @@ internal sealed partial class ContentFilters
     }
 
     [Command("add")]
-    [Description("Adds a new content filter")]
+    [Description("Add a new content filter")]
     public static async ValueTask Add(
         SlashCommandContext ctx,
         [Description("A plain string to match"), MinMaxLength(minLength: 3)]
@@ -280,7 +280,7 @@ internal sealed partial class ContentFilters
     */
 
     [Command("update")]
-    [Description("Modifies the specified content filter")]
+    [Description("Modify an existing content filter")]
     public async Task Edit(SlashCommandContext ctx,
         [Description("Filter ID"), SlashAutoCompleteProvider<ContentFilterAutoCompleteProvider>]
         int id,
@@ -367,7 +367,7 @@ internal sealed partial class ContentFilters
     }
 
     [Command("view")]
-    [Description("Show the details of the specified content filter")]
+    [Description("Show the details of an existing content filter")]
     public static async ValueTask ViewById(
         SlashCommandContext ctx,
         [Description("Filter ID"), SlashAutoCompleteProvider<ContentFilterAutoCompleteProvider>] int id
@@ -389,7 +389,7 @@ internal sealed partial class ContentFilters
     }
 
     [Command("remove")]
-    [Description("Removes a content filter trigger")]
+    [Description("Remove a content filter")]
     public static async ValueTask Remove(
         SlashCommandContext ctx,
         [Description("Filter to remove"), SlashAutoCompleteProvider<ContentFilterAutoCompleteProvider>]int id

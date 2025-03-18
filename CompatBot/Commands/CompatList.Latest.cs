@@ -13,19 +13,21 @@ namespace CompatBot.Commands;
 internal static partial class CompatList
 {
     [Command("latest")]
-    [Description("Links to the latest RPCS3 build")]
     public static class LatestBuild
     {
         [Command("build"), DefaultGroupCommand]
+        [Description("Link to the latest RPCS3 build")]
         public static ValueTask Latest(SlashCommandContext ctx) => CheckForRpcs3UpdatesAsync(ctx, respond: true);
 
+        /*
         [Command("since")]
         [Description("Show additional info about changes since specified update")]
         public static ValueTask Since(TextCommandContext ctx, [Description("Commit hash of the update, such as `46abe0f31`")] string commit)
             => CheckForRpcs3UpdatesAsync(ctx, respond: true, sinceCommit: commit);
+        */
 
         [Command("clear"), RequiresBotModRole]
-        [Description("Clears update info cache that is used to post new build announcements")]
+        [Description("Clear the update info cache and post the latest RPCS3 build announcement")]
         public static ValueTask Clear(TextCommandContext ctx)
         {
             lastUpdateInfo = null;
@@ -34,7 +36,7 @@ internal static partial class CompatList
         }
 
         [Command("set"), RequiresBotModRole]
-        [Description("Sets update info cache that is used to check if new updates are available")]
+        [Description("Set the latest build info to the specified PR merge, and post new release announcements after it")]
         public static ValueTask Set(TextCommandContext ctx, string lastUpdatePr)
         {
             lastUpdateInfo = lastUpdatePr;
