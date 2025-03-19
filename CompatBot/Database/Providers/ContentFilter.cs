@@ -238,7 +238,7 @@ internal static class ContentFilter
             && !string.IsNullOrEmpty(trigger.ExplainTerm))
         {
             var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
-            await Explain.SendExplanation(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
+            await Explain.SendExplanationAsync(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
         }
 
         if (trigger.Actions.HasFlag(FilterAction.Kick)

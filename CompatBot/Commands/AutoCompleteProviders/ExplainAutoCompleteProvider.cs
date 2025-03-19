@@ -1,4 +1,5 @@
 ﻿using CompatBot.Database;
+using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands.AutoCompleteProviders;
@@ -9,15 +10,25 @@ public class ExplainAutoCompleteProvider: IAutoCompleteProvider
     {
         await using var db = new BotDb();
         IEnumerable<string> result;
-        if (context.UserInput is not {Length: >0} prefix)
-            //todo: use tracking stats to get popular entries instead?
-            result = await db.Explanation
-                .OrderBy(e=>e.Keyword)
-                .Take(25)
+        if (context.UserInput is not { Length: > 0 } prefix)
+        {
+            var allTerms = await db.Explanation
                 .Select(e => e.Keyword)
                 .AsNoTracking()
-                .ToListAsync()
-                .ConfigureAwait(false);
+                .ToListAsync();
+            var popular = StatsStorage
+                .GetExplainStats()
+                .Select(s => s.name)
+                .Intersect(allTerms)
+                .Take(25);
+            var random = allTerms
+                .OrderBy(n => n)
+                .Take(50);
+            result = popular
+                .Concat(random)
+                .Distinct()
+                .Take(25);
+        }
         else
         {
             prefix = prefix.ToLowerInvariant();

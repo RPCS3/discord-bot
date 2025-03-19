@@ -9,15 +9,12 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
-using DSharpPlus.Commands.Processors.SlashCommands;
-using DSharpPlus.Commands.Processors.SlashCommands.RemoteRecordRetentionPolicies;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using NLog;
 using NLog.Extensions.Logging;
-using Fortune = CompatBot.Commands.Fortune;
 
 namespace CompatBot;
 
@@ -151,12 +148,13 @@ internal static class Program
                         //NamingPolicy = new CamelCaseNamingPolicy(),
                         RegisterCommands = true,
 #if DEBUG
-                        //UnconditionallyOverwriteCommands = true,
+                        UnconditionallyOverwriteCommands = true,
 #endif
                     });
                     textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();
                     extension.AddProcessor(textCommandProcessor);
                     extension.AddProcessor(appCommandProcessor);
+                    
                     extension.AddCommands(Assembly.GetExecutingAssembly());
                     //extension.AddChecks(Assembly.GetExecutingAssembly()); //todo: use this after the bug is fixed
                     extension.AddCheck<LimitedToSpecificChannelsCheck>();
@@ -169,7 +167,7 @@ internal static class Program
                     //extension.CommandErrored += UnknownCommandHandler.OnError;
                 }, new()
                 {
-                    RegisterDefaultCommandProcessors = false,
+                    RegisterDefaultCommandProcessors = true,
                     //UseDefaultCommandErrorHandler = false,
 #if DEBUG
                     //DebugGuildId = Config.BotGuildId, // this forces app commands to be guild-limited, which doesn't work well
