@@ -17,7 +17,7 @@ using NLog.LayoutRenderers;
 namespace CompatBot.Commands;
 
 [Command("explain")]
-internal sealed class Explain
+internal static class Explain
 {
     private const string TermListTitle = "Defined terms";
 
@@ -200,7 +200,7 @@ internal sealed class Explain
 
     [Command("remove"), RequiresBotModRole]
     [Description("Remove a part or the whole explanation from the definition list")]
-    public async ValueTask Remove(
+    public static async ValueTask Remove(
         SlashCommandContext ctx,
         [Description("Term to remove"),  SlashAutoCompleteProvider<ExplainAutoCompleteProvider>]
         string term,

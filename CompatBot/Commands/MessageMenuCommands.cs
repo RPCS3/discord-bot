@@ -7,6 +7,12 @@ namespace CompatBot.Commands;
 
 public class MessageMenuCommands
 {
+    /*
+    [Command("🗨️ message")]
+    [Description("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")]
+    public async ValueTask AnalyzerTest(){}
+    */
+    
     [Command("💬 Explain"), SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask ShowToUser(MessageCommandContext ctx, DiscordMessage replyTo)
     {

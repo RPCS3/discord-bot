@@ -1,49 +1,70 @@
 ﻿using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
+using DSharpPlus.Commands.Processors.UserCommands;
+using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-/*
-[Command("rename")]
 [Description("Manage users who has forced nickname.")]
-internal sealed class ForcedNicknames
+internal static class ForcedNicknames
 {
-    [Command("user"), DefaultGroupCommand]
-    [Description("Enforces specific nickname for particular user.")]
-    public async Task Rename(CommandContext ctx,
-        [Description("Discord user to add to forced nickname list.")] DiscordUser discordUser, 
-        [Description("Nickname which should be displayed."), RemainingText] string expectedNickname)
+    [Command("📛 Enforce nickname"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    [Description("Enforce specific nickname for a particular user permanently")]
+    public static async ValueTask Rename(UserCommandContext ctx, DiscordUser discordUser)
     {
-        if (!await new RequiresBotModRoleAttribute().ExecuteCheckAsync(ctx, false).ConfigureAwait(false))
+        var interactivity = ctx.Extension.ServiceProvider.GetService<InteractivityExtension>();
+        if (interactivity is null)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't get interactivity extension").ConfigureAwait(false);
             return;
-            
+        }
+
+        var interaction = ctx.Interaction;
+        var suggestedName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
+        var modal = new DiscordInteractionResponseBuilder()
+            .AsEphemeral()
+            .WithCustomId($"modal:nickname:{Guid.NewGuid():n}")
+            .WithTitle("Enforcing Rule 7")
+            .AddComponents(
+                new DiscordTextInputComponent(
+                    "New nickname",
+                    "nickname",
+                    suggestedName,
+                    suggestedName,
+                    min_length: 2,
+                    max_length: 32
+                )
+            );
+        await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
+
+        string resultMsg;
         try
         {
-            if (expectedNickname.Length is < 2 or > 32)
+            InteractivityResult<ModalSubmittedEventArgs> modalResult;
+            string expectedNickname;
+            do
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Nickname must be between 2 and 32 characters long", true).ConfigureAwait(false);
-                return;
-            }
+                modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
+                if (modalResult.TimedOut)
+                    return;
+            } while (
+                !modalResult.Result.Values.TryGetValue("nickname", out expectedNickname)
+                || expectedNickname is not { Length: >1 and <33 }
+                || (!expectedNickname.All(c => char.IsLetterOrDigit(c)
+                                                    || char.IsWhiteSpace(c)
+                                                    || char.IsPunctuation(c)
+                         )
+                         || expectedNickname.Any(c => c is ':' or '#' or '@' or '`')
+                   ) && !discordUser.IsBotSafeCheck()
+            );
 
-            if ((!expectedNickname.All(c => char.IsLetterOrDigit(c)
-                                            || char.IsWhiteSpace(c)
-                                            || char.IsPunctuation(c))
-                 || expectedNickname.Any(c => c is ':' or '#' or '@' or '`')
-                ) && !discordUser.IsBotSafeCheck())
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Nickname must follow Rule 7", true).ConfigureAwait(false);
-                return;
-            }
-
+            interaction = modalResult.Result.Interaction;
+            await interaction.DeferAsync(true).ConfigureAwait(false);
             List<DiscordGuild> guilds;
-            if (ctx.Guild == null)
-            {
-                guilds = ctx.Client.Guilds?.Values.ToList() ?? [];
-                if (guilds.Count > 1)
-                    await ctx.Channel.SendMessageAsync($"{discordUser.Mention} will be renamed in all {guilds.Count} servers").ConfigureAwait(false);
-            }
+            if (ctx.Guild is null)
+                guilds = ctx.Client.Guilds.Values.ToList();
             else
                 guilds = [ctx.Guild];
 
@@ -67,7 +88,7 @@ internal sealed class ForcedNicknames
                         enforceRules.Nickname = expectedNickname;
                     }
                 }
-                if (!(ctx.Guild?.Permissions?.HasFlag(Permissions.ChangeNickname) ?? true))
+                if (!(ctx.Guild?.Permissions?.HasFlag(DiscordPermission.ChangeNickname) ?? true))
                 {
                     noPermissions++;
                     continue;
@@ -89,62 +110,72 @@ internal sealed class ForcedNicknames
             if (guilds.Count > 1)
             {
                 if (changed > 0)
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Forced nickname for {discordUser.Mention} in {changed} server{(changed == 1 ? "" : "s")}", true).ConfigureAwait(false);
+                    resultMsg = $"{Config.Reactions.Success} Forced nickname for {discordUser.Mention} in {changed} server{(changed == 1 ? "" : "s")}";
                 else
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to force nickname for {discordUser.Mention} in any server").ConfigureAwait(false);
+                    resultMsg = $"{Config.Reactions.Failure} Failed to force nickname for {discordUser.Mention} in any server";
             }
             else
             {
                 if (changed > 0)
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Forced nickname for {discordUser.Mention}", true).ConfigureAwait(false);
+                    resultMsg = $"{Config.Reactions.Success} Forced nickname for {discordUser.Mention}";
                 else if (failed > 0)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to force nickname for {discordUser.Mention}").ConfigureAwait(false);
+                    resultMsg = $"{Config.Reactions.Failure} Failed to force nickname for {discordUser.Mention}";
                 else if (noPermissions > 0)
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"No permissions to force nickname for {discordUser.Mention}").ConfigureAwait(false);
+                    resultMsg = $"{Config.Reactions.Failure} No permissions to force nickname for {discordUser.Mention}";
+                else
+                    resultMsg = "Unknown result, this situation should never happen";
             }
         }
         catch (Exception e)
         {
             Config.Log.Error(e);
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to change nickname, check bot's permissions").ConfigureAwait(false);
+            resultMsg = $"{Config.Reactions.Failure} Failed to change nickname, check bot's permissions";
         }
+        var msg = new DiscordInteractionResponseBuilder()
+            .AsEphemeral()
+            .WithContent(resultMsg);
+        await interaction.EditOriginalResponseAsync(new(msg)).ConfigureAwait(false);
     }
 
-    [Command("clear"), TextAlias("remove"), RequiresBotModRole]
-    [Description("Removes nickname restriction from particular user.")]
-    public async Task Remove(CommandContext ctx, [Description("Discord user to remove from forced nickname list.")] DiscordUser discordUser)
+    [Command("🧼 Remove enforcement"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    [Description("Remove nickname enforcement from a particular user")]
+    public static async ValueTask Remove(UserCommandContext ctx, DiscordUser discordUser)
     {
+        await ctx.DeferResponseAsync(true).ConfigureAwait(false);
         try
         {
-            if (discordUser.IsBotSafeCheck())
+            if (discordUser.IsBotSafeCheck() && ctx.Guild is not null)
             {
-                var mem = await ctx.Client.GetMemberAsync(ctx.Guild.Id, discordUser).ConfigureAwait(false);
-                if (mem is not null)
+                if (await ctx.Client.GetMemberAsync(ctx.Guild.Id, discordUser).ConfigureAwait(false) is DiscordMember mem)
                 {
                     await mem.ModifyAsync(m => m.Nickname = new(discordUser.Username)).ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
+                    await ctx.RespondAsync($"{Config.Reactions.Success} Reset server nickname to username", ephemeral: true).ConfigureAwait(false);
                 }
                 return;
             }
-                
+
             await using var db = new BotDb();
-            var enforcedRules = ctx.Guild == null
+            var enforcedRules = ctx.Guild is null
                 ? await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id).ToListAsync().ConfigureAwait(false)
                 : await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id && mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
-            if (enforcedRules.Count == 0)
+            if (enforcedRules is not {Count: >0})
                 return;
-                
+
             db.ForcedNicknames.RemoveRange(enforcedRules);
             await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.ReactWithAsync(Config.Reactions.Success).ConfigureAwait(false);
+            if (ctx.Guild is null)
+                await ctx.RespondAsync($"{Config.Reactions.Success} Removed all nickname enforcements", ephemeral: true).ConfigureAwait(false);
+            else
+                await ctx.RespondAsync($"{Config.Reactions.Success} Removed server nickname enforcement", ephemeral: true).ConfigureAwait(false);
         }
         catch (Exception e)
         {
             Config.Log.Error(e);
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Failed to reset user nickname").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to reset user nickname", ephemeral: true).ConfigureAwait(false);
         }
     }
 
+    /*
     [Command("cleanup"), TextAlias("clean", "fix"), RequiresBotModRole]
     [Description("Removes zalgo from specified user nickname")]
     public async Task Cleanup(CommandContext ctx, [Description("Discord user to clean up")] DiscordUser discordUser)
@@ -154,7 +185,7 @@ internal sealed class ForcedNicknames
             await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}").ConfigureAwait(false);
             return;
         }
-        
+
         var name = member.DisplayName;
         var newName = UsernameZalgoMonitor.StripZalgo(name, discordUser.Username, discordUser.Id);
         if (name == newName)
@@ -173,10 +204,11 @@ internal sealed class ForcedNicknames
             }
         }
     }
-
-    [Command("dump")]
-    [Description("Prints hexadecimal binary representation of an UTF-8 encoded user name for diagnostic purposes")]
-    public async Task Dump(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
+    */
+    
+    [Command("🔍 dump"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    [Description("Print hexadecimal binary representation of an UTF-8 encoded user name for diagnostic purposes")]
+    public static async ValueTask Dump(UserCommandContext ctx, DiscordUser discordUser)
     {
         var name = discordUser.Username;
         var nameBytes = StringUtils.Utf8.GetBytes(name);
@@ -189,20 +221,12 @@ internal sealed class ForcedNicknames
             hex = BitConverter.ToString(nameBytes).Replace('-', ' ');
             result += "\nNickname: " + hex;
         }
-        await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
+        await ctx.RespondAsync(result, ephemeral: true).ConfigureAwait(false);
     }
 
-    [Command("generate"), TextAlias("gen", "suggest")]
-    [Description("Generates random name for specified user")]
-    public async Task Generate(CommandContext ctx, [Description("Discord user to dump")] DiscordUser discordUser)
-    {
-        var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
-        await ctx.Channel.SendMessageAsync(newName).ConfigureAwait(false);
-    }
-
-    [Command("autorename"), TextAlias("auto"), RequiresBotModRole]
-    [Description("Sets automatically generated nickname without enforcing it")]
-    public async Task Autorename(CommandContext ctx, [Description("Discord user to rename")] DiscordUser discordUser)
+    [Command("📝 Rename automatically"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    [Description("Set automatically generated nickname without enforcing it")]
+    public static async ValueTask Autorename(UserCommandContext ctx, DiscordUser discordUser)
     {
         var newName = UsernameZalgoMonitor.GenerateRandomName(discordUser.Id);
         try
@@ -210,18 +234,19 @@ internal sealed class ForcedNicknames
             if (await ctx.Client.GetMemberAsync(discordUser).ConfigureAwait(false) is { } member)
             {
                 await member.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
-                await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed user to {newName}", true).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Success} Renamed user to {newName}", ephemeral: true).ConfigureAwait(false);
             }
             else
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Couldn't resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}").ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}", ephemeral: true).ConfigureAwait(false);
         }
         catch (Exception e)
         {
             Config.Log.Warn(e, $"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to rename user to {newName}").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to rename user to {newName}", ephemeral: true).ConfigureAwait(false);
         }
     }
-        
+
+    /*
     [Command("list"), RequiresBotModRole]
     [Description("Lists all users who has restricted nickname.")]
     public async Task List(CommandContext ctx)
@@ -257,6 +282,6 @@ internal sealed class ForcedNicknames
             previousUser = forcedNickname.UserId;
         }
         await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
-    } 
+    }
+    */
 }
-*/

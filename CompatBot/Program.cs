@@ -227,7 +227,7 @@ internal static class Program
                             DiscordInviteFilter.OnMessageCreated,
                         ],
                         [
-                            Watchdog.OnMessageCreated,
+                            //Watchdog.OnMessageCreated,
                             GlobalMessageCache.OnMessageCreated,
                             mediaScreenshotMonitor.OnMessageCreated,
                             ProductCodeLookup.OnMessageCreated,
@@ -291,7 +291,7 @@ internal static class Program
             using var client = clientBuilder.Build();
             mediaScreenshotMonitor.Client = client;
 
-            Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
+            //Watchdog.DisconnectTimestamps.Enqueue(DateTime.UtcNow);
 
             try
             {
@@ -351,12 +351,12 @@ internal static class Program
             backgroundTasks = Task.WhenAll(
                 backgroundTasks,
                 NewBuildsMonitor.MonitorAsync(client),
-                Watchdog.Watch(client),
+                //Watchdog.Watch(client),
                 InviteWhitelistProvider.CleanupAsync(client),
                 UsernameValidationMonitor.MonitorAsync(client),
                 Psn.Check.MonitorFwUpdates(client, Config.Cts.Token),
-                Watchdog.SendMetrics(client),
-                Watchdog.CheckGCStats(),
+                //Watchdog.SendMetrics(client),
+                //Watchdog.CheckGCStats(),
                 mediaScreenshotMonitor.ProcessWorkQueue()
             );
 
@@ -388,8 +388,8 @@ internal static class Program
     private static async Task OnGuildAvailableAsync(DiscordClient c, GuildAvailableEventArgs gaArgs)
     {
         await BotStatusMonitor.RefreshAsync(c).ConfigureAwait(false);
-        Watchdog.DisconnectTimestamps.Clear();
-        Watchdog.TimeSinceLastIncomingMessage.Restart();
+        //Watchdog.DisconnectTimestamps.Clear();
+        //Watchdog.TimeSinceLastIncomingMessage.Restart();
         if (gaArgs.Guild.Id != Config.BotGuildId)
         {
 #if DEBUG
