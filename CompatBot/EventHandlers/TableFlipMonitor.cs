@@ -16,6 +16,9 @@ internal static partial class TableFlipMonitor
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
+        if (!args.Channel.IsSpamChannel() && !args.Channel.IsOfftopicChannel())
+            return;
+
         /*
          * (╯°□°）╯︵ ┻━┻
          * (ノ ゜Д゜)ノ ︵ ┻━┻
@@ -47,7 +50,8 @@ internal static partial class TableFlipMonitor
             if (content.Trim() == "🥠")
             {
                 EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
-                await Fortune.ShowFortune(args.Message, args.Author).ConfigureAwait(false);
+                if (await Fortune.GetFortuneAsync(args.Author).ConfigureAwait(false) is {Length: >0} fortune)
+                    await args.Message.RespondAsync(fortune).ConfigureAwait(false);
                 return;
             }
 
