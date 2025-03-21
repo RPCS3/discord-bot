@@ -118,7 +118,7 @@ internal partial class Sudo
             }
         }
 
-        [Command("import_metacritic"), TextAlias("importmc", "imc"), TriggersTyping]
+        [Command("import_metacritic"), TextAlias("importmc", "imc")]
         [Description("Imports Metacritic database dump and links it to existing items")]
         public async Task ImportMc(CommandContext ctx)
         {
