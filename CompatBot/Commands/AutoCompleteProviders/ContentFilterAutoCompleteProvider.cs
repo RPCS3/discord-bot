@@ -28,7 +28,7 @@ public class ContentFilterAutoCompleteProvider: IAutoCompleteProvider
                 .Take(25);
             var substringMatches= db.Piracystring
                 .Where(i => i.Id.ToString().Contains(prefix) || i.String.Contains(prefix))
-                .Take(25);
+                .Take(50);
             result = prefixMatches
                 .Concat(substringMatches)
                 .Distinct()
