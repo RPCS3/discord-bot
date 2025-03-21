@@ -1,6 +1,8 @@
-﻿namespace CompatBot.Commands;
+﻿using CommunityToolkit.HighPerformance;
 
-internal sealed class Minesweeper
+namespace CompatBot.Commands;
+
+internal static class Minesweeper
 {
 	//private static readonly string[] Numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
 	private static readonly string[] Numbers = ["０", "１", "２", "３", "４", "５", "６", "７", "８", "９"];
@@ -29,45 +31,38 @@ internal sealed class Minesweeper
 		Mine = 255,
 	}
 
-	[Command("minesweeper"), TextAlias("msgen")]
-	[LimitedToOfftopicChannel]
-	//[Cooldown(1, 30, CooldownBucketType.Channel)]
-	[Description("Generates a minesweeper field with specified parameters")]
-	public async Task Generate(CommandContext ctx,
-		[Description("Width of the field")] int width = 14,
-		[Description("Height of the field")] int height = 14,
-		[Description("Number of mines")] int mineCount = 30)
+	[Command("minesweeper")]
+	[Description("Generate a minesweeper field with specified parameters")]
+	public static async ValueTask Generate(
+		SlashCommandContext ctx,
+		[Description("Width of the field"), MinMaxValue(3)]
+		int width = 14,
+		[Description("Height of the field"), MinMaxValue(3, 98)]
+		int height = 14,
+		[Description("Number of mines"), MinMaxValue(1)]
+		int mines = 30
+	)
 	{
-		if (width < 3 || height < 3 || mineCount < 1)
-		{
-			await ctx.Channel.SendMessageAsync("Invalid generation parameters").ConfigureAwait(false);
-			return;
-		}
-
-		var header = $"{mineCount}x💣\n";
+		var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
+		var header = $"{mines}x💣\n";
 		var footer = "If something is cut off, blame Discord";
 		var maxMineCount = (width - 1) * (height - 1) * 2 / 3;
-		if (mineCount > maxMineCount)
+		if (mines > maxMineCount)
 		{
-			await ctx.Channel.SendMessageAsync("Isn't this a bit too many mines 🤔").ConfigureAwait(false);
+			await ctx.RespondAsync("Isn't this a bit too many mines 🤔", ephemeral: ephemeral).ConfigureAwait(false);
 			return;
 		}
 
-		if (height > 98)
-		{
-			await ctx.Channel.SendMessageAsync("Too many lines for one message, Discord would truncate the result randomly").ConfigureAwait(false);
-			return;
-		}
-
-		var msgLen = (4 * width * height - 4) + (height - 1) + mineCount * MaxBombLength + (width * height - mineCount) * "0️⃣".Length + header.Length;
+		var msgLen = (4 * width * height - 4) + (height - 1) + mines * MaxBombLength + (width * height - mines) * Numbers[0].Length + header.Length;
 		if (width * height > 198 || msgLen > EmbedPager.MaxMessageLength) // for some reason discord would cut everything beyond 198 cells even if the content length is well within the limits
 		{
-			await ctx.Channel.SendMessageAsync("Requested field size is too large for one message").ConfigureAwait(false);
+			await ctx.RespondAsync("Requested field size is too large for one message", ephemeral: ephemeral).ConfigureAwait(false);
 			return;
 		}
 
+		await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
 		var rng = new Random();
-		var field = GenerateField(width, height, mineCount, rng);
+		var field = GenerateField(width, height, mines, rng);
 		var result = new StringBuilder(msgLen).Append(header);
 		var bomb = rng.NextDouble() > 0.9 ? Bombs[rng.Next(Bombs.Length)] : Bombs[0];
 		var needOneOpenCell = true;
@@ -87,13 +82,13 @@ internal sealed class Minesweeper
 			result.Append('\n');
 		}
 		result.Append(footer);
-		await ctx.Channel.SendMessageAsync(result.ToString()).ConfigureAwait(false);
+		await ctx.RespondAsync(result.ToString(), ephemeral: ephemeral).ConfigureAwait(false);
 	}
 
 	private static byte[,] GenerateField(int width, int height, in int mineCount, in Random rng)
 	{
 		var len = width * height;
-		var cells = new byte[len];
+		Span<byte> cells = stackalloc byte[len];
 		// put mines
 		for (var i = 0; i < mineCount; i++)
 			cells[i] = (byte)CellVal.Mine;
@@ -105,25 +100,25 @@ internal sealed class Minesweeper
 			(cells[i], cells[j]) = (cells[j], cells[i]);
 		}
 		var result = new byte[height, width];
-		Buffer.BlockCopy(cells, 0, result, 0, len);
+		cells.CopyTo(result.AsSpan());
 
 		//update mine indicators
-		byte get(int x, int y) => x < 0 || x >= width || y < 0 || y >= height ? (byte)0 : result[y, x];
+		byte Get(int x, int y) => x < 0 || x >= width || y < 0 || y >= height ? (byte)0 : result[y, x];
 
-		byte countMines(int x, int y)
+		byte CountMines(int x, int y)
 		{
 			byte c = 0;
 			for (var yy = y - 1; yy <= y + 1; yy++)
 			for (var xx = x - 1; xx <= x + 1; xx++)
-				if ((CellVal)get(xx, yy) == CellVal.Mine)
+				if ((CellVal)Get(xx, yy) is CellVal.Mine)
 					c++;
 			return c;
 		}
 
 		for (var y = 0; y < height; y++)
 		for (var x = 0; x < width; x++)
-			if ((CellVal)result[y, x] != CellVal.Mine)
-				result[y, x] = countMines(x, y);
+			if ((CellVal)result[y, x] is not CellVal.Mine)
+				result[y, x] = CountMines(x, y);
 		return result;
 	}
 }
