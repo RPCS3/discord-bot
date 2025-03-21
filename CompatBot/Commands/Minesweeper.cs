@@ -14,28 +14,27 @@ internal static class Minesweeper
 		MaxBombLength = Bombs.Select(b => b.Length).Max();
 	}
 
-	private enum CellVal: byte
+	[Flags]
+	private enum CellVal : byte
 	{
-		Zero = 0,
-		One = 1,
-		Two = 2,
-		Three = 3,
-		Four = 4,
-		Five = 5,
-		Six = 6,
-		Seven = 7,
-		Eight = 8,
-			
-		OpenZero = 100,
-
-		Mine = 255,
+		Zero  = 0x00,
+		One   = 0x01,
+		Two   = 0x02,
+		Three = 0x03,
+		Four  = 0x04,
+		Five  = 0x05,
+		Six   = 0x06,
+		Seven = 0x07,
+		Eight = 0x08,
+		Open  = 0x10,
+		Mine  = 0x80,
 	}
 
 	[Command("minesweeper")]
 	[Description("Generate a minesweeper field with specified parameters")]
 	public static async ValueTask Generate(
 		SlashCommandContext ctx,
-		[Description("Width of the field"), MinMaxValue(3)]
+		[Description("Width of the field"), MinMaxValue(3, 255)]
 		int width = 14,
 		[Description("Height of the field"), MinMaxValue(3, 98)]
 		int height = 14,
@@ -62,20 +61,20 @@ internal static class Minesweeper
 
 		await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
 		var rng = new Random();
-		var field = GenerateField(width, height, mines, rng);
+		var len = width * height;
+		Span<CellVal> buff = stackalloc CellVal[len];
+		GenerateField(buff, width, height, mines, rng);
+		OpenZeroCells(buff, width, height, mines, rng);
 		var result = new StringBuilder(msgLen).Append(header);
 		var bomb = rng.NextDouble() > 0.9 ? Bombs[rng.Next(Bombs.Length)] : Bombs[0];
-		var needOneOpenCell = true;
+		var field = buff.AsSpan2D(height, width);
 		for (var y = 0; y < height; y++)
 		{
 			for (var x = 0; x < width; x++)
 			{
-				var c = (CellVal)field[y, x] == CellVal.Mine ? bomb : Numbers[field[y, x]];
-				if (needOneOpenCell && field[y, x] == 0)
-				{
+				var c = field[y, x] is CellVal.Mine ? bomb : Numbers[(byte)field[y, x] & 0x0f];
+				if (field[y, x].HasFlag(CellVal.Open))
 					result.Append(c);
-					needOneOpenCell = false;
-				}
 				else
 					result.Append("||").Append(c).Append("||");
 			}
@@ -85,13 +84,12 @@ internal static class Minesweeper
 		await ctx.RespondAsync(result.ToString(), ephemeral: ephemeral).ConfigureAwait(false);
 	}
 
-	private static byte[,] GenerateField(int width, int height, in int mineCount, in Random rng)
+	private static void GenerateField(Span<CellVal> cells, int width, int height, in int mineCount, in Random rng)
 	{
-		var len = width * height;
-		Span<byte> cells = stackalloc byte[len];
+		var len = cells.Length;
 		// put mines
 		for (var i = 0; i < mineCount; i++)
-			cells[i] = (byte)CellVal.Mine;
+			cells[i] = CellVal.Mine;
 
 		//shuffle the board
 		for (var i = 0; i < len - 1; i++)
@@ -99,26 +97,82 @@ internal static class Minesweeper
 			var j = rng.Next(i, len);
 			(cells[i], cells[j]) = (cells[j], cells[i]);
 		}
-		var result = new byte[height, width];
-		cells.CopyTo(result.AsSpan());
+		var result = cells.AsSpan2D(height, width);
 
 		//update mine indicators
-		byte Get(int x, int y) => x < 0 || x >= width || y < 0 || y >= height ? (byte)0 : result[y, x];
+		CellVal Get(Span2D<CellVal> f, int x, int y) => x < 0 || x >= width || y < 0 || y >= height ? 0 : f[y, x];
 
-		byte CountMines(int x, int y)
+		CellVal CountMines(Span2D<CellVal> f, int x, int y)
 		{
-			byte c = 0;
+			CellVal c = 0;
 			for (var yy = y - 1; yy <= y + 1; yy++)
 			for (var xx = x - 1; xx <= x + 1; xx++)
-				if ((CellVal)Get(xx, yy) is CellVal.Mine)
+				if (Get(f, xx, yy) is CellVal.Mine)
 					c++;
 			return c;
 		}
 
 		for (var y = 0; y < height; y++)
 		for (var x = 0; x < width; x++)
-			if ((CellVal)result[y, x] is not CellVal.Mine)
-				result[y, x] = CountMines(x, y);
-		return result;
+			if (result[y, x] is not CellVal.Mine)
+				result[y, x] = CountMines(result, x, y);
+	}
+
+	private static void OpenZeroCells(Span<CellVal> cells, in int width, in int height, in int mineCount,  in Random rng)
+	{
+		var field = cells.AsSpan2D(height, width);
+		var len = cells.Length;
+		int startPos;
+		for (startPos = rng.Next(len); startPos < len; startPos = (startPos + 1) % len)
+			if (cells[startPos] is 0)
+				break;
+		var sy = (byte)(startPos / width);
+		var sx = (byte)(startPos - sy * width);
+		Span<(byte x, byte y)> curWave = stackalloc (byte, byte)[len - mineCount];
+		Span<(byte x, byte y)> nextWave = stackalloc (byte, byte)[len - mineCount];
+		var curWaveSize = 0;
+		var nextWaveSize = 0;
+
+		void Push(Span2D<CellVal> f, int x, int y, Span<(byte x, byte y)> wave, ref int waveLen)
+		{
+			if (f[y, x] is 0)
+				wave[waveLen++] = ((byte)x, (byte)y);
+			f[y, x] |= CellVal.Open;
+		}
+		
+		Push(field, sx, sy, curWave, ref curWaveSize);
+		do
+		{
+			foreach (var (x, y) in curWave[..curWaveSize])
+			{
+				if (y > 0)
+				{
+					if (x > 0)
+						Push(field, x - 1, y - 1, nextWave, ref nextWaveSize);
+					Push(field, x, y - 1, nextWave, ref nextWaveSize);
+					if (x < width - 1)
+						Push(field, x + 1, y - 1, nextWave, ref nextWaveSize);
+				}
+				{
+					if (x > 0)
+						Push(field, x - 1, y, nextWave, ref nextWaveSize);
+					Push(field, x, y, nextWave, ref nextWaveSize);
+					if (x < width - 1)
+						Push(field, x + 1, y, nextWave, ref nextWaveSize);
+				}
+				if (y < height - 1)
+				{
+					if (x > 0)
+						Push(field, x - 1, y + 1, nextWave, ref nextWaveSize);
+					Push(field, x, y + 1, nextWave, ref nextWaveSize);
+					if (x < width - 1)
+						Push(field, x + 1, y + 1, nextWave, ref nextWaveSize);
+				}
+			}
+			(curWaveSize, nextWaveSize) = (nextWaveSize, 0);
+			var tmp = curWave;
+			curWave = nextWave;
+			nextWave = tmp;
+		} while (curWaveSize > 0);
 	}
 }

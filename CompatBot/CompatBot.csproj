@@ -40,6 +40,7 @@
     <AdditionalFiles Include="..\win32_error_codes*.txt" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
     <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02465" />
     <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02465" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02465" />
