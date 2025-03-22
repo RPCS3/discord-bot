@@ -43,7 +43,7 @@ internal static partial class TableFlipMonitor
                 while (idx < content.Length && (idx = content.IndexOf("🎲", idx + 1)) > 0)
                     count++;
                 EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
-                await Misc.RollImpl(args.Message, $"{count}d6").ConfigureAwait(false);
+                await args.Message.RespondAsync(Misc.Roll($"{count}d6")).ConfigureAwait(false);
                 return;
             }
                 

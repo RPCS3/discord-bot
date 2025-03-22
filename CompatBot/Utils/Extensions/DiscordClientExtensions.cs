@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
 using DSharpPlus.Commands.Processors.TextCommands;
@@ -189,9 +190,11 @@ public static class DiscordClientExtensions
                 ? $"`{member.Username.Sanitize()}#{member.Discriminator}`"
                 : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
 
+    [return: NotNullIfNotNull(nameof(fallbackEmoji))]
     public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, string? fallbackEmoji = null)
         => GetEmoji(client, emojiName, fallbackEmoji == null ? null : DiscordEmoji.FromUnicode(fallbackEmoji));
 
+    [return: NotNullIfNotNull(nameof(fallbackEmoji))]
     public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, DiscordEmoji? fallbackEmoji)
     {
         if (string.IsNullOrEmpty(emojiName))

@@ -1,19 +1,21 @@
 ﻿using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
+using DSharpPlus.Commands.Processors.TextCommands;
 using HomoglyphConverter;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class Misc
+internal static partial class Misc
 {
     private static readonly Random rng = new();
 
     private static readonly List<string> EightBallAnswers =
     [
-        // keep this at 2:1:1 ratio 
+        // try to keep it at 2:1:1 ratio 
         // 70
         "It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it",
         "As I see it, yes", "Most likely", "Outlook good", "Yes", "Signs point to yes", // 10
@@ -58,22 +60,23 @@ internal sealed partial class Misc
         "In Discord no one can read your question if you don't type it",
         "In space no one can hear you scream; that's what you're doing right now",
         "Unfortunately there's no technology to transmit your question telepathically just yet",
-        "I'd say maybe, but I'd need to see your question first"
+        "I'd say maybe, but I'd need to see your question first",
     ];
 
     private static readonly List<string> EightBallTimeUnits =
     [
-        "second", "minute", "hour", "day", "week", "month", "year", "decade", "century", "millennium",
-        "night", "moon cycle", "solar eclipse", "blood moon", "complete emulator rewrite"
+        "second", "minute", "hour", "day", "week", "month", "year", "decade", "century", "millennium", "aeon",
+        "night", "moon cycle", "solar eclipse", "blood moon", "season change", "solar cycle", "sothic cycle",
+        "complete emulator rewrite", "generation",
     ];
 
     private static readonly List<string> RateAnswers =
     [
-        "Not so bad", "I likesss!", "Pretty good", "Guchi gud", "Amazing!",
+        "Not so bad", "I likesss!", "Pretty good", "Gucci gud", "Amazing!",
         "Glorious!", "Very good", "Excellent…", "Magnificent", "Rate bot says he likes, so you like too",
         "If you reorganize the words it says \"pretty cool\"", "I approve", "<:morgana_sparkle:315899996274688001>　やるじゃねーか！", "Not half bad 👍", "Belissimo!",
         "Cool. Cool cool cool", "I am in awe", "Incredible!", "Radiates gloriousness", "Like a breath of fresh air",
-        "Sunshine for my digital soul 🌞", "Fantastic like petrichor 🌦", "Joyous like a rainbow 🌈", "Unbelievably good", "Can't recommend enough",
+        "Sunshine for my digital soul 🌞", "Fantastic like petrichor 🌦️", "Joyous like a rainbow 🌈", "Unbelievably good", "Can't recommend enough",
         "Not perfect, but ok", "So good!", "A lucky find!", "💯 approved", "I don't see any downsides",
         "Here's my seal of approval 💮", "As good as it gets", "A benchmark to pursue", "Should make you warm and fuzzy inside", "Fabulous",
         "Cool like a cup of good wine 🍷", "Magical ✨", "Wondrous like a unicorn 🦄", "Soothing sight for these tired eyes", "Lovely",
@@ -105,7 +108,7 @@ internal sealed partial class Misc
     private static readonly char[] Suffixes = [',', '.', ':', ';', '!', '?', ')', '}', ']', '>', '+', '-', '/', '*', '=', '"', '\'', '`'];
     private static readonly char[] Prefixes = ['@', '(', '{', '[', '<', '!', '`', '"', '\'', '#'];
     private static readonly char[] EveryTimable = Separators.Concat(Suffixes).Concat(Prefixes).Distinct().ToArray();
-
+    
     private static readonly HashSet<string> Me = new(StringComparer.InvariantCultureIgnoreCase)
     {
         "I", "me", "myself", "moi"
@@ -123,10 +126,10 @@ internal sealed partial class Misc
     [GeneratedRegex(@"(?<num>\d+)?d(?<face>\d+)(?:\+(?<mod>\d+))?")]
     private static partial Regex DiceNotationPattern();
 
-    /*
     [Command("about"), Description("Bot information")]
-    public async Task About(CommandContext ctx)
+    public static async ValueTask About(SlashCommandContext ctx)
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
         var hcorion = ctx.Client.GetEmoji(":hcorion:", DiscordEmoji.FromUnicode("🍁"));
         var clienthax = ctx.Client.GetEmoji(":gooseknife:", DiscordEmoji.FromUnicode("🐱"));
         var embed = new DiscordEmbedBuilder
@@ -134,169 +137,160 @@ internal sealed partial class Misc
             Title = "RPCS3 Compatibility Bot",
             Url = "https://github.com/RPCS3/discord-bot",
             Color = DiscordColor.Purple,
-        }.AddField("Made by", $"""
-                               💮 13xforever
-                               🇭🇷 Roberto Anić Banić aka nicba1010
-                               {clienthax} clienthax
-                               """
-        ).AddField("People who ~~broke~~ helped test the bot", $"""
-                                                                🐱 Juhn
-                                                                {hcorion} hcorion
-                                                                🙃 TGE
-                                                                🍒 Maru
-                                                                ♋ Tourghool
-                                                                """
+        }.AddField(
+            "Made by",
+            $"""
+            💮 13xforever
+            🇭🇷 Roberto Anić Banić aka nicba1010
+            {clienthax} clienthax
+            """
+        ).AddField(
+            "People who ~~broke~~ helped test the bot",
+            $"""
+            🐱 Juhn
+            {hcorion} hcorion
+            🙃 TGE
+            🍒 Maru
+            ♋ Tourghool
+            """
         ).WithFooter($"Running {Config.GitRevision}");
-        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().AddEmbed(embed.Build()).AsEphemeral());
+        await ctx.RespondAsync(embed, ephemeral: ephemeral);
     }
 
     [Command("roll")]
-    [Description("Generates a random number between 1 and maxValue. Can also roll dices like `2d6`. Default is 1d6")]
-    public Task Roll(CommandContext ctx, [Description("Some positive natural number")] int maxValue = 6, [RemainingText, Description("Optional text")] string? comment = null)
-        => RollImpl(ctx.Message, maxValue);
-
-    [Command("roll")]
-    public Task Roll(CommandContext ctx, [RemainingText, Description("Dices to roll (i.e. 2d6+1 for two 6-sided dices with a bonus 1)")] string dices)
-        => RollImpl(ctx.Message, dices);
-    */
-        
-    internal static async Task RollImpl(DiscordMessage message, int maxValue = 6)
+    [Description("Generate random number between 1 and N, or roll dice(s)")]
+    public static async ValueTask Roll(
+        SlashCommandContext ctx,
+        [Description("Some number `N` for random number, or a list of dice (e.g. `2d6+1 1d3`)")]
+        string dice
+    )
     {
-        string? result = null;
-        if (maxValue > 1)
-            lock (rng) result = (rng.Next(maxValue) + 1).ToString();
-        if (string.IsNullOrEmpty(result))
-            await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), $"How is {maxValue} a positive natural number?").ConfigureAwait(false);
-        else
-            await message.Channel.SendMessageAsync(result).ConfigureAwait(false);
+        var ephemeral = !ctx.Channel.IsSpamChannel() || !ctx.Channel.IsOfftopicChannel();
+        var result = new DiscordInteractionResponseBuilder(Roll(dice)).AsEphemeral(ephemeral);
+        await ctx.RespondAsync(result.AsEphemeral(ephemeral)).ConfigureAwait(false);
     }
-        
-    internal static async Task RollImpl(DiscordMessage message, string dices)
+    
+    internal static DiscordMessageBuilder Roll(string dice)
     {
-        var result = "";
+        string? msg = null;
+        var result = new DiscordMessageBuilder();
+        if (int.TryParse(dice, out var maxValue))
+        {
+            if (maxValue > 1)
+                lock (rng) msg = (rng.Next(maxValue) + 1).ToString();
+            if (msg is {Length: >0})
+                return result.WithContent(msg);
+            return result.WithContent($"💩 How is {maxValue} a positive natural number?");
+        }
+
+        if (DiceNotationPattern().Matches(dice) is not { Count: > 0 and <= EmbedPager.MaxFields } matches)
+            return result.WithContent($"{Config.Reactions.Failure} Couldn't parse dice notation");
+        
         var embed = new DiscordEmbedBuilder();
-        if (dices is string dice && DiceNotationPattern().Matches(dice) is {Count: > 0 and <= EmbedPager.MaxFields } matches)
+        var grandTotal = 0;
+        foreach (Match m in matches)
         {
-            var grandTotal = 0;
-            foreach (Match m in matches)
+            msg = "";
+            if (!int.TryParse(m.Groups["num"].Value, out var num))
+                num = 1;
+            if (int.TryParse(m.Groups["face"].Value, out var face)
+                && num is > 0 and < 101
+                && face is > 1 and < 1001)
             {
-                result = "";
-                if (!int.TryParse(m.Groups["num"].Value, out var num))
-                    num = 1;
-                if (int.TryParse(m.Groups["face"].Value, out var face)
-                    && num is > 0 and < 101 
-                    && face is > 1 and < 1001)
+                List<int> rolls;
+                lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
+                var total = rolls.Sum();
+                var totalStr = total.ToString();
+                if (int.TryParse(m.Groups["mod"].Value, out var mod) && mod > 0)
+                    totalStr += $" + {mod} = {total + mod}";
+                var rollsStr = string.Join(' ', rolls);
+                if (rolls.Count > 1)
                 {
-                    List<int> rolls;
-                    lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
-                    var total = rolls.Sum();
-                    var totalStr = total.ToString();
-                    if (int.TryParse(m.Groups["mod"].Value, out var mod) && mod > 0)
-                        totalStr += $" + {mod} = {total + mod}";
-                    var rollsStr = string.Join(' ', rolls);
-                    if (rolls.Count > 1)
-                    {
-                        result = "Total: " + totalStr;
-                        result += "\nRolls: " + rollsStr;
-                    }
-                    else
-                        result = totalStr;
-                    grandTotal += total + mod;
-                    var diceDesc = $"{num}d{face}";
-                    if (mod > 0)
-                        diceDesc += "+" + mod;
-                    embed.AddField(diceDesc, result.Trim(EmbedPager.MaxFieldLength), true);
+                    msg = "Total: " + totalStr;
+                    msg += "\nRolls: " + rollsStr;
                 }
-            }
-            if (matches.Count == 1)
-                embed = null;
-            else
-            {
-                embed.Description = "Grand total: " + grandTotal;
-                embed.Title = $"Result of {matches.Count} dice rolls";
-                embed.Color = Config.Colors.Help;
-                result = null;
+                else
+                    msg = totalStr;
+                grandTotal += total + mod;
+                var diceDesc = $"{num}d{face}";
+                if (mod > 0)
+                    diceDesc += "+" + mod;
+                embed.AddField(diceDesc, msg.Trim(EmbedPager.MaxFieldLength), true);
             }
         }
+        if (matches.Count is 1)
+            embed = null;
         else
         {
-            await RollImpl(message).ConfigureAwait(false);
-            return;
+            embed.Description = "Grand total: " + grandTotal;
+            embed.Title = $"Result of {matches.Count} dice rolls";
+            embed.Color = Config.Colors.Help;
+            msg = null;
         }
 
-        if (string.IsNullOrEmpty(result) && embed == null)
-            await message.ReactWithAsync(DiscordEmoji.FromUnicode("💩"), "Invalid dice description passed").ConfigureAwait(false);
-        else if (embed != null)
-            await message.Channel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embed).WithReply(message.Id)).ConfigureAwait(false);
-        else
-            await message.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(result).WithReply(message.Id)).ConfigureAwait(false);
+        if (embed is not null)
+            return result.AddEmbed(embed);
+        if (msg is { Length: > 0 })
+            return result.WithContent(msg);
+        return result.WithContent($"{Config.Reactions.Failure} Couldn't parse dice notation");
     }
 
-    /*
-    [Command("random"), TextAlias("rng")]
-    //[Hidden, Cooldown(1, 3, CooldownBucketType.Channel)]
-    [Description("Provides random stuff")]
-    public async Task RandomShit(CommandContext ctx, string stuff)
+    [Command("random")]
+    internal static class Rng
     {
-        stuff = stuff.ToLowerInvariant();
-        switch (stuff)
+        [Command("game"), Description("Get random game")]
+        public static async ValueTask Game(SlashCommandContext ctx)
         {
-            case "game":
-            case "serial":
-            case "productcode":
-            case "product code":
+            var ephemeral = !ctx.Channel.IsSpamChannel();
+            var db = new ThumbnailDb();
+            await using var _ = db.ConfigureAwait(false);
+            var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
+            if (count is 0)
             {
-                var db = new ThumbnailDb();
-                await using var _ = db.ConfigureAwait(false);
-                var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
-                if (count == 0)
-                {
-                    await ctx.Channel.SendMessageAsync("Sorry, I have no information about a single game yet").ConfigureAwait(false);
-                    return;
-                }
-
-                var tmpRng = new Random().Next(count);
-                var productCode = await db.Thumbnail.Skip(tmpRng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
-                if (productCode == null)
-                {
-                    await ctx.Channel.SendMessageAsync("Sorry, there's something with my brains today. Try again or something").ConfigureAwait(false);
-                    return;
-                }
-
-                await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, [productCode.ProductCode]).ConfigureAwait(false);
-                break;
+                await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true)
+                    .ConfigureAwait(false);
+                return;
             }
-            default:
-                await Roll(ctx, comment: stuff).ConfigureAwait(false);
-                break;
+
+            int tmpRng;
+            lock (rng) tmpRng = rng.Next(count);
+            var productCode = await db.Thumbnail.Skip(tmpRng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
+            if (productCode is null)
+            {
+                await ctx.RespondAsync(
+                    $"{Config.Reactions.Failure} Sorry, there's something wrong with my brains today. Try again or something.",
+                    ephemeral: true).ConfigureAwait(false);
+                return;
+            }
+
+            var result = await ProductCodeLookup.LookupProductCodeAndFormatAsync(ctx.Client, [productCode.ProductCode])
+                .ConfigureAwait(false);
+            await ctx.RespondAsync(result[0].builder, ephemeral: ephemeral).ConfigureAwait(false);
         }
     }
-    */
 
     [Command("8ball")]
-    //[Cooldown(20, 60, CooldownBucketType.Channel)]
-    [Description("Provides a ~~random~~ objectively best answer to your question")]
-    public async Task EightBall(CommandContext ctx, [RemainingText, Description("A yes/no question")] string question)
+    [Description("Get ~~a random~~ an objectively best answer to your question")]
+    public static ValueTask EightBall(SlashCommandContext ctx, [Description("A yes or no question")] string question)
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
         question = question.ToLowerInvariant();
         if (question.StartsWith("when "))
-            await When(ctx, question[5..]).ConfigureAwait(false);
-        else
-        {
-            string answer;
-            var pool = string.IsNullOrEmpty(question) ? EightBallSnarkyComments : EightBallAnswers;
-            lock (rng) answer = pool[rng.Next(pool.Count)];
-            if (answer.StartsWith(':') && answer.EndsWith(':'))
-                answer = ctx.Client.GetEmoji(answer, "🔮");
-            await ctx.RespondAsync(answer).ConfigureAwait(false);
-        }
+            return When(ctx, question[5..]);
+        
+        string answer;
+        var pool = string.IsNullOrEmpty(question) ? EightBallSnarkyComments : EightBallAnswers;
+        lock (rng) answer = pool[rng.Next(pool.Count)];
+        if (answer.StartsWith(':') && answer.EndsWith(':'))
+            answer = ctx.Client.GetEmoji(answer, "🔮");
+        return ctx.RespondAsync(answer, ephemeral: ephemeral);
     }
 
-    [Command("when")]
-    //[Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
-    [Description("Advanced clairvoyance services to predict the time frame for specified event with maximum accuracy")]
-    public async Task When(CommandContext ctx, [RemainingText, Description("Something to happen")] string something = "")
+    [Command("when"), AllowedProcessors<TextCommandProcessor>]
+    [Description("Advanced clairvoyance service to predict the time frame for specified event with maximum accuracy")]
+    public static ValueTask When(CommandContext ctx, [RemainingText, Description("Something to happen")] string something = "")
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel() && !ModProvider.IsMod(ctx.User.Id);
         var question = something.Trim().TrimEnd('?').ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
         var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
         var crng = new Random((prefix + question).GetHashCode());
@@ -311,33 +305,33 @@ internal sealed partial class Misc
                 unit = "millennia";
         }
         var willWont = crng.NextDouble() < 0.5 ? "will" : "won't";
-        await ctx.RespondAsync($"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮").ConfigureAwait(false);
+        var result = $"🔮 My psychic powers tell me it {willWont} happen in the next **{number} {unit}** 🔮";
+        if (ctx is SlashCommandContext sctx)
+            return sctx.RespondAsync(result, ephemeral: ephemeral);
+        return ctx.RespondAsync(result);
     }
 
-    [Command("how")]
-    //[Hidden, Cooldown(20, 60, CooldownBucketType.Channel)]
-    [Description("Advanced clairvoyance services to predict the exact amount of anything that could be measured")]
-    public class How
+    [Command("how"), AllowedProcessors<TextCommandProcessor>]
+    [Description("Advanced clairvoyance service to predict the exact amount of anything that could be measured")]
+    internal static class How
     {
         [Command("much"), TextAlias("many")]
-        [Description("Advanced clairvoyance services to predict the exact amount of anything that could be measured")]
-        public async Task Much(CommandContext ctx, [RemainingText, Description("much or many ")] string ofWhat = "")
+        [Description("Advanced clairvoyance service to predict the exact amount of anything that could be measured")]
+        public static async ValueTask Much(TextCommandContext ctx, [RemainingText, Description("much or many ")] string ofWhat = "")
         {
             var question = ofWhat.Trim().TrimEnd('?').ToLowerInvariant().StripInvisibleAndDiacritics().ToCanonicalForm();
             var prefix = DateTime.UtcNow.ToString("yyyyMMddHH");
             var crng = new Random((prefix + question).GetHashCode());
             if (crng.NextDouble() < 0.0001)
-                await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
+                await ctx.RespondAsync("🔮 My psychic powers tell me the answer should be **3.50** 🔮").ConfigureAwait(false);
             else
                 await ctx.RespondAsync($"🔮 My psychic powers tell me the answer should be **{crng.Next(100) + 1}** 🔮").ConfigureAwait(false);
         }
     }
 
-    /*
     [Command("rate")]
-    //[Cooldown(20, 60, CooldownBucketType.Channel)]
     [Description("Gives a ~~random~~ expert judgment on the matter at hand")]
-    public async Task Rate(CommandContext ctx, [RemainingText, Description("Something to rate")] string whatever = "")
+    public static async ValueTask Rate(TextCommandContext ctx, [RemainingText, Description("Something to rate")] string whatever = "")
     {
         try
         {
@@ -398,15 +392,15 @@ internal sealed partial class Misc
                 {
                     if (mem is null || choiceFlags.Contains('f'))
                         return;
-                        
+
                     var roleList = mem.Roles.ToList();
                     if (roleList.Count == 0)
                         return;
-                        
+
                     var role = roleList[new Random((prefix + mem.Id).GetHashCode()).Next(roleList.Count)].Name?.ToLowerInvariant();
                     if (string.IsNullOrEmpty(role))
                         return;
-                        
+
                     if (role.EndsWith('s'))
                         role = role[..^1];
                     var article = Vowels.Contains(role[0]) ? "n" : "";
@@ -423,7 +417,7 @@ internal sealed partial class Misc
                     result.Append(word);
                     appended = true;
                 }
-                else if (word == "my")
+                else if (word is "my")
                 {
                     result.Append(ctx.Message.Author.Id).Append("'s");
                     appended = true;
@@ -444,11 +438,11 @@ internal sealed partial class Misc
                     result.Clear();
                     appended = true;
                 }
-                if (member is null && i == 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
+                if (member is null && i is 0 && await ctx.ResolveMemberAsync(word).ConfigureAwait(false) is DiscordMember m)
                     member = m;
-                if (member != null)
+                if (member is not null)
                 {
-                    if (suffix.Length == 0)
+                    if (suffix.Length is 0)
                         MakeCustomRoleRating(member);
                     if (!appended)
                     {
@@ -458,7 +452,7 @@ internal sealed partial class Misc
                 }
                 if (nekoMatch.Contains(word))
                 {
-                    if (i == 0 && suffix.Length == 0)
+                    if (i is 0 && suffix.Length is 0)
                     {
                         choices = RateAnswers.Concat(Enumerable.Repeat("Ugh", RateAnswers.Count * 3 * funMult)).ToList();
                         MakeCustomRoleRating(nekoMember);
@@ -468,7 +462,7 @@ internal sealed partial class Misc
                 }
                 if (kdMatch.Contains(word))
                 {
-                    if (i == 0 && suffix.Length == 0)
+                    if (i is 0 && suffix.Length is 0)
                     {
                         choices = RateAnswers.Concat(Enumerable.Repeat("RSX genius", RateAnswers.Count * 3 * funMult)).ToList();
                         MakeCustomRoleRating(kdMember);
@@ -513,41 +507,36 @@ internal sealed partial class Misc
         }
     }
 
-    [Command("meme"), TextAlias("memes")]
-    //[Cooldown(1, 30, CooldownBucketType.Channel), Hidden]
-    [Description("No, memes are not implemented yet")]
-    public async Task Memes(CommandContext ctx, [RemainingText] string? _ = null)
-    {
-        var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-        var msgBuilder = new DiscordMessageBuilder()
-            .WithContent($"{ctx.User.Mention} congratulations, you're the meme");
-        if (ch.Id == ctx.Channel.Id)
-            msgBuilder.WithReply(ctx.Message.Id);
-        await ch.SendMessageAsync(msgBuilder).ConfigureAwait(false);
-    }
-    */
-
-    /*
-    [Command("firmware"), TextAlias("fw")]
-    //[Cooldown(1, 10, CooldownBucketType.Channel)]
-    [Description("Checks for latest PS3 firmware version")]
-    public Task Firmware(CommandContext ctx) => Psn.Check.GetFirmwareAsync(ctx);
-    */
+    [Command("meme")]
+    [Description("Get access to #memes")]
+    public static ValueTask Memes(
+        SlashCommandContext ctx,
+        [Description("Default is `I understand that memeing is a serious business, and I swear my memes are funny`")]
+        string password
+    ) => ctx.RespondAsync(
+            new DiscordInteractionResponseBuilder()
+                .WithContent($"{ctx.User.Mention} congratulations, you're the meme")
+                .AsEphemeral()
+                .AddMention(RepliedUserMention.All)
+        );
 
     [Command("compare")]
-    //[Hidden]
-    [Description("Calculates the similarity metric of two phrases from 0 (completely different) to 1 (identical)")]
-    public Task Compare(CommandContext ctx, string strA, string strB)
+    [Description("Calculate the similarity metric of two phrases from 0 (completely different) to 1 (identical)")]
+    public static ValueTask Compare(TextCommandContext ctx, string strA, string strB)
     {
         var result = strA.GetFuzzyCoefficientCached(strB);
-        return ctx.Channel.SendMessageAsync($"Similarity score is {result:0.######}");
+        return ctx.RespondAsync($"Similarity score is {result:0.######}");
     }
 
-    /*
-    [Command("productcode"), TextAlias("pci", "decode")]
+    [Command("decode")]
     [Description("Describe Playstation product code")]
-    public async Task ProductCode(CommandContext ctx, [RemainingText, Description("Product code such as BLUS12345 or SCES")] string productCode)
+    public static async ValueTask ProductCode(
+        SlashCommandContext ctx,
+        [Description("Product code such as NPEB or BLUS12345"), MinMaxLength(4, 10)]
+        string productCode
+    )
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel();
         productCode = ProductCodeLookup.GetProductIds(productCode).FirstOrDefault() ?? productCode;
         productCode = productCode.ToUpperInvariant();
         if (productCode.Length > 3)
@@ -558,13 +547,12 @@ internal sealed partial class Misc
             {
                 var embed = await ctx.Client.LookupGameInfoAsync(productCode).ConfigureAwait(false);
                 embed.AddField("Product code info", info);
-                await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
+                await ctx.RespondAsync(embed, ephemeral: ephemeral).ConfigureAwait(false);
             }
             else
-                await ctx.Channel.SendMessageAsync(info).ConfigureAwait(false);
+                await ctx.RespondAsync(info, ephemeral: ephemeral).ConfigureAwait(false);
         }
         else
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid product code").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid product code", ephemeral: ephemeral).ConfigureAwait(false);
     }
-    */
 }

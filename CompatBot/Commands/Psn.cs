@@ -5,7 +5,7 @@ using PsnClient;
 
 namespace CompatBot.Commands;
 
-[Command("psn")]
+//[Command("psn")]
 [Description("Commands related to PSN metadata")]
 internal sealed partial class Psn
 {

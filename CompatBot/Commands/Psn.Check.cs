@@ -13,7 +13,7 @@ internal sealed partial class Psn
 {
     [Command("check")]
     [Description("Commands to check for various stuff on PSN")]
-    public sealed class Check
+    internal sealed class Check
     {
         private static string? latestFwVersion;
 
@@ -162,16 +162,19 @@ internal sealed partial class Psn
         }
         */
 
-        [Command("firmware"), TextAlias("fw")]
-        //[Cooldown(1, 10, CooldownBucketType.Channel)]
-        [Description("Checks for latest PS3 firmware version")]
-        public Task Firmware(CommandContext ctx) => GetFirmwareAsync(ctx);
+        [Command("firmware")]
+        [Description("Get the latest PS3 firmware")]
+        public static async ValueTask Firmware(SlashCommandContext ctx)
+        {
+            var ephemeral = !ctx.Channel.IsSpamChannel() && !ModProvider.IsMod(ctx.User.Id);
+            var embed = await GetFirmwareEmbedAsync().ConfigureAwait(false);
+            await ctx.RespondAsync(embed, ephemeral: ephemeral).ConfigureAwait(false);
+        }
 
-        internal static async Task GetFirmwareAsync(CommandContext ctx)
+        internal static async ValueTask<DiscordEmbed> GetFirmwareEmbedAsync()
         {
             var fwList = await Client.GetHighestFwVersionAsync(Config.Cts.Token).ConfigureAwait(false);
-            var embed = fwList.ToEmbed();
-            await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
+            return fwList.ToEmbed();
         }
 
         internal static async Task CheckFwUpdateForAnnouncementAsync(DiscordClient client, List<FirmwareInfo>? fwList = null)
