@@ -118,8 +118,6 @@ internal static class Starbucks
                 await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
             if (emoji == Config.Reactions.ShutUp && !isBacklog)
                 await ShutupAsync(client, user, message).ConfigureAwait(false);
-            if (emoji == Config.Reactions.BadUpdate && !isBacklog)
-                await BadUpdateAsync(client, user, message, emoji).ConfigureAwait(false);
 
             await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
         }
@@ -178,22 +176,6 @@ internal static class Starbucks
             return;
 
         await message.DeleteAsync().ConfigureAwait(false);
-    }
-
-    private static async Task BadUpdateAsync(DiscordClient client, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
-    {
-        if (message.Channel.Id != Config.BotChannelId)
-            return;
-
-        if (!await user.IsSmartlistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
-            return;
-
-        await Moderation.ToggleBadUpdateAnnouncementAsync(message).ConfigureAwait(false);
-        try
-        {
-            await message.DeleteReactionAsync(emoji, user).ConfigureAwait(false);
-        }
-        catch { }
     }
 
     private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)

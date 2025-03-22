@@ -5,7 +5,7 @@ using CompatBot.EventHandlers;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class Moderation
+internal static partial class Moderation
 {
 //    [Command("audit"), RequiresBotModRole]
     [Description("Commands to audit server things")]

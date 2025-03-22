@@ -1,11 +1,12 @@
 ﻿using CompatBot.Database;
 using CompatBot.Database.Providers;
+using CompatBot.EventHandlers;
 using DSharpPlus.Commands.Processors.MessageCommands;
 using DSharpPlus.Interactivity;
 
 namespace CompatBot.Commands;
 
-public class MessageMenuCommands
+internal static class MessageMenuCommands
 {
     /*
     [Command("🗨️ message")]
@@ -16,8 +17,7 @@ public class MessageMenuCommands
     [Command("💬 Explain"), SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask ShowToUser(MessageCommandContext ctx, DiscordMessage replyTo)
     {
-        var interactivity = ctx.Extension.ServiceProvider.GetService<InteractivityExtension>();
-        if (interactivity is null)
+        if (ctx.Extension.ServiceProvider.GetService<InteractivityExtension>() is not {} interactivity)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't get interactivity extension").ConfigureAwait(false);
             return;
@@ -50,5 +50,109 @@ public class MessageMenuCommands
         ).ConfigureAwait(false);
         var canPing = ModProvider.IsMod(ctx.User.Id);
         await Explain.SendExplanationAsync(result, term, replyTo, true, canPing).ConfigureAwait(false);
+    }
+
+    [Command("👮 Report to mods"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    public static async ValueTask Report(MessageCommandContext ctx, DiscordMessage message)
+    {
+        try
+        {
+            if (message.Reactions.Any(r => r.IsMe && r.Emoji == Config.Reactions.Moderated))
+            {
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Message was already reported", ephemeral: true).ConfigureAwait(false);
+                return;
+            }
+            
+            if (ctx.Extension.ServiceProvider.GetService<InteractivityExtension>() is not {} interactivity)
+            {
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't get interactivity extension").ConfigureAwait(false);
+                return;
+            }
+
+            var modal = new DiscordInteractionResponseBuilder()
+                .AsEphemeral()
+                .WithCustomId($"modal:report:{Guid.NewGuid():n}")
+                .WithTitle("Message Report")
+                .AddComponents(
+                    new DiscordTextInputComponent("Comment", "comment", "Describe why you report this message", required: false)
+                );
+            await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
+            var modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
+            if (modalResult.TimedOut)
+                return;
+            
+            modalResult.Result.Values.TryGetValue("comment", out var comment);
+            await ctx.Client.ReportAsync("👀 Message report", message, [ctx.Member], comment, ReportSeverity.Medium).ConfigureAwait(false);
+            await message.ReactWithAsync(Config.Reactions.Moderated).ConfigureAwait(false);
+            await modalResult.Result.Interaction.CreateResponseAsync(
+                DiscordInteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder()
+                    .WithContent($"{Config.Reactions.Success} Message was reported")
+                    .AsEphemeral()
+            ).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to report the message", ephemeral: true).ConfigureAwait(false);
+        }
+    }
+
+    [Command("🔍 Analyze log"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    public static async ValueTask Reanalyze(MessageCommandContext ctx, DiscordMessage message)
+    {
+        try
+        {
+            LogParsingHandler.EnqueueLogProcessing(ctx.Client, ctx.Channel, message, ctx.Member, true, true);
+        }
+        catch
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to enqueue log analysis", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+        await ctx.RespondAsync($"{Config.Reactions.Success} Message was enqueued for analysis", ephemeral: true).ConfigureAwait(false);
+
+    }
+  
+    [Command("👎 Toggle bad update"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    public static async ValueTask BadUpdate(MessageCommandContext ctx, DiscordMessage message)
+    {
+        if (message.Embeds is not [DiscordEmbed embed]
+            || message.Channel?.Id != Config.BotChannelId)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid update announcement message", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        var result = new DiscordEmbedBuilder(embed);
+        const string warningTitle = "Warning!";
+        if (embed.Color?.Value == Config.Colors.UpdateStatusGood.Value)
+        {
+            result = result.WithColor(Config.Colors.UpdateStatusBad);
+            result.ClearFields();
+            var warned = false;
+            foreach (var f in embed.Fields!)
+            {
+                if (!warned && f.Name!.EndsWith("download"))
+                {
+                    result.AddField(warningTitle, "This build is known to have severe problems, please avoid downloading.");
+                    warned = true;
+                }
+                result.AddField(f.Name!, f.Value!, f.Inline);
+            }
+        }
+        else if (embed.Color?.Value == Config.Colors.UpdateStatusBad.Value)
+        {
+            result = result.WithColor(Config.Colors.UpdateStatusGood);
+            result.ClearFields();
+            foreach (var f in embed.Fields!)
+            {
+                if (f.Name is warningTitle)
+                    continue;
+
+                result.AddField(f.Name!, f.Value!, f.Inline);
+            }
+        }
+        await message.UpdateOrCreateMessageAsync(message.Channel!, embed: result).ConfigureAwait(false);
+        await ctx.RespondAsync($"{Config.Reactions.Success} Done", ephemeral: true).ConfigureAwait(false);
     }
 }
