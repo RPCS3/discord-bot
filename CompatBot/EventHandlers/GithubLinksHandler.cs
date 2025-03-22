@@ -55,7 +55,10 @@ internal static partial class GithubLinksHandler
         if (GithubClient.Client.RateLimitRemaining - issuesToLookup.Count >= 10)
         {
             foreach (var issueId in issuesToLookup)
-                await Pr.LinkIssue(c, args.Message, issueId).ConfigureAwait(false);
+            {
+                if (await Pr.GetIssueLinkMessageAsync(c, issueId).ConfigureAwait(false) is {} msg)
+                    await args.Message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+            }
         }
         else
         {
