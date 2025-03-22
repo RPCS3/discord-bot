@@ -59,7 +59,7 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static async Task RemoveReactionAsync(this DiscordMessage message, DiscordEmoji emoji)
+    public static async ValueTask RemoveReactionAsync(this DiscordMessage message, DiscordEmoji emoji)
     {
         try
         {
@@ -71,7 +71,7 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static async Task ReactWithAsync(this DiscordMessage message, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
+    public static async ValueTask ReactWithAsync(this DiscordMessage message, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
     {
         try
         {
@@ -89,9 +89,9 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static Task RemoveReactionAsync(this TextCommandContext ctx, DiscordEmoji emoji) => RemoveReactionAsync(ctx.Message, emoji);
+    public static ValueTask RemoveReactionAsync(this TextCommandContext ctx, DiscordEmoji emoji) => RemoveReactionAsync(ctx.Message, emoji);
 
-    public static Task ReactWithAsync(this TextCommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
+    public static ValueTask ReactWithAsync(this TextCommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
         => ReactWithAsync(ctx.Message, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
 
     public static async Task<IReadOnlyCollection<DiscordMessage>> GetMessagesBeforeAsync(this DiscordChannel channel, ulong beforeMessageId, int limit = 100, DateTime? timeLimit = null)

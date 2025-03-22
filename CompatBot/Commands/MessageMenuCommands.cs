@@ -74,7 +74,14 @@ internal static class MessageMenuCommands
                 .WithCustomId($"modal:report:{Guid.NewGuid():n}")
                 .WithTitle("Message Report")
                 .AddComponents(
-                    new DiscordTextInputComponent("Comment", "comment", "Describe why you report this message", required: false)
+                    new DiscordTextInputComponent(
+                        "Comment",
+                        "comment",
+                        "Describe why you report this message",
+                        required: false,
+                        style: DiscordTextInputStyle.Paragraph,
+                        max_length: EmbedPager.MaxFieldLength
+                    )
                 );
             await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
             var modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);

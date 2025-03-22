@@ -43,7 +43,7 @@ public static class UsernameValidationMonitor
         {
             if (!once)
                 await Task.Delay(Config.ForcedNicknamesRecheckTimeInHours, Config.Cts.Token).ConfigureAwait(false);
-            if (!await Moderation.Audit.CheckLock.WaitAsync(0).ConfigureAwait(false))
+            if (!await Audit.CheckLock.WaitAsync(0).ConfigureAwait(false))
                 continue;
                 
             try
@@ -83,7 +83,7 @@ public static class UsernameValidationMonitor
             }
             finally
             {
-                Moderation.Audit.CheckLock.Release();
+                Audit.CheckLock.Release();
             }
         } while (!Config.Cts.IsCancellationRequested && !once);
     }
