@@ -322,7 +322,6 @@ internal static partial class LogParserResult
         "BCUS98144", "BCES00112", "NPEA90021", "NPUA80112", // NBA08
         "BLUS31152", "BLES01793", "BLJM60486", "NPUB31115", "NPEB01262", // Atelier Ayesha: The Alchemist of Dusk
         "BLES00103", "BLUS30052", "BLJM60072", "NPEB90043", "NPUB90063", // Blazing Angels 2: Secret Missions of WWII
-        "BLES00783", "BLUS30416", "BCAS25005", "BLJM67005", "MRTC00003", "BLJX94005", // FF13 remove after #8911 & #13231 is fixed
         "BLES00249", "BLES00250", "BLES00263", "BLUS30137", "NPEB90066", "NPUB90051", // robert ludlum remove after #14845 is fixed
         "BLES01796", "BLUS31381", "BLJM61068", "NPEB01332", "NPUB31231", "NPJB00415", // farming simulator
         "BLUS31465", "BLES02061", "BLES02062", "BLJM61208", "NPEB02064", "NPUB31547", // Assassin's Creed Rogue
