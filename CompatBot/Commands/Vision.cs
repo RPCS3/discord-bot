@@ -22,7 +22,6 @@ using SystemFonts = SixLabors.Fonts.SystemFonts;
 
 namespace CompatBot.Commands;
 
-//[Cooldown(1, 5, CooldownBucketType.Channel)]
 internal sealed class Vision
 {
     static Vision()

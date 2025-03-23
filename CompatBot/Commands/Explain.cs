@@ -21,7 +21,7 @@ internal static class Explain
 {
     private const string TermListTitle = "Defined terms";
 
-    [Command("show"), DefaultGroupCommand]
+    [Command("show")]
     [Description("Show explanation for specified term")]
     public static async ValueTask Show(
         SlashCommandContext ctx,

@@ -6,37 +6,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-/*
 [Command("syscall"), TextAlias("syscalls", "cell", "sce", "scecall", "scecalls"), LimitedToSpamChannel]
-[Description("Provides information about syscalls used by games")]
-internal sealed class Syscall
+internal static class Syscall
 {
-    [Command("search"), DefaultGroupCommand]
-    public async Task Search(CommandContext ctx, [RemainingText, Description("Product ID, module, or function name. **Case sensitive**")] string search)
+    [Command("search")]
+    [Description("Get information about system and firmware calls used by games")]
+    public static async ValueTask Search(
+        SlashCommandContext ctx,
+        [Description("Product ID, module, or function name. **Case sensitive**")]
+        string search
+    )
     {
-        if (string.IsNullOrEmpty(search))
-        {
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "No meaningful search query provided").ConfigureAwait(false);
-            return;
-        }
-
+        var ephemeral = !ctx.Channel.IsSpamChannel();
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(true);
         var productCodes = ProductCodeLookup.GetProductIds(search);
-        if (productCodes.Any())
+        if (productCodes.Count > 0)
         {
-            await ReturnSyscallsByGameAsync(ctx, productCodes.First()).ConfigureAwait(false);
-            return;
-        }
-
-        if (ctx.User.Id == 216724245957312512UL && !search.StartsWith("sys_", StringComparison.InvariantCultureIgnoreCase))
-        {
-            await ctx.Channel.SendMessageAsync($"This is not a _syscall_, {ctx.User.Mention}").ConfigureAwait(false);
+            await ReturnSyscallsByGameAsync(ctx, productCodes[0], ephemeral).ConfigureAwait(false);
             return;
         }
 
         await using var db = new ThumbnailDb();
         if (db.SyscallInfo.Any(sci => sci.Function == search))
         {
-            var productInfoList = db.SyscallToProductMap.AsNoTracking()
+            var productInfoList = db.SyscallToProductMap
+                .AsNoTracking()
                 .Where(m => m.SyscallInfo.Function == search)
                 .Include(m => m.Product)
                 .AsEnumerable()
@@ -47,11 +41,11 @@ internal sealed class Syscall
                 .GroupBy(m => m.Name, m => m.ProductCode, StringComparer.InvariantCultureIgnoreCase)
                 .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
                 .ToList();
-            if (groupedList.Any())
+            if (groupedList.Count > 0)
             {
                 var bigList = groupedList.Count >= Config.MaxSyscallResultLines;
                 var result = new StringBuilder();
-                var fullList = bigList ? new StringBuilder() : null;
+                var fullList = bigList ? new StringBuilder() : result;
                 result.AppendLine($"List of games using `{search}`:```");
                 var c = 0;
                 foreach (var gi in groupedList)
@@ -60,27 +54,37 @@ internal sealed class Syscall
                     if (c < Config.MaxSyscallResultLines)
                         result.AppendLine($"{gi.Key.Trim(60)} [{productIds}]");
                     if (bigList)
-                        fullList!.AppendLine($"{gi.Key} [{productIds}]");
+                        fullList.AppendLine($"{gi.Key} [{productIds}]");
                     c++;
                 }
-                await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
-                if (bigList)
+                if (bigList || result.Length > EmbedPager.MaxMessageLength)
                 {
                     await using var memoryStream = Config.MemoryStreamManager.GetStream();
                     await using var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8);
                     await streamWriter.WriteAsync(fullList).ConfigureAwait(false);
                     await streamWriter.FlushAsync().ConfigureAwait(false);
                     memoryStream.Seek(0, SeekOrigin.Begin);
-                    await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{search}.txt", memoryStream).WithContent($"See attached file for full list of {groupedList.Count} entries")).ConfigureAwait(false);
+                    var response = new DiscordInteractionResponseBuilder()
+                        .WithContent($"See attached file for full list of {groupedList.Count} entries")
+                        .AddFile($"{search}.txt", memoryStream)
+                        .AsEphemeral(ephemeral);
+                    await ctx.RespondAsync(response).ConfigureAwait(false);
                 }
+                else
+                    await ctx.RespondAsync(result.Append("```").ToString(), ephemeral: ephemeral).ConfigureAwait(false);
             }
             else
-                await ctx.Channel.SendMessageAsync($"No games found that use `{search}`").ConfigureAwait(false);
+                await ctx.RespondAsync($"No games found that use `{search}`", ephemeral: ephemeral).ConfigureAwait(false);
         }
         else
         {
             var result = new StringBuilder("Unknown entity name");
-            var functions = await db.SyscallInfo.Select(sci => sci.Function).Distinct().ToListAsync().ConfigureAwait(false);
+            var functions = await db.SyscallInfo
+                .AsNoTracking()
+                .Select(sci => sci.Function)
+                .Distinct()
+                .ToListAsync()
+                .ConfigureAwait(false);
             var substrFuncs = functions.Where(f => f.Contains(search, StringComparison.InvariantCultureIgnoreCase));
             var fuzzyFuncs = functions
                 .Select(f => (name: f, score: search.GetFuzzyCoefficientCached(f)))
@@ -93,52 +97,55 @@ internal sealed class Syscall
                 .Distinct()
                 .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                 .ToList();
-            var functionsFound = functions.Any();
-            if (functionsFound)
+            if (functions.Count > 0)
             {
                 result.AppendLine(", possible functions:```");
                 foreach (var f in functions)
                     result.AppendLine(f);
                 result.AppendLine("```");
             }
-            await ctx.SendAutosplitMessageAsync(result).ConfigureAwait(false);
+            var pages = AutosplitResponseHelper.AutosplitMessage(result.ToString());
+            await ctx.RespondAsync(pages[0], ephemeral: ephemeral).ConfigureAwait(false);
         }
     }
 
     [Command("rename"), RequiresBotModRole]
     [Description("Provides an option to rename function call")]
-    public async Task Rename(CommandContext ctx, [Description("Old function name")] string oldFunctionName, [Description("New function name")] string newFunctionName)
+    public static async ValueTask Rename(
+        SlashCommandContext ctx,
+        [Description("Old function name")]
+        string oldFunctionName,
+        [Description("New function name")]
+        string newFunctionName
+    )
     {
         await using var db = new ThumbnailDb();
         var oldMatches = await db.SyscallInfo.Where(sci => sci.Function == oldFunctionName).ToListAsync().ConfigureAwait(false);
-        if (oldMatches.Count == 0)
+        if (oldMatches.Count is 0)
         {
-            await ctx.Channel.SendMessageAsync($"Function `{oldFunctionName}` could not be found").ConfigureAwait(false);
-            await Search(ctx, oldFunctionName).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Function `{oldFunctionName}` could not be found", ephemeral: true).ConfigureAwait(false);
             return;
         }
             
         if (oldMatches.Count > 1)
         {
-            await ctx.Channel.SendMessageAsync("More than one matching function was found, I can't handle this right now 😔").ConfigureAwait(false);
-            await Search(ctx, oldFunctionName).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} More than one matching function was found, I can't handle this right now 😔", ephemeral: true).ConfigureAwait(false);
             return;
         }
-            
-        var conflicts = await db.SyscallInfo.Where(sce => sce.Function == newFunctionName).AnyAsync().ConfigureAwait(false);
-        if (conflicts)
+
+        if (await db.SyscallInfo.Where(sce => sce.Function == newFunctionName).AnyAsync().ConfigureAwait(false))
         {
-            await ctx.Channel.SendMessageAsync($"There is already a function `{newFunctionName}`").ConfigureAwait(false);
-            await Search(ctx, newFunctionName).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} There is already a function `{newFunctionName}`", ephemeral: true).ConfigureAwait(false);
             return;
         }
-            
+
+        var ephemeral = !ctx.Channel.IsSpamChannel();
         oldMatches[0].Function = newFunctionName;
         await db.SaveChangesAsync().ConfigureAwait(false);
-        await ctx.Channel.SendMessageAsync($"Function `{oldFunctionName}` was successfully renamed to `{newFunctionName}`").ConfigureAwait(false);
+        await ctx.RespondAsync($"{Config.Reactions.Success} Function `{oldFunctionName}` was successfully renamed to `{newFunctionName}`", ephemeral: ephemeral).ConfigureAwait(false);
     }
 
-    private static async Task ReturnSyscallsByGameAsync(CommandContext ctx, string productId)
+    private static async ValueTask ReturnSyscallsByGameAsync(SlashCommandContext ctx, string productId, bool ephemeral)
     {
         productId = productId.ToUpperInvariant();
         await using var db = new ThumbnailDb();
@@ -151,7 +158,7 @@ internal sealed class Syscall
             .AsEnumerable()
             .OrderBy(sci => sci.Function.TrimStart('_'))
             .ToList();
-        if (sysInfoList.Any())
+        if (sysInfoList.Count > 0)
         {
             var result = new StringBuilder();
             foreach (var sci in sysInfoList)
@@ -161,10 +168,13 @@ internal sealed class Syscall
             await streamWriter.WriteAsync(result).ConfigureAwait(false);
             await streamWriter.FlushAsync().ConfigureAwait(false);
             memoryStream.Seek(0, SeekOrigin.Begin);
-            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{productId} syscalls.txt", memoryStream).WithContent($"List of syscalls used by `{title}`")).ConfigureAwait(false);
+            var response = new DiscordInteractionResponseBuilder()
+                .WithContent($"List of syscalls used by `{title}`")
+                .AddFile($"{productId} syscalls.txt", memoryStream)
+                .AsEphemeral(ephemeral);
+            await ctx.RespondAsync(response).ConfigureAwait(false);
         }
         else
-            await ctx.Channel.SendMessageAsync($"No information available for `{title}`").ConfigureAwait(false);
+            await ctx.RespondAsync($"No information available for `{title}`", ephemeral: ephemeral).ConfigureAwait(false);
     }
 }
-*/

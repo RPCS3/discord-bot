@@ -11,7 +11,7 @@ internal static class BotMath
         License.iConfirmNonCommercialUse("RPCS3");
     }
     
-    [Command("calculate"), DefaultGroupCommand]
+    [Command("calculate")]
     [Description("Math; there you go, Juhn")]
     public static async ValueTask Calc(SlashCommandContext ctx, [Description("Math expression or `help` for syntax link")] string expression)
     {

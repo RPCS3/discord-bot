@@ -14,7 +14,7 @@ internal static partial class Events
     [GeneratedRegex(@"((?<days>\d+)(\.|d\s*))?((?<hours>\d+)(\:|h\s*))?((?<mins>\d+)m?)?", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture)]
     private static partial Regex Duration();
 
-    [Command("countdown"), DefaultGroupCommand]
+    [Command("countdown")]
     [Description("Show countdown for the nearest known event")]
     public static async ValueTask Countdown(
         SlashCommandContext ctx,
