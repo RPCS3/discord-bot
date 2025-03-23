@@ -2,6 +2,7 @@
 using System.Net.Http;
 using CompatApiClient.Compression;
 using CompatBot.Commands.Converters;
+using CompatBot.Database.Providers;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,9 +11,9 @@ namespace CompatBot.Commands;
 
 [Command("sudo"), RequiresBotSudoerRole]
 [Description("Used to manage bot moderators and sudoers")]
-internal static class Sudo
+internal static partial class Sudo
 {
-    [Command("say")]
+    [Command("say"), RequiresDm]
     [Description("Make bot say things. Specify #channel or put message link in the beginning to specify where to reply")]
     public static async ValueTask Say(
         TextCommandContext ctx,
@@ -31,22 +32,9 @@ internal static class Sudo
             }
             else
             {
-                await using var scope = ctx.Extension.ServiceProvider.CreateAsyncScope();
-                if (await TextOnlyDiscordChannelConverter.ConvertAsync(new TextConverterContext()
-                    {
-                        User = ctx.User,
-                        Channel = ctx.Channel,
-                        Message = ctx.Message,
-                        Command = ctx.Command,
-                        RawArguments = chOrLink,
-
-                        PrefixLength = ctx.Prefix?.Length ?? 0,
-                        Splicer = DefaultTextArgumentSplicer.Splice,
-                        Extension = ctx.Extension,
-                        ServiceScope = scope,
-                    }).ConfigureAwait(false) is { HasValue: true } ch)
+                if (await ctx.ParseChannelNameAsync(chOrLink).ConfigureAwait(false) is {} ch)
                 {
-                    channel = ch.Value;
+                    channel = ch;
                     message = msg;
                 }
             }
@@ -79,7 +67,7 @@ internal static class Sudo
         await typingTask.ConfigureAwait(false);
     }
 
-    [Command("react")]
+    [Command("react"), RequiresDm]
     [Description("Add reactions to the specified message")]
     public static async ValueTask React(
         TextCommandContext ctx,
@@ -134,7 +122,11 @@ internal static class Sudo
 
     [Command("salt")]
     [Description("Regenerate salt for data anonymization. This WILL affect Hardware DB deduplication.")]
-    public static async ValueTask ResetCryptoSalt(SlashCommandContext ctx, [Description("Should be `I understand this will break hardware survey deduplication`")] string confirmation)
+    public static async ValueTask ResetCryptoSalt(
+        SlashCommandContext ctx,
+        [Description("Should be `I understand this will break hardware survey deduplication`")]
+        string confirmation
+    )
     {
         if (confirmation is not "I understand this will break hardware survey deduplication")
         {
@@ -145,5 +137,42 @@ internal static class Sudo
         var salt = new byte[256 / 8];
         System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
         await Bot.Configuration.Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt)).ConfigureAwait(false);
+    }
+
+    [Command("mod"), LimitedToSpamChannel]
+    internal static class Mod
+    {
+        [Command("list")]
+        [Description("List all bot moderators")]
+        public static async ValueTask List(TextCommandContext ctx)
+        {
+            var table = new AsciiTable(
+                new AsciiColumn( "Username", maxWidth: 32),
+                new AsciiColumn("Sudo")
+            );
+            foreach (var mod in ModProvider.Mods.Values.OrderByDescending(m => m.Sudoer))
+                table.Add(await ctx.GetUserNameAsync(mod.DiscordId), mod.Sudoer ? "✅" :"");
+            await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
+        }
+    }
+    
+    private static async ValueTask<DiscordChannel?> ParseChannelNameAsync(this TextCommandContext ctx, string channelName)
+    {
+        await using var scope = ctx.Extension.ServiceProvider.CreateAsyncScope();
+        if (await TextOnlyDiscordChannelConverter.ConvertAsync(new TextConverterContext()
+            {
+                User = ctx.User,
+                Channel = ctx.Channel,
+                Message = ctx.Message,
+                Command = ctx.Command,
+                RawArguments = channelName,
+
+                PrefixLength = ctx.Prefix?.Length ?? 0,
+                Splicer = DefaultTextArgumentSplicer.Splice,
+                Extension = ctx.Extension,
+                ServiceScope = scope,
+            }).ConfigureAwait(false) is { HasValue: true } ch)
+            return ch.Value;
+        return null;
     }
 }
