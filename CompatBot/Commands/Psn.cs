@@ -1,38 +1,53 @@
-﻿using CompatBot.Database;
+﻿using CompatBot.Commands.AutoCompleteProviders;
+using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.ThumbScrapper;
+using Microsoft.EntityFrameworkCore;
 using PsnClient;
 
 namespace CompatBot.Commands;
 
-//[Command("psn")]
+[Command("psn")]
 [Description("Commands related to PSN metadata")]
-internal sealed partial class Psn
+internal static partial class Psn
 {
     private static readonly Client Client = new();
 
-/*
-    [Command("rename"), TextAlias("setname", "settitle"), RequiresBotModRole]
-    [Description("Command to set or change game title for specific product code")]
-    public async Task Rename(CommandContext ctx, [Description("Product code such as BLUS12345")] string productCode, [RemainingText, Description("New game title to save in the database")] string title)
+    [Command("rename"), RequiresBotModRole]
+    [Description("Change game title for specific product code in bot's PSN database")]
+    public static async ValueTask Rename(
+        SlashCommandContext ctx,
+        [Description("Product code such as `BLUS12345`"), MinMaxLength(9, 9), SlashAutoCompleteProvider<ProductCodeAutoCompleteProvider>]
+        string productCode,
+        [Description("New game title to save in the database")]
+        string title
+    )
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel();
         productCode = productCode.ToUpperInvariant();
         await using var db = new ThumbnailDb();
-        var item = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
-        if (item == null)
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Unknown product code {productCode}", true).ConfigureAwait(false);
+        var item = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
+        if (item is null)
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown product code {productCode}", ephemeral: true).ConfigureAwait(false);
         else
         {
             item.Name = title;
             await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.ReactWithAsync(Config.Reactions.Success, "Title updated successfully").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Title updated successfully", ephemeral: ephemeral).ConfigureAwait(false);
         }
     }
 
     [Command("add"), RequiresBotModRole]
     [Description("Add new product code with specified title to the bot database")]
-    public async Task Add(CommandContext ctx, [Description("Product code such as BLUS12345")] string contentId, [RemainingText, Description("New game title to save in the database")] string title)
+    public static async ValueTask Add(
+        SlashCommandContext ctx,
+        [Description("Product code (e.g. `BLUS12345`) or PSN content ID (e.g.`GP0002-BLUS30219_00-MADAGASCARPARENT`")]
+        [MinMaxLength(9, 36)]
+        string contentId,
+        [Description("Game title to save in the database")]
+        string title)
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel();
         contentId = contentId.ToUpperInvariant();
         var productCodeMatch = ProductCodeLookup.Pattern().Match(contentId);
         var contentIdMatch = PsnScraper.ContentIdMatcher().Match(contentId);
@@ -48,26 +63,25 @@ internal sealed partial class Psn
         }
         else
         {
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Invalid content id", true).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid content id", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
         await using var db = new ThumbnailDb();
-        var item = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
+        var item = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
         if (item is null)
         {
-            item = new Thumbnail
+            item = new()
             {
                 ProductCode = productCode,
-                ContentId = string.IsNullOrEmpty(contentId) ? null : contentId,
+                ContentId = contentId is {Length: >0} ? contentId : null,
                 Name = title,
             };
             await db.AddAsync(item).ConfigureAwait(false);
             await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.ReactWithAsync(Config.Reactions.Success, "Title added successfully").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Title added successfully", ephemeral: ephemeral).ConfigureAwait(false);
         }
         else
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Product code {contentId} already exists", true).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Product code {contentId} already exists", ephemeral: true).ConfigureAwait(false);
     }
-*/
 }

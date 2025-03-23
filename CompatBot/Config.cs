@@ -92,12 +92,6 @@ internal static class Config
     public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
     public static bool EnableEfDebugLogging => config.GetValue(nameof(EnableEfDebugLogging), false);
    
-    internal static class AllowedMentions
-    {
-        internal static readonly IMention[] UsersOnly = [UserMention.All];
-        internal static readonly IMention[] Nothing = [];
-    }
-
     internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
 
     public static string GoogleApiConfigPath 

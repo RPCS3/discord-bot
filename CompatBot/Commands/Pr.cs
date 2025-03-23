@@ -21,9 +21,9 @@ internal sealed class Pr
         [Description("Pull request author username on GitHub")]
         string? author = null,
         [Description("Search for text in the pull request description")]
-        string? searchStr = null)
+        string? search = null)
     {
-        if (author is not { Length: > 0 } && searchStr is not { Length: > 0 })
+        if (author is not { Length: > 0 } && search is not { Length: > 0 })
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} At least one argument must be provided", ephemeral: true).ConfigureAwait(false);
             return;
@@ -43,11 +43,11 @@ internal sealed class Pr
             return;
         }
 
-        if (author is {Length: >0} && searchStr is {Length: >0})
+        if (author is {Length: >0} && search is {Length: >0})
         {
             openPrList = openPrList.Where(
                 pr => pr.User?.Login?.Contains(author, StringComparison.InvariantCultureIgnoreCase) is true
-                     && pr.Title?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
+                     && pr.Title?.Contains(search, StringComparison.InvariantCultureIgnoreCase) is true
             ).ToList();
         }
         else if (author is { Length: > 0 })
@@ -56,10 +56,10 @@ internal sealed class Pr
                 pr => pr.User?.Login?.Contains(author, StringComparison.InvariantCultureIgnoreCase) is true
             ).ToList();
         }
-        else if (searchStr is {Length: >0})
+        else if (search is {Length: >0})
         {
             openPrList = openPrList.Where(
-                pr => pr.Title?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
+                pr => pr.Title?.Contains(search, StringComparison.InvariantCultureIgnoreCase) is true
             ).ToList();
         }
         if (openPrList.Count is 0)

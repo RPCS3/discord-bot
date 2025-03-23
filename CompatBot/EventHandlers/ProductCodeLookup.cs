@@ -60,7 +60,14 @@ internal static partial class ProductCodeLookup
                     var messageBuilder = new DiscordMessageBuilder().AddEmbed(result.builder);
                     //todo: pass author from context and update OnCheckUpdatesButtonClick in psn check updates
                     if (message is {Author: not null} && channel.IsSpamChannel())
-                        messageBuilder.AddComponents(new DiscordButtonComponent(DiscordButtonStyle.Secondary, $"{GlobalButtonHandler.ReplaceWithUpdatesPrefix}{message.Author.Id}:{message.Id}:{result.code}", "Check for updates", emoji: lookupEmoji));
+                        messageBuilder.AddComponents(
+                            new DiscordButtonComponent(
+                                DiscordButtonStyle.Secondary,
+                                $"{GlobalButtonHandler.ReplaceWithUpdatesPrefix}{message.Author.Id}:{result.code}",
+                                "Check for updates",
+                                emoji: lookupEmoji
+                            )
+                        );
                     await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);
                 }
                 catch (Exception e)

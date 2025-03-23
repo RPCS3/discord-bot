@@ -123,13 +123,11 @@ public static class DiscordClientExtensions
                     new DiscordMessageBuilder()
                         .AddEmbed(embedBuilder.Build())
                         .AddFiles(contents)
-                        .WithAllowedMentions(Config.AllowedMentions.Nothing)
                 ).ConfigureAwait(false);
             else
                 return await logChannel.SendMessageAsync(
                     new DiscordMessageBuilder()
                         .AddEmbed(embedBuilder.Build())
-                        .WithAllowedMentions(Config.AllowedMentions.Nothing)
                 ).ConfigureAwait(false);
         }
         finally
@@ -152,7 +150,6 @@ public static class DiscordClientExtensions
         return await logChannel.SendMessageAsync(
             new DiscordMessageBuilder()
                 .AddEmbed(embedBuilder.Build())
-                .WithAllowedMentions(Config.AllowedMentions.Nothing)
         ).ConfigureAwait(false);
     }
 
@@ -170,7 +167,6 @@ public static class DiscordClientExtensions
         return await logChannel.SendMessageAsync(
             new DiscordMessageBuilder()
                 .AddEmbed(result.Build())
-                .WithAllowedMentions(Config.AllowedMentions.Nothing)
         ).ConfigureAwait(false);
     }
 
