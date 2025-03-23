@@ -1,6 +1,7 @@
 ﻿using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
+using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.MessageCommands;
 using DSharpPlus.Interactivity;
 
@@ -14,6 +15,7 @@ internal static class MessageMenuCommands
     public async ValueTask AnalyzerTest(){}
     */
     
+    // anyone can use this
     [Command("💬 Explain"), SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask ShowToUser(MessageCommandContext ctx, DiscordMessage replyTo)
     {
@@ -52,6 +54,7 @@ internal static class MessageMenuCommands
         await Explain.SendExplanationAsync(result, term, replyTo, true, canPing).ConfigureAwait(false);
     }
 
+    // non-whitenames can use these
     [Command("👮 Report to mods"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask Report(MessageCommandContext ctx, DiscordMessage message)
     {
@@ -119,7 +122,38 @@ internal static class MessageMenuCommands
         await ctx.RespondAsync($"{Config.Reactions.Success} Message was enqueued for analysis", ephemeral: true).ConfigureAwait(false);
 
     }
+
+    [Command("🔇 Shut up bot"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    public static async ValueTask Shutup(MessageCommandContext ctx, DiscordMessage message)
+    {
+        if (!message.Author.IsBotSafeCheck()
+            || message.Author != ctx.Client.CurrentUser)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} You can only remove bot messages", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+        
+        /*
+        if (message.CreationTimestamp.Add(Config.ShutupTimeLimitInMin) < DateTime.UtcNow)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Message is too old to remove", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+        */
+        
+        try
+        {
+            await message.DeleteAsync().ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Message removed", ephemeral: true).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            Config.Log.Warn(e, "Failed to remove bot message");
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove bot message: {e.Message}", ephemeral: true).ConfigureAwait(false);
+        }
+    }
   
+    // only bot mods can use this
     [Command("👎 Toggle bad update"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask BadUpdate(MessageCommandContext ctx, DiscordMessage message)
     {

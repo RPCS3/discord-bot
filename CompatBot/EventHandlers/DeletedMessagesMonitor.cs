@@ -33,9 +33,6 @@ internal static class DeletedMessagesMonitor
 		Config.Log.Info($"Deleted message from {usernameWithNickname} ({msg.JumpLink}):{Environment.NewLine}{logMsg.TrimStart()}");
 
 		var logChannel = await c.GetChannelAsync(Config.DeletedMessagesLogChannelId).ConfigureAwait(false);
-		if (logChannel == null)
-			return;
-
 		var (attachmentContent, attachmentFilenames) = await msg.DownloadAttachmentsAsync().ConfigureAwait(false);
 		try
 		{

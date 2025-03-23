@@ -116,9 +116,6 @@ internal static class Starbucks
             message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
             if (emoji == Config.Reactions.Starbucks)
                 await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
-            if (emoji == Config.Reactions.ShutUp && !isBacklog)
-                await ShutupAsync(client, user, message).ConfigureAwait(false);
-
             await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -127,7 +124,7 @@ internal static class Starbucks
         }
     }
 
-    private static async Task CheckMediaTalkAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordEmoji emoji)
+    private static async ValueTask CheckMediaTalkAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordEmoji emoji)
     {
         if (!Config.Moderation.MediaChannels.Contains(channel.Id))
             return;
@@ -163,22 +160,7 @@ internal static class Starbucks
         await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
     }
 
-
-    private static async Task ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)
-    {
-        if (!message.Author.IsCurrent)
-            return;
-
-        if (message.CreationTimestamp.Add(Config.ShutupTimeLimitInMin) < DateTime.UtcNow)
-            return;
-
-        if (!await user.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
-            return;
-
-        await message.DeleteAsync().ConfigureAwait(false);
-    }
-
-    private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
+    private static async ValueTask CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
     {
         var bot = await client.GetMemberAsync(channel.Guild, client.CurrentUser).ConfigureAwait(false);
         var ch = channel.IsPrivate ? channel.Users.FirstOrDefault(u => u.Id != client.CurrentUser.Id)?.Username + "'s DM" : "#" + channel.Name;
