@@ -626,11 +626,11 @@ internal static partial class LogParserResult
 
                 Win32ErrorCodes.Map.TryGetValue(code, out var error);
                 if (link.Length == 0)
-                    link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
+                    link = "https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes";
                 else if (string.IsNullOrEmpty(error.name))
-                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
+                    link = $"https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
                 else
-                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
+                    link = $"https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
                 if (string.IsNullOrEmpty(error.description))
                     notes.Add($"ℹ️ [Error 0x{code:x}]({link})");
                 else

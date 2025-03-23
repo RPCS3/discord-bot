@@ -142,9 +142,9 @@ internal sealed class Vision
                 imageStream,
                 new List<VisualFeatureTypes?>
                 {
-                    VisualFeatureTypes.Objects, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-object-detection
-                    VisualFeatureTypes.Description, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-describing-images
-                    VisualFeatureTypes.Adult, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-detecting-adult-content
+                    VisualFeatureTypes.Objects, // https://learn.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-object-detection
+                    VisualFeatureTypes.Description, // https://learn.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-describing-images
+                    VisualFeatureTypes.Adult, // https://learn.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-detecting-adult-content
                 },
                 cancellationToken: Config.Cts.Token
             ).ConfigureAwait(false);

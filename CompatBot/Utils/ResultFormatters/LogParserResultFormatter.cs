@@ -900,7 +900,7 @@ internal static partial class LogParserResult
 
     private static string? GetWindowsVersion(string? driverVersionString)
     {
-        // see https://docs.microsoft.com/en-us/windows-hardware/drivers/display/wddm-2-1-features#driver-versioning
+        // see https://learn.microsoft.com/en-us/windows-hardware/drivers/display/wddm-2-1-features#driver-versioning
         if (string.IsNullOrEmpty(driverVersionString) || !Version.TryParse(driverVersionString, out var driverVer))
             return null;
 
