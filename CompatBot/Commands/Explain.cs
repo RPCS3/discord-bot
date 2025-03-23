@@ -240,8 +240,28 @@ internal static class Explain
         await ctx.RespondAsync(msg, ephemeral: true).ConfigureAwait(false);
     }
 
+    [Command("list")]
+    [Description("Saves the list of all known terms as a text file attachment")]
+    public static async ValueTask List(SlashCommandContext ctx)
+    {
+        var ephemeral = !ctx.Channel.IsSpamChannel();
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
+        await using var db = new BotDb();
+        var allTerms = await db.Explanation.AsNoTracking().Select(e => e.Keyword).ToListAsync();
+        await using var stream = Config.MemoryStreamManager.GetStream();
+        await using var writer = new StreamWriter(stream);
+        foreach (var term in allTerms)
+            await writer.WriteLineAsync(term);
+        await writer.FlushAsync().ConfigureAwait(false);
+        stream.Seek(0, SeekOrigin.Begin);
+        var response = new DiscordInteractionResponseBuilder()
+            .AsEphemeral(ephemeral)
+            .AddFile("explain_list.txt", stream);
+        await ctx.RespondAsync(response).ConfigureAwait(false);
+    }
+    
     [Command("dump")]
-    [Description("Save explanation conten as a file attachment")]
+    [Description("Save explanation content as a file attachment")]
     public static async ValueTask Dump(
         SlashCommandContext ctx,
         [Description("Term to dump"), SlashAutoCompleteProvider<ExplainAutoCompleteProvider>]
