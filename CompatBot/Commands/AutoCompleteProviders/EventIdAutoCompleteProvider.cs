@@ -34,6 +34,7 @@ public class EventIdAutoCompleteProvider: IAutoCompleteProvider
                 .AsNoTracking()
                 .AsEnumerable()
                 .Select(e => new { coef = e.Name.GetFuzzyCoefficientCached(input), evt = e })
+                .Where(i => i.coef > 0.5)
                 .OrderByDescending(i => i.coef)
                 .Take(25)
                 .Select(i => i.evt);

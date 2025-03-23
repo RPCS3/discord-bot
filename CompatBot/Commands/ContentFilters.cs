@@ -131,7 +131,7 @@ internal sealed partial class ContentFilters
             }
             catch (Exception e)
             {
-                await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid regex expression: {e.Message}", ephemeral: ephemeral).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid regex expression: {e.Message}".Trim(EmbedPager.MaxMessageLength), ephemeral: ephemeral).ConfigureAwait(false);
                 return;
             }
         }
@@ -314,7 +314,7 @@ internal sealed partial class ContentFilters
             }
             catch (Exception e)
             {
-                await ctx.RespondAsync($"❌ Invalid regex expression: {e.Message}", ephemeral: ephemeral).ConfigureAwait(false);
+                await ctx.RespondAsync($"❌ Invalid regex expression: {e.Message}".Trim(EmbedPager.MaxMessageLength), ephemeral: ephemeral).ConfigureAwait(false);
                 return;
             }
         }

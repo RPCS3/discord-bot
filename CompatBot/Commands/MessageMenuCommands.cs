@@ -1,9 +1,11 @@
-﻿using CompatBot.Database;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.MessageCommands;
 using DSharpPlus.Interactivity;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot.Commands;
 
@@ -149,7 +151,7 @@ internal static class MessageMenuCommands
         catch (Exception e)
         {
             Config.Log.Warn(e, "Failed to remove bot message");
-            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove bot message: {e.Message}", ephemeral: true).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove bot message: {e.Message}".Trim(EmbedPager.MaxMessageLength), ephemeral: true).ConfigureAwait(false);
         }
     }
   

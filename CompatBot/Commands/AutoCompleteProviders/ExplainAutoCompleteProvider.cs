@@ -50,10 +50,11 @@ public class ExplainAutoCompleteProvider: IAutoCompleteProvider
                 .Select(e => e.Keyword)
                 .AsNoTracking()
                 .AsEnumerable()
-                .Select(term => new{coeff=term.GetFuzzyCoefficientCached(prefix), term=term})
-                .OrderByDescending(pair => pair.coeff)
+                .Select(term => new{coef=term.GetFuzzyCoefficientCached(prefix), term=term})
+                .Where(i => i.coef > 0.5)
+                .OrderByDescending(i => i.coef)
                 .Take(25)
-                .Select(pair => pair.term);
+                .Select(i => i.term);
             result = prefixMatches
                 .Concat(substringMatches)
                 .Concat(fuzzyMatches)

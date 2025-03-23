@@ -82,12 +82,12 @@ internal static class Program
                 Config.Log.Info("Checking for updates…");
                 try
                 {
-                    var (updated, stdout) = await Sudo.Bot.GitPullAsync(Config.Cts.Token).ConfigureAwait(false);
+                    var (updated, stdout) = await Bot.GitPullAsync(Config.Cts.Token).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(stdout) && updated)
                         Config.Log.Debug(stdout);
                     if (updated)
                     {
-                        Sudo.Bot.Restart(InvalidChannelId, "Restarted due to new bot updates not present in this Docker image");
+                        Bot.Restart(InvalidChannelId, "Restarted due to new bot updates not present in this Docker image");
                         return;
                     }
                 }
@@ -116,7 +116,7 @@ internal static class Program
                 CompatList.ImportCompatListAsync(),
                 Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),
                 Config.GetCurrentGitRevisionAsync(Config.Cts.Token),
-                Sudo.Bot.UpdateCheckScheduledAsync(Config.Cts.Token)
+                Bot.UpdateCheckScheduledAsync(Config.Cts.Token)
             );
 
             try
@@ -382,7 +382,7 @@ internal static class Program
                 singleInstanceCheckThread.Join(100);
         }
         if (!Config.InMemorySettings.ContainsKey("shutdown"))
-            Sudo.Bot.Restart(InvalidChannelId, null);
+            Bot.Restart(InvalidChannelId, null);
     }
 
     private static async Task OnGuildAvailableAsync(DiscordClient c, GuildAvailableEventArgs gaArgs)

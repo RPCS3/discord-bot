@@ -38,7 +38,7 @@ internal static class Watchdog
 
                 Config.TelemetryClient?.TrackEvent("socket-deadlock-for-sure");
                 Config.Log.Error("Hard reconnect failed, restarting…");
-                Sudo.Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential socket deadlock (last incoming message event: {TimeSinceLastIncomingMessage.Elapsed:h\:mm\:ss} ago)");
+                Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential socket deadlock (last incoming message event: {TimeSinceLastIncomingMessage.Elapsed:h\:mm\:ss} ago)");
             }
             catch (Exception e)
             {
@@ -66,7 +66,7 @@ internal static class Watchdog
         {
             if (message.Contains("System.Threading.Tasks.TaskSchedulerException")
                 || message.Contains("System.OutOfMemoryException"))
-                Sudo.Bot.RestartNoSaving();
+                Bot.RestartNoSaving();
         }
         else if (level == nameof(LogLevel.Fatal))
         {
@@ -111,7 +111,7 @@ internal static class Watchdog
             tc.Flush();
                 
             if (gcMemInfo.TotalCommittedBytes > 3_000_000_000)
-                Sudo.Bot.Restart(Program.InvalidChannelId, "GC Memory overcommitment");
+                Bot.Restart(Program.InvalidChannelId, "GC Memory overcommitment");
         } while (!Config.Cts.IsCancellationRequested);
     }
 
