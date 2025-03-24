@@ -2,7 +2,6 @@
 using System.Net.Http;
 using CompatApiClient.Compression;
 using CompatBot.Commands.Converters;
-using CompatBot.Database.Providers;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using Microsoft.Extensions.DependencyInjection;
@@ -139,23 +138,6 @@ internal static partial class Sudo
         await Bot.Configuration.Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt)).ConfigureAwait(false);
     }
 
-    [Command("mod"), LimitedToSpamChannel]
-    internal static class Mod
-    {
-        [Command("list")]
-        [Description("List all bot moderators")]
-        public static async ValueTask List(TextCommandContext ctx)
-        {
-            var table = new AsciiTable(
-                new AsciiColumn( "Username", maxWidth: 32),
-                new AsciiColumn("Sudo")
-            );
-            foreach (var mod in ModProvider.Mods.Values.OrderByDescending(m => m.Sudoer))
-                table.Add(await ctx.GetUserNameAsync(mod.DiscordId), mod.Sudoer ? "✅" :"");
-            await ctx.SendAutosplitMessageAsync(table.ToString()).ConfigureAwait(false);
-        }
-    }
-    
     private static async ValueTask<DiscordChannel?> ParseChannelNameAsync(this TextCommandContext ctx, string channelName)
     {
         await using var scope = ctx.Extension.ServiceProvider.CreateAsyncScope();

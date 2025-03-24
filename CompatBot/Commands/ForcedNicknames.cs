@@ -11,6 +11,8 @@ namespace CompatBot.Commands;
 [Description("Manage users who has forced nickname.")]
 internal static class ForcedNicknames
 {
+    // limited to 5 commands per menu
+
     [Command("📛 Enforce nickname"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Enforce specific nickname for a particular user permanently")]
     public static async ValueTask Rename(UserCommandContext ctx, DiscordUser discordUser)

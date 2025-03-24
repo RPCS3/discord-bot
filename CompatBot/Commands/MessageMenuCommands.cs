@@ -16,7 +16,9 @@ internal static class MessageMenuCommands
     [Description("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")]
     public async ValueTask AnalyzerTest(){}
     */
-    
+
+    // limited to 5 commands per menu
+
     // anyone can use this
     [Command("💬 Explain"), SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask ShowToUser(MessageCommandContext ctx, DiscordMessage replyTo)
@@ -125,6 +127,7 @@ internal static class MessageMenuCommands
 
     }
 
+    /*
     [Command("🔇 Shut up bot"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask Shutup(MessageCommandContext ctx, DiscordMessage message)
     {
@@ -141,7 +144,7 @@ internal static class MessageMenuCommands
             await ctx.RespondAsync($"{Config.Reactions.Failure} Message is too old to remove", ephemeral: true).ConfigureAwait(false);
             return;
         }
-        */
+        #1#
         
         try
         {
@@ -154,6 +157,7 @@ internal static class MessageMenuCommands
             await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove bot message: {e.Message}".Trim(EmbedPager.MaxMessageLength), ephemeral: true).ConfigureAwait(false);
         }
     }
+    */
   
     // only bot mods can use this
     [Command("👎 Toggle bad update"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
