@@ -120,7 +120,16 @@ internal static partial class DiscordInviteFilter
                 
                 await message.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
                 if (circumventionAttempt)
-                    await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Attempted to circumvent discord invite filter", codeResolveMsg);
+                {
+                    var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                        message.Author.Id,
+                        client.CurrentUser,
+                        "Attempted to circumvent discord invite filter",
+                        codeResolveMsg
+                    ).ConfigureAwait(false);
+                    if (saved && !suppress)
+                        await message.Channel.SendMessageAsync($"User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)").ConfigureAwait(false);
+                }
                 return false;
             }
         }

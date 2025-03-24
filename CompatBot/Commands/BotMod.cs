@@ -49,7 +49,7 @@ internal static class Mod
             await ctx.RespondAsync($"{Config.Reactions.Failure} {moderator.Mention} is not a moderator (yet)", ephemeral: true).ConfigureAwait(false);
     }
 
-    [Command("💔 Remove bot admin permissions")]
+    [Command("💔 Remove bot admin permissions"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     public static async ValueTask Unsudo(UserCommandContext ctx, DiscordUser sudoer)
     {
         if (ctx.Client.CurrentApplication.Owners?.Any(u => u.Id == sudoer.Id) ?? false)

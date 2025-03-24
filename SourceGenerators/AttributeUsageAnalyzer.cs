@@ -32,7 +32,7 @@ public class AttributeUsageAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         description: "Description must be less than or equal to 100 characters."
     );
-    private static readonly DiagnosticDescriptor CommandWithEmojiVariationSelector = new(
+    private static readonly DiagnosticDescriptor CommandWithEmojiVariationSelectorRule = new(
         "DSP0003",
         "Emoji with variation selector",
         "Command name has an emoji character with VS{0} ({1}), which may not work as a command name",
@@ -41,11 +41,21 @@ public class AttributeUsageAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         description: "Commands should avoid using variation selectors for emoji characters in command names."
     );
+    private static readonly DiagnosticDescriptor CommandNameLengthRule = new(
+        "DSP0004",
+        "Command name length is too long",
+        "Command name is {0} characters long, which is {1} characters longer than allowed",
+        "Usage",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Command name must be between 1 and 32 characters long."
+    );
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = [
         AccessCheckAttributeOnGroupCommandRule,
         DescriptionLengthRule,
-        CommandWithEmojiVariationSelector,
+        CommandWithEmojiVariationSelectorRule,
+        CommandNameLengthRule,
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -197,19 +207,31 @@ public class AttributeUsageAnalyzer : DiagnosticAnalyzer
         if (actualName is not {Length: >0})
             return;
 
+        if (actualName.Length > 32)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(CommandNameLengthRule,
+                    // The highlighted area in the analyzed source code. Keep it as specific as possible.
+                    attributeSyntax.GetLocation(),
+                    // The value is passed to the 'MessageFormat' argument of your rule.
+                    actualName.Length, actualName.Length - 32
+                )
+            );
+        }
+        
         var vs = actualName.ToCharArray().FirstOrDefault(VariationSelectors.Contains);
         if (vs is default(char))
             return;
-        
-        var diagnostic = Diagnostic.Create(CommandWithEmojiVariationSelector,
-            // The highlighted area in the analyzed source code. Keep it as specific as possible.
-            attributeSyntax.GetLocation(),
-            // The value is passed to the 'MessageFormat' argument of your rule.
-            vs - 0xFE00 + 1, $"0x{(int)vs:X4}"
-        );
 
         // Reporting a diagnostic is the primary outcome of analyzers.
-        context.ReportDiagnostic(diagnostic);
+        context.ReportDiagnostic(
+            Diagnostic.Create(CommandWithEmojiVariationSelectorRule,
+                // The highlighted area in the analyzed source code. Keep it as specific as possible.
+                attributeSyntax.GetLocation(),
+                // The value is passed to the 'MessageFormat' argument of your rule.
+                vs - 0xFE00 + 1, $"0x{(int)vs:X4}"
+            )
+        );
     }
 
     private static bool IsDescendantOfAttribute(AttributeData attributeData, string baseAttributeClassNameWithNamespace)

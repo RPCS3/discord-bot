@@ -208,8 +208,17 @@ public static class LogParsingHandler
                                     {
                                         Config.Log.Error(e, "Failed to send piracy report");
                                     }
-                                    if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
-                                        await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}");
+                                    if (!(message.Channel!.IsPrivate || message.Channel.Name.Contains("spam")))
+                                    {
+                                        var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                                            message.Author.Id,
+                                            client.CurrentUser,
+                                            "Pirated Release",
+                                            $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}"
+                                        );
+                                        if (saved && !suppress)
+                                            await message.Channel.SendMessageAsync($"User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)").ConfigureAwait(false);
+                                    }
                                 }
                             }
                             else

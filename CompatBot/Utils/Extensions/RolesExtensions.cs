@@ -6,46 +6,46 @@ internal static class RolesExtensions
 {
     public static async ValueTask<bool> IsModeratorAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
-        if (user == null)
+        if (user is null)
             return false;
             
         if (ModProvider.IsSudoer(user.Id))
             return true;
 
-        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
+        var member = await (guild is null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsModerator() is true;
     }
 
     public static async ValueTask<bool> IsWhitelistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
-        if (user == null)
+        if (user is null)
             return false;
 
         if (ModProvider.IsMod(user.Id))
             return true;
 
-        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
+        var member = await (guild is null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsWhitelisted() is true;
     }
 
     public static async ValueTask<bool> IsSmartlistedAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
-        if (user == null)
+        if (user is null)
             return false;
 
         if (ModProvider.IsMod(user.Id))
             return true;
 
-        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
+        var member = await (guild is null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsSmartlisted() is true;
     }
 
     public static async ValueTask<bool> IsSupporterAsync(this DiscordUser? user, DiscordClient client, DiscordGuild? guild = null)
     {
-        if (user == null)
+        if (user is null)
             return false;
 
-        var member = await (guild == null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
+        var member = await (guild is null ? client.GetMemberAsync(user) : client.GetMemberAsync(guild, user)).ConfigureAwait(false);
         return member?.Roles.IsSupporter() is true;
     }
 

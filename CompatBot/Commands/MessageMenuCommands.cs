@@ -12,7 +12,7 @@ namespace CompatBot.Commands;
 internal static class MessageMenuCommands
 {
     /*
-    [Command("🗨️ message")]
+    [Command("🗨️ message command with very long name")]
     [Description("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")]
     public async ValueTask AnalyzerTest(){}
     */

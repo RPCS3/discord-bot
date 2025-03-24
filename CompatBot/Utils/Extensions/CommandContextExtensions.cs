@@ -53,9 +53,6 @@ public static partial class CommandContextExtensions
     public static Task<DiscordChannel> GetChannelForSpamAsync(this CommandContext ctx)
         => ctx.Channel.IsSpamChannel() ? Task.FromResult(ctx.Channel) : ctx.CreateDmAsync();
 
-    public static Task<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
-        => ctx.Client.GetUserNameAsync(ctx.Channel, userId, forDmPurposes, defaultName);
-
     public static async Task<DiscordMessage?> GetMessageAsync(this CommandContext ctx, string messageLink)
     {
         if (MessageLinkPattern().Match(messageLink) is Match m

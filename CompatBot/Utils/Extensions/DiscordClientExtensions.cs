@@ -43,7 +43,10 @@ public static class DiscordClientExtensions
     public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, ulong userId)
         => guild is null ? GetMemberAsync(client, userId) : GetMemberAsync(client, guild.Id, userId);
 
-    public static async Task<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
+    public static ValueTask<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
+        => GetUserNameAsync(ctx.Client, ctx.Channel, userId, forDmPurposes, defaultName);
+    
+    public static async ValueTask<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
     {
         var isPrivate = forDmPurposes ?? channel.IsPrivate;
         if (userId == 0)
