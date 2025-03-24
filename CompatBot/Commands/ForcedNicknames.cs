@@ -209,7 +209,7 @@ internal static class ForcedNicknames
     }
     */
     
-    [Command("🔍 dump"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    [Command("🔍 Dump"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Print hexadecimal binary representation of an UTF-8 encoded user name for diagnostic purposes")]
     public static async ValueTask Dump(UserCommandContext ctx, DiscordUser discordUser)
     {

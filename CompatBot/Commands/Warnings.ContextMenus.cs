@@ -1,4 +1,6 @@
 ﻿using CompatApiClient.Utils;
+using DSharpPlus.Commands.Processors.MessageCommands;
+using DSharpPlus.Commands.Processors.UserCommands;
 using DSharpPlus.Interactivity;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -6,10 +8,15 @@ namespace CompatBot.Commands;
 
 internal static class WarningsContextMenus
 {
-    [Command("❗ Warn user"), RequiresBotModRole]
-    [SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu, DiscordApplicationCommandType.UserContextMenu)]
-    [Description("Give user a warning")]
-    public static async ValueTask Warn(SlashCommandContext ctx, DiscordMessage? message = null, DiscordUser? user = null)
+    [Command("❗ Warn"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    public static ValueTask WarnUser(UserCommandContext ctx, DiscordUser user)
+        => Warn(ctx, null, user);
+
+    [Command("❗ Warn user"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    public static ValueTask WarnMessageAuthor(MessageCommandContext ctx, DiscordMessage message)
+        => Warn(ctx, message, null);
+
+    private static async ValueTask Warn(SlashCommandContext ctx, DiscordMessage? message = null, DiscordUser? user = null)
     {
         var interactivity = ctx.Extension.ServiceProvider.GetService<InteractivityExtension>();
         if (interactivity is null)
