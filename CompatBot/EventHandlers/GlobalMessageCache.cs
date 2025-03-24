@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Linq.Expressions;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Microsoft.VisualStudio.Services.Common;
 
 namespace CompatBot.EventHandlers;

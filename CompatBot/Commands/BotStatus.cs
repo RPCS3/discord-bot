@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using CompatApiClient;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;

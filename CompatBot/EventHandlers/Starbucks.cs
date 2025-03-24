@@ -1,5 +1,4 @@
-﻿using CompatBot.Commands;
-using CompatBot.Utils.Extensions;
+﻿using CompatBot.Utils.Extensions;
 
 namespace CompatBot.EventHandlers;
 

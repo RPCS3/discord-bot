@@ -5,14 +5,9 @@ using System.Runtime.InteropServices;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands.AutoCompleteProviders;
-using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using CompatBot.EventHandlers;
-using DSharpPlus.Commands.Converters;
-using DSharpPlus.Commands.Processors.MessageCommands;
 using Microsoft.EntityFrameworkCore;
-using NLog.LayoutRenderers;
 
 namespace CompatBot.Commands;
 

@@ -1,7 +1,6 @@
 ﻿using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Services.Common;
 
 namespace CompatBot.Commands.AutoCompleteProviders;
 

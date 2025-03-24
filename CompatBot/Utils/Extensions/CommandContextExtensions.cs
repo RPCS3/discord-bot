@@ -1,6 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using CompatBot.Commands.Attributes;
-using CompatBot.Commands.Checks;
 using DSharpPlus.Commands.Converters;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;

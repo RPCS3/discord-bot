@@ -1,6 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using CompatBot.Commands.Attributes;
-using CompatBot.Commands.Checks;
 
 namespace CompatBot.EventHandlers;
 

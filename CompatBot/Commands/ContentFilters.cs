@@ -1,19 +1,12 @@
 ﻿using System.IO;
-using System.IO.Compression;
-using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Commands.ChoiceProviders;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
-using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
-using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
-using org.mariuszgromada.math.mxparser.parsertokens;
 using Exception = System.Exception;
 
 namespace CompatBot.Commands;

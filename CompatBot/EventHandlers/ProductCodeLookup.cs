@@ -1,8 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using CompatApiClient;
 using CompatApiClient.POCOs;
-using CompatBot.Commands.Attributes;
-using CompatBot.Commands.Checks;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.ResultFormatters;
 

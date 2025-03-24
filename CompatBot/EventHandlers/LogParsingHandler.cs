@@ -4,7 +4,6 @@ using System.IO.Pipelines;
 using System.Net;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
-using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;

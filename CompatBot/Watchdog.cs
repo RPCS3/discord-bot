@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using CompatBot.Commands;
-using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using Microsoft.ApplicationInsights;
 using NLog;
