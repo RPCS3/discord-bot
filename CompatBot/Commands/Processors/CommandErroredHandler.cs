@@ -16,7 +16,7 @@ internal static class CommandErroredHandler
 
         if (eventArgs is
             {
-                Exception: CommandNotFoundException,
+                Exception: CommandNotFoundException or CommandNotExecutableException,
                 Context: TextCommandContext tctx
             } && tctx.Prefix == Config.CommandPrefix)
         {
