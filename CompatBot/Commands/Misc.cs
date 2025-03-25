@@ -134,7 +134,7 @@ internal static partial class Misc
         var clienthax = ctx.Client.GetEmoji(":gooseknife:", DiscordEmoji.FromUnicode("🐱"));
         var embed = new DiscordEmbedBuilder
         {
-            Title = "RPCS3 Compatibility Bot",
+            Title = "RPCS3 Compatibility Bot mk. III",
             Url = "https://github.com/RPCS3/discord-bot",
             Color = DiscordColor.Purple,
         }.AddField(
