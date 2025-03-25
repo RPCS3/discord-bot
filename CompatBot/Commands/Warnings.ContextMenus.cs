@@ -16,6 +16,10 @@ internal static class WarningsContextMenus
     public static ValueTask WarnMessageAuthor(MessageCommandContext ctx, DiscordMessage message)
         => Warn(ctx, message, null);
 
+    [Command("🔍 Show warnings"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    public static ValueTask ShowWarnings(UserCommandContext ctx, DiscordUser user)
+        => Warnings.ListGroup.List(ctx, user);
+    
     private static async ValueTask Warn(SlashCommandContext ctx, DiscordMessage? message = null, DiscordUser? user = null)
     {
         var interactivity = ctx.Extension.ServiceProvider.GetService<InteractivityExtension>();
@@ -72,7 +76,7 @@ internal static class WarningsContextMenus
                     .AddMention(UserMention.All);
                 await ctx.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
             }
-            await Warnings.ListUserWarningsAsync(ctx.Client, ctx.Interaction, user.Id, user.Username.Sanitize()).ConfigureAwait(false);
+            await Warnings.ListUserWarningsAsync(ctx.Client, interaction, user.Id, user.Username.Sanitize()).ConfigureAwait(false);
 
         }
         catch (Exception e)

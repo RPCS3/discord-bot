@@ -271,7 +271,7 @@ internal static class Config
         };
         watchdogTarget.Parameters.AddRange([new MethodCallParameter("${level}"), new("${message}")]);
 #if DEBUG
-        loggingConfig.AddRule(LogLevel.Error, LogLevel.Fatal, consoleTarget);
+        loggingConfig.AddRule(LogLevel.Warn, LogLevel.Fatal, consoleTarget);
         loggingConfig.AddRule(LogLevel.Trace, LogLevel.Fatal, consoleTarget, "default"); // echo all messages from default logger to the console
 #else
         loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "default");

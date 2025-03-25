@@ -187,7 +187,7 @@ internal static class BotStatus
         var sortedTerms = StatsStorage.GetExplainStats();
         var totalExplains = sortedTerms.Sum(t => t.stat);
         var top = sortedTerms.Take(5).ToList();
-        if (top.Count == 0)
+        if (top.Count is 0)
             return;
             
         var statsBuilder = new StringBuilder();

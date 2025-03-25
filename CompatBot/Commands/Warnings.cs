@@ -194,12 +194,12 @@ internal static partial class Warnings
 
     //note: be sure to pass a sanitized userName
     //note2: itneraction must be deferred
-    internal static async ValueTask ListUserWarningsAsync(DiscordClient client, DiscordInteraction interaction, ulong userId, string userName, bool skipIfOne = true)
+    internal static async ValueTask ListUserWarningsAsync(DiscordClient client, DiscordInteraction interaction, ulong userId, string userName, bool skipIfOne = true, bool useFollowup = false)
     {
         try
         {
-            var isWhitelisted = await interaction.User.IsWhitelistedAsync(client, interaction.Guild).ConfigureAwait(false);
-            if (interaction.User.Id != userId && !isWhitelisted)
+            var isMod = await interaction.User.IsWhitelistedAsync(client, interaction.Guild).ConfigureAwait(false);
+            if (interaction.User.Id != userId && !isMod)
             {
                 Config.Log.Error($"Somehow {interaction.User.Username} ({interaction.User.Id}) triggered warning list for {userId}");
                 return;
@@ -249,22 +249,22 @@ internal static partial class Warnings
             var showCount = Math.Min(maxWarningsInPublicChannel, count);
             var table = new AsciiTable(
                 new AsciiColumn("ID", alignToRight: true),
-                new AsciiColumn("±", disabled: !ephemeral || !isWhitelisted),
+                new AsciiColumn("±", disabled: !ephemeral || !isMod),
                 new AsciiColumn("By", maxWidth: 15),
                 new AsciiColumn("On date (UTC)"),
                 new AsciiColumn("Reason"),
-                new AsciiColumn("Context", disabled: !ephemeral, maxWidth: 4096)
+                new AsciiColumn("Context", disabled: !ephemeral || !isMod, maxWidth: 4096)
             );
             IQueryable<Warning> query = db.Warning.Where(w => w.DiscordId == userId).OrderByDescending(w => w.Id);
-            if (!ephemeral || !isWhitelisted)
+            if (!ephemeral || !isMod)
                 query = query.Where(w => !w.Retracted);
-            if (!ephemeral && !isWhitelisted)
+            if (!ephemeral && !isMod)
                 query = query.Take(maxWarningsInPublicChannel);
             foreach (var warning in await query.ToListAsync().ConfigureAwait(false))
             {
                 if (warning.Retracted)
                 {
-                    if (isWhitelisted && ephemeral)
+                    if (isMod && ephemeral)
                     {
                         var retractedByName = warning.RetractedBy.HasValue
                             ? await client.GetUserNameAsync(interaction.Channel, warning.RetractedBy.Value, ephemeral, "unknown mod").ConfigureAwait(false)
@@ -274,7 +274,7 @@ internal static partial class Warnings
                             : "";
                         table.Add(warning.Id.ToString(), "-", retractedByName, retractionTimestamp, warning.RetractionReason ?? "", "");
 
-                        var issuerName = warning.IssuerId == 0
+                        var issuerName = warning.IssuerId is 0
                             ? ""
                             : await client.GetUserNameAsync(interaction.Channel, warning.IssuerId, ephemeral, "unknown mod").ConfigureAwait(false);
                         var timestamp = warning.Timestamp.HasValue
@@ -285,7 +285,7 @@ internal static partial class Warnings
                 }
                 else
                 {
-                    var issuerName = warning.IssuerId == 0
+                    var issuerName = warning.IssuerId is 0
                         ? ""
                         : await client.GetUserNameAsync(interaction.Channel, warning.IssuerId, ephemeral, "unknown mod").ConfigureAwait(false);
                     var timestamp = warning.Timestamp.HasValue
@@ -296,19 +296,21 @@ internal static partial class Warnings
             }
             
             var result = new StringBuilder("Warning list for ").Append(Formatter.Sanitize(userName));
-            if (!ephemeral && !isWhitelisted && count > maxWarningsInPublicChannel)
+            if (!ephemeral && !isMod && count > maxWarningsInPublicChannel)
                 result.Append($" (last {showCount} of {count}, full list in DMs)");
             result.AppendLine(":").Append(table);
             var pages = AutosplitResponseHelper.AutosplitMessage(result.ToString());
             await interaction.EditOriginalResponseAsync(new(response.WithContent(pages[0]))).ConfigureAwait(false);
-            foreach (var page in pages.Skip(1).Take(4))
+            if (useFollowup)
             {
-                var followupMsg = new DiscordFollowupMessageBuilder()
-                    .AsEphemeral(ephemeral)
-                    .WithContent(page);
-                await interaction.CreateFollowupMessageAsync(followupMsg).ConfigureAwait(false);
-            }
-        }
+                foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
+                {
+                    var followupMsg = new DiscordFollowupMessageBuilder()
+                        .AsEphemeral(ephemeral)
+                        .WithContent(page);
+                    await interaction.CreateFollowupMessageAsync(followupMsg).ConfigureAwait(false);
+                }
+            }        }
         catch (Exception e)
         {
             Config.Log.Warn(e);

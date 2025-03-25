@@ -209,6 +209,7 @@ internal static class ForcedNicknames
     }
     */
     
+    /*
     [Command("🔍 Dump"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Print hexadecimal binary representation of an UTF-8 encoded user name for diagnostic purposes")]
     public static async ValueTask Dump(UserCommandContext ctx, DiscordUser discordUser)
@@ -226,6 +227,7 @@ internal static class ForcedNicknames
         }
         await ctx.RespondAsync(result, ephemeral: true).ConfigureAwait(false);
     }
+    */
 
     [Command("📝 Rename automatically"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Set automatically generated nickname without enforcing it")]

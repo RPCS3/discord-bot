@@ -49,7 +49,7 @@ public static class DiscordClientExtensions
     public static async ValueTask<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
     {
         var isPrivate = forDmPurposes ?? channel.IsPrivate;
-        if (userId == 0)
+        if (userId is 0)
             return "";
 
         try

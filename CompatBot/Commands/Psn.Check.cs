@@ -54,7 +54,7 @@ internal static partial class Psn
                 ];
             }
             await ctx.RespondAsync(embeds[0], ephemeral: ephemeral).ConfigureAwait(false);
-            foreach (var embed in embeds.Skip(1).Take(5))
+            foreach (var embed in embeds.Skip(1).Take(EmbedPager.MaxFollowupMessages))
                 await ctx.FollowupAsync(embed, ephemeral: ephemeral).ConfigureAwait(false);
         }
 

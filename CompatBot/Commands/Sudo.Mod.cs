@@ -85,7 +85,7 @@ internal static partial class Sudo
                 table.Add(await ctx.GetUserNameAsync(mod.DiscordId), mod.Sudoer ? "✅" :"");
             var pages = AutosplitResponseHelper.AutosplitMessage(table.ToString());
             await ctx.RespondAsync(pages[0], ephemeral: ephemeral).ConfigureAwait(false);
-            foreach (var page in pages.Skip(1).Take(4))
+            foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
                 await ctx.FollowupAsync(page, ephemeral: ephemeral).ConfigureAwait(false);
         }
     }
