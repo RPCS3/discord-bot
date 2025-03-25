@@ -120,9 +120,9 @@ internal static class CommandErroredHandler
         else
             messageBuilder.WithContent(stringBuilder.ToString());
 
-        if (eventArgs.Context is SlashCommandContext { Interaction.ResponseState: DiscordInteractionResponseState.Unacknowledged })
-            await eventArgs.Context.RespondAsync(new DiscordInteractionResponseBuilder(messageBuilder).AsEphemeral());
-        else
+        if (eventArgs.Context is SlashCommandContext { Interaction.ResponseState: not DiscordInteractionResponseState.Unacknowledged })
             await eventArgs.Context.FollowupAsync(new DiscordFollowupMessageBuilder(messageBuilder).AsEphemeral());
+        else
+            await eventArgs.Context.RespondAsync(new DiscordInteractionResponseBuilder(messageBuilder).AsEphemeral());
     }
 }
