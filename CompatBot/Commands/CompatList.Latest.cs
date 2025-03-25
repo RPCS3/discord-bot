@@ -12,7 +12,7 @@ namespace CompatBot.Commands;
 
 internal static partial class CompatList
 {
-    [Command("latest")]
+    [Command("latest"), AllowDMUsage]
     public static class LatestBuild
     {
         [Command("build")]
