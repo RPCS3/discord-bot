@@ -7,7 +7,9 @@ using CompatApiClient.Utils;
 using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
+using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot.Commands;
 
@@ -72,12 +74,18 @@ internal static class Explain
         SlashCommandContext ctx,
         [Description("A term to explain")]
         string term,
-        [Description("Explanation text")]
-        string explanation,
         [Description("Explanation file attachment. Usually an image or a short video. Keep it as small as possible")]
         DiscordAttachment? attachment = null
     )
     {
+        var interactivity = ctx.Extension.ServiceProvider.GetService<InteractivityExtension>();
+        if (interactivity is null)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't get interactivity extension").ConfigureAwait(false);
+            return;
+        }
+
+        var interaction = ctx.Interaction;
         try
         {
             term = term.ToLowerInvariant().StripQuotes();
@@ -99,17 +107,53 @@ internal static class Explain
                     return;
                 }
             }
+            
+            var label = "Content";
+            if (attachment is not null)
+                label += " (can be empty)";
+            var modal = new DiscordInteractionResponseBuilder()
+                .AsEphemeral()
+                .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
+                .WithTitle("New explanation")
+                .AddComponents(
+                    new DiscordTextInputComponent(
+                        label,
+                        "explanation", 
+                        style: DiscordTextInputStyle.Paragraph
+                    )
+                );
+            await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
+            InteractivityResult<ModalSubmittedEventArgs> modalResult;
+            string explanation;
+            do
+            {
+                modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
+                if (modalResult.TimedOut)
+                    return;
+            } while (!modalResult.Result.Values.TryGetValue("explanation", out explanation)
+                     && (attachment is not null || explanation is {Length: >0}));
+
+            interaction = modalResult.Result.Interaction;
             if (string.IsNullOrEmpty(explanation) && string.IsNullOrEmpty(attachmentFilename))
             {
-                await ctx.RespondAsync($"{Config.Reactions.Failure} An explanation for the term _or_ an attachment must be provided", ephemeral: true).ConfigureAwait(false);
+                await interaction.CreateResponseAsync(
+                    DiscordInteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder()
+                        .WithContent($"{Config.Reactions.Failure} An explanation for the term _or_ an attachment must be provided")
+                        .AsEphemeral()
+                ).ConfigureAwait(false);
                 return;
             }
-            
+
+            var response = new DiscordInteractionResponseBuilder().AsEphemeral();
+            await interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredChannelMessageWithSource, response).ConfigureAwait(false);
             await using var db = new BotDb();
             if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
             {
-                await ctx.RespondAsync($"{Config.Reactions.Failure} `{term}` is already defined", ephemeral: true).ConfigureAwait(false);
+                await interaction.EditOriginalResponseAsync(
+                    new(response.WithContent($"{Config.Reactions.Failure} `{term}` is already defined"))
+                ).ConfigureAwait(false);
                 return;
             }
             
@@ -122,12 +166,20 @@ internal static class Explain
             };
             await db.Explanation.AddAsync(entity).ConfigureAwait(false);
             await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.RespondAsync($"{Config.Reactions.Success} `{term}` was added", ephemeral: true).ConfigureAwait(false);
+            await interaction.EditOriginalResponseAsync(
+                new(response.WithContent($"{Config.Reactions.Success} `{term}` was added"))
+            ).ConfigureAwait(false);
         }
         catch (Exception e)
         {
             Config.Log.Error(e, $"Failed to add an explanation for `{term}`");
-            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to add an explanation", ephemeral: true).ConfigureAwait(false);
+            await interaction.EditOriginalResponseAsync(
+                new(
+                    new DiscordInteractionResponseBuilder()
+                    .WithContent($"{Config.Reactions.Failure} Failed to add an explanation")
+                    .AsEphemeral()
+                )
+            ).ConfigureAwait(false);
         }
     }
 
@@ -139,12 +191,18 @@ internal static class Explain
         string term,
         [Description("Rename to new term")]
         string? renameTo = null,
-        [Description("New explanation text")]
-        string? explanation = null,
         [Description("Explanation file attachment. Usually an image or a short video. Keep it as small as possible")]
         DiscordAttachment? attachment = null
     )
     {
+        var interactivity = ctx.Extension.ServiceProvider.GetService<InteractivityExtension>();
+        if (interactivity is null)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't get interactivity extension").ConfigureAwait(false);
+            return;
+        }
+
+        var interaction = ctx.Interaction;
         term = term.ToLowerInvariant().StripQuotes();
         byte[]? attachmentContent = null;
         string? attachmentFilename = null;
@@ -167,11 +225,12 @@ internal static class Explain
         
         await using var db = new BotDb();
         var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-        if (item == null)
+        if (item is null)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{term}` is not defined", ephemeral: true).ConfigureAwait(false);
             return;
         }
+        
         if (renameTo is { Length: > 0 })
         {
             var check = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == renameTo).ConfigureAwait(false);
@@ -183,15 +242,48 @@ internal static class Explain
 
             item.Keyword = renameTo;
         }
-        if (explanation is {Length: >0 })
-            item.Text = explanation;
+        
+        var label = "Content";
+        if (item.AttachmentFilename is {Length: >0})
+            label += " (can be empty)";
+        var modal = new DiscordInteractionResponseBuilder()
+            .AsEphemeral()
+            .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
+            .WithTitle("Updated explanation")
+            .AddComponents(
+                new DiscordTextInputComponent(
+                    label,
+                    "explanation",
+                    value: item.Text,
+                    style: DiscordTextInputStyle.Paragraph
+                )
+            );
+        await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
+
+        InteractivityResult<ModalSubmittedEventArgs> modalResult;
+        string explanation;
+        do
+        {
+            modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
+            if (modalResult.TimedOut)
+                return;
+        } while (!modalResult.Result.Values.TryGetValue("explanation", out explanation)
+                 && (item.AttachmentFilename is {Length: >0} || explanation is {Length: >0}));
+
+        interaction = modalResult.Result.Interaction;
+        item.Text = explanation;
         if (attachmentContent?.Length > 0)
         {
             item.Attachment = attachmentContent;
             item.AttachmentFilename = attachmentFilename;
         }
         await db.SaveChangesAsync().ConfigureAwait(false);
-        await ctx.RespondAsync($"{Config.Reactions.Success} Term was updated", ephemeral: true).ConfigureAwait(false);
+        await interaction.CreateResponseAsync(
+            DiscordInteractionResponseType.ChannelMessageWithSource,
+            new DiscordInteractionResponseBuilder()
+                .WithContent($"{Config.Reactions.Success} Term was updated")
+                .AsEphemeral()
+        ).ConfigureAwait(false);
     }
 
     [Command("remove"), RequiresBotModRole]

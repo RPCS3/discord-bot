@@ -1,4 +1,5 @@
-﻿using CompatBot.Database.Providers;
+﻿using CompatBot.Commands.AutoCompleteProviders;
+using CompatBot.Database.Providers;
 using CompatBot.Utils.ResultFormatters;
 using IrdLibraryClient;
 
@@ -13,6 +14,7 @@ internal static class Ird
     public static async ValueTask Search(
         SlashCommandContext ctx,
         [Description("Product code or game title"), MinMaxLength(3)]
+        [SlashAutoCompleteProvider<ProductCodeAutoCompleteProvider>]
         string query
     )
     {
