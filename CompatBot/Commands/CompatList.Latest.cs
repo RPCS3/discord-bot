@@ -15,7 +15,7 @@ internal static partial class CompatList
     [Command("latest"), AllowDMUsage]
     public static class LatestBuild
     {
-        [Command("build")]
+        [Command("build"), AllowDMUsage]
         [Description("Link to the latest RPCS3 build")]
         public static ValueTask Latest(SlashCommandContext ctx) => CheckForRpcs3UpdatesAsync(ctx, respond: true);
 

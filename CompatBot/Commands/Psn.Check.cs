@@ -16,7 +16,7 @@ internal static partial class Psn
     {
         private static string? latestFwVersion;
 
-        [Command("updates")]
+        [Command("updates"), AllowDMUsage]
         [Description("Check if game with the specified product code has any updates")]
         public static async ValueTask Updates(
             SlashCommandContext ctx,
@@ -58,7 +58,7 @@ internal static partial class Psn
                 await ctx.FollowupAsync(embed, ephemeral: ephemeral).ConfigureAwait(false);
         }
 
-        [Command("firmware")]
+        [Command("firmware"), AllowDMUsage]
         [Description("Get the latest PS3 firmware")]
         public static async ValueTask Firmware(SlashCommandContext ctx)
         {
