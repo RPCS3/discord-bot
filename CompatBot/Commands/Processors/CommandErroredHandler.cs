@@ -14,9 +14,20 @@ internal static class CommandErroredHandler
         StringBuilder stringBuilder = new();
         DiscordMessageBuilder messageBuilder = new();
 
-        if (eventArgs is { Exception: CommandNotFoundException, Context: TextCommandContext tctx })
+        if (eventArgs is
+            {
+                Exception: CommandNotFoundException,
+                Context: TextCommandContext tctx
+            } && tctx.Prefix == Config.CommandPrefix)
         {
-            await tctx.Message.DeleteAsync().ConfigureAwait(false);
+            try
+            {
+                await tctx.Message.DeleteAsync().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to remove message with unknown text command");
+            }
             return;
         }
         
