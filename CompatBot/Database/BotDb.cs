@@ -132,7 +132,7 @@ internal class Explanation
     [Required]
     public string Keyword { get; set; } = null!;
     [Required]
-    public string Text { get; set; } = null!;
+    public string? Text { get; set; } = null!;
     [MaxLength(7*1024*1024)]
     public byte[]? Attachment { get; set; }
     public string? AttachmentFilename { get; set; }

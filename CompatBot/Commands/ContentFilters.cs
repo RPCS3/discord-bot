@@ -84,9 +84,9 @@ internal sealed partial class ContentFilters
         await using (var writer = new StreamWriter(output, leaveOpen: true))
             await writer.WriteAsync(result.ToString()).ConfigureAwait(false);
         output.Seek(0, SeekOrigin.Begin);
-        var builder = new DiscordInteractionResponseBuilder().AddFile("filters.txt", output);
-        if (ephemeral)
-            builder = builder.AsEphemeral();
+        var builder = new DiscordInteractionResponseBuilder()
+            .AsEphemeral(ephemeral)
+            .AddFile("filters.txt", output);
         await ctx.RespondAsync(builder).ConfigureAwait(false);
     }
 
@@ -375,9 +375,9 @@ internal sealed partial class ContentFilters
             return;
         }
 
-        var messageBuilder = new DiscordInteractionResponseBuilder().AddEmbed(FormatFilter(filter));
-        if (ephemeral)
-            messageBuilder = messageBuilder.AsEphemeral();
+        var messageBuilder = new DiscordInteractionResponseBuilder()
+            .AsEphemeral(ephemeral)
+            .AddEmbed(FormatFilter(filter));
         await ctx.RespondAsync(messageBuilder).ConfigureAwait(false);
     }
 

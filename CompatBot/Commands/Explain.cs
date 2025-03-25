@@ -36,11 +36,12 @@ internal static class Explain
             return;
         }
 
-        var explainMsg = new DiscordInteractionResponseBuilder();
-        if (ephemeral)
-            explainMsg.AsEphemeral();
+        var explainMsg = new DiscordInteractionResponseBuilder().AsEphemeral(ephemeral);
         if (to is null)
-            explainMsg.WithContent(result.explanation.Text);
+        {
+            if (result.explanation.Text is {Length: >0})
+                explainMsg.WithContent(result.explanation.Text);
+        }
         else
         {
             var mention = new UserMention(to.Id);
@@ -383,7 +384,9 @@ internal static class Explain
 
                 var explain = termLookupResult.explanation;
                 StatsStorage.IncExplainStat(explain.Keyword);
-                msgBuilder = new DiscordMessageBuilder().WithContent(explain.Text);
+                msgBuilder = new();
+                if (explain.Text is {Length: >0})
+                    msgBuilder.WithContent(explain.Text);
                 if (!usedReply && useReply)
                     msgBuilder.WithReply(sourceMessage.Id, ping);
                 if (ping)
