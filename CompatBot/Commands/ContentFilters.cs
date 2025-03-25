@@ -11,7 +11,7 @@ using Exception = System.Exception;
 
 namespace CompatBot.Commands;
 
-[Command("filter"), RequiresBotSudoerRole]
+[Command("filter"), RequiresBotSudoerRole, AllowDMUsage]
 [Description("Manage content filters")]
 internal sealed partial class ContentFilters
 {

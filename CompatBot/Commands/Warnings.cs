@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Command("warning"), RequiresBotModRole]
+[Command("warning"), RequiresBotModRole, AllowDMUsage]
 [Description("Command used to manage warnings")]
 internal static partial class Warnings
 {

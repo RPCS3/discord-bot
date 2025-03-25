@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot.Commands;
 
-[Command("sudo"), RequiresBotSudoerRole]
+[Command("sudo"), RequiresBotSudoerRole, AllowDMUsage]
 [Description("Used to manage bot moderators and sudoers")]
 internal static partial class Sudo
 {

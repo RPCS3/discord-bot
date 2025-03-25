@@ -14,7 +14,7 @@ using SharpCompress.Writers.Zip;
 
 namespace CompatBot.Commands;
 
-[Command("bot"), TextAlias("kot"), RequiresBotSudoerRole]
+[Command("bot"), TextAlias("kot"), RequiresBotSudoerRole, AllowDMUsage]
 [Description("Commands to manage the bot instance")]
 internal static partial class Bot
 {
