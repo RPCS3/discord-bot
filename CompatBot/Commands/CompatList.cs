@@ -8,6 +8,7 @@ using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
+using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -54,7 +55,12 @@ internal static partial class CompatList
 
     [Command("compatibility")]
     [Description("Search the game compatibility list")]
-    public static async ValueTask Compat(SlashCommandContext ctx, [Description("Game title or product code to look up")] string title)
+    public static async ValueTask Compat(
+        SlashCommandContext ctx,
+        [Description("Game title or product code to look up")]
+        [SlashAutoCompleteProvider<ProductCodeAutoCompleteProvider>]
+        string title
+    )
     {
         if (await ContentFilter.FindTriggerAsync(FilterContext.Chat, title).ConfigureAwait(false) is not null)
         {

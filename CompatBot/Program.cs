@@ -134,6 +134,8 @@ internal static class Program
             var mediaScreenshotMonitor = new MediaScreenshotMonitor();
             var clientBuilder = DiscordClientBuilder
                 .CreateDefault(Config.Token, DiscordIntents.All)
+                .ConfigureLogging(builder => builder.AddNLog(LogManager.Configuration))
+                .UseZstdCompression()
                 .UseCommands((services, extension) =>
                 {
                     var textCommandProcessor = new TextCommandProcessor(new()
@@ -175,7 +177,6 @@ internal static class Program
 #endif
                 })
                 .UseInteractivity()
-                .ConfigureLogging(builder => builder.AddNLog(LogManager.Configuration))
                 .ConfigureEventHandlers(config =>
                 {
                     config.HandleSessionCreated(async (c, sceArgs) =>
