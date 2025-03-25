@@ -7,7 +7,7 @@ using PsnClient;
 
 namespace CompatBot.Commands;
 
-[Command("psn")]
+[Command("psn"), AllowDMUsage]
 [Description("Commands related to PSN metadata")]
 internal static partial class Psn
 {

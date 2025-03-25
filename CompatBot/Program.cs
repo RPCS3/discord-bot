@@ -150,7 +150,7 @@ internal static class Program
                     {
                         //NamingPolicy = new CamelCaseNamingPolicy(),
                         RegisterCommands = true,
-#if !DEBUG
+#if DEBUG
                         UnconditionallyOverwriteCommands = true,
 #endif
                     });
