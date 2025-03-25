@@ -151,7 +151,7 @@ internal static class Program
                         //NamingPolicy = new CamelCaseNamingPolicy(),
                         RegisterCommands = true,
 #if DEBUG
-                        UnconditionallyOverwriteCommands = true,
+                        //UnconditionallyOverwriteCommands = true,
 #endif
                     });
                     textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();

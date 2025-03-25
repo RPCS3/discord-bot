@@ -11,7 +11,7 @@ namespace CompatBot.Commands;
 
 internal static class BotStatus
 {
-    [Command("status")]
+    [Command("status"), AllowDMUsage]
     [Description("Bot subsystem configuration status and various runtime stats")]
     public static async ValueTask Show(SlashCommandContext ctx)
     {
