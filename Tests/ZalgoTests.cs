@@ -25,7 +25,7 @@ public class ZalgoTests
     public async Task ZalgoAuditTestAsync()
     {
         var samplePath = @"C:/Users/13xforever/Downloads/names.txt";
-        var resultPath = Path.Combine(Path.GetDirectoryName(samplePath), "zalgo.txt");
+        var resultPath = Path.Combine(Path.GetDirectoryName(samplePath)!, "zalgo.txt");
 
         var names = await File.ReadAllLinesAsync(samplePath, Encoding.UTF8);
         await using var r = File.Open(resultPath, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -43,7 +43,7 @@ public class ZalgoTests
     public async Task RoleSortTestAsync()
     {
         var samplePath = @"C:/Users/13xforever/Downloads/names.txt";
-        var resultPath = Path.Combine(Path.GetDirectoryName(samplePath), "role_count.txt");
+        var resultPath = Path.Combine(Path.GetDirectoryName(samplePath)!, "role_count.txt");
 
         var stats = new int[10];
         var names = await File.ReadAllLinesAsync(samplePath, Encoding.UTF8);
@@ -82,7 +82,7 @@ public class ZalgoTests
     [TestCase("͔", true, "Combining marks")]
     [TestCase("҉҉҉҉", true, "Combining sign")]
     [TestCase("᲼᲼᲼᲼᲼᲼᲼᲼᲼ ", true, "Private block")]
-    public void ZalgoDetectionTest(string name, bool isBad, string comment = null)
+    public void ZalgoDetectionTest(string name, bool isBad, string? comment = null)
     {
         Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad), comment);
     }
@@ -90,10 +90,10 @@ public class ZalgoTests
 
 internal class UserInfo
 {
-    public string Username { get; private set; }
-    public string Nickname { get; private set; }
-    public DateTime JoinDate { get; private set; }
-    public string[] Roles { get; private set; }
+    public string Username { get; private init; } = null!;
+    public string Nickname { get; private init; } = null!;
+    public DateTime JoinDate { get; private init; }
+    public string[] Roles { get; private init; } = null!;
 
     public string DisplayName => string.IsNullOrEmpty(Nickname) ? Username : Nickname;
 
@@ -108,7 +108,7 @@ internal class UserInfo
             Username = parts[0],
             Nickname = parts[1],
             JoinDate = DateTime.Parse(parts[2], CultureInfo.InvariantCulture),
-            Roles = parts[3]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [],
+            Roles = parts[3].Split(',', StringSplitOptions.RemoveEmptyEntries),
         };
     }
 }

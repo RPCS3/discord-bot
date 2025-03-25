@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using CompatApiClient.Utils;
 using CompatBot.Database;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
@@ -20,7 +11,7 @@ public static class UsernameZalgoMonitor
         '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄', '˞',
     ];
 
-    public static async Task OnUserUpdated(DiscordClient c, UserUpdateEventArgs args)
+    public static async Task OnUserUpdated(DiscordClient c, UserUpdatedEventArgs args)
     {
         try
         {
@@ -44,7 +35,7 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdateEventArgs args)
+    public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdatedEventArgs args)
     {
         try
         {
@@ -78,7 +69,7 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddEventArgs args)
+    public static async Task OnMemberAdded(DiscordClient c, GuildMemberAddedEventArgs args)
     {
         try
         {

@@ -1,18 +1,16 @@
 ﻿using System;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
-using CompatApiClient.Utils;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using CompatApiClient.Formatters;
+using CompatApiClient.Utils;
 using MediafireClient.POCOs;
 
 namespace MediafireClient;

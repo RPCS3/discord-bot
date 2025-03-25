@@ -1,24 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
-using CompatBot.Database.Providers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+﻿using CompatBot.Database.Providers;
 
 namespace CompatBot.Commands;
 
-[Group("commands"), Aliases("command"), RequiresBotModRole]
+[Command("command"), RequiresBotModRole]
 [Description("Used to enable and disable bot commands at runtime")]
-public sealed class CommandsManagement : BaseCommandModule
+internal static class CommandsManagement
 {
-    [Command("list"), Aliases("show")]
-    [Description("Lists the disabled commands")]
-    public async Task List(CommandContext ctx)
+    [Command("list")]
+    [Description("List the disabled commands")]
+    public static async ValueTask List(SlashCommandContext ctx)
     {
+        await ctx.DeferResponseAsync(true).ConfigureAwait(false);
         var list = DisabledCommandsProvider.Get();
         if (list.Count > 0)
         {
@@ -28,15 +20,22 @@ public sealed class CommandsManagement : BaseCommandModule
                 """);
             foreach (var cmd in list)
                 result.AppendLine(cmd);
-            await ctx.SendAutosplitMessageAsync(result.Append("```")).ConfigureAwait(false);
+            var pages = AutosplitResponseHelper.AutosplitMessage(result.Append("```").ToString());
+            await ctx.RespondAsync(pages[0], ephemeral: true).ConfigureAwait(false);
+            foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
+                await ctx.FollowupAsync(page, ephemeral: true).ConfigureAwait(false);
         }
         else
-            await ctx.Channel.SendMessageAsync("All commands are enabled").ConfigureAwait(false);
+            await ctx.RespondAsync("All commands are enabled", ephemeral: true).ConfigureAwait(false);
     }
 
-    [Command("disable"), Aliases("add")]
-    [Description("Disables the specified command")]
-    public async Task Disable(CommandContext ctx, [RemainingText, Description("Fully qualified command to disable, e.g. `explain add` or `sudo mod *`")] string? command)
+    [Command("disable")]
+    [Description("Disable the specified command")]
+    public static async ValueTask Disable(
+        SlashCommandContext ctx,
+        [Description("Fully qualified command to disable, e.g. `explain add` or `sudo mod *`")]
+        string command
+    )
     {
         command ??= "";
         var isPrefix = command.EndsWith('*');
@@ -45,66 +44,70 @@ public sealed class CommandsManagement : BaseCommandModule
 
         if (string.IsNullOrEmpty(command) && !isPrefix)
         {
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "You need to specify the command").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} You need to specify the command", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
-        if (ctx.Command?.Parent is CommandGroup p && command.StartsWith(p.QualifiedName))
+        if (ctx.Command.Parent is Command p && command.StartsWith(p.FullName))
         {
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Cannot disable command management commands").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Cannot disable command management commands", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
         var cmd = GetCommand(ctx, command);
         if (isPrefix)
         {
-            if (cmd == null && !string.IsNullOrEmpty(command))
+            if (cmd is null && command is {Length: >0})
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Unknown group `{command}`").ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown group `{command}`", ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
             try
             {
-                if (cmd == null)
-                    foreach (var c in ctx.CommandsNext.RegisteredCommands.Values)
+                if (cmd is null)
+                    foreach (var c in ctx.Extension.Commands.Values)
                         DisableSubcommands(ctx, c);
                 else
                     DisableSubcommands(ctx, cmd);
-                if (ctx.Command?.Parent is CommandGroup parent && parent.QualifiedName.StartsWith(command))
-                    await ctx.Channel.SendMessageAsync("Some subcommands cannot be disabled").ConfigureAwait(false);
+                if (ctx.Command.Parent is Command parent && parent.FullName.StartsWith(command))
+                    await ctx.RespondAsync("Some subcommands cannot be disabled", ephemeral: true).ConfigureAwait(false);
                 else
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"Disabled `{command}` and all subcommands").ConfigureAwait(false);
-                await List(ctx).ConfigureAwait(false);
+                    await ctx.RespondAsync($"{Config.Reactions.Success} Disabled `{command}` and all subcommands", ephemeral: true).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Error(e);
-                await ctx.Channel.SendMessageAsync("Error while disabling the group").ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Error while disabling the group", ephemeral: true).ConfigureAwait(false);
             }
         }
         else
         {
-            if (cmd == null)
+            if (cmd is null)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Unknown command `{command}`").ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown command `{command}`", ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
-            command = cmd.QualifiedName;
+            command = cmd.FullName;
             DisabledCommandsProvider.Disable(command);
-            await ctx.ReactWithAsync(Config.Reactions.Success, $"Disabled `{command}`").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Disabled `{command}`", ephemeral: true).ConfigureAwait(false);
         }
     }
 
-    [Command("enable"), Aliases("reenable", "remove", "delete", "del", "clear")]
-    [Description("Enables the specified command")]
-    public async Task Enable(CommandContext ctx, [RemainingText, Description("Fully qualified command to enable, e.g. `explain add` or `sudo mod *`")] string? command)
+    [Command("enable")]
+    [Description("Enable the specified command")]
+    public static async ValueTask Enable(
+        SlashCommandContext ctx,
+        [Description("Fully qualified command to enable, e.g. `explain add` or `sudo mod *`")]
+        string command
+    )
     {
-        if (command == "*")
+        await ctx.DeferResponseAsync(true).ConfigureAwait(false);
+        if (command is "*")
         {
             DisabledCommandsProvider.Clear();
-            await ctx.ReactWithAsync(Config.Reactions.Success, "Enabled all the commands").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Enabled all the commands", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
@@ -113,61 +116,56 @@ public sealed class CommandsManagement : BaseCommandModule
         if (isPrefix)
             command = command.TrimEnd('*', ' ');
 
-        if (string.IsNullOrEmpty(command))
-        {
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "You need to specify the command").ConfigureAwait(false);
-            return;
-        }
-
         var cmd = GetCommand(ctx, command);
         if (isPrefix)
         {
-            if (cmd == null)
+            if (cmd is null)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Unknown group `{command}`").ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown group `{command}`", ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
             try
             {
                 EnableSubcommands(ctx, cmd);
-                await ctx.ReactWithAsync(Config.Reactions.Success, $"Enabled `{command}` and all subcommands").ConfigureAwait(false);
-                await List(ctx).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Success} Enabled `{command}` and all subcommands", ephemeral: true).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Error(e);
-                await ctx.Channel.SendMessageAsync("Error while enabling the group").ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Error while enabling the group").ConfigureAwait(false);
             }
         }
         else
         {
-            if (cmd == null)
+            if (cmd is null)
             {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Unknown command `{command}`").ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown command `{command}`", ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
-            command = cmd.QualifiedName;
+            command = cmd.FullName;
             DisabledCommandsProvider.Enable(command);
-            await ctx.ReactWithAsync(Config.Reactions.Success, $"Enabled `{command}`").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Enabled `{command}`", ephemeral: true).ConfigureAwait(false);
         }
     }
 
     private static Command? GetCommand(CommandContext ctx, string qualifiedName)
     {
-        if (string.IsNullOrEmpty(qualifiedName))
+        if (qualifiedName is not {Length: >0})
             return null;
 
-        var groups = (IReadOnlyList<Command>)ctx.CommandsNext.RegisteredCommands.Values.ToList();
+        IReadOnlyList<Command> groups = ctx.Extension.Commands.Values.ToList();
         Command? result = null;
         foreach (var cmdPart in qualifiedName.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
-            if (groups.FirstOrDefault(g => g.Name == cmdPart || g.Aliases.Any(a => a == cmdPart)) is Command c)
+            if (groups.FirstOrDefault(g => g.Name == cmdPart
+                                           // || g.Aliases.Any(a => a == cmdPart)
+                                    ) is Command c)
             {
                 result = c;
-                if (c is CommandGroup subGroup)
-                    groups = subGroup.Children;
+                if (c is Command subGroup)
+                    groups = subGroup.Subcommands;
             }
             else
                 return null;
@@ -177,23 +175,23 @@ public sealed class CommandsManagement : BaseCommandModule
 
     private static void DisableSubcommands(CommandContext ctx, Command cmd)
     {
-        if (ctx.Command?.Parent is not CommandGroup p || cmd.QualifiedName.StartsWith(p.QualifiedName))
+        if (ctx.Command.Parent is not Command p || cmd.FullName.StartsWith(p.FullName))
             return;
 
-        DisabledCommandsProvider.Disable(cmd.QualifiedName);
-        if (cmd is CommandGroup group)
-            foreach (var subCmd in group.Children)
+        DisabledCommandsProvider.Disable(cmd.FullName);
+        if (cmd is Command group)
+            foreach (var subCmd in group.Subcommands)
                 DisableSubcommands(ctx, subCmd);
     }
 
     private static void EnableSubcommands(CommandContext ctx, Command cmd)
     {
-        if (ctx.Command?.Parent is not CommandGroup p || cmd.QualifiedName.StartsWith(p.QualifiedName))
+        if (ctx.Command.Parent is not Command p || cmd.FullName.StartsWith(p.FullName))
             return;
 
-        DisabledCommandsProvider.Enable(cmd.QualifiedName);
-        if (cmd is CommandGroup group)
-            foreach (var subCmd in group.Children)
+        DisabledCommandsProvider.Enable(cmd.FullName);
+        if (cmd is Command group)
+            foreach (var subCmd in group.Subcommands)
                 EnableSubcommands(ctx, subCmd);
     }
 }

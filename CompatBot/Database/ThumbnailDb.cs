@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,9 +18,8 @@ internal class ThumbnailDb : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var dbPath = DbImporter.GetDbPath("thumbs.db", Environment.SpecialFolder.LocalApplicationData);
-#if DEBUG
-        optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
-#endif
+        if (Config.EnableEfDebugLogging)
+            optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
         optionsBuilder.UseSqlite($""" Data Source="{dbPath}" """);
     }
 

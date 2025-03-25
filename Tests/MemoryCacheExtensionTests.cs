@@ -18,7 +18,7 @@ public class MemoryCacheExtensionTests
         cache.Set(13, testVal);
         Assert.Multiple(() =>
             {
-                Assert.That(cache.TryGetValue(13, out string expectedVal), Is.True);
+                Assert.That(cache.TryGetValue(13, out string? expectedVal), Is.True);
                 Assert.That(expectedVal, Is.EqualTo(testVal));
             }
         );

@@ -1,6 +1,5 @@
 ﻿using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using NUnit.Framework;
 
@@ -12,7 +11,7 @@ public class ReflectionHacksTests
     [Test]
     public void DiscordButtonComponentEmojiSetterTest()
     {
-        var button = new DiscordButtonComponent(ButtonStyle.Primary, "test", "Test");
+        var button = new DiscordButtonComponent(DiscordButtonStyle.Primary, "test", "Test");
         var property = button.GetType().GetProperty(nameof(button.Emoji));
         Assert.That(property, Is.Not.Null);
         Assert.That(property.GetMethod?.IsPublic, Is.True);

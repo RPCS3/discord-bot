@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CompatBot.Database;
+﻿using CompatBot.Database;
 
 namespace CompatBot.Utils.Extensions;
 
 internal static class FilterActionExtensions
 {
-    private static readonly Dictionary<FilterAction, char> ActionFlags = new()
+    internal static readonly FilterAction[] ActionFlagValues = Enum.GetValues<FilterAction>();
+    private static readonly Dictionary<FilterAction, char> ActionFlagToChar = new()
     {
         [FilterAction.RemoveContent] = 'r',
         [FilterAction.IssueWarning] = 'w',
@@ -18,20 +15,33 @@ internal static class FilterActionExtensions
         [FilterAction.Kick] = 'k',
     };
 
-    public static string ToFlagsString(this FilterAction flags)
+    private static readonly Dictionary<char, FilterAction> CharToActionFlag = new()
     {
-        var result = Enum.GetValues(typeof(FilterAction))
-            .Cast<FilterAction>()
-            .Select(fa => flags.HasFlag(fa) ? ActionFlags[fa] : '-')
-            .ToArray();
-        return new(result);
-    }
+        ['r'] = FilterAction.RemoveContent,
+        ['w'] = FilterAction.IssueWarning,
+        ['m'] = FilterAction.SendMessage,
+        ['e'] = FilterAction.ShowExplain,
+        ['u'] = FilterAction.MuteModQueue,
+        ['k'] = FilterAction.Kick,
+    };
+    
+    public static string ToFlagsString(this FilterAction flags)
+        => new(
+            ActionFlagValues
+                .Select(fa => flags.HasFlag(fa) ? ActionFlagToChar[fa] : '-')
+                .ToArray()
+        );
+
+    public static FilterAction ToFilterAction(this string flags)
+        => flags.ToCharArray()
+            .Select(c => CharToActionFlag.TryGetValue(c, out var f)? f: 0)
+            .Aggregate((a, b) => a | b);
 
     public static string GetLegend(string wrapChar = "`")
     {
         var result = new StringBuilder("Actions flag legend:");
-        foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
-            result.Append($"\n{wrapChar}{ActionFlags[fa]}{wrapChar} = {fa}");
+        foreach (FilterAction fa in ActionFlagValues)
+            result.Append($"\n{wrapChar}{ActionFlagToChar[fa]}{wrapChar} = {fa}");
         return result.ToString();
     }
 }

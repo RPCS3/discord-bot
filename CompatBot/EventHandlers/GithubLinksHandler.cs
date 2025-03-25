@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatBot.Commands;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
@@ -23,7 +15,7 @@ internal static partial class GithubLinksHandler
     [GeneratedRegex(@"github.com/RPCS3/rpcs3/issues/(?<number>\d+)", DefaultOptions)]
     internal static partial Regex IssueLink();
 
-    public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
@@ -63,7 +55,10 @@ internal static partial class GithubLinksHandler
         if (GithubClient.Client.RateLimitRemaining - issuesToLookup.Count >= 10)
         {
             foreach (var issueId in issuesToLookup)
-                await Pr.LinkIssue(c, args.Message, issueId).ConfigureAwait(false);
+            {
+                if (await Pr.GetIssueLinkMessageAsync(c, issueId).ConfigureAwait(false) is {} msg)
+                    await args.Message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+            }
         }
         else
         {

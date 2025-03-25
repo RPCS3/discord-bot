@@ -1,63 +1,53 @@
-﻿using System;
-using System.Globalization;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 using CompatApiClient.Compression;
-using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
 using CompatBot.Commands.Converters;
-using CompatBot.Database;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-using DSharpPlus.Interactivity.Extensions;
-using Microsoft.EntityFrameworkCore;
-using NLog;
-using SharpCompress.Common;
-using SharpCompress.Compressors;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Writers;
-using SharpCompress.Writers.Zip;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Processors.TextCommands.Parsing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot.Commands;
 
-[Group("sudo"), RequiresBotSudoerRole]
+[Command("sudo"), RequiresBotSudoerRole, AllowDMUsage]
 [Description("Used to manage bot moderators and sudoers")]
-internal sealed partial class Sudo : BaseCommandModuleCustom
+internal static partial class Sudo
 {
-    [Command("say")]
+    [Command("say"), RequiresDm]
     [Description("Make bot say things. Specify #channel or put message link in the beginning to specify where to reply")]
-    public async Task Say(CommandContext ctx, [RemainingText, Description("Message text to send")] string message)
+    public static async ValueTask Say(
+        TextCommandContext ctx,
+        [Description("Message text to send"), RemainingText] string message
+    )
     {
-        var msgParts = message.Split(' ', 2, StringSplitOptions.TrimEntries);
         var channel = ctx.Channel;
         DiscordMessage? ogMsg = null;
-        if (msgParts.Length > 1)
+        if (message.Split(' ', 2, StringSplitOptions.TrimEntries) is [{Length: >0} chOrLink, {Length: >0} msg])
         {
-            if (await ctx.GetMessageAsync(msgParts[0]).ConfigureAwait(false) is DiscordMessage lnk)
+            if (await ctx.GetMessageAsync(chOrLink).ConfigureAwait(false) is DiscordMessage lnk)
             {
                 ogMsg = lnk;
                 channel = ogMsg.Channel;
-                message = msgParts[1];
+                message = msg;
             }
-            else if (await TextOnlyDiscordChannelConverter.ConvertAsync(msgParts[0], ctx).ConfigureAwait(false) is {HasValue: true} ch)
+            else
             {
-                channel = ch.Value;
-                message = msgParts[1];
+                if (await ctx.ParseChannelNameAsync(chOrLink).ConfigureAwait(false) is {} ch)
+                {
+                    channel = ch;
+                    message = msg;
+                }
             }
         }
-
+        if (channel is null)
+            return;
+        
         var typingTask = channel.TriggerTypingAsync();
         // simulate bot typing the message at 300 cps
         await Task.Delay(message.Length * 10 / 3).ConfigureAwait(false);
         var msgBuilder = new DiscordMessageBuilder().WithContent(message);
         if (ogMsg is not null)
             msgBuilder.WithReply(ogMsg.Id);
-        if (ctx.Message.Attachments.Any())
+        if (ctx.Message.Attachments.Count > 0)
         {
             try
             {
@@ -66,7 +56,7 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
                 await using var requestStream = await client.GetStreamAsync(ctx.Message.Attachments[0].Url!).ConfigureAwait(false);
                 await requestStream.CopyToAsync(memStream).ConfigureAwait(false);
                 memStream.Seek(0, SeekOrigin.Begin);
-                msgBuilder.AddFile(ctx.Message.Attachments[0].FileName, memStream);
+                msgBuilder.AddFile(ctx.Message.Attachments[0].FileName!, memStream);
                 await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
             }
             catch { }
@@ -76,12 +66,12 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         await typingTask.ConfigureAwait(false);
     }
 
-    [Command("react")]
+    [Command("react"), RequiresDm]
     [Description("Add reactions to the specified message")]
-    public async Task React(
-        CommandContext ctx,
+    public static async ValueTask React(
+        TextCommandContext ctx,
         [Description("Message link")] string messageLink,
-        [RemainingText, Description("List of reactions to add")]string emojis
+        [Description("List of reactions to add"), RemainingText]string emojis
     )
     {
         try
@@ -129,136 +119,42 @@ internal sealed partial class Sudo : BaseCommandModuleCustom
         }
     }
 
-    [Command("log"), RequiresDm]
-    [Description("Uploads current log file as an attachment")]
-    public async Task Log(CommandContext ctx, [Description("Specific date")]string date = "")
+    [Command("salt")]
+    [Description("Regenerate salt for data anonymization. This WILL affect Hardware DB deduplication.")]
+    public static async ValueTask ResetCryptoSalt(
+        SlashCommandContext ctx,
+        [Description("Should be `I understand this will break hardware survey deduplication`")]
+        string confirmation
+    )
     {
-        try
+        if (confirmation is not "I understand this will break hardware survey deduplication")
         {
-            LogManager.LogFactory.Flush();
-            string[] logPaths = [Config.CurrentLogPath];
-            if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var logDate))
-            {
-                var enumOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, };
-                logPaths = Directory.GetFiles(Config.LogPath, $"bot.{logDate:yyyyMMdd}.*.log", enumOptions);
-            }
-            if (logPaths.Length is 0)
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Log files do not exist for specified day", true).ConfigureAwait(false);
-                return;
-            }
-                
-            await using var result = Config.MemoryStreamManager.GetStream();
-            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.Default}))
-                foreach (var fname in logPaths)
-                {
-                    await using var log = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    zip.Write(Path.GetFileName(fname), log);
-                }
-
-            if (result.Length <= ctx.GetAttachmentSizeLimit())
-            {
-                result.Seek(0, SeekOrigin.Begin);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(Path.GetFileName(logPaths[0]) + ".zip", result)).ConfigureAwait(false);
-            }
-            else
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "Compressed log size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Operation cancelled.", ephemeral: true).ConfigureAwait(false);
+            return;
         }
-        catch (Exception e)
-        {
-            Config.Log.Warn(e, "Failed to upload current log");
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to send the log\n{e}".Trim(EmbedPager.MaxMessageLength), true).ConfigureAwait(false);
-        }
+        
+        var salt = new byte[256 / 8];
+        System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
+        await Bot.Configuration.Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt)).ConfigureAwait(false);
     }
 
-    [Command("dbbackup"), Aliases("dbb"), TriggersTyping]
-    [Description("Uploads current Thumbs.db and Hardware.db files as an attachments")]
-    public async Task DbBackup(CommandContext ctx, [Description("Name of the database")]string name = "")
+    private static async ValueTask<DiscordChannel?> ParseChannelNameAsync(this TextCommandContext ctx, string channelName)
     {
-        name = name.ToLower();
-        if (name.EndsWith(".db"))
-            name = name[..^3];
-        if (name != "hw")
-            await using (var db = new ThumbnailDb())
-                await BackupDb(ctx, db).ConfigureAwait(false);
-        if (name != "thumbs")
-            await using (var db = new HardwareDb())
-                await BackupDb(ctx, db).ConfigureAwait(false);
-    }
-    
-    private static async Task BackupDb(CommandContext ctx, DbContext db)
-    {
-        string? dbName = null;
-        try
-        {
-            await using var botDb = new BotDb();
-            string dbPath, dbDir;
-            await using (var connection = db.Database.GetDbConnection())
+        await using var scope = ctx.Extension.ServiceProvider.CreateAsyncScope();
+        if (await TextOnlyDiscordChannelConverter.ConvertAsync(new TextConverterContext()
             {
-                dbPath = connection.DataSource;
-                dbDir = Path.GetDirectoryName(dbPath) ?? ".";
-                dbName = Path.GetFileNameWithoutExtension(dbPath);
+                User = ctx.User,
+                Channel = ctx.Channel,
+                Message = ctx.Message,
+                Command = ctx.Command,
+                RawArguments = channelName,
 
-                var tsName = "db-vacuum-" + dbName;
-                var vacuumTs = await botDb.BotState.FirstOrDefaultAsync(v => v.Key == tsName).ConfigureAwait(false);
-                if (vacuumTs?.Value is null
-                    || (long.TryParse(vacuumTs.Value, out var vtsTicks)
-                        && vtsTicks < DateTime.UtcNow.AddDays(-30).Ticks))
-                {
-                    await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
-                    
-                    var newTs = DateTime.UtcNow.Ticks.ToString();
-                    if (vacuumTs is null)
-                        botDb.BotState.Add(new() { Key = tsName, Value = newTs });
-                    else
-                        vacuumTs.Value = newTs;
-                    await botDb.SaveChangesAsync().ConfigureAwait(false);
-                }
-            }
-            await using var result = Config.MemoryStreamManager.GetStream();
-            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.Default}))
-                foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, }))
-                {
-                    await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    zip.Write(Path.GetFileName(fname), dbData);
-                }
-            if (result.Length <= ctx.GetAttachmentSizeLimit())
-            {
-                result.Seek(0, SeekOrigin.Begin);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(Path.GetFileName(dbName) + ".zip", result)).ConfigureAwait(false);
-            }
-            else
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Compressed {dbName}.db size is too large, ask 13xforever for help :(", true).ConfigureAwait(false);
-        }
-        catch (Exception e)
-        {
-            Config.Log.Warn(e, $"Failed to upload {(dbName is null? "DB": dbName + ".db")} backup");
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Failed to send {(dbName is null? "DB": dbName + ".db")} backup", true).ConfigureAwait(false);
-        }
-    }
-
-    [Command("gen-salt")]
-    [Description("Regenerates salt for data anonymization purposes. This WILL affect Hardware DB deduplication.")]
-    public async Task ResetCryptoSalt(CommandContext ctx)
-    {
-        var btnYes = new DiscordButtonComponent(ButtonStyle.Danger, "gen-salt:yes", "Yes, regenerate salt");
-        var btnNo = new DiscordButtonComponent(ButtonStyle.Primary, "gen-salt:no", "No, I do not fully understand the consequences");
-        var b = new DiscordMessageBuilder()
-            .WithContent("This will affect hardware DB data deduplication. Are you sure?")
-            .AddComponents(btnYes, btnNo);
-        var msg = await ctx.RespondAsync(b).ConfigureAwait(false);
-        var interactivity = ctx.Client.GetInteractivity();
-        var (txt, reaction) = await interactivity.WaitForMessageOrButtonAsync(msg, ctx.User, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
-        if (txt?.Content?.ToLowerInvariant() is "y" or "yes" || reaction?.Id == btnYes.CustomId)
-        {
-            var salt = new byte[256 / 8];
-            System.Security.Cryptography.RandomNumberGenerator.Fill(salt);
-            await new Bot.Configuration().Set(ctx, nameof(Config.CryptoSalt), Convert.ToBase64String(salt)).ConfigureAwait(false);
-            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Regenerated salt.").ConfigureAwait(false);
-        }
-        else
-        {
-            await msg.UpdateOrCreateMessageAsync(ctx.Channel, "Operation cancelled.").ConfigureAwait(false);
-        }
+                PrefixLength = ctx.Prefix?.Length ?? 0,
+                Splicer = DefaultTextArgumentSplicer.Splice,
+                Extension = ctx.Extension,
+                ServiceScope = scope,
+            }).ConfigureAwait(false) is { HasValue: true } ch)
+            return ch.Value;
+        return null;
     }
 }

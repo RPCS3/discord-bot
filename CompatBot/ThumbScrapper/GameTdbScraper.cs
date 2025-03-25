@@ -1,12 +1,8 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using CompatApiClient.Compression;
 using CompatBot.Database;
@@ -78,7 +74,7 @@ internal static partial class GameTdbScraper
             if (ScrapeStateProvider.IsFresh(container))
                 return;
 
-            Config.Log.Debug("Scraping GameTDB for game titles...");
+            Config.Log.Debug("Scraping GameTDB for game titles…");
             await using var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose);
             await using (var downloadStream = await HttpClient.GetStreamAsync(TitleDownloadLink, cancellationToken).ConfigureAwait(false))
                 await downloadStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);

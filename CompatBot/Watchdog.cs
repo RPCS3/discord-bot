@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using CompatBot.Commands;
-using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 using Microsoft.ApplicationInsights;
 using NLog;
 
@@ -32,8 +26,8 @@ internal static class Watchdog
             try
             {
                 Config.TelemetryClient?.TrackEvent("socket-deadlock-potential");
-                Config.Log.Warn("Potential socket deadlock detected, reconnecting...");
-                await client.ReconnectAsync(true).ConfigureAwait(false);
+                Config.Log.Warn("Potential socket deadlock detected, reconnecting…");
+                await client.ReconnectAsync().ConfigureAwait(false);
                 await Task.Delay(Config.SocketDisconnectCheckIntervalInSec, Config.Cts.Token).ConfigureAwait(false);
                 if (IsOk)
                 {
@@ -42,8 +36,8 @@ internal static class Watchdog
                 }
 
                 Config.TelemetryClient?.TrackEvent("socket-deadlock-for-sure");
-                Config.Log.Error("Hard reconnect failed, restarting...");
-                Sudo.Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential socket deadlock (last incoming message event: {TimeSinceLastIncomingMessage.Elapsed:h\:mm\:ss} ago)");
+                Config.Log.Error("Hard reconnect failed, restarting…");
+                Bot.Restart(Program.InvalidChannelId, $@"Restarted to reset potential socket deadlock (last incoming message event: {TimeSinceLastIncomingMessage.Elapsed:h\:mm\:ss} ago)");
             }
             catch (Exception e)
             {
@@ -71,7 +65,7 @@ internal static class Watchdog
         {
             if (message.Contains("System.Threading.Tasks.TaskSchedulerException")
                 || message.Contains("System.OutOfMemoryException"))
-                Sudo.Bot.RestartNoSaving();
+                Bot.RestartNoSaving();
         }
         else if (level == nameof(LogLevel.Fatal))
         {
@@ -82,12 +76,13 @@ internal static class Watchdog
         }
     }
 
-    public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         if (Config.TelemetryClient is TelemetryClient tc)
         {
             var userToBotDelay = (DateTime.UtcNow - args.Message.Timestamp.UtcDateTime).TotalMilliseconds;
-            tc.TrackMetric("gw-latency", c.Ping);
+            var latency = c.GetConnectionLatency(Config.BotGuildId);
+            tc.TrackMetric("gw-latency", latency.TotalMilliseconds);
             tc.TrackMetric("user-to-bot-latency", userToBotDelay);
             tc.TrackMetric("time-since-last-incoming-message", TimeSinceLastIncomingMessage.ElapsedMilliseconds);
         }
@@ -104,7 +99,8 @@ internal static class Watchdog
             if (Config.TelemetryClient is not TelemetryClient tc)
                 continue;
                 
-            tc.TrackMetric("gw-latency", client.Ping);
+            var latency = client.GetConnectionLatency(Config.BotGuildId);
+            tc.TrackMetric("gw-latency", latency.TotalMilliseconds);
             tc.TrackMetric("memory-gc-total", gcMemInfo.HeapSizeBytes);
             tc.TrackMetric("memory-gc-load", gcMemInfo.MemoryLoadBytes);
             tc.TrackMetric("memory-gc-committed", gcMemInfo.TotalCommittedBytes);
@@ -114,7 +110,7 @@ internal static class Watchdog
             tc.Flush();
                 
             if (gcMemInfo.TotalCommittedBytes > 3_000_000_000)
-                Sudo.Bot.Restart(Program.InvalidChannelId, "GC Memory overcommitment");
+                Bot.Restart(Program.InvalidChannelId, "GC Memory overcommitment");
         } while (!Config.Cts.IsCancellationRequested);
     }
 

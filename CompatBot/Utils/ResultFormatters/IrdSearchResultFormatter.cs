@@ -1,11 +1,7 @@
-using System;
-using CompatApiClient.Utils;
-using DSharpPlus.Entities;
-using IrdLibraryClient;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using CompatApiClient;
+using CompatApiClient.Utils;
+using IrdLibraryClient;
 using IrdLibraryClient.POCOs;
 
 namespace CompatBot.Utils.ResultFormatters

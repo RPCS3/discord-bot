@@ -1,17 +1,8 @@
-﻿using System;
-using System.Text;
-using System.Threading.Tasks;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-
-namespace CompatBot.Commands;
-
-internal sealed class DevOnly : BaseCommandModuleCustom
+﻿namespace CompatBot.Commands;
+#if DEBUG
+internal sealed class DevOnly
 {
-    [Command("whitespacetest"), Aliases("wst", "wstest")]
+    [Command("whitespacetest"), TextAlias("wst", "wstest")]
     [Description("Testing discord embeds breakage for whitespaces")]
     public async Task WhitespaceTest(CommandContext ctx)
     {
@@ -61,9 +52,10 @@ internal sealed class DevOnly : BaseCommandModuleCustom
         var builder = new DiscordMessageBuilder()
             .WithContent("Regular button vs emoji button")
             .AddComponents(
-                new DiscordButtonComponent(ButtonStyle.Primary, "pt", "✅ Regular"),
-                new DiscordButtonComponent(ButtonStyle.Primary, "pe", "Emoji", emoji: new(DiscordEmoji.FromUnicode("✅")))
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, "pt", "✅ Regular"),
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, "pe", "Emoji", emoji: new(DiscordEmoji.FromUnicode("✅")))
             );
         await ctx.RespondAsync(builder).ConfigureAwait(false);
     }
 }
+#endif

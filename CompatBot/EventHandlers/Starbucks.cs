@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CompatBot.Commands;
-using CompatBot.Utils;
-using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+﻿using CompatBot.Utils.Extensions;
 
 namespace CompatBot.EventHandlers;
 
@@ -83,7 +74,7 @@ internal static class Starbucks
         [DiscordEmoji.FromUnicode("〰")] = "W",
     };
 
-    public static Task Handler(DiscordClient c, MessageReactionAddEventArgs args)
+    public static Task Handler(DiscordClient c, MessageReactionAddedEventArgs args)
         => CheckMessageAsync(c, args.Channel, args.User, args.Message, args.Emoji, false);
 
     public static async Task CheckBacklogAsync(DiscordClient client, DiscordGuild guild)
@@ -100,7 +91,7 @@ internal static class Starbucks
                     select msg;
                 foreach (var message in messagesToCheck)
                 {
-                    var reactionUsers = await message.GetReactionsAsync(Config.Reactions.Starbucks).ConfigureAwait(false);
+                    var reactionUsers = message.GetReactionsAsync(Config.Reactions.Starbucks).ToList();
                     if (reactionUsers.Count > 0)
                         checkTasks.Add(CheckMessageAsync(client, channel, reactionUsers[0], message, Config.Reactions.Starbucks, true));
                 }
@@ -124,11 +115,6 @@ internal static class Starbucks
             message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
             if (emoji == Config.Reactions.Starbucks)
                 await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
-            if (emoji == Config.Reactions.ShutUp && !isBacklog)
-                await ShutupAsync(client, user, message).ConfigureAwait(false);
-            if (emoji == Config.Reactions.BadUpdate && !isBacklog)
-                await BadUpdateAsync(client, user, message, emoji).ConfigureAwait(false);
-
             await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -137,7 +123,7 @@ internal static class Starbucks
         }
     }
 
-    private static async Task CheckMediaTalkAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordEmoji emoji)
+    private static async ValueTask CheckMediaTalkAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordEmoji emoji)
     {
         if (!Config.Moderation.MediaChannels.Contains(channel.Id))
             return;
@@ -152,7 +138,7 @@ internal static class Starbucks
         if (await message.Author.IsWhitelistedAsync(client, channel.Guild).ConfigureAwait(false))
             return;
 
-        var users = await message.GetReactionsAsync(emoji).ConfigureAwait(false);
+        var users = message.GetReactionsAsync(emoji).ToList();
         if (users.Any(u => u.IsCurrent))
             return;
 
@@ -173,43 +159,11 @@ internal static class Starbucks
         await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
     }
 
-
-    private static async Task ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)
-    {
-        if (!message.Author.IsCurrent)
-            return;
-
-        if (message.CreationTimestamp.Add(Config.ShutupTimeLimitInMin) < DateTime.UtcNow)
-            return;
-
-        if (!await user.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
-            return;
-
-        await message.DeleteAsync().ConfigureAwait(false);
-    }
-
-    private static async Task BadUpdateAsync(DiscordClient client, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
-    {
-        if (message.Channel.Id != Config.BotChannelId)
-            return;
-
-        if (!await user.IsSmartlistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
-            return;
-
-        await Moderation.ToggleBadUpdateAnnouncementAsync(message).ConfigureAwait(false);
-        try
-        {
-            await message.DeleteReactionAsync(emoji, user).ConfigureAwait(false);
-        }
-        catch { }
-    }
-
-
-    private static async Task CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
+    private static async ValueTask CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
     {
         var bot = await client.GetMemberAsync(channel.Guild, client.CurrentUser).ConfigureAwait(false);
         var ch = channel.IsPrivate ? channel.Users.FirstOrDefault(u => u.Id != client.CurrentUser.Id)?.Username + "'s DM" : "#" + channel.Name;
-        if (!channel.PermissionsFor(bot).HasPermission(Permissions.AddReactions))
+        if (!channel.PermissionsFor(bot).HasPermission(DiscordPermission.AddReactions))
         {
             Config.Log.Debug($"No permissions to react in {ch}");
             return;

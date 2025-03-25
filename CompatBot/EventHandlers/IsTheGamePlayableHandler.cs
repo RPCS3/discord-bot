@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
-using CompatBot.Commands.Attributes;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
@@ -30,14 +22,14 @@ internal static partial class IsTheGamePlayableHandler
     private static readonly TimeSpan CooldownThreshold = TimeSpan.FromSeconds(5);
     private static readonly Client Client = new();
 
-    public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message) || args.Channel is null)
             return;
 
 #if !DEBUG
             if (!(args.Channel.Id == Config.BotGeneralChannelId
-                  || LimitedToHelpChannel.IsHelpChannel(args.Channel)))
+                  || args.Channel.IsHelpChannel()))
                 return;
 
             if (CooldownBuckets.TryGetValue(args.Channel.Id, out var lastCheck)

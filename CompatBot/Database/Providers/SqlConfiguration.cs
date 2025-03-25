@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.IO;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +21,7 @@ internal static class SqlConfiguration
             {
                 if (Path.Exists(Config.GoogleApiConfigPath))
                 {
-                    Config.Log.Info("Migrating Google API credentials storage from file to db...");
+                    Config.Log.Info("Migrating Google API credentials storage from file to db…");
                     try
                     {
                         googleCreds = await File.ReadAllTextAsync(Config.GoogleApiConfigPath).ConfigureAwait(false);

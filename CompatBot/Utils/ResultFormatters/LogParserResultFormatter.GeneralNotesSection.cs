@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.ComponentModel;
+﻿using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using IrdLibraryClient.IrdFormat;
 
 namespace CompatBot.Utils.ResultFormatters;
@@ -294,7 +286,7 @@ internal static partial class LogParserResult
             if (items["driver_version_info"] is string driverVersionString)
             {
                 if (driverVersionString.Contains('-'))
-                    driverVersionString = driverVersionString.Split(new[] {' ', '-'}, StringSplitOptions.RemoveEmptyEntries).Last();
+                    driverVersionString = driverVersionString.Split([' ', '-'], StringSplitOptions.RemoveEmptyEntries).Last();
                 if (Version.TryParse(driverVersionString, out var driverVersion) && buildVersion is not null)
                 {
                     items["driver_version_parsed"] = driverVersion.ToString();
@@ -633,11 +625,11 @@ internal static partial class LogParserResult
 
                 Win32ErrorCodes.Map.TryGetValue(code, out var error);
                 if (link.Length == 0)
-                    link = "https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes";
+                    link = "https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes";
                 else if (string.IsNullOrEmpty(error.name))
-                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
+                    link = $"https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-";
                 else
-                    link = $"https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
+                    link = $"https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--{link}-#{error.name}";
                 if (string.IsNullOrEmpty(error.description))
                     notes.Add($"ℹ️ [Error 0x{code:x}]({link})");
                 else

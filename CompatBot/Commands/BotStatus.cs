@@ -1,37 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 using CompatApiClient;
 using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("stats"), Aliases("status")]
-internal sealed class BotStats: BaseCommandModuleCustom
+internal static class BotStatus
 {
-    [GroupCommand]
-    [Description("Use to look at various runtime stats")]
-    public async Task Show(CommandContext ctx)
+    [Command("status")]
+    [Description("Bot subsystem configuration status and various runtime stats")]
+    public static async ValueTask Show(SlashCommandContext ctx)
     {
+        var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
         var embed = new DiscordEmbedBuilder
             {
                 Color = DiscordColor.Purple,
             }
             .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
-            .AddField("Discord Latency", $"{ctx.Client.Ping} ms", true);
+            .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true);
         if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
             embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
         var osInfo = RuntimeInformation.OSDescription;
@@ -74,15 +64,9 @@ internal sealed class BotStats: BaseCommandModuleCustom
 #if DEBUG
         embed.WithFooter("Test Instance");
 #endif
-        var ch = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
-        await ch.SendMessageAsync(embed: embed).ConfigureAwait(false);
+        await ctx.RespondAsync(embed: embed, ephemeral: !ctx.Channel.IsSpamChannel());
     }
 
-    [Command("hw"), Aliases("hardware")]
-    [Description("Various hardware stats from uploaded log files")]
-    [Cooldown(1, 5, CooldownBucketType.Guild)]
-    public Task Hardware(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30) => Commands.Hardware.ShowStats(ctx, period);
-    
     private static string GetConfiguredApiStats()
         => $"""
             {(GoogleDriveHandler.ValidateCredentials() ? "✅" : "❌")} Google Drive
@@ -203,7 +187,7 @@ internal sealed class BotStats: BaseCommandModuleCustom
         var sortedTerms = StatsStorage.GetExplainStats();
         var totalExplains = sortedTerms.Sum(t => t.stat);
         var top = sortedTerms.Take(5).ToList();
-        if (top.Count == 0)
+        if (top.Count is 0)
             return;
             
         var statsBuilder = new StringBuilder();

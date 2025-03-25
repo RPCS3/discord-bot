@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.IO.Pipelines;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
-using DSharpPlus.Entities;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Download;
 using Google.Apis.Drive.v3;
-using Google.Apis.Services;
 using FileMeta = Google.Apis.Drive.v3.Data.File;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;

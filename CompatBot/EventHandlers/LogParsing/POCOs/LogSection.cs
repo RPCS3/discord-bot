@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using CompatBot.Utils;
+﻿using System.Text.RegularExpressions;
 
 namespace CompatBot.EventHandlers.LogParsing.POCOs;
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;

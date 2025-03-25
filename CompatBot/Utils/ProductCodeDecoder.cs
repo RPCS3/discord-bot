@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace CompatBot.Utils;
+﻿namespace CompatBot.Utils;
 
 public static class ProductCodeDecoder
 {

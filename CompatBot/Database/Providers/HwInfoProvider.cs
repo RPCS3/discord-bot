@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.Globalization;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatBot.Utils;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.Database.Providers;

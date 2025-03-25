@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.EventHandlers;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
+using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
-using NReco.Text;
 using Microsoft.Extensions.Caching.Memory;
-using NLog;
+using NReco.Text;
 
 namespace CompatBot.Database.Providers;
 
@@ -68,7 +60,7 @@ internal static class ContentFilter
     {
         var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
         using var db = new BotDb();
-        foreach (FilterContext ctx in Enum.GetValues(typeof(FilterContext)))
+        foreach (FilterContext ctx in Enum.GetValues<FilterContext>())
         {
             var triggerList = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking()
                 .AsEnumerable()
@@ -232,7 +224,14 @@ internal static class ContentFilter
         {
             try
             {
-                await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, warningReason ?? "Mention of piracy", message.Content.Sanitize()).ConfigureAwait(false);
+                var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                    message.Author!.Id,
+                    client.CurrentUser,
+                    warningReason ?? "Mention of piracy",
+                    message.Content.Sanitize()
+                ).ConfigureAwait(false);
+                if (saved && !suppress && message.Channel is not null)
+                    await message.Channel.SendMessageAsync($"User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)").ConfigureAwait(false);
                 completedActions.Add(FilterAction.IssueWarning);
             }
             catch (Exception e)
@@ -246,7 +245,7 @@ internal static class ContentFilter
             && !string.IsNullOrEmpty(trigger.ExplainTerm))
         {
             var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
-            await Explain.SendExplanation(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
+            await Explain.SendExplanationAsync(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
         }
 
         if (trigger.Actions.HasFlag(FilterAction.Kick)
@@ -268,7 +267,7 @@ internal static class ContentFilter
         }
 
         var actionList = "";
-        foreach (FilterAction fa in Enum.GetValues(typeof(FilterAction)))
+        foreach (FilterAction fa in FilterActionExtensions.ActionFlagValues)
         {
             if (trigger.Actions.HasFlag(fa) && !ignoreFlags.HasFlag(fa))
                 actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + ' ';

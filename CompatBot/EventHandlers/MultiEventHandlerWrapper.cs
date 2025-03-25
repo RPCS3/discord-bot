@@ -1,18 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
+﻿namespace CompatBot.EventHandlers;
 
-namespace CompatBot.EventHandlers;
-
-public class OrderedEventHandlerWrapper<T> where T: DiscordEventArgs
+public class MultiEventHandlerWrapper<T> where T: DiscordEventArgs
 {
     private readonly ICollection<Func<DiscordClient,T,Task<bool>>> orderedHandlers;
     private readonly ICollection<Func<DiscordClient,T,Task>> unorderedHandlers;
 
-    public OrderedEventHandlerWrapper(ICollection<Func<DiscordClient, T, Task<bool>>> orderedHandlers, ICollection<Func<DiscordClient, T, Task>> unorderedHandlers)
+    public MultiEventHandlerWrapper(ICollection<Func<DiscordClient, T, Task<bool>>> orderedHandlers, ICollection<Func<DiscordClient, T, Task>> unorderedHandlers)
     {
         this.orderedHandlers = orderedHandlers;
         this.unorderedHandlers = unorderedHandlers;
@@ -34,4 +27,10 @@ public class OrderedEventHandlerWrapper<T> where T: DiscordEventArgs
             Config.Log.Error(e);
         }
     }
+    
+    public static Func<DiscordClient, T, Task> CreateOrdered(ICollection<Func<DiscordClient, T, Task<bool>>> orderedHandlers)
+        => new MultiEventHandlerWrapper<T>(orderedHandlers, []).OnEvent;
+
+    public static Func<DiscordClient, T, Task> CreateUnordered(ICollection<Func<DiscordClient, T, Task>> unorderedHandlers)
+        => new MultiEventHandlerWrapper<T>([], unorderedHandlers).OnEvent;
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +23,8 @@ internal class BotDb: DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
-#if DEBUG
-        optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
-#endif
+        if (Config.EnableEfDebugLogging)
+            optionsBuilder.UseLoggerFactory(Config.LoggerFactory);
         optionsBuilder.UseSqlite($""" Data Source="{dbPath}" """);
     }
 
@@ -95,6 +93,7 @@ public class SuspiciousString
 [Flags]
 public enum FilterContext: byte
 {
+    //None = 0b_0000_0000, do NOT add this
     Chat = 0b_0000_0001,
     Log  = 0b_0000_0010,
 }
@@ -133,7 +132,7 @@ internal class Explanation
     [Required]
     public string Keyword { get; set; } = null!;
     [Required]
-    public string Text { get; set; } = null!;
+    public string? Text { get; set; } = null!;
     [MaxLength(7*1024*1024)]
     public byte[]? Attachment { get; set; }
     public string? AttachmentFilename { get; set; }

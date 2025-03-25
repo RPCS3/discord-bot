@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.Entities;
+using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Exceptions;
 
 namespace CompatBot.Utils;
@@ -48,10 +43,13 @@ public static class DiscordClientExtensions
     public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, ulong userId)
         => guild is null ? GetMemberAsync(client, userId) : GetMemberAsync(client, guild.Id, userId);
 
-    public static async Task<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
+    public static ValueTask<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
+        => GetUserNameAsync(ctx.Client, ctx.Channel, userId, forDmPurposes, defaultName);
+    
+    public static async ValueTask<string> GetUserNameAsync(this DiscordClient client, DiscordChannel channel, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
     {
         var isPrivate = forDmPurposes ?? channel.IsPrivate;
-        if (userId == 0)
+        if (userId is 0)
             return "";
 
         try
@@ -64,7 +62,7 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static async Task RemoveReactionAsync(this DiscordMessage message, DiscordEmoji emoji)
+    public static async ValueTask RemoveReactionAsync(this DiscordMessage message, DiscordEmoji emoji)
     {
         try
         {
@@ -76,15 +74,16 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static async Task ReactWithAsync(this DiscordMessage message, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
+    public static async ValueTask ReactWithAsync(this DiscordMessage message, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
     {
         try
         {
-            showBoth ??= message.Channel.IsPrivate;
-            var canReact = message.Channel.IsPrivate || message.Channel.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(Permissions.AddReactions);
+            var isDm = message.Channel?.IsPrivate ?? true;
+            showBoth ??= isDm;
+            var canReact = isDm || (message.Channel?.PermissionsFor(message.Channel.Guild.CurrentMember).HasPermission(DiscordPermission.AddReactions) ?? false);
             if (canReact)
                 await message.CreateReactionAsync(emoji).ConfigureAwait(false);
-            if ((!canReact || showBoth.Value) && !string.IsNullOrEmpty(fallbackMessage))
+            if ((!canReact || showBoth.Value) && !string.IsNullOrEmpty(fallbackMessage) && message.Channel is not null)
                 await message.Channel.SendMessageAsync(fallbackMessage).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -93,9 +92,9 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static Task RemoveReactionAsync(this CommandContext ctx, DiscordEmoji emoji) => RemoveReactionAsync(ctx.Message, emoji);
+    public static ValueTask RemoveReactionAsync(this TextCommandContext ctx, DiscordEmoji emoji) => RemoveReactionAsync(ctx.Message, emoji);
 
-    public static Task ReactWithAsync(this CommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
+    public static ValueTask ReactWithAsync(this TextCommandContext ctx, DiscordEmoji emoji, string? fallbackMessage = null, bool? showBoth = null)
         => ReactWithAsync(ctx.Message, emoji, fallbackMessage, showBoth ?? (ctx.Prefix == Config.AutoRemoveCommandPrefix));
 
     public static async Task<IReadOnlyCollection<DiscordMessage>> GetMessagesBeforeAsync(this DiscordChannel channel, ulong beforeMessageId, int limit = 100, DateTime? timeLimit = null)
@@ -123,9 +122,16 @@ public static class DiscordClientExtensions
         try
         {
             if (contents?.Count > 0)
-                return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).AddFiles(contents).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+                return await logChannel.SendMessageAsync(
+                    new DiscordMessageBuilder()
+                        .AddEmbed(embedBuilder.Build())
+                        .AddFiles(contents)
+                ).ConfigureAwait(false);
             else
-                return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+                return await logChannel.SendMessageAsync(
+                    new DiscordMessageBuilder()
+                        .AddEmbed(embedBuilder.Build())
+                ).ConfigureAwait(false);
         }
         finally
         {
@@ -144,7 +150,10 @@ public static class DiscordClientExtensions
         var mentions = reporters.Where(m => m is not null).Select(GetMentionWithNickname!);
         embedBuilder.AddField("Reporters", string.Join(Environment.NewLine, mentions));
         var logChannel = await getLogChannelTask.ConfigureAwait(false);
-        return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embedBuilder.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+        return await logChannel.SendMessageAsync(
+            new DiscordMessageBuilder()
+                .AddEmbed(embedBuilder.Build())
+        ).ConfigureAwait(false);
     }
 
     public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember>? potentialVictims, ReportSeverity severity)
@@ -158,7 +167,10 @@ public static class DiscordClientExtensions
         if (potentialVictims?.Count > 0)
             result.AddField("Potential Targets", string.Join(Environment.NewLine, potentialVictims.Select(GetMentionWithNickname)).Trim(EmbedPager.MaxFieldLength));
         var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-        return await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(result.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+        return await logChannel.SendMessageAsync(
+            new DiscordMessageBuilder()
+                .AddEmbed(result.Build())
+        ).ConfigureAwait(false);
     }
 
     public static string GetMentionWithNickname(this DiscordMember member)
@@ -177,9 +189,11 @@ public static class DiscordClientExtensions
                 ? $"`{member.Username.Sanitize()}#{member.Discriminator}`"
                 : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
 
+    [return: NotNullIfNotNull(nameof(fallbackEmoji))]
     public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, string? fallbackEmoji = null)
         => GetEmoji(client, emojiName, fallbackEmoji == null ? null : DiscordEmoji.FromUnicode(fallbackEmoji));
 
+    [return: NotNullIfNotNull(nameof(fallbackEmoji))]
     public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, DiscordEmoji? fallbackEmoji)
     {
         if (string.IsNullOrEmpty(emojiName))

@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.Globalization;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.ResultFormatters;
 
@@ -367,7 +362,7 @@ internal static partial class LogParserResult
 
             if (lleLibList.Contains("libvdec"))
             {
-                var weirdModules = lleLibList.Split(',', StringSplitOptions.TrimEntries).Except(new[] {"libvdec.sprx"}).ToArray();
+                var weirdModules = lleLibList.Split(',', StringSplitOptions.TrimEntries).Except(["libvdec.sprx"]).ToArray();
                 if (weirdModules.Length > 0)
                 {
                     notes.Add("⚠️ Please do not override Firmware Libraries that you weren't asked to");

@@ -1,14 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatBot.Database.Providers;
-using CompatBot.Utils;
+﻿using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
@@ -19,9 +11,9 @@ internal static class DeletedMessagesMonitor
 	public static readonly TimeSpan CacheRetainTime = TimeSpan.FromMinutes(1);
 	private static readonly SemaphoreSlim PostLock = new(1);
 
-	public static async Task OnMessageDeleted(DiscordClient c, MessageDeleteEventArgs e)
+	public static async Task OnMessageDeleted(DiscordClient c, MessageDeletedEventArgs e)
 	{
-		if (e.Channel.IsPrivate)
+		if (Config.DeletedMessagesLogChannelId is 0 || e.Channel.IsPrivate)
 			return;
 
 		var msg = e.Message;
@@ -41,9 +33,6 @@ internal static class DeletedMessagesMonitor
 		Config.Log.Info($"Deleted message from {usernameWithNickname} ({msg.JumpLink}):{Environment.NewLine}{logMsg.TrimStart()}");
 
 		var logChannel = await c.GetChannelAsync(Config.DeletedMessagesLogChannelId).ConfigureAwait(false);
-		if (logChannel == null)
-			return;
-
 		var (attachmentContent, attachmentFilenames) = await msg.DownloadAttachmentsAsync().ConfigureAwait(false);
 		try
 		{
@@ -59,11 +48,11 @@ internal static class DeletedMessagesMonitor
 			await PostLock.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithEmbed(embed.Build()).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+				await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embed.Build())).ConfigureAwait(false);
 				if (attachmentContent?.Count > 0)
-					await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddFiles(attachmentContent).WithContent(msg.Content).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+					await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msg.Content).AddFiles(attachmentContent)).ConfigureAwait(false);
 				else if (!string.IsNullOrEmpty(msg.Content))
-					await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msg.Content).WithAllowedMentions(Config.AllowedMentions.Nothing)).ConfigureAwait(false);
+					await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msg.Content)).ConfigureAwait(false);
 			}
 			finally
 			{

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RoslynAnalyzers": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\CompatBot\\CompatBot.csproj"
+    }
+  }
+}

@@ -1,26 +1,18 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
-using CompatBot.Commands.Attributes;
+using CompatBot.Commands.Checks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers.LogParsing;
-using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
-using CompatBot.Utils;
-using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils.Extensions;
+using CompatBot.Utils.ResultFormatters;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
@@ -53,7 +45,7 @@ public static class LogParsingHandler
     private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);
     private static event OnLog OnNewLog = EnqueueLogProcessing;
 
-    public static Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+    public static Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
         var message = args.Message;
         if (message.Author.IsBotSafeCheck())
@@ -68,8 +60,8 @@ public static class LogParsingHandler
                 || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
             return Task.CompletedTask;
 
-        var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(args.Channel);
-        var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(args.Channel);
+        var isSpamChannel = args.Channel.IsSpamChannel();
+        var isHelpChannel = args.Channel.IsHelpChannel();
         var checkExternalLinks = isHelpChannel || isSpamChannel;
         OnNewLog(c, args.Channel, args.Message, checkExternalLinks: checkExternalLinks);
         return Task.CompletedTask;
@@ -103,15 +95,14 @@ public static class LogParsingHandler
                     s?.Dispose();
                 }
                     
-                var isSpamChannel = LimitedToSpamChannel.IsSpamChannel(channel);
-                var isHelpChannel = LimitedToHelpChannel.IsHelpChannel(channel);
-                    
+                var isSpamChannel = channel.IsSpamChannel();
+                var isHelpChannel = channel.IsHelpChannel();
                 if (source != null)
                 {
-                    Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)...");
+                    Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)…");
                     var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
                     var msgBuilder = new DiscordMessageBuilder()
-                        .WithEmbed(await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false))
+                        .AddEmbed(await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false))
                         .WithReply(message.Id);
                     botMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                     parsedLog = true;
@@ -216,8 +207,17 @@ public static class LogParsingHandler
                                     {
                                         Config.Log.Error(e, "Failed to send piracy report");
                                     }
-                                    if (!(message.Channel.IsPrivate || (message.Channel.Name?.Contains("spam") ?? true)))
-                                        await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Pirated Release", $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}");
+                                    if (!(message.Channel!.IsPrivate || message.Channel.Name.Contains("spam")))
+                                    {
+                                        var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                                            message.Author.Id,
+                                            client.CurrentUser,
+                                            "Pirated Release",
+                                            $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}"
+                                        );
+                                        if (saved && !suppress)
+                                            await message.Channel.SendMessageAsync($"User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)").ConfigureAwait(false);
+                                    }
                                 }
                             }
                             else
@@ -247,7 +247,7 @@ public static class LogParsingHandler
                                         else
                                         {
                                             Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.NoContent.ToString(), true);
-                                            var helpChannel = await LimitedToHelpChannel.GetHelpChannelAsync(client, channel, message.Author).ConfigureAwait(false);
+                                            var helpChannel = await LimitedToSpecificChannelsCheck.GetHelpChannelAsync(client, channel, message.Author).ConfigureAwait(false);
                                             if (helpChannel is not null)
                                                 await botMsg.UpdateOrCreateMessageAsync(
                                                     channel,
@@ -392,7 +392,7 @@ public static class LogParsingHandler
                 functionCount += funcStats.Count;
             Config.Log.Debug("Product keys: " + serialCount);
             Config.Log.Debug("Functions: " + functionCount);
-            Config.Log.Debug("Saving syscall information...");
+            Config.Log.Debug("Saving syscall information…");
             var sw = Stopwatch.StartNew();
 #endif
             await SyscallInfoProvider.SaveAsync(result.Syscalls).ConfigureAwait(false);
@@ -412,7 +412,7 @@ public static class LogParsingHandler
         var indicator = client.GetEmoji(":kannamag:", Config.Reactions.PleaseWait);
         return new()
         {
-            Description = $"{indicator} Looking at the log, please wait... {indicator}",
+            Description = $"{indicator} Looking at the log, please wait… {indicator}",
             Color = Config.Colors.LogUnknown,
         };
     }

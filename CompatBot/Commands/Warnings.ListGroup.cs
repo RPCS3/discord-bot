@@ -1,49 +1,35 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
+﻿using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.CommandsNext.Converters;
-using DSharpPlus.Entities;
+using DSharpPlus.Commands.Converters;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class Warnings
+internal static partial class Warnings
 {
-    [Group("list"), Aliases("show")]
+    [Command("list")]
     [Description("Allows to list warnings in various ways. Users can only see their own warnings.")]
-    public class ListGroup : BaseCommandModuleCustom
+    internal static class ListGroup
     {
-        [GroupCommand, Priority(10)]
-        [Description("Show warning list for a user. Default is to show warning list for yourself")]
-        public async Task List(CommandContext ctx, [Description("Discord user to list warnings for")] DiscordUser user)
+        [Command("user")]
+        [Description("Show warning list for a user")]
+        public static async ValueTask List(SlashCommandContext ctx, DiscordUser user)
         {
+            await ctx.DeferResponseAsync(true).ConfigureAwait(false);
             if (await CheckListPermissionAsync(ctx, user.Id).ConfigureAwait(false))
-                await ListUserWarningsAsync(ctx.Client, ctx.Message, user.Id, user.Username.Sanitize(), false);
+                await ListUserWarningsAsync(ctx.Client, ctx.Interaction, user.Id, user.Username.Sanitize(), skipIfOne: false, useFollowup: true);
         }
 
-        [GroupCommand]
-        public async Task List(CommandContext ctx, [Description("Id of the user to list warnings for")] ulong userId)
+        [Command("top")]
+        [Description("List top users with warnings")]
+        public static async ValueTask Users(
+            SlashCommandContext ctx,
+            [Description("Number of items to show. Default is 10")]
+            int number = 10
+        )
         {
-            if (await CheckListPermissionAsync(ctx, userId).ConfigureAwait(false))
-                await ListUserWarningsAsync(ctx.Client, ctx.Message, userId, $"<@{userId}>", false);
-        }
-
-        [GroupCommand]
-        [Description("List your own warning list")]
-        public async Task List(CommandContext ctx)
-            => await List(ctx, ctx.Message.Author).ConfigureAwait(false);
-
-        [Command("users"), Aliases("top"), RequiresBotModRole, TriggersTyping]
-        [Description("List users with warnings, sorted from most warned to least")]
-        public async Task Users(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
-        {
+            var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
+            await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
             try
             {
                 if (number < 1)
@@ -66,19 +52,28 @@ internal sealed partial class Warnings
                     var username = await ctx.GetUserNameAsync(row.discordId).ConfigureAwait(false);
                     table.Add(username, row.discordId.ToString(), row.count.ToString(), row.total.ToString());
                 }
-                await ctx.SendAutosplitMessageAsync(new StringBuilder("Warning count per user:").Append(table)).ConfigureAwait(false);
+                var pages = AutosplitResponseHelper.AutosplitMessage(new StringBuilder("Warning count per user:").Append(table).ToString());
+                await ctx.RespondAsync(pages[0], ephemeral: ephemeral).ConfigureAwait(false);
+                foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
+                    await ctx.FollowupAsync(page, ephemeral: ephemeral).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Error(e);
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "SQL query for this command is broken at the moment", true).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to execute the command: {e.Message}".Trim(EmbedPager.MaxMessageLength), ephemeral: true).ConfigureAwait(false);
             }
         }
 
-        [Command("mods"), Aliases("mtop"), RequiresBotModRole, TriggersTyping]
-        [Description("List bot mods, sorted by the number of warnings issued")]
-        public async Task Mods(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
+        [Command("mods")]
+        [Description("List top bot mods giving warnings")]
+        public static async ValueTask Mods(
+            SlashCommandContext ctx,
+            [Description("Number of items to show. Default is 10")]
+            int number = 10
+        )
         {
+            var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
+            await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
             try
             {
                 if (number < 1)
@@ -103,19 +98,27 @@ internal sealed partial class Warnings
                         username = "Unknown";
                     table.Add(username, row.userId.ToString(), row.count.ToString(), row.total.ToString());
                 }
-                await ctx.SendAutosplitMessageAsync(new StringBuilder("Warnings issued per bot mod:").Append(table)).ConfigureAwait(false);
+                var pages = AutosplitResponseHelper.AutosplitMessage(new StringBuilder("Warnings issued per bot mod:").Append(table).ToString());
+                await ctx.RespondAsync(pages[0], ephemeral: ephemeral).ConfigureAwait(false);
+                foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
+                    await ctx.FollowupAsync(page, ephemeral: ephemeral).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Error(e);
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "SQL query for this command is broken at the moment", true).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to execute the command: {e.Message}".Trim(EmbedPager.MaxMessageLength), ephemeral: true).ConfigureAwait(false);
             }
         }
 
-        [Command("by"), RequiresBotModRole]
+        [Command("by")]
         [Description("Shows warnings issued by the specified moderator")]
-        public async Task By(CommandContext ctx, ulong moderatorId, [Description("Optional number of items to show. Default is 10")] int number = 10)
+        public static async ValueTask By(
+            SlashCommandContext ctx,
+            DiscordUser moderator,
+            [Description("Number of items to show. Default is 10")] int number = 10
+        )
         {
+            await ctx.DeferResponseAsync(true).ConfigureAwait(false);
             if (number < 1)
                 number = 10;
             var table = new AsciiTable(
@@ -128,7 +131,7 @@ internal sealed partial class Warnings
             );
             await using var db = new BotDb();
             var query = from warn in db.Warning
-                where warn.IssuerId == moderatorId && !warn.Retracted
+                where warn.IssuerId == moderator.Id && !warn.Retracted
                 orderby warn.Id descending
                 select warn;
             foreach (var row in query.Take(number))
@@ -137,50 +140,38 @@ internal sealed partial class Warnings
                 var timestamp = row.Timestamp.HasValue ? new DateTime(row.Timestamp.Value, DateTimeKind.Utc).ToString("u") : "";
                 table.Add(row.Id.ToString(), username, row.DiscordId.ToString(), timestamp, row.Reason, row.FullReason);
             }
-            var modName = await ctx.GetUserNameAsync(moderatorId, defaultName: "Unknown mod").ConfigureAwait(false);
-            await ctx.SendAutosplitMessageAsync(new StringBuilder($"Recent warnings issued by {modName}:").Append(table)).ConfigureAwait(false);
-
+            var modName = moderator.Username;
+            var pages = AutosplitResponseHelper.AutosplitMessage(new StringBuilder($"Recent warnings issued by {modName}:").Append(table).ToString());
+            await ctx.RespondAsync(pages[0], ephemeral: true).ConfigureAwait(false);
+            foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
+                await ctx.FollowupAsync(page, ephemeral: true).ConfigureAwait(false);
         }
 
-        [Command("by"), Priority(1), RequiresBotModRole]
-        public async Task By(CommandContext ctx, string me, [Description("Optional number of items to show. Default is 10")] int number = 10)
+        [Command("recent")]
+        [Description("Show last issued warnings")]
+        public static async ValueTask Last(
+            SlashCommandContext ctx,
+            [Description("Number of items to show. Default is 10")]
+            int number = 10
+        )
         {
-            if (me.ToLowerInvariant() == "me")
-            {
-                await By(ctx, ctx.User.Id, number).ConfigureAwait(false);
-                return;
-            }
-
-            var user = await ((IArgumentConverter<DiscordUser>)new DiscordUserConverter()).ConvertAsync(me, ctx).ConfigureAwait(false);
-            if (user.HasValue)
-                await By(ctx, user.Value, number).ConfigureAwait(false);
-        }
-
-        [Command("by"), Priority(10), RequiresBotModRole]
-        public Task By(CommandContext ctx, DiscordUser moderator, [Description("Optional number of items to show. Default is 10")] int number = 10)
-            => By(ctx, moderator.Id, number);
-
-        [Command("recent"), Aliases("last", "all"), RequiresBotModRole]
-        [Description("Shows last issued warnings in chronological order")]
-        public async Task Last(CommandContext ctx, [Description("Optional number of items to show. Default is 10")] int number = 10)
-        {
+            await ctx.DeferResponseAsync(true).ConfigureAwait(false);
             var isMod = await ctx.User.IsWhitelistedAsync(ctx.Client, ctx.Guild).ConfigureAwait(false);
-            var showRetractions = ctx.Channel.IsPrivate && isMod;
             if (number < 1)
                 number = 10;
             var table = new AsciiTable(
                 new AsciiColumn("ID", alignToRight: true),
-                new AsciiColumn("±", disabled: !showRetractions),
+                new AsciiColumn("±", disabled: !isMod),
                 new AsciiColumn("Username", maxWidth: 24),
-                new AsciiColumn("User ID", disabled: !ctx.Channel.IsPrivate, alignToRight: true),
+                new AsciiColumn("User ID", disabled: !isMod, alignToRight: true),
                 new AsciiColumn("Issued by", maxWidth: 15),
                 new AsciiColumn("On date (UTC)"),
                 new AsciiColumn("Reason"),
-                new AsciiColumn("Context", disabled: !ctx.Channel.IsPrivate)
+                new AsciiColumn("Context", disabled: !isMod)
             );
             await using var db = new BotDb();
             IOrderedQueryable<Warning> query;
-            if (showRetractions)
+            if (isMod)
                 query = from warn in db.Warning
                     orderby warn.Id descending
                     select warn;
@@ -204,15 +195,18 @@ internal sealed partial class Warnings
                 else
                     table.Add(row.Id.ToString(), "+", username, row.DiscordId.ToString(), modName, timestamp, row.Reason, row.FullReason);
             }
-            await ctx.SendAutosplitMessageAsync(new StringBuilder("Recent warnings:").Append(table)).ConfigureAwait(false);
+            var pages = AutosplitResponseHelper.AutosplitMessage(new StringBuilder("Recent warnings:").Append(table).ToString());
+            await ctx.RespondAsync(pages[0], ephemeral: true).ConfigureAwait(false);
+            foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
+                await ctx.FollowupAsync(page, ephemeral: true).ConfigureAwait(false);
         }
 
-        private async Task<bool> CheckListPermissionAsync(CommandContext ctx, ulong userId)
+        private static async ValueTask<bool> CheckListPermissionAsync(SlashCommandContext ctx, ulong userId)
         {
-            if (userId == ctx.Message.Author.Id || ModProvider.IsMod(ctx.Message.Author.Id))
+            if (userId == ctx.User.Id || ModProvider.IsMod(ctx.User.Id))
                 return true;
 
-            await ctx.ReactWithAsync(Config.Reactions.Denied, "Regular users can only view their own warnings").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Denied} You can only view your own warnings").ConfigureAwait(false);
             return false;
         }
     }

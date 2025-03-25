@@ -1,5 +1,4 @@
-﻿using DSharpPlus.Entities;
-using Octokit;
+﻿using Octokit;
 
 namespace CompatBot.Utils.ResultFormatters;
 

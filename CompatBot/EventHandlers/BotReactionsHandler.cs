@@ -1,17 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
+﻿using System.Text.RegularExpressions;
 using CompatBot.Database;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using NReco.Text;
 #if DEBUG
-using System.Collections.Generic;
 #endif
 
 namespace CompatBot.EventHandlers
@@ -50,7 +40,7 @@ namespace CompatBot.EventHandlers
         private static readonly string[] SadMessages =
         [
             "Okay (._.)", "As you wish", "My bad", "I only wanted to help", "Dobby will learn, master",
-            "Sorry...", "I'll try to be smarter next time", "Your wish is my command", "Done.",
+            "Sorry…", "I'll try to be smarter next time", "Your wish is my command", "Done.",
         ];
 
         private static readonly DiscordEmoji[] ThankYouReactions = new[]
@@ -78,7 +68,7 @@ namespace CompatBot.EventHandlers
         public static DiscordEmoji RandomNegativeReaction { get { lock (TheDoor) return SadReactions[Rng.Next(SadReactions.Length)]; } }
         public static DiscordEmoji RandomPositiveReaction { get { lock (TheDoor) return ThankYouReactions[Rng.Next(ThankYouReactions.Length)]; } }
 
-        public static async Task OnMessageCreated(DiscordClient c, MessageCreateEventArgs args)
+        public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
         {
             if (DefaultHandlerFilter.IsFluff(args.Message))
                 return;
@@ -165,8 +155,8 @@ namespace CompatBot.EventHandlers
                 lock (TheDoor)
                 {
                     emoji = ThankYouReactions[Rng.Next(ThankYouReactions.Length)];
-                    thankYouMessage = LimitedToSpamChannel.IsSpamChannel(args.Channel)
-                                      || LimitedToOfftopicChannel.IsOfftopicChannel(args.Channel)
+                    thankYouMessage = args.Channel.IsSpamChannel()
+                                      || args.Channel.IsOfftopicChannel()
                         ? ThankYouMessages[Rng.Next(ThankYouMessages.Length)]
                         : null;
                 }
@@ -186,7 +176,7 @@ namespace CompatBot.EventHandlers
                 if (await args.Author.IsSmartlistedAsync(c, args.Message.Channel.Guild).ConfigureAwait(false))
                 {
                     var botMember = args.Guild?.CurrentMember ?? await c.GetMemberAsync(c.CurrentUser).ConfigureAwait(false);
-                    if (args.Channel.PermissionsFor(botMember).HasPermission(Permissions.ReadMessageHistory))
+                    if (args.Channel.PermissionsFor(botMember).HasPermission(DiscordPermission.ReadMessageHistory))
                     {
                         var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.Add(-Config.ShutupTimeLimitInMin)).ConfigureAwait(false);
                         if (lastBotMessages.OrderByDescending(m => m.CreationTimestamp).FirstOrDefault(m => m.Author.IsCurrent) is DiscordMessage msg)

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace CompatBot.Utils;
+﻿namespace CompatBot.Utils;
 
 public static class EnumerableExtensions
 {
@@ -53,5 +49,7 @@ public static class EnumerableExtensions
             .GroupBy(x => x.inx / maxItems)
             .Select(g => g.Select(x => x.item));
     }
-        
+
+    public static List<T> ToList<T>(this IAsyncEnumerable<T> items)
+        => items.ToBlockingEnumerable().ToList();
 }

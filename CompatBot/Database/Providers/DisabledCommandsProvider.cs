@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace CompatBot.Database.Providers;
+﻿namespace CompatBot.Database.Providers;
 
 internal static class DisabledCommandsProvider
 {

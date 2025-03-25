@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
@@ -20,7 +11,7 @@ internal static class EmpathySimulationHandler
     internal static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
     internal static readonly MemoryCache Throttling = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
@@ -61,7 +52,7 @@ internal static class EmpathySimulationHandler
             {
                 Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
                 var msgContent = GetAvgContent(similarList.Select(m => m.Content).ToList());
-                var botMsg = await args.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msgContent).WithAllowedMentions(Config.AllowedMentions.UsersOnly)).ConfigureAwait(false);
+                var botMsg = await args.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msgContent).AddMention(UserMention.All)).ConfigureAwait(false);
                 similarList.Add(botMsg);
             }
             else
@@ -69,8 +60,8 @@ internal static class EmpathySimulationHandler
         }
     }
 
-    public static Task OnMessageUpdated(DiscordClient _, MessageUpdateEventArgs e) => Backtrack(e.Channel, e.MessageBefore, false);
-    public static Task OnMessageDeleted(DiscordClient _, MessageDeleteEventArgs e) => Backtrack(e.Channel, e.Message, true);
+    public static Task OnMessageUpdated(DiscordClient _, MessageUpdatedEventArgs e) => Backtrack(e.Channel, e.MessageBefore, false);
+    public static Task OnMessageDeleted(DiscordClient _, MessageDeletedEventArgs e) => Backtrack(e.Channel, e.Message, true);
 
     private static async Task Backtrack(DiscordChannel channel, DiscordMessage message, bool removeFromQueue)
     {

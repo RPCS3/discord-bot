@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using DSharpPlus.CommandsNext;
 using PsnClient.POCOs;
 using PsnClient.Utils;
+using Container = PsnClient.POCOs.Container;
 
 namespace CompatBot.ThumbScrapper;
 
@@ -151,7 +146,7 @@ internal sealed partial class PsnScraper
                 continue;
             }
 
-            Config.Log.Debug($"Scraping {locale} PSN for PS3 games...");
+            Config.Log.Debug($"Scraping {locale} PSN for PS3 games…");
             var knownContainers = new HashSet<string>();
             // get containers from the left side navigation panel on the main page
             var containerIds = await Client.GetMainPageNavigationContainerIdsAsync(locale, cancellationToken).ConfigureAwait(false);
@@ -192,7 +187,7 @@ internal sealed partial class PsnScraper
                 }
 
                 var currentPercent = storeIdx * percentPerStore + containerIdx * percentPerStore * percentPerContainer;
-                Config.Log.Debug($"\tScraping {locale} container {containerId} ({currentPercent*100:##0.00}%)...");
+                Config.Log.Debug($"\tScraping {locale} container {containerId} ({currentPercent*100:##0.00}%)…");
                 var total = -1;
                 var start = 0;
                 do
@@ -283,7 +278,7 @@ internal sealed partial class PsnScraper
         }
         var orderedLocales = new[] {"en-US", "en-GB"}
             .Concat(en)
-            .Concat(new[] {"ja-JP"})
+            .Concat(["ja-JP"])
             .Concat(ja)
             .Concat(locales);
         var countries = new HashSet<string>();

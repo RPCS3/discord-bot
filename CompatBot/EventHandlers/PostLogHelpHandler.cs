@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
+﻿using System.Text.RegularExpressions;
 using CompatBot.Database;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.EventHandlers;
@@ -28,12 +20,12 @@ internal static partial class PostLogHelpHandler
     };
     private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
-        if (!LimitedToHelpChannel.IsHelpChannel(args.Channel))
+        if (!args.Channel.IsHelpChannel())
             return;
 
         if (DateTime.UtcNow - lastMention < ThrottlingThreshold)

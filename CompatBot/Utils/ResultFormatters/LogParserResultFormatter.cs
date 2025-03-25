@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
+﻿using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
@@ -12,8 +8,6 @@ using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
-using DSharpPlus;
-using DSharpPlus.Entities;
 using IrdLibraryClient;
 
 namespace CompatBot.Utils.ResultFormatters;
@@ -906,7 +900,7 @@ internal static partial class LogParserResult
 
     private static string? GetWindowsVersion(string? driverVersionString)
     {
-        // see https://docs.microsoft.com/en-us/windows-hardware/drivers/display/wddm-2-1-features#driver-versioning
+        // see https://learn.microsoft.com/en-us/windows-hardware/drivers/display/wddm-2-1-features#driver-versioning
         if (string.IsNullOrEmpty(driverVersionString) || !Version.TryParse(driverVersionString, out var driverVer))
             return null;
 

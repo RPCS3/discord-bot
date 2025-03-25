@@ -1,20 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using ColorThiefDotNet;
-using CompatBot.Commands.Attributes;
 using CompatBot.EventHandlers;
-using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
+using DSharpPlus.Commands.Processors.TextCommands;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 using SixLabors.Fonts;
@@ -26,16 +16,13 @@ using SixLabors.ImageSharp.Processing;
 using Color = SixLabors.ImageSharp.Color;
 using FontStyle = SixLabors.Fonts.FontStyle;
 using Image = SixLabors.ImageSharp.Image;
-using PointF = SixLabors.ImageSharp.PointF;
 using Rectangle = SixLabors.ImageSharp.Rectangle;
 using RectangleF = SixLabors.ImageSharp.RectangleF;
-using Size = SixLabors.ImageSharp.Size;
 using SystemFonts = SixLabors.Fonts.SystemFonts;
 
 namespace CompatBot.Commands;
 
-[Cooldown(1, 5, CooldownBucketType.Channel)]
-internal sealed class Vision: BaseCommandModuleCustom
+internal sealed class Vision
 {
     static Vision()
     {
@@ -47,8 +34,8 @@ internal sealed class Vision: BaseCommandModuleCustom
 
     private static readonly Dictionary<string, string[]> Reactions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["cat"] = BotStats.GoodKot,
-        ["dog"] = BotStats.GoodDog,
+        ["cat"] = BotStatus.GoodKot,
+        ["dog"] = BotStatus.GoodDog,
         ["hedgehog"] = ["🦔",],
         ["flower"] = ["🌷", "🌸", "🌹", "🌺", "🌼", "🥀", "💐", "🌻", "💮",],
         ["lizard"] = ["🦎",],
@@ -71,6 +58,7 @@ internal sealed class Vision: BaseCommandModuleCustom
         ["strawberry"] = ["🍓",],
     };
 
+    /*
     [Command("describe"), TriggersTyping]
     [Description("Generates an image description from the attached image, or from the url")]
     public Task Describe(CommandContext ctx, [RemainingText] string? imageUrl = null)
@@ -79,7 +67,9 @@ internal sealed class Vision: BaseCommandModuleCustom
             return Tag(ctx, imageUrl[3..].TrimStart());
         return Tag(ctx, imageUrl);
     }
+    */
 
+    /*
     [Command("tag"), TriggersTyping]
     [Description("Tags recognized objects in the image")]
     public async Task Tag(CommandContext ctx, string? imageUrl = null)
@@ -151,9 +141,9 @@ internal sealed class Vision: BaseCommandModuleCustom
                 imageStream,
                 new List<VisualFeatureTypes?>
                 {
-                    VisualFeatureTypes.Objects, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-object-detection
-                    VisualFeatureTypes.Description, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-describing-images
-                    VisualFeatureTypes.Adult, // https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-detecting-adult-content
+                    VisualFeatureTypes.Objects, // https://learn.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-object-detection
+                    VisualFeatureTypes.Description, // https://learn.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-describing-images
+                    VisualFeatureTypes.Adult, // https://learn.microsoft.com/en-us/azure/cognitive-services/computer-vision/concept-detecting-adult-content
                 },
                 cancellationToken: Config.Cts.Token
             ).ConfigureAwait(false);
@@ -239,7 +229,7 @@ internal sealed class Vision: BaseCommandModuleCustom
                             WrapTextWidth = r.W - 10,
 #endif
                     };
-                    var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop/*, TextOptions = textOptions*/};
+                    var textDrawingOptions = new DrawingOptions {GraphicsOptions = fgGop/*, TextOptions = textOptions#1#};
                     //var brush = Brushes.Solid(Color.Black);
                     //var pen = Pens.Solid(color, 2);
                     var textBox = TextMeasurer.MeasureBounds(label, textOptions);
@@ -359,6 +349,7 @@ internal sealed class Vision: BaseCommandModuleCustom
             await ctx.Channel.SendMessageAsync("Can't do anything with this image").ConfigureAwait(false);
         }
     }
+    */
 
     internal static IEnumerable<string> GetImagesFromEmbeds(DiscordMessage msg)
     {
@@ -422,7 +413,10 @@ internal sealed class Vision: BaseCommandModuleCustom
 
     private static async Task<string?> GetImageUrlAsync(CommandContext ctx, string? imageUrl)
     {
-        var reactMsg = ctx.Message;
+        if (ctx is not TextCommandContext tctx)
+            return null;
+        
+        var reactMsg = tctx.Message;
         if (GetImageAttachments(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
             imageUrl = attachment.Url;
         imageUrl = imageUrl?.Trim() ?? "";
@@ -440,10 +434,10 @@ internal sealed class Vision: BaseCommandModuleCustom
                  || str.StartsWith("^"))
                 && ctx.Channel.PermissionsFor(
                     await ctx.Client.GetMemberAsync(ctx.Guild, ctx.Client.CurrentUser).ConfigureAwait(false)
-                ).HasPermission(Permissions.ReadMessageHistory))
+                ).HasPermission(DiscordPermission.ReadMessageHistory))
                 try
                 {
-                    var previousMessages = (await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false))!;
+                    var previousMessages = (await ctx.Channel.GetMessagesBeforeCachedAsync(tctx.Message.Id, 10).ConfigureAwait(false))!;
                     imageUrl = (
                         from m in previousMessages
                         where m.Attachments?.Count > 0

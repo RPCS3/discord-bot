@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using DSharpPlus.Entities;
 
 namespace CompatBot.Utils.Extensions;
 

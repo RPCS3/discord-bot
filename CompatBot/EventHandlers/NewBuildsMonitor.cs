@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatBot.Commands;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 
 namespace CompatBot.EventHandlers;
 
@@ -20,7 +14,7 @@ internal static partial class NewBuildsMonitor
     private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
     private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new();
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (args.Author.IsBotSafeCheck()
             && !args.Author.IsCurrent
@@ -60,7 +54,7 @@ internal static partial class NewBuildsMonitor
             {
                 try
                 {
-                    await CompatList.UpdatesCheck.CheckForRpcs3Updates(client, null).ConfigureAwait(false);
+                    await CompatList.LatestBuild.CheckForRpcs3UpdatesAsync(discordClient: client).ConfigureAwait(false);
                     lastCheck = DateTime.UtcNow;
                 }
                 catch (Exception e)

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
+﻿using System.Buffers;
 using System.IO.Pipelines;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using CompatBot.EventHandlers.LogParsing.POCOs;
-using CompatBot.Utils;
 
 namespace CompatBot.EventHandlers.LogParsing;
 

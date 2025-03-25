@@ -1,12 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+﻿using System.Text.RegularExpressions;
 
 namespace CompatBot.EventHandlers;
 
@@ -15,12 +7,12 @@ internal static partial class LogAsTextMonitor
     [GeneratedRegex(@"^[`""]?(·|(\w|!)) ({(rsx|PPU|SPU)|LDR:)|E LDR:", RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     private static partial Regex LogLine();
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
-        if (!LimitedToHelpChannel.IsHelpChannel(args.Channel))
+        if (!args.Channel.IsHelpChannel())
             return;
 
         if ((args.Message.Author as DiscordMember)?.Roles.Any() ?? false)

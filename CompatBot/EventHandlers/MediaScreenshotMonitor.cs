@@ -1,18 +1,9 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
@@ -20,18 +11,13 @@ namespace CompatBot.EventHandlers;
 
 internal sealed class MediaScreenshotMonitor
 {
-    private readonly DiscordClient client;
     private readonly ComputerVisionClient cvClient = new(new ApiKeyServiceClientCredentials(Config.AzureComputerVisionKey)) {Endpoint = Config.AzureComputerVisionEndpoint};
     private readonly SemaphoreSlim workSemaphore = new(0);
-    private readonly ConcurrentQueue<(MessageCreateEventArgs evt, Guid readOperationId)> workQueue = new ConcurrentQueue<(MessageCreateEventArgs args, Guid readOperationId)>();
+    private readonly ConcurrentQueue<(MessageCreatedEventArgs evt, Guid readOperationId)> workQueue = new ConcurrentQueue<(MessageCreatedEventArgs args, Guid readOperationId)>();
+    public DiscordClient Client { get; internal set; } = null!;
     public static int MaxQueueLength { get; private set; }
 
-    internal MediaScreenshotMonitor(DiscordClient client)
-    {
-        this.client = client;
-    }
-
-    public async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs evt)
+    public async Task OnMessageCreated(DiscordClient client, MessageCreatedEventArgs evt)
     {
         if (string.IsNullOrEmpty(Config.AzureComputerVisionKey))
             return;
@@ -44,11 +30,11 @@ internal sealed class MediaScreenshotMonitor
             return;
 
 #if !DEBUG
-            if (message.Author.IsBotSafeCheck())
-                return;
+        if (message.Author.IsBotSafeCheck())
+            return;
 
-            if (await message.Author.IsSmartlistedAsync(client).ConfigureAwait(false))
-                return;
+        if (await message.Author.IsSmartlistedAsync(client).ConfigureAwait(false))
+            return;
 #endif
 
         if (!message.Attachments.Any())
@@ -124,7 +110,7 @@ internal sealed class MediaScreenshotMonitor
                                 if ("media".Equals(item.evt.Channel.Name))
                                     suppressFlags = FilterAction.SendMessage | FilterAction.ShowExplain;
                                 await ContentFilter.PerformFilterActions(
-                                    client,
+                                    Client,
                                     item.evt.Message,
                                     hit,
                                     suppressFlags,
@@ -141,7 +127,7 @@ internal sealed class MediaScreenshotMonitor
                         if (!cnt || hasVkDiagInfo)
                             try
                             {
-                                var botSpamCh = await client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
+                                var botSpamCh = await Client.GetChannelAsync(Config.ThumbnailSpamId).ConfigureAwait(false);
                                 await botSpamCh.SendAutosplitMessageAsync(ocrTextBuf, blockStart: "", blockEnd: "").ConfigureAwait(false);
                             }
                             catch (Exception ex)
@@ -150,7 +136,7 @@ internal sealed class MediaScreenshotMonitor
                             }
                     }
                 }
-                else if (result.Status == OperationStatusCodes.NotStarted || result.Status == OperationStatusCodes.Running)
+                else if (result.Status is OperationStatusCodes.NotStarted or OperationStatusCodes.Running)
                 {
                     workQueue.Enqueue(item);
                     reEnqueueId ??= item.readOperationId;

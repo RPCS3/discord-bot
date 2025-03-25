@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using CompatBot.Commands;
 using CompatBot.Database.Providers;
-using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
@@ -29,8 +21,8 @@ internal static partial class DiscordInviteFilter
     private static readonly MemoryCache InviteCodeCache = new(new MemoryCacheOptions{ExpirationScanFrequency = TimeSpan.FromHours(1)});
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
 
-    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreateEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
-    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdateEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
+    public static Task<bool> OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
+    public static Task<bool> OnMessageUpdated(DiscordClient c, MessageUpdatedEventArgs args) => CheckMessageInvitesAreSafeAsync(c, args.Message);
 
     public static async Task<bool> CheckMessageInvitesAreSafeAsync(DiscordClient client, DiscordMessage message)
     {
@@ -41,8 +33,8 @@ internal static partial class DiscordInviteFilter
             return true;
 
 #if !DEBUG
-            if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
-                return true;
+        if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
+            return true;
 #endif
 
         if (message.Reactions.Any(r => r.Emoji == Config.Reactions.Moderated && r.IsMe))
@@ -128,7 +120,16 @@ internal static partial class DiscordInviteFilter
                 
                 await message.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
                 if (circumventionAttempt)
-                    await Warnings.AddAsync(client, message, message.Author.Id, message.Author.Username, client.CurrentUser, "Attempted to circumvent discord invite filter", codeResolveMsg);
+                {
+                    var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                        message.Author.Id,
+                        client.CurrentUser,
+                        "Attempted to circumvent discord invite filter",
+                        codeResolveMsg
+                    ).ConfigureAwait(false);
+                    if (saved && !suppress)
+                        await message.Channel.SendMessageAsync($"User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)").ConfigureAwait(false);
+                }
                 return false;
             }
         }
@@ -152,16 +153,16 @@ internal static partial class DiscordInviteFilter
             }
 
             var after = DateTime.UtcNow - Config.ModerationBacklogThresholdInHours;
-            foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != ChannelType.Voice))
+            foreach (var channel in guild.Channels.Values.Where(ch => !ch.IsCategory && ch.Type != DiscordChannelType.Voice))
             {
                 var permissions = channel.PermissionsFor(botMember);
-                if (!permissions.HasPermission(Permissions.ReadMessageHistory))
+                if (!permissions.HasPermission(DiscordPermission.ReadMessageHistory))
                 {
                     Config.Log.Warn($"No permissions to read message history in #{channel.Name}");
                     continue;
                 }
 
-                if (!permissions.HasPermission(Permissions.AccessChannels))
+                if (!permissions.HasPermission(DiscordPermission.ViewChannel))
                 {
                     Config.Log.Warn($"No permissions to access #{channel.Name}");
                     continue;

@@ -1,106 +1,118 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
-using CompatBot.Utils;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 using Microsoft.TeamFoundation.Build.WebApi;
 using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands;
 
-[Group("pr"), TriggersTyping]
+[Command("pr")]
 [Description("Commands to list opened pull requests information")]
-internal sealed class Pr: BaseCommandModuleCustom
+internal sealed class Pr
 {
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
     private static readonly CompatApiClient.Client CompatApiClient = new();
 
-    [GroupCommand]
-    public Task List(CommandContext ctx, [Description("Get information for specific PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr);
-
-    [GroupCommand]
-    public async Task List(CommandContext ctx, [Description("Get information for PRs with specified text in description. First word might be an author"), RemainingText] string? searchStr = null)
+    [Command("search")]
+    [Description("Search for open pull requests")]
+    public static async ValueTask List(
+        SlashCommandContext ctx,
+        [Description("Pull request author username on GitHub")]
+        string? author = null,
+        [Description("Search for text in the pull request description")]
+        string? search = null)
     {
-        var openPrList = await GithubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false);
-        if (openPrList == null)
+        if (author is not { Length: > 0 } && search is not { Length: > 0 })
         {
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't retrieve open pull requests list, try again later").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} At least one argument must be provided", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+        
+        var ephemeral = !ctx.Channel.IsSpamChannel() && !ModProvider.IsMod(ctx.User.Id);
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
+        if (await GithubClient.GetOpenPrsAsync(Config.Cts.Token).ConfigureAwait(false) is not {} openPrList)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't retrieve open pull requests list, try again later", ephemeral: ephemeral).ConfigureAwait(false);
             return;
         }
 
-        if (openPrList.Count == 0)
+        if (openPrList.Count is 0)
         {
-            await ctx.Channel.SendMessageAsync("It looks like there are no open pull requests at the moment 🎉").ConfigureAwait(false);
+            await ctx.RespondAsync("It looks like there are no open pull requests at the moment", ephemeral: ephemeral).ConfigureAwait(false);
             return;
         }
 
-        if (!string.IsNullOrEmpty(searchStr))
+        if (author is {Length: >0} && search is {Length: >0})
         {
-            var filteredList = openPrList.Where(
-                pr => pr.Title?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
-                      || pr.User?.Login?.Contains(searchStr, StringComparison.InvariantCultureIgnoreCase) is true
+            openPrList = openPrList.Where(
+                pr => pr.User?.Login?.Contains(author, StringComparison.InvariantCultureIgnoreCase) is true
+                     && pr.Title?.Contains(search, StringComparison.InvariantCultureIgnoreCase) is true
             ).ToList();
-            if (filteredList.Count == 0)
-            {
-                var searchParts = searchStr.Split(' ', 2);
-                if (searchParts.Length == 2)
-                {
-                    var author = searchParts[0].Trim();
-                    var substr = searchParts[1].Trim();
-                    openPrList = openPrList.Where(
-                        pr => pr.User?.Login?.Contains(author, StringComparison.InvariantCultureIgnoreCase) is true
-                              && pr.Title?.Contains(substr, StringComparison.InvariantCultureIgnoreCase) is true
-                    ).ToList();
-                }
-                else
-                    openPrList = filteredList;
-            }
-            else
-                openPrList = filteredList;
         }
-
-        if (openPrList.Count == 0)
+        else if (author is { Length: > 0 })
         {
-            await ctx.Channel.SendMessageAsync("No open pull requests were found for specified filter").ConfigureAwait(false);
+            openPrList = openPrList.Where(
+                pr => pr.User?.Login?.Contains(author, StringComparison.InvariantCultureIgnoreCase) is true
+            ).ToList();
+        }
+        else if (search is {Length: >0})
+        {
+            openPrList = openPrList.Where(
+                pr => pr.Title?.Contains(search, StringComparison.InvariantCultureIgnoreCase) is true
+            ).ToList();
+        }
+        if (openPrList.Count is 0)
+        {
+            await ctx.RespondAsync("No open pull requests were found", ephemeral: ephemeral).ConfigureAwait(false);
             return;
         }
 
-        if (openPrList.Count == 1)
+        if (openPrList is [{}item])
         {
-            await LinkPrBuild(ctx.Client, ctx.Message, openPrList[0].Number).ConfigureAwait(false);
+            var msg = await GetPrBuildMessageAsync(ctx.Client, item.Number).ConfigureAwait(false);
+            await ctx.RespondAsync(new DiscordInteractionResponseBuilder(msg).AsEphemeral(ephemeral)).ConfigureAwait(false);
             return;
         }
 
-        var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
         const int maxTitleLength = 80;
-        var maxNum = openPrList.Max(pr => pr.Number).ToString().Length + 1;
-        var maxAuthor = openPrList.Max(pr => (pr.User?.Login).GetVisibleLength());
-        var maxTitle = Math.Min(openPrList.Max(pr => pr.Title.GetVisibleLength()), maxTitleLength);
+        var maxNum = openPrList.Max(i => i.Number).ToString().Length + 1;
+        var maxAuthor = openPrList.Max(i => (i.User?.Login).GetVisibleLength());
+        var maxTitle = Math.Min(openPrList.Max(i => i.Title.GetVisibleLength()), maxTitleLength);
         var result = new StringBuilder($"There are {openPrList.Count} open pull requests:\n");
         foreach (var pr in openPrList)
             result.Append('`').Append($"{("#" + pr.Number).PadLeft(maxNum)} by {pr.User?.Login?.PadRightVisible(maxAuthor)}: {pr.Title?.Trim(maxTitleLength).PadRightVisible(maxTitle)}".FixSpaces()).AppendLine($"` <{pr.HtmlUrl}>");
-        await responseChannel.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
+        var pages = AutosplitResponseHelper.AutosplitMessage(result.ToString(), blockStart: null, blockEnd: null);
+        await ctx.RespondAsync(pages[0], ephemeral: ephemeral).ConfigureAwait(false);
     }
 
-    [Command("link"), Aliases("old")]
-    [Description("Links to the official binary builds produced after specified PR was merged")]
-    public Task Link(CommandContext ctx, [Description("PR number")] int pr) => LinkPrBuild(ctx.Client, ctx.Message, pr, true);
-    
+    [Command("build")]
+    [Description("Link the latest available PR build")]
+    public static async ValueTask Build(SlashCommandContext ctx, [Description("Pull request number")] int pr)
+    {
+        var ephemeral = !ctx.Channel.IsSpamChannel() && !ModProvider.IsMod(ctx.User.Id);
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
+        var response = await GetPrBuildMessageAsync(ctx.Client, pr).ConfigureAwait(false);
+        await ctx.RespondAsync(new DiscordInteractionResponseBuilder(response).AsEphemeral(ephemeral)).ConfigureAwait(false);
+    }
+
+    [Command("merge")]
+    [Description("Link to the official binary build produced after the specified PR was merged")]
+    public static async ValueTask Link(SlashCommandContext ctx, [Description("Pull request number")] int pr)
+    {
+        var ephemeral = !ctx.Channel.IsSpamChannel() && !ModProvider.IsMod(ctx.User.Id);
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
+        var msg = await GetPrBuildMessageAsync(ctx.Client, pr, true).ConfigureAwait(false);
+        await ctx.RespondAsync(new DiscordInteractionResponseBuilder(msg).AsEphemeral(ephemeral)).ConfigureAwait(false);
+    }
+
 #if DEBUG
     [Command("stats"), RequiresBotModRole]
-    public async Task Stats(CommandContext ctx)
+    public static async ValueTask Stats(SlashCommandContext ctx)
     {
         var azureClient = Config.GetAzureDevOpsClient();
         var duration = await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
-        await ctx.Channel.SendMessageAsync(
+        await ctx.RespondAsync(
             $"Expected pipeline duration (using {duration.BuildCount} builds): \n" +
             $"95%: {duration.Percentile95} ({duration.Percentile95.TotalMinutes})\n" +
             $"90%: {duration.Percentile90} ({duration.Percentile90.TotalMinutes})\n" +
@@ -111,15 +123,13 @@ internal sealed class Pr: BaseCommandModuleCustom
         ).ConfigureAwait(false);
     }
 #endif
-        
-    public static async Task LinkPrBuild(DiscordClient client, DiscordMessage message, int pr, bool linkOld = false)
+
+    private static async ValueTask<DiscordMessageBuilder> GetPrBuildMessageAsync(DiscordClient client, int pr, bool linkOld = false)
     {
         var prInfo = await GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false);
+        var result = new DiscordMessageBuilder();
         if (prInfo is null or {Number: 0})
-        {
-            await message.ReactWithAsync(Config.Reactions.Failure, prInfo?.Title ?? "PR not found").ConfigureAwait(false);
-            return;
-        }
+            return result.WithContent($"{Config.Reactions.Failure} {prInfo?.Title ?? "PR not found"}");
 
         var (state, _) = prInfo.GetState();
         var embed = prInfo.AsEmbed();
@@ -134,12 +144,12 @@ internal sealed class Pr: BaseCommandModuleCustom
             string? macDownloadText = null;
             string? buildTime = null;
 
-            if (azureClient != null && prInfo.Head?.Sha is string commit)
+            if (azureClient is not null && prInfo is {Head.Sha: {Length: >0} commit})
                 try
                 {
-                    windowsDownloadText = "⏳ Pending...";
-                    linuxDownloadText = "⏳ Pending...";
-                    macDownloadText = "⏳ Pending...";
+                    windowsDownloadText = "⏳ Pending…";
+                    linuxDownloadText = "⏳ Pending…";
+                    macDownloadText = "⏳ Pending…";
                     var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
                     if (latestBuild == null)
                     {
@@ -189,22 +199,22 @@ internal sealed class Pr: BaseCommandModuleCustom
                             var estimatedTime = TimeSpan.FromMinutes(1);
                             if (estimatedCompletionTime > DateTime.UtcNow)
                                 estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
-                            windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                            windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             linuxDownloadText = windowsDownloadText;
                             macDownloadText = windowsDownloadText;
 
                             /*
                             if (latestBuild.WindowsBuild?.Status is TaskStatus.Executing)
                             {
-                                windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             }
                             if (latestBuild.LinuxBuild?.Status is TaskStatus.Executing)
                             {
-                                linuxDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                linuxDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             }
                             if (latestBuild.MacBuild?.Status is TaskStatus.Executing)
                             {
-                                macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}...";
+                                macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             }
                         */
                         }
@@ -296,21 +306,18 @@ internal sealed class Pr: BaseCommandModuleCustom
                 }
             }
         }
-        await message.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
+        return result.AddEmbed(embed);
     }
 
-    public static async Task LinkIssue(DiscordClient client, DiscordMessage message, int issue)
+    public static async ValueTask<DiscordMessageBuilder?> GetIssueLinkMessageAsync(DiscordClient client, int issue)
     {
         var issueInfo = await GithubClient.GetIssueInfoAsync(issue, Config.Cts.Token).ConfigureAwait(false);
         if (issueInfo is null or {Number: 0})
-            return;
+            return null;
 
-        if (issueInfo.PullRequest != null)
-        {
-            await LinkPrBuild(client, message, issue).ConfigureAwait(false);
-            return;
-        }
+        if (issueInfo.PullRequest is not null)
+            return await GetPrBuildMessageAsync(client, issue).ConfigureAwait(false);
 
-        await message.Channel.SendMessageAsync(embed: issueInfo.AsEmbed()).ConfigureAwait(false);
+        return new DiscordMessageBuilder().AddEmbed(issueInfo.AsEmbed());
     }
 }

@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using DSharpPlus.Entities;
-using PsnClient.Utils;
+﻿using PsnClient.Utils;
 
 namespace CompatBot.Utils.Extensions;
 
 public static class DiscordUserExtensions
 {
-    public static bool IsBotSafeCheck(this DiscordUser user)
+    public static bool IsBotSafeCheck(this DiscordUser? user)
     {
         try
         {
-            return user.IsBot;
+            return user?.IsBot ?? false;
         }
         catch (KeyNotFoundException)
         {

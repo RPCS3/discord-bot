@@ -6,7 +6,7 @@
 // this is item #6 in App array
 public sealed class AppLocales
 {
-    public string[]? EnabledLocales; // "ar-AE",...
+    public string[]? EnabledLocales; // "ar-AE",…
     public AppLocaleOverride[]? Overrides;
 }
 

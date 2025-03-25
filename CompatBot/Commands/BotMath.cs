@@ -1,37 +1,24 @@
-﻿using System;
-using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
-using CompatBot.Commands.Attributes;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+﻿using System.Globalization;
 using org.mariuszgromada.math.mxparser;
+using License = org.mariuszgromada.math.mxparser.License;
 
 namespace CompatBot.Commands;
 
-[Group("math")]
-[Description("Math, here you go Juhn. Use `math help` for syntax help")]
-internal sealed class BotMath : BaseCommandModuleCustom
+internal static class BotMath
 {
     static BotMath()
     {
         License.iConfirmNonCommercialUse("RPCS3");
     }
     
-    [GroupCommand, Priority(9)]
-    public async Task Expression(CommandContext ctx, [RemainingText, Description("Math expression")] string expression)
+    [Command("calculate")]
+    [Description("Math; there you go, Juhn")]
+    public static async ValueTask Calc(SlashCommandContext ctx, [Description("Math expression or `help` for syntax link")] string expression)
     {
-        if (string.IsNullOrEmpty(expression))
+        var ephemeral = !ctx.Channel.IsSpamChannel();
+        if (expression.Equals("help", StringComparison.OrdinalIgnoreCase))
         {
-            try
-            {
-                if (ctx.CommandsNext.FindCommand("math help", out _) is Command helpCmd)
-                {
-                    var helpCtx = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, helpCmd);
-                    await helpCmd.ExecuteAsync(helpCtx).ConfigureAwait(false);
-                }
-            }
-            catch { }
+            await ctx.RespondAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)", ephemeral);
             return;
         }
 
@@ -63,11 +50,6 @@ internal sealed class BotMath : BaseCommandModuleCustom
         {
             Config.Log.Warn(e, "Math failed");
         }
-        await ctx.Channel.SendMessageAsync(result).ConfigureAwait(false);
+        await ctx.RespondAsync(result, ephemeral).ConfigureAwait(false);
     }
-
-    [Command("help"), LimitedToSpamChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
-    [Description("General math expression help, or description of specific math word")]
-    public Task Help(CommandContext ctx)
-        => ctx.Channel.SendMessageAsync("Help for all the features and built-in constants and functions could be found at [mXparser website](<https://mathparser.org/mxparser-math-collection/>)");
 }

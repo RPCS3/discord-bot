@@ -1,408 +1,346 @@
-﻿using System;
-using System.ComponentModel;
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
+using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
-using CompatBot.EventHandlers;
-using CompatBot.Utils;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.CommandsNext.Converters;
-using DSharpPlus.Entities;
-using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Description = DSharpPlus.CommandsNext.Attributes.DescriptionAttribute; 
 
 namespace CompatBot.Commands;
 
-[Group("explain"), Aliases("botsplain", "define")]
-[Cooldown(1, 3, CooldownBucketType.Channel)]
-[Description("Used to manage and show explanations")]
-internal sealed class Explain: BaseCommandModuleCustom
+[Command("explain")]
+internal static class Explain
 {
     private const string TermListTitle = "Defined terms";
 
-    [GroupCommand]
-    public async Task ShowExplanation(CommandContext ctx, [RemainingText, Description("Term to explain")] string term)
+    [Command("show")]
+    [Description("Show explanation for specified term")]
+    public static async ValueTask Show(
+        SlashCommandContext ctx,
+        [Description("Keyword or topic"), SlashAutoCompleteProvider<ExplainAutoCompleteProvider>]
+        string term,
+        [Description("User to ping with the explanation")]
+        DiscordUser? to = null
+    )
     {
-        if (string.IsNullOrEmpty(term))
-        {
-            var lastBotMessages = await ctx.Channel.GetMessagesBeforeCachedAsync(ctx.Message.Id, 10).ConfigureAwait(false);
-            var showList = true;
-            foreach (var pastMsg in lastBotMessages)
-                if (pastMsg.Embeds.FirstOrDefault() is {Title: TermListTitle}
-                    || BotReactionsHandler.NeedToSilence(pastMsg).needToChill)
-                {
-                    showList = false;
-                    break;
-                }
-            if (showList)
-                await List(ctx).ConfigureAwait(false);
-            var botMsg = await ctx.Channel.SendMessageAsync("Please tell what term to explain:").ConfigureAwait(false);
-            var interact = ctx.Client.GetInteractivity();
-            var newMessage = await interact.WaitForMessageAsync(m => m.Author == ctx.User && m.Channel == ctx.Channel && !string.IsNullOrEmpty(m.Content)).ConfigureAwait(false);
-            await botMsg.DeleteAsync().ConfigureAwait(false);
-            if (string.IsNullOrEmpty(newMessage.Result?.Content) || newMessage.Result.Content.StartsWith(Config.CommandPrefix))
-            {
-                await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
-                return;
-            }
-        }
-
-        if (!await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
-            return;
-
-        if (!await ContentFilter.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
-            return;
-
-        var hasMention = false;
+        var ephemeral = !(ctx.Channel.IsSpamChannel() || (ModProvider.IsMod(ctx.User.Id) && to is not null));
+        var canPing = ModProvider.IsMod(ctx.User.Id);
         term = term.ToLowerInvariant();
         var result = await LookupTerm(term).ConfigureAwait(false);
-        if (result is {explanation: null} or {fuzzyMatch.Length: >0})
+        if (result.explanation is null)
         {
-            term = term.StripQuotes();
-            var idx = term.LastIndexOf(" to ", StringComparison.Ordinal);
-            if (idx > 0)
-            {
-                var potentialUserId = term[(idx + 4)..].Trim();
-                try
-                {
-                    var lookup = await ((IArgumentConverter<DiscordUser>)new DiscordUserConverter()).ConvertAsync(potentialUserId, ctx).ConfigureAwait(false);
-                    hasMention = lookup.HasValue && lookup.Value.Id != ctx.Message.Author.Id;
-                }
-                catch {}
-
-                if (hasMention)
-                {
-                    term = term[..idx].TrimEnd();
-                    var mentionResult = await LookupTerm(term).ConfigureAwait(false);
-                    if (mentionResult.score > result.score)
-                        result = mentionResult;
-                }
-            }
-        }
-
-        var needReply = !hasMention || ctx.Message.ReferencedMessage is not null;
-        if (await SendExplanation(result, term, ctx.Message.ReferencedMessage ?? ctx.Message, needReply).ConfigureAwait(false))
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown term `{term.Sanitize(replaceBackTicks: true)}`.", ephemeral: true).ConfigureAwait(false);
             return;
-
-        string? inSpecificLocation = null;
-        if (!LimitedToSpamChannel.IsSpamChannel(ctx.Channel))
-        {
-            var spamChannel = await ctx.Client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
-            inSpecificLocation = $" in {spamChannel.Mention} or bot DMs";
         }
-        var msg = $"Unknown term `{term.Sanitize(replaceBackTicks: true)}`. Use `{ctx.Prefix}explain list` to look at defined terms{inSpecificLocation}";
-        await ctx.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+
+        var explainMsg = new DiscordInteractionResponseBuilder().AsEphemeral(ephemeral);
+        if (to is null)
+        {
+            if (result.explanation.Text is {Length: >0})
+                explainMsg.WithContent(result.explanation.Text);
+        }
+        else
+        {
+            var mention = new UserMention(to.Id);
+            explainMsg.WithContent(
+                $"""
+                 {to.Mention} please read the explanation for `{result.explanation.Keyword.Sanitize(replaceBackTicks: true)}`:
+                 {result.explanation.Text}
+                 """
+            );
+            if (canPing)
+                explainMsg.AddMention(mention);
+        }
+        if (result.explanation.Attachment is not { Length: > 0 })
+        {
+            await ctx.RespondAsync(explainMsg).ConfigureAwait(false);
+            return;
+        }
+        
+        await using var memStream = Config.MemoryStreamManager.GetStream(result.explanation.Attachment);
+        memStream.Seek(0, SeekOrigin.Begin);
+        explainMsg.AddFile(result.explanation.AttachmentFilename!, memStream);
+        await ctx.RespondAsync(explainMsg).ConfigureAwait(false);
     }
 
     [Command("add"), RequiresBotModRole]
-    [Description("Adds a new explanation to the list")]
-    public async Task Add(CommandContext ctx,
-        [Description("A term to explain. Quote it if it contains spaces")] string term,
-        [RemainingText, Description("Explanation text. Can have attachment")] string explanation)
+    [Description("Add a new explanation")]
+    public static async ValueTask Add(
+        SlashCommandContext ctx,
+        [Description("A term to explain")]
+        string term,
+        [Description("Explanation text")]
+        string explanation,
+        [Description("Explanation file attachment. Usually an image or a short video. Keep it as small as possible")]
+        DiscordAttachment? attachment = null
+    )
     {
         try
         {
             term = term.ToLowerInvariant().StripQuotes();
-            byte[]? attachment = null;
+            byte[]? attachmentContent = null;
             string? attachmentFilename = null;
-            if (ctx.Message.Attachments is [DiscordAttachment att, ..])
+            if (attachment is {} att)
             {
                 attachmentFilename = att.FileName;
+                await ctx.DeferResponseAsync(true).ConfigureAwait(false);
                 try
                 {
                     using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
-                    attachment = await httpClient.GetByteArrayAsync(att.Url).ConfigureAwait(false);
+                    attachmentContent = await httpClient.GetByteArrayAsync(att.Url).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
                     Config.Log.Warn(e, "Failed to download explanation attachment " + ctx);
+                    await ctx.RespondAsync("Failed to download explanation attachment", ephemeral: true).ConfigureAwait(false);
+                    return;
                 }
             }
 
             if (string.IsNullOrEmpty(explanation) && string.IsNullOrEmpty(attachmentFilename))
-                await ctx.ReactWithAsync(Config.Reactions.Failure, "An explanation for the term must be provided").ConfigureAwait(false);
-            else
             {
-                await using var db = new BotDb();
-                if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
-                    await ctx.ReactWithAsync(Config.Reactions.Failure, $"`{term}` is already defined. Use `update` to update an existing term.").ConfigureAwait(false);
-                else
-                {
-                    var entity = new Explanation
-                    {
-                        Keyword = term, Text = explanation, Attachment = attachment,
-                        AttachmentFilename = attachmentFilename
-                    };
-                    await db.Explanation.AddAsync(entity).ConfigureAwait(false);
-                    await db.SaveChangesAsync().ConfigureAwait(false);
-                    await ctx.ReactWithAsync(Config.Reactions.Success, $"`{term}` was successfully added").ConfigureAwait(false);
-                }
+                await ctx.RespondAsync($"{Config.Reactions.Failure} An explanation for the term _or_ an attachment must be provided", ephemeral: true).ConfigureAwait(false);
+                return;
             }
+            
+            await using var db = new BotDb();
+            if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
+            {
+                await ctx.RespondAsync($"{Config.Reactions.Failure} `{term}` is already defined", ephemeral: true).ConfigureAwait(false);
+                return;
+            }
+            
+            var entity = new Explanation
+            {
+                Keyword = term,
+                Text = explanation,
+                Attachment = attachmentContent,
+                AttachmentFilename = attachmentFilename
+            };
+            await db.Explanation.AddAsync(entity).ConfigureAwait(false);
+            await db.SaveChangesAsync().ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} `{term}` was added", ephemeral: true).ConfigureAwait(false);
         }
         catch (Exception e)
         {
-            Config.Log.Error(e, $"Failed to add explanation for `{term}`");
+            Config.Log.Error(e, $"Failed to add an explanation for `{term}`");
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to add an explanation", ephemeral: true).ConfigureAwait(false);
         }
     }
 
-    [Command("update"), Aliases("replace"), RequiresBotModRole]
-    [Description("Update explanation for a given term")]
-    public async Task Update(CommandContext ctx,
-        [Description("A term to update. Quote it if it contains spaces")] string term,
-        [RemainingText, Description("New explanation text")] string explanation)
+    [Command("update"), RequiresBotModRole]
+    [Description("Update an explanation")]
+    public static async ValueTask Update(
+        SlashCommandContext ctx,
+        [Description("A term to update"),  SlashAutoCompleteProvider<ExplainAutoCompleteProvider>]
+        string term,
+        [Description("Rename to new term")]
+        string? renameTo = null,
+        [Description("New explanation text")]
+        string? explanation = null,
+        [Description("Explanation file attachment. Usually an image or a short video. Keep it as small as possible")]
+        DiscordAttachment? attachment = null
+    )
     {
         term = term.ToLowerInvariant().StripQuotes();
-        byte[]? attachment = null;
+        byte[]? attachmentContent = null;
         string? attachmentFilename = null;
-        if (ctx.Message.Attachments is [DiscordAttachment att, ..])
+        if (attachment is {} att)
         {
+            await ctx.DeferResponseAsync(true).ConfigureAwait(false);
             attachmentFilename = att.FileName;
             try
             {
                 using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
-                attachment = await httpClient.GetByteArrayAsync(att.Url).ConfigureAwait(false);
+                attachmentContent = await httpClient.GetByteArrayAsync(att.Url).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to download explanation attachment " + ctx);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to download new attachment", ephemeral: true).ConfigureAwait(false);
+                return;
             }
         }
+        
         await using var db = new BotDb();
         var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         if (item == null)
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
-        else
         {
-            if (!string.IsNullOrEmpty(explanation))
-                item.Text = explanation;
-            if (attachment?.Length > 0)
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{term}` is not defined", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+        if (renameTo is { Length: > 0 })
+        {
+            var check = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == renameTo).ConfigureAwait(false);
+            if (check is not null)
             {
-                item.Attachment = attachment;
-                item.AttachmentFilename = attachmentFilename;
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{renameTo}` is already defined", ephemeral: true).ConfigureAwait(false);
+                return;
             }
-            await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.ReactWithAsync(Config.Reactions.Success, "Term was updated").ConfigureAwait(false);
+
+            item.Keyword = renameTo;
         }
+        if (explanation is {Length: >0 })
+            item.Text = explanation;
+        if (attachmentContent?.Length > 0)
+        {
+            item.Attachment = attachmentContent;
+            item.AttachmentFilename = attachmentFilename;
+        }
+        await db.SaveChangesAsync().ConfigureAwait(false);
+        await ctx.RespondAsync($"{Config.Reactions.Success} Term was updated", ephemeral: true).ConfigureAwait(false);
     }
 
-    [Command("rename"), Priority(10), RequiresBotModRole]
-    public async Task Rename(CommandContext ctx,
-        [Description("A term to rename. Remember quotes if it contains spaces")] string oldTerm,
-        [Description("New term. Again, quotes")] string newTerm)
+    [Command("remove"), RequiresBotModRole]
+    [Description("Remove a part or the whole explanation from the definition list")]
+    public static async ValueTask Remove(
+        SlashCommandContext ctx,
+        [Description("Term to remove"),  SlashAutoCompleteProvider<ExplainAutoCompleteProvider>]
+        string term,
+        [Description("Specify what part to remove (default is remove explanation completely)")]
+        RemoveExplanationOp part = RemoveExplanationOp.Complete
+    )
     {
-        oldTerm = oldTerm.ToLowerInvariant().StripQuotes();
-        newTerm = newTerm.ToLowerInvariant().StripQuotes();
+        term = term.ToLowerInvariant().StripQuotes();
         await using var db = new BotDb();
-        var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == oldTerm).ConfigureAwait(false);
-        if (item == null)
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{oldTerm}` is not defined").ConfigureAwait(false);
-        else if (await db.Explanation.AnyAsync(e => e.Keyword == newTerm).ConfigureAwait(false))
-            await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{newTerm}` already defined, can't replace it with explanation for `{oldTerm}`").ConfigureAwait(false);
+        var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+        if (item is null)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{term}` is not defined", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        var msg = $"{Config.Reactions.Success} Removed ";
+        if (part is RemoveExplanationOp.AttachmentOnly)
+        {
+            item.Attachment = null;
+            item.AttachmentFilename = null;
+            msg += $"attachment from `{term}`";
+        }
+        /*
+        else if (part is RemoveExplanationOp.TextOnly && item.Attachment is {Length: >0})
+        {
+            item.Text = null;
+            msg += $"explanation text from `{term}`";
+        }
+        */
         else
         {
-            item.Keyword = newTerm;
-            await db.SaveChangesAsync().ConfigureAwait(false);
-            await ctx.ReactWithAsync(Config.Reactions.Success, $"Renamed `{oldTerm}` to `{newTerm}`").ConfigureAwait(false);
+            db.Explanation.Remove(item);
+            msg += $"`{term}`";
         }
-    }
-
-    [Command("rename"), Priority(1), RequiresBotModRole]
-    [Description("Renames a term in case you misspelled it or something")]
-    public async Task Rename(CommandContext ctx,
-        [Description("A term to rename. Remember quotes if it contains spaces")] string oldTerm,
-        [Description("Constant \"to'")] string to,
-        [Description("New term. Again, quotes")] string newTerm)
-    {
-        if ("to".Equals(to, StringComparison.InvariantCultureIgnoreCase))
-            await Rename(ctx, oldTerm, newTerm).ConfigureAwait(false);
-        else
-            await ctx.ReactWithAsync(Config.Reactions.Failure).ConfigureAwait(false);
+        await db.SaveChangesAsync().ConfigureAwait(false);
+        await ctx.RespondAsync(msg, ephemeral: true).ConfigureAwait(false);
     }
 
     [Command("list")]
-    [Description("List all known terms that could be used for !explain command")]
-    public async Task List(CommandContext ctx)
+    [Description("Saves the list of all known terms as a text file attachment")]
+    public static async ValueTask List(SlashCommandContext ctx)
     {
-        var responseChannel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
+        var ephemeral = !ctx.Channel.IsSpamChannel();
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
         await using var db = new BotDb();
-        var keywords = await db.Explanation.Select(e => e.Keyword).OrderBy(t => t).ToListAsync().ConfigureAwait(false);
-        if (keywords.Count == 0)
-            await ctx.Channel.SendMessageAsync("Nothing has been defined yet").ConfigureAwait(false);
-        else
-            try
-            {
-                foreach (var embed in keywords.BreakInEmbeds(new DiscordEmbedBuilder {Title = TermListTitle, Color = Config.Colors.Help}))
-                    await responseChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                Config.Log.Error(e);
-            }
+        var allTerms = await db.Explanation.AsNoTracking().Select(e => e.Keyword).ToListAsync();
+        await using var stream = Config.MemoryStreamManager.GetStream();
+        await using var writer = new StreamWriter(stream);
+        foreach (var term in allTerms)
+            await writer.WriteLineAsync(term);
+        await writer.FlushAsync().ConfigureAwait(false);
+        stream.Seek(0, SeekOrigin.Begin);
+        var response = new DiscordInteractionResponseBuilder()
+            .AsEphemeral(ephemeral)
+            .AddFile("explain_list.txt", stream);
+        await ctx.RespondAsync(response).ConfigureAwait(false);
     }
-
-    [Group("remove"), Aliases("delete", "del", "erase", "obliterate"), RequiresBotModRole]
-    [Description("Removes an explanation from the definition list")]
-    internal sealed class Remove: BaseCommandModuleCustom
+    
+    [Command("dump")]
+    [Description("Save explanation content as a file attachment")]
+    public static async ValueTask Dump(
+        SlashCommandContext ctx,
+        [Description("Term to dump"), SlashAutoCompleteProvider<ExplainAutoCompleteProvider>]
+        string term
+    )
     {
-        [GroupCommand]
-        public async Task RemoveExplanation(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
-        {
-            term = term.ToLowerInvariant().StripQuotes();
-            await using var db = new BotDb();
-            var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-            if (item is null)
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
-            else
-            {
-                db.Explanation.Remove(item);
-                await db.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed `{term}`").ConfigureAwait(false);
-            }
-        }
-
-        [Command("attachment"), Aliases("image", "picture", "file")]
-        [Description("Removes attachment from specified explanation. If there is no text, the whole explanation is removed")]
-        public async Task Attachment(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
-        {
-            term = term.ToLowerInvariant().StripQuotes();
-            await using var db = new BotDb();
-            var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-            if (item is null)
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
-            else if (string.IsNullOrEmpty(item.AttachmentFilename))
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` doesn't have any attachments").ConfigureAwait(false);
-            else if (string.IsNullOrEmpty(item.Text))
-                await RemoveExplanation(ctx, term).ConfigureAwait(false);
-            else
-            {
-                item.Attachment = null;
-                item.AttachmentFilename = null;
-                await db.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed attachment for `{term}`").ConfigureAwait(false);
-            }
-        }
-
-        [Command("text"), Aliases("description")]
-        [Description("Removes explanation text. If there is no attachment, the whole explanation is removed")]
-        public async Task Text(CommandContext ctx, [RemainingText, Description("Term to remove")] string term)
-        {
-            term = term.ToLowerInvariant().StripQuotes();
-            await using var db = new BotDb();
-            var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
-            if (item == null)
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` is not defined").ConfigureAwait(false);
-            else if (string.IsNullOrEmpty(item.Text))
-                await ctx.ReactWithAsync(Config.Reactions.Failure, $"Term `{term}` doesn't have any text").ConfigureAwait(false);
-            else if (string.IsNullOrEmpty(item.AttachmentFilename))
-                await RemoveExplanation(ctx, term).ConfigureAwait(false);
-            else
-            {
-                item.Text = "";
-                await db.SaveChangesAsync().ConfigureAwait(false);
-                await ctx.ReactWithAsync(Config.Reactions.Success, $"Removed explanation text for `{term}`").ConfigureAwait(false);
-            }
-        }
-    }
-
-    [Command("dump"), Aliases("download")]
-    [Description("Returns explanation text as a file attachment")]
-    public async Task Dump(CommandContext ctx, [RemainingText, Description("Term to dump **or** a link to a message containing the explanation")] string? termOrLink = null)
-    {
-        if (string.IsNullOrEmpty(termOrLink))
-        {
-            var term = ctx.Message.Content.Split(' ', 2).Last();
-            await ShowExplanation(ctx, term).ConfigureAwait(false);
-            return;
-        }
-
-        if (!await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
-            return;
-
-        termOrLink = termOrLink.ToLowerInvariant().StripQuotes();
-        var isLink = CommandContextExtensions.MessageLinkPattern().IsMatch(termOrLink);
-        if (isLink)
-        {
-            await DumpLink(ctx, termOrLink).ConfigureAwait(false);
-            return;
-        }
-
         await using var db = new BotDb();
-        var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == termOrLink).ConfigureAwait(false);
+        var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         if (item is null)
         {
-            var term = ctx.Message.Content.Split(' ', 2).Last();
-            await ShowExplanation(ctx, term).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{term}` is not defined",  ephemeral: true).ConfigureAwait(false);
+            return;
         }
-        else
+
+        var result = new DiscordInteractionResponseBuilder().AsEphemeral();
+        await using var textStream = Config.MemoryStreamManager.GetStream(Encoding.UTF8.GetBytes(item.Text));
+        if (item is { Text.Length: > 0 })
+            result.AddFile($"{term}.txt", textStream);
+
+        if (item is not { Attachment.Length: >0 })
         {
-            if (item is { Text.Length: > 0 })
-            {
-                await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(item.Text));
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile($"{termOrLink}.txt", stream)).ConfigureAwait(false);
-            }
-            if (item is { AttachmentFilename.Length: > 0, Attachment.Length: > 0 })
-            {
-                await using var stream = new MemoryStream(item.Attachment);
-                await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(item.AttachmentFilename, stream)).ConfigureAwait(false);
-            }
+            await ctx.RespondAsync(result).ConfigureAwait(false);
+            return;
         }
+        
+        await using var stream = Config.MemoryStreamManager.GetStream(item.Attachment);
+        result.AddFile(item.AttachmentFilename!, stream);
+        await ctx.RespondAsync(result).ConfigureAwait(false);
     }
 
     [Command("error")]
-    [Description("Provides additional information about Win32 and Linux system error")]
-    public async Task Error(CommandContext ctx, [Description("Error code (should start with 0x for hex code, otherwise it's interpreted as decimal)")] string code, [RemainingText, Description("OS type: win (default) or lin")] string os = "Windows")
+    [Description("Information about a Win32 or Linux system error")]
+    public static async ValueTask Error(
+        SlashCommandContext ctx,
+        [Description("Error code (should start with 0x for hex code, otherwise it's interpreted as decimal)")]
+        string code,
+        [Description("OS type")]
+        OsType osType = OsType.Windows)
     {
-        var osType = OsType.Windows;
-        if (os.StartsWith("lin", StringComparison.OrdinalIgnoreCase) || os.EndsWith("nix", StringComparison.OrdinalIgnoreCase))
-            osType = OsType.Linux;
-
-        if (osType == OsType.Linux && !RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        if (osType is OsType.Linux && !RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            await ctx.RespondAsync("Access to Linux error code descriptions is not available at the moment").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Access to Linux error code descriptions is not available at the moment", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
-        if (!(code.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && int.TryParse(code[2..], NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var intCode))
+        if (!(code.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+              && int.TryParse(code[2..], NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var intCode))
             && !int.TryParse(code, out intCode)
             && !int.TryParse(code, NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out intCode))
         {
-            await ctx.RespondAsync($"Failed to parse {code} as an error code.").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to parse {code} as an error code.", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
-        if (osType == OsType.Windows)
+        var ephemeral = !ctx.Channel.IsSpamChannel();
+        if (osType is OsType.Windows)
         {
             if (Win32ErrorCodes.Map.TryGetValue(intCode, out var win32Info))
-                await ctx.RespondAsync($"`0x{intCode:x8}` (`{win32Info.name}`): {win32Info.description}").ConfigureAwait(false);
+                await ctx.RespondAsync($"`0x{intCode:x8}` (`{win32Info.name}`): {win32Info.description}", ephemeral: ephemeral).ConfigureAwait(false);
             else
-                await ctx.RespondAsync($"Unknown Win32 error code 0x{intCode:x8}").ConfigureAwait(false);
+                await ctx.RespondAsync($"Unknown Win32 error code 0x{intCode:x8}", ephemeral: ephemeral).ConfigureAwait(false);
         }
         else
         {
             try
             {
-                await ctx.RespondAsync($"`{code}`: {new Win32Exception(code).Message}").ConfigureAwait(false);
+                await ctx.RespondAsync($"`{code}`: {new Win32Exception(code).Message}", ephemeral: ephemeral).ConfigureAwait(false);
             }
             catch
             {
-                await ctx.RespondAsync($"Unknown Linux error code {intCode}").ConfigureAwait(false);
+                await ctx.RespondAsync($"Unknown error code {intCode}", ephemeral: ephemeral).ConfigureAwait(false);
             }
         }
     }
+
+    internal enum RemoveExplanationOp
+    {
+        Complete,
+        AttachmentOnly,
+        //TextOnly,
+    }
     
-    internal static async Task<(Explanation? explanation, string? fuzzyMatch, double score)> LookupTerm(string term)
+    internal static async ValueTask<(Explanation? explanation, string? fuzzyMatch, double score)> LookupTerm(string term)
     {
         await using var db = new BotDb();
         string? fuzzyMatch = null;
@@ -421,11 +359,11 @@ internal sealed class Explain: BaseCommandModuleCustom
         return (explanation, fuzzyMatch, coefficient);
     }
 
-    internal static async Task<bool> SendExplanation((Explanation? explanation, string? fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage, bool useReply)
+    internal static async ValueTask<bool> SendExplanationAsync((Explanation? explanation, string? fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage, bool useReply, bool ping = false)
     {
         try
         {
-            if (termLookupResult.explanation != null && termLookupResult.score > 0.5)
+            if (termLookupResult is { explanation: not null, score: >0.5 })
             {
                 var usedReply = false;
                 DiscordMessageBuilder msgBuilder;
@@ -437,25 +375,32 @@ internal sealed class Explain: BaseCommandModuleCustom
 #endif
                     msgBuilder = new DiscordMessageBuilder().WithContent(fuzzyNotice);
                     if (useReply)
-                        msgBuilder.WithReply(sourceMessage.Id);
-                    await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                        msgBuilder.WithReply(sourceMessage.Id, ping);
+                    if (ping)
+                        msgBuilder.WithAllowedMention(useReply ? RepliedUserMention.All : UserMention.All);
+                    await sourceMessage.Channel!.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                     usedReply = true;
                 }
 
                 var explain = termLookupResult.explanation;
                 StatsStorage.IncExplainStat(explain.Keyword);
-                msgBuilder = new DiscordMessageBuilder().WithContent(explain.Text);
+                msgBuilder = new();
+                if (explain.Text is {Length: >0})
+                    msgBuilder.WithContent(explain.Text);
                 if (!usedReply && useReply)
-                    msgBuilder.WithReply(sourceMessage.Id);
-                if (explain.Attachment is {Length: >0})
+                    msgBuilder.WithReply(sourceMessage.Id, ping);
+                if (ping)
+                    msgBuilder.WithAllowedMention(useReply ? RepliedUserMention.All : UserMention.All);
+                if (explain.Attachment is not { Length: > 0 })
                 {
-                    await using var memStream = Config.MemoryStreamManager.GetStream(explain.Attachment);
-                    memStream.Seek(0, SeekOrigin.Begin);
-                    msgBuilder.AddFile(explain.AttachmentFilename, memStream);
-                    await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                    await sourceMessage.Channel!.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                    return true;
                 }
-                else
-                    await sourceMessage.Channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
+                
+                await using var memStream = Config.MemoryStreamManager.GetStream(explain.Attachment);
+                memStream.Seek(0, SeekOrigin.Begin);
+                msgBuilder.AddFile(explain.AttachmentFilename!, memStream);
+                await sourceMessage.Channel!.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                 return true;
             }
         }
@@ -465,27 +410,5 @@ internal sealed class Explain: BaseCommandModuleCustom
             return true;
         }
         return false;
-    }
-
-    private static async Task DumpLink(CommandContext ctx, string messageLink)
-    {
-        string? explanation = null;
-        DiscordMessage? msg = null;
-        try { msg = await ctx.GetMessageAsync(messageLink).ConfigureAwait(false); } catch {}
-        if (msg != null)
-        {
-            if (msg.Embeds.FirstOrDefault() is DiscordEmbed embed && !string.IsNullOrEmpty(embed.Description))
-                explanation = embed.Description;
-            else if (!string.IsNullOrEmpty(msg.Content))
-                explanation = msg.Content;
-        }
-
-        if (string.IsNullOrEmpty(explanation))
-            await ctx.ReactWithAsync(Config.Reactions.Failure, "Couldn't find any text in the specified message").ConfigureAwait(false);
-        else
-        {
-            await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(explanation));
-            await ctx.Channel.SendMessageAsync(new DiscordMessageBuilder().AddFile("explanation.txt", stream)).ConfigureAwait(false);
-        }
     }
 }

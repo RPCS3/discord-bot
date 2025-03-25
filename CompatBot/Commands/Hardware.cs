@@ -1,36 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CompatBot.Database;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
+﻿using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
-[Group("hardware"), Aliases("hw")]
-[Description("Various hardware stats from uploaded log files")]
-[Cooldown(1, 5, CooldownBucketType.Guild)]
-internal sealed class Hardware: BaseCommandModuleCustom
+internal static class Hardware
 {
-    [GroupCommand]
-    public Task Show(CommandContext ctx) => ShowStats(ctx);
-
-    [Command("stats")]
-    public Task Stats(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30) => ShowStats(ctx, period);
-    
-    public static async Task ShowStats(CommandContext ctx, [Description("Desired period in days, default is 30")] int period = 30)
+    [Command("hardware")]
+    [Description("Hardware survey data from uploaded log files")]
+    public static async ValueTask Stats(
+        SlashCommandContext ctx,
+        [Description("Desired period in days, default is 30"), MinMaxValue(1)]
+        int period = 30
+    )
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel();
         var maxDays = DateTime.UtcNow - new DateTime(2011, 5, 23, 0, 0, 0, DateTimeKind.Utc);
-        period = Math.Clamp(Math.Abs(period), 0, (int)maxDays.TotalDays);
+        period = Math.Clamp(Math.Abs(period), 1, (int)maxDays.TotalDays);
         var ts = DateTime.UtcNow.AddDays(-period).Ticks;
         await using var db = new HardwareDb();
         var count = await db.HwInfo.AsNoTracking().CountAsync(i => i.Timestamp > ts).ConfigureAwait(false);
-        if (count == 0)
+        if (count is 0)
         {
-            await ctx.RespondAsync("No data available for specified time period").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} No data available for specified time period", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
@@ -92,7 +83,7 @@ internal sealed class Hardware: BaseCommandModuleCustom
             .ToListAsync()
             .ConfigureAwait(false);
         var featureStats = new Dictionary<CpuFeatures, int>();
-        foreach (CpuFeatures feature in Enum.GetValues(typeof(CpuFeatures)))
+        foreach (CpuFeatures feature in Enum.GetValues<CpuFeatures>())
         {
             if (feature == CpuFeatures.None)
                 continue;
@@ -176,7 +167,7 @@ internal sealed class Hardware: BaseCommandModuleCustom
             .AddField("Top RAM Configurations", string.Join('\n', ramStats.Select(i => $"{i.Count*100.0/count:0.00}% {i.Mem}")), true)
 
             .WithFooter("All collected data is anonymous, for details see bot source code");
-        await ctx.RespondAsync(embed: embed).ConfigureAwait(false);
+        await ctx.RespondAsync(embed: embed, ephemeral: ephemeral).ConfigureAwait(false);
     }
 
     private static string GetNum(int position)

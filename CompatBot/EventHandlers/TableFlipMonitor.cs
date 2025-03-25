@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
-using CompatBot.Utils;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
@@ -18,9 +11,12 @@ internal static partial class TableFlipMonitor
     private static partial Regex DiceRoll();
     private static readonly char[] OpenParen = ['(', '（', 'ʕ'];
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreateEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
+            return;
+
+        if (!args.Channel.IsSpamChannel() && !args.Channel.IsOfftopicChannel())
             return;
 
         /*
@@ -47,14 +43,15 @@ internal static partial class TableFlipMonitor
                 while (idx < content.Length && (idx = content.IndexOf("🎲", idx + 1)) > 0)
                     count++;
                 EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
-                await Misc.RollImpl(args.Message, $"{count}d6").ConfigureAwait(false);
+                await args.Message.RespondAsync(Misc.Roll($"{count}d6")).ConfigureAwait(false);
                 return;
             }
                 
             if (content.Trim() == "🥠")
             {
                 EmpathySimulationHandler.Throttling.Set(args.Channel.Id, new List<DiscordMessage> {args.Message}, EmpathySimulationHandler.ThrottleDuration);
-                await Fortune.ShowFortune(args.Message, args.Author).ConfigureAwait(false);
+                if (await Fortune.GetFortuneAsync(args.Author).ConfigureAwait(false) is {Length: >0} fortune)
+                    await args.Message.RespondAsync(fortune).ConfigureAwait(false);
                 return;
             }
 

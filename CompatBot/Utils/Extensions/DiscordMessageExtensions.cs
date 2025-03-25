@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
 using CompatApiClient.Compression;
-using DSharpPlus.Entities;
 
 namespace CompatBot.Utils;
 
@@ -63,7 +59,7 @@ public static class DiscordMessageExtensions
         if (content is {Length: >0})
             msgBuilder.WithContent(content);
         if (embed is not null)
-            msgBuilder.WithEmbed(embed);
+            msgBuilder.AddEmbed(embed);
         if (refMsg is not null)
             msgBuilder.WithReply(refMsg.Id);
         return botMsg.UpdateOrCreateMessageAsync(channel, msgBuilder);

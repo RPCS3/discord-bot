@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using CompatApiClient.POCOs;
+﻿using CompatApiClient.POCOs;
 
 namespace CompatBot.Utils;
 

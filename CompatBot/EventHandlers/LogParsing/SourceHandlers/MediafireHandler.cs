@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
-using DSharpPlus.Entities;
-using CompatBot.Utils;
-using System.IO.Pipelines;
+﻿using System.IO.Pipelines;
 using System.Net.Http;
-using System.Text;
-using System.Threading;
+using System.Text.RegularExpressions;
+using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using MediafireClient;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
@@ -41,12 +34,12 @@ internal sealed partial class MediafireHandler : BaseSourceHandler
                 var filename = m.Groups["filename"].Value;
                 var filesize = -1;
 
-                Config.Log.Debug($"Trying to get download link for {webLink}...");
+                Config.Log.Debug($"Trying to get download link for {webLink}…");
                 var directLink = await Client.GetDirectDownloadLinkAsync(webLink, Config.Cts.Token).ConfigureAwait(false);
                 if (directLink is null)
                     return (null, null);
 
-                Config.Log.Debug($"Trying to get content size for {directLink}...");
+                Config.Log.Debug($"Trying to get content size for {directLink}…");
                 using (var request = new HttpRequestMessage(HttpMethod.Head, directLink))
                 {
                     using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Config.Cts.Token);
@@ -56,7 +49,7 @@ internal sealed partial class MediafireHandler : BaseSourceHandler
                         filename = fname;
                 }
 
-                Config.Log.Debug($"Trying to get content stream for {directLink}...");
+                Config.Log.Debug($"Trying to get content stream for {directLink}…");
                 await using var stream = await client.GetStreamAsync(directLink).ConfigureAwait(false);
                 var buf = BufferPool.Rent(SnoopBufferSize);
                 try

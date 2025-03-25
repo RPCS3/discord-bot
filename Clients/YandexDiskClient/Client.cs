@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
-using CompatApiClient.Utils;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using CompatApiClient.Formatters;
+using CompatApiClient.Utils;
 using YandexDiskClient.POCOs;
 
 namespace YandexDiskClient;

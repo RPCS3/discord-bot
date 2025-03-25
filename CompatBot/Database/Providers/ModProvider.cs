@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using DSharpPlus.Entities;
+﻿using System.Collections.ObjectModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Database.Providers;
@@ -99,7 +95,7 @@ internal static class ModProvider
             return;
 
         var modRole = modRoleList.First().Value;
-        var members = await guild.GetAllMembersAsync().ConfigureAwait(false);
+        var members = guild.GetAllMembersAsync().ToList();
         var guildMods = members.Where(m => m.Roles.Any(r => r.Id == modRole.Id) && !m.IsBot && !m.IsCurrent).ToList();
         foreach (var mod in guildMods)
         {

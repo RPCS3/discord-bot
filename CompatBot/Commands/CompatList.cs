@@ -1,38 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
-using CompatBot.Commands.Attributes;
+using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
-using CompatBot.Utils;
-using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace CompatBot.Commands;
 
-internal sealed partial class CompatList : BaseCommandModuleCustom
+internal static partial class CompatList
 {
     private static readonly Client Client = new();
     private static readonly GithubClient.Client GithubClient = new(Config.GithubToken);
@@ -52,61 +37,52 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
         lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
         lastFullBuildNumber = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateBuildKey)?.Value;
         //lastUpdateInfo = "8022";
-        if (lastUpdateInfo is string strPr
-            && int.TryParse(strPr, out var pr))
+        if (lastUpdateInfo is {Length: >0} strPr && int.TryParse(strPr, out var pr))
         {
             try
             {
                 var prInfo = GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                 cachedUpdateInfo = Client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).ConfigureAwait(false).GetAwaiter().GetResult();
-                if (cachedUpdateInfo?.CurrentBuild != null)
-                {
-                    cachedUpdateInfo.LatestBuild = cachedUpdateInfo.CurrentBuild;
-                    cachedUpdateInfo.CurrentBuild = null;
-                }
+                if (cachedUpdateInfo?.CurrentBuild == null)
+                    return;
+                
+                cachedUpdateInfo.LatestBuild = cachedUpdateInfo.CurrentBuild;
+                cachedUpdateInfo.CurrentBuild = null;
             }
             catch { }
         }
     }
 
-    [Command("compat"), Aliases("c", "compatibility")]
-    [Description("Searches the compatibility database, USE: !compat search term")]
-    public async Task Compat(CommandContext ctx, [RemainingText, Description("Game title to look up")] string? title)
+    [Command("compatibility")]
+    [Description("Search the game compatibility list")]
+    public static async ValueTask Compat(
+        SlashCommandContext ctx,
+        [Description("Game title or product code to look up")]
+        [SlashAutoCompleteProvider<ProductCodeAutoCompleteProvider>]
+        string title
+    )
     {
-        title = title?.TrimEager().Truncate(40);
-        if (string.IsNullOrEmpty(title))
+        if (await ContentFilter.FindTriggerAsync(FilterContext.Chat, title).ConfigureAwait(false) is not null)
         {
-            var prompt = await ctx.Channel.SendMessageAsync($"{ctx.Message.Author.Mention} what game do you want to check?").ConfigureAwait(false);
-            var interact = ctx.Client.GetInteractivity();
-            var response = await interact.WaitForMessageAsync(m => m.Author == ctx.Message.Author && m.Channel == ctx.Channel).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(response.Result?.Content) || response.Result.Content.StartsWith(Config.CommandPrefix))
-            {
-                await prompt.ModifyAsync("You should specify what you're looking for").ConfigureAwait(false);
-                return;
-            }
-
-            DeletedMessagesMonitor.RemovedByBotCache.Set(prompt.Id, true, DeletedMessagesMonitor.CacheRetainTime);
-            await prompt.DeleteAsync().ConfigureAwait(false);
-            title = response.Result.Content.TrimEager().Truncate(40);
+            await ctx.RespondAsync("Invalid game title or product code.", true).ConfigureAwait(false);
+            return;
         }
+        var ephemeral = !ctx.Channel.IsSpamChannel();
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
 
-        if (!await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(ctx.Client, ctx.Message).ConfigureAwait(false))
-            return;
-
-        if (!await ContentFilter.IsClean(ctx.Client, ctx.Message).ConfigureAwait(false))
-            return;
-
-        var productCodes = ProductCodeLookup.GetProductIds(ctx.Message.Content);
-        if (productCodes.Any())
+        var productCodes = ProductCodeLookup.GetProductIds(title);
+        if (productCodes.Count > 0)
         {
-            await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, productCodes).ConfigureAwait(false);
+            var formattedResults = await ProductCodeLookup.LookupProductCodeAndFormatAsync(ctx.Client, productCodes).ConfigureAwait(false);
+            await ctx.RespondAsync(embed: formattedResults[0].builder, ephemeral: ephemeral).ConfigureAwait(false);
             return;
         }
 
         try
         {
+            title = title.TrimEager().Truncate(40);
             var requestBuilder = RequestBuilder.Start().SetSearch(title);
-            await DoRequestAndRespond(ctx, requestBuilder).ConfigureAwait(false);
+            await DoRequestAndRespondAsync(ctx, ephemeral, requestBuilder).ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -114,297 +90,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
         }
     }
 
-    [Command("top"), LimitedToOfftopicChannel, Cooldown(1, 5, CooldownBucketType.Channel)]
-    [Description("Provides top game lists based on Metacritic and compatibility lists")]
-    public async Task Top(CommandContext ctx,
-        [Description("Number of entries in the list")] int number = 10,
-        [Description("One of `playable`, `ingame`, `intro`, `loadable`, or `<status>Only`")] string status = "playable",
-        [Description("One of `both`, `critic`, or `user`")] string scoreType = "both")
-    {
-        status = status.ToLowerInvariant();
-        scoreType = scoreType.ToLowerInvariant();
-
-        number = number.Clamp(1, 100);
-        var exactStatus = status.EndsWith("only");
-        if (exactStatus)
-            status = status[..^4];
-        if (!Enum.TryParse(status, true, out CompatStatus s))
-            s = CompatStatus.Playable;
-
-        await using var db = new ThumbnailDb();
-        var queryBase = db.Thumbnail.AsNoTracking();
-        if (exactStatus)
-            queryBase = queryBase.Where(g => g.CompatibilityStatus == s);
-        else
-            queryBase = queryBase.Where(g => g.CompatibilityStatus >= s);
-        queryBase = queryBase.Where(g => g.Metacritic != null).Include(t => t.Metacritic);
-        var query = scoreType switch
-        {
-            "critic" => queryBase.Where(t => t.Metacritic!.CriticScore > 0).AsEnumerable().Select(t => (title: t.Metacritic!.Title, score: t.Metacritic!.CriticScore!.Value, second: t.Metacritic.UserScore ?? t.Metacritic.CriticScore.Value)),
-            "user" => queryBase.Where(t => t.Metacritic!.UserScore > 0).AsEnumerable().Select(t => (title: t.Metacritic!.Title, score: t.Metacritic!.UserScore!.Value, second: t.Metacritic.CriticScore ?? t.Metacritic.UserScore.Value)),
-            _ => queryBase.AsEnumerable().Select(t => (title: t.Metacritic!.Title, score: Math.Max(t.Metacritic.CriticScore ?? 0, t.Metacritic.UserScore ?? 0), second: (byte)0)),
-        };
-        var resultList = query.Where(i => i.score > 0)
-            .OrderByDescending(i => i.score)
-            .ThenByDescending(i => i.second)
-            .Distinct()
-            .Take(number)
-            .ToList();
-        if (resultList.Count > 0)
-        {
-            var result = new StringBuilder($"Best {s.ToString().ToLower()}");
-            if (exactStatus)
-                result.Append(" only");
-            result.Append(" games");
-            if (scoreType is "critic" or "user")
-                result.Append($" according to {scoreType}s");
-            result.AppendLine(":");
-            foreach (var (title, score, _) in resultList)
-                result.AppendLine($"`{score:00}` {title}");
-            await ctx.SendAutosplitMessageAsync(result, blockStart: null, blockEnd: null).ConfigureAwait(false);
-        }
-        else
-            await ctx.Channel.SendMessageAsync("Failed to generate list").ConfigureAwait(false);
-    }
-
-    [Group("latest"), TriggersTyping]
-    [Description("Provides links to the latest RPCS3 build")]
-    [Cooldown(1, 30, CooldownBucketType.Channel)]
-    public sealed class UpdatesCheck: BaseCommandModuleCustom
-    {
-        [GroupCommand]
-        public Task Latest(CommandContext ctx) => CheckForRpcs3Updates(ctx.Client, ctx.Channel);
-
-        [Command("since")]
-        [Description("Show additional info about changes since specified update")]
-        public Task Since(CommandContext ctx, [Description("Commit hash of the update, such as `46abe0f31`")] string commit)
-            => CheckForRpcs3Updates(ctx.Client, ctx.Channel, commit);
-
-        [Command("clear"), RequiresBotModRole]
-        [Description("Clears update info cache that is used to post new build announcements")]
-        public Task Clear(CommandContext ctx)
-        {
-            lastUpdateInfo = null;
-            lastFullBuildNumber = null;
-            return CheckForRpcs3Updates(ctx.Client, null);
-        }
-
-        [Command("set"), RequiresBotModRole]
-        [Description("Sets update info cache that is used to check if new updates are available")]
-        public Task Set(CommandContext ctx, string lastUpdatePr)
-        {
-            lastUpdateInfo = lastUpdatePr;
-            lastFullBuildNumber = null;
-            return CheckForRpcs3Updates(ctx.Client, null);
-        }
-
-        public static async Task<bool> CheckForRpcs3Updates(DiscordClient discordClient, DiscordChannel? channel, string? sinceCommit = null, DiscordMessage? emptyBotMsg = null)
-        {
-            var updateAnnouncement = channel is null;
-            var updateAnnouncementRestore = emptyBotMsg != null;
-            var info = await Client.GetUpdateAsync(Config.Cts.Token, sinceCommit).ConfigureAwait(false);
-            if (info?.ReturnCode != 1 && sinceCommit != null)
-                info = await Client.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
-
-            if (updateAnnouncementRestore && info?.CurrentBuild != null)
-                info.LatestBuild = info.CurrentBuild;
-            var embed = await info.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
-            if (info == null || embed.Color.Value.Value == Config.Colors.Maintenance.Value)
-            {
-                if (updateAnnouncementRestore)
-                {
-                    Config.Log.Debug($"Failed to get update info for commit {sinceCommit}: {JsonSerializer.Serialize(info)}");
-                    return false;
-                }
-
-                embed = await cachedUpdateInfo.AsEmbedAsync(discordClient, updateAnnouncement).ConfigureAwait(false);
-            }
-            else if (!updateAnnouncementRestore)
-            {
-                if (cachedUpdateInfo?.LatestBuild?.Datetime is string previousBuildTimeStr
-                    && info.LatestBuild?.Datetime is string newBuildTimeStr
-                    && DateTime.TryParse(previousBuildTimeStr, out var previousBuildTime)
-                    && DateTime.TryParse(newBuildTimeStr, out var newBuildTime)
-                    && newBuildTime > previousBuildTime)
-                    cachedUpdateInfo = info;
-            }
-            if (!updateAnnouncement)
-            {
-                await channel!.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                return true;
-            }
-                
-            if (updateAnnouncementRestore)
-            {
-                if (embed.Title == "Error")
-                    return false;
-
-                Config.Log.Debug($"Restoring update announcement for build {sinceCommit}: {embed.Title}\n{embed.Description}");
-                await emptyBotMsg!.ModifyAsync(embed: embed.Build()).ConfigureAwait(false);
-                return true;
-            }
-
-            var latestUpdatePr = info?.LatestBuild?.Pr?.ToString();
-            var match = (
-                from field in embed.Fields
-                let m = UpdateVersionRegex().Match(field.Value)
-                where m.Success
-                select m
-            ).FirstOrDefault();
-            var latestUpdateBuild = match?.Groups["build"].Value;
-
-            if (string.IsNullOrEmpty(latestUpdatePr)
-                || lastUpdateInfo == latestUpdatePr
-                || !await UpdateCheck.WaitAsync(0).ConfigureAwait(false))
-                return false;
-
-            try
-            {
-                if (!string.IsNullOrEmpty(lastFullBuildNumber)
-                    && !string.IsNullOrEmpty(latestUpdateBuild)
-                    && int.TryParse(lastFullBuildNumber, out var lastSaveBuild)
-                    && int.TryParse(latestUpdateBuild, out var latestBuild)
-                    && latestBuild <= lastSaveBuild)
-                    return false;
-
-                var compatChannel = await discordClient.GetChannelAsync(Config.BotChannelId).ConfigureAwait(false);
-                var botMember = await discordClient.GetMemberAsync(compatChannel.Guild, discordClient.CurrentUser).ConfigureAwait(false);
-                if (botMember == null)
-                    return false;
-
-                if (!compatChannel.PermissionsFor(botMember).HasPermission(Permissions.SendMessages))
-                {
-                    NewBuildsMonitor.Reset();
-                    return false;
-                }
-
-                if (embed.Color.Value.Value == Config.Colors.Maintenance.Value)
-                    return false;
-
-                await CheckMissedBuildsBetween(discordClient, compatChannel, lastUpdateInfo, latestUpdatePr, Config.Cts.Token).ConfigureAwait(false);
-
-                await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                lastUpdateInfo = latestUpdatePr;
-                lastFullBuildNumber = latestUpdateBuild;
-                await using var db = new BotDb();
-                var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
-                if (currentState == null)
-                    await db.BotState.AddAsync(new() {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr}).ConfigureAwait(false);
-                else
-                    currentState.Value = latestUpdatePr;
-                var savedLastBuild = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateBuildKey).ConfigureAwait(false);
-                if (savedLastBuild == null)
-                    await db.BotState.AddAsync(new() {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild}).ConfigureAwait(false);
-                else
-                    savedLastBuild.Value = latestUpdateBuild;
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-                NewBuildsMonitor.Reset();
-                return true;
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e, "Failed to check for RPCS3 update info");
-            }
-            finally
-            {
-                UpdateCheck.Release();
-            }
-            return false;
-        }
-
-        private static async Task CheckMissedBuildsBetween(DiscordClient discordClient, DiscordChannel compatChannel, string? previousUpdatePr, string? latestUpdatePr, CancellationToken cancellationToken)
-        {
-            if (!int.TryParse(previousUpdatePr, out var oldestPr)
-                || !int.TryParse(latestUpdatePr, out var newestPr))
-                return;
-
-            var mergedPrs = await GithubClient.GetClosedPrsAsync(cancellationToken).ConfigureAwait(false); // this will cache 30 latest PRs
-            var newestPrCommit = await GithubClient.GetPrInfoAsync(newestPr, cancellationToken).ConfigureAwait(false);
-            var oldestPrCommit = await GithubClient.GetPrInfoAsync(oldestPr, cancellationToken).ConfigureAwait(false);
-            if (newestPrCommit?.MergedAt == null || oldestPrCommit?.MergedAt == null)
-                return;
-
-            mergedPrs = mergedPrs?.Where(pri => pri.MergedAt.HasValue)
-                .OrderBy(pri => pri.MergedAt!.Value)
-                .SkipWhile(pri => pri.Number != oldestPr)
-                .Skip(1)
-                .TakeWhile(pri => pri.Number != newestPr)
-                .ToList();
-            if (mergedPrs is null or {Count: 0})
-                return;
-
-            var failedBuilds = await Config.GetAzureDevOpsClient().GetMasterBuildsAsync(
-                oldestPrCommit.MergeCommitSha,
-                newestPrCommit.MergeCommitSha,
-                oldestPrCommit.MergedAt?.DateTime,
-                cancellationToken
-            ).ConfigureAwait(false);
-            foreach (var mergedPr in mergedPrs)
-            {
-                var updateInfo = await Client.GetUpdateAsync(cancellationToken, mergedPr.MergeCommitSha).ConfigureAwait(false)
-                                 ?? new UpdateInfo {ReturnCode = -1};
-                if (updateInfo.ReturnCode is 0 or 1) // latest or known build
-                {
-                    updateInfo.LatestBuild = updateInfo.CurrentBuild;
-                    updateInfo.CurrentBuild = null;
-                    var embed = await updateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
-                    await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                }
-                else if (updateInfo.ReturnCode == -1) // unknown build
-                {
-                    var masterBuildInfo = failedBuilds?.FirstOrDefault(b => b.Commit?.Equals(mergedPr.MergeCommitSha, StringComparison.InvariantCultureIgnoreCase) is true);
-                    var buildTime = masterBuildInfo?.FinishTime;
-                    if (masterBuildInfo != null)
-                    {
-                        updateInfo = new()
-                        {
-                            ReturnCode = 1,
-                            LatestBuild = new()
-                            {
-                                Datetime = buildTime?.ToString("yyyy-MM-dd HH:mm:ss"),
-                                Pr = mergedPr.Number,
-                                Windows = new() {Download = masterBuildInfo.WindowsBuildDownloadLink ?? ""},
-                                Linux = new() { Download = masterBuildInfo.LinuxBuildDownloadLink ?? "" },
-                                Mac = new() { Download = masterBuildInfo.MacBuildDownloadLink ?? "" },
-                            },
-                        };
-                    }
-                    else
-                    {
-                        updateInfo = new()
-                        {
-                            ReturnCode = 1,
-                            LatestBuild = new()
-                            {
-                                Pr = mergedPr.Number,
-                                Windows = new() {Download = ""},
-                                Linux = new() { Download = "" },
-                                Mac = new() { Download = "" },
-                            },
-                        };
-                    }
-                    var embed = await updateInfo.AsEmbedAsync(discordClient, true).ConfigureAwait(false);
-                    embed.Color = Config.Colors.PrClosed;
-                    embed.ClearFields();
-                    var reason = masterBuildInfo?.Result switch
-                    {
-                        BuildResult.Succeeded => "Built",
-                        BuildResult.PartiallySucceeded => "Built",
-                        BuildResult.Failed => "Failed to build",
-                        BuildResult.Canceled => "Cancelled",
-                        _ => null,
-                    };
-                    if (buildTime.HasValue && reason != null)
-                        embed.WithFooter($"{reason} on {buildTime:u} ({(DateTime.UtcNow - buildTime.Value).AsTimeDeltaDescription()} ago)");
-                    else
-                        embed.WithFooter(reason ?? "Never built");
-                    await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                }
-            }
-        }
-    }
-
-    private static async Task DoRequestAndRespond(CommandContext ctx, RequestBuilder requestBuilder)
+    private static async ValueTask DoRequestAndRespondAsync(SlashCommandContext ctx, bool ephemeral, RequestBuilder requestBuilder)
     {
         Config.Log.Info(requestBuilder.Build());
         CompatResult? result = null;
@@ -420,7 +106,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
         {
             if (result == null)
             {
-                await ctx.Channel.SendMessageAsync(embed: TitleInfo.CommunicationError.AsEmbed(null)).ConfigureAwait(false);
+                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null), ephemeral).ConfigureAwait(false);
                 return;
             }
         }
@@ -428,12 +114,19 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
 #if DEBUG
         await Task.Delay(5_000).ConfigureAwait(false);
 #endif
-        var channel = await ctx.GetChannelForSpamAsync().ConfigureAwait(false);
         if (result?.Results?.Count == 1)
-            await ProductCodeLookup.LookupAndPostProductCodeEmbedAsync(ctx.Client, ctx.Message, ctx.Channel, [..result.Results.Keys]).ConfigureAwait(false);
+        {
+            var formattedResults = await ProductCodeLookup.LookupProductCodeAndFormatAsync(ctx.Client, [..result.Results.Keys]).ConfigureAwait(false);
+            await ctx.RespondAsync(embed: formattedResults[0].builder, ephemeral: ephemeral).ConfigureAwait(false);
+        }
         else if (result != null)
+        {
+            var builder = new StringBuilder();
             foreach (var msg in FormatSearchResults(ctx, result))
-                await channel.SendAutosplitMessageAsync(msg, blockStart: "", blockEnd: "").ConfigureAwait(false);
+                builder.AppendLine(msg);
+            var formattedResults = AutosplitResponseHelper.AutosplitMessage(builder.ToString(), blockStart: null, blockEnd: null);
+            await ctx.RespondAsync(formattedResults[0], ephemeral).ConfigureAwait(false);
+        }
     }
 
     internal static CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
@@ -465,58 +158,49 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
         return result;
     }
 
-    private static IEnumerable<string> FormatSearchResults(CommandContext ctx, CompatResult compatResult)
+    private static IEnumerable<string> FormatSearchResults(SlashCommandContext ctx, CompatResult compatResult)
     {
         var returnCode = ApiConfig.ReturnCodes[compatResult.ReturnCode];
         var request = compatResult.RequestBuilder;
 
         if (returnCode.overrideAll)
-            yield return string.Format(returnCode.info, ctx.Message.Author.Mention);
+            yield return string.Format(returnCode.info, ctx.User.Mention);
         else
         {
-            var authorMention = ctx.Channel.IsPrivate ? "You" : ctx.Message.Author.Mention;
+            var authorMention = ctx.Channel.IsPrivate ? "You" : ctx.User.Mention;
             var result = new StringBuilder();
             result.AppendLine($"{authorMention} searched for: ***{request.Search?.Sanitize(replaceBackTicks: true)}***");
             if (request.Search?.Contains("persona", StringComparison.InvariantCultureIgnoreCase) is true
                 || request.Search?.Contains("p5", StringComparison.InvariantCultureIgnoreCase) is true)
                 result.AppendLine("Did you try searching for **__Unnamed__** instead?");
-            else if (ctx.IsOnionLike()
-                     && compatResult.Results.Values.Any(i =>
-                         i.Title.Contains("afrika", StringComparison.InvariantCultureIgnoreCase)
-                         || i.Title.Contains("africa", StringComparison.InvariantCultureIgnoreCase))
-                    )
-            {
-                var sqvat = ctx.Client.GetEmoji(":sqvat:", Config.Reactions.No);
-                result.AppendLine($"One day this meme will die {sqvat}");
-            }
             result.AppendFormat(returnCode.info, compatResult.SearchTerm);
             yield return result.ToString();
 
             result.Clear();
 
-            if (returnCode.displayResults)
-            {
-                var sortedList = compatResult.GetSortedList();
-                var trimmedList = sortedList.Where(i => i.score > 0).ToList();
-                if (trimmedList.Count > 0)
-                    sortedList = trimmedList;
+            if (!returnCode.displayResults)
+                yield break;
+            
+            var sortedList = compatResult.GetSortedList();
+            var trimmedList = sortedList.Where(i => i.score > 0).ToList();
+            if (trimmedList.Count > 0)
+                sortedList = trimmedList;
 
-                var searchTerm = request.Search ?? @"¯\\\_(ツ)\_/¯";
-                var searchHits = sortedList.Where(t => t.score > 0.5
-                                                       || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
-                                                       || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
-                foreach (var title in searchHits.Select(t => t.info.Title).Distinct())
-                    StatsStorage.IncGameStat(title);
-                foreach (var resultInfo in sortedList.Take(request.AmountRequested))
-                {
-                    var info = resultInfo.AsString();
+            var searchTerm = request.Search ?? @"¯\\\_(ツ)\_/¯";
+            var searchHits = sortedList.Where(t => t.score > 0.5
+                                                   || (t.info.Title?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false)
+                                                   || (t.info.AlternativeTitle?.StartsWith(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false));
+            foreach (var title in searchHits.Select(t => t.info.Title).Distinct())
+                StatsStorage.IncGameStat(title);
+            foreach (var resultInfo in sortedList.Take(request.AmountRequested))
+            {
+                var info = resultInfo.AsString();
 #if DEBUG
-                    info = $"{StringUtils.InvisibleSpacer}`{CompatApiResultUtils.GetScore(request.Search, resultInfo.info):0.000000}` {info}";
+                info = $"{StringUtils.InvisibleSpacer}`{CompatApiResultUtils.GetScore(request.Search, resultInfo.info):0.000000}` {info}";
 #endif
-                    result.AppendLine(info);
-                }
-                yield return result.ToString();
+                result.AppendLine(info);
             }
+            yield return result.ToString();
         }
     }
 
@@ -576,7 +260,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
         await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
     }
 
-    public static async Task ImportMetacriticScoresAsync()
+    public static async ValueTask ImportMetacriticScoresAsync()
     {
         var scoreJson = "metacritic_ps3.json";
         string json;
@@ -584,7 +268,7 @@ internal sealed partial class CompatList : BaseCommandModuleCustom
             json = await File.ReadAllTextAsync(scoreJson).ConfigureAwait(false);
         else
         {
-            Config.Log.Warn($"Missing {scoreJson}, trying to get an online copy...");
+            Config.Log.Warn($"Missing {scoreJson}, trying to get an online copy…");
             using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
             try
             {
