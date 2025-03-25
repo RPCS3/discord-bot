@@ -41,9 +41,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02467" />
-    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02467" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02467" />
+    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02474" />
+    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02474" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02474" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3703" />
     <PackageReference Include="ksemenenko.ColorThief" Version="1.1.1.4" />
     <PackageReference Include="MathParser.org-mXparser" Version="6.1.0" />
