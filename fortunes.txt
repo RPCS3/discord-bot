@@ -840,3 +840,5 @@ Your talents will be recognized and suitably rewarded.
 %
 Your work interests can capture the highest status or prestige.
 %
+Slow motion better than no motion.
+%
