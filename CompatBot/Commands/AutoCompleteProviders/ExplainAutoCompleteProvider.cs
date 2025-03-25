@@ -1,4 +1,5 @@
-﻿using CompatBot.Database;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,6 +62,11 @@ public class ExplainAutoCompleteProvider: IAutoCompleteProvider
                 .Distinct()
                 .Take(25);
         }
-        return result.Select(term => new DiscordAutoCompleteChoice(term, term)).ToList();
+        return result.Select(
+            term => new DiscordAutoCompleteChoice(
+                $"{term} - {db.Explanation.AsNoTracking().First(i => i.Keyword == term).Text}".Trim(40),
+                term
+            )
+        ).ToList();
     }
 }
