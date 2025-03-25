@@ -145,6 +145,8 @@ internal static class Program
                             Config.CommandPrefix,
                             Config.AutoRemoveCommandPrefix
                         ).ResolvePrefixAsync,
+                        IgnoreBots = true,
+                        EnableCommandNotFoundException = true,
                     });
                     var appCommandProcessor = new SlashCommandProcessor(new()
                     {

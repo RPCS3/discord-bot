@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using DSharpPlus.Commands.EventArgs;
 using DSharpPlus.Commands.Exceptions;
+using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Exceptions;
 
 namespace CompatBot.Commands.Processors;
@@ -10,9 +11,15 @@ internal static class CommandErroredHandler
     // CommandsExtension.DefaultCommandErrorHandlerAsync()
     public static async Task OnError(CommandsExtension sender, CommandErroredEventArgs eventArgs)
     {
-       StringBuilder stringBuilder = new();
+        StringBuilder stringBuilder = new();
         DiscordMessageBuilder messageBuilder = new();
 
+        if (eventArgs is { Exception: CommandNotFoundException, Context: TextCommandContext tctx })
+        {
+            await tctx.Message.DeleteAsync().ConfigureAwait(false);
+            return;
+        }
+        
         // Error message
         stringBuilder.Append(eventArgs.Exception switch
         {
