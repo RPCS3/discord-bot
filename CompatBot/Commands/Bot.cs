@@ -29,6 +29,8 @@ internal static partial class Bot
         [Description("Specific date (e.g. 2020-01-31)")]string date = ""
     )
     {
+        var ephemeral = !ctx.Channel.IsPrivate;
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
         try
         {
             LogManager.LogFactory.Flush();
@@ -63,12 +65,12 @@ internal static partial class Bot
                 await ctx.RespondAsync(response).ConfigureAwait(false);
             }
             else
-                await ctx.RespondAsync($"{Config.Reactions.Failure} Compressed log size is too large, ask <@98072022709456896> for help :(", ephemeral: true).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Compressed log size is too large, ask <@98072022709456896> for help :(", ephemeral: ephemeral).ConfigureAwait(false);
         }
         catch (Exception e)
         {
             Config.Log.Warn(e, "Failed to upload current log");
-            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to send the log: {e.Message}".Trim(EmbedPager.MaxMessageLength), true).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to send the log: {e.Message}".Trim(EmbedPager.MaxMessageLength), ephemeral).ConfigureAwait(false);
         }
     }
 
