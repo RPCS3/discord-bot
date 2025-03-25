@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using CompatBot.Commands;
 using CompatBot.Commands.Checks;
 using CompatBot.Commands.Converters;
+using CompatBot.Commands.Processors;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -148,7 +149,7 @@ internal static class Program
                         //NamingPolicy = new CamelCaseNamingPolicy(),
                         RegisterCommands = true,
 #if DEBUG
-                        UnconditionallyOverwriteCommands = true,
+                        //UnconditionallyOverwriteCommands = true,
 #endif
                     });
                     textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();
@@ -164,11 +165,11 @@ internal static class Program
                         extension.AddCommands<Vision>();
                     */
 
-                    //extension.CommandErrored += UnknownCommandHandler.OnError;
+                    extension.CommandErrored += CommandErroredHandler.OnError;
                 }, new()
                 {
                     RegisterDefaultCommandProcessors = true,
-                    //UseDefaultCommandErrorHandler = false,
+                    UseDefaultCommandErrorHandler = false,
 #if DEBUG
                     //DebugGuildId = Config.BotGuildId, // this forces app commands to be guild-limited, which doesn't work well
 #endif
