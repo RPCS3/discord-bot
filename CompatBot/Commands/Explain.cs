@@ -28,7 +28,7 @@ internal static class Explain
         DiscordUser? to = null
     )
     {
-        var ephemeral = !(ctx.Channel.IsSpamChannel() || (ModProvider.IsMod(ctx.User.Id) && to is not null));
+        var ephemeral = !ctx.Channel.IsSpamChannel() && (to is null || to.Id == ctx.User.Id);
         var canPing = ModProvider.IsMod(ctx.User.Id);
         term = term.ToLowerInvariant();
         var result = await LookupTerm(term).ConfigureAwait(false);
