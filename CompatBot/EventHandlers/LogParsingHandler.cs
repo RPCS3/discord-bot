@@ -209,14 +209,20 @@ public static class LogParsingHandler
                                     }
                                     if (!(message.Channel!.IsPrivate || message.Channel.Name.Contains("spam")))
                                     {
+                                        var reason = "Logs showing use of pirated content";
                                         var (saved, suppress, recent, total) = await Warnings.AddAsync(
                                             message.Author.Id,
                                             client.CurrentUser,
-                                            "Pirated Release",
+                                            reason,
                                             $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}"
                                         );
                                         if (saved && !suppress)
-                                            await message.Channel.SendMessageAsync($"User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)").ConfigureAwait(false);
+                                            await message.Channel.SendMessageAsync(
+                                                $"""
+                                                 User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
+                                                 Warned for: {reason}
+                                                 """
+                                            ).ConfigureAwait(false);
                                     }
                                 }
                             }

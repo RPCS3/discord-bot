@@ -224,14 +224,20 @@ internal static class ContentFilter
         {
             try
             {
+                warningReason ??= "Mention of piracy";
                 var (saved, suppress, recent, total) = await Warnings.AddAsync(
                     message.Author!.Id,
                     client.CurrentUser,
-                    warningReason ?? "Mention of piracy",
+                    warningReason,
                     message.Content.Sanitize()
                 ).ConfigureAwait(false);
                 if (saved && !suppress && message.Channel is not null)
-                    await message.Channel.SendMessageAsync($"User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)").ConfigureAwait(false);
+                    await message.Channel.SendMessageAsync(
+                        $"""
+                         User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
+                         Warned for: {warningReason}
+                         """
+                    ).ConfigureAwait(false);
                 completedActions.Add(FilterAction.IssueWarning);
             }
             catch (Exception e)

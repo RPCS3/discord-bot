@@ -70,7 +70,10 @@ internal static class WarningsContextMenus
 
             if (!suppress)
             {
-                var userMsgContent = $"{Config.Reactions.Success} User warning saved, {user.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)";
+                var userMsgContent = $"""
+                      User warning saved, {user.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
+                      Warned for: {reason}
+                      """;
                 var userMsg = new DiscordMessageBuilder()
                     .WithContent(userMsgContent)
                     .AddMention(UserMention.All);
