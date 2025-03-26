@@ -172,6 +172,7 @@ internal static class Program
                 {
                     RegisterDefaultCommandProcessors = true,
                     UseDefaultCommandErrorHandler = false,
+                    CommandExecutor = new CustomCommandExecutor(),
 #if DEBUG
                     //DebugGuildId = Config.BotGuildId, // this forces app commands to be guild-limited, which doesn't work well
 #endif
