@@ -9,7 +9,7 @@ namespace CompatBot.Utils;
 
 public static class DiscordClientExtensions
 {
-    public static async Task<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong? guildId, ulong userId)
+    public static async ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong? guildId, ulong userId)
     {
         try
         {
@@ -36,11 +36,11 @@ public static class DiscordClientExtensions
         return null;
     }
 
-    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong userId) => GetMemberAsync(client, (ulong?)null, userId);
-    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordUser user) => GetMemberAsync(client, user.Id);
-    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong guildId, DiscordUser user) => GetMemberAsync(client, guildId, user.Id);
-    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, DiscordUser user) => GetMemberAsync(client, guild, user.Id);
-    public static Task<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, ulong userId)
+    public static ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong userId) => GetMemberAsync(client, (ulong?)null, userId);
+    public static ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordUser user) => GetMemberAsync(client, user.Id);
+    public static ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong guildId, DiscordUser user) => GetMemberAsync(client, guildId, user.Id);
+    public static ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, DiscordUser user) => GetMemberAsync(client, guild, user.Id);
+    public static ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, DiscordGuild? guild, ulong userId)
         => guild is null ? GetMemberAsync(client, userId) : GetMemberAsync(client, guild.Id, userId);
 
     public static ValueTask<string> GetUserNameAsync(this CommandContext ctx, ulong userId, bool? forDmPurposes = null, string defaultName = "Unknown user")
@@ -107,7 +107,7 @@ public static class DiscordClientExtensions
         return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
     }
 
-    public static async Task<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? matchedOn, int? filterId, string? context, ReportSeverity severity, string? actionList = null)
+    public static async ValueTask<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? matchedOn, int? filterId, string? context, ReportSeverity severity, string? actionList = null)
     {
         var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
         if (logChannel is null)
@@ -141,7 +141,7 @@ public static class DiscordClientExtensions
         }
     }
 
-    public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember?> reporters, string? comment, ReportSeverity severity)
+    public static async ValueTask<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember?> reporters, string? comment, ReportSeverity severity)
     {
         var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
         var embedBuilder = await MakeReportTemplateAsync(client, infraction, null, message, severity).ConfigureAwait(false);
@@ -156,7 +156,7 @@ public static class DiscordClientExtensions
         ).ConfigureAwait(false);
     }
 
-    public static async Task<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember>? potentialVictims, ReportSeverity severity)
+    public static async ValueTask<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, string description, ICollection<DiscordMember>? potentialVictims, ReportSeverity severity)
     {
         var result = new DiscordEmbedBuilder
         {
@@ -178,7 +178,7 @@ public static class DiscordClientExtensions
             ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)"
             : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
 
-    public static async Task<string> GetUsernameWithNicknameAsync(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
+    public static async ValueTask<string> GetUsernameWithNicknameAsync(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
         => (await client.GetMemberAsync(guild, user).ConfigureAwait(false)).GetUsernameWithNickname()
            ?? $"`{user.Username.Sanitize()}#{user.Discriminator}`";
 
@@ -217,7 +217,7 @@ public static class DiscordClientExtensions
         return channel.SendMessageAsync(message);
     }
 
-    private static async Task<DiscordEmbedBuilder> MakeReportTemplateAsync(DiscordClient client, string infraction, int? filterId, DiscordMessage message, ReportSeverity severity, string? actionList = null)
+    private static async ValueTask<DiscordEmbedBuilder> MakeReportTemplateAsync(DiscordClient client, string infraction, int? filterId, DiscordMessage message, ReportSeverity severity, string? actionList = null)
     {
         var content = message.Content;
         if (message.Channel.IsPrivate)
