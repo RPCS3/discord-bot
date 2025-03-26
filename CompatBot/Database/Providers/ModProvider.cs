@@ -91,7 +91,7 @@ internal static class ModProvider
     {
         Config.Log.Debug("Syncing moderator list to the sudoer role");
         var modRoleList = guild.Roles.Where(kvp => kvp.Value.Name.Equals("Moderator")).ToList();
-        if (modRoleList.Count == 0)
+        if (modRoleList.Count is 0)
             return;
 
         var modRole = modRoleList.First().Value;
