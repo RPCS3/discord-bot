@@ -91,6 +91,7 @@ internal static class Config
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
     public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
     public static bool EnableEfDebugLogging => config.GetValue(nameof(EnableEfDebugLogging), false);
+    public static bool EnableBulkDiscordCommandOverwrite => config.GetValue(nameof(EnableBulkDiscordCommandOverwrite), false);
    
     internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
 
@@ -143,8 +144,8 @@ internal static class Config
 
     public static class Reactions
     {
-        public static readonly DiscordEmoji Success = DiscordEmoji.FromUnicode("👌");
-        public static readonly DiscordEmoji Failure = DiscordEmoji.FromUnicode("⛔");
+        public static readonly DiscordEmoji Success = DiscordEmoji.FromUnicode("✅");
+        public static readonly DiscordEmoji Failure = DiscordEmoji.FromUnicode("❌");
         public static readonly DiscordEmoji Denied = DiscordEmoji.FromUnicode("👮");
         public static readonly DiscordEmoji Starbucks = DiscordEmoji.FromUnicode("☕");
         public static readonly DiscordEmoji Moderated = DiscordEmoji.FromUnicode("🔨");
