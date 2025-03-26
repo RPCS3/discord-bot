@@ -271,7 +271,7 @@ internal static partial class Misc
 
     [Command("8ball")]
     [Description("Get ~~a random~~ an objectively best answer to your question")]
-    public static ValueTask EightBall(SlashCommandContext ctx, [Description("A yes or no question")] string question)
+    public static ValueTask EightBall(CommandContext ctx, [Description("A yes or no question")] string question)
     {
         var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
         question = question.ToLowerInvariant();
@@ -283,7 +283,9 @@ internal static partial class Misc
         lock (rng) answer = pool[rng.Next(pool.Count)];
         if (answer.StartsWith(':') && answer.EndsWith(':'))
             answer = ctx.Client.GetEmoji(answer, "🔮");
-        return ctx.RespondAsync(answer, ephemeral: ephemeral);
+        if (ctx is SlashCommandContext sctx)
+            return sctx.RespondAsync(answer, ephemeral: ephemeral);
+        return ctx.RespondAsync(answer);
     }
 
     [Command("when"), AllowedProcessors<TextCommandProcessor>]
