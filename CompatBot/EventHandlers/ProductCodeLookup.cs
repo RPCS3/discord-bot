@@ -50,7 +50,6 @@ internal static partial class ProductCodeLookup
         await message.ReactWithAsync(Config.Reactions.PleaseWait).ConfigureAwait(false);
         try
         {
-            var lookupEmoji = new DiscordComponentEmoji(DiscordEmoji.FromUnicode("🔍"));
             var formattedResults = await LookupProductCodeAndFormatAsync(client, codesToLookup).ConfigureAwait(false);
             foreach (var result in formattedResults)
                 try
@@ -61,9 +60,9 @@ internal static partial class ProductCodeLookup
                         messageBuilder.AddComponents(
                             new DiscordButtonComponent(
                                 DiscordButtonStyle.Secondary,
-                                $"{GlobalButtonHandler.ReplaceWithUpdatesPrefix}{message.Author.Id}:{result.code}",
-                                "Check for updates",
-                                emoji: lookupEmoji
+                                $"{GlobalButtonHandler.ReplaceWithUpdatesPrefix}{result.code}",
+                                "How to check for updates",
+                                emoji: new(DiscordEmoji.FromUnicode("ℹ️"))
                             )
                         );
                     await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);

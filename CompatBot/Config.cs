@@ -57,7 +57,7 @@ internal static class Config
     public static TimeSpan SocketDisconnectCheckIntervalInSec => TimeSpan.FromSeconds(config.GetValue(nameof(SocketDisconnectCheckIntervalInSec), 10));
     public static TimeSpan LogParsingTimeoutInSec => TimeSpan.FromSeconds(config.GetValue(nameof(LogParsingTimeoutInSec), 30));
     public static TimeSpan BuildTimeDifferenceForOutdatedBuildsInDays => TimeSpan.FromDays(config.GetValue(nameof(BuildTimeDifferenceForOutdatedBuildsInDays), 3));
-    public static TimeSpan ShutupTimeLimitInMin => TimeSpan.FromMinutes(config.GetValue(nameof(ShutupTimeLimitInMin), 5));
+    public static TimeSpan ShutupTimeLimitInMin => TimeSpan.FromMinutes(config.GetValue(nameof(ShutupTimeLimitInMin), 15));
     public static TimeSpan ForcedNicknamesRecheckTimeInHours => TimeSpan.FromHours(config.GetValue(nameof(ForcedNicknamesRecheckTimeInHours), 3));
     public static TimeSpan IncomingMessageCheckIntervalInMin => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMin), 10));
     public static TimeSpan MetricsIntervalInSec => TimeSpan.FromSeconds(config.GetValue(nameof(MetricsIntervalInSec), 10));
@@ -91,6 +91,7 @@ internal static class Config
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
     public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
     public static bool EnableEfDebugLogging => config.GetValue(nameof(EnableEfDebugLogging), false);
+    public static bool EnableBulkDiscordCommandOverwrite => config.GetValue(nameof(EnableBulkDiscordCommandOverwrite), false);
    
     internal static string CurrentLogPath => Path.GetFullPath(Path.Combine(LogPath, "bot.log"));
 
@@ -143,8 +144,8 @@ internal static class Config
 
     public static class Reactions
     {
-        public static readonly DiscordEmoji Success = DiscordEmoji.FromUnicode("👌");
-        public static readonly DiscordEmoji Failure = DiscordEmoji.FromUnicode("⛔");
+        public static readonly DiscordEmoji Success = DiscordEmoji.FromUnicode("✅");
+        public static readonly DiscordEmoji Failure = DiscordEmoji.FromUnicode("❌");
         public static readonly DiscordEmoji Denied = DiscordEmoji.FromUnicode("👮");
         public static readonly DiscordEmoji Starbucks = DiscordEmoji.FromUnicode("☕");
         public static readonly DiscordEmoji Moderated = DiscordEmoji.FromUnicode("🔨");

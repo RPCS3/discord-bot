@@ -152,9 +152,7 @@ internal static class Program
                     {
                         //NamingPolicy = new CamelCaseNamingPolicy(),
                         RegisterCommands = true,
-#if DEBUG
-                        //UnconditionallyOverwriteCommands = true,
-#endif
+                        UnconditionallyOverwriteCommands = Config.EnableBulkDiscordCommandOverwrite,
                     });
                     textCommandProcessor.AddConverter<TextOnlyDiscordChannelConverter>();
                     extension.AddProcessor(textCommandProcessor);

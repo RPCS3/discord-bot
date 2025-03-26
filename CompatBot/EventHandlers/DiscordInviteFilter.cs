@@ -129,12 +129,16 @@ internal static partial class DiscordInviteFilter
                         codeResolveMsg
                     ).ConfigureAwait(false);
                     if (saved && !suppress)
-                        await message.Channel.SendMessageAsync(
-                            $"""
-                             User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                             Warned for: {reason}
-                             """
-                        ).ConfigureAwait(false);
+                    {
+                        var msg = new DiscordMessageBuilder()
+                            .WithContent(
+                                $"""
+                                 User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
+                                 Warned for: {reason} by {client.CurrentUser}
+                                 """
+                            ).AddMention(new UserMention(message.Author));
+                        await message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+                    }
                 }
                 return false;
             }

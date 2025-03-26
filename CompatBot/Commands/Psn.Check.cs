@@ -113,8 +113,7 @@ internal static partial class Psn
         {
             var btnId = e.Interaction.Data.CustomId;
             var parts = btnId.Split(':');
-            if (parts is not [_, {Length: >6} authorIdStr, { Length: 9 } productCode]
-                || !ulong.TryParse(authorIdStr, out var authorId))
+            if (parts is not [_, .., { Length: 9 } productCode])
             {
                 Config.Log.Warn("Invalid interaction id: " + btnId);
                 return;
@@ -122,14 +121,12 @@ internal static partial class Psn
 
             try
             {
-                if (e.User.Id != authorId)
-                    return;
-                    
                 await e.Interaction.CreateResponseAsync(
                     DiscordInteractionResponseType.ChannelMessageWithSource,
                     new DiscordInteractionResponseBuilder()
                         .AsEphemeral()
-                        .WithContent($"Use application command `/psn check updates {productCode}` to search for game updates")
+                        // /psn check updates product_code: BLUS30078
+                        .WithContent($"Use application command `/psn check updates product_code:{productCode}` to search for game updates")
                 ).ConfigureAwait(false);
             }
             catch (Exception ex)

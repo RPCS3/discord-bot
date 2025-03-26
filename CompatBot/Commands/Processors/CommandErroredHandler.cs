@@ -1,13 +1,21 @@
 ﻿using System.Net;
+using System.Text.RegularExpressions;
 using DSharpPlus.Commands.EventArgs;
 using DSharpPlus.Commands.Exceptions;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot.Commands.Processors;
 
-internal static class CommandErroredHandler
+internal static partial class CommandErroredHandler
 {
+    [GeneratedRegex(
+        @"^\s*(am I|(are|is|do(es)|did|can(?!\s+of\s+)|should|must|have)(n't)?|shall|shan't|may|will|won't)\b",
+        RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase
+    )]
+    private static partial Regex BinaryQuestion();
+
     // CommandsExtension.DefaultCommandErrorHandlerAsync()
     public static async Task OnError(CommandsExtension sender, CommandErroredEventArgs eventArgs)
     {
@@ -18,15 +26,51 @@ internal static class CommandErroredHandler
             {
                 Exception: CommandNotFoundException or CommandNotExecutableException,
                 Context: TextCommandContext tctx
-            } && tctx.Prefix == Config.CommandPrefix)
+            })
         {
-            try
+            if (tctx.Prefix == Config.CommandPrefix || tctx.Prefix == Config.AutoRemoveCommandPrefix)
             {
-                await tctx.Message.DeleteAsync().ConfigureAwait(false);
+                try
+                {
+                    await tctx.Message.DeleteAsync().ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to remove message with unknown text command");
+                }
             }
-            catch (Exception e)
+            else
             {
-                Config.Log.Warn(e, "Failed to remove message with unknown text command");
+                if (tctx.Message.Content is string msgTxt
+                    && (msgTxt.EndsWith('?') || BinaryQuestion().IsMatch(msgTxt.AsSpan(tctx.Prefix!.Length)))
+                    && tctx.Extension.Commands.TryGetValue("8ball", out var cmd))
+                {
+                    await using var scope = tctx.Extension.ServiceProvider.CreateAsyncScope();
+                    var updatedContext = new TextCommandContext()
+                    {
+                        User = tctx.User,
+                        Channel = tctx.Channel,
+                        Message = tctx.Message,
+                        PrefixLength = tctx.Prefix!.Length,
+
+                        Command = cmd,
+                        Arguments = new Dictionary<CommandParameter, object?>()
+                        {
+                            [new() { Name = "question", Type = typeof(string), Parent = cmd }] = msgTxt[tctx.Prefix!.Length ..].Trim()
+                        },
+                        Extension = tctx.Extension,
+                        ServiceScope = scope,
+                    };
+                    try
+                    {
+                        await tctx.Extension.CommandExecutor.ExecuteAsync(updatedContext).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e, "Failed to execute custom 8ball command");
+                    }
+                    return;
+                }
             }
             return;
         }
