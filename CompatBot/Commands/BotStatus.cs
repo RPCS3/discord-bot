@@ -22,8 +22,10 @@ internal static class BotStatus
             }
             .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
             .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true);
-        if (!string.IsNullOrEmpty(Config.AzureComputerVisionKey))
+        if (Config.AzureComputerVisionKey is {Length: >0})
             embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
+        else
+            embed.AddField("Max OCR Queue", "-", true);
         var osInfo = RuntimeInformation.OSDescription;
         if (Environment.OSVersion.Platform is PlatformID.Unix or PlatformID.MacOSX)
             osInfo = RuntimeInformation.RuntimeIdentifier;

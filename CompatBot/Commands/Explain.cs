@@ -66,6 +66,7 @@ internal static class Explain
         memStream.Seek(0, SeekOrigin.Begin);
         explainMsg.AddFile(result.explanation.AttachmentFilename!, memStream);
         await ctx.RespondAsync(explainMsg).ConfigureAwait(false);
+        StatsStorage.IncExplainStat(term);
     }
 
     [Command("add"), RequiresBotModRole]

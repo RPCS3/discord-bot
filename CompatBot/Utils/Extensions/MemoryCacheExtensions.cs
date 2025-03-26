@@ -21,7 +21,7 @@ internal static class MemoryCacheExtensions
         var coherentState = stateField?.GetValue(memoryCache);
         if (coherentState is null)
         {
-            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed");
+            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {nameof(coherentState)}");
             return [];
         }
 
@@ -34,7 +34,7 @@ internal static class MemoryCacheExtensions
             .FirstOrDefault(fi => fi.Name == "_nonStringEntries");
         if (stringField is null || nonStringField is null)
         {
-            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed");
+            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {nameof(stringField)}");
             return [];
         }
 
@@ -54,7 +54,7 @@ internal static class MemoryCacheExtensions
         var coherentState = stateField?.GetValue(memoryCache);
         if (coherentState is null)
         {
-            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed");
+            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {nameof(coherentState)}");
             return new();
         }
 
@@ -64,7 +64,7 @@ internal static class MemoryCacheExtensions
         var cacheEntries = (IDictionary?)field?.GetValue(coherentState);
         if (cacheEntries is null)
         {
-            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed");
+            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {cacheEntries}");
             return new(0);
         }
 
