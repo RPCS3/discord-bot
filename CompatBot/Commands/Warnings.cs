@@ -31,11 +31,11 @@ internal static partial class Warnings
         {
             var userMsgContent = $"""
                   User warning saved, {user.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                  Warned for: {reason}
+                  Warned for: {reason} by {ctx.User.Mention}
                   """;
             var userMsg = new DiscordMessageBuilder()
                 .WithContent(userMsgContent)
-                .AddMention(UserMention.All);
+                .AddMention(new UserMention(user));
             await ctx.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
         }
         await ListUserWarningsAsync(ctx.Client, ctx.Interaction, user.Id, user.Username.Sanitize()).ConfigureAwait(false);

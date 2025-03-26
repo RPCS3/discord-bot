@@ -232,12 +232,16 @@ internal static class ContentFilter
                     message.Content.Sanitize()
                 ).ConfigureAwait(false);
                 if (saved && !suppress && message.Channel is not null)
-                    await message.Channel.SendMessageAsync(
-                        $"""
-                         User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                         Warned for: {warningReason}
-                         """
-                    ).ConfigureAwait(false);
+                {
+                    var msg = new DiscordMessageBuilder()
+                        .WithContent(
+                            $"""
+                             User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
+                             Warned for: {warningReason} by {client.CurrentUser}
+                             """
+                        ).AddMention(new UserMention(message.Author));
+                    await message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+                }
                 completedActions.Add(FilterAction.IssueWarning);
             }
             catch (Exception e)

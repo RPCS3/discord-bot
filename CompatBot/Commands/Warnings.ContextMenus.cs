@@ -72,11 +72,11 @@ internal static class WarningsContextMenus
             {
                 var userMsgContent = $"""
                       User warning saved, {user.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                      Warned for: {reason}
+                      Warned for: {reason} by {ctx.User.Mention}
                       """;
                 var userMsg = new DiscordMessageBuilder()
                     .WithContent(userMsgContent)
-                    .AddMention(UserMention.All);
+                    .AddMention(new UserMention(user.Id));
                 await ctx.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
             }
             await Warnings.ListUserWarningsAsync(ctx.Client, interaction, user.Id, user.Username.Sanitize()).ConfigureAwait(false);
