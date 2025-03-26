@@ -77,6 +77,8 @@ internal static class WarningsContextMenus
                 var userMsg = new DiscordMessageBuilder()
                     .WithContent(userMsgContent)
                     .AddMention(new UserMention(user.Id));
+                if (message is not null)
+                    userMsg.WithReply(message.Id, mention: true);
                 await ctx.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
             }
             await Warnings.ListUserWarningsAsync(ctx.Client, interaction, user.Id, user.Username.Sanitize()).ConfigureAwait(false);
