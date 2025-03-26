@@ -32,11 +32,11 @@ public class MemoryCacheExtensionTests
     public void GetCacheEntriesTest()
     {
         var cache = new MemoryCache(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
-        Assert.That(cache.GetCacheKeys<int>(), Is.Empty);
+        Assert.That(cache.GetCacheEntries<int>(), Is.Empty);
 
         cache.Set(13, "val13");
         cache.Set("bob", 69);
-        Assert.That(cache.GetCacheKeys<int>(), Has.Count.EqualTo(1));
-        Assert.That(cache.GetCacheKeys<string>(), Has.Count.EqualTo(1));
+        Assert.That(cache.GetCacheEntries<int>(), Has.Count.EqualTo(1));
+        Assert.That(cache.GetCacheEntries<string>(), Has.Count.EqualTo(1));
     }
 }

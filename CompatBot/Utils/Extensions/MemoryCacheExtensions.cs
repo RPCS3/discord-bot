@@ -6,48 +6,15 @@ namespace CompatBot.Utils;
 
 internal static class MemoryCacheExtensions
 {
-    private static readonly object throaway = new object();
+    private static readonly object throaway = new();
     
     public static List<T> GetCacheKeys<T>(this MemoryCache memoryCache)
-    {
-        // idk why it requires access before it populates the internal state
-        memoryCache.TryGetValue("str", out _);
-        memoryCache.TryGetValue(throaway, out _);
-        
-        // get the internal state object
-        var stateField = memoryCache.GetType()
-            .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-            .FirstOrDefault(fi => fi.Name == "_coherentState");
-        var coherentState = stateField?.GetValue(memoryCache);
-        if (coherentState is null)
-        {
-            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {nameof(coherentState)}");
-            return [];
-        }
-
-        // get the actual underlying key-value object
-        var stringField = coherentState.GetType()
-            .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-            .FirstOrDefault(fi => fi.Name == "_stringEntries");
-        var nonStringField = coherentState.GetType()
-            .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-            .FirstOrDefault(fi => fi.Name == "_nonStringEntries");
-        if (stringField is null || nonStringField is null)
-        {
-            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {nameof(stringField)}");
-            return [];
-        }
-
-        // read the keys
-        var value = typeof(T) == typeof(string)
-            ? (IDictionary?)stringField.GetValue(coherentState)
-            : (IDictionary?)nonStringField.GetValue(coherentState);
-        return value?.Keys.OfType<T>().ToList() ?? [];
-    }
+        => memoryCache.Keys.OfType<T>().ToList();
 
     public static Dictionary<TKey, ICacheEntry?> GetCacheEntries<TKey>(this MemoryCache memoryCache)
         where TKey: notnull
     {
+        //memoryCache.TryGetValue();
         var stateField = memoryCache.GetType()
             .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
             .FirstOrDefault(fi => fi.Name == "_coherentState");
@@ -58,13 +25,16 @@ internal static class MemoryCacheExtensions
             return new();
         }
 
-        var field = coherentState.GetType()
+        var entriesName = "_nonStringEntries";
+        if (typeof(TKey) == typeof(string))
+            entriesName = "_stringEntries";
+        var entriesField = coherentState.GetType() // MemoryCache.CoherentState
             .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-            .FirstOrDefault(fi => fi.Name == "_entries");
-        var cacheEntries = (IDictionary?)field?.GetValue(coherentState);
+            .FirstOrDefault(fi => fi.Name == entriesName);
+        var cacheEntries = (IDictionary?)entriesField?.GetValue(coherentState);
         if (cacheEntries is null)
         {
-            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {cacheEntries}");
+            Config.Log.Error($"Looks like {nameof(MemoryCache)} internals have changed in {nameof(coherentState)} cache entries");
             return new(0);
         }
 
