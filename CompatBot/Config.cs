@@ -57,7 +57,7 @@ internal static class Config
     public static TimeSpan SocketDisconnectCheckIntervalInSec => TimeSpan.FromSeconds(config.GetValue(nameof(SocketDisconnectCheckIntervalInSec), 10));
     public static TimeSpan LogParsingTimeoutInSec => TimeSpan.FromSeconds(config.GetValue(nameof(LogParsingTimeoutInSec), 30));
     public static TimeSpan BuildTimeDifferenceForOutdatedBuildsInDays => TimeSpan.FromDays(config.GetValue(nameof(BuildTimeDifferenceForOutdatedBuildsInDays), 3));
-    public static TimeSpan ShutupTimeLimitInMin => TimeSpan.FromMinutes(config.GetValue(nameof(ShutupTimeLimitInMin), 5));
+    public static TimeSpan ShutupTimeLimitInMin => TimeSpan.FromMinutes(config.GetValue(nameof(ShutupTimeLimitInMin), 15));
     public static TimeSpan ForcedNicknamesRecheckTimeInHours => TimeSpan.FromHours(config.GetValue(nameof(ForcedNicknamesRecheckTimeInHours), 3));
     public static TimeSpan IncomingMessageCheckIntervalInMin => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMin), 10));
     public static TimeSpan MetricsIntervalInSec => TimeSpan.FromSeconds(config.GetValue(nameof(MetricsIntervalInSec), 10));

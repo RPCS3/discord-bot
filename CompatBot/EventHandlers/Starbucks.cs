@@ -115,6 +115,8 @@ internal static class Starbucks
             message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
             if (emoji == Config.Reactions.Starbucks)
                 await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
+            if (emoji == Config.Reactions.ShutUp && !isBacklog)
+                await ShutupAsync(client, user, message).ConfigureAwait(false);
             await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -157,6 +159,20 @@ internal static class Starbucks
 
         await message.ReactWithAsync(emoji).ConfigureAwait(false);
         await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
+    }
+
+    private static async ValueTask ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)
+    {
+        if (message.Author is null || message.Author.IsCurrent is false)
+            return;
+
+        if (message.CreationTimestamp.Add(Config.ShutupTimeLimitInMin) < DateTime.UtcNow)
+            return;
+
+        if (!await user.IsWhitelistedAsync(client, message.Channel?.Guild).ConfigureAwait(false))
+            return;
+
+        await message.DeleteAsync().ConfigureAwait(false);
     }
 
     private static async ValueTask CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)
