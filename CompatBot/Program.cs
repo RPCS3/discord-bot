@@ -214,11 +214,13 @@ internal static class Program
                         return Task.CompletedTask;
                     });
 #if !DEBUG
+                    /*
                     config.HandleGuildDownloadCompleted(async (_, gdcArgs) =>
                     {
                         foreach (var guild in gdcArgs.Guilds)
                             await ModProvider.SyncRolesAsync(guild.Value).ConfigureAwait(false);
                     });
+                    */
 #endif
                     config.HandleMessageReactionAdded(MultiEventHandlerWrapper<MessageReactionAddedEventArgs>.CreateUnordered([
                             Starbucks.Handler,
