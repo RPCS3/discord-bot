@@ -33,7 +33,7 @@ public class ZalgoTests
         foreach (var line in names)
         {
             var user = UserInfo.Parse(line);
-            var isZalgo = UsernameZalgoMonitor.NeedsRename(user.DisplayName);
+            var isZalgo = await UsernameZalgoMonitor.NeedsRenameAsync(user.DisplayName).ConfigureAwait(false);
             if (isZalgo)
                 await w.WriteLineAsync(user.DisplayName).ConfigureAwait(false);
         }
@@ -82,9 +82,10 @@ public class ZalgoTests
     [TestCase("͔", true, "Combining marks")]
     [TestCase("҉҉҉҉", true, "Combining sign")]
     [TestCase("᲼᲼᲼᲼᲼᲼᲼᲼᲼ ", true, "Private block")]
-    public void ZalgoDetectionTest(string name, bool isBad, string? comment = null)
+    public async Task ZalgoDetectionTest(string name, bool isBad, string? comment = null)
     {
-        Assert.That(UsernameZalgoMonitor.NeedsRename(name), Is.EqualTo(isBad), comment);
+        var result = await UsernameZalgoMonitor.NeedsRenameAsync(name).ConfigureAwait(false);
+        Assert.That(result, Is.EqualTo(isBad), comment);
     }
 }
 

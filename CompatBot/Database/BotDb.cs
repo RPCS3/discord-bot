@@ -2,11 +2,15 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
+using Nito.AsyncEx;
 
 namespace CompatBot.Database;
 
 internal class BotDb: DbContext
 {
+    private static readonly AsyncReaderWriterLock DbLockSource = new();
+    private readonly IDisposable readWriteLock;
+    
     public DbSet<BotState> BotState { get; set; } = null!;
     public DbSet<Moderator> Moderator { get; set; } = null!;
     public DbSet<Piracystring> Piracystring { get; set; } = null!;
@@ -20,6 +24,20 @@ internal class BotDb: DbContext
     public DbSet<Kot> Kot { get; set; } = null!;
     public DbSet<Doggo> Doggo { get; set; } = null!;
     public DbSet<ForcedNickname> ForcedNicknames { get; set; } = null!;
+
+    private BotDb(IDisposable readWriteLock) => this.readWriteLock = readWriteLock;
+
+    public static BotDb OpenRead()
+        => new(DbLockSource.ReaderLock(Config.Cts.Token));
+    
+    public static async ValueTask<BotDb> OpenReadAsync()
+        => new(await DbLockSource.ReaderLockAsync(Config.Cts.Token).ConfigureAwait(false));
+
+    public static BotDb OpenWrite()
+        => new(DbLockSource.WriterLock(Config.Cts.Token));
+    
+    public static async ValueTask<BotDb> OpenWriteAsync()
+        => new(await DbLockSource.WriterLockAsync(Config.Cts.Token).ConfigureAwait(false));
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -53,6 +71,18 @@ internal class BotDb: DbContext
 
         //configure name conversion for all configured entities from CamelCase to snake_case
         modelBuilder.ConfigureMapping(NamingStyles.Underscore);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        readWriteLock.Dispose();
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        readWriteLock.Dispose();
     }
 }
 

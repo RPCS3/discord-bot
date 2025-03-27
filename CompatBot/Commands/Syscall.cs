@@ -26,7 +26,7 @@ internal static class Syscall
             return;
         }
 
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         if (db.SyscallInfo.Any(sci => sci.Function == search))
         {
             var productInfoList = db.SyscallToProductMap
@@ -119,7 +119,7 @@ internal static class Syscall
         string newFunctionName
     )
     {
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var oldMatches = await db.SyscallInfo.Where(sci => sci.Function == oldFunctionName).ToListAsync().ConfigureAwait(false);
         if (oldMatches.Count is 0)
         {
@@ -148,7 +148,7 @@ internal static class Syscall
     private static async ValueTask ReturnSyscallsByGameAsync(SlashCommandContext ctx, string productId, bool ephemeral)
     {
         productId = productId.ToUpperInvariant();
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var title = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productId)?.Name;
         title = string.IsNullOrEmpty(title) ? productId : $"[{productId}] {title.Trim(40)}";
         var sysInfoList = db.SyscallToProductMap.AsNoTracking()

@@ -1,12 +1,24 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
+using Nito.AsyncEx;
 
 namespace CompatBot.Database;
 
 internal class HardwareDb : DbContext
 {
+    private static readonly AsyncReaderWriterLock DbLockSource = new();
+    private readonly IDisposable readWriteLock;
+
     public DbSet<HwInfo> HwInfo { get; set; } = null!;
+
+    private HardwareDb(IDisposable readWriteLock) => this.readWriteLock = readWriteLock;
+
+    public static async ValueTask<HardwareDb> OpenReadAsync()
+        => new(await DbLockSource.ReaderLockAsync(Config.Cts.Token).ConfigureAwait(false));
+
+    public static async ValueTask<HardwareDb> OpenWriteAsync()
+        => new(await DbLockSource.WriterLockAsync(Config.Cts.Token).ConfigureAwait(false));
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -23,6 +35,18 @@ internal class HardwareDb : DbContext
 
         //configure name conversion for all configured entities from CamelCase to snake_case
         modelBuilder.ConfigureMapping(NamingStyles.Underscore);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        readWriteLock.Dispose();
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        readWriteLock.Dispose();
     }
 }
 

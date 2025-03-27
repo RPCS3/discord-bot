@@ -16,7 +16,7 @@ internal static class Invites
     public static async ValueTask List(SlashCommandContext ctx)
     {
         const string linkPrefix = "discord.gg/";
-        await using var db = new BotDb();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var whitelistedInvites = await db.WhitelistedInvites.ToListAsync().ConfigureAwait(false);
         if (whitelistedInvites.Count is 0)
         {
@@ -144,7 +144,7 @@ internal static class Invites
         [Description("Custom server name"), MinMaxLength(3)] string name
     )
     {
-        await using var db = new BotDb();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var invite = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
         if (invite is null)
         {

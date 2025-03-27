@@ -155,7 +155,7 @@ internal static partial class CompatList
                 await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 lastUpdateInfo = latestUpdatePr;
                 lastFullBuildNumber = latestUpdateBuild;
-                await using var db = new BotDb();
+                await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
                 var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
                 if (currentState == null)
                     await db.BotState.AddAsync(new() {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr}).ConfigureAwait(false);

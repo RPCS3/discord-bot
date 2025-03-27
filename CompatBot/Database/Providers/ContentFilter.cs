@@ -18,13 +18,13 @@ internal static class ContentFilter
 
     static ContentFilter() => RebuildMatcher();
 
-    public static Task<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
+    public static ValueTask<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
     {
         if (string.IsNullOrEmpty(str))
-            return Task.FromResult((Piracystring?)null);
+            return ValueTask.FromResult((Piracystring?)null);
 
         if (!filters.TryGetValue(ctx, out var matcher))
-            return Task.FromResult((Piracystring?)null);
+            return ValueTask.FromResult((Piracystring?)null);
 
         Piracystring? result = null;
         matcher?.ParseText(str, h =>
@@ -53,13 +53,13 @@ internal static class ContentFilter
             });
         }
 
-        return Task.FromResult(result);
+        return ValueTask.FromResult(result);
     }
 
     public static void RebuildMatcher()
     {
         var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
-        using var db = new BotDb();
+        using var db = BotDb.OpenRead();
         foreach (FilterContext ctx in Enum.GetValues<FilterContext>())
         {
             var triggerList = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking()
@@ -100,8 +100,7 @@ internal static class ContentFilter
         filters = newFilters;
     }
 
-
-    public static async Task<bool> IsClean(DiscordClient client, DiscordMessage message)
+    public static async ValueTask<bool> IsClean(DiscordClient client, DiscordMessage message)
     {
         if (message.Channel.IsPrivate)
             return true;
@@ -166,7 +165,15 @@ internal static class ContentFilter
         return (trigger.Actions & ~suppressActions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
     }
 
-    public static async Task PerformFilterActions(DiscordClient client, DiscordMessage message, Piracystring trigger, FilterAction ignoreFlags = 0, string? triggerContext = null, string? infraction = null, string? warningReason = null)
+    public static async ValueTask PerformFilterActions(
+        DiscordClient client,
+        DiscordMessage message,
+        Piracystring trigger,
+        FilterAction ignoreFlags = 0,
+        string? triggerContext = null,
+        string? infraction = null,
+        string? warningReason = null
+    )
     {
         var severity = ReportSeverity.Low;
         var completedActions = new List<FilterAction>();

@@ -54,7 +54,13 @@ internal static class TitleInfoFormatter
         return $"Product code {titleId} was not found in compatibility database";
     }
 
-    public static DiscordEmbedBuilder AsEmbed(this TitleInfo info, string? titleId, string? gameTitle = null, bool forLog = false, string? thumbnailUrl = null)
+    public static async ValueTask<DiscordEmbedBuilder> AsEmbedAsync(
+        this TitleInfo info,
+        string? titleId,
+        string? gameTitle = null,
+        bool forLog = false,
+        string? thumbnailUrl = null
+    )
     {
         if (string.IsNullOrWhiteSpace(gameTitle))
             gameTitle = null;
@@ -62,7 +68,7 @@ internal static class TitleInfoFormatter
         var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
         if (!StatusColors.TryGetValue(info.Status, out _) && !string.IsNullOrEmpty(titleId))
         {
-            using var db = new ThumbnailDb();
+            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             var thumb = db.Thumbnail.FirstOrDefault(t => t.ProductCode == titleId);
             if (thumb?.CompatibilityStatus != null)
             {
@@ -78,7 +84,7 @@ internal static class TitleInfoFormatter
         if (info.Status is string status && StatusColors.TryGetValue(status, out var color))
         {
             // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
-            var onlineOnlyPart = info.Network == 1 ? " 🌐" : "";
+            var onlineOnlyPart = info.Network is 1 ? " 🌐" : "";
             var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
             if (info.Pr > 0)
                 desc += $" (PR {info.ToPrString()})";
@@ -141,6 +147,6 @@ internal static class TitleInfoFormatter
     public static string AsString(this KeyValuePair<string, TitleInfo> resultInfo)
         => resultInfo.Value.AsString(resultInfo.Key);
 
-    public static DiscordEmbed AsEmbed(this KeyValuePair<string, TitleInfo> resultInfo)
-        => resultInfo.Value.AsEmbed(resultInfo.Key);
+    public static ValueTask<DiscordEmbedBuilder> AsEmbedAsync(this KeyValuePair<string, TitleInfo> resultInfo)
+        => resultInfo.Value.AsEmbedAsync(resultInfo.Key);
 }

@@ -8,40 +8,41 @@ internal static class SqlConfiguration
 {
     internal const string ConfigVarPrefix = "ENV-";
 
-    public static async Task RestoreAsync()
+    public static async ValueTask RestoreAsync()
     {
-        await using var db = new BotDb();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var setVars = await db.BotState.AsNoTracking().Where(v => v.Key.StartsWith(ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
-        if (setVars.Any())
+        if (setVars.Count is 0)
+            return;
+        
+        foreach (var stateVar in setVars)
+            if (stateVar.Value is string value)
+                Config.InMemorySettings[stateVar.Key[ConfigVarPrefix.Length ..]] = value;
+        if (!Config.InMemorySettings.TryGetValue(nameof(Config.GoogleApiCredentials), out var googleCreds) ||
+            string.IsNullOrEmpty(googleCreds))
         {
-            foreach (var stateVar in setVars)
-                if (stateVar.Value is string value)
-                    Config.InMemorySettings[stateVar.Key[ConfigVarPrefix.Length ..]] = value;
-            if (!Config.InMemorySettings.TryGetValue(nameof(Config.GoogleApiCredentials), out var googleCreds) || string.IsNullOrEmpty(googleCreds))
+            if (Path.Exists(Config.GoogleApiConfigPath))
             {
-                if (Path.Exists(Config.GoogleApiConfigPath))
+                Config.Log.Info("Migrating Google API credentials storage from file to db…");
+                try
                 {
-                    Config.Log.Info("Migrating Google API credentials storage from file to db…");
-                    try
+                    googleCreds = await File.ReadAllTextAsync(Config.GoogleApiConfigPath).ConfigureAwait(false);
+                    if (GoogleDriveHandler.ValidateCredentials(googleCreds))
                     {
-                        googleCreds = await File.ReadAllTextAsync(Config.GoogleApiConfigPath).ConfigureAwait(false);
-                        if (GoogleDriveHandler.ValidateCredentials(googleCreds))
-                        {
-                            Config.InMemorySettings[nameof(Config.GoogleApiCredentials)] = googleCreds;
-                            Config.Log.Info("Successfully migrated Google API credentials");
-                        }
-                        else
-                        {
-                            Config.Log.Error("Failed to migrate Google API credentials");
-                        }
+                        Config.InMemorySettings[nameof(Config.GoogleApiCredentials)] = googleCreds;
+                        Config.Log.Info("Successfully migrated Google API credentials");
                     }
-                    catch (Exception e)
+                    else
                     {
-                        Config.Log.Error(e, "Failed to migrate Google API credentials");
+                        Config.Log.Error("Failed to migrate Google API credentials");
                     }
                 }
+                catch (Exception e)
+                {
+                    Config.Log.Error(e, "Failed to migrate Google API credentials");
+                }
             }
-            Config.RebuildConfiguration();
         }
+        Config.RebuildConfiguration();
     }
 }

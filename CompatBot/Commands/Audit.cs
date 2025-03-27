@@ -142,10 +142,11 @@ internal static class Audit
                 try
                 {
                     var displayName = member.DisplayName;
-                    if (!UsernameZalgoMonitor.NeedsRename(displayName))
+                    if (!await UsernameZalgoMonitor.NeedsRenameAsync(displayName).ConfigureAwait(false))
                         continue;
 
-                    var nickname = UsernameZalgoMonitor.StripZalgo(displayName, member.Username, member.Id).Sanitize();
+                    var nickname = await UsernameZalgoMonitor.StripZalgoAsync(displayName, member.Username, member.Id).ConfigureAwait(false);
+                    nickname = nickname.Sanitize();
                     try
                     {
                         await member.ModifyAsync(m => m.Nickname = nickname).ConfigureAwait(false);

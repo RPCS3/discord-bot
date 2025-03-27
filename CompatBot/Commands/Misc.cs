@@ -242,7 +242,7 @@ internal static partial class Misc
         public static async ValueTask Game(SlashCommandContext ctx)
         {
             var ephemeral = !ctx.Channel.IsSpamChannel();
-            var db = new ThumbnailDb();
+            var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             await using var _ = db.ConfigureAwait(false);
             var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
             if (count is 0)

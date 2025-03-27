@@ -11,7 +11,7 @@ internal static class HwInfoProvider
     private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
     private static readonly MemoryCache UserCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
-    public static async Task AddOrUpdateSystemAsync(DiscordClient client, DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
+    public static async ValueTask AddOrUpdateSystemAsync(DiscordClient client, DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
     {
         var ignoreAuthor = await msg.Author.IsWhitelistedAsync(client, msg.Channel.Guild).ConfigureAwait(false);
         byte counter = 0;
@@ -76,8 +76,8 @@ internal static class HwInfoProvider
             OsName = GetName(osType, items),
             OsVersion = items["os_version"],
         };
-        await using var db = new HardwareDb();
-        var existingItem = await db.HwInfo.FindAsync(info.InstallId).ConfigureAwait(false);
+        await using var db = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
+        var existingItem = await db.HwInfo.FindAsync([info.InstallId], cancellationToken: cancellationToken).ConfigureAwait(false);
         if (existingItem is null)
             db.HwInfo.Add(info);
         else if (existingItem.Timestamp <= info.Timestamp)

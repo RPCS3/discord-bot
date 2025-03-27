@@ -25,7 +25,7 @@ internal static partial class Psn
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
         productCode = productCode.ToUpperInvariant();
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var item = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
         if (item is null)
             await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown product code {productCode}", ephemeral: true).ConfigureAwait(false);
@@ -67,7 +67,7 @@ internal static partial class Psn
             return;
         }
 
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var item = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
         if (item is null)
         {

@@ -56,13 +56,13 @@ internal static class BotStatus
                 CPUs: {Environment.ProcessorCount}
                 Time zones: {TimeParser.TimeZoneMap.Count} out of {TimeParser.TimeZoneAcronyms.Count} resolved, {TimeZoneInfo.GetSystemTimeZones().Count} total
                 """, true);
-        AppendPiracyStats(embed);
+        await AppendPiracyStatsAsync(embed).ConfigureAwait(false);
         AppendCmdStats(embed);
         AppendExplainStats(embed);
         AppendGameLookupStats(embed);
-        AppendSyscallsStats(embed);
-        AppendHwInfoStats(embed);
-        AppendPawStats(embed);
+        await AppendSyscallsStatsAsync(embed).ConfigureAwait(false);
+        await AppendHwInfoStatsAsync(embed).ConfigureAwait(false);
+        await AppendPawStatsAsync(embed).ConfigureAwait(false);
 #if DEBUG
         embed.WithFooter("Test Instance");
 #endif
@@ -78,16 +78,16 @@ internal static class BotStatus
             {(string.IsNullOrEmpty(Config.GithubToken) ? "❌" : "✅")} GitHub
             """;
 
-    private static void AppendPiracyStats(DiscordEmbedBuilder embed)
+    private static async ValueTask AppendPiracyStatsAsync(DiscordEmbedBuilder embed)
     {
         try
         {
-            using var db = new BotDb();
-            var timestamps = db.Warning
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+            var timestamps = await db.Warning
                 .Where(w => w.Timestamp.HasValue && !w.Retracted)
                 .OrderBy(w => w.Timestamp)
                 .Select(w => w.Timestamp!.Value)
-                .ToList();
+                .ToListAsync();
             var firstWarnTimestamp = timestamps.FirstOrDefault();
             var previousTimestamp = firstWarnTimestamp;
             var longestGapBetweenWarning = 0L;
@@ -216,11 +216,11 @@ internal static class BotStatus
         embed.AddField($"Top {top.Count} Recent Game Lookups", statsBuilder.ToString().TrimEnd(), true);
     }
 
-    private static void AppendSyscallsStats(DiscordEmbedBuilder embed)
+    private static async ValueTask AppendSyscallsStatsAsync(DiscordEmbedBuilder embed)
     {
         try
         {
-            using var db = new ThumbnailDb();
+            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             var syscallCount = db.SyscallInfo.AsNoTracking().Where(sci => sci.Function.StartsWith("sys_") || sci.Function.StartsWith("_sys_")).Distinct().Count();
             var totalFuncCount = db.SyscallInfo.AsNoTracking().Select(sci => sci.Function).Distinct().Count();
             var fwCallCount = totalFuncCount - syscallCount;
@@ -229,7 +229,9 @@ internal static class BotStatus
                 Tracked game IDs: {gameCount}
                 Tracked syscalls: {syscallCount} function{(syscallCount == 1 ? "" : "s")}
                 Tracked fw calls: {fwCallCount} function{(fwCallCount == 1 ? "" : "s")}
-                """, true);
+                """,
+                true
+            );
         }
         catch (Exception e)
         {
@@ -237,14 +239,14 @@ internal static class BotStatus
         }
     }
 
-    private static void AppendHwInfoStats(DiscordEmbedBuilder embed)
+    private static async ValueTask AppendHwInfoStatsAsync(DiscordEmbedBuilder embed)
     {
         try
         {
-            using var db = new HardwareDb();
+            await using var db = await HardwareDb.OpenReadAsync().ConfigureAwait(false);
             var monthAgo = DateTime.UtcNow.AddDays(-30).Ticks;
             var monthCount = db.HwInfo.Count(i => i.Timestamp > monthAgo);
-            if (monthCount == 0)
+            if (monthCount is 0)
                 return;
             
             var totalCount = db.HwInfo.Count();
@@ -257,10 +259,13 @@ internal static class BotStatus
 
             var cpuInfo = cpu is null ? "" : $"Popular CPU: {cpu.maker} {cpu.name} ({cpu.count * 100.0 / monthCount:0.##}%)";
             embed.AddField("Hardware Stats", $"""
-                Total: {totalCount} system{(totalCount == 1 ? "" : "s")}
-                Last 30 days: {monthCount} system{(monthCount == 1 ? "" : "s")}
+                Total: {totalCount} system{(totalCount is 1 ? "" : "s")}
+                Last 30 days: {monthCount} system{(monthCount is 1 ? "" : "s")}
                 {cpuInfo}
-                """.TrimEnd(), true);
+                """.TrimEnd()
+                ,
+                true
+            );
         }
         catch (Exception e)
         {
@@ -268,14 +273,14 @@ internal static class BotStatus
         }
     }
 
-    private static void AppendPawStats(DiscordEmbedBuilder embed)
+    private static async ValueTask AppendPawStatsAsync(DiscordEmbedBuilder embed)
     {
         try
         {
-            using var db = new BotDb();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var kots = db.Kot.Count();
             var doggos = db.Doggo.Count();
-            if (kots == 0 && doggos == 0)
+            if (kots is 0 && doggos is 0)
                 return;
 
             var diff = kots > doggos ? (double)kots / doggos - 1.0 : (double)doggos / kots - 1.0;

@@ -9,7 +9,7 @@ public class ExplainAutoCompleteProvider: IAutoCompleteProvider
 {
     public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {
-        await using var db = new BotDb();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         IEnumerable<string> result;
         if (context.UserInput is not { Length: > 0 } prefix)
         {

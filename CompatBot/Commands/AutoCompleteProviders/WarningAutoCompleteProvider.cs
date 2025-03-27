@@ -20,7 +20,7 @@ public class WarningAutoCompleteProvider: IAutoCompleteProvider
                 ? w => w.Retracted && w.DiscordId == userId
                 : w => !w.Retracted && w.DiscordId == userId;
         
-        await using var db = new BotDb();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         List<Warning> result;
         if (context.UserInput is not { Length: > 0 } prefix)
             result = await db.Warning

@@ -5,58 +5,76 @@ namespace CompatBot.Database.Providers;
 
 internal static class InviteWhitelistProvider
 {
-    public static bool IsWhitelisted(ulong guildId)
+    public static async ValueTask<bool> IsWhitelistedAsync(ulong guildId)
     {
-        using var db = new BotDb();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         return db.WhitelistedInvites.Any(i => i.GuildId == guildId);
     }
 
-    public static async Task<bool> IsWhitelistedAsync(DiscordInvite invite)
+    public static async ValueTask<bool> IsWhitelistedAsync(DiscordInvite invite)
     {
         var code = string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
         var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
-        await using var db = new BotDb();
-        var whitelistedInvite = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.GuildId == invite.Guild.Id);
-        if (whitelistedInvite == null)
-            return false;
+        WhitelistedInvite? savedInfo;
+        await using (var db = await BotDb.OpenReadAsync().ConfigureAwait(false))
+        {
+            savedInfo = await db.WhitelistedInvites
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.GuildId == invite.Guild.Id)
+                .ConfigureAwait(false);
+            if (savedInfo is null)
+                return false;
 
-        if (name != null && name != whitelistedInvite.Name)
+            if (savedInfo.InviteCode == code
+                && (savedInfo.Name == name
+                    || savedInfo.Name is not { Length: > 0 } && name is not { Length: > 0 }
+                ))
+                return true;
+        }
+        
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var whitelistedInvite = await wdb.WhitelistedInvites
+            .FirstAsync(i => i.Id == savedInfo.Id)
+            .ConfigureAwait(false);
+        if (name is {Length: >0} && name != whitelistedInvite.Name)
             whitelistedInvite.Name = invite.Guild.Name;
-        if (string.IsNullOrEmpty(whitelistedInvite.InviteCode) && code != null)
+        if (code is {Length: >0}
+            && !invite.IsRevoked
+            && (!invite.IsTemporary || whitelistedInvite.InviteCode is not { Length: > 0 }))
             whitelistedInvite.InviteCode = code;
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
-    public static async Task<bool> AddAsync(DiscordInvite invite)
+    public static async ValueTask<bool> AddAsync(DiscordInvite invite)
     {
         if (await IsWhitelistedAsync(invite).ConfigureAwait(false))
             return false;
 
         var code = invite.IsRevoked || string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
         var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
-        await using var db = new BotDb();
-        await db.WhitelistedInvites.AddAsync(new WhitelistedInvite { GuildId = invite.Guild.Id, Name = name, InviteCode = code }).ConfigureAwait(false);
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        await db.WhitelistedInvites.AddAsync(new() { GuildId = invite.Guild.Id, Name = name, InviteCode = code }).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
-    public static async Task<bool> AddAsync(ulong guildId)
+    public static async ValueTask<bool> AddAsync(ulong guildId)
     {
-        if (IsWhitelisted(guildId))
+        if (await IsWhitelistedAsync(guildId).ConfigureAwait(false))
             return false;
 
-        await using var db = new BotDb();
-        await db.WhitelistedInvites.AddAsync(new WhitelistedInvite {GuildId = guildId}).ConfigureAwait(false);
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        await db.WhitelistedInvites.AddAsync(new() {GuildId = guildId}).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
-    public static async Task<bool> RemoveAsync(int id)
+    public static async ValueTask<bool> RemoveAsync(int id)
     {
-        await using var db = new BotDb();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         var dbItem = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
-        if (dbItem == null)
+        if (dbItem is null)
             return false;
 
         db.WhitelistedInvites.Remove(dbItem);
@@ -68,26 +86,28 @@ internal static class InviteWhitelistProvider
     {
         while (!Config.Cts.IsCancellationRequested)
         {
-            await using var db = new BotDb();
-            foreach (var invite in db.WhitelistedInvites.Where(i => i.InviteCode != null))
+            await using (var db = await BotDb.OpenWriteAsync().ConfigureAwait(false))
             {
-                try
+                foreach (var invite in db.WhitelistedInvites.Where(i => i.InviteCode != null))
                 {
-                    var result = await client.GetInviteByCodeAsync(invite.InviteCode).ConfigureAwait(false);
-                    if (result?.IsRevoked == true)
+                    try
+                    {
+                        var result = await client.GetInviteByCodeAsync(invite.InviteCode).ConfigureAwait(false);
+                        if (result.IsRevoked)
+                            invite.InviteCode = null;
+                    }
+                    catch (NotFoundException)
+                    {
                         invite.InviteCode = null;
+                        Config.Log.Info($"Removed invite code {invite.InviteCode} for server {invite.Name}");
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Debug(e);
+                    }
                 }
-                catch (NotFoundException)
-                {
-                    invite.InviteCode = null;
-                    Config.Log.Info($"Removed invite code {invite.InviteCode} for server {invite.Name}");
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Debug(e);
-                }
+                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
-            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             await Task.Delay(TimeSpan.FromHours(1), Config.Cts.Token).ConfigureAwait(false);
         }
     }

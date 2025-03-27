@@ -15,7 +15,7 @@ internal static partial class Bot
         [Description("List set variable names")]
         public static async ValueTask List(SlashCommandContext ctx)
         {
-            await using var db = new BotDb();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var setVars = await db.BotState
                 .AsNoTracking()
                 .Where(v => v.Key.StartsWith(SqlConfiguration.ConfigVarPrefix))
@@ -49,7 +49,7 @@ internal static partial class Bot
             Config.InMemorySettings[key] = value;
             Config.RebuildConfiguration();
             key = SqlConfiguration.ConfigVarPrefix + key;
-            await using var db = new BotDb();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var stateValue = await db.BotState.FirstOrDefaultAsync(v => v.Key == key).ConfigureAwait(false);
             if (stateValue == null)
             {
@@ -72,7 +72,7 @@ internal static partial class Bot
             Config.InMemorySettings.TryRemove(key, out _);
             Config.RebuildConfiguration();
             key = SqlConfiguration.ConfigVarPrefix + key;
-            await using var db = new BotDb();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var stateValue = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
             if (stateValue is not null)
             {

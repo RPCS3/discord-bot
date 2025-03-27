@@ -1,11 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
+using Nito.AsyncEx;
 
 namespace CompatBot.Database;
 
 internal class ThumbnailDb : DbContext
 {
+    private static readonly AsyncReaderWriterLock DbLockSource = new();
+    private readonly IDisposable readWriteLock;
+
     public DbSet<State> State { get; set; } = null!;
     public DbSet<Thumbnail> Thumbnail { get; set; } = null!;
     public DbSet<GameUpdateInfo> GameUpdateInfo { get; set; } = null!;
@@ -14,6 +18,14 @@ internal class ThumbnailDb : DbContext
     public DbSet<Metacritic> Metacritic { get; set; } = null!;
     public DbSet<Fortune> Fortune { get; set; } = null!;
     public DbSet<NamePool> NamePool { get; set; } = null!;
+
+    private ThumbnailDb(IDisposable readWriteLock) => this.readWriteLock = readWriteLock;
+
+    public static async ValueTask<ThumbnailDb> OpenReadAsync()
+        => new(await DbLockSource.ReaderLockAsync(Config.Cts.Token).ConfigureAwait(false));
+
+    public static async ValueTask<ThumbnailDb> OpenWriteAsync()
+        => new(await DbLockSource.WriterLockAsync(Config.Cts.Token).ConfigureAwait(false));
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -42,6 +54,18 @@ internal class ThumbnailDb : DbContext
 
         //configure name conversion for all configured entities from CamelCase to snake_case
         modelBuilder.ConfigureMapping(NamingStyles.Underscore);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        readWriteLock.Dispose();
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        readWriteLock.Dispose();
     }
 }
 

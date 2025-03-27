@@ -8,7 +8,7 @@ internal static class SyscallInfoProvider
 {
     private static readonly SemaphoreSlim Limiter = new(1, 1);
 
-    public static async Task SaveAsync(TSyscallStats syscallInfo)
+    public static async ValueTask SaveAsync(TSyscallStats syscallInfo)
     {
         if (syscallInfo.Count == 0)
             return;
@@ -17,7 +17,7 @@ internal static class SyscallInfoProvider
         {
             try
             {
-                await using var db = new ThumbnailDb();
+                await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
                 foreach (var productCodeMap in syscallInfo)
                 {
                     var product = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCodeMap.Key)
@@ -45,11 +45,11 @@ internal static class SyscallInfoProvider
         }
     }
 
-    public static async Task<(int funcs, int links)> FixInvalidFunctionNamesAsync()
+    public static async ValueTask<(int funcs, int links)> FixInvalidFunctionNamesAsync()
     {
         var syscallStats = new TSyscallStats();
         int funcs, links = 0;
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var funcsToRemove = new List<SyscallInfo>(0);
         try
         {
@@ -103,10 +103,10 @@ internal static class SyscallInfoProvider
         return (funcs, links);
     }
 
-    public static async Task<(int funcs, int links)> FixDuplicatesAsync()
+    public static async ValueTask<(int funcs, int links)> FixDuplicatesAsync()
     {
         int funcs = 0, links = 0;
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var duplicateFunctionNames = await db.SyscallInfo.Where(sci => db.SyscallInfo.Count(isci => isci.Function == sci.Function) > 1).Distinct().ToListAsync().ConfigureAwait(false);
         if (duplicateFunctionNames.Count == 0)
             return (0, 0);

@@ -23,6 +23,7 @@ internal sealed partial class PsnScraper
     private static DateTime storeRefreshTimestamp = DateTime.MinValue;
     private static readonly SemaphoreSlim QueueLimiter = new(32, 32);
 
+    [Obsolete]
     public static async Task RunAsync(CancellationToken cancellationToken)
     {
         do
@@ -140,7 +141,7 @@ internal sealed partial class PsnScraper
             if (cancellationToken.IsCancellationRequested)
                 break;
 
-            if (ScrapeStateProvider.IsFresh(locale))
+            if (await ScrapeStateProvider.IsFreshAsync(locale).ConfigureAwait(false))
             {
                 //Config.Log.Debug($"Cache for {locale} PSN is fresh, skipping");
                 continue;
@@ -180,7 +181,7 @@ internal sealed partial class PsnScraper
                 if (cancellationToken.IsCancellationRequested)
                     return;
 
-                if (ScrapeStateProvider.IsFresh(locale, containerId))
+                if (await ScrapeStateProvider.IsFreshAsync(locale, containerId).ConfigureAwait(false))
                 {
                     //Config.Log.Debug($"\tCache for {locale} container {containerId} is fresh, skipping");
                     continue;
@@ -218,7 +219,7 @@ internal sealed partial class PsnScraper
                         var pages = (int)Math.Ceiling((double)total / take);
                         if (pages > 1)
                             Config.Log.Debug($"\t\tPage {start / take + 1} of {pages}");
-                        returned = container.Data?.Relationships?.Children?.Data?.Count(i => i.Type == "game" || i.Type == "legacy-sku") ?? 0;
+                        returned = container.Data?.Relationships?.Children?.Data?.Count(i => i.Type is "game" or "legacy-sku") ?? 0;
                         // included contains full data already, so it's wise to get it first
                         await ProcessIncludedGamesAsync(locale, container, cancellationToken).ConfigureAwait(false);
 
@@ -230,9 +231,9 @@ internal sealed partial class PsnScraper
                                 if (cancellationToken.IsCancellationRequested)
                                     return;
 
-                                if (item.Type == "game")
+                                if (item.Type is "game")
                                 {
-                                    if (!NeedLookup(item.Id))
+                                    if (!await NeedLookupAsync(item.Id).ConfigureAwait(false))
                                         continue;
                                 }
                                 else if (item.Type != "legacy-sku")
@@ -290,9 +291,9 @@ internal sealed partial class PsnScraper
         return result;
     }
 
-    private static bool NeedLookup(string contentId)
+    private static async ValueTask<bool> NeedLookupAsync(string contentId)
     {
-        using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         if (db.Thumbnail.FirstOrDefault(t => t.ContentId == contentId) is Thumbnail thumbnail)
             if (!string.IsNullOrEmpty(thumbnail.Url))
                 if (ScrapeStateProvider.IsFresh(new DateTime(thumbnail.Timestamp, DateTimeKind.Utc)))
@@ -326,8 +327,10 @@ internal sealed partial class PsnScraper
                             .Concat(item.Attributes?.Entitlements ?? Enumerable.Empty<GameSkuRelation>())
                             .Select(sku => sku.Id)
                             .Distinct()
-                            .Where(id => ProductCodeLookup.Pattern().IsMatch(id) && NeedLookup(id))
-                            .ToList();
+                            .ToAsyncEnumerable()
+                            .WhereAwait(async id => ProductCodeLookup.Pattern().IsMatch(id)
+                                                    && await NeedLookupAsync(id).ConfigureAwait(false)
+                            ).ToList();
                         foreach (var relatedSku in relatedSkus)
                         {
                             var relatedContainer = await Client.ResolveContentAsync(locale, relatedSku, 1, cancellationToken).ConfigureAwait(false);
@@ -350,7 +353,7 @@ internal sealed partial class PsnScraper
             return;
 
         name = string.IsNullOrEmpty(name) ? null : name;
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var savedItem = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
         if (savedItem == null)
         {

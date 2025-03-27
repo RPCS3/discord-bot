@@ -67,9 +67,9 @@ internal static class CommandsManagement
             {
                 if (cmd is null)
                     foreach (var c in ctx.Extension.Commands.Values)
-                        DisableSubcommands(ctx, c);
+                        await DisableSubcommandsAsync(ctx, c).ConfigureAwait(false);
                 else
-                    DisableSubcommands(ctx, cmd);
+                    await DisableSubcommandsAsync(ctx, cmd).ConfigureAwait(false);
                 if (ctx.Command.Parent is Command parent && parent.FullName.StartsWith(command))
                     await ctx.RespondAsync("Some subcommands cannot be disabled", ephemeral: true).ConfigureAwait(false);
                 else
@@ -90,7 +90,7 @@ internal static class CommandsManagement
             }
 
             command = cmd.FullName;
-            DisabledCommandsProvider.Disable(command);
+            await DisabledCommandsProvider.DisableAsync(command).ConfigureAwait(false);
             await ctx.RespondAsync($"{Config.Reactions.Success} Disabled `{command}`", ephemeral: true).ConfigureAwait(false);
         }
     }
@@ -106,7 +106,7 @@ internal static class CommandsManagement
         await ctx.DeferResponseAsync(true).ConfigureAwait(false);
         if (command is "*")
         {
-            DisabledCommandsProvider.Clear();
+            await DisabledCommandsProvider.ClearAsync().ConfigureAwait(false);
             await ctx.RespondAsync($"{Config.Reactions.Success} Enabled all the commands", ephemeral: true).ConfigureAwait(false);
             return;
         }
@@ -127,7 +127,7 @@ internal static class CommandsManagement
 
             try
             {
-                EnableSubcommands(ctx, cmd);
+                await EnableSubcommandsAsync(ctx, cmd).ConfigureAwait(false);
                 await ctx.RespondAsync($"{Config.Reactions.Success} Enabled `{command}` and all subcommands", ephemeral: true).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -145,7 +145,7 @@ internal static class CommandsManagement
             }
 
             command = cmd.FullName;
-            DisabledCommandsProvider.Enable(command);
+            await DisabledCommandsProvider.EnableAsync(command).ConfigureAwait(false);
             await ctx.RespondAsync($"{Config.Reactions.Success} Enabled `{command}`", ephemeral: true).ConfigureAwait(false);
         }
     }
@@ -173,25 +173,25 @@ internal static class CommandsManagement
         return result;
     }
 
-    private static void DisableSubcommands(CommandContext ctx, Command cmd)
+    private static async ValueTask DisableSubcommandsAsync(CommandContext ctx, Command cmd)
     {
         if (ctx.Command.Parent is not Command p || cmd.FullName.StartsWith(p.FullName))
             return;
 
-        DisabledCommandsProvider.Disable(cmd.FullName);
+        await DisabledCommandsProvider.DisableAsync(cmd.FullName).ConfigureAwait(false);
         if (cmd is Command group)
             foreach (var subCmd in group.Subcommands)
-                DisableSubcommands(ctx, subCmd);
+                await DisableSubcommandsAsync(ctx, subCmd).ConfigureAwait(false);
     }
 
-    private static void EnableSubcommands(CommandContext ctx, Command cmd)
+    private static async ValueTask EnableSubcommandsAsync(CommandContext ctx, Command cmd)
     {
         if (ctx.Command.Parent is not Command p || cmd.FullName.StartsWith(p.FullName))
             return;
 
-        DisabledCommandsProvider.Enable(cmd.FullName);
+        await DisabledCommandsProvider.EnableAsync(cmd.FullName).ConfigureAwait(false);
         if (cmd is Command group)
             foreach (var subCmd in group.Subcommands)
-                EnableSubcommands(ctx, subCmd);
+                await EnableSubcommandsAsync(ctx, subCmd).ConfigureAwait(false);
     }
 }

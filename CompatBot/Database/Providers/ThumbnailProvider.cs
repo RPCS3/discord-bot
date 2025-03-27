@@ -12,7 +12,7 @@ internal static class ThumbnailProvider
     private static readonly PsnClient.Client PsnClient = new();
     private static readonly MemoryCache ColorCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
-    public static async Task<string?> GetThumbnailUrlAsync(this DiscordClient client, string? productCode)
+    public static async ValueTask<string?> GetThumbnailUrlAsync(this DiscordClient client, string? productCode)
     {
         if (string.IsNullOrEmpty(productCode))
             return null;
@@ -22,23 +22,32 @@ internal static class ThumbnailProvider
         if (tmdbInfo is { Icon.Url: string tmdbIconUrl })
             return tmdbIconUrl;
 
-        await using var db = new ThumbnailDb();
-        var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
-        //todo: add search task if not found
-        if (thumb?.EmbeddableUrl is {Length: >0} embeddableUrl)
-            return embeddableUrl;
+        await using (var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false))
+        {
+            //todo: add search task if not found
+            if (await db.Thumbnail
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.ProductCode == productCode)
+                    .ConfigureAwait(false) is { EmbeddableUrl: { Length: > 0 } embeddableUrl }
+            )
+            {
+                return embeddableUrl;
+            }
+        }
 
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var thumb = await wdb.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
         if (string.IsNullOrEmpty(thumb?.Url) || !ScrapeStateProvider.IsFresh(thumb.Timestamp))
         {
             var gameTdbCoverUrl = await GameTdbScraper.GetThumbAsync(productCode).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(gameTdbCoverUrl))
             {
                 if (thumb is null)
-                    thumb = (await db.Thumbnail.AddAsync(new() {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false)).Entity;
+                    thumb = (await wdb.Thumbnail.AddAsync(new() {ProductCode = productCode, Url = gameTdbCoverUrl}).ConfigureAwait(false)).Entity;
                 else
                     thumb.Url = gameTdbCoverUrl;
                 thumb.Timestamp = DateTime.UtcNow.Ticks;
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
         }
 
@@ -51,38 +60,47 @@ internal static class ThumbnailProvider
             return null;
             
         thumb.EmbeddableUrl = embedUrl;
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         return embedUrl;
     }
 
-    public static async Task<string?> GetTitleNameAsync(string? productCode, CancellationToken cancellationToken)
+    public static async ValueTask<string?> GetTitleNameAsync(string? productCode, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(productCode))
             return null;
 
         productCode = productCode.ToUpperInvariant();
-        await using var db = new ThumbnailDb();
-        var thumb = await db.Thumbnail.FirstOrDefaultAsync(
+        await using (var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false))
+        {
+            if (await db.Thumbnail
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.ProductCode == productCode, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false) is { Name: { Length: > 0 } result }
+               )
+            {
+                return result;
+            }
+        }
+
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var thumb = await wdb.Thumbnail.FirstOrDefaultAsync(
             t => t.ProductCode == productCode,
             cancellationToken: cancellationToken
         ).ConfigureAwait(false);
-        if (thumb?.Name is string result)
-            return result;
-
         var title = (await PsnClient.GetTitleMetaAsync(productCode, cancellationToken).ConfigureAwait(false))?.Name;
         try
         {
             if (!string.IsNullOrEmpty(title))
             {
-                if (thumb == null)
-                    await db.Thumbnail.AddAsync(new()
+                if (thumb is null)
+                    await wdb.Thumbnail.AddAsync(new()
                     {
                         ProductCode = productCode,
                         Name = title,
                     }, cancellationToken).ConfigureAwait(false);
                 else
                     thumb.Name = title;
-                await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception e)
@@ -93,13 +111,14 @@ internal static class ThumbnailProvider
         return title;
     }
 
-    public static async Task<(string? url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string? url = null)
+    [Obsolete]
+    public static async ValueTask<(string? url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string? url = null)
     {
         if (string.IsNullOrEmpty(contentId))
             throw new ArgumentException("ContentID can't be empty", nameof(contentId));
 
         contentId = contentId.ToUpperInvariant();
-        await using var db = new ThumbnailDb();
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false); //todo: fix this if it's ever get re-used
         var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
         info ??= new() {Url = url};
         if (info.Url is null)
@@ -137,7 +156,7 @@ internal static class ThumbnailProvider
         return (info.EmbeddableUrl, color);
     }
 
-    public static async Task<(string? url, byte[]? image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
+    public static async ValueTask<(string? url, byte[]? image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
     {
         try
         {
@@ -164,7 +183,7 @@ internal static class ThumbnailProvider
         return (null, null);
     }
 
-    public static async Task<DiscordColor?> GetImageColorAsync(string? url, DiscordColor? defaultColor = null)
+    public static async ValueTask<DiscordColor?> GetImageColorAsync(string? url, DiscordColor? defaultColor = null)
     {
         try
         {

@@ -6,25 +6,26 @@ namespace CompatBot.Database.Providers;
 internal static class ModProvider
 {
     private static readonly Dictionary<ulong, Moderator> Moderators;
-    private static readonly BotDb Db = new();
     public static ReadOnlyDictionary<ulong, Moderator> Mods => new(Moderators);
 
     static ModProvider()
     {
-        Moderators = Db.Moderator.AsNoTracking().ToDictionary(m => m.DiscordId, m => m);
+        using var db = BotDb.OpenRead();
+        Moderators = db.Moderator.AsNoTracking().ToDictionary(m => m.DiscordId, m => m);
     }
 
     public static bool IsMod(ulong userId) => Moderators.ContainsKey(userId);
     public static bool IsSudoer(ulong userId) => Moderators.TryGetValue(userId, out var mod) && mod.Sudoer;
 
-    public static async Task<bool> AddAsync(ulong userId)
+    public static async ValueTask<bool> AddAsync(ulong userId)
     {
         if (IsMod(userId))
             return false;
 
         var newMod = new Moderator {DiscordId = userId};
-        await Db.Moderator.AddAsync(newMod).ConfigureAwait(false);
-        await Db.SaveChangesAsync().ConfigureAwait(false);
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        await db.Moderator.AddAsync(newMod).ConfigureAwait(false);
+        await db.SaveChangesAsync().ConfigureAwait(false);
         lock (Moderators)
         {
             if (IsMod(userId))
@@ -35,16 +36,17 @@ internal static class ModProvider
         return true;
     }
 
-    public static async Task<bool> RemoveAsync(ulong userId)
+    public static async ValueTask<bool> RemoveAsync(ulong userId)
     {
         if (!Moderators.ContainsKey(userId))
             return false;
 
-        var mod = await Db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var mod = await db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
         if (mod is not null)
         {
-            Db.Moderator.Remove(mod);
-            await Db.SaveChangesAsync().ConfigureAwait(false);
+            db.Moderator.Remove(mod);
+            await db.SaveChangesAsync().ConfigureAwait(false);
         }
         lock (Moderators)
         {
@@ -56,37 +58,40 @@ internal static class ModProvider
         return true;
     }
 
-    public static async Task<bool> MakeSudoerAsync(ulong userId)
+    public static async ValueTask<bool> MakeSudoerAsync(ulong userId)
     {
         if (!Moderators.TryGetValue(userId, out var mod) || mod.Sudoer)
             return false;
 
-        var dbMod = await Db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var dbMod = await db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
         if (dbMod is not null)
         {
             dbMod.Sudoer = true;
-            await Db.SaveChangesAsync().ConfigureAwait(false);
+            await db.SaveChangesAsync().ConfigureAwait(false);
         }
         mod.Sudoer = true;
         return true;
     }
 
-    public static async Task<bool> UnmakeSudoerAsync(ulong userId)
+    public static async ValueTask<bool> UnmakeSudoerAsync(ulong userId)
     {
         if (!Moderators.TryGetValue(userId, out var mod) || !mod.Sudoer)
             return false;
 
-        var dbMod = await Db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var dbMod = await db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
         if (dbMod is not null)
         {
             dbMod.Sudoer = false;
-            await Db.SaveChangesAsync().ConfigureAwait(false);
+            await db.SaveChangesAsync().ConfigureAwait(false);
         }
         mod.Sudoer = false;
-        await Db.SaveChangesAsync().ConfigureAwait(false);
+        await db.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
+    [Obsolete]
     public static async Task SyncRolesAsync(DiscordGuild guild)
     {
         Config.Log.Debug("Syncing moderator list to the sudoer role");
