@@ -10,7 +10,7 @@ internal static class SqlConfiguration
 
     public static async ValueTask RestoreAsync()
     {
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var setVars = await db.BotState.AsNoTracking().Where(v => v.Key.StartsWith(ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
         if (setVars.Count is 0)
             return;

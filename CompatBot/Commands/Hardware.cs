@@ -17,7 +17,7 @@ internal static class Hardware
         var maxDays = DateTime.UtcNow - new DateTime(2011, 5, 23, 0, 0, 0, DateTimeKind.Utc);
         period = Math.Clamp(Math.Abs(period), 1, (int)maxDays.TotalDays);
         var ts = DateTime.UtcNow.AddDays(-period).Ticks;
-        await using var db = HardwareDb.OpenRead();
+        await using var db = await HardwareDb.OpenReadAsync().ConfigureAwait(false);
         var count = await db.HwInfo.AsNoTracking().CountAsync(i => i.Timestamp > ts).ConfigureAwait(false);
         if (count is 0)
         {

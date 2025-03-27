@@ -23,7 +23,7 @@ internal static class ModProvider
             return false;
 
         var newMod = new Moderator {DiscordId = userId};
-        await using var db = BotDb.OpenWrite();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         await db.Moderator.AddAsync(newMod).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         lock (Moderators)
@@ -41,7 +41,7 @@ internal static class ModProvider
         if (!Moderators.ContainsKey(userId))
             return false;
 
-        await using var db = BotDb.OpenWrite();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         var mod = await db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
         if (mod is not null)
         {
@@ -63,7 +63,7 @@ internal static class ModProvider
         if (!Moderators.TryGetValue(userId, out var mod) || mod.Sudoer)
             return false;
 
-        await using var db = BotDb.OpenWrite();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         var dbMod = await db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
         if (dbMod is not null)
         {
@@ -79,7 +79,7 @@ internal static class ModProvider
         if (!Moderators.TryGetValue(userId, out var mod) || !mod.Sudoer)
             return false;
 
-        await using var db = BotDb.OpenWrite();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         var dbMod = await db.Moderator.FirstOrDefaultAsync(m => m.DiscordId == userId).ConfigureAwait(false);
         if (dbMod is not null)
         {

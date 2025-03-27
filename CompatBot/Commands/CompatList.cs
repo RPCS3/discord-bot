@@ -97,16 +97,17 @@ internal static partial class CompatList
         try
         {
             var remoteSearchTask = Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
-            var localResult = GetLocalCompatResult(requestBuilder);
+            var localResult = await GetLocalCompatResultAsync(requestBuilder).ConfigureAwait(false);
             result = localResult;
             var remoteResult = await remoteSearchTask.ConfigureAwait(false);
             result = remoteResult?.Append(localResult);
         }
         catch
         {
-            if (result == null)
+            if (result is null)
             {
-                await ctx.RespondAsync(embed: TitleInfo.CommunicationError.AsEmbed(null), ephemeral).ConfigureAwait(false);
+                var embed = await TitleInfo.CommunicationError.AsEmbedAsync(null).ConfigureAwait(false);
+                await ctx.RespondAsync(embed: embed, ephemeral).ConfigureAwait(false);
                 return;
             }
         }
@@ -129,11 +130,11 @@ internal static partial class CompatList
         }
     }
 
-    internal static CompatResult GetLocalCompatResult(RequestBuilder requestBuilder)
+    internal static async ValueTask<CompatResult> GetLocalCompatResultAsync(RequestBuilder requestBuilder)
     {
         var timer = Stopwatch.StartNew();
         var title = requestBuilder.Search;
-        using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var matches = db.Thumbnail
             .AsNoTracking()
             .AsEnumerable()
@@ -227,7 +228,7 @@ internal static partial class CompatList
         if (list is null)
             return;
             
-        await using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         foreach (var kvp in list.Results)
         {
             var (productCode, info) = kvp;
@@ -306,7 +307,7 @@ internal static partial class CompatList
                 .Select(i => i.WithTitle(i.Title.Replace("HAWX", "H.A.W.X")))
         );
 
-        await using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         foreach (var mcScore in scoreList.Where(s => s.CriticScore > 0 || s.UserScore > 0))
         {
             if (Config.Cts.IsCancellationRequested)

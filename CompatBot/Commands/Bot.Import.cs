@@ -17,7 +17,7 @@ internal static partial class Bot
                 try
                 {
                     await CompatList.ImportMetacriticScoresAsync().ConfigureAwait(false);
-                    await using var db = ThumbnailDb.OpenRead();
+                    await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
                     var linkedItems = await db.Thumbnail.CountAsync(i => i.MetacriticId != null).ConfigureAwait(false);
                     await ctx.Channel.SendMessageAsync($"Importing Metacritic info was successful, linked {linkedItems} items").ConfigureAwait(false);
                 }

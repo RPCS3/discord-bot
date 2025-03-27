@@ -102,7 +102,7 @@ internal static partial class IsTheGamePlayableHandler
         {
             var requestBuilder = RequestBuilder.Start().SetSearch(gameTitle);
             var searchCompatListTask = Client.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
-            var localList = CompatList.GetLocalCompatResult(requestBuilder);
+            var localList = await CompatList.GetLocalCompatResultAsync(requestBuilder).ConfigureAwait(false);
             var status = await searchCompatListTask.ConfigureAwait(false);
             status = status?.Append(localList);
             if (status is null

@@ -17,7 +17,7 @@ internal static class SyscallInfoProvider
         {
             try
             {
-                await using var db = ThumbnailDb.OpenWrite();
+                await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
                 foreach (var productCodeMap in syscallInfo)
                 {
                     var product = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCodeMap.Key)
@@ -49,7 +49,7 @@ internal static class SyscallInfoProvider
     {
         var syscallStats = new TSyscallStats();
         int funcs, links = 0;
-        await using var db = ThumbnailDb.OpenWrite();
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var funcsToRemove = new List<SyscallInfo>(0);
         try
         {
@@ -106,7 +106,7 @@ internal static class SyscallInfoProvider
     public static async ValueTask<(int funcs, int links)> FixDuplicatesAsync()
     {
         int funcs = 0, links = 0;
-        await using var db = ThumbnailDb.OpenWrite();
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var duplicateFunctionNames = await db.SyscallInfo.Where(sci => db.SyscallInfo.Count(isci => isci.Function == sci.Function) > 1).Distinct().ToListAsync().ConfigureAwait(false);
         if (duplicateFunctionNames.Count == 0)
             return (0, 0);

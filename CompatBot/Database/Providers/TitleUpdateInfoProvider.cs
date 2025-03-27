@@ -23,7 +23,7 @@ public static class TitleUpdateInfoProvider
         if (xml is {Length: > 10})
         {
             var xmlChecksum = xml.GetStableHash();
-            await using var db = ThumbnailDb.OpenWrite();
+            await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
             var updateInfo = db.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
             if (updateInfo is null)
                 db.GameUpdateInfo.Add(new() {ProductCode = productId, MetaHash = xmlChecksum, MetaXml = xml, Timestamp = DateTime.UtcNow.Ticks});
@@ -44,7 +44,7 @@ public static class TitleUpdateInfoProvider
 
     private static async ValueTask<TitlePatch?> GetCachedAsync(string? productId, bool returnStale = false)
     {
-        await using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var updateInfo = db.GameUpdateInfo
             .AsNoTracking()
             .FirstOrDefault(ui => ui.ProductCode == productId);
@@ -63,7 +63,7 @@ public static class TitleUpdateInfoProvider
 
     public static async Task RefreshGameUpdateInfoAsync(CancellationToken cancellationToken)
     {
-        await using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         do
         {
             var productCodeList = await db.Thumbnail.AsNoTracking().Select(t => t.ProductCode).ToListAsync(cancellationToken).ConfigureAwait(false);

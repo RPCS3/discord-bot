@@ -22,7 +22,7 @@ internal static class ThumbnailProvider
         if (tmdbInfo is { Icon.Url: string tmdbIconUrl })
             return tmdbIconUrl;
 
-        await using (var db = ThumbnailDb.OpenWrite())
+        await using (var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false))
         {
             //todo: add search task if not found
             if (await db.Thumbnail
@@ -35,7 +35,7 @@ internal static class ThumbnailProvider
             }
         }
 
-        await using var wdb = ThumbnailDb.OpenWrite();
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var thumb = await wdb.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
         if (string.IsNullOrEmpty(thumb?.Url) || !ScrapeStateProvider.IsFresh(thumb.Timestamp))
         {
@@ -70,7 +70,7 @@ internal static class ThumbnailProvider
             return null;
 
         productCode = productCode.ToUpperInvariant();
-        await using (var db = ThumbnailDb.OpenRead())
+        await using (var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false))
         {
             if (await db.Thumbnail
                     .AsNoTracking()
@@ -82,7 +82,7 @@ internal static class ThumbnailProvider
             }
         }
 
-        await using var wdb = ThumbnailDb.OpenWrite();
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var thumb = await wdb.Thumbnail.FirstOrDefaultAsync(
             t => t.ProductCode == productCode,
             cancellationToken: cancellationToken
@@ -118,7 +118,7 @@ internal static class ThumbnailProvider
             throw new ArgumentException("ContentID can't be empty", nameof(contentId));
 
         contentId = contentId.ToUpperInvariant();
-        await using var db = ThumbnailDb.OpenWrite(); //todo: fix this if it's ever get re-used
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false); //todo: fix this if it's ever get re-used
         var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
         info ??= new() {Url = url};
         if (info.Url is null)

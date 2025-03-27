@@ -112,7 +112,10 @@ internal static partial class ProductCodeLookup
     public static async ValueTask<(DiscordEmbedBuilder embedBuilder, CompatResult? compatResult)> LookupGameInfoWithEmbedAsync(this DiscordClient client, string? code, string? gameTitle = null, bool forLog = false, string? category = null)
     {
         if (string.IsNullOrEmpty(code))
-            return (TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog), null);
+            return (
+                await TitleInfo.Unknown.AsEmbedAsync(code, gameTitle, forLog).ConfigureAwait(false), 
+                null
+            );
 
         string? thumbnailUrl = null;
         CompatResult? result = null;
@@ -120,15 +123,23 @@ internal static partial class ProductCodeLookup
         {
             result = await CompatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
             if (result?.ReturnCode == -2)
-                return (TitleInfo.Maintenance.AsEmbed(code), result);
+                return (
+                    await TitleInfo.Maintenance.AsEmbedAsync(code).ConfigureAwait(false),
+                    result
+                );
 
             if (result?.ReturnCode == -1)
-                return (TitleInfo.CommunicationError.AsEmbed(code), result);
+                return (
+                    await TitleInfo.CommunicationError.AsEmbedAsync(code).ConfigureAwait(false),
+                    result
+                );
 
             thumbnailUrl = await client.GetThumbnailUrlAsync(code).ConfigureAwait(false);
-
             if (result?.Results != null && result.Results.TryGetValue(code, out var info))
-                return (info.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
+                return (
+                    await info.AsEmbedAsync(code, gameTitle, forLog, thumbnailUrl).ConfigureAwait(false),
+                    result
+                );
 
             gameTitle ??= await ThumbnailProvider.GetTitleNameAsync(code, Config.Cts.Token).ConfigureAwait(false);
             if (category == "1P")
@@ -140,7 +151,10 @@ internal static partial class ProductCodeLookup
                     Pr = 4802,
                     Status = "Playable",
                 };
-                return (ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
+                return (
+                    await ti.AsEmbedAsync(code, gameTitle, forLog, thumbnailUrl).ConfigureAwait(false),
+                    result
+                );
             }
             if (category is "2P" or "2G" or "2D" or "PP" or "PE" or "MN")
             {
@@ -148,14 +162,23 @@ internal static partial class ProductCodeLookup
                 {
                     Status = "Nothing"
                 };
-                return (ti.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
+                return (
+                    await ti.AsEmbedAsync(code, gameTitle, forLog, thumbnailUrl).ConfigureAwait(false),
+                    result
+                );
             }
-            return (TitleInfo.Unknown.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
+            return (
+                await TitleInfo.Unknown.AsEmbedAsync(code, gameTitle, forLog, thumbnailUrl).ConfigureAwait(false),
+                result
+            );
         }
         catch (Exception e)
         {
             Config.Log.Warn(e, $"Couldn't get compat result for {code}");
-            return (TitleInfo.CommunicationError.AsEmbed(code, gameTitle, forLog, thumbnailUrl), result);
+            return (
+                await TitleInfo.CommunicationError.AsEmbedAsync(code, gameTitle, forLog, thumbnailUrl).ConfigureAwait(false),
+                result
+            );
         }
     }
 }

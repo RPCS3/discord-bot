@@ -10,11 +10,11 @@ public static class DbImporter
 {
     public static async Task<bool> UpgradeAsync(CancellationToken cancellationToken)
     {
-        await using (var db = BotDb.OpenWrite())
+        await using (var db = await BotDb.OpenWriteAsync().ConfigureAwait(false))
             if (!await UpgradeAsync(db, cancellationToken).ConfigureAwait(false))
                 return false;
 
-        await using (var db = ThumbnailDb.OpenWrite())
+        await using (var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false))
         {
             if (!await UpgradeAsync(db,cancellationToken).ConfigureAwait(false))
                 return false;
@@ -23,7 +23,7 @@ public static class DbImporter
                 return false;
         }
             
-        await using (var db = HardwareDb.OpenWrite())
+        await using (var db = await HardwareDb.OpenWriteAsync().ConfigureAwait(false))
             if (!await UpgradeAsync(db, cancellationToken).ConfigureAwait(false))
                 return false;
 

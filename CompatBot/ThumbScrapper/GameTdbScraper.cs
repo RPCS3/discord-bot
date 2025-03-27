@@ -71,7 +71,7 @@ internal static partial class GameTdbScraper
         var container = Path.GetFileName(TitleDownloadLink.AbsolutePath);
         try
         {
-            if (ScrapeStateProvider.IsFresh(container))
+            if (await ScrapeStateProvider.IsFreshAsync(container).ConfigureAwait(false))
                 return;
 
             Config.Log.Debug("Scraping GameTDB for game titles…");
@@ -91,7 +91,7 @@ internal static partial class GameTdbScraper
             if (!DateTime.TryParseExact(version, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var timestamp))
                 return;
 
-            if (ScrapeStateProvider.IsFresh("PS3TDB", timestamp))
+            if (await ScrapeStateProvider.IsFreshAsync("PS3TDB", timestamp).ConfigureAwait(false))
             {
                 await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);
                 return;
@@ -113,7 +113,7 @@ internal static partial class GameTdbScraper
                 if (string.IsNullOrEmpty(title))
                     continue;
 
-                await using var db = ThumbnailDb.OpenRead();
+                await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
                 var item = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
                 if (item is null)
                 {

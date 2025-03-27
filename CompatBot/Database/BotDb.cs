@@ -2,13 +2,14 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
+using Nito.AsyncEx;
 
 namespace CompatBot.Database;
 
 internal class BotDb: DbContext
 {
-    private static ReaderWriterLockSlim dbLock = new();
-    private bool isWriteMode;
+    private static readonly AsyncReaderWriterLock DbLockSource = new();
+    private readonly IDisposable readWriteLock;
     
     public DbSet<BotState> BotState { get; set; } = null!;
     public DbSet<Moderator> Moderator { get; set; } = null!;
@@ -24,19 +25,19 @@ internal class BotDb: DbContext
     public DbSet<Doggo> Doggo { get; set; } = null!;
     public DbSet<ForcedNickname> ForcedNicknames { get; set; } = null!;
 
-    private BotDb(bool writeMode = false) => isWriteMode = writeMode;
+    private BotDb(IDisposable readWriteLock) => this.readWriteLock = readWriteLock;
 
     public static BotDb OpenRead()
-    {
-        dbLock.EnterReadLock();
-        return new();
-    }
+        => new(DbLockSource.ReaderLock(Config.Cts.Token));
+    
+    public static async ValueTask<BotDb> OpenReadAsync()
+        => new(await DbLockSource.ReaderLockAsync(Config.Cts.Token).ConfigureAwait(false));
 
     public static BotDb OpenWrite()
-    {
-        dbLock.EnterWriteLock();
-        return new();
-    }
+        => new(DbLockSource.WriterLock(Config.Cts.Token));
+    
+    public static async ValueTask<BotDb> OpenWriteAsync()
+        => new(await DbLockSource.WriterLockAsync(Config.Cts.Token).ConfigureAwait(false));
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -75,19 +76,13 @@ internal class BotDb: DbContext
     public override void Dispose()
     {
         base.Dispose();
-        if (isWriteMode)
-            dbLock.ExitWriteLock();
-        else
-            dbLock.ExitReadLock();
+        readWriteLock.Dispose();
     }
 
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        if (isWriteMode)
-            dbLock.ExitWriteLock();
-        else
-            dbLock.ExitReadLock();
+        readWriteLock.Dispose();
     }
 }
 

@@ -10,19 +10,19 @@ internal static class ScrapeStateProvider
     public static bool IsFresh(DateTime timestamp)
         => timestamp.Add(CheckInterval) > DateTime.UtcNow;
 
-    public static bool IsFresh(string locale, string? containerId = null)
+    public static async ValueTask<bool> IsFreshAsync(string locale, string? containerId = null)
     {
         var id = GetId(locale, containerId);
-        using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var timestamp = string.IsNullOrEmpty(id) ? db.State.OrderBy(s => s.Timestamp).FirstOrDefault() : db.State.FirstOrDefault(s => s.Locale == id);
         if (timestamp is { Timestamp: long checkDate and > 0 })
             return IsFresh(new DateTime(checkDate, DateTimeKind.Utc));
         return false;
     }
 
-    public static bool IsFresh(string locale, DateTime dataTimestamp)
+    public static async ValueTask<bool> IsFreshAsync(string locale, DateTime dataTimestamp)
     {
-        using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var timestamp = string.IsNullOrEmpty(locale) ? db.State.OrderBy(s => s.Timestamp).FirstOrDefault() : db.State.FirstOrDefault(s => s.Locale == locale);
         if (timestamp is { Timestamp: long checkDate and > 0 })
             return new DateTime(checkDate, DateTimeKind.Utc) > dataTimestamp;
@@ -35,7 +35,7 @@ internal static class ScrapeStateProvider
             throw new ArgumentException("Locale is mandatory", nameof(locale));
 
         var id = GetId(locale, containerId);
-        await using var db = ThumbnailDb.OpenWrite();
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var timestamp = db.State.FirstOrDefault(s => s.Locale == id);
         if (timestamp is null)
             await db.State.AddAsync(new() {Locale = id, Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
@@ -46,7 +46,7 @@ internal static class ScrapeStateProvider
 
     public static async ValueTask CleanAsync(CancellationToken cancellationToken)
     {
-        await using var db = ThumbnailDb.OpenWrite();
+        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var latestTimestamp = db.State.OrderByDescending(s => s.Timestamp).FirstOrDefault()?.Timestamp;
         if (!latestTimestamp.HasValue)
             return;

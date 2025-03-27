@@ -25,7 +25,7 @@ internal static partial class Sudo
             try
             {
                 var @fixed = 0;
-                await using var db = BotDb.OpenRead();
+                await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
                 foreach (var warning in db.Warning)
                     if (!string.IsNullOrEmpty(warning.FullReason))
                     {
@@ -54,7 +54,7 @@ internal static partial class Sudo
             try
             {
                 var @fixed = 0;
-                await using var db = BotDb.OpenRead();
+                await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
                 foreach (var warning in db.Warning)
                 {
                     var newReason = await FixChannelMentionAsync(ctx, warning.Reason).ConfigureAwait(false);
@@ -106,7 +106,7 @@ internal static partial class Sudo
         public static async ValueTask TitleMarks(TextCommandContext ctx)
         {
             var changed = 0;
-            await using var db = ThumbnailDb.OpenRead();
+            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             foreach (var thumb in db.Thumbnail)
             {
                 if (string.IsNullOrEmpty(thumb.Name))
@@ -135,7 +135,7 @@ internal static partial class Sudo
         public static async ValueTask MetacriticLinks(TextCommandContext ctx, [Description("Remove links for trial and demo versions only")] bool demosOnly = true)
         {
             var changed = 0;
-            await using var db = ThumbnailDb.OpenRead();
+            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             foreach (var thumb in db.Thumbnail.Where(t => t.MetacriticId != null))
             {
                 if (demosOnly

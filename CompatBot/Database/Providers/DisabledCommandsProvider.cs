@@ -3,53 +3,78 @@
 internal static class DisabledCommandsProvider
 {
     private static readonly HashSet<string> DisabledCommands = new(StringComparer.InvariantCultureIgnoreCase);
+    private static SemaphoreSlim semaphore = new(1, 1);
 
     static DisabledCommandsProvider()
     {
-        lock (DisabledCommands)
+        semaphore.Wait();
+        try
         {
             using var db = BotDb.OpenRead();
             foreach (var cmd in db.DisabledCommands.ToList())
                 DisabledCommands.Add(cmd.Command);
         }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
     public static HashSet<string> Get() => DisabledCommands;
 
-    public static void Disable(string command)
+    public static async ValueTask DisableAsync(string command)
     {
-        lock (DisabledCommands)
+        await semaphore.WaitAsync().ConfigureAwait(false);
+        try
+        {
             if (DisabledCommands.Add(command))
             {
-                using var db = BotDb.OpenWrite();
-                db.DisabledCommands.Add(new() {Command = command});
-                db.SaveChanges();
+                await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+                db.DisabledCommands.Add(new() { Command = command });
+                await db.SaveChangesAsync().ConfigureAwait(false);
             }
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
-    public static void Enable(string command)
+    public static async ValueTask EnableAsync(string command)
     {
-        lock (DisabledCommands)
+        await semaphore.WaitAsync().ConfigureAwait(false);
+        try
+        {
             if (DisabledCommands.Remove(command))
             {
-                using var db = BotDb.OpenWrite();
+                await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
                 var cmd = db.DisabledCommands.FirstOrDefault(c => c.Command == command);
                 if (cmd == null)
                     return;
 
                 db.DisabledCommands.Remove(cmd);
-                db.SaveChanges();
+                await db.SaveChangesAsync().ConfigureAwait(false);
             }
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
-    public static void Clear()
+    public static async ValueTask ClearAsync()
     {
-        lock (DisabledCommands)
+        await semaphore.WaitAsync().ConfigureAwait(false);
+        try
         {
             DisabledCommands.Clear();
-            using var db = BotDb.OpenWrite();
+            await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
             db.DisabledCommands.RemoveRange(db.DisabledCommands);
-            db.SaveChanges();
+            await db.SaveChangesAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            semaphore.Release();
         }
     }
 }

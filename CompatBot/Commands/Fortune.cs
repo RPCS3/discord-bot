@@ -50,7 +50,7 @@ internal static class Fortune
 
             await ctx.RespondAsync("Importing…", ephemeral: true).ConfigureAwait(false);
             var stopwatch = Stopwatch.StartNew();
-            await using var db = ThumbnailDb.OpenRead();
+            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             var response = await httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
@@ -149,7 +149,7 @@ internal static class Fortune
             var count = 0;
             await using var outputStream = Config.MemoryStreamManager.GetStream();
             await using var writer = new StreamWriter(outputStream);
-            await using var db = ThumbnailDb.OpenRead();
+            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             foreach (var fortune in db.Fortune.AsNoTracking())
             {
                 if (Config.Cts.Token.IsCancellationRequested)
@@ -184,7 +184,7 @@ internal static class Fortune
         }
 
         await ctx.DeferResponseAsync(true).ConfigureAwait(false);
-        await using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         db.Fortune.RemoveRange(db.Fortune);
         var count = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         await ctx.RespondAsync($"{Config.Reactions.Success} Removed {count} fortune{(count == 1 ? "" : "s")}", ephemeral: true).ConfigureAwait(false);
@@ -194,7 +194,7 @@ internal static class Fortune
     {
         var prefix = DateTime.UtcNow.ToString("yyyyMMdd")+ user.Id.ToString("x16");
         var rng = new Random(prefix.GetStableHash());
-        await using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         Database.Fortune? fortune;
         do
         {

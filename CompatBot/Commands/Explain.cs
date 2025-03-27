@@ -149,7 +149,7 @@ internal static class Explain
 
             var response = new DiscordInteractionResponseBuilder().AsEphemeral();
             await interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredChannelMessageWithSource, response).ConfigureAwait(false);
-            await using var db = BotDb.OpenRead();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
             {
                 await interaction.EditOriginalResponseAsync(
@@ -224,7 +224,7 @@ internal static class Explain
             }
         }
         
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         if (item is null)
         {
@@ -298,7 +298,7 @@ internal static class Explain
     )
     {
         term = term.ToLowerInvariant().StripQuotes();
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         if (item is null)
         {
@@ -335,7 +335,7 @@ internal static class Explain
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
         await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var allTerms = await db.Explanation.AsNoTracking().Select(e => e.Keyword).ToListAsync();
         await using var stream = Config.MemoryStreamManager.GetStream();
         await using var writer = new StreamWriter(stream);
@@ -357,7 +357,7 @@ internal static class Explain
         string term
     )
     {
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         if (item is null)
         {
@@ -435,7 +435,7 @@ internal static class Explain
     
     internal static async ValueTask<(Explanation? explanation, string? fuzzyMatch, double score)> LookupTerm(string term)
     {
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         string? fuzzyMatch = null;
         double coefficient;
         var explanation = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);

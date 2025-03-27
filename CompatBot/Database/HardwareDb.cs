@@ -1,29 +1,24 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CompatApiClient;
 using Microsoft.EntityFrameworkCore;
+using Nito.AsyncEx;
 
 namespace CompatBot.Database;
 
 internal class HardwareDb : DbContext
 {
-    private static ReaderWriterLockSlim dbLock = new();
-    private bool isWriteMode;
+    private static readonly AsyncReaderWriterLock DbLockSource = new();
+    private readonly IDisposable readWriteLock;
 
     public DbSet<HwInfo> HwInfo { get; set; } = null!;
 
-    private HardwareDb(bool writeMode = false) => isWriteMode = writeMode;
+    private HardwareDb(IDisposable readWriteLock) => this.readWriteLock = readWriteLock;
 
-    public static HardwareDb OpenRead()
-    {
-        dbLock.EnterReadLock();
-        return new();
-    }
+    public static async ValueTask<HardwareDb> OpenReadAsync()
+        => new(await DbLockSource.ReaderLockAsync(Config.Cts.Token).ConfigureAwait(false));
 
-    public static HardwareDb OpenWrite()
-    {
-        dbLock.EnterWriteLock();
-        return new();
-    }
+    public static async ValueTask<HardwareDb> OpenWriteAsync()
+        => new(await DbLockSource.WriterLockAsync(Config.Cts.Token).ConfigureAwait(false));
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -45,19 +40,13 @@ internal class HardwareDb : DbContext
     public override void Dispose()
     {
         base.Dispose();
-        if (isWriteMode)
-            dbLock.ExitWriteLock();
-        else
-            dbLock.ExitReadLock();
+        readWriteLock.Dispose();
     }
 
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        if (isWriteMode)
-            dbLock.ExitWriteLock();
-        else
-            dbLock.ExitReadLock();
+        readWriteLock.Dispose();
     }
 }
 

@@ -76,7 +76,7 @@ internal static class HwInfoProvider
             OsName = GetName(osType, items),
             OsVersion = items["os_version"],
         };
-        await using var db = HardwareDb.OpenWrite();
+        await using var db = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
         var existingItem = await db.HwInfo.FindAsync([info.InstallId], cancellationToken: cancellationToken).ConfigureAwait(false);
         if (existingItem is null)
             db.HwInfo.Add(info);

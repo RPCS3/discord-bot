@@ -7,7 +7,7 @@ public class EventNameAutoCompleteProvider: IAutoCompleteProvider
 {
     public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
 #if DEBUG        
         var currentTime = DateTime.UtcNow.AddYears(-10);
 #else

@@ -5,9 +5,9 @@ namespace CompatBot.Database.Providers;
 
 internal static class InviteWhitelistProvider
 {
-    public static bool IsWhitelisted(ulong guildId)
+    public static async ValueTask<bool> IsWhitelistedAsync(ulong guildId)
     {
-        using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         return db.WhitelistedInvites.Any(i => i.GuildId == guildId);
     }
 
@@ -16,7 +16,7 @@ internal static class InviteWhitelistProvider
         var code = string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
         var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
         WhitelistedInvite? savedInfo;
-        await using (var db = BotDb.OpenRead())
+        await using (var db = await BotDb.OpenReadAsync().ConfigureAwait(false))
         {
             savedInfo = await db.WhitelistedInvites
                 .AsNoTracking()
@@ -32,7 +32,7 @@ internal static class InviteWhitelistProvider
                 return true;
         }
         
-        await using var wdb = BotDb.OpenWrite();
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         var whitelistedInvite = await wdb.WhitelistedInvites
             .FirstAsync(i => i.Id == savedInfo.Id)
             .ConfigureAwait(false);
@@ -53,7 +53,7 @@ internal static class InviteWhitelistProvider
 
         var code = invite.IsRevoked || string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
         var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
-        await using var db = BotDb.OpenWrite();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         await db.WhitelistedInvites.AddAsync(new() { GuildId = invite.Guild.Id, Name = name, InviteCode = code }).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         return true;
@@ -61,10 +61,10 @@ internal static class InviteWhitelistProvider
 
     public static async ValueTask<bool> AddAsync(ulong guildId)
     {
-        if (IsWhitelisted(guildId))
+        if (await IsWhitelistedAsync(guildId).ConfigureAwait(false))
             return false;
 
-        await using var db = BotDb.OpenWrite();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         await db.WhitelistedInvites.AddAsync(new() {GuildId = guildId}).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         return true;
@@ -72,7 +72,7 @@ internal static class InviteWhitelistProvider
 
     public static async ValueTask<bool> RemoveAsync(int id)
     {
-        await using var db = BotDb.OpenWrite();
+        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         var dbItem = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
         if (dbItem is null)
             return false;
@@ -86,7 +86,7 @@ internal static class InviteWhitelistProvider
     {
         while (!Config.Cts.IsCancellationRequested)
         {
-            await using var db = BotDb.OpenWrite();
+            await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
             foreach (var invite in db.WhitelistedInvites.Where(i => i.InviteCode != null))
             {
                 try

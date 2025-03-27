@@ -16,9 +16,10 @@ public static class UsernameZalgoMonitor
         try
         {
             if (await c.GetMemberAsync(args.UserAfter).ConfigureAwait(false) is DiscordMember m
-                && NeedsRename(m.DisplayName))
+                && await NeedsRenameAsync(m.DisplayName).ConfigureAwait(false))
             {
-                var suggestedName = StripZalgo(m.DisplayName, m.Username, m.Id).Sanitize();
+                var suggestedName = await StripZalgoAsync(m.DisplayName, m.Username, m.Id).ConfigureAwait(false);
+                suggestedName = suggestedName.Sanitize();
                 await c.ReportAsync("🔣 Potential display name issue",
                     $"""
                         User {m.GetMentionWithNickname()} has changed their __username__ and is now shown as **{m.DisplayName.Sanitize()}**
@@ -50,9 +51,10 @@ public static class UsernameZalgoMonitor
             }
 
             var member = await args.Guild.GetMemberAsync(args.Member.Id).ConfigureAwait(false) ?? args.Member;
-            if (NeedsRename(name))
+            if (await NeedsRenameAsync(name).ConfigureAwait(false))
             {
-                var suggestedName = StripZalgo(name, fallback, args.Member.Id).Sanitize();
+                var suggestedName = await StripZalgoAsync(name, fallback, args.Member.Id).ConfigureAwait(false);
+                suggestedName = suggestedName.Sanitize();
                 await c.ReportAsync("🔣 Potential display name issue",
                     $"""
                         Member {member.GetMentionWithNickname()} has changed their __display name__ and is now shown as **{name.Sanitize()}**
@@ -74,9 +76,10 @@ public static class UsernameZalgoMonitor
         try
         {
             var name = args.Member.DisplayName;
-            if (NeedsRename(name))
+            if (await NeedsRenameAsync(name).ConfigureAwait(false))
             {
-                var suggestedName = StripZalgo(name, args.Member.Username, args.Member.Id).Sanitize();
+                var suggestedName = await StripZalgoAsync(name, args.Member.Username, args.Member.Id).ConfigureAwait(false);
+                suggestedName = suggestedName.Sanitize();
                 await c.ReportAsync("🔣 Potential display name issue",
                     $"""
                         New member joined the server: {args.Member.GetMentionWithNickname()} and is shown as **{name.Sanitize()}**
@@ -93,10 +96,10 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static bool NeedsRename(string displayName)
+    public static async ValueTask<bool> NeedsRenameAsync(string displayName)
     {
         displayName = displayName.Normalize().TrimEager();
-        return displayName != StripZalgo(displayName, null, 0ul, NormalizationForm.FormC, 3);
+        return displayName != await StripZalgoAsync(displayName, null, 0ul, NormalizationForm.FormC, 3).ConfigureAwait(false);
     }
 
     private static async Task DmAndRenameUserAsync(DiscordClient client, DiscordMember member, string suggestedName)
@@ -121,14 +124,14 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static string StripZalgo(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
+    public static async ValueTask<string> StripZalgoAsync(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
     {
         const int minNicknameLength = 2;
         displayName = displayName.Normalize(normalizationForm).TrimEager();
         if (displayName is null or {Length: <minNicknameLength} && userName is not null)
             displayName = userName.Normalize(normalizationForm).TrimEager();
         if (displayName is null or {Length: <minNicknameLength})
-            return GenerateRandomName(userId);
+            return await GenerateRandomNameAsync(userId).ConfigureAwait(false);
 
         var builder = new StringBuilder();
         bool skipLowSurrogate = false;
@@ -196,17 +199,17 @@ public static class UsernameZalgoMonitor
         if (result is null or {Length: <minNicknameLength})
         {
             if (userName is null)
-                return GenerateRandomName(userId);
-            return StripZalgo(userName, null, userId, normalizationForm, level);
+                return await GenerateRandomNameAsync(userId).ConfigureAwait(false);
+            return await StripZalgoAsync(userName, null, userId, normalizationForm, level).ConfigureAwait(false);
         }
         return result;
     }
 
-    public static string GenerateRandomName(ulong userId)
+    public static async ValueTask<string> GenerateRandomNameAsync(ulong userId)
     {
         var hash = userId.GetHashCode();
         var rng = new Random(hash);
-        using var db = ThumbnailDb.OpenRead();
+        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         var count = db.NamePool.Count();
         var name = db.NamePool.Skip(rng.Next(count)).First().Name;
         return name + Config.RenameNameSuffix;

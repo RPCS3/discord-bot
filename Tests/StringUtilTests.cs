@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using CompatBot.EventHandlers;
 using CompatBot.Utils;
 using CompatBot.Utils.Extensions;
@@ -51,9 +52,9 @@ public class StringUtilTests
     }
 
     [TestCase("jò̵͗s̷̑͠ẻ̵͝p̸̆̂h̸͐̿", "joseph")]
-    public void StripZalgoTest(string input, string expected)
+    public async Task StripZalgoTest(string input, string expected)
     {
-        var stripped = UsernameZalgoMonitor.StripZalgo(input, null, 0ul);
+        var stripped = await UsernameZalgoMonitor.StripZalgoAsync(input, null, 0ul).ConfigureAwait(false);
         Assert.That(stripped, Is.EqualTo(expected));
     }
 

@@ -19,7 +19,7 @@ public static class UsernameValidationMonitor
             if (guild.Permissions?.HasFlag(DiscordPermission.ChangeNickname) is false)
                 return;
 
-            await using var db = BotDb.OpenRead();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var forcedNickname = await db.ForcedNicknames.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == guildMember.Id && x.GuildId == guildMember.Guild.Id).ConfigureAwait(false);
             if (forcedNickname is null)
                 return;
@@ -54,7 +54,7 @@ public static class UsernameValidationMonitor
                         if (guild.Permissions?.HasFlag(DiscordPermission.ChangeNickname) is false)
                             continue;
 
-                        await using var db = BotDb.OpenRead();
+                        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
                         var forcedNicknames = await db.ForcedNicknames
                             .Where(mem => mem.GuildId == guild.Id)
                             .ToListAsync()

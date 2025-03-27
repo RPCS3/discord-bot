@@ -89,7 +89,7 @@ internal static partial class Bot
         await using var thumbStream = Config.MemoryStreamManager.GetStream();
         if (name != BackupDbType.Hardware)
         {
-            await using var db = ThumbnailDb.OpenRead();
+            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
             if (await BackupDbAsync(db, thumbStream, maxSize).ConfigureAwait(false) is { Length: > 0 } error)
                 msg += error + '\n';
             else
@@ -98,7 +98,7 @@ internal static partial class Bot
         await using var hwStream = Config.MemoryStreamManager.GetStream();
         if (name != BackupDbType.Thumbs)
         {
-            await using var db = HardwareDb.OpenRead();
+            await using var db = await HardwareDb.OpenReadAsync().ConfigureAwait(false);
             if (await BackupDbAsync(db, hwStream, maxSize).ConfigureAwait(false) is { Length: > 0 } error)
                 msg += error + '\n';
             else
@@ -146,7 +146,7 @@ internal static partial class Bot
     {
         try
         {
-            await using var db = BotDb.OpenRead();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
             var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
             if (message is {Length: >0})
@@ -187,7 +187,7 @@ internal static partial class Bot
         string? dbName = null;
         try
         {
-            await using var botDb = BotDb.OpenRead();
+            await using var botDb = await BotDb.OpenReadAsync().ConfigureAwait(false);
             string dbPath, dbDir;
             await using (var connection = db.Database.GetDbConnection())
             {
@@ -305,7 +305,7 @@ internal static partial class Bot
     internal static void Restart(ulong channelId, string? restartMsg)
     {
         Config.Log.Info($"Saving channelId {channelId} into settings…");
-        using var db = BotDb.OpenRead();
+        using var db = BotDb.OpenWrite();
         var ch = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
         if (ch is null)
         {

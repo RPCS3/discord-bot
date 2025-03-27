@@ -53,7 +53,7 @@ internal static partial class Warnings
         DiscordUser? user = null
     )
     {
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var warnings = await db.Warning.Where(w => id.Equals(w.Id)).ToListAsync().ConfigureAwait(false);
         if (warnings.Count is 0)
         {
@@ -85,7 +85,7 @@ internal static partial class Warnings
         DiscordUser? user = null
     )
     {
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var warningsToRemove = await db.Warning.Where(w => w.Id == id).ToListAsync().ConfigureAwait(false);
         foreach (var w in warningsToRemove)
         {
@@ -117,7 +117,7 @@ internal static partial class Warnings
     {
         try
         {
-            await using var db = BotDb.OpenRead();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var warningsToRemove = await db.Warning.Where(w => w.DiscordId == user.Id && !w.Retracted).ToListAsync().ConfigureAwait(false);
             foreach (var w in warningsToRemove)
             {
@@ -146,7 +146,7 @@ internal static partial class Warnings
         DiscordUser? user = null
     )
     {
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var warn = await db.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
         if (warn is { Retracted: true })
         {
@@ -166,7 +166,7 @@ internal static partial class Warnings
     {
         try
         {
-            await using var db = BotDb.OpenRead();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             await db.Warning.AddAsync(
                 new()
                 {
@@ -211,7 +211,7 @@ internal static partial class Warnings
             const bool ephemeral = true;
             int count, removed;
             bool isKot, isDoggo;
-            await using var db = BotDb.OpenRead();
+            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             count = await db.Warning.CountAsync(w => w.DiscordId == userId && !w.Retracted).ConfigureAwait(false);
             removed = await db.Warning.CountAsync(w => w.DiscordId == userId && w.Retracted).ConfigureAwait(false);
             isKot = db.Kot.Any(k => k.UserId == userId);

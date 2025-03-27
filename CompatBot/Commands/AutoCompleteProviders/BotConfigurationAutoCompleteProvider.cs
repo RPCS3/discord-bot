@@ -18,7 +18,7 @@ public class BotConfigurationAutoCompleteProvider: IAutoCompleteProvider
         if (!ModProvider.IsSudoer(context.User.Id))
             return [new($"{Config.Reactions.Denied} You are not authorized to use this command.", -1)];
 
-        await using var db = BotDb.OpenRead();
+        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         IEnumerable<string> result;
         var input = context.UserInput;
         if (input is not { Length: > 0 })
