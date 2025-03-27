@@ -35,7 +35,7 @@ public static class TitleUpdateInfoProvider
         if (update?.Tag?.Packages?.Length is null or 0)
         {
             await using var db = ThumbnailDb.OpenRead();
-            var updateInfo = db.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
+            var updateInfo = db.GameUpdateInfo.AsNoTracking().FirstOrDefault(ui => ui.ProductCode == productId);
             if (updateInfo is null)
                 return update;
 

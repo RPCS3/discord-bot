@@ -15,16 +15,34 @@ internal static class InviteWhitelistProvider
     {
         var code = string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
         var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
-        await using var db = BotDb.OpenWrite();
-        var whitelistedInvite = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.GuildId == invite.Guild.Id);
-        if (whitelistedInvite is null)
-            return false;
+        WhitelistedInvite? savedInfo;
+        await using (var db = BotDb.OpenRead())
+        {
+            savedInfo = await db.WhitelistedInvites
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.GuildId == invite.Guild.Id)
+                .ConfigureAwait(false);
+            if (savedInfo is null)
+                return false;
 
-        if (name != null && name != whitelistedInvite.Name)
+            if (savedInfo.InviteCode == code
+                && (savedInfo.Name == name
+                    || savedInfo.Name is not { Length: > 0 } && name is not { Length: > 0 }
+                ))
+                return true;
+        }
+        
+        await using var wdb = BotDb.OpenWrite();
+        var whitelistedInvite = await wdb.WhitelistedInvites
+            .FirstAsync(i => i.Id == savedInfo.Id)
+            .ConfigureAwait(false);
+        if (name is {Length: >0} && name != whitelistedInvite.Name)
             whitelistedInvite.Name = invite.Guild.Name;
-        if (string.IsNullOrEmpty(whitelistedInvite.InviteCode) && code != null)
+        if (code is {Length: >0}
+            && !invite.IsRevoked
+            && (!invite.IsTemporary || whitelistedInvite.InviteCode is not { Length: > 0 }))
             whitelistedInvite.InviteCode = code;
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
@@ -36,7 +54,7 @@ internal static class InviteWhitelistProvider
         var code = invite.IsRevoked || string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
         var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
         await using var db = BotDb.OpenWrite();
-        await db.WhitelistedInvites.AddAsync(new WhitelistedInvite { GuildId = invite.Guild.Id, Name = name, InviteCode = code }).ConfigureAwait(false);
+        await db.WhitelistedInvites.AddAsync(new() { GuildId = invite.Guild.Id, Name = name, InviteCode = code }).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
@@ -47,7 +65,7 @@ internal static class InviteWhitelistProvider
             return false;
 
         await using var db = BotDb.OpenWrite();
-        await db.WhitelistedInvites.AddAsync(new WhitelistedInvite {GuildId = guildId}).ConfigureAwait(false);
+        await db.WhitelistedInvites.AddAsync(new() {GuildId = guildId}).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
@@ -56,7 +74,7 @@ internal static class InviteWhitelistProvider
     {
         await using var db = BotDb.OpenWrite();
         var dbItem = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
-        if (dbItem == null)
+        if (dbItem is null)
             return false;
 
         db.WhitelistedInvites.Remove(dbItem);
