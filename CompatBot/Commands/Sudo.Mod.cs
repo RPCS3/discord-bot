@@ -1,4 +1,4 @@
-﻿using CompatBot.Database.Providers; 
+﻿using CompatBot.Database.Providers;
 
 namespace CompatBot.Commands;
 
@@ -75,14 +75,27 @@ internal static partial class Sudo
         [Description("List all bot moderators")]
         public static async ValueTask List(SlashCommandContext ctx)
         {
-            var ephemeral = !ctx.Channel.IsSpamChannel();
+            var ephemeral = !ctx.Channel.IsPrivate;
             await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
+            var modList = ModProvider.Mods
+                .Values
+                .ToAsyncEnumerable()
+                .SelectAwait(async m =>(m: m, u: await ctx.Client.GetUserAsync(m.DiscordId).ConfigureAwait(false)))
+                .OrderByDescending(i => i.m.Sudoer)
+                .ThenBy(i => i.u.Username)
+                .ToList();
+
             var table = new AsciiTable(
                 new AsciiColumn( "Username", maxWidth: 32),
+                new AsciiColumn( "User ID", alignToRight: true),
                 new AsciiColumn("Sudo")
             );
-            foreach (var mod in ModProvider.Mods.Values.OrderByDescending(m => m.Sudoer))
-                table.Add(await ctx.GetUserNameAsync(mod.DiscordId), mod.Sudoer ? "✅" :"");
+            foreach (var (mod, user) in modList)
+                table.Add(
+                    user.Username,
+                    user.Id.ToString(),
+                    mod.Sudoer ? "✅" :"➖"
+                );
             var pages = AutosplitResponseHelper.AutosplitMessage(table.ToString());
             await ctx.RespondAsync(pages[0], ephemeral: ephemeral).ConfigureAwait(false);
             foreach (var page in pages.Skip(1).Take(EmbedPager.MaxFollowupMessages))
