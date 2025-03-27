@@ -1,4 +1,5 @@
-﻿using CompatBot.Database;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +39,6 @@ public class ContentFilterAutoCompleteProvider: IAutoCompleteProvider
                 .AsEnumerable()
                 .Select(i => (id: i.Id, trigger: i.String));
         }
-        return result.Select(i => new DiscordAutoCompleteChoice($"{i.id}: {i.trigger}", i.id)).ToList();
+        return result.Select(i => new DiscordAutoCompleteChoice($"{i.id}: {i.trigger}".Trim(100), i.id)).ToList();
     }
 }

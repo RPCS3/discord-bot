@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using CompatApiClient.Utils;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,7 +60,7 @@ public class WarningAutoCompleteProvider: IAutoCompleteProvider
             userNames[id] = await context.Client.GetUserNameAsync(context.Channel, id).ConfigureAwait(false);
         return result.Select(
             w => new DiscordAutoCompleteChoice(
-                $"{w.Id}: {w.Timestamp?.AsUtc():yyyy-MM-dd HH:mmz}: {userNames[w.DiscordId]} - {w.Reason}",
+                $"{w.Id}: {w.Timestamp?.AsUtc():yyyy-MM-dd HH:mmz}: {userNames[w.DiscordId]} - {w.Reason}".Trim(100),
                 w.Id
             )
         ).ToList();
