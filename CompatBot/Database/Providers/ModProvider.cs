@@ -17,7 +17,7 @@ internal static class ModProvider
     public static bool IsMod(ulong userId) => Moderators.ContainsKey(userId);
     public static bool IsSudoer(ulong userId) => Moderators.TryGetValue(userId, out var mod) && mod.Sudoer;
 
-    public static async Task<bool> AddAsync(ulong userId)
+    public static async ValueTask<bool> AddAsync(ulong userId)
     {
         if (IsMod(userId))
             return false;
@@ -36,7 +36,7 @@ internal static class ModProvider
         return true;
     }
 
-    public static async Task<bool> RemoveAsync(ulong userId)
+    public static async ValueTask<bool> RemoveAsync(ulong userId)
     {
         if (!Moderators.ContainsKey(userId))
             return false;
@@ -58,7 +58,7 @@ internal static class ModProvider
         return true;
     }
 
-    public static async Task<bool> MakeSudoerAsync(ulong userId)
+    public static async ValueTask<bool> MakeSudoerAsync(ulong userId)
     {
         if (!Moderators.TryGetValue(userId, out var mod) || mod.Sudoer)
             return false;
@@ -74,7 +74,7 @@ internal static class ModProvider
         return true;
     }
 
-    public static async Task<bool> UnmakeSudoerAsync(ulong userId)
+    public static async ValueTask<bool> UnmakeSudoerAsync(ulong userId)
     {
         if (!Moderators.TryGetValue(userId, out var mod) || !mod.Sudoer)
             return false;
@@ -91,6 +91,7 @@ internal static class ModProvider
         return true;
     }
 
+    [Obsolete]
     public static async Task SyncRolesAsync(DiscordGuild guild)
     {
         Config.Log.Debug("Syncing moderator list to the sudoer role");

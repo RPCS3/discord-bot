@@ -12,7 +12,7 @@ internal static class ThumbnailProvider
     private static readonly PsnClient.Client PsnClient = new();
     private static readonly MemoryCache ColorCache = new(new MemoryCacheOptions{ ExpirationScanFrequency = TimeSpan.FromDays(1) });
 
-    public static async Task<string?> GetThumbnailUrlAsync(this DiscordClient client, string? productCode)
+    public static async ValueTask<string?> GetThumbnailUrlAsync(this DiscordClient client, string? productCode)
     {
         if (string.IsNullOrEmpty(productCode))
             return null;
@@ -137,7 +137,7 @@ internal static class ThumbnailProvider
         return (info.EmbeddableUrl, color);
     }
 
-    public static async Task<(string? url, byte[]? image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
+    public static async ValueTask<(string? url, byte[]? image)> GetEmbeddableUrlAsync(DiscordClient client, string contentId, string url)
     {
         try
         {
@@ -164,7 +164,7 @@ internal static class ThumbnailProvider
         return (null, null);
     }
 
-    public static async Task<DiscordColor?> GetImageColorAsync(string? url, DiscordColor? defaultColor = null)
+    public static async ValueTask<DiscordColor?> GetImageColorAsync(string? url, DiscordColor? defaultColor = null)
     {
         try
         {

@@ -8,7 +8,7 @@ internal static class SyscallInfoProvider
 {
     private static readonly SemaphoreSlim Limiter = new(1, 1);
 
-    public static async Task SaveAsync(TSyscallStats syscallInfo)
+    public static async ValueTask SaveAsync(TSyscallStats syscallInfo)
     {
         if (syscallInfo.Count == 0)
             return;
@@ -45,7 +45,7 @@ internal static class SyscallInfoProvider
         }
     }
 
-    public static async Task<(int funcs, int links)> FixInvalidFunctionNamesAsync()
+    public static async ValueTask<(int funcs, int links)> FixInvalidFunctionNamesAsync()
     {
         var syscallStats = new TSyscallStats();
         int funcs, links = 0;
@@ -103,7 +103,7 @@ internal static class SyscallInfoProvider
         return (funcs, links);
     }
 
-    public static async Task<(int funcs, int links)> FixDuplicatesAsync()
+    public static async ValueTask<(int funcs, int links)> FixDuplicatesAsync()
     {
         int funcs = 0, links = 0;
         await using var db = ThumbnailDb.OpenWrite();

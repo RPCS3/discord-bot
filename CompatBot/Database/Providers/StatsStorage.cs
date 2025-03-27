@@ -123,7 +123,7 @@ internal static class StatsStorage
         }
     }
 
-    public static async Task RestoreAsync()
+    public static async ValueTask RestoreAsync()
     {
         var now = DateTime.UtcNow;
         await using var db = BotDb.OpenWrite();

@@ -29,7 +29,7 @@ internal static class ScrapeStateProvider
         return false;
     }
 
-    public static async Task SetLastRunTimestampAsync(string locale, string? containerId = null)
+    public static async ValueTask SetLastRunTimestampAsync(string locale, string? containerId = null)
     {
         if (string.IsNullOrEmpty(locale))
             throw new ArgumentException("Locale is mandatory", nameof(locale));

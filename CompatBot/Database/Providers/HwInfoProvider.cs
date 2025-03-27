@@ -11,7 +11,7 @@ internal static class HwInfoProvider
     private static readonly TimeSpan CacheTime = TimeSpan.FromDays(1);
     private static readonly MemoryCache UserCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
-    public static async Task AddOrUpdateSystemAsync(DiscordClient client, DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
+    public static async ValueTask AddOrUpdateSystemAsync(DiscordClient client, DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
     {
         var ignoreAuthor = await msg.Author.IsWhitelistedAsync(client, msg.Channel.Guild).ConfigureAwait(false);
         byte counter = 0;
