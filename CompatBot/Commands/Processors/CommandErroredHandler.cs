@@ -28,7 +28,11 @@ internal static partial class CommandErroredHandler
                 Context: TextCommandContext tctx
             })
         {
-            if (tctx.Prefix == Config.CommandPrefix || tctx.Prefix == Config.AutoRemoveCommandPrefix)
+            // if it has a command prefix, check that it's not a random string of punctuation
+            if ((tctx.Prefix == Config.CommandPrefix
+                || tctx.Prefix == Config.AutoRemoveCommandPrefix)
+                && tctx.Message.Content[tctx.Prefix.Length ..] is {Length: >0} args
+                && !char.IsPunctuation(args[0]))
             {
                 try
                 {
