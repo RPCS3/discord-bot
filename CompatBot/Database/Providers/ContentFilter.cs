@@ -59,7 +59,7 @@ internal static class ContentFilter
     public static void RebuildMatcher()
     {
         var newFilters = new Dictionary<FilterContext, AhoCorasickDoubleArrayTrie<Piracystring>?>();
-        using var db = new BotDb();
+        using var db = BotDb.OpenRead();
         foreach (FilterContext ctx in Enum.GetValues<FilterContext>())
         {
             var triggerList = db.Piracystring.Where(ps => ps.Disabled == false && ps.Context.HasFlag(ctx)).AsNoTracking()

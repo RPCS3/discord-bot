@@ -22,7 +22,7 @@ internal static class ThumbnailProvider
         if (tmdbInfo is { Icon.Url: string tmdbIconUrl })
             return tmdbIconUrl;
 
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenWrite();
         var thumb = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
         //todo: add search task if not found
         if (thumb?.EmbeddableUrl is {Length: >0} embeddableUrl)
@@ -55,13 +55,13 @@ internal static class ThumbnailProvider
         return embedUrl;
     }
 
-    public static async Task<string?> GetTitleNameAsync(string? productCode, CancellationToken cancellationToken)
+    public static async ValueTask<string?> GetTitleNameAsync(string? productCode, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(productCode))
             return null;
 
         productCode = productCode.ToUpperInvariant();
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenWrite();
         var thumb = await db.Thumbnail.FirstOrDefaultAsync(
             t => t.ProductCode == productCode,
             cancellationToken: cancellationToken
@@ -93,13 +93,13 @@ internal static class ThumbnailProvider
         return title;
     }
 
-    public static async Task<(string? url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string? url = null)
+    public static async ValueTask<(string? url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string? url = null)
     {
         if (string.IsNullOrEmpty(contentId))
             throw new ArgumentException("ContentID can't be empty", nameof(contentId));
 
         contentId = contentId.ToUpperInvariant();
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenWrite();
         var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
         info ??= new() {Url = url};
         if (info.Url is null)

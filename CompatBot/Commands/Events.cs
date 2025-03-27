@@ -30,7 +30,7 @@ internal static partial class Events
         var current = DateTime.UtcNow;
 #endif
         var currentTicks = current.Ticks;
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var currentEvents = await db.EventSchedule.OrderBy(e => e.End).Where(e => e.Start <= currentTicks && e.End >= currentTicks).ToListAsync().ConfigureAwait(false);
         var nextEvent = await db.EventSchedule.OrderBy(e => e.Start).FirstOrDefaultAsync(e => e.Start > currentTicks).ConfigureAwait(false);
         if (string.IsNullOrEmpty(name))
@@ -203,7 +203,7 @@ internal static partial class Events
         evt.Name = name;
         evt.EventName = string.IsNullOrWhiteSpace(@event) || @event == "-" ? null : @event;
         evt.Year = newTime.Year;
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         await db.EventSchedule.AddAsync(evt).ConfigureAwait(false);
         await db.SaveChangesAsync().ConfigureAwait(false);
         await ctx.RespondAsync(embed: FormatEvent(evt).WithTitle("Created new event schedule entry #" + evt.Id), ephemeral: ephemeral).ConfigureAwait(false);
@@ -218,7 +218,7 @@ internal static partial class Events
     )
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var eventsToRemove = await db.EventSchedule.Where(evt => evt.Id == id).ToListAsync().ConfigureAwait(false);
         db.EventSchedule.RemoveRange(eventsToRemove);
         var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
@@ -234,7 +234,7 @@ internal static partial class Events
     public Task ClearGeneric(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
     {
         var currentYear = DateTime.UtcNow.Year;
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var itemsToRemove = await db.EventSchedule.Where(e =>
             year.HasValue
                 ? e.Year == year
@@ -262,7 +262,7 @@ internal static partial class Events
     )
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var evt = db.EventSchedule.FirstOrDefault(e => e.Id == id);
         if (evt is null)
         {
@@ -312,7 +312,7 @@ internal static partial class Events
         var ephemeral = !ctx.Channel.IsSpamChannel() || ModProvider.IsMod(ctx.User.Id);
         var showAll = "all".Equals(@event, StringComparison.InvariantCultureIgnoreCase);
         var currentTicks = DateTime.UtcNow.Ticks;
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         IQueryable<EventSchedule> query = db.EventSchedule;
         if (year.HasValue)
             query = query.Where(e => e.Year == year);

@@ -72,7 +72,7 @@ internal static class ForcedNicknames
                 guilds = [ctx.Guild];
 
             int changed = 0, noPermissions = 0, failed = 0;
-            await using var db = new BotDb();
+            await using var db = BotDb.OpenRead();
             foreach (var guild in guilds)
             {
                 if (!discordUser.IsBotSafeCheck())
@@ -157,7 +157,7 @@ internal static class ForcedNicknames
                 return;
             }
 
-            await using var db = new BotDb();
+            await using var db = BotDb.OpenRead();
             var enforcedRules = ctx.Guild is null
                 ? await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id).ToListAsync().ConfigureAwait(false)
                 : await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id && mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
@@ -256,7 +256,7 @@ internal static class ForcedNicknames
     [Description("Lists all users who has restricted nickname.")]
     public async Task List(CommandContext ctx)
     {
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var selectExpr = db.ForcedNicknames.AsNoTracking();
         if (ctx.Guild != null)
             selectExpr = selectExpr.Where(mem => mem.GuildId == ctx.Guild.Id);

@@ -62,7 +62,7 @@ internal static class TitleInfoFormatter
         var productCodePart = string.IsNullOrWhiteSpace(titleId) ? "" : $"[{titleId}] ";
         if (!StatusColors.TryGetValue(info.Status, out _) && !string.IsNullOrEmpty(titleId))
         {
-            using var db = new ThumbnailDb();
+            using var db = ThumbnailDb.OpenRead();
             var thumb = db.Thumbnail.FirstOrDefault(t => t.ProductCode == titleId);
             if (thumb?.CompatibilityStatus != null)
             {

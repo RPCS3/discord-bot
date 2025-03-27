@@ -37,7 +37,7 @@ internal sealed partial class ContentFilters
             new AsciiColumn("Actions"),
             new AsciiColumn("Custom message", maxWidth: 2048)
         );
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var duplicates = new Dictionary<string, FilterContext>(StringComparer.InvariantCultureIgnoreCase);
         var filters = db.Piracystring.Where(ps => !ps.Disabled).AsNoTracking().AsEnumerable().OrderBy(ps => ps.String.ToUpperInvariant()).ToList();
         var nonUniqueTriggers = (
@@ -130,7 +130,7 @@ internal sealed partial class ContentFilters
         }
 
         explanation = explanation?.ToLowerInvariant();
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         if (explanation is {Length: >0} && !await db.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
         {
             await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral).ConfigureAwait(false);
@@ -235,7 +235,7 @@ internal sealed partial class ContentFilters
                     return;
                 }
 
-                await using var db = new BotDb();
+                await using var db = BotDb.OpenRead();
                 foreach (var element in xml.Root.Elements("game"))
                 {
                     var name = element.Element("rom")?.Attribute("name")?.Value;
@@ -312,7 +312,7 @@ internal sealed partial class ContentFilters
             }
         }
 
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         explanation = explanation?.ToLowerInvariant();
         if (explanation is {Length: >0} && !await db.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
         {
@@ -367,7 +367,7 @@ internal sealed partial class ContentFilters
     )
     {
         var ephemeral = !ctx.Channel.IsPrivate;
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id && !ps.Disabled).ConfigureAwait(false);
         if (filter is null)
         {
@@ -391,7 +391,7 @@ internal sealed partial class ContentFilters
         var ephemeral = !ctx.Channel.IsPrivate;
         int removedFilters;
         var removedTriggers = new StringBuilder();
-        await using (var db = new BotDb())
+        await using (var db = BotDb.OpenRead())
         {
             foreach (var f in db.Piracystring.Where(ps => ps.Id == id && !ps.Disabled))
             {

@@ -8,7 +8,7 @@ public class ProductCodeAutoCompleteProvider: IAutoCompleteProvider
 {
     public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenRead();
         IEnumerable<(string code, string title)> result;
         if (context.UserInput is not { Length: > 0 } prefix)
         {

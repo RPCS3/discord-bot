@@ -23,6 +23,7 @@ internal sealed partial class PsnScraper
     private static DateTime storeRefreshTimestamp = DateTime.MinValue;
     private static readonly SemaphoreSlim QueueLimiter = new(32, 32);
 
+    [Obsolete]
     public static async Task RunAsync(CancellationToken cancellationToken)
     {
         do
@@ -292,7 +293,7 @@ internal sealed partial class PsnScraper
 
     private static bool NeedLookup(string contentId)
     {
-        using var db = new ThumbnailDb();
+        using var db = ThumbnailDb.OpenRead();
         if (db.Thumbnail.FirstOrDefault(t => t.ContentId == contentId) is Thumbnail thumbnail)
             if (!string.IsNullOrEmpty(thumbnail.Url))
                 if (ScrapeStateProvider.IsFresh(new DateTime(thumbnail.Timestamp, DateTimeKind.Utc)))
@@ -350,7 +351,7 @@ internal sealed partial class PsnScraper
             return;
 
         name = string.IsNullOrEmpty(name) ? null : name;
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenRead();
         var savedItem = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
         if (savedItem == null)
         {

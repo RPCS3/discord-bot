@@ -8,7 +8,7 @@ internal static class DisabledCommandsProvider
     {
         lock (DisabledCommands)
         {
-            using var db = new BotDb();
+            using var db = BotDb.OpenRead();
             foreach (var cmd in db.DisabledCommands.ToList())
                 DisabledCommands.Add(cmd.Command);
         }
@@ -21,7 +21,7 @@ internal static class DisabledCommandsProvider
         lock (DisabledCommands)
             if (DisabledCommands.Add(command))
             {
-                using var db = new BotDb();
+                using var db = BotDb.OpenWrite();
                 db.DisabledCommands.Add(new() {Command = command});
                 db.SaveChanges();
             }
@@ -32,7 +32,7 @@ internal static class DisabledCommandsProvider
         lock (DisabledCommands)
             if (DisabledCommands.Remove(command))
             {
-                using var db = new BotDb();
+                using var db = BotDb.OpenWrite();
                 var cmd = db.DisabledCommands.FirstOrDefault(c => c.Command == command);
                 if (cmd == null)
                     return;
@@ -47,7 +47,7 @@ internal static class DisabledCommandsProvider
         lock (DisabledCommands)
         {
             DisabledCommands.Clear();
-            using var db = new BotDb();
+            using var db = BotDb.OpenWrite();
             db.DisabledCommands.RemoveRange(db.DisabledCommands);
             db.SaveChanges();
         }

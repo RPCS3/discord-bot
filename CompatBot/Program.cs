@@ -192,7 +192,7 @@ internal static class Program
                         var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
                         if (owners.Count > 1)
                             msg.AppendLine();
-                        await using var db = new BotDb();
+                        await using var db = BotDb.OpenRead();
                         foreach (var owner in owners)
                         {
                             msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
@@ -310,7 +310,7 @@ internal static class Program
 
             ulong? channelId = null;
             string? restartMsg = null;
-            await using (var db = new BotDb())
+            await using (var db = BotDb.OpenRead())
             {
                 var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
                 if (chState != null)

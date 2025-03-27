@@ -7,6 +7,9 @@ namespace CompatBot.Database;
 
 internal class BotDb: DbContext
 {
+    private static ReaderWriterLockSlim dbLock = new();
+    private bool isWriteMode;
+    
     public DbSet<BotState> BotState { get; set; } = null!;
     public DbSet<Moderator> Moderator { get; set; } = null!;
     public DbSet<Piracystring> Piracystring { get; set; } = null!;
@@ -20,6 +23,20 @@ internal class BotDb: DbContext
     public DbSet<Kot> Kot { get; set; } = null!;
     public DbSet<Doggo> Doggo { get; set; } = null!;
     public DbSet<ForcedNickname> ForcedNicknames { get; set; } = null!;
+
+    private BotDb(bool writeMode = false) => isWriteMode = writeMode;
+
+    public static BotDb OpenRead()
+    {
+        dbLock.EnterReadLock();
+        return new();
+    }
+
+    public static BotDb OpenWrite()
+    {
+        dbLock.EnterWriteLock();
+        return new();
+    }
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -53,6 +70,24 @@ internal class BotDb: DbContext
 
         //configure name conversion for all configured entities from CamelCase to snake_case
         modelBuilder.ConfigureMapping(NamingStyles.Underscore);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        if (isWriteMode)
+            dbLock.ExitWriteLock();
+        else
+            dbLock.ExitReadLock();
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        if (isWriteMode)
+            dbLock.ExitWriteLock();
+        else
+            dbLock.ExitReadLock();
     }
 }
 

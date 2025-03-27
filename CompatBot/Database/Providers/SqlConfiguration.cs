@@ -10,7 +10,7 @@ internal static class SqlConfiguration
 
     public static async Task RestoreAsync()
     {
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var setVars = await db.BotState.AsNoTracking().Where(v => v.Key.StartsWith(ConfigVarPrefix)).ToListAsync().ConfigureAwait(false);
         if (setVars.Any())
         {

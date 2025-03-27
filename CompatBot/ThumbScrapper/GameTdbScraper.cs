@@ -113,7 +113,7 @@ internal static partial class GameTdbScraper
                 if (string.IsNullOrEmpty(title))
                     continue;
 
-                await using var db = new ThumbnailDb();
+                await using var db = ThumbnailDb.OpenRead();
                 var item = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
                 if (item is null)
                 {

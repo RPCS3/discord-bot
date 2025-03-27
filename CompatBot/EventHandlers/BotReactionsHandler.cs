@@ -119,7 +119,7 @@ namespace CompatBot.EventHandlers
 
             if (!string.IsNullOrEmpty(args.Message.Content) && Paws().Matches(args.Message.Content) is MatchCollection mc)
             {
-                await using var db = new BotDb();
+                await using var db = BotDb.OpenRead();
                 var matchedGroups = (from m in mc
                         from Group g in m.Groups
                         where g is { Success: true, Value.Length: > 0 }

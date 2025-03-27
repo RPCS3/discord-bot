@@ -206,7 +206,7 @@ public static class UsernameZalgoMonitor
     {
         var hash = userId.GetHashCode();
         var rng = new Random(hash);
-        using var db = new ThumbnailDb();
+        using var db = ThumbnailDb.OpenRead();
         var count = db.NamePool.Count();
         var name = db.NamePool.Skip(rng.Next(count)).First().Name;
         return name + Config.RenameNameSuffix;

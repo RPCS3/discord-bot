@@ -82,7 +82,7 @@ internal static class BotStatus
     {
         try
         {
-            using var db = new BotDb();
+            using var db = BotDb.OpenRead();
             var timestamps = db.Warning
                 .Where(w => w.Timestamp.HasValue && !w.Retracted)
                 .OrderBy(w => w.Timestamp)
@@ -220,7 +220,7 @@ internal static class BotStatus
     {
         try
         {
-            using var db = new ThumbnailDb();
+            using var db = ThumbnailDb.OpenRead();
             var syscallCount = db.SyscallInfo.AsNoTracking().Where(sci => sci.Function.StartsWith("sys_") || sci.Function.StartsWith("_sys_")).Distinct().Count();
             var totalFuncCount = db.SyscallInfo.AsNoTracking().Select(sci => sci.Function).Distinct().Count();
             var fwCallCount = totalFuncCount - syscallCount;
@@ -241,7 +241,7 @@ internal static class BotStatus
     {
         try
         {
-            using var db = new HardwareDb();
+            using var db = HardwareDb.OpenRead();
             var monthAgo = DateTime.UtcNow.AddDays(-30).Ticks;
             var monthCount = db.HwInfo.Count(i => i.Timestamp > monthAgo);
             if (monthCount == 0)
@@ -272,7 +272,7 @@ internal static class BotStatus
     {
         try
         {
-            using var db = new BotDb();
+            using var db = BotDb.OpenRead();
             var kots = db.Kot.Count();
             var doggos = db.Doggo.Count();
             if (kots == 0 && doggos == 0)

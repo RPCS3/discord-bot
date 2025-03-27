@@ -8,7 +8,7 @@ public static class TitleUpdateInfoProvider
 {
     private static readonly PsnClient.Client Client = new();
 
-    public static async Task<TitlePatch?> GetAsync(string? productId, CancellationToken cancellationToken)
+    public static async ValueTask<TitlePatch?> GetAsync(string? productId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(productId))
             return default;
@@ -18,7 +18,7 @@ public static class TitleUpdateInfoProvider
         if (xml is {Length: > 10})
         {
             var xmlChecksum = xml.GetStableHash();
-            await using var db = new ThumbnailDb();
+            await using var db = ThumbnailDb.OpenWrite();
             var updateInfo = db.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
             if (updateInfo is null)
                 db.GameUpdateInfo.Add(new() {ProductCode = productId, MetaHash = xmlChecksum, MetaXml = xml, Timestamp = DateTime.UtcNow.Ticks});
@@ -34,7 +34,7 @@ public static class TitleUpdateInfoProvider
         }
         if (update?.Tag?.Packages?.Length is null or 0)
         {
-            await using var db = new ThumbnailDb();
+            await using var db = ThumbnailDb.OpenRead();
             var updateInfo = db.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
             if (updateInfo is null)
                 return update;
@@ -52,7 +52,7 @@ public static class TitleUpdateInfoProvider
 
     public static async Task RefreshGameUpdateInfoAsync(CancellationToken cancellationToken)
     {
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenRead();
         do
         {
             var productCodeList = await db.Thumbnail.AsNoTracking().Select(t => t.ProductCode).ToListAsync(cancellationToken).ConfigureAwait(false);

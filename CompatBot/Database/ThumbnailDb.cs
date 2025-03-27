@@ -6,6 +6,9 @@ namespace CompatBot.Database;
 
 internal class ThumbnailDb : DbContext
 {
+    private static ReaderWriterLockSlim dbLock = new();
+    private bool isWriteMode;
+
     public DbSet<State> State { get; set; } = null!;
     public DbSet<Thumbnail> Thumbnail { get; set; } = null!;
     public DbSet<GameUpdateInfo> GameUpdateInfo { get; set; } = null!;
@@ -14,6 +17,20 @@ internal class ThumbnailDb : DbContext
     public DbSet<Metacritic> Metacritic { get; set; } = null!;
     public DbSet<Fortune> Fortune { get; set; } = null!;
     public DbSet<NamePool> NamePool { get; set; } = null!;
+
+    private ThumbnailDb(bool writeMode = false) => isWriteMode = writeMode;
+
+    public static ThumbnailDb OpenRead()
+    {
+        dbLock.EnterReadLock();
+        return new();
+    }
+
+    public static ThumbnailDb OpenWrite()
+    {
+        dbLock.EnterWriteLock();
+        return new();
+    }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -42,6 +59,24 @@ internal class ThumbnailDb : DbContext
 
         //configure name conversion for all configured entities from CamelCase to snake_case
         modelBuilder.ConfigureMapping(NamingStyles.Underscore);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        if (isWriteMode)
+            dbLock.ExitWriteLock();
+        else
+            dbLock.ExitReadLock();
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        if (isWriteMode)
+            dbLock.ExitWriteLock();
+        else
+            dbLock.ExitReadLock();
     }
 }
 

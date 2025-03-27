@@ -40,7 +40,7 @@ internal static partial class Warnings
                     new AsciiColumn("Count", alignToRight: true),
                     new AsciiColumn("All time", alignToRight: true)
                 );
-                await using var db = new BotDb();
+                await using var db = BotDb.OpenRead();
                 var query = from warn in db.Warning.AsEnumerable()
                     group warn by warn.DiscordId
                     into userGroup
@@ -84,7 +84,7 @@ internal static partial class Warnings
                     new AsciiColumn("Warnings given", alignToRight: true),
                     new AsciiColumn("Including retracted", alignToRight: true)
                 );
-                await using var db = new BotDb();
+                await using var db = BotDb.OpenRead();
                 var query = from warn in db.Warning.AsEnumerable()
                     group warn by warn.IssuerId
                     into modGroup
@@ -129,7 +129,7 @@ internal static partial class Warnings
                 new AsciiColumn("Reason"),
                 new AsciiColumn("Context", disabled: !ctx.Channel.IsPrivate)
             );
-            await using var db = new BotDb();
+            await using var db = BotDb.OpenRead();
             var query = from warn in db.Warning
                 where warn.IssuerId == moderator.Id && !warn.Retracted
                 orderby warn.Id descending
@@ -169,7 +169,7 @@ internal static partial class Warnings
                 new AsciiColumn("Reason"),
                 new AsciiColumn("Context", disabled: !isMod)
             );
-            await using var db = new BotDb();
+            await using var db = BotDb.OpenRead();
             IOrderedQueryable<Warning> query;
             if (isMod)
                 query = from warn in db.Warning

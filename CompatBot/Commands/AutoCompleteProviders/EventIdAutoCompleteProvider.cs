@@ -7,7 +7,7 @@ public class EventIdAutoCompleteProvider: IAutoCompleteProvider
 {
     public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         IEnumerable<EventSchedule> query;
         if (context.UserInput is not { Length: > 0 } input)
         {

@@ -33,7 +33,7 @@ internal static partial class CompatList
 
     static CompatList()
     {
-        using var db = new BotDb();
+        using var db = BotDb.OpenRead();
         lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
         lastFullBuildNumber = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateBuildKey)?.Value;
         //lastUpdateInfo = "8022";
@@ -133,7 +133,7 @@ internal static partial class CompatList
     {
         var timer = Stopwatch.StartNew();
         var title = requestBuilder.Search;
-        using var db = new ThumbnailDb();
+        using var db = ThumbnailDb.OpenRead();
         var matches = db.Thumbnail
             .AsNoTracking()
             .AsEnumerable()
@@ -227,7 +227,7 @@ internal static partial class CompatList
         if (list is null)
             return;
             
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenRead();
         foreach (var kvp in list.Results)
         {
             var (productCode, info) = kvp;
@@ -306,7 +306,7 @@ internal static partial class CompatList
                 .Select(i => i.WithTitle(i.Title.Replace("HAWX", "H.A.W.X")))
         );
 
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenRead();
         foreach (var mcScore in scoreList.Where(s => s.CriticScore > 0 || s.UserScore > 0))
         {
             if (Config.Cts.IsCancellationRequested)

@@ -58,7 +58,7 @@ internal static class AmdDriverVersionProvider
             }
     }
 
-    public static async Task<string> GetFromOpenglAsync(string openglVersion, bool autoRefresh = true)
+    public static async ValueTask<string> GetFromOpenglAsync(string openglVersion, bool autoRefresh = true)
     {
         if (OpenglToDriver.TryGetValue(openglVersion, out var result))
             return result;
@@ -111,7 +111,7 @@ internal static class AmdDriverVersionProvider
         return openglVersion;
     }
 
-    public static async Task<string> GetFromVulkanAsync(string vulkanVersion, bool autoRefresh = true)
+    public static async ValueTask<string> GetFromVulkanAsync(string vulkanVersion, bool autoRefresh = true)
     {
         if (!VulkanToDriver.TryGetValue(vulkanVersion, out var result))
             await RefreshAsync().ConfigureAwait(false);

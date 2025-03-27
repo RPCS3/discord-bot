@@ -6,7 +6,24 @@ namespace CompatBot.Database;
 
 internal class HardwareDb : DbContext
 {
+    private static ReaderWriterLockSlim dbLock = new();
+    private bool isWriteMode;
+
     public DbSet<HwInfo> HwInfo { get; set; } = null!;
+
+    private HardwareDb(bool writeMode = false) => isWriteMode = writeMode;
+
+    public static HardwareDb OpenRead()
+    {
+        dbLock.EnterReadLock();
+        return new();
+    }
+
+    public static HardwareDb OpenWrite()
+    {
+        dbLock.EnterWriteLock();
+        return new();
+    }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -23,6 +40,24 @@ internal class HardwareDb : DbContext
 
         //configure name conversion for all configured entities from CamelCase to snake_case
         modelBuilder.ConfigureMapping(NamingStyles.Underscore);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        if (isWriteMode)
+            dbLock.ExitWriteLock();
+        else
+            dbLock.ExitReadLock();
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        if (isWriteMode)
+            dbLock.ExitWriteLock();
+        else
+            dbLock.ExitReadLock();
     }
 }
 

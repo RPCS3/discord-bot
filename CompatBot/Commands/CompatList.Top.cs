@@ -28,7 +28,7 @@ internal static partial class CompatList
             if (!Enum.TryParse(status, true, out CompatStatus s))
                 s = CompatStatus.Playable;
 
-            await using var db = new ThumbnailDb();
+            await using var db = ThumbnailDb.OpenRead();
             var queryBase = db.Thumbnail.AsNoTracking();
             if (exactStatus)
                 queryBase = queryBase.Where(g => g.CompatibilityStatus == s);

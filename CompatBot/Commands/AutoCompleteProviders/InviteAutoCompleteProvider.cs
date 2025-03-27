@@ -11,7 +11,7 @@ public class InviteAutoCompleteProvider: IAutoCompleteProvider
         if (!ModProvider.IsMod(context.User.Id))
             return [new($"{Config.Reactions.Denied} You are not authorized to use this command.", -1)];
         
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         IQueryable<WhitelistedInvite> result;
         if (context.UserInput is not { Length: > 0 } input)
             result = db.WhitelistedInvites

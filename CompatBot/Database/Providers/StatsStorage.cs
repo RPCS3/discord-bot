@@ -64,14 +64,14 @@ internal static class StatsStorage
             .ToList();
     }
     
-    public static async Task SaveAsync(bool wait = false)
+    public static async ValueTask SaveAsync(bool wait = false)
     {
         if (await Barrier.WaitAsync(0).ConfigureAwait(false))
         {
             try
             {
                 Config.Log.Debug("Got stats saving lock");
-                await using var db = new BotDb();
+                await using var db = BotDb.OpenWrite();
                 foreach (var (category, cache) in AllCaches)
                 {
                     var entries = cache.GetCacheEntries<string>();
@@ -126,7 +126,7 @@ internal static class StatsStorage
     public static async Task RestoreAsync()
     {
         var now = DateTime.UtcNow;
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenWrite();
         foreach (var (category, cache) in AllCaches)
         {
             var entries = await db.Stats.Where(e => e.Category == category).ToListAsync().ConfigureAwait(false);

@@ -58,7 +58,7 @@ internal static partial class PostLogHelpHandler
 
     public static async Task<Explanation> GetExplanationAsync(string term)
     {
-        await using var db = new BotDb();
+        await using var db = BotDb.OpenRead();
         var result = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         return result ?? DefaultExplanation[term];
     }

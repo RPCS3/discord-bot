@@ -13,7 +13,7 @@ internal static class ScrapeStateProvider
     public static bool IsFresh(string locale, string? containerId = null)
     {
         var id = GetId(locale, containerId);
-        using var db = new ThumbnailDb();
+        using var db = ThumbnailDb.OpenRead();
         var timestamp = string.IsNullOrEmpty(id) ? db.State.OrderBy(s => s.Timestamp).FirstOrDefault() : db.State.FirstOrDefault(s => s.Locale == id);
         if (timestamp is { Timestamp: long checkDate and > 0 })
             return IsFresh(new DateTime(checkDate, DateTimeKind.Utc));
@@ -22,7 +22,7 @@ internal static class ScrapeStateProvider
 
     public static bool IsFresh(string locale, DateTime dataTimestamp)
     {
-        using var db = new ThumbnailDb();
+        using var db = ThumbnailDb.OpenRead();
         var timestamp = string.IsNullOrEmpty(locale) ? db.State.OrderBy(s => s.Timestamp).FirstOrDefault() : db.State.FirstOrDefault(s => s.Locale == locale);
         if (timestamp is { Timestamp: long checkDate and > 0 })
             return new DateTime(checkDate, DateTimeKind.Utc) > dataTimestamp;
@@ -35,18 +35,18 @@ internal static class ScrapeStateProvider
             throw new ArgumentException("Locale is mandatory", nameof(locale));
 
         var id = GetId(locale, containerId);
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenWrite();
         var timestamp = db.State.FirstOrDefault(s => s.Locale == id);
-        if (timestamp == null)
-            await db.State.AddAsync(new State {Locale = id, Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
+        if (timestamp is null)
+            await db.State.AddAsync(new() {Locale = id, Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
         else
             timestamp.Timestamp = DateTime.UtcNow.Ticks;
         await db.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    public static async Task CleanAsync(CancellationToken cancellationToken)
+    public static async ValueTask CleanAsync(CancellationToken cancellationToken)
     {
-        await using var db = new ThumbnailDb();
+        await using var db = ThumbnailDb.OpenWrite();
         var latestTimestamp = db.State.OrderByDescending(s => s.Timestamp).FirstOrDefault()?.Timestamp;
         if (!latestTimestamp.HasValue)
             return;
