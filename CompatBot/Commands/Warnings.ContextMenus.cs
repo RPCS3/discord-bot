@@ -16,7 +16,7 @@ internal static class WarningsContextMenus
     public static ValueTask WarnMessageAuthor(MessageCommandContext ctx, DiscordMessage message)
         => Warn(ctx, message, null);
 
-    [Command("🔍 Show warnings"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    [Command("🔍 Show warnings"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu), AllowDMUsage]
     public static ValueTask ShowWarnings(UserCommandContext ctx, DiscordUser user)
         => Warnings.ListGroup.List(ctx, user);
     
