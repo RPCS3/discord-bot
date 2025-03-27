@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,6 @@ public class BotConfigurationAutoCompleteProvider: IAutoCompleteProvider
         return result
             .Distinct()
             .Take(25)
-            .Select(n => new DiscordAutoCompleteChoice(n, n)).ToList();
+            .Select(n => new DiscordAutoCompleteChoice(n.Trim(100), n)).ToList();
     }
 }

@@ -64,7 +64,7 @@ public class ExplainAutoCompleteProvider: IAutoCompleteProvider
         }
         return result.Select(
             term => new DiscordAutoCompleteChoice(
-                $"{term} - {db.Explanation.AsNoTracking().First(i => i.Keyword == term).Text}".Trim(40),
+                $"{term} - {db.Explanation.AsNoTracking().First(i => i.Keyword == term).Text}".Trim(100),
                 term
             )
         ).ToList();

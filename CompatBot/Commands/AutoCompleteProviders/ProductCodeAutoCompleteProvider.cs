@@ -1,4 +1,5 @@
-﻿using CompatBot.Database;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
 
@@ -70,6 +71,6 @@ public class ProductCodeAutoCompleteProvider: IAutoCompleteProvider
                 .Distinct()
                 .Take(25);
         }
-        return result.Select(i => new DiscordAutoCompleteChoice($"{i.code}: {i.title}", i.code)).ToList();
+        return result.Select(i => new DiscordAutoCompleteChoice($"{i.code}: {i.title}".Trim(100), i.code)).ToList();
     }
 }

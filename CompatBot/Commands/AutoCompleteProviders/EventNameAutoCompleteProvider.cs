@@ -1,4 +1,5 @@
-﻿using CompatBot.Database;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands.AutoCompleteProviders;
@@ -87,7 +88,7 @@ public class EventNameAutoCompleteProvider: IAutoCompleteProvider
         return query
             .Distinct()
             .Take(25)
-            .Select(n => new DiscordAutoCompleteChoice(n!, n))
+            .Select(n => new DiscordAutoCompleteChoice(n.Trim(100), n))
             .ToList();
     }
 }

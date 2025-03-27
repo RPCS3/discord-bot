@@ -1,4 +1,5 @@
-﻿using CompatBot.Database;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,7 +42,7 @@ public class InviteAutoCompleteProvider: IAutoCompleteProvider
             .Take(25)
             .AsNoTracking()
             .AsEnumerable()
-            .Select(i => new DiscordAutoCompleteChoice($"{i.Id}: {i.Name} ({i.GuildId})", i.Id))
+            .Select(i => new DiscordAutoCompleteChoice($"{i.Id}: {i.Name} ({i.GuildId})".Trim(100), i.Id))
             .ToList();
     }
 }
