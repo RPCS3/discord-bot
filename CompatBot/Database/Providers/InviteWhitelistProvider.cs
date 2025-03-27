@@ -86,26 +86,28 @@ internal static class InviteWhitelistProvider
     {
         while (!Config.Cts.IsCancellationRequested)
         {
-            await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-            foreach (var invite in db.WhitelistedInvites.Where(i => i.InviteCode != null))
+            await using (var db = await BotDb.OpenWriteAsync().ConfigureAwait(false))
             {
-                try
+                foreach (var invite in db.WhitelistedInvites.Where(i => i.InviteCode != null))
                 {
-                    var result = await client.GetInviteByCodeAsync(invite.InviteCode).ConfigureAwait(false);
-                    if (result.IsRevoked)
+                    try
+                    {
+                        var result = await client.GetInviteByCodeAsync(invite.InviteCode).ConfigureAwait(false);
+                        if (result.IsRevoked)
+                            invite.InviteCode = null;
+                    }
+                    catch (NotFoundException)
+                    {
                         invite.InviteCode = null;
+                        Config.Log.Info($"Removed invite code {invite.InviteCode} for server {invite.Name}");
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Debug(e);
+                    }
                 }
-                catch (NotFoundException)
-                {
-                    invite.InviteCode = null;
-                    Config.Log.Info($"Removed invite code {invite.InviteCode} for server {invite.Name}");
-                }
-                catch (Exception e)
-                {
-                    Config.Log.Debug(e);
-                }
+                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
-            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             await Task.Delay(TimeSpan.FromHours(1), Config.Cts.Token).ConfigureAwait(false);
         }
     }

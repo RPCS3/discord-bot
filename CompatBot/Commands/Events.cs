@@ -383,14 +383,14 @@ internal static partial class Events
         return name;
     }
 
-    private static async Task<string?> FuzzyMatchEventName(BotDb db, string? eventName)
+    private static async ValueTask<string?> FuzzyMatchEventName(BotDb db, string? eventName)
     {
         var knownEventNames = await db.EventSchedule.Select(e => e.EventName).Distinct().ToListAsync().ConfigureAwait(false);
         var (score, name) = knownEventNames.Select(n => (score: eventName.GetFuzzyCoefficientCached(n), name: n)).OrderByDescending(t => t.score).FirstOrDefault();
         return score > 0.8 ? name : eventName;
     }
 
-    private static async Task<string?> FuzzyMatchEntryName(BotDb db, string? eventName)
+    private static async ValueTask<string?> FuzzyMatchEntryName(BotDb db, string? eventName)
     {
         var now = DateTime.UtcNow.Ticks;
         var knownNames = await db.EventSchedule.Where(e => e.End > now).Select(e => e.Name).ToListAsync().ConfigureAwait(false);
