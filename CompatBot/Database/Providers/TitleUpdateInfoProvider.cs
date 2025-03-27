@@ -7,8 +7,13 @@ namespace CompatBot.Database.Providers;
 public static class TitleUpdateInfoProvider
 {
     private static readonly PsnClient.Client Client = new();
+    private static readonly XmlSerializer XmlSerializer = new(typeof(TitlePatch));
 
     public static async ValueTask<TitlePatch?> GetAsync(string? productId, CancellationToken cancellationToken)
+        => await GetCachedAsync(productId, false).ConfigureAwait(false)
+           ?? await GetFromApiAsync(productId, cancellationToken).ConfigureAwait(false);
+
+    private static async ValueTask<TitlePatch?> GetFromApiAsync(string? productId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(productId))
             return default;
@@ -32,21 +37,27 @@ public static class TitleUpdateInfoProvider
                 updateInfo.Timestamp = DateTime.UtcNow.Ticks;
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
-        if (update?.Tag?.Packages?.Length is null or 0)
-        {
-            await using var db = ThumbnailDb.OpenRead();
-            var updateInfo = db.GameUpdateInfo.AsNoTracking().FirstOrDefault(ui => ui.ProductCode == productId);
-            if (updateInfo is null)
-                return update;
+        if (update is not {Tag.Packages.Length: >0})
+            return await GetCachedAsync(productId, true).ConfigureAwait(false);
+        return update;
+    }
 
-            await using var memStream = Config.MemoryStreamManager.GetStream(Encoding.UTF8.GetBytes(updateInfo.MetaXml));
-            var xmlSerializer = new XmlSerializer(typeof(TitlePatch));
-            update = (TitlePatch?)xmlSerializer.Deserialize(memStream);
-            if (update is not null)
-                update.OfflineCacheTimestamp = updateInfo.Timestamp.AsUtc();
+    private static async ValueTask<TitlePatch?> GetCachedAsync(string? productId, bool returnStale = false)
+    {
+        await using var db = ThumbnailDb.OpenRead();
+        var updateInfo = db.GameUpdateInfo
+            .AsNoTracking()
+            .FirstOrDefault(ui => ui.ProductCode == productId);
+        if (updateInfo is null
+            || (!returnStale && updateInfo.Timestamp < DateTime.UtcNow.AddDays(-1).Ticks))
+            return null;
 
-            return update;
-        }
+        await using var memStream = Config.MemoryStreamManager.GetStream(Encoding.UTF8.GetBytes(updateInfo.MetaXml));
+        var update = (TitlePatch?)XmlSerializer.Deserialize(memStream);
+        if (update is null)
+            return null;
+        
+        update.OfflineCacheTimestamp = updateInfo.Timestamp.AsUtc();
         return update;
     }
 
