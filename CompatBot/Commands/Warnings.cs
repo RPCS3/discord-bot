@@ -85,6 +85,7 @@ internal static partial class Warnings
         DiscordUser? user = null
     )
     {
+        await ctx.DeferResponseAsync(ephemeral: true).ConfigureAwait(false);
         await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
         var warningsToRemove = await db.Warning.Where(w => w.Id == id).ToListAsync().ConfigureAwait(false);
         foreach (var w in warningsToRemove)
@@ -96,11 +97,11 @@ internal static partial class Warnings
         }
         var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
         if (removedCount is 0)
-            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove warning").ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove warning", ephemeral: true).ConfigureAwait(false);
         else
         {
-            await ctx.Channel.SendMessageAsync("Warning successfully removed").ConfigureAwait(false);
             user ??= await ctx.Client.GetUserAsync(warningsToRemove[0].DiscordId).ConfigureAwait(false);
+            await ctx.Channel.SendMessageAsync($"Warning successfully removed for {user.Mention} by {ctx.User.Mention}").ConfigureAwait(false);
             await ListUserWarningsAsync(ctx.Client, ctx.Interaction, user.Id, user.Username.Sanitize(), false).ConfigureAwait(false);
         }
     }
@@ -117,6 +118,7 @@ internal static partial class Warnings
     {
         try
         {
+            await ctx.DeferResponseAsync(ephemeral: true).ConfigureAwait(false);
             await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
             var warningsToRemove = await db.Warning.Where(w => w.DiscordId == user.Id && !w.Retracted).ToListAsync().ConfigureAwait(false);
             foreach (var w in warningsToRemove)
