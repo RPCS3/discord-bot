@@ -20,6 +20,7 @@ internal class BotDb: DbContext
     public DbSet<Kot> Kot { get; set; } = null!;
     public DbSet<Doggo> Doggo { get; set; } = null!;
     public DbSet<ForcedNickname> ForcedNicknames { get; set; } = null!;
+    
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var dbPath = DbImporter.GetDbPath("bot.db", Environment.SpecialFolder.ApplicationData);
