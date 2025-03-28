@@ -3,6 +3,7 @@ using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using Microsoft.TeamFoundation.Build.WebApi;
+using Octokit;
 using BuildStatus = Microsoft.TeamFoundation.Build.WebApi.BuildStatus;
 
 namespace CompatBot.Commands;
@@ -151,9 +152,10 @@ internal sealed class Pr
                     linuxDownloadText = "⏳ Pending…";
                     macDownloadText = "⏳ Pending…";
                     var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
-                    if (latestBuild == null)
+                    var ghBuild = await GithubClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
+                    if (latestBuild is null && ghBuild is null)
                     {
-                        if (state == "Open")
+                        if (state is "Open")
                         {
                             embed.WithFooter($"Opened on {prInfo.CreatedAt:u} ({(DateTime.UtcNow - prInfo.CreatedAt).AsTimeDeltaDescription()} ago)");
                         }
@@ -161,10 +163,9 @@ internal sealed class Pr
                         linuxDownloadText = null;
                         macDownloadText = null;
                     }
-                    else
+                    else if (latestBuild is not null)
                     {
-                        bool shouldHaveArtifacts = false;
-
+                        var shouldHaveArtifacts = false;
                         if (latestBuild is
                             {
                                 Status: BuildStatus.Completed,
@@ -177,20 +178,10 @@ internal sealed class Pr
                         }
 
                         // Check for subtask errors (win/lin/mac)
-                        if (latestBuild.Result is BuildResult.Failed or BuildResult.Canceled)
+                        if (latestBuild is { Result: BuildResult.Failed or BuildResult.Canceled })
                         {
-                            windowsDownloadText = $"❌ {latestBuild.Result}";
+                            macDownloadText = $"❌ {latestBuild.Result}";
                         }
-                        /*
-                        if (latestBuild.LinuxBuild?.Status is TaskStatus.Aborted or TaskStatus.Failed or TaskStatus.Skipped)
-                        {
-                            linuxDownloadText = $"❌ {latestBuild.LinuxBuild?.Status}";
-                        }
-                        if (latestBuild.MacBuild?.Status is TaskStatus.Aborted or TaskStatus.Failed or TaskStatus.Skipped)
-                        {
-                            macDownloadText = $"❌ {latestBuild.MacBuild?.Status}";
-                        }
-                        */
 
                         // Check estimated time for pending builds
                         if (latestBuild is { Status: BuildStatus.InProgress, StartTime: not null })
@@ -199,50 +190,11 @@ internal sealed class Pr
                             var estimatedTime = TimeSpan.FromMinutes(1);
                             if (estimatedCompletionTime > DateTime.UtcNow)
                                 estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
-                            windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
-                            linuxDownloadText = windowsDownloadText;
-                            macDownloadText = windowsDownloadText;
-
-                            /*
-                            if (latestBuild.WindowsBuild?.Status is TaskStatus.Executing)
-                            {
-                                windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
-                            }
-                            if (latestBuild.LinuxBuild?.Status is TaskStatus.Executing)
-                            {
-                                linuxDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
-                            }
-                            if (latestBuild.MacBuild?.Status is TaskStatus.Executing)
-                            {
-                                macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
-                            }
-                        */
-                        }
-
-                        // windows build
-                        var name = latestBuild.WindowsFilename ?? "Windows PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_win64", "");
-                        if (!string.IsNullOrEmpty(latestBuild.WindowsBuildDownloadLink))
-                            windowsDownloadText = $"[⏬ {name}]({latestBuild.WindowsBuildDownloadLink})";
-                        else if (shouldHaveArtifacts)
-                        {
-                            if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
-                                windowsDownloadText = "No longer available";
-                        }
-
-                        // linux build
-                        name = latestBuild.LinuxFilename ?? "Linux PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_linux64", "");
-                        if (!string.IsNullOrEmpty(latestBuild.LinuxBuildDownloadLink))
-                            linuxDownloadText = $"[⏬ {name}]({latestBuild.LinuxBuildDownloadLink})";
-                        else if (shouldHaveArtifacts)
-                        {
-                            if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
-                                linuxDownloadText = "No longer available";
+                            macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                         }
 
                         // mac build
-                        name = latestBuild.MacFilename ?? "Mac PR Build";
+                        var name = latestBuild.MacFilename ?? "Mac PR Build";
                         name = name.Replace("rpcs3-", "").Replace("_macos", "");
                         if (!string.IsNullOrEmpty(latestBuild.MacBuildDownloadLink))
                             macDownloadText = $"[⏬ {name}]({latestBuild.MacBuildDownloadLink})";
@@ -251,20 +203,70 @@ internal sealed class Pr
                             if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
                                 macDownloadText = "No longer available";
                         }
+                    }
+                    if (ghBuild is not null)
+                    {
+                        var shouldHaveArtifacts = false;
+                        if (ghBuild is
+                            {
+                                Status: WorkflowRunStatus.Completed,
+                                Result: WorkflowRunConclusion.Success
+                            })
+                        {
+                            buildTime = $"Built on {ghBuild.FinishTime:u} ({(DateTime.UtcNow - ghBuild.FinishTime).AsTimeDeltaDescription()} ago)";
+                            shouldHaveArtifacts = true;
+                        }
 
-                        // Neatify PR's with missing builders
-                        /*if (latestBuild.WindowsBuild?.Status is null)
+                        // Check for subtask errors (win/lin/mac)
+                        if (ghBuild is { Result: WorkflowRunConclusion.Failure or WorkflowRunConclusion.Cancelled or WorkflowRunConclusion.TimedOut })
                         {
-                            windowsDownloadText = null;
+                            windowsDownloadText = $"❌ {ghBuild.Result}";
                         }
-                        if (latestBuild.LinuxBuild?.Status is null)
+
+                        // Check estimated time for pending builds
+                        if (ghBuild is { Status: WorkflowRunStatus.Waiting or WorkflowRunStatus.Pending })
                         {
-                            linuxDownloadText = null;
+                            var estimatedCompletionTime = ghBuild.StartTime + (await GithubClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
+                            var estimatedTime = TimeSpan.FromMinutes(1);
+                            if (estimatedCompletionTime > DateTime.UtcNow)
+                                estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
+                            windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
+                            linuxDownloadText = windowsDownloadText;
+                            //macDownloadText = windowsDownloadText;
                         }
-                        if (latestBuild.MacBuild?.Status is null)
+
+                        // windows build
+                        var name = ghBuild.WindowsFilename ?? "Windows PR Build";
+                        name = name.Replace("rpcs3-", "").Replace("_win64", "");
+                        if (ghBuild.WindowsBuildDownloadLink is {Length: >0})
+                            windowsDownloadText = $"[⏬ {name}]({ghBuild.WindowsBuildDownloadLink})";
+                        else if (shouldHaveArtifacts)
                         {
-                            macDownloadText = null;
-                        }*/
+                            if ((DateTime.UtcNow - ghBuild.FinishTime).TotalDays > 30)
+                                windowsDownloadText = "No longer available";
+                        }
+
+                        // linux build
+                        name = ghBuild.LinuxFilename ?? "Linux PR Build";
+                        name = name.Replace("rpcs3-", "").Replace("_linux64", "");
+                        if (ghBuild.LinuxBuildDownloadLink is {Length: >0})
+                            linuxDownloadText = $"[⏬ {name}]({ghBuild.LinuxBuildDownloadLink})";
+                        else if (shouldHaveArtifacts)
+                        {
+                            if ((DateTime.UtcNow - ghBuild.FinishTime).TotalDays > 30)
+                                linuxDownloadText = "No longer available";
+                        }
+
+                        // mac build
+                        name = ghBuild.MacFilename ?? "Mac PR Build";
+                        name = name.Replace("rpcs3-", "").Replace("_macos", "");
+                        if (ghBuild.MacBuildDownloadLink is {Length: >0})
+                            macDownloadText = $"[⏬ {name}]({ghBuild.MacBuildDownloadLink})";
+                        else if (shouldHaveArtifacts)
+                        {
+                            if ((DateTime.UtcNow - ghBuild.FinishTime).TotalDays > 30)
+                                macDownloadText = "No longer available";
+                        }
                     }
                 }
                 catch (Exception e)
@@ -296,7 +298,7 @@ internal sealed class Pr
                 else
                 {
                     var waitTime = TimeSpan.FromMinutes(5);
-                    var avgBuildTime = (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
+                    var avgBuildTime = (await GithubClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
                     if (now < mergeTime + avgBuildTime)
                         waitTime = mergeTime + avgBuildTime - now;
                     embed.AddField("Latest master build", $"""

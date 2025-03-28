@@ -41,12 +41,12 @@ internal static class AzureDevOpsClientExtensions
 
         public static readonly PipelineStats Defaults = new()
         {
-            Percentile95 = TimeSpan.FromMinutes(33.696220415),
-            Percentile90 = TimeSpan.FromMinutes(32.635776191666665),
-            Percentile85 = TimeSpan.FromMinutes(32.17856230833333),
-            Percentile80 = TimeSpan.FromMinutes(31.885896321666667),
-            Mean = TimeSpan.FromMinutes(28.875494935),
-            StdDev = TimeSpan.FromMinutes(2.8839262116666666),
+            Percentile95 = TimeSpan.FromMinutes(60.82984169),
+            Percentile90 = TimeSpan.FromMinutes(59.145449178333337),
+            Percentile85 = TimeSpan.FromMinutes(57.569420649999998),
+            Percentile80 = TimeSpan.FromMinutes(57.033788216666665),
+            Mean = TimeSpan.FromMinutes(50.7788),
+            StdDev = TimeSpan.FromMinutes(7.376),
         };
     }
 
@@ -91,7 +91,7 @@ internal static class AzureDevOpsClientExtensions
         return result;
     }
         
-    public static async Task<List<BuildInfo>?> GetMasterBuildsAsync(this BuildHttpClient? azureDevOpsClient, string? oldestMergeCommit, string? newestMergeCommit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
+    public static async ValueTask<List<BuildInfo>?> GetMasterBuildsAsync(this BuildHttpClient? azureDevOpsClient, string? oldestMergeCommit, string? newestMergeCommit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
     {
         if (azureDevOpsClient == null || string.IsNullOrEmpty(oldestMergeCommit) || string.IsNullOrEmpty(newestMergeCommit))
             return null;
@@ -107,7 +107,7 @@ internal static class AzureDevOpsClientExtensions
             cancellationToken: cancellationToken
         ).ConfigureAwait(false);
         builds = builds
-            .Where(b => b.SourceBranch == "refs/heads/master" && b.Status == BuildStatus.Completed)
+            .Where(b => b.SourceBranch == "refs/heads/master" && b.Status is BuildStatus.Completed)
             .OrderByDescending(b => b.StartTime)
             .ToList();
         builds = builds
@@ -115,12 +115,14 @@ internal static class AzureDevOpsClientExtensions
             .Skip(1)
             .TakeWhile(b => !oldestMergeCommit.Equals(b.SourceVersion, StringComparison.InvariantCultureIgnoreCase))
             .ToList();
-
-        await Task.WhenAll(builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken))).ConfigureAwait(false);
-        return builds.Select(b => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken).GetAwaiter().GetResult()).ToList();
+        return await builds
+            .ToAsyncEnumerable()
+            .SelectAwait(async b => await azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken).ConfigureAwait(false))
+            .ToListAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    public static async Task<BuildInfo?> GetMasterBuildInfoAsync(this BuildHttpClient? azureDevOpsClient, string? commit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
+    public static async ValueTask<BuildInfo?> GetMasterBuildInfoAsync(this BuildHttpClient? azureDevOpsClient, string? commit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
     {
         if (azureDevOpsClient == null || string.IsNullOrEmpty(commit))
             return null;
@@ -154,7 +156,7 @@ internal static class AzureDevOpsClientExtensions
         return result;
     }
 
-    public static async Task<BuildInfo?> GetPrBuildInfoAsync(this BuildHttpClient? azureDevOpsClient, string? commit, DateTime? oldestTimestamp, int pr, CancellationToken cancellationToken)
+    public static async ValueTask<BuildInfo?> GetPrBuildInfoAsync(this BuildHttpClient? azureDevOpsClient, string? commit, DateTime? oldestTimestamp, int pr, CancellationToken cancellationToken)
     {
         if (azureDevOpsClient == null || string.IsNullOrEmpty(commit))
             return null;
@@ -183,12 +185,12 @@ internal static class AzureDevOpsClientExtensions
             return null;
 
         result = await azureDevOpsClient.GetArtifactsInfoAsync(commit, latestBuild, cancellationToken).ConfigureAwait(false);
-        if (result.Status == BuildStatus.Completed && (result.Result == BuildResult.Succeeded || result.Result == BuildResult.PartiallySucceeded))
+        if (result is { Status: BuildStatus.Completed, Result: BuildResult.Succeeded or BuildResult.PartiallySucceeded })
             BuildInfoCache.Set(commit, result, TimeSpan.FromHours(1));
         return result;
     }
 
-    public static async Task<BuildInfo> GetArtifactsInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, Build build, CancellationToken cancellationToken)
+    public static async ValueTask<BuildInfo> GetArtifactsInfoAsync(this BuildHttpClient azureDevOpsClient, string commit, Build build, CancellationToken cancellationToken)
     {
         var result = new BuildInfo
         {
