@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
@@ -8,10 +9,13 @@ using Octokit;
 
 namespace GithubClient;
 
-public class Client
+public partial class Client
 {
     private readonly GitHubClient client;
+    private static readonly HttpClient httpClient = HttpClientFactory.Create();
 
+    private const string OwnerId = "RPCS3";
+    private const string RepoId = "rpcs3";
     private static readonly TimeSpan PrStatusCacheTime = TimeSpan.FromMinutes(3);
     private static readonly TimeSpan IssueStatusCacheTime = TimeSpan.FromMinutes(30);
     private static readonly MemoryCache StatusesCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromMinutes(1) });
@@ -28,7 +32,7 @@ public class Client
             client.Credentials = new(githubToken);
     }
 
-    public async Task<PullRequest?> GetPrInfoAsync(int pr, CancellationToken cancellationToken)
+    public async ValueTask<PullRequest?> GetPrInfoAsync(int pr, CancellationToken cancellationToken)
     {
         if (StatusesCache.TryGetValue(pr, out PullRequest? result))
         {
@@ -38,7 +42,7 @@ public class Client
 
         try
         {
-            result = await client.PullRequest.Get("RPCS3", "rpcs3", pr).WaitAsync(cancellationToken).ConfigureAwait(false);
+            result = await client.PullRequest.Get(OwnerId, RepoId, pr).WaitAsync(cancellationToken).ConfigureAwait(false);
             UpdateRateLimitStats();
         }
         catch (Exception e)
@@ -56,7 +60,7 @@ public class Client
         return result;
     }
 
-    public async Task<Issue?> GetIssueInfoAsync(int issue, CancellationToken cancellationToken)
+    public async ValueTask<Issue?> GetIssueInfoAsync(int issue, CancellationToken cancellationToken)
     {
         if (IssuesCache.TryGetValue(issue, out Issue? result))
         {
@@ -66,7 +70,7 @@ public class Client
 
         try
         {
-            result = await client.Issue.Get("RPCS3", "rpcs3", issue).WaitAsync(cancellationToken).ConfigureAwait(false);
+            result = await client.Issue.Get(OwnerId, RepoId, issue).WaitAsync(cancellationToken).ConfigureAwait(false);
             UpdateRateLimitStats();
             IssuesCache.Set(issue, result, IssueStatusCacheTime);
             ApiConfig.Log.Debug($"Cached {nameof(Issue)} for {issue} for {IssueStatusCacheTime}");
@@ -80,17 +84,17 @@ public class Client
         return new();
     }
 
-    public Task<IReadOnlyList<PullRequest>?> GetOpenPrsAsync(CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<PullRequest>?> GetOpenPrsAsync(CancellationToken cancellationToken)
         => GetPrsWithStatusAsync(new() { State = ItemStateFilter.Open }, cancellationToken);
 
-    public Task<IReadOnlyList<PullRequest>?> GetClosedPrsAsync(CancellationToken cancellationToken) => GetPrsWithStatusAsync(new()
+    public ValueTask<IReadOnlyList<PullRequest>?> GetClosedPrsAsync(CancellationToken cancellationToken) => GetPrsWithStatusAsync(new()
     {
         State = ItemStateFilter.Closed,
         SortProperty = PullRequestSort.Updated,
         SortDirection = SortDirection.Descending
     }, cancellationToken);
 
-    private async Task<IReadOnlyList<PullRequest>?> GetPrsWithStatusAsync(PullRequestRequest filter, CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<PullRequest>?> GetPrsWithStatusAsync(PullRequestRequest filter, CancellationToken cancellationToken)
     {
         var statusUri = "https://api.github.com/repos/RPCS3/rpcs3/pulls?state=" + filter;
         if (StatusesCache.TryGetValue(statusUri, out IReadOnlyList<PullRequest>? result))
@@ -101,7 +105,7 @@ public class Client
 
         try
         {
-            result = await client.PullRequest.GetAllForRepository("RPCS3", "rpcs3", filter).WaitAsync(cancellationToken).ConfigureAwait(false);
+            result = await client.PullRequest.GetAllForRepository(OwnerId, RepoId, filter).WaitAsync(cancellationToken).ConfigureAwait(false);
             UpdateRateLimitStats();
             StatusesCache.Set(statusUri, result, PrStatusCacheTime);
             foreach (var prInfo in result)
@@ -118,7 +122,7 @@ public class Client
     private void UpdateRateLimitStats()
     {
         var apiInfo = client.GetLastApiInfo();
-        if (apiInfo == null)
+        if (apiInfo is null)
             return;
 
         RateLimit = apiInfo.RateLimit.Limit;

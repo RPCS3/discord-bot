@@ -48,10 +48,10 @@ internal static partial class GithubLinksHandler
             .Where(lnk => !idsFromPreviousReplies.Contains(lnk))
             .Take(args.Channel.IsPrivate ? 50 : 5)
             .ToList();
-        if (issuesToLookup.Count == 0)
+        if (issuesToLookup.Count is 0)
             return;
 
-        var suffix = issuesToLookup.Count == 1 ? "" : "s";
+        var suffix = issuesToLookup.Count is 1 ? "" : "s";
         if (GithubClient.Client.RateLimitRemaining - issuesToLookup.Count >= 10)
         {
             foreach (var issueId in issuesToLookup)
