@@ -21,7 +21,7 @@ internal static partial class LogParserResult
     [GeneratedRegex(@"Xeon (([EXLW]C?|LV )?\d+|(E\d|AWS)-\d+\w?( (v[2-4]|0))?|D-1.+)( \(ES\))?$", DefaultSingleLine)]
     private static partial Regex XeonModelPattern();
 
-    private static async Task BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
+    private static async ValueTask BuildNotesSectionAsync(DiscordEmbedBuilder builder, LogParseState state, DiscordClient discordClient)
     {
         var items = state.CompletedCollection!;
         var multiItems = state.CompleteMultiValueCollection!;
@@ -717,7 +717,7 @@ internal static partial class LogParserResult
         }
     }
 
-    private static async Task<(bool irdChecked, bool broken, int longestPath)> HasBrokenFilesAsync(LogParseState state)
+    private static async ValueTask<(bool irdChecked, bool broken, int longestPath)> HasBrokenFilesAsync(LogParseState state)
     {
         var items = state.CompletedCollection!;
         var multiItems = state.CompleteMultiValueCollection!;

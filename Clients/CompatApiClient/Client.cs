@@ -33,7 +33,7 @@ public class Client: IDisposable
     }
 
     //todo: cache results
-    public async Task<CompatResult?> GetCompatResultAsync(RequestBuilder requestBuilder, CancellationToken cancellationToken)
+    public async ValueTask<CompatResult?> GetCompatResultAsync(RequestBuilder requestBuilder, CancellationToken cancellationToken)
     {
         var startTime = DateTime.UtcNow;
         var url = requestBuilder.Build();
@@ -69,7 +69,7 @@ public class Client: IDisposable
         throw new HttpRequestException("Couldn't communicate with the API");
     }
 
-    public async Task<CompatResult?> GetCompatListSnapshotAsync(CancellationToken cancellationToken)
+    public async ValueTask<CompatResult?> GetCompatListSnapshotAsync(CancellationToken cancellationToken)
     {
         var url = "https://rpcs3.net/compatibility?api=v1&export";
         if (ResponseCache.TryGetValue(url, out CompatResult? result))
@@ -104,7 +104,8 @@ public class Client: IDisposable
         throw new HttpRequestException("Couldn't communicate with the API");
     }
 
-    public async Task<UpdateInfo?> GetUpdateAsync(CancellationToken cancellationToken, string? commit = null)
+    // https://github.com/AniLeo/rpcs3-compatibility/wiki/API:-Update
+    public async ValueTask<UpdateInfo?> GetUpdateAsync(CancellationToken cancellationToken, string? commit = null)
     {
         if (string.IsNullOrEmpty(commit))
             commit = "somecommit";
