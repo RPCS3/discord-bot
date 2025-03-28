@@ -134,7 +134,7 @@ internal static partial class DiscordInviteFilter
                             .WithContent(
                                 $"""
                                  User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                                 Warned for: {reason} by {client.CurrentUser}
+                                 Warned for: {reason} by {client.CurrentUser.Mention}
                                  """
                             ).AddMention(new UserMention(message.Author));
                         await message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
