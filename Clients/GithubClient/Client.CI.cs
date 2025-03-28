@@ -17,15 +17,25 @@ public partial class Client
 
     public record BuildInfo
     {
-        public string Commit { get; init; }
+        public required string Commit { get; init; }
+
         public string? WindowsFilename { get; init; }
         public string? LinuxFilename { get; init; }
         public string? MacFilename { get; init; }
+        public string? WindowsArmFilename { get; init; }
+        public string? LinuxArmFilename { get; init; }
+        public string? MacArmFilename { get; init; }
+
         public string? WindowsBuildDownloadLink { get; init; }
         public string? LinuxBuildDownloadLink { get; init; }
         public string? MacBuildDownloadLink { get; init; }
+        public string? WindowsArmBuildDownloadLink { get; init; }
+        public string? LinuxArmBuildDownloadLink { get; init; }
+        public string? MacArmBuildDownloadLink { get; init; }
+
         public DateTimeOffset StartTime { get; init; }
         public DateTimeOffset FinishTime { get; init; }
+
         public WorkflowRunStatus Status { get; init; }
         public WorkflowRunConclusion? Result { get; init; }
     }
@@ -118,12 +128,13 @@ public partial class Client
         // we need public web links like this:
         // https://github.com/RPCS3/rpcs3/actions/runs/14017059654/artifacts/2802751674
         var windowsBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Windows"));
-        if (windowsBuildArtifact is { ArchiveDownloadUrl: { Length: > 0 } winZipUrl, Expired: false })
+        if (windowsBuildArtifact is { ArchiveDownloadUrl.Length: > 0, Expired: false })
         {
-            result = result with { WindowsBuildDownloadLink = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{windowsBuildArtifact.Id}" };
+            var winZipUrl = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{windowsBuildArtifact.Id}";
+            result = result with { WindowsBuildDownloadLink = winZipUrl };
             try
             {
-                await using var stream = await httpClient.GetStreamAsync(winZipUrl, cancellationToken).ConfigureAwait(false);
+                await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, windowsBuildArtifact.Id, "zip").ConfigureAwait(false);
                 using var zipStream = ReaderFactory.Open(stream);
                 while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                 {
@@ -146,12 +157,13 @@ public partial class Client
             .FirstOrDefault(a => a.Name.EndsWith("clang)", StringComparison.OrdinalIgnoreCase)
                                  || a.Name.EndsWith("gcc)", StringComparison.OrdinalIgnoreCase)
             );
-        if (linuxBuildArtifact is { ArchiveDownloadUrl: { Length: > 0 } linZipUrl, Expired: false })
+        if (linuxBuildArtifact is { ArchiveDownloadUrl.Length: > 0, Expired: false })
         {
-            result = result with { LinuxBuildDownloadLink = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{linuxBuildArtifact.Id}" };
+            var linZipUrl = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{linuxBuildArtifact.Id}";
+            result = result with { LinuxBuildDownloadLink = linZipUrl };
             try
             {
-                await using var stream = await httpClient.GetStreamAsync(linZipUrl, cancellationToken).ConfigureAwait(false);
+                await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, linuxBuildArtifact.Id, "zip").ConfigureAwait(false);
                 using var zipStream = ReaderFactory.Open(stream);
                 while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                 {
@@ -164,22 +176,52 @@ public partial class Client
             }
             catch (Exception e2)
             {
-                ApiConfig.Log.Error(e2, "Failed to get linux x86 build filename");
+                ApiConfig.Log.Error(e2, "Failed to get linux x64 build filename");
+            }
+        }
+
+        // linux arm build
+        var linuxArmBuildArtifact = artifacts
+            .Where(a => a.Name.Contains("Linux") && a.Name.Contains("arm64", StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault(a => a.Name.EndsWith("clang)", StringComparison.OrdinalIgnoreCase)
+                                 || a.Name.EndsWith("gcc)", StringComparison.OrdinalIgnoreCase)
+            );
+        if (linuxArmBuildArtifact is { ArchiveDownloadUrl.Length: > 0, Expired: false })
+        {
+            var linArmZipUrl = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{linuxArmBuildArtifact.Id}";
+            result = result with { LinuxArmBuildDownloadLink = linArmZipUrl };
+            try
+            {
+                await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, linuxArmBuildArtifact.Id, "zip").ConfigureAwait(false);
+                using var zipStream = ReaderFactory.Open(stream);
+                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                {
+                    if (zipStream.Entry.Key?.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase) is true)
+                    {
+                        result = result with {LinuxArmFilename = Path.GetFileName(zipStream.Entry.Key)};
+                        break;
+                    }
+                }
+            }
+            catch (Exception e2)
+            {
+                ApiConfig.Log.Error(e2, "Failed to get linux arm build filename");
             }
         }
 
         // mac build
-        var macBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac"));
-        if (macBuildArtifact is { ArchiveDownloadUrl: { Length: > 0 } macZipUrl, Expired: false })
+        var macBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac") && a.Name.Contains("Intel"));
+        if (macBuildArtifact is { ArchiveDownloadUrl.Length: > 0, Expired: false })
         {
-            result = result with { LinuxBuildDownloadLink = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{macBuildArtifact.Id}" };
+            var macZipUrl = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{macBuildArtifact.Id}";
+            result = result with { MacBuildDownloadLink = macZipUrl };
             try
             {
-                await using var stream = await httpClient.GetStreamAsync(macZipUrl, cancellationToken).ConfigureAwait(false);
+                await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, macBuildArtifact.Id, "zip").ConfigureAwait(false);
                 using var zipStream = ReaderFactory.Open(stream);
                 while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase) is true)
+                    if (zipStream.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
                     {
                         result = result with { MacFilename = Path.GetFileName(zipStream.Entry.Key) };
                         break;
@@ -188,7 +230,32 @@ public partial class Client
             }
             catch (Exception e2)
             {
-                ApiConfig.Log.Error(e2, "Failed to get mac build filename");
+                ApiConfig.Log.Error(e2, "Failed to get mac x64 build filename");
+            }
+        }
+
+        // mac arm build
+        var macArmBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac") && a.Name.Contains("Apple"));
+        if (macArmBuildArtifact is { ArchiveDownloadUrl.Length: > 0, Expired: false })
+        {
+            var macArmZipUrl = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{macArmBuildArtifact.Id}";
+            result = result with { MacArmBuildDownloadLink = macArmZipUrl };
+            try
+            {
+                await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, macArmBuildArtifact.Id, "zip").ConfigureAwait(false);
+                using var zipStream = ReaderFactory.Open(stream);
+                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                {
+                    if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase) is true)
+                    {
+                        result = result with { MacArmFilename = Path.GetFileName(zipStream.Entry.Key) };
+                        break;
+                    }
+                }
+            }
+            catch (Exception e2)
+            {
+                ApiConfig.Log.Error(e2, "Failed to get mac arm build filename");
             }
         }
 

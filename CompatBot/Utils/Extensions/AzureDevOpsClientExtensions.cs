@@ -17,12 +17,19 @@ internal static class AzureDevOpsClientExtensions
     public record BuildInfo
     {
         public string? Commit { get; init; }
+        
         public string? WindowsFilename { get; init; }
         public string? LinuxFilename { get; init; }
         public string? MacFilename { get; init; }
+        public string? LinuxArmFilename { get; init; }
+        public string? MacArmFilename { get; init; }
+
         public string? WindowsBuildDownloadLink { get; init; }
         public string? LinuxBuildDownloadLink { get; init; }
         public string? MacBuildDownloadLink { get; init; }
+        public string? LinuxArmBuildDownloadLink { get; init; }
+        public string? MacArmBuildDownloadLink { get; init; }
+
         public DateTime? StartTime { get; init; }
         public DateTime? FinishTime { get; init; }
         public BuildStatus? Status { get; init; }
@@ -259,7 +266,7 @@ internal static class AzureDevOpsClientExtensions
         }
 
         // mac build
-        var macBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac"));
+        var macBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac") && a.Name.Contains("Intel"));
         var macBuild = macBuildArtifact?.Resource;
         if (macBuild?.DownloadUrl is string macDownloadUrl)
         {
@@ -272,7 +279,8 @@ internal static class AzureDevOpsClientExtensions
                     using var zipStream = ReaderFactory.Open(stream);
                     while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                     {
-                        if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true)
+                        if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true
+                            || zipStream.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
                             result = result with { MacFilename = Path.GetFileName(zipStream.Entry.Key) };
                             break;
@@ -282,6 +290,34 @@ internal static class AzureDevOpsClientExtensions
                 catch (Exception e2)
                 {
                     Config.Log.Error(e2, "Failed to get mac build filename");
+                }
+        }
+
+        // mac arm build
+        var macArmBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Mac") && a.Name.Contains("Apple"));
+        var macArmBuild = macArmBuildArtifact?.Resource;
+        if (macArmBuild?.DownloadUrl is string macArmDownloadUrl)
+        {
+            result = result with { MacArmBuildDownloadLink = macArmDownloadUrl };
+            if (macArmBuild.DownloadUrl.Contains("format=zip", StringComparison.InvariantCultureIgnoreCase))
+                try
+                {
+                    using var httpClient = HttpClientFactory.Create();
+                    await using var stream = await httpClient.GetStreamAsync(macArmDownloadUrl, cancellationToken).ConfigureAwait(false);
+                    using var zipStream = ReaderFactory.Open(stream);
+                    while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                    {
+                        if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true
+                            || zipStream.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
+                        {
+                            result = result with { MacArmFilename = Path.GetFileName(zipStream.Entry.Key) };
+                            break;
+                        }
+                    }
+                }
+                catch (Exception e2)
+                {
+                    Config.Log.Error(e2, "Failed to get mac arm build filename");
                 }
         }
 
