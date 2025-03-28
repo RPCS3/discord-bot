@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using CompatApiClient;
 using Microsoft.Extensions.Caching.Memory;
 using Octokit;
+using ProductHeaderValue = Octokit.ProductHeaderValue;
 
 namespace GithubClient;
 
 public partial class Client
 {
     private readonly GitHubClient client;
-    private static readonly HttpClient httpClient = HttpClientFactory.Create();
 
     private const string OwnerId = "RPCS3";
     private const string RepoId = "rpcs3";
@@ -24,7 +25,7 @@ public partial class Client
     public static int RateLimit { get; private set; }
     public static int RateLimitRemaining { get; private set; }
     public static DateTime RateLimitResetTime { get; private set; }
-
+    
     public Client(string? githubToken)
     {
         client = new(new ProductHeaderValue(ApiConfig.ProductName, ApiConfig.ProductVersion));
