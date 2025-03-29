@@ -338,7 +338,7 @@ public static class LogParsingHandler
         }
     }
 
-    public static async Task<LogParseState?> ParseLogAsync(ISource source, Func<Task> onProgressAsync, CancellationToken cancellationToken)
+    public static async ValueTask<LogParseState?> ParseLogAsync(ISource source, Func<Task> onProgressAsync, CancellationToken cancellationToken)
     {
         LogParseState? result = null;
         try

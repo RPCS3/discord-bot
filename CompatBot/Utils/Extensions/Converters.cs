@@ -9,9 +9,6 @@ internal static class Converters
 {
 	private static readonly ColorSpaceConverter ColorSpaceConverter = new();
 
-	public static Color ToStandardColor(this ColorThiefDotNet.Color c)
-		=> new Rgba32(c.R, c.G, c.B, c.A);
-
 	public static Color GetComplementary(this Color src, bool preserveOpacity = false)
 	{
 		var c = src.ToPixel<Rgba32>();

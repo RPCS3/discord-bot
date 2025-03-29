@@ -769,7 +769,7 @@ internal static partial class LogParserResult
         }
     }
 
-    private static async Task<UpdateInfo?> CheckForUpdateAsync(NameValueCollection items)
+    private static async ValueTask<UpdateInfo?> CheckForUpdateAsync(NameValueCollection items)
     {
         if (string.IsNullOrEmpty(items["build_and_specs"]))
             return null;
@@ -1164,7 +1164,7 @@ internal static partial class LogParserResult
         return result;
     }
 
-    internal static async Task<DiscordEmbedBuilder> AddAuthorAsync(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage? message, ISource source, LogParseState? state = null)
+    internal static async ValueTask<DiscordEmbedBuilder> AddAuthorAsync(this DiscordEmbedBuilder builder, DiscordClient client, DiscordMessage? message, ISource source, LogParseState? state = null)
     {
         if (message == null || state?.Error == LogParseState.ErrorCode.PiracyDetected)
             return builder;

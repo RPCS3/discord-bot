@@ -53,9 +53,9 @@ internal static class InviteWhitelistProvider
 
         var code = invite.IsRevoked || string.IsNullOrWhiteSpace(invite.Code) ? null : invite.Code;
         var name = string.IsNullOrWhiteSpace(invite.Guild.Name) ? null : invite.Guild.Name;
-        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-        await db.WhitelistedInvites.AddAsync(new() { GuildId = invite.Guild.Id, Name = name, InviteCode = code }).ConfigureAwait(false);
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        await wdb.WhitelistedInvites.AddAsync(new() { GuildId = invite.Guild.Id, Name = name, InviteCode = code }).ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
@@ -64,21 +64,21 @@ internal static class InviteWhitelistProvider
         if (await IsWhitelistedAsync(guildId).ConfigureAwait(false))
             return false;
 
-        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-        await db.WhitelistedInvites.AddAsync(new() {GuildId = guildId}).ConfigureAwait(false);
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        await wdb.WhitelistedInvites.AddAsync(new() {GuildId = guildId}).ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
     public static async ValueTask<bool> RemoveAsync(int id)
     {
-        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-        var dbItem = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var dbItem = await wdb.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
         if (dbItem is null)
             return false;
 
-        db.WhitelistedInvites.Remove(dbItem);
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        wdb.WhitelistedInvites.Remove(dbItem);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }
 
@@ -86,9 +86,9 @@ internal static class InviteWhitelistProvider
     {
         while (!Config.Cts.IsCancellationRequested)
         {
-            await using (var db = await BotDb.OpenWriteAsync().ConfigureAwait(false))
+            await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
             {
-                foreach (var invite in db.WhitelistedInvites.Where(i => i.InviteCode != null))
+                foreach (var invite in wdb.WhitelistedInvites.Where(i => i.InviteCode != null))
                 {
                     try
                     {
@@ -106,7 +106,7 @@ internal static class InviteWhitelistProvider
                         Config.Log.Debug(e);
                     }
                 }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
             await Task.Delay(TimeSpan.FromHours(1), Config.Cts.Token).ConfigureAwait(false);
         }

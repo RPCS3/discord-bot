@@ -130,54 +130,63 @@ internal sealed partial class ContentFilters
         }
 
         explanation = explanation?.ToLowerInvariant();
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        if (explanation is {Length: >0} && !await db.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
+        await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
         {
-            await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral).ConfigureAwait(false);
-            return;
-        }
-        
-        var isNewFilter = true;
-        var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled).ConfigureAwait(false);
-        if (filter is null)
-            filter = new() { String = trigger };
-        else
-        {
-            filter.Disabled = false;
-            isNewFilter = false;
-        }
-        if (isNewFilter)
-        {
-            filter.Context = FilterContext.Chat | FilterContext.Log;
-            filter.Actions = FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage;
-        }
-        filter.ValidatingRegex = validation;
-        if (context is not 0)
-            filter.Context = (FilterContext)context;
-        if (action is not 0)
-            filter.Actions = (FilterAction)action;
-        if (message is {Length: >0})
-            filter.CustomMessage = message;
-        if (explanation is { Length: > 0 })
-            filter.ExplainTerm = explanation;
-        if (filter.Actions.HasFlag(FilterAction.ShowExplain)
-            && filter.ExplainTerm is not { Length: > 0 })
-        {
-            await ctx.RespondAsync("❌ Explain action flag was enabled, but no valid explanation term was provided.", ephemeral: ephemeral).ConfigureAwait(false);
-            return;
-        }
+            if (explanation is { Length: > 0 } &&
+                !await wdb.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
+            {
+                await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral)
+                    .ConfigureAwait(false);
+                return;
+            }
 
-        if (isNewFilter)
-            await db.Piracystring.AddAsync(filter).ConfigureAwait(false);
-        await db.SaveChangesAsync().ConfigureAwait(false);
-        var resultEmbed = FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id);
-        await ctx.RespondAsync(resultEmbed, ephemeral: ephemeral).ConfigureAwait(false);
+            var isNewFilter = true;
+            var filter = await wdb.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled)
+                .ConfigureAwait(false);
+            if (filter is null)
+                filter = new() { String = trigger };
+            else
+            {
+                filter.Disabled = false;
+                isNewFilter = false;
+            }
+            if (isNewFilter)
+            {
+                filter.Context = FilterContext.Chat | FilterContext.Log;
+                filter.Actions = FilterAction.RemoveContent | FilterAction.IssueWarning | FilterAction.SendMessage;
+            }
+            filter.ValidatingRegex = validation;
+            if (context is not 0)
+                filter.Context = (FilterContext)context;
+            if (action is not 0)
+                filter.Actions = (FilterAction)action;
+            if (message is { Length: > 0 })
+                filter.CustomMessage = message;
+            if (explanation is { Length: > 0 })
+                filter.ExplainTerm = explanation;
+            if (filter.Actions.HasFlag(FilterAction.ShowExplain)
+                && filter.ExplainTerm is not { Length: > 0 })
+            {
+                await ctx.RespondAsync("❌ Explain action flag was enabled, but no valid explanation term was provided.",
+                    ephemeral: ephemeral).ConfigureAwait(false);
+                return;
+            }
 
-        var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
-        var reportMsg = $"{member?.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
-        if (!string.IsNullOrEmpty(filter.ValidatingRegex))
-            reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
-        await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
+            if (isNewFilter)
+                await wdb.Piracystring.AddAsync(filter).ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
+
+            var resultEmbed = FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id);
+            await ctx.RespondAsync(resultEmbed, ephemeral: ephemeral).ConfigureAwait(false);
+
+            var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
+            var reportMsg =
+                $"{member?.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
+            if (!string.IsNullOrEmpty(filter.ValidatingRegex))
+                reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
+            await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low)
+                .ConfigureAwait(false);
+        }
         ContentFilter.RebuildMatcher();
     }
 
@@ -235,7 +244,7 @@ internal sealed partial class ContentFilters
                     return;
                 }
 
-                await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+                await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
                 foreach (var element in xml.Root.Elements("game"))
                 {
                     var name = element.Element("rom")?.Attribute("name")?.Value;
@@ -253,7 +262,7 @@ internal sealed partial class ContentFilters
                     db.SuspiciousString.Add(new() {String = name});
                     count++;
                 }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -312,50 +321,56 @@ internal sealed partial class ContentFilters
             }
         }
 
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        explanation = explanation?.ToLowerInvariant();
-        if (explanation is {Length: >0} && !await db.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
+        await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
         {
-            await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral).ConfigureAwait(false);
-            return;
-        }
-        
-        var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id).ConfigureAwait(false);
-        if (filter is null)
-        {
-            await ctx.RespondAsync($"❌ Unknown filter  ID: {id}", ephemeral: ephemeral).ConfigureAwait(false);
-            return;
-        }
-        
-        filter.Disabled = false;
-        if (trigger is { Length: > 0 })
-            filter.String = trigger;
-        if (validation is { Length: >0 })
-            filter.ValidatingRegex = validation;
-        if (context is not 0)
-            filter.Context = (FilterContext)context;
-        if (action is not 0)
-            filter.Actions = (FilterAction)action;
-        if (message is {Length: >0})
-            filter.CustomMessage = message;
-        if (explanation is { Length: > 0 })
-            filter.ExplainTerm = explanation;
-        if (filter.Actions.HasFlag(FilterAction.ShowExplain)
-            && filter.ExplainTerm is not { Length: > 0 })
-        {
-            await ctx.RespondAsync("❌ Explain action flag was enabled, but no valid explanation term was provided.", ephemeral: ephemeral).ConfigureAwait(false);
-            return;
-        }
+            explanation = explanation?.ToLowerInvariant();
+            if (explanation is { Length: > 0 } &&
+                !await wdb.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
+            {
+                await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral)
+                    .ConfigureAwait(false);
+                return;
+            }
 
-        await db.SaveChangesAsync().ConfigureAwait(false);
-        var resultEmbed = FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id);
-        await ctx.RespondAsync(resultEmbed, ephemeral: ephemeral).ConfigureAwait(false);
+            var filter = await wdb.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id).ConfigureAwait(false);
+            if (filter is null)
+            {
+                await ctx.RespondAsync($"❌ Unknown filter  ID: {id}", ephemeral: ephemeral).ConfigureAwait(false);
+                return;
+            }
 
-        var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
-        var reportMsg = $"{member?.GetMentionWithNickname()} updated content filter #{filter.Id}: `{filter.String.Sanitize()}`";
-        if (!string.IsNullOrEmpty(filter.ValidatingRegex))
-            reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
-        await ctx.Client.ReportAsync("🆙 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
+            filter.Disabled = false;
+            if (trigger is { Length: > 0 })
+                filter.String = trigger;
+            if (validation is { Length: > 0 })
+                filter.ValidatingRegex = validation;
+            if (context is not 0)
+                filter.Context = (FilterContext)context;
+            if (action is not 0)
+                filter.Actions = (FilterAction)action;
+            if (message is { Length: > 0 })
+                filter.CustomMessage = message;
+            if (explanation is { Length: > 0 })
+                filter.ExplainTerm = explanation;
+            if (filter.Actions.HasFlag(FilterAction.ShowExplain)
+                && filter.ExplainTerm is not { Length: > 0 })
+            {
+                await ctx.RespondAsync("❌ Explain action flag was enabled, but no valid explanation term was provided.",
+                    ephemeral: ephemeral).ConfigureAwait(false);
+                return;
+            }
+
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
+            var resultEmbed = FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id);
+            await ctx.RespondAsync(resultEmbed, ephemeral: ephemeral).ConfigureAwait(false);
+
+            var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
+            var reportMsg =
+                $"{member?.GetMentionWithNickname()} updated content filter #{filter.Id}: `{filter.String.Sanitize()}`";
+            if (!string.IsNullOrEmpty(filter.ValidatingRegex))
+                reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
+            await ctx.Client.ReportAsync("🆙 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
+        }
         ContentFilter.RebuildMatcher();
     }
 
@@ -391,14 +406,14 @@ internal sealed partial class ContentFilters
         var ephemeral = !ctx.Channel.IsPrivate;
         int removedFilters;
         var removedTriggers = new StringBuilder();
-        await using (var db = await BotDb.OpenReadAsync().ConfigureAwait(false))
+        await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
         {
-            foreach (var f in db.Piracystring.Where(ps => ps.Id == id && !ps.Disabled))
+            foreach (var f in wdb.Piracystring.Where(ps => ps.Id == id && !ps.Disabled))
             {
                 f.Disabled = true;
                 removedTriggers.Append($"\n`{f.String.Sanitize()}`");
             }
-            removedFilters = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+            removedFilters = await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         }
 
         if (removedFilters is 0)

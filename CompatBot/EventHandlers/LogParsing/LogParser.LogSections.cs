@@ -268,7 +268,7 @@ internal partial class LogParser
 
     private static readonly string[] CountValueItems = ["enqueue_buffer_error"];
 
-    private static async Task PiracyCheckAsync(string line, LogParseState state)
+    private static async ValueTask PiracyCheckAsync(string line, LogParseState state)
     {
         if (await ContentFilter.FindTriggerAsync(FilterContext.Log, line).ConfigureAwait(false) is Piracystring match
             && match.Actions.HasFlag(FilterAction.RemoveContent))

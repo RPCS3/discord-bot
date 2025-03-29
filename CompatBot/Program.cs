@@ -193,14 +193,14 @@ internal static class Program
                         var msg = new StringBuilder($"Bot admin id{(owners.Count == 1 ? "": "s")}:");
                         if (owners.Count > 1)
                             msg.AppendLine();
-                        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+                        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
                         foreach (var owner in owners)
                         {
                             msg.AppendLine($"\t{owner.Id} ({owner.Username ?? "???"}#{owner.Discriminator ?? "????"})");
-                            if (!await db.Moderator.AnyAsync(m => m.DiscordId == owner.Id, Config.Cts.Token).ConfigureAwait(false))
-                                await db.Moderator.AddAsync(new() {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
+                            if (!await wdb.Moderator.AnyAsync(m => m.DiscordId == owner.Id, Config.Cts.Token).ConfigureAwait(false))
+                                await wdb.Moderator.AddAsync(new() {DiscordId = owner.Id, Sudoer = true}, Config.Cts.Token).ConfigureAwait(false);
                         }
-                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                        await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                         Config.Log.Info(msg.ToString().TrimEnd);
                         Config.Log.Info("");
                         clientInfoLogged = true;
@@ -311,22 +311,22 @@ internal static class Program
 
             ulong? channelId = null;
             string? restartMsg = null;
-            await using (var db = await BotDb.OpenReadAsync().ConfigureAwait(false))
+            await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
             {
-                var chState = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
+                var chState = wdb.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
                 if (chState != null)
                 {
                     if (ulong.TryParse(chState.Value, out var ch))
                         channelId = ch;
-                    db.BotState.Remove(chState);
+                    wdb.BotState.Remove(chState);
                 }
-                var msgState = db.BotState.FirstOrDefault(i => i.Key == "bot-restart-msg");
+                var msgState = wdb.BotState.FirstOrDefault(i => i.Key == "bot-restart-msg");
                 if (msgState != null)
                 {
                     restartMsg = msgState.Value;
-                    db.BotState.Remove(msgState);
+                    wdb.BotState.Remove(msgState);
                 }
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
             if (string.IsNullOrEmpty(restartMsg))
                 restartMsg = null;

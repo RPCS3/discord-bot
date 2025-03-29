@@ -85,7 +85,7 @@ internal static partial class LogParser
         return state;
     }
 
-    private static async Task OnNewLineAsync(ReadOnlySequence<byte> line, ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
+    private static async ValueTask OnNewLineAsync(ReadOnlySequence<byte> line, ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
     {
         var currentProcessor = SectionParsers[state.Id];
         var strLine = line.AsString();
@@ -101,13 +101,13 @@ internal static partial class LogParser
         sectionLines.AddLast(line);
     }
 
-    private static async Task FlushAllLinesAsync(ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
+    private static async ValueTask FlushAllLinesAsync(ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
     {
         while (sectionLines.Count > 0 && state.Error == LogParseState.ErrorCode.None)
             await ProcessFirstLineInBufferAsync(buffer, sectionLines, state).ConfigureAwait(false);
     }
 
-    private static async Task ProcessFirstLineInBufferAsync(ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
+    private static async ValueTask ProcessFirstLineInBufferAsync(ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
     {
         var currentProcessor = SectionParsers[state.Id];
         if (sectionLines.First is null)

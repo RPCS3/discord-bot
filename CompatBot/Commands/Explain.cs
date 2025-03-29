@@ -95,7 +95,7 @@ internal static class Explain
             if (attachment is {} att)
             {
                 attachmentFilename = att.FileName;
-                await ctx.DeferResponseAsync(true).ConfigureAwait(false);
+                //await ctx.DeferResponseAsync(true).ConfigureAwait(false);
                 try
                 {
                     using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
@@ -149,8 +149,8 @@ internal static class Explain
 
             var response = new DiscordInteractionResponseBuilder().AsEphemeral();
             await interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredChannelMessageWithSource, response).ConfigureAwait(false);
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-            if (await db.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            if (await wdb.Explanation.AnyAsync(e => e.Keyword == term).ConfigureAwait(false))
             {
                 await interaction.EditOriginalResponseAsync(
                     new(response.WithContent($"{Config.Reactions.Failure} `{term}` is already defined"))
@@ -165,8 +165,8 @@ internal static class Explain
                 Attachment = attachmentContent,
                 AttachmentFilename = attachmentFilename
             };
-            await db.Explanation.AddAsync(entity).ConfigureAwait(false);
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.Explanation.AddAsync(entity).ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
             await interaction.EditOriginalResponseAsync(
                 new(response.WithContent($"{Config.Reactions.Success} `{term}` was added"))
             ).ConfigureAwait(false);
@@ -209,7 +209,7 @@ internal static class Explain
         string? attachmentFilename = null;
         if (attachment is {} att)
         {
-            await ctx.DeferResponseAsync(true).ConfigureAwait(false);
+            //await ctx.DeferResponseAsync(true).ConfigureAwait(false);
             attachmentFilename = att.FileName;
             try
             {
@@ -224,8 +224,8 @@ internal static class Explain
             }
         }
         
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var item = await wdb.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         if (item is null)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{term}` is not defined", ephemeral: true).ConfigureAwait(false);
@@ -234,7 +234,7 @@ internal static class Explain
         
         if (renameTo is { Length: > 0 })
         {
-            var check = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == renameTo).ConfigureAwait(false);
+            var check = await wdb.Explanation.FirstOrDefaultAsync(e => e.Keyword == renameTo).ConfigureAwait(false);
             if (check is not null)
             {
                 await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{renameTo}` is already defined", ephemeral: true).ConfigureAwait(false);
@@ -278,7 +278,7 @@ internal static class Explain
             item.Attachment = attachmentContent;
             item.AttachmentFilename = attachmentFilename;
         }
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         await interaction.CreateResponseAsync(
             DiscordInteractionResponseType.ChannelMessageWithSource,
             new DiscordInteractionResponseBuilder()
@@ -298,8 +298,8 @@ internal static class Explain
     )
     {
         term = term.ToLowerInvariant().StripQuotes();
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var item = await db.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var item = await wdb.Explanation.FirstOrDefaultAsync(e => e.Keyword == term).ConfigureAwait(false);
         if (item is null)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} Term `{term}` is not defined", ephemeral: true).ConfigureAwait(false);
@@ -322,10 +322,10 @@ internal static class Explain
         */
         else
         {
-            db.Explanation.Remove(item);
+            wdb.Explanation.Remove(item);
             msg += $"`{term}`";
         }
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         await ctx.RespondAsync(msg, ephemeral: true).ConfigureAwait(false);
     }
 

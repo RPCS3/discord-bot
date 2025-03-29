@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CompatApiClient;
+using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Nito.AsyncEx;
 
@@ -8,11 +9,25 @@ namespace CompatBot.Database;
 internal class HardwareDb : DbContext
 {
     private static readonly AsyncReaderWriterLock DbLockSource = new();
+    private static int openReadCount, openWriteCount;
     private readonly IDisposable readWriteLock;
+    private readonly bool canWrite;
 
     public DbSet<HwInfo> HwInfo { get; set; } = null!;
 
-    private HardwareDb(IDisposable readWriteLock) => this.readWriteLock = readWriteLock;
+    private HardwareDb(IDisposable readWriteLock, bool canWrite = false)
+    {
+        this.readWriteLock = readWriteLock;
+        this.canWrite = canWrite;
+#if DEBUG
+        if (canWrite)
+            Interlocked.Increment(ref openWriteCount);
+        else
+            Interlocked.Increment(ref openReadCount);
+        var st = new System.Diagnostics.StackTrace().GetCaller<HardwareDb>();
+        Config.Log.Trace($"{nameof(HardwareDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
+#endif
+    }
 
     public static async ValueTask<HardwareDb> OpenReadAsync()
         => new(await DbLockSource.ReaderLockAsync(Config.Cts.Token).ConfigureAwait(false));
@@ -41,12 +56,26 @@ internal class HardwareDb : DbContext
     {
         base.Dispose();
         readWriteLock.Dispose();
+#if DEBUG
+        if (canWrite)
+            Interlocked.Decrement(ref openWriteCount);
+        else
+            Interlocked.Decrement(ref openReadCount);
+        Config.Log.Trace($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+#endif
     }
 
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
         readWriteLock.Dispose();
+#if DEBUG
+        if (canWrite)
+            Interlocked.Decrement(ref openWriteCount);
+        else
+            Interlocked.Decrement(ref openReadCount);
+        Config.Log.Trace($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+#endif
     }
 }
 

@@ -23,10 +23,10 @@ public static class TitleUpdateInfoProvider
         if (xml is {Length: > 10})
         {
             var xmlChecksum = xml.GetStableHash();
-            await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
-            var updateInfo = db.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
+            await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+            var updateInfo = wdb.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
             if (updateInfo is null)
-                db.GameUpdateInfo.Add(new() {ProductCode = productId, MetaHash = xmlChecksum, MetaXml = xml, Timestamp = DateTime.UtcNow.Ticks});
+                wdb.GameUpdateInfo.Add(new() {ProductCode = productId, MetaHash = xmlChecksum, MetaXml = xml, Timestamp = DateTime.UtcNow.Ticks});
             else if (updateInfo.MetaHash != xmlChecksum && update?.Tag?.Packages is {Length: >0})
             {
                 updateInfo.MetaHash = xmlChecksum;
@@ -35,7 +35,7 @@ public static class TitleUpdateInfoProvider
             }
             else if (updateInfo.MetaHash == xmlChecksum)
                 updateInfo.Timestamp = DateTime.UtcNow.Ticks;
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         if (update is not {Tag.Packages.Length: >0})
             return await GetCachedAsync(productId, true).ConfigureAwait(false);

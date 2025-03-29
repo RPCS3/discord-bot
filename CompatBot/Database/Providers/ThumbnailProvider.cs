@@ -111,15 +111,14 @@ internal static class ThumbnailProvider
         return title;
     }
 
-    [Obsolete]
     public static async ValueTask<(string? url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string? url = null)
     {
         if (string.IsNullOrEmpty(contentId))
             throw new ArgumentException("ContentID can't be empty", nameof(contentId));
 
         contentId = contentId.ToUpperInvariant();
-        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false); //todo: fix this if it's ever get re-used
-        var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false); //todo: fix this if it's ever get re-used
+        var info = await wdb.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
         info ??= new() {Url = url};
         if (info.Url is null)
             return (null, defaultColor);
@@ -134,12 +133,13 @@ internal static class ThumbnailProvider
                 if (image is byte[] jpg)
                 {
                     Config.Log.Trace("Getting dominant color for " + eUrl);
-                    analyzedColor = ColorGetter.Analyze(jpg, defaultColor);
+                    await using var stream = Config.MemoryStreamManager.GetStream(jpg);
+                    analyzedColor = await ColorGetter.GetDominantColorAsync(stream, defaultColor).ConfigureAwait(false);
                     if (analyzedColor.HasValue
                         && analyzedColor.Value.Value != defaultColor.Value)
                         info.EmbedColor = analyzedColor.Value.Value;
                 }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
         }
         if (!info.EmbedColor.HasValue && !analyzedColor.HasValue
@@ -149,7 +149,7 @@ internal static class ThumbnailProvider
             if (c.HasValue && c.Value.Value != defaultColor.Value)
             {
                 info.EmbedColor = c.Value.Value;
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
         }
         var color = info.EmbedColor.HasValue ? new(info.EmbedColor.Value) : defaultColor;
@@ -203,7 +203,7 @@ internal static class ThumbnailProvider
             memStream.Seek(0, SeekOrigin.Begin);
 
             Config.Log.Trace("Getting dominant color for " + url);
-            result = ColorGetter.Analyze(memStream.ToArray(), defaultColor);
+            result = await ColorGetter.GetDominantColorAsync(memStream, defaultColor).ConfigureAwait(false);
             ColorCache.Set(url, result, TimeSpan.FromHours(1));
             return result;
         }

@@ -76,15 +76,15 @@ internal static class HwInfoProvider
             OsName = GetName(osType, items),
             OsVersion = items["os_version"],
         };
-        await using var db = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
-        var existingItem = await db.HwInfo.FindAsync([info.InstallId], cancellationToken: cancellationToken).ConfigureAwait(false);
+        await using var wdb = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
+        var existingItem = await wdb.HwInfo.FindAsync([info.InstallId], cancellationToken: cancellationToken).ConfigureAwait(false);
         if (existingItem is null)
-            db.HwInfo.Add(info);
+            wdb.HwInfo.Add(info);
         else if (existingItem.Timestamp <= info.Timestamp)
-            db.Entry(existingItem).CurrentValues.SetValues(info);
+            wdb.Entry(existingItem).CurrentValues.SetValues(info);
         try
         {
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e)
         {

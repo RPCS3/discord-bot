@@ -71,7 +71,7 @@ internal static class StatsStorage
             try
             {
                 Config.Log.Debug("Got stats saving lock");
-                await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+                await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
                 foreach (var (category, cache) in AllCaches)
                 {
                     var entries = cache.GetCacheEntries<string>();
@@ -85,9 +85,9 @@ internal static class StatsStorage
                             var statValue = (int?)value?.Value ?? 0;
                             var ts = value?.AbsoluteExpiration?.ToUniversalTime().Ticks ?? 0;
 
-                            var currentEntry = db.Stats.FirstOrDefault(e => e.Category == category && e.Bucket == bucket && e.Key == statKey);
+                            var currentEntry = wdb.Stats.FirstOrDefault(e => e.Category == category && e.Bucket == bucket && e.Key == statKey);
                             if (currentEntry is null)
-                                await db.Stats.AddAsync(new()
+                                await wdb.Stats.AddAsync(new()
                                 {
                                     Category = category,
                                     Bucket = bucket,
@@ -104,7 +104,7 @@ internal static class StatsStorage
                         else
                             Config.Log.Warn($"Somehow there's another '{key}' in the {category} cache");
                 }
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
             catch(Exception e)
             {
@@ -126,10 +126,10 @@ internal static class StatsStorage
     public static async ValueTask RestoreAsync()
     {
         var now = DateTime.UtcNow;
-        await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         foreach (var (category, cache) in AllCaches)
         {
-            var entries = await db.Stats.Where(e => e.Category == category).ToListAsync().ConfigureAwait(false);
+            var entries = await wdb.Stats.Where(e => e.Category == category).ToListAsync().ConfigureAwait(false);
             foreach (var entry in entries)
             {
                 var time = entry.ExpirationTimestamp.AsUtc();
@@ -142,11 +142,11 @@ internal static class StatsStorage
                 }
                 else
                 {
-                    db.Stats.Remove(entry);
+                    wdb.Stats.Remove(entry);
                 }
             }
         }
-        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+        await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
     }
 
     public static async Task BackgroundSaveAsync()
