@@ -111,7 +111,6 @@ internal static class ThumbnailProvider
         return title;
     }
 
-    [Obsolete]
     public static async ValueTask<(string? url, DiscordColor color)> GetThumbnailUrlWithColorAsync(DiscordClient client, string contentId, DiscordColor defaultColor, string? url = null)
     {
         if (string.IsNullOrEmpty(contentId))
@@ -134,7 +133,8 @@ internal static class ThumbnailProvider
                 if (image is byte[] jpg)
                 {
                     Config.Log.Trace("Getting dominant color for " + eUrl);
-                    analyzedColor = ColorGetter.Analyze(jpg, defaultColor);
+                    await using var stream = Config.MemoryStreamManager.GetStream(jpg);
+                    analyzedColor = await ColorGetter.GetDominantColorAsync(stream, defaultColor).ConfigureAwait(false);
                     if (analyzedColor.HasValue
                         && analyzedColor.Value.Value != defaultColor.Value)
                         info.EmbedColor = analyzedColor.Value.Value;
@@ -203,7 +203,7 @@ internal static class ThumbnailProvider
             memStream.Seek(0, SeekOrigin.Begin);
 
             Config.Log.Trace("Getting dominant color for " + url);
-            result = ColorGetter.Analyze(memStream.ToArray(), defaultColor);
+            result = await ColorGetter.GetDominantColorAsync(memStream, defaultColor).ConfigureAwait(false);
             ColorCache.Set(url, result, TimeSpan.FromHours(1));
             return result;
         }

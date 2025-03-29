@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Net;
 using System.Net.Http;
-using ColorThiefDotNet;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.TextCommands;
