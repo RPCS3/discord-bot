@@ -119,8 +119,8 @@ internal static class Syscall
         string newFunctionName
     )
     {
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-        var oldMatches = await db.SyscallInfo.Where(sci => sci.Function == oldFunctionName).ToListAsync().ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var oldMatches = await wdb.SyscallInfo.Where(sci => sci.Function == oldFunctionName).ToListAsync().ConfigureAwait(false);
         if (oldMatches.Count is 0)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} Function `{oldFunctionName}` could not be found", ephemeral: true).ConfigureAwait(false);
@@ -133,7 +133,7 @@ internal static class Syscall
             return;
         }
 
-        if (await db.SyscallInfo.Where(sce => sce.Function == newFunctionName).AnyAsync().ConfigureAwait(false))
+        if (await wdb.SyscallInfo.Where(sce => sce.Function == newFunctionName).AnyAsync().ConfigureAwait(false))
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} There is already a function `{newFunctionName}`", ephemeral: true).ConfigureAwait(false);
             return;
@@ -141,7 +141,7 @@ internal static class Syscall
 
         var ephemeral = !ctx.Channel.IsSpamChannel();
         oldMatches[0].Function = newFunctionName;
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         await ctx.RespondAsync($"{Config.Reactions.Success} Function `{oldFunctionName}` was successfully renamed to `{newFunctionName}`", ephemeral: ephemeral).ConfigureAwait(false);
     }
 

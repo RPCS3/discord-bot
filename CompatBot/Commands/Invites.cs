@@ -144,8 +144,8 @@ internal static class Invites
         [Description("Custom server name"), MinMaxLength(3)] string name
     )
     {
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var invite = await db.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var invite = await wdb.WhitelistedInvites.FirstOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
         if (invite is null)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid filter ID", ephemeral: true).ConfigureAwait(false);
@@ -153,7 +153,7 @@ internal static class Invites
         }
 
         invite.Name = name;
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         await ctx.RespondAsync($"{Config.Reactions.Success} Renamed guild {invite.GuildId} to {name}", ephemeral: true).ConfigureAwait(false);
     }
 

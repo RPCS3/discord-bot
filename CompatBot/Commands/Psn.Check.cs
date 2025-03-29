@@ -80,8 +80,8 @@ internal static partial class Psn
                 return;
 
             var newVersion = fwList[0].Version;
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-            var fwVersionState = db.BotState.FirstOrDefault(s => s.Key == "Latest-Firmware-Version");
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            var fwVersionState = wdb.BotState.FirstOrDefault(s => s.Key == "Latest-Firmware-Version");
             latestFwVersion ??= fwVersionState?.Value;
             if (latestFwVersion is null
                 || (Version.TryParse(newVersion, out var newFw)
@@ -93,10 +93,10 @@ internal static partial class Psn
                 await announcementChannel.SendMessageAsync(embed: embed).ConfigureAwait(false);
                 latestFwVersion = newVersion;
                 if (fwVersionState == null)
-                    await db.BotState.AddAsync(new() {Key = "Latest-Firmware-Version", Value = latestFwVersion}).ConfigureAwait(false);
+                    await wdb.BotState.AddAsync(new() {Key = "Latest-Firmware-Version", Value = latestFwVersion}).ConfigureAwait(false);
                 else
                     fwVersionState.Value = latestFwVersion;
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
         }
 

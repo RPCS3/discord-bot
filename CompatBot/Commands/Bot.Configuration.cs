@@ -49,16 +49,16 @@ internal static partial class Bot
             Config.InMemorySettings[key] = value;
             Config.RebuildConfiguration();
             key = SqlConfiguration.ConfigVarPrefix + key;
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-            var stateValue = await db.BotState.FirstOrDefaultAsync(v => v.Key == key).ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            var stateValue = await wdb.BotState.FirstOrDefaultAsync(v => v.Key == key).ConfigureAwait(false);
             if (stateValue == null)
             {
                 stateValue = new() {Key = key, Value = value};
-                await db.BotState.AddAsync(stateValue).ConfigureAwait(false);
+                await wdb.BotState.AddAsync(stateValue).ConfigureAwait(false);
             }
             else
                 stateValue.Value = value;
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
             await ctx.RespondAsync($"{Config.Reactions.Success} Successfully set variable value", ephemeral: true).ConfigureAwait(false);
         }
 
@@ -72,12 +72,12 @@ internal static partial class Bot
             Config.InMemorySettings.TryRemove(key, out _);
             Config.RebuildConfiguration();
             key = SqlConfiguration.ConfigVarPrefix + key;
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-            var stateValue = await db.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            var stateValue = await wdb.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
             if (stateValue is not null)
             {
-                db.BotState.Remove(stateValue);
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                wdb.BotState.Remove(stateValue);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
             await ctx.RespondAsync($"{Config.Reactions.Success} Reset variable to default", ephemeral: true).ConfigureAwait(false);
         }

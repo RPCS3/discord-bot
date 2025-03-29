@@ -17,26 +17,26 @@ internal static class SyscallInfoProvider
         {
             try
             {
-                await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+                await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
                 foreach (var productCodeMap in syscallInfo)
                 {
-                    var product = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCodeMap.Key)
-                                  ?? (await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCodeMap.Key}).ConfigureAwait(false)).Entity;
+                    var product = wdb.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCodeMap.Key)
+                                  ?? (await wdb.Thumbnail.AddAsync(new Thumbnail {ProductCode = productCodeMap.Key}).ConfigureAwait(false)).Entity;
                     if (product.Id == 0)
-                        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                        await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
 
                     foreach (var func in productCodeMap.Value)
                     {
-                        var syscall = db.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Function == func.ToUtf8())
-                                      ?? (await db.SyscallInfo.AddAsync(new SyscallInfo {Function = func.ToUtf8() }).ConfigureAwait(false)).Entity;
+                        var syscall = wdb.SyscallInfo.AsNoTracking().FirstOrDefault(sci => sci.Function == func.ToUtf8())
+                                      ?? (await wdb.SyscallInfo.AddAsync(new SyscallInfo {Function = func.ToUtf8() }).ConfigureAwait(false)).Entity;
                         if (syscall.Id == 0)
-                            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                            await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
 
-                        if (!db.SyscallToProductMap.Any(m => m.ProductId == product.Id && m.SyscallInfoId == syscall.Id))
-                            await db.SyscallToProductMap.AddAsync(new SyscallToProductMap {ProductId = product.Id, SyscallInfoId = syscall.Id}).ConfigureAwait(false);
+                        if (!wdb.SyscallToProductMap.Any(m => m.ProductId == product.Id && m.SyscallInfoId == syscall.Id))
+                            await wdb.SyscallToProductMap.AddAsync(new SyscallToProductMap {ProductId = product.Id, SyscallInfoId = syscall.Id}).ConfigureAwait(false);
                     }
                 }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
             finally
             {
@@ -49,18 +49,18 @@ internal static class SyscallInfoProvider
     {
         var syscallStats = new TSyscallStats();
         int funcs, links = 0;
-        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         var funcsToRemove = new List<SyscallInfo>(0);
         try
         {
-            funcsToRemove = db.SyscallInfo.AsEnumerable().Where(sci => sci.Function.Contains('(') || sci.Function.StartsWith('“')).ToList();
+            funcsToRemove = wdb.SyscallInfo.AsEnumerable().Where(sci => sci.Function.Contains('(') || sci.Function.StartsWith('“')).ToList();
             funcs = funcsToRemove.Count;
             if (funcs == 0)
                 return (0, 0);
 
             foreach (var sci in funcsToRemove.Where(sci => sci.Function.Contains('(')))
             {
-                var productIds = await db.SyscallToProductMap
+                var productIds = await wdb.SyscallToProductMap
                     .AsNoTracking()
                     .Where(m => m.SyscallInfoId == sci.Id)
                     .Select(m => m.Product.ProductCode)
@@ -88,8 +88,8 @@ internal static class SyscallInfoProvider
 
         try
         {
-            db.SyscallInfo.RemoveRange(funcsToRemove);
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            wdb.SyscallInfo.RemoveRange(funcsToRemove);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -106,8 +106,8 @@ internal static class SyscallInfoProvider
     public static async ValueTask<(int funcs, int links)> FixDuplicatesAsync()
     {
         int funcs = 0, links = 0;
-        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
-        var duplicateFunctionNames = await db.SyscallInfo.Where(sci => db.SyscallInfo.Count(isci => isci.Function == sci.Function) > 1).Distinct().ToListAsync().ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var duplicateFunctionNames = await wdb.SyscallInfo.Where(sci => wdb.SyscallInfo.Count(isci => isci.Function == sci.Function) > 1).Distinct().ToListAsync().ConfigureAwait(false);
         if (duplicateFunctionNames.Count == 0)
             return (0, 0);
 
@@ -118,28 +118,28 @@ internal static class SyscallInfoProvider
         {
             foreach (var dupFunc in duplicateFunctionNames)
             {
-                var dups = db.SyscallInfo.Where(sci => sci.Function == dupFunc.Function).ToList();
+                var dups = wdb.SyscallInfo.Where(sci => sci.Function == dupFunc.Function).ToList();
                 if (dups.Count < 2)
                     continue;
 
-                var mostCommonDup = dups.Select(dup => (dup, count: db.SyscallToProductMap.Count(scm => scm.SyscallInfoId == dup.Id))).OrderByDescending(stat => stat.count).First().dup;
+                var mostCommonDup = dups.Select(dup => (dup, count: wdb.SyscallToProductMap.Count(scm => scm.SyscallInfoId == dup.Id))).OrderByDescending(stat => stat.count).First().dup;
                 var dupsToRemove = dups.Where(df => df.Id != mostCommonDup.Id).ToList();
                 funcs += dupsToRemove.Count;
                 foreach (var dupToRemove in dupsToRemove)
                 {
-                    var mappings = db.SyscallToProductMap.Where(scm => scm.SyscallInfoId == dupToRemove.Id).ToList();
+                    var mappings = wdb.SyscallToProductMap.Where(scm => scm.SyscallInfoId == dupToRemove.Id).ToList();
                     links += mappings.Count;
                     foreach (var mapping in mappings)
                     {
-                        if (!db.SyscallToProductMap.Any(scm => scm.ProductId == mapping.ProductId && scm.SyscallInfoId == mostCommonDup.Id))
-                            await db.SyscallToProductMap.AddAsync(new SyscallToProductMap {ProductId = mapping.ProductId, SyscallInfoId = mostCommonDup.Id}).ConfigureAwait(false);
+                        if (!wdb.SyscallToProductMap.Any(scm => scm.ProductId == mapping.ProductId && scm.SyscallInfoId == mostCommonDup.Id))
+                            await wdb.SyscallToProductMap.AddAsync(new SyscallToProductMap {ProductId = mapping.ProductId, SyscallInfoId = mostCommonDup.Id}).ConfigureAwait(false);
                     }
                 }
-                await db.SaveChangesAsync().ConfigureAwait(false);
-                db.SyscallInfo.RemoveRange(dupsToRemove);
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
+                wdb.SyscallInfo.RemoveRange(dupsToRemove);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
         }
         catch (Exception e)
         {

@@ -118,8 +118,8 @@ internal static class ThumbnailProvider
             throw new ArgumentException("ContentID can't be empty", nameof(contentId));
 
         contentId = contentId.ToUpperInvariant();
-        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false); //todo: fix this if it's ever get re-used
-        var info = await db.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false); //todo: fix this if it's ever get re-used
+        var info = await wdb.Thumbnail.FirstOrDefaultAsync(ti => ti.ContentId == contentId, Config.Cts.Token).ConfigureAwait(false);
         info ??= new() {Url = url};
         if (info.Url is null)
             return (null, defaultColor);
@@ -139,7 +139,7 @@ internal static class ThumbnailProvider
                         && analyzedColor.Value.Value != defaultColor.Value)
                         info.EmbedColor = analyzedColor.Value.Value;
                 }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
         }
         if (!info.EmbedColor.HasValue && !analyzedColor.HasValue
@@ -149,7 +149,7 @@ internal static class ThumbnailProvider
             if (c.HasValue && c.Value.Value != defaultColor.Value)
             {
                 info.EmbedColor = c.Value.Value;
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
         }
         var color = info.EmbedColor.HasValue ? new(info.EmbedColor.Value) : defaultColor;

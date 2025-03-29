@@ -15,12 +15,12 @@ internal static class ThumbnailCacheMonitor
         if (!args.Message.Attachments.Any())
             return;
 
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-        var thumb = db.Thumbnail.FirstOrDefault(i => i.ContentId == args.Message.Content);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var thumb = wdb.Thumbnail.FirstOrDefault(i => i.ContentId == args.Message.Content);
         if (thumb is { EmbeddableUrl: { Length: > 0 } url } && args.Message.Attachments.Any(a => a.Url == url))
         {
             thumb.EmbeddableUrl = null;
-            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+            await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         }
     }
 }

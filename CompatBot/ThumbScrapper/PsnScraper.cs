@@ -353,8 +353,8 @@ internal sealed partial class PsnScraper
             return;
 
         name = string.IsNullOrEmpty(name) ? null : name;
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-        var savedItem = db.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var savedItem = wdb.Thumbnail.FirstOrDefault(t => t.ProductCode == productCode);
         if (savedItem == null)
         {
             var newItem = new Thumbnail
@@ -365,7 +365,7 @@ internal sealed partial class PsnScraper
                 Url = url,
                 Timestamp = DateTime.UtcNow.Ticks,
             };
-            await db.Thumbnail.AddAsync(newItem, cancellationToken).ConfigureAwait(false);
+            await wdb.Thumbnail.AddAsync(newItem, cancellationToken).ConfigureAwait(false);
         }
         else if (!string.IsNullOrEmpty(url))
         {
@@ -386,7 +386,7 @@ internal sealed partial class PsnScraper
             savedItem.ContentId = contentId;
             savedItem.Timestamp = DateTime.UtcNow.Ticks;
         }
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task ScrapeContainerIdsAsync(string locale, string containerId, HashSet<string> knownContainerIds, CancellationToken cancellationToken)

@@ -29,9 +29,9 @@ internal static class DisabledCommandsProvider
         {
             if (DisabledCommands.Add(command))
             {
-                await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-                db.DisabledCommands.Add(new() { Command = command });
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+                wdb.DisabledCommands.Add(new() { Command = command });
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
         }
         finally
@@ -47,13 +47,13 @@ internal static class DisabledCommandsProvider
         {
             if (DisabledCommands.Remove(command))
             {
-                await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-                var cmd = db.DisabledCommands.FirstOrDefault(c => c.Command == command);
+                await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+                var cmd = wdb.DisabledCommands.FirstOrDefault(c => c.Command == command);
                 if (cmd == null)
                     return;
 
-                db.DisabledCommands.Remove(cmd);
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                wdb.DisabledCommands.Remove(cmd);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
         }
         finally
@@ -68,9 +68,9 @@ internal static class DisabledCommandsProvider
         try
         {
             DisabledCommands.Clear();
-            await using var db = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-            db.DisabledCommands.RemoveRange(db.DisabledCommands);
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            wdb.DisabledCommands.RemoveRange(wdb.DisabledCommands);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
         }
         finally
         {

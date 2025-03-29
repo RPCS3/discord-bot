@@ -203,9 +203,9 @@ internal static partial class Events
         evt.Name = name;
         evt.EventName = string.IsNullOrWhiteSpace(@event) || @event == "-" ? null : @event;
         evt.Year = newTime.Year;
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        await db.EventSchedule.AddAsync(evt).ConfigureAwait(false);
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        await wdb.EventSchedule.AddAsync(evt).ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         await ctx.RespondAsync(embed: FormatEvent(evt).WithTitle("Created new event schedule entry #" + evt.Id), ephemeral: ephemeral).ConfigureAwait(false);
     }
 
@@ -218,10 +218,10 @@ internal static partial class Events
     )
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var eventsToRemove = await db.EventSchedule.Where(evt => evt.Id == id).ToListAsync().ConfigureAwait(false);
-        db.EventSchedule.RemoveRange(eventsToRemove);
-        var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var eventsToRemove = await wdb.EventSchedule.Where(evt => evt.Id == id).ToListAsync().ConfigureAwait(false);
+        wdb.EventSchedule.RemoveRange(eventsToRemove);
+        var removedCount = await wdb.SaveChangesAsync().ConfigureAwait(false);
         if (removedCount is 1)
             await ctx.RespondAsync($"{Config.Reactions.Success} Event successfully removed", ephemeral: ephemeral).ConfigureAwait(false);
         else
@@ -234,14 +234,14 @@ internal static partial class Events
     public Task ClearGeneric(CommandContext ctx, [Description("Optional year to remove, by default everything before current year")] int? year = null)
     {
         var currentYear = DateTime.UtcNow.Year;
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         var itemsToRemove = await db.EventSchedule.Where(e =>
             year.HasValue
                 ? e.Year == year
                 : e.Year < currentYear
         ).ToListAsync().ConfigureAwait(false);
         db.EventSchedule.RemoveRange(itemsToRemove);
-        var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
+        var removedCount = await wdb.SaveChangesAsync().ConfigureAwait(false);
         await ctx.Channel.SendMessageAsync($"Removed {removedCount} event{(removedCount == 1 ? "" : "s")}").ConfigureAwait(false);
     }
     */
@@ -262,8 +262,8 @@ internal static partial class Events
     )
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var evt = db.EventSchedule.FirstOrDefault(e => e.Id == id);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var evt = wdb.EventSchedule.FirstOrDefault(e => e.Id == id);
         if (evt is null)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} No event with id {id}", ephemeral: ephemeral).ConfigureAwait(false);
@@ -296,7 +296,7 @@ internal static partial class Events
         if (@event is { Length: >0 })
             evt.EventName = @event;
 
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         await ctx.RespondAsync(embed: FormatEvent(evt).WithTitle("Updated event schedule entry #" + evt.Id), ephemeral: ephemeral).ConfigureAwait(false);
     }
 

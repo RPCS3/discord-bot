@@ -50,7 +50,7 @@ internal static class Fortune
 
             await ctx.RespondAsync("Importing…", ephemeral: true).ConfigureAwait(false);
             var stopwatch = Stopwatch.StartNew();
-            await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
+            await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
             using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             var response = await httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
@@ -60,7 +60,7 @@ internal static class Fortune
             string? line;
             int count = 0, skipped = 0;
             var allFortunes = new ConcurrentHashSet<string>(
-                await db.Fortune.AsNoTracking().Select(f => f.Content).ToListAsync(cancellationToken: cts.Token).ConfigureAwait(false),
+                await wdb.Fortune.AsNoTracking().Select(f => f.Content).ToListAsync(cancellationToken: cts.Token).ConfigureAwait(false),
                 StringComparer.OrdinalIgnoreCase
             );
 
@@ -99,7 +99,7 @@ internal static class Fortune
                         continue;
                     }
 
-                    await db.Fortune.AddAsync(new() {Content = newFortune}, cts.Token).ConfigureAwait(false);
+                    await wdb.Fortune.AddAsync(new() {Content = newFortune}, cts.Token).ConfigureAwait(false);
                     allFortunes.Add(newFortune);
                     buf.Clear();
                     count++;
@@ -120,7 +120,7 @@ internal static class Fortune
                     stopwatch.Restart();
                 }
             }
-            await db.SaveChangesAsync(cts.Token).ConfigureAwait(false);
+            await wdb.SaveChangesAsync(cts.Token).ConfigureAwait(false);
             var result = $"{Config.Reactions.Success} Imported {count} fortune{(count == 1 ? "" : "s")}";
             if (skipped > 0)
                 result += $", skipped {skipped}";
@@ -184,9 +184,9 @@ internal static class Fortune
         }
 
         await ctx.DeferResponseAsync(true).ConfigureAwait(false);
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-        db.Fortune.RemoveRange(db.Fortune);
-        var count = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        wdb.Fortune.RemoveRange(wdb.Fortune);
+        var count = await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         await ctx.RespondAsync($"{Config.Reactions.Success} Removed {count} fortune{(count == 1 ? "" : "s")}", ephemeral: true).ConfigureAwait(false);
     }
 

@@ -155,18 +155,18 @@ internal static partial class CompatList
                 await compatChannel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 lastUpdateInfo = latestUpdatePr;
                 lastFullBuildNumber = latestUpdateBuild;
-                await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-                var currentState = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
+                await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+                var currentState = await wdb.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
                 if (currentState == null)
-                    await db.BotState.AddAsync(new() {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr}).ConfigureAwait(false);
+                    await wdb.BotState.AddAsync(new() {Key = Rpcs3UpdateStateKey, Value = latestUpdatePr}).ConfigureAwait(false);
                 else
                     currentState.Value = latestUpdatePr;
-                var savedLastBuild = await db.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateBuildKey).ConfigureAwait(false);
+                var savedLastBuild = await wdb.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateBuildKey).ConfigureAwait(false);
                 if (savedLastBuild == null)
-                    await db.BotState.AddAsync(new() {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild}).ConfigureAwait(false);
+                    await wdb.BotState.AddAsync(new() {Key = Rpcs3UpdateBuildKey, Value = latestUpdateBuild}).ConfigureAwait(false);
                 else
                     savedLastBuild.Value = latestUpdateBuild;
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
                 NewBuildsMonitor.Reset();
             }
             catch (Exception e)

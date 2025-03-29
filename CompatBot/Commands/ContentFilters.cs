@@ -130,15 +130,15 @@ internal sealed partial class ContentFilters
         }
 
         explanation = explanation?.ToLowerInvariant();
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        if (explanation is {Length: >0} && !await db.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        if (explanation is {Length: >0} && !await wdb.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
         {
             await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral).ConfigureAwait(false);
             return;
         }
         
         var isNewFilter = true;
-        var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled).ConfigureAwait(false);
+        var filter = await wdb.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled).ConfigureAwait(false);
         if (filter is null)
             filter = new() { String = trigger };
         else
@@ -168,8 +168,8 @@ internal sealed partial class ContentFilters
         }
 
         if (isNewFilter)
-            await db.Piracystring.AddAsync(filter).ConfigureAwait(false);
-        await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.Piracystring.AddAsync(filter).ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         var resultEmbed = FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id);
         await ctx.RespondAsync(resultEmbed, ephemeral: ephemeral).ConfigureAwait(false);
 
@@ -235,7 +235,7 @@ internal sealed partial class ContentFilters
                     return;
                 }
 
-                await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+                await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
                 foreach (var element in xml.Root.Elements("game"))
                 {
                     var name = element.Element("rom")?.Attribute("name")?.Value;
@@ -253,7 +253,7 @@ internal sealed partial class ContentFilters
                     db.SuspiciousString.Add(new() {String = name});
                     count++;
                 }
-                await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+                await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -312,15 +312,15 @@ internal sealed partial class ContentFilters
             }
         }
 
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
         explanation = explanation?.ToLowerInvariant();
-        if (explanation is {Length: >0} && !await db.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
+        if (explanation is {Length: >0} && !await wdb.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
         {
             await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral).ConfigureAwait(false);
             return;
         }
         
-        var filter = await db.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id).ConfigureAwait(false);
+        var filter = await wdb.Piracystring.FirstOrDefaultAsync(ps => ps.Id == id).ConfigureAwait(false);
         if (filter is null)
         {
             await ctx.RespondAsync($"❌ Unknown filter  ID: {id}", ephemeral: ephemeral).ConfigureAwait(false);
@@ -347,7 +347,7 @@ internal sealed partial class ContentFilters
             return;
         }
 
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         var resultEmbed = FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id);
         await ctx.RespondAsync(resultEmbed, ephemeral: ephemeral).ConfigureAwait(false);
 
@@ -391,14 +391,14 @@ internal sealed partial class ContentFilters
         var ephemeral = !ctx.Channel.IsPrivate;
         int removedFilters;
         var removedTriggers = new StringBuilder();
-        await using (var db = await BotDb.OpenReadAsync().ConfigureAwait(false))
+        await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
         {
-            foreach (var f in db.Piracystring.Where(ps => ps.Id == id && !ps.Disabled))
+            foreach (var f in wdb.Piracystring.Where(ps => ps.Id == id && !ps.Disabled))
             {
                 f.Disabled = true;
                 removedTriggers.Append($"\n`{f.String.Sanitize()}`");
             }
-            removedFilters = await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+            removedFilters = await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         }
 
         if (removedFilters is 0)

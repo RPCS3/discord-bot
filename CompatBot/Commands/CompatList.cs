@@ -228,16 +228,16 @@ internal static partial class CompatList
         if (list is null)
             return;
             
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         foreach (var kvp in list.Results)
         {
             var (productCode, info) = kvp;
-            var dbItem = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
+            var dbItem = await wdb.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productCode).ConfigureAwait(false);
             if (dbItem is null
                 && await Client.GetCompatResultAsync(RequestBuilder.Start().SetSearch(productCode), Config.Cts.Token).ConfigureAwait(false) is {} compatItemSearchResult
                 && compatItemSearchResult.Results.TryGetValue(productCode, out var compatItem))
             {
-                dbItem = (await db.Thumbnail.AddAsync(new()
+                dbItem = (await wdb.Thumbnail.AddAsync(new()
                 {
                     ProductCode = productCode,
                     Name = compatItem.Title,
@@ -258,7 +258,7 @@ internal static partial class CompatList
             else
                 Config.Log.Debug($"Failed to parse game compatibility status {info.Status}");
         }
-        await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+        await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
     }
 
     public static async ValueTask ImportMetacriticScoresAsync()
@@ -307,25 +307,25 @@ internal static partial class CompatList
                 .Select(i => i.WithTitle(i.Title.Replace("HAWX", "H.A.W.X")))
         );
 
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
         foreach (var mcScore in scoreList.Where(s => s.CriticScore > 0 || s.UserScore > 0))
         {
             if (Config.Cts.IsCancellationRequested)
                 return;
 
-            var item = db.Metacritic.FirstOrDefault(i => i.Title == mcScore.Title);
+            var item = wdb.Metacritic.FirstOrDefault(i => i.Title == mcScore.Title);
             if (item == null)
-                item = (await db.Metacritic.AddAsync(mcScore).ConfigureAwait(false)).Entity;
+                item = (await wdb.Metacritic.AddAsync(mcScore).ConfigureAwait(false)).Entity;
             else
             {
                 item.CriticScore = mcScore.CriticScore;
                 item.UserScore = mcScore.UserScore;
                 item.Notes = mcScore.Notes;
             }
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
                 
             var title = mcScore.Title;
-            var matches = db.Thumbnail
+            var matches = wdb.Thumbnail
                 //.Where(t => t.MetacriticId == null)
                 .AsEnumerable()
                 .Select(t => (thumb: t, coef: t.Name.GetFuzzyCoefficientCached(title)))
@@ -360,9 +360,9 @@ internal static partial class CompatList
                         compatListMatches = compatListMatches.Where(i => i.coef > 0.90).ToList();
                     foreach ((string productCode, TitleInfo titleInfo, double coef) in compatListMatches)
                     {
-                        var dbItem = await db.Thumbnail.FirstOrDefaultAsync(i => i.ProductCode == productCode).ConfigureAwait(false);
+                        var dbItem = await wdb.Thumbnail.FirstOrDefaultAsync(i => i.ProductCode == productCode).ConfigureAwait(false);
                         if (dbItem is null)
-                            dbItem = (await db.Thumbnail.AddAsync(new()
+                            dbItem = (await wdb.Thumbnail.AddAsync(new()
                             {
                                 ProductCode = productCode,
                                 Name = titleInfo.Title,
@@ -375,7 +375,7 @@ internal static partial class CompatList
                             dbItem.CompatibilityChangeDate = date.Ticks;
                         matches.Add((dbItem, coef));
                     }
-                    await db.SaveChangesAsync().ConfigureAwait(false);
+                    await wdb.SaveChangesAsync().ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -390,7 +390,7 @@ internal static partial class CompatList
                 Config.Log.Trace($"Matched metacritic [{item.Title}] to compat titles: {string.Join(", ", matches.Select(m => $"[{m.thumb.Name}]"))}");
                 foreach (var (thumb, _) in matches)
                     thumb.Metacritic = item;
-                await db.SaveChangesAsync().ConfigureAwait(false);
+                await wdb.SaveChangesAsync().ConfigureAwait(false);
             }
             else
             {

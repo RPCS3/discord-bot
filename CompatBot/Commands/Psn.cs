@@ -25,14 +25,14 @@ internal static partial class Psn
     {
         var ephemeral = !ctx.Channel.IsSpamChannel();
         productCode = productCode.ToUpperInvariant();
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-        var item = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var item = wdb.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
         if (item is null)
             await ctx.RespondAsync($"{Config.Reactions.Failure} Unknown product code {productCode}", ephemeral: true).ConfigureAwait(false);
         else
         {
             item.Name = title;
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
             await ctx.RespondAsync($"{Config.Reactions.Success} Title updated successfully", ephemeral: ephemeral).ConfigureAwait(false);
         }
     }
@@ -67,8 +67,8 @@ internal static partial class Psn
             return;
         }
 
-        await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-        var item = db.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var item = wdb.Thumbnail.AsNoTracking().FirstOrDefault(t => t.ProductCode == productCode);
         if (item is null)
         {
             item = new()
@@ -77,8 +77,8 @@ internal static partial class Psn
                 ContentId = contentId is {Length: >0} ? contentId : null,
                 Name = title,
             };
-            await db.AddAsync(item).ConfigureAwait(false);
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.AddAsync(item).ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
             await ctx.RespondAsync($"{Config.Reactions.Success} Title added successfully", ephemeral: ephemeral).ConfigureAwait(false);
         }
         else

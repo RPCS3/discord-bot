@@ -53,8 +53,8 @@ internal static partial class Warnings
         DiscordUser? user = null
     )
     {
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var warnings = await db.Warning.Where(w => id.Equals(w.Id)).ToListAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var warnings = await wdb.Warning.Where(w => id.Equals(w.Id)).ToListAsync().ConfigureAwait(false);
         if (warnings.Count is 0)
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} Warning not found", ephemeral: true).ConfigureAwait(false);
@@ -69,7 +69,7 @@ internal static partial class Warnings
         }
 
         warningToEdit.Reason = reason;
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
         await ctx.RespondAsync("Warning successfully updated", ephemeral: true).ConfigureAwait(false);
     }
 
@@ -86,8 +86,8 @@ internal static partial class Warnings
     )
     {
         await ctx.DeferResponseAsync(ephemeral: true).ConfigureAwait(false);
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var warningsToRemove = await db.Warning.Where(w => w.Id == id).ToListAsync().ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var warningsToRemove = await wdb.Warning.Where(w => w.Id == id).ToListAsync().ConfigureAwait(false);
         foreach (var w in warningsToRemove)
         {
             w.Retracted = true;
@@ -95,7 +95,7 @@ internal static partial class Warnings
             w.RetractionReason = reason;
             w.RetractionTimestamp = DateTime.UtcNow.Ticks;
         }
-        var removedCount = await db.SaveChangesAsync().ConfigureAwait(false);
+        var removedCount = await wdb.SaveChangesAsync().ConfigureAwait(false);
         if (removedCount is 0)
             await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove warning", ephemeral: true).ConfigureAwait(false);
         else
@@ -119,8 +119,8 @@ internal static partial class Warnings
         try
         {
             await ctx.DeferResponseAsync(ephemeral: true).ConfigureAwait(false);
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-            var warningsToRemove = await db.Warning.Where(w => w.DiscordId == user.Id && !w.Retracted).ToListAsync().ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            var warningsToRemove = await wdb.Warning.Where(w => w.DiscordId == user.Id && !w.Retracted).ToListAsync().ConfigureAwait(false);
             foreach (var w in warningsToRemove)
             {
                 w.Retracted = true;
@@ -128,7 +128,7 @@ internal static partial class Warnings
                 w.RetractionReason = reason;
                 w.RetractionTimestamp = DateTime.UtcNow.Ticks;
             }
-            var removed = await db.SaveChangesAsync().ConfigureAwait(false);
+            var removed = await wdb.SaveChangesAsync().ConfigureAwait(false);
             await ctx.Channel.SendMessageAsync($"{removed} warning{StringUtils.GetSuffix(removed)} successfully removed!").ConfigureAwait(false);
             await ListUserWarningsAsync(ctx.Client, ctx.Interaction, user.Id, user.Username.Sanitize()).ConfigureAwait(false);
         }
@@ -148,15 +148,15 @@ internal static partial class Warnings
         DiscordUser? user = null
     )
     {
-        await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-        var warn = await db.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
+        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+        var warn = await wdb.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
         if (warn is { Retracted: true })
         {
             warn.Retracted = false;
             warn.RetractedBy = null;
             warn.RetractionReason = null;
             warn.RetractionTimestamp = null;
-            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+            await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
             await ctx.RespondAsync($"{Config.Reactions.Success} Reissued the warning", ephemeral: true).ConfigureAwait(false);
         }
         else
@@ -168,8 +168,8 @@ internal static partial class Warnings
     {
         try
         {
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-            await db.Warning.AddAsync(
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            await wdb.Warning.AddAsync(
                 new()
                 {
                     DiscordId = userId,
@@ -179,11 +179,11 @@ internal static partial class Warnings
                     Timestamp = DateTime.UtcNow.Ticks
                 }
             ).ConfigureAwait(false);
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
 
             var threshold = DateTime.UtcNow.AddMinutes(-15).Ticks;
-            var totalCount = db.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
-            var recentCount = db.Warning.Count(w => w.DiscordId == userId && !w.Retracted && w.Timestamp > threshold);
+            var totalCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
+            var recentCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted && w.Timestamp > threshold);
             if (recentCount < 4)
                 return (true, false, recentCount, totalCount);
             

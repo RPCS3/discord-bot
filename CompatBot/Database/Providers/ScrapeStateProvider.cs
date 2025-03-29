@@ -35,26 +35,26 @@ internal static class ScrapeStateProvider
             throw new ArgumentException("Locale is mandatory", nameof(locale));
 
         var id = GetId(locale, containerId);
-        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
-        var timestamp = db.State.FirstOrDefault(s => s.Locale == id);
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var timestamp = wdb.State.FirstOrDefault(s => s.Locale == id);
         if (timestamp is null)
-            await db.State.AddAsync(new() {Locale = id, Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
+            await wdb.State.AddAsync(new() {Locale = id, Timestamp = DateTime.UtcNow.Ticks}).ConfigureAwait(false);
         else
             timestamp.Timestamp = DateTime.UtcNow.Ticks;
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await wdb.SaveChangesAsync().ConfigureAwait(false);
     }
 
     public static async ValueTask CleanAsync(CancellationToken cancellationToken)
     {
-        await using var db = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
-        var latestTimestamp = db.State.OrderByDescending(s => s.Timestamp).FirstOrDefault()?.Timestamp;
+        await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+        var latestTimestamp = wdb.State.OrderByDescending(s => s.Timestamp).FirstOrDefault()?.Timestamp;
         if (!latestTimestamp.HasValue)
             return;
 
         var cutOff = new DateTime(latestTimestamp.Value, DateTimeKind.Utc).Add(-CheckInterval);
-        var oldItems = db.State.Where(s => s.Timestamp < cutOff.Ticks);
-        db.State.RemoveRange(oldItems);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var oldItems = wdb.State.Where(s => s.Timestamp < cutOff.Ticks);
+        wdb.State.RemoveRange(oldItems);
+        await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static string GetId(string locale, string? containerId)

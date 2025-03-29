@@ -113,17 +113,17 @@ internal static partial class GameTdbScraper
                 if (string.IsNullOrEmpty(title))
                     continue;
 
-                await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-                var item = await db.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
+                await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+                var item = await wdb.Thumbnail.FirstOrDefaultAsync(t => t.ProductCode == productId, cancellationToken).ConfigureAwait(false);
                 if (item is null)
                 {
-                    await db.Thumbnail.AddAsync(new Thumbnail {ProductCode = productId, Name = title}, cancellationToken).ConfigureAwait(false);
-                    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    await wdb.Thumbnail.AddAsync(new Thumbnail {ProductCode = productId, Name = title}, cancellationToken).ConfigureAwait(false);
+                    await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
                 else if (item.Name != title && item.Timestamp == 0)
                 {
                     item.Name = title;
-                    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
             await ScrapeStateProvider.SetLastRunTimestampAsync("PS3TDB").ConfigureAwait(false);

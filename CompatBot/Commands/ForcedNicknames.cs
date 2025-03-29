@@ -72,16 +72,16 @@ internal static class ForcedNicknames
                 guilds = [ctx.Guild];
 
             int changed = 0, noPermissions = 0, failed = 0;
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
             foreach (var guild in guilds)
             {
                 if (!discordUser.IsBotSafeCheck())
                 {
-                    var enforceRules = db.ForcedNicknames.FirstOrDefault(mem => mem.UserId == discordUser.Id && mem.GuildId == guild.Id);
+                    var enforceRules = wdb.ForcedNicknames.FirstOrDefault(mem => mem.UserId == discordUser.Id && mem.GuildId == guild.Id);
                     if (enforceRules is null)
                     {
                         enforceRules = new() {UserId = discordUser.Id, GuildId = guild.Id, Nickname = expectedNickname};
-                        await db.ForcedNicknames.AddAsync(enforceRules).ConfigureAwait(false);
+                        await wdb.ForcedNicknames.AddAsync(enforceRules).ConfigureAwait(false);
                     }
                     else
                     {
@@ -109,7 +109,7 @@ internal static class ForcedNicknames
                         failed++;
                     }
             }
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
             if (guilds.Count > 1)
             {
                 if (changed > 0)
@@ -157,15 +157,15 @@ internal static class ForcedNicknames
                 return;
             }
 
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
             var enforcedRules = ctx.Guild is null
-                ? await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id).ToListAsync().ConfigureAwait(false)
-                : await db.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id && mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
+                ? await wdb.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id).ToListAsync().ConfigureAwait(false)
+                : await wdb.ForcedNicknames.Where(mem => mem.UserId == discordUser.Id && mem.GuildId == ctx.Guild.Id).ToListAsync().ConfigureAwait(false);
             if (enforcedRules is not {Count: >0})
                 return;
 
-            db.ForcedNicknames.RemoveRange(enforcedRules);
-            await db.SaveChangesAsync().ConfigureAwait(false);
+            wdb.ForcedNicknames.RemoveRange(enforcedRules);
+            await wdb.SaveChangesAsync().ConfigureAwait(false);
             if (ctx.Guild is null)
                 await ctx.RespondAsync($"{Config.Reactions.Success} Removed all nickname enforcements", ephemeral: true).ConfigureAwait(false);
             else

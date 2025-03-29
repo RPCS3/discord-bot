@@ -146,17 +146,17 @@ internal static partial class Bot
     {
         try
         {
-            await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
-            var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
-            var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            var status = await wdb.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
+            var txt = await wdb.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
             if (message is {Length: >0})
             {
                 if (status is null)
-                    await db.BotState.AddAsync(new() {Key = "bot-status-activity", Value = activity.ToString().ToLower()}).ConfigureAwait(false);
+                    await wdb.BotState.AddAsync(new() {Key = "bot-status-activity", Value = activity.ToString().ToLower()}).ConfigureAwait(false);
                 else
                     status.Value = activity.ToString().ToLower();
                 if (txt is null)
-                    await db.BotState.AddAsync(new() {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
+                    await wdb.BotState.AddAsync(new() {Key = "bot-status-text", Value = message}).ConfigureAwait(false);
                 else
                     txt.Value = message;
                 await ctx.Client.UpdateStatusAsync(new(message, activity), DiscordUserStatus.Online).ConfigureAwait(false);
@@ -164,10 +164,10 @@ internal static partial class Bot
             else
             {
                 if (status is not null)
-                    db.BotState.Remove(status);
+                    wdb.BotState.Remove(status);
                 await ctx.Client.UpdateStatusAsync(new()).ConfigureAwait(false);
             }
-            await db.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+            await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -187,7 +187,7 @@ internal static partial class Bot
         string? dbName = null;
         try
         {
-            await using var botDb = await BotDb.OpenReadAsync().ConfigureAwait(false);
+            await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
             string dbPath, dbDir;
             await using (var connection = db.Database.GetDbConnection())
             {
@@ -196,7 +196,7 @@ internal static partial class Bot
                 dbName = Path.GetFileNameWithoutExtension(dbPath);
 
                 var tsName = "db-vacuum-" + dbName;
-                var vacuumTs = await botDb.BotState.FirstOrDefaultAsync(v => v.Key == tsName).ConfigureAwait(false);
+                var vacuumTs = await wdb.BotState.FirstOrDefaultAsync(v => v.Key == tsName).ConfigureAwait(false);
                 if (vacuumTs?.Value is null
                     || (long.TryParse(vacuumTs.Value, out var vtsTicks)
                         && vtsTicks < DateTime.UtcNow.AddDays(-30).Ticks))
@@ -204,10 +204,10 @@ internal static partial class Bot
                     await db.Database.ExecuteSqlRawAsync("VACUUM;").ConfigureAwait(false);
                     var newTs = DateTime.UtcNow.Ticks.ToString();
                     if (vacuumTs is null)
-                        botDb.BotState.Add(new() { Key = tsName, Value = newTs });
+                        wdb.BotState.Add(new() { Key = tsName, Value = newTs });
                     else
                         vacuumTs.Value = newTs;
-                    await botDb.SaveChangesAsync().ConfigureAwait(false);
+                    await wdb.SaveChangesAsync().ConfigureAwait(false);
                 }
             }
             using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.Default}))
@@ -305,24 +305,24 @@ internal static partial class Bot
     internal static void Restart(ulong channelId, string? restartMsg)
     {
         Config.Log.Info($"Saving channelId {channelId} into settings…");
-        using var db = BotDb.OpenWrite();
-        var ch = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
+        using var wdb = BotDb.OpenWrite();
+        var ch = wdb.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
         if (ch is null)
         {
             ch = new() {Key = "bot-restart-channel", Value = channelId.ToString()};
-            db.BotState.Add(ch);
+            wdb.BotState.Add(ch);
         }
         else
             ch.Value = channelId.ToString();
-        var msg = db.BotState.FirstOrDefault(k => k.Key == "bot-restart-msg");
+        var msg = wdb.BotState.FirstOrDefault(k => k.Key == "bot-restart-msg");
         if (msg is null)
         {
             msg = new() {Key = "bot-restart-msg", Value = restartMsg};
-            db.BotState.Add(msg);
+            wdb.BotState.Add(msg);
         }
         else
             msg.Value = restartMsg;
-        db.SaveChanges();
+        wdb.SaveChanges();
         Config.TelemetryClient?.TrackEvent("Restart");
         RestartNoSaving();
     }

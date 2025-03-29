@@ -167,7 +167,7 @@ public static class DbImporter
         return dbPath;
     }
 
-    private static async Task<bool> ImportNamesPool(ThumbnailDb db, CancellationToken cancellationToken)
+    private static async Task<bool> ImportNamesPool(ThumbnailDb wdb, CancellationToken cancellationToken)
     {
         Config.Log.Debug("Importing name pool…");
         var rootDir = Environment.CurrentDirectory;
@@ -176,7 +176,7 @@ public static class DbImporter
         if (rootDir is null)
         {
             Config.Log.Error("Couldn't find any name sources");
-            return db.NamePool.Any();
+            return wdb.NamePool.Any();
         }
 
         var resources = Directory.GetFiles(rootDir, "names_*.txt", SearchOption.TopDirectoryOnly)
@@ -185,7 +185,7 @@ public static class DbImporter
         if (resources.Count == 0)
         {
             Config.Log.Error("Couldn't find any name sources (???)");
-            return db.NamePool.Any();
+            return wdb.NamePool.Any();
         }
 
         var timestamp = -1L;
@@ -204,7 +204,7 @@ public static class DbImporter
         }
 
         const string renameStateKey = "rename-name-pool";
-        var stateEntry = db.State.FirstOrDefault(n => n.Locale == renameStateKey);
+        var stateEntry = wdb.State.FirstOrDefault(n => n.Locale == renameStateKey);
         if (stateEntry?.Timestamp == timestamp)
         {
             Config.Log.Info("Name pool is up-to-date");
@@ -242,15 +242,15 @@ public static class DbImporter
                     names.Add(line);
                 }
             }
-            await using var tx = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            db.NamePool.RemoveRange(db.NamePool);
+            await using var tx = await wdb.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            wdb.NamePool.RemoveRange(wdb.NamePool);
             foreach (var name in names)
-                await db.NamePool.AddAsync(new() {Name = name}, cancellationToken).ConfigureAwait(false);
+                await wdb.NamePool.AddAsync(new() {Name = name}, cancellationToken).ConfigureAwait(false);
             if (stateEntry is null)
-                await db.State.AddAsync(new() {Locale = renameStateKey, Timestamp = timestamp}, cancellationToken).ConfigureAwait(false);
+                await wdb.State.AddAsync(new() {Locale = renameStateKey, Timestamp = timestamp}, cancellationToken).ConfigureAwait(false);
             else
                 stateEntry.Timestamp = timestamp;
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await tx.CommitAsync(cancellationToken).ConfigureAwait(false);
             return names.Count > 0;
         }

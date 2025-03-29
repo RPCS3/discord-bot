@@ -119,7 +119,7 @@ namespace CompatBot.EventHandlers
 
             if (!string.IsNullOrEmpty(args.Message.Content) && Paws().Matches(args.Message.Content) is MatchCollection mc)
             {
-                await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+                await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
                 var matchedGroups = (from m in mc
                         from Group g in m.Groups
                         where g is { Success: true, Value.Length: > 0 }
@@ -128,18 +128,18 @@ namespace CompatBot.EventHandlers
                     .ToArray();
                 if (matchedGroups.Contains("kot"))
                 {
-                    if (!db.Kot.Any(k => k.UserId == args.Author.Id))
+                    if (!wdb.Kot.Any(k => k.UserId == args.Author.Id))
                     {
-                        await db.Kot.AddAsync(new Kot {UserId = args.Author.Id}).ConfigureAwait(false);
-                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        await wdb.Kot.AddAsync(new Kot {UserId = args.Author.Id}).ConfigureAwait(false);
+                        await wdb.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
                 if (matchedGroups.Contains("doggo"))
                 {
-                    if (!db.Doggo.Any(d => d.UserId == args.Author.Id))
+                    if (!wdb.Doggo.Any(d => d.UserId == args.Author.Id))
                     {
-                        await db.Doggo.AddAsync(new Doggo {UserId = args.Author.Id}).ConfigureAwait(false);
-                        await db.SaveChangesAsync().ConfigureAwait(false);
+                        await wdb.Doggo.AddAsync(new Doggo {UserId = args.Author.Id}).ConfigureAwait(false);
+                        await wdb.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
             }
