@@ -50,7 +50,6 @@ internal static class Fortune
 
             await ctx.RespondAsync("Importing…", ephemeral: true).ConfigureAwait(false);
             var stopwatch = Stopwatch.StartNew();
-            await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
             using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             var response = await httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
@@ -59,11 +58,15 @@ internal static class Fortune
             var buf = new StringBuilder();
             string? line;
             int count = 0, skipped = 0;
-            var allFortunes = new ConcurrentHashSet<string>(
-                await wdb.Fortune.AsNoTracking().Select(f => f.Content).ToListAsync(cancellationToken: cts.Token).ConfigureAwait(false),
-                StringComparer.OrdinalIgnoreCase
-            );
-
+            ConcurrentHashSet<string> allFortunes;
+            await using (var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false))
+            {
+                allFortunes = new(
+                    await db.Fortune.AsNoTracking().Select(f => f.Content).ToListAsync(cancellationToken: cts.Token).ConfigureAwait(false),
+                    StringComparer.OrdinalIgnoreCase
+                );
+            }
+            await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
             while (
                 !cts.IsCancellationRequested
                 && ((line = await reader.ReadLineAsync(cts.Token).ConfigureAwait(false)) != null

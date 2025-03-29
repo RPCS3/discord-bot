@@ -140,9 +140,9 @@ internal static partial class Bot
             await ctx.RespondAsync("Update is already in progress", ephemeral: true).ConfigureAwait(false);
     }
 
-    [Command("status")]
-    [Description("Set bot status to specified activity and message")]
-    public static async ValueTask Status(SlashCommandContext ctx, DiscordActivityType activity, string message)
+    [Command("activity")]
+    [Description("Set bot activity status with specified message")]
+    public static async ValueTask Status(SlashCommandContext ctx, DiscordActivityType activity, string message = "")
     {
         try
         {
@@ -160,6 +160,7 @@ internal static partial class Bot
                 else
                     txt.Value = message;
                 await ctx.Client.UpdateStatusAsync(new(message, activity), DiscordUserStatus.Online).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Success} Bot status updated");
             }
             else
             {
@@ -168,10 +169,12 @@ internal static partial class Bot
                 await ctx.Client.UpdateStatusAsync(new()).ConfigureAwait(false);
             }
             await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Success} Bot status removed");
         }
         catch (Exception e)
         {
             Config.Log.Error(e);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to update bot status");
         }
     }
 
