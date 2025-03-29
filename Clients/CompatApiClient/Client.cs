@@ -15,22 +15,17 @@ namespace CompatApiClient;
 
 public class Client: IDisposable
 {
-    private readonly HttpClient client;
-    private readonly JsonSerializerOptions jsonOptions;
     private static readonly MemoryCache ResponseCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
 
-    public Client()
+    private readonly HttpClient client = HttpClientFactory.Create(new CompressionMessageHandler());
+    private readonly JsonSerializerOptions jsonOptions = new()
     {
-        client = HttpClientFactory.Create(new CompressionMessageHandler());
-        jsonOptions = new()
-        {
-            PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            NumberHandling = JsonNumberHandling.AllowReadingFromString,
-            IncludeFields = true,
-            Converters = { new CompatApiCommitHashConverter(), },
-        };
-    }
+        PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        IncludeFields = true,
+        Converters = { new CompatApiCommitHashConverter(), },
+    };
 
     //todo: cache results
     public async ValueTask<CompatResult?> GetCompatResultAsync(RequestBuilder requestBuilder, CancellationToken cancellationToken)
