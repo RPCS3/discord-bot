@@ -38,7 +38,7 @@ internal static partial class FwInfoFormatter
                                  $"It is available in {fwInfoList.Count} region{(fwInfoList.Count == 1 ? "" : "s")} out of {RegionToFlagMap.Count}";
             result.AddField("Checksums", $"""
                     MD5: `{info.Groups["md5"].Value}`
-                    You can use [HashCheck](https://github.com/gurnec/HashCheck/releases/latest) to verify your download
+                    You can use [OpenHashTab](https://github.com/namazso/OpenHashTab/releases/latest) to verify your download
                     """);
             var links = new StringBuilder();
             foreach (var fwi in fwInfoList)
