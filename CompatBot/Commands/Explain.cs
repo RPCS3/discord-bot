@@ -95,7 +95,7 @@ internal static class Explain
             if (attachment is {} att)
             {
                 attachmentFilename = att.FileName;
-                await ctx.DeferResponseAsync(true).ConfigureAwait(false);
+                //await ctx.DeferResponseAsync(true).ConfigureAwait(false);
                 try
                 {
                     using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
@@ -209,7 +209,7 @@ internal static class Explain
         string? attachmentFilename = null;
         if (attachment is {} att)
         {
-            await ctx.DeferResponseAsync(true).ConfigureAwait(false);
+            //await ctx.DeferResponseAsync(true).ConfigureAwait(false);
             attachmentFilename = att.FileName;
             try
             {
