@@ -29,7 +29,7 @@ namespace IrdLibraryClient
 
         public static readonly Uri JsonUrl = new("https://flexby420.github.io/playstation_3_ird_database/all.json");
 
-        public async Task<List<IrdInfo>> SearchAsync(string query, CancellationToken cancellationToken)
+        public async ValueTask<List<IrdInfo>> SearchAsync(string query, CancellationToken cancellationToken)
         {            
             List<IrdInfo> result = [];
             if (!JsonCache.TryGetValue("json", out Dictionary<string, List<IrdInfo>>? irdData)
@@ -72,7 +72,7 @@ namespace IrdLibraryClient
             return result;
         }
 
-        public async Task<List<Ird>> DownloadAsync(string productCode, string localCachePath, CancellationToken cancellationToken)
+        public async ValueTask<List<Ird>> DownloadAsync(string productCode, string localCachePath, CancellationToken cancellationToken)
         {
             var result = new List<Ird>();
             try
@@ -86,7 +86,9 @@ namespace IrdLibraryClient
 
                 foreach (var item in searchResults)
                 {
-                    var localFilePath = Path.Combine(localCachePath, $"{productCode}-{item.Link.Split('/').Last()}.ird");
+                    var localFilePath = Path.Combine(localCachePath, $"{productCode}-{item.Link.Split('/').Last()}");
+                    if (!localCachePath.EndsWith(".ird", StringComparison.OrdinalIgnoreCase))
+                        localFilePath += ".ird";
                     if (File.Exists(localFilePath))
                     {
                         var irdData = await File.ReadAllBytesAsync(localFilePath, cancellationToken).ConfigureAwait(false);
