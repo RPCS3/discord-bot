@@ -41,7 +41,10 @@ public static class LogParsingHandler
         new PlainTextHandler(),
     ];
 
-    private static readonly SemaphoreSlim QueueLimiter = new(Math.Max(1, Environment.ProcessorCount / 2), Math.Max(1, Environment.ProcessorCount / 2));
+    private static readonly SemaphoreSlim QueueLimiter = new(
+        Math.Max(Config.MinLogThreads, Environment.ProcessorCount - 1),
+        Math.Max(Config.MinLogThreads, Environment.ProcessorCount - 1)
+    );
     private delegate void OnLog(DiscordClient client, DiscordChannel channel, DiscordMessage message, DiscordMember? requester = null, bool checkExternalLinks = false, bool force = false);
     private static event OnLog OnNewLog = EnqueueLogProcessing;
 
