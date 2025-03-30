@@ -74,6 +74,7 @@ internal static class Config
     public static int ChannelMessageHistorySize => config.GetValue(nameof(ChannelMessageHistorySize), 100);
     public static int FunMultiplier => config.GetValue(nameof(FunMultiplier), 1);
     public static int MaxPositionsForHwSurveyResults => config.GetValue(nameof(MaxPositionsForHwSurveyResults), 10);
+    public static int MinLogThreads => config.GetValue(nameof(MinLogThreads), 1);
 
     public static string Token => config.GetValue(nameof(Token), "");
     public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
