@@ -262,7 +262,7 @@ internal static class Program
                         //todo: make this ordered?
                         EmpathySimulationHandler.OnMessageDeleted,
                         ThumbnailCacheMonitor.OnMessageDeleted,
-                        DeletedMessagesMonitor.OnMessageDeleted,
+                        //DeletedMessagesMonitor.OnMessageDeleted,
                         GlobalMessageCache.OnMessageDeleted,
                     ]));
                     config.HandleMessagesBulkDeleted(GlobalMessageCache.OnMessagesBulkDeleted);
