@@ -63,9 +63,6 @@ public static class LogParsingHandler
                 || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
             return Task.CompletedTask;
 
-        if (message.Attachments is [])
-            return Task.CompletedTask;
-        
         var isSpamChannel = args.Channel.IsSpamChannel();
         var isHelpChannel = args.Channel.IsHelpChannel();
         var checkExternalLinks = isHelpChannel || isSpamChannel;
