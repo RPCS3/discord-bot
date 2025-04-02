@@ -19,14 +19,14 @@ internal class HardwareDb : DbContext
     {
         this.readWriteLock = readWriteLock;
         this.canWrite = canWrite;
-#if DEBUG
+//#if DEBUG
         if (canWrite)
             Interlocked.Increment(ref openWriteCount);
         else
             Interlocked.Increment(ref openReadCount);
         var st = new System.Diagnostics.StackTrace().GetCaller<HardwareDb>();
         Config.Log.Trace($"{nameof(HardwareDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
-#endif
+//#endif
     }
 
     public static async ValueTask<HardwareDb> OpenReadAsync()

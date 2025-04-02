@@ -254,7 +254,7 @@ public partial class Client
             if (response.StatusCode == HttpStatusCode.NotFound)
                 return default;
 
-            await response.Content.LoadIntoBufferAsync().ConfigureAwait(false);
+            await response.Content.LoadIntoBufferAsync(cancellationToken).ConfigureAwait(false);
             var xml = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             patchInfo = await response.Content.ReadAsAsync<TitlePatch>(xmlFormatters, cancellationToken).ConfigureAwait(false);
             ResponseCache.Set(productId, patchInfo, ResponseCacheDuration);

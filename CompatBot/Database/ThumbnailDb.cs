@@ -26,14 +26,14 @@ internal class ThumbnailDb : DbContext
     {
         this.readWriteLock = readWriteLock;
         this.canWrite = canWrite;
-#if DEBUG
+//#if DEBUG
         if (canWrite)
             Interlocked.Increment(ref openWriteCount);
         else
             Interlocked.Increment(ref openReadCount);
         var st = new System.Diagnostics.StackTrace().GetCaller<ThumbnailDb>();
         Config.Log.Trace($"{nameof(ThumbnailDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
-#endif
+//#endif
     }
 
     public static async ValueTask<ThumbnailDb> OpenReadAsync()

@@ -32,14 +32,14 @@ internal class BotDb: DbContext
     {
         this.readWriteLock = readWriteLock;
         this.canWrite = canWrite;
-#if DEBUG
+//#if DEBUG
         if (canWrite)
             Interlocked.Increment(ref openWriteCount);
         else
             Interlocked.Increment(ref openReadCount);
         var st = new System.Diagnostics.StackTrace().GetCaller<BotDb>();
         Config.Log.Trace($"{nameof(BotDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
-#endif
+//#endif
     }
 
     public static BotDb OpenRead()
