@@ -33,9 +33,11 @@ internal static partial class CompatList
 
     static CompatList()
     {
-        using var db = BotDb.OpenRead();
-        lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
-        lastFullBuildNumber = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateBuildKey)?.Value;
+        using (var db = BotDb.OpenRead())
+        {
+            lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
+            lastFullBuildNumber = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateBuildKey)?.Value;
+        }
         //lastUpdateInfo = "8022";
         if (lastUpdateInfo is {Length: >0} strPr && int.TryParse(strPr, out var pr))
         {
@@ -43,11 +45,10 @@ internal static partial class CompatList
             {
                 var prInfo = GithubClient.GetPrInfoAsync(pr, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
                 cachedUpdateInfo = Client.GetUpdateAsync(Config.Cts.Token, prInfo?.MergeCommitSha).ConfigureAwait(false).GetAwaiter().GetResult();
-                if (cachedUpdateInfo?.CurrentBuild == null)
+                if ((cachedUpdateInfo.X64 ?? cachedUpdateInfo.Arm)?.CurrentBuild is null)
                     return;
-                
-                cachedUpdateInfo.LatestBuild = cachedUpdateInfo.CurrentBuild;
-                cachedUpdateInfo.CurrentBuild = null;
+
+                cachedUpdateInfo.SetCurrentAsLatest();
             }
             catch { }
         }

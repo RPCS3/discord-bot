@@ -411,9 +411,10 @@ internal static partial class LogParserResult
 
         var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
-        if (updateInfo != null
+        if (updateInfo is not null
             && (buildBranch is "master" or "head" or "spu_perf"
-                || string.IsNullOrEmpty(buildBranch) && updateInfo.CurrentBuild != null))
+                || buildBranch is not {Length: >0}
+                    && (updateInfo.X64?.CurrentBuild is not null || updateInfo.Arm?.CurrentBuild is not null)))
         {
             string prefix = "⚠️";
             string timeDeltaStr;

@@ -112,8 +112,7 @@ public static class LogParsingHandler
                         $">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)…");
                     var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
                     var msgBuilder = new DiscordMessageBuilder()
-                        .AddEmbed(await analyzingProgressEmbed.AddAuthorAsync(client, message, source)
-                            .ConfigureAwait(false))
+                        .AddEmbed(await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false))
                         .WithReply(message.Id);
                     botMsg = await channel.SendMessageAsync(msgBuilder).ConfigureAwait(false);
                     parsedLog = true;
@@ -130,8 +129,7 @@ public static class LogParsingHandler
                                 source,
                                 async () => botMsg = await botMsg.UpdateOrCreateMessageAsync(
                                     channel,
-                                    embed: await analyzingProgressEmbed.AddAuthorAsync(client, message, source)
-                                        .ConfigureAwait(false)
+                                    embed: await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false)
                                 ).ConfigureAwait(false),
                                 combinedTokenSource.Token
                             ).ConfigureAwait(false);
@@ -175,15 +173,12 @@ public static class LogParsingHandler
                                 }
                                 var yarr = client.GetEmoji(":piratethink:", "☠");
                                 result.ReadBytes = 0;
-                                if (await message.Author.IsWhitelistedAsync(client, channel.Guild)
-                                        .ConfigureAwait(false))
+                                if (await message.Author.IsWhitelistedAsync(client, channel.Guild).ConfigureAwait(false))
                                 {
-                                    var piracyWarning = await result.AsEmbedAsync(client, message, source)
-                                        .ConfigureAwait(false);
+                                    var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
                                     piracyWarning = piracyWarning.WithDescription(
                                         "Please remove the log and issue warning to the original author of the log");
-                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning)
-                                        .ConfigureAwait(false);
+                                    botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
                                     var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter,
                                         result.SelectedFilterContext);
                                     await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message,
@@ -269,19 +264,16 @@ public static class LogParsingHandler
                                 if (!force
                                     && string.IsNullOrEmpty(message.Content)
                                     && !isSpamChannel
-                                    && !await message.Author.IsSmartlistedAsync(client, message.Channel.Guild)
-                                        .ConfigureAwait(false))
+                                    && !await message.Author.IsSmartlistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
                                 {
                                     var threshold = DateTime.UtcNow.AddMinutes(-15);
-                                    var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id)
-                                        .ConfigureAwait(false);
+                                    var previousMessages = await channel.GetMessagesBeforeCachedAsync(message.Id).ConfigureAwait(false);
                                     previousMessages = previousMessages.TakeWhile((msg, num) =>
                                         num < 15 || msg.Timestamp.UtcDateTime > threshold).ToList();
                                     if (!previousMessages.Any(m =>
                                             m.Author == message.Author && !string.IsNullOrEmpty(m.Content)))
                                     {
-                                        var botSpamChannel = await client.GetChannelAsync(Config.BotSpamId)
-                                            .ConfigureAwait(false);
+                                        var botSpamChannel = await client.GetChannelAsync(Config.BotSpamId).ConfigureAwait(false);
                                         if (isHelpChannel)
                                             await botMsg.UpdateOrCreateMessageAsync(
                                                 channel,

@@ -249,8 +249,7 @@ internal static partial class Misc
             var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
             if (count is 0)
             {
-                await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true)
-                    .ConfigureAwait(false);
+                await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
@@ -265,8 +264,7 @@ internal static partial class Misc
                 return;
             }
 
-            var result = await ProductCodeLookup.LookupProductCodeAndFormatAsync(ctx.Client, [productCode.ProductCode])
-                .ConfigureAwait(false);
+            var result = await ProductCodeLookup.LookupProductCodeAndFormatAsync(ctx.Client, [productCode.ProductCode]).ConfigureAwait(false);
             await ctx.RespondAsync(result[0].builder, ephemeral: ephemeral).ConfigureAwait(false);
         }
     }

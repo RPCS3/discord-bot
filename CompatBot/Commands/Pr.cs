@@ -365,21 +365,21 @@ internal sealed class Pr
             var mergeTime = prInfo.MergedAt.GetValueOrDefault();
             var now = DateTime.UtcNow;
             var updateInfo = await CompatApiClient.GetUpdateAsync(Config.Cts.Token, linkOld ? prInfo.MergeCommitSha : null).ConfigureAwait(false);
-            if (updateInfo is not null)
+            if (updateInfo.LatestDatetime is DateTime masterBuildTime && masterBuildTime.Ticks >= mergeTime.Ticks)
+                embed = await updateInfo.AsEmbedAsync(client, false, embed, prInfo, linkOld).ConfigureAwait(false);
+            else
             {
-                if (DateTime.TryParse(updateInfo.LatestBuild?.Datetime, out var masterBuildTime) && masterBuildTime.Ticks >= mergeTime.Ticks)
-                    embed = await updateInfo.AsEmbedAsync(client, false, embed, prInfo, linkOld).ConfigureAwait(false);
-                else
-                {
-                    var waitTime = TimeSpan.FromMinutes(5);
-                    var avgBuildTime = (await GithubClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
-                    if (now < mergeTime + avgBuildTime)
-                        waitTime = mergeTime + avgBuildTime - now;
-                    embed.AddField("Latest master build", $"""
-                        This pull request has been merged, and will be part of `master` very soon.
-                        Please check again in {waitTime.AsTimeDeltaDescription()}.
-                        """);
-                }
+                var waitTime = TimeSpan.FromMinutes(5);
+                var avgBuildTime = (await GithubClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
+                if (now < mergeTime + avgBuildTime)
+                    waitTime = mergeTime + avgBuildTime - now;
+                embed.AddField(
+                    "Latest master build",
+                    $"""
+                   This pull request has been merged, and will be part of `master` very soon.
+                   Please check again in {waitTime.AsTimeDeltaDescription()}.
+                   """
+                );
             }
         }
         return result.AddEmbed(embed);

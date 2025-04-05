@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -90,7 +91,6 @@ public partial class Client
             ExcludePullRequests = false,
             Event = "pull_request",
             HeadSha = commit,
-            //Branch = $"refs/pull/{pr}/merge",
         };
         var runsList = await client.Actions.Workflows.Runs.ListByWorkflow(OwnerId, RepoId, wfId, wfrRequest).ConfigureAwait(false);
         var builds = runsList.WorkflowRuns
@@ -299,4 +299,72 @@ public partial class Client
         BuildInfoCache.Set(cacheKey, result, TimeSpan.FromDays(1));
         return result;
     }
+    
+    public async ValueTask<List<BuildInfo>?> GetMasterBuildsAsync(string? oldestMergeCommit, string? newestMergeCommit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
+    {
+        if (oldestMergeCommit is not {Length: >=6} || newestMergeCommit is not {Length: >=6})
+            return null;
+
+        if (await GetWorkflowIdAsync().ConfigureAwait(false) is not long wfId)
+            return null;
+
+        oldestMergeCommit = oldestMergeCommit.ToLower();
+        newestMergeCommit = newestMergeCommit.ToLower();
+        var wfrRequest = new WorkflowRunsRequest
+        {
+            ExcludePullRequests = true,
+            Event = "push",
+            Created = $"{oldestTimestamp:yyyy-MM-dd}..*",
+            Status = CheckRunStatusFilter.Completed,
+            Branch = "master",
+        };
+        var runsList = await client.Actions.Workflows.Runs.ListByWorkflow(OwnerId, RepoId, wfId, wfrRequest).ConfigureAwait(false);
+        var builds = runsList.WorkflowRuns
+            .OrderByDescending(r => r.CreatedAt)
+            .SkipWhile(b => !newestMergeCommit.Equals(b.HeadSha, StringComparison.OrdinalIgnoreCase))
+            .Skip(1)
+            .TakeWhile(b => !oldestMergeCommit.Equals(b.HeadSha, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        return await builds
+            .ToAsyncEnumerable()
+            .SelectAwait(async b => await GetArtifactsInfoAsync(b.HeadSha, b, cancellationToken).ConfigureAwait(false))
+            .ToListAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async ValueTask<BuildInfo?> GetMasterBuildInfoAsync(string? commit, DateTime? oldestTimestamp, CancellationToken cancellationToken)
+    {
+        if (commit is not {Length: >=6})
+            return null;
+
+        if (await GetWorkflowIdAsync().ConfigureAwait(false) is not long wfId)
+            return null;
+
+        commit = commit.ToLower();
+        if (BuildInfoCache.TryGetValue(commit, out BuildInfo? result) && result is not null)
+            return result;
+
+        var wfrRequest = new WorkflowRunsRequest
+        {
+            ExcludePullRequests = true,
+            Event = "push",
+            Created = $"{oldestTimestamp:yyyy-MM-dd}..*",
+            Status = CheckRunStatusFilter.Completed,
+            Branch = "master",
+        };
+        var runsList = await client.Actions.Workflows.Runs.ListByWorkflow(OwnerId, RepoId, wfId, wfrRequest).ConfigureAwait(false);
+
+        var builds = runsList.WorkflowRuns
+            .Where(b => commit.Equals(b.HeadSha, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(b => b.CreatedAt)
+            .ToList();
+        if (builds.FirstOrDefault() is not {} latestBuild)
+            return null;
+
+        result = await GetArtifactsInfoAsync(commit, latestBuild, cancellationToken).ConfigureAwait(false);
+        if (result is { Status: WorkflowRunStatus.Completed, Result: WorkflowRunConclusion.Success })
+            BuildInfoCache.Set(commit, result, TimeSpan.FromHours(1));
+        return result;
+    }
+
 }

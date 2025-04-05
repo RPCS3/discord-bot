@@ -778,10 +778,15 @@ internal static partial class LogParserResult
         if (string.IsNullOrEmpty(currentBuildCommit))
             currentBuildCommit = null;
         var updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
-        if (updateInfo?.ReturnCode != 1 && currentBuildCommit != null)
+        if (updateInfo.ReturnCode != StatusCode.UpdatesAvailable && currentBuildCommit is not null)
             updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
-        var link = updateInfo?.LatestBuild?.Windows?.Download ?? updateInfo?.LatestBuild?.Linux?.Download ?? updateInfo?.LatestBuild?.Mac?.Download;
-        if (string.IsNullOrEmpty(link))
+        var link = updateInfo.X64?.LatestBuild.Windows?.Download
+                   ?? updateInfo.X64?.LatestBuild.Linux?.Download
+                   ?? updateInfo.X64?.LatestBuild.Mac?.Download
+                   ??updateInfo.Arm?.LatestBuild.Windows?.Download
+                   ?? updateInfo.Arm?.LatestBuild.Linux?.Download
+                   ?? updateInfo.Arm?.LatestBuild.Mac?.Download;
+        if (updateInfo.ReturnCode is not StatusCode.UpdatesAvailable || link is null)
             return null;
 
         var latestBuildInfo = BuildInfoInUpdate().Match(link.ToLowerInvariant());
@@ -791,7 +796,7 @@ internal static partial class LogParserResult
         return null;
     }
 
-    private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo? updateInfo)
+    private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo updateInfo)
     {
         if (updateInfo.GetUpdateDelta() is TimeSpan updateTimeDelta
             && updateTimeDelta < Config.BuildTimeDifferenceForOutdatedBuildsInDays)

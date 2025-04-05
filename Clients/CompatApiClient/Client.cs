@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -16,6 +17,7 @@ namespace CompatApiClient;
 public class Client: IDisposable
 {
     private static readonly MemoryCache ResponseCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+    private static readonly string[] BuildArchList = [ArchType.X64, ArchType.Arm];
 
     private readonly HttpClient client = HttpClientFactory.Create(new CompressionMessageHandler());
     private readonly JsonSerializerOptions jsonOptions = new()
@@ -100,33 +102,46 @@ public class Client: IDisposable
     }
 
     // https://github.com/AniLeo/rpcs3-compatibility/wiki/API:-Update
-    public async ValueTask<UpdateInfo?> GetUpdateAsync(CancellationToken cancellationToken, string? commit = null)
+    public async ValueTask<UpdateInfo> GetUpdateAsync(CancellationToken cancellationToken, string? commit = null)
     {
-        if (string.IsNullOrEmpty(commit))
+        if (commit is not {Length: >6})
             commit = "somecommit";
-        var tries = 3;
-        do
+        var result = new UpdateInfo();
+        foreach (var arch in BuildArchList)
         {
-            try
+            var tries = 3;
+            do
             {
-                using var message = new HttpRequestMessage(HttpMethod.Get, "https://update.rpcs3.net/?api=v1&c=" + commit);
-                using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    return await response.Content.ReadFromJsonAsync<UpdateInfo>(jsonOptions, cancellationToken).ConfigureAwait(false);
+                    using var message = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        $"https://update.rpcs3.net/?api=v3&os_arch={arch}&os_type=all&c={commit}"
+                    );
+                    using var response = await client
+                        .SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                        .ConfigureAwait(false);
+                    try
+                    {
+                        var info = await response.Content
+                            .ReadFromJsonAsync<UpdateCheckResult>(jsonOptions, cancellationToken)
+                            .ConfigureAwait(false);
+                        if (info is not null)
+                            result[arch] = info;
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleLogger.PrintError(e, response, false);
+                    }
                 }
                 catch (Exception e)
                 {
-                    ConsoleLogger.PrintError(e, response, false);
+                    ApiConfig.Log.Warn(e);
                 }
-            }
-            catch (Exception e)
-            {
-                ApiConfig.Log.Warn(e);
-            }
-            tries++;
-        } while (tries < 3);
-        return null;
+                tries++;
+            } while (tries < 3);
+        }
+        return result;
     }
 
     public void Dispose()
