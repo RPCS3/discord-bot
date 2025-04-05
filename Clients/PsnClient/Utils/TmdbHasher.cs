@@ -10,10 +10,7 @@ public static class TmdbHasher
     private static readonly byte[] HmacKey = "F5DE66D2680E255B2DF79E74F890EBF349262F618BCAE2A9ACCDEE5156CE8DF2CDF2D48C71173CDC2594465B87405D197CF1AED3B7E9671EEB56CA6753C2E6B0".FromHexString();
 
     public static string GetTitleHash(string productId)
-    {
-        using var hmacSha1 = new HMACSHA1(HmacKey);
-        return hmacSha1.ComputeHash(Encoding.ASCII.GetBytes(productId)).ToHexString();
-    }
+        => HMACSHA1.HashData(HmacKey, Encoding.UTF8.GetBytes(productId)).ToHexString();
 
     public static byte[] FromHexString(this string hexString)
     {

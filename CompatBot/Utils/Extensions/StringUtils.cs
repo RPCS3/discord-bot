@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using CompatBot.Utils.Extensions;
 using HomoglyphConverter;
@@ -447,9 +448,8 @@ public static partial class StringUtils
 
     internal static int GetStableHash(this string str)
     {
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var data = Encoding.UTF8.GetBytes(str);
-        var hash = sha256.ComputeHash(data);
+        var data = Encoding.UTF8.GetBytes(str.ToLowerInvariant());
+        var hash = SHA256.HashData(data);
         return BitConverter.ToInt32(hash, 0);
     }
 
