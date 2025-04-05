@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net.Http;
+using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
@@ -11,6 +12,7 @@ namespace CompatBot.Commands;
 
 internal static partial class Misc
 {
+    private static readonly HttpClient HttpClient = HttpClientFactory.Create();
     private static readonly Random rng = new();
 
     private static readonly List<string> EightBallAnswers =
@@ -247,8 +249,7 @@ internal static partial class Misc
             var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
             if (count is 0)
             {
-                await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true)
-                    .ConfigureAwait(false);
+                await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
@@ -263,8 +264,7 @@ internal static partial class Misc
                 return;
             }
 
-            var result = await ProductCodeLookup.LookupProductCodeAndFormatAsync(ctx.Client, [productCode.ProductCode])
-                .ConfigureAwait(false);
+            var result = await ProductCodeLookup.LookupProductCodeAndFormatAsync(ctx.Client, [productCode.ProductCode]).ConfigureAwait(false);
             await ctx.RespondAsync(result[0].builder, ephemeral: ephemeral).ConfigureAwait(false);
         }
     }
@@ -343,14 +343,28 @@ internal static partial class Misc
             whatever = whatever.ToLowerInvariant().StripInvisibleAndDiacritics();
             var originalWhatever = whatever;
             var matches = Instead().Matches(whatever);
-            if (matches.Any())
+            if (matches is [.., Match last])
             {
-                var insteadWhatever = matches.Last().Groups["instead"].Value.TrimEager();
+                var insteadWhatever = last.Groups["instead"].Value.TrimEager();
                 if (!string.IsNullOrEmpty(insteadWhatever))
                     whatever = insteadWhatever;
             }
             foreach (var attachment in ctx.Message.Attachments)
+            {
+                if (attachment is { Width: > 0, Height: > 0, Url: {Length: >0} url })
+                {
+                    await using var imgStream = await HttpClient.GetStreamAsync(url).ConfigureAwait(false);
+                    if (await ColorGetter.GetBlurHashAsync(imgStream).ConfigureAwait(false) is {Length: >0} hash)
+                    {
+#if DEBUG
+                        Config.Log.Trace($"Got image blur hash {hash}");
+#endif
+                        whatever += $" {hash}";
+                        continue;
+                    }
+                }
                 whatever += $" {attachment.FileSize}";
+            }
 
             var nekoUser = await ctx.Client.GetUserAsync(272032356922032139ul).ConfigureAwait(false);
             var nekoMember = await ctx.Client.GetMemberAsync(nekoUser).ConfigureAwait(false);
@@ -494,7 +508,11 @@ internal static partial class Misc
                 await ctx.Channel.SendMessageAsync("Rating nothing makes _**so much**_ sense, right?").ConfigureAwait(false);
             else
             {
-                var seed = (prefix + whatever).GetHashCode(StringComparison.CurrentCultureIgnoreCase);
+                var seedMsg = prefix + whatever;
+                var seed = seedMsg.GetStableHash();
+#if DEBUG
+                Config.Log.Trace($"Rating seed is {seed:x8} for '{seedMsg}'");
+#endif
                 var seededRng = new Random(seed);
                 var answer = choices[seededRng.Next(choices.Count)];
                 var msgBuilder = new DiscordMessageBuilder()

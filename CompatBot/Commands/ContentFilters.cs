@@ -135,13 +135,13 @@ internal sealed partial class ContentFilters
             if (explanation is { Length: > 0 } &&
                 !await wdb.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
             {
-                await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral)
-                    .ConfigureAwait(false);
+                await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral).ConfigureAwait(false);
                 return;
             }
 
             var isNewFilter = true;
-            var filter = await wdb.Piracystring.FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled)
+            var filter = await wdb.Piracystring
+                .FirstOrDefaultAsync(ps => ps.String == trigger && ps.Disabled)
                 .ConfigureAwait(false);
             if (filter is null)
                 filter = new() { String = trigger };
@@ -184,8 +184,7 @@ internal sealed partial class ContentFilters
                 $"{member?.GetMentionWithNickname()} added a new content filter: `{filter.String.Sanitize()}`";
             if (!string.IsNullOrEmpty(filter.ValidatingRegex))
                 reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
-            await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low)
-                .ConfigureAwait(false);
+            await ctx.Client.ReportAsync("🆕 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
         }
         ContentFilter.RebuildMatcher();
     }
@@ -327,8 +326,7 @@ internal sealed partial class ContentFilters
             if (explanation is { Length: > 0 } &&
                 !await wdb.Explanation.AnyAsync(e => e.Keyword == explanation).ConfigureAwait(false))
             {
-                await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral)
-                    .ConfigureAwait(false);
+                await ctx.RespondAsync($"❌ Unknown explanation term: {explanation}", ephemeral: ephemeral).ConfigureAwait(false);
                 return;
             }
 

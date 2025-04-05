@@ -40,11 +40,12 @@
     <AdditionalFiles Include="..\win32_error_codes*.txt" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Blurhash.ImageSharp" Version="4.0.0" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
     <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02474" />
     <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02474" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02474" />
-    <PackageReference Include="DSharpPlus.Natives.Zstd" Version="1.5.7.19" />
+    <PackageReference Include="DSharpPlus.Natives.Zstd" Version="1.5.7.21" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3703" />
     <PackageReference Include="MathParser.org-mXparser" Version="6.1.0" />
     <PackageReference Include="MegaApiClient" Version="1.10.4" />

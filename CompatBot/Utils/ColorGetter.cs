@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using Blurhash.ImageSharp;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.ColorSpaces;
 using SixLabors.ImageSharp.ColorSpaces.Conversion;
 using SixLabors.ImageSharp.PixelFormats;
@@ -8,7 +10,7 @@ namespace CompatBot.Utils;
 
 internal static class ColorGetter
 {
-    public static SixLabors.ImageSharp.Color GetDominantColor(SixLabors.ImageSharp.Image<Rgba32> img)
+    public static Color GetDominantColor(Image<Rgba32> img)
     {
         //img.Mutate(x => x.Resize(new ResizeOptions { Sampler = KnownResamplers.NearestNeighbor, Size = new Size(100, 0) }));
         int r = 0;
@@ -42,7 +44,7 @@ internal static class ColorGetter
     {
         try
         {
-            var img = await SixLabors.ImageSharp.Image.LoadAsync<Rgba32>(jpg).ConfigureAwait(false);
+            var img = await Image.LoadAsync<Rgba32>(jpg).ConfigureAwait(false);
             var quantizerOptions = new QuantizerOptions { Dither = null, MaxColors = 4 };
             var sampling = new ExtensivePixelSamplingStrategy();
             var quantizer = new WuQuantizer().CreatePixelSpecificQuantizer<Rgba32>(new(), quantizerOptions);
@@ -67,6 +69,20 @@ internal static class ColorGetter
         {
             Config.Log.Warn(e, "Failed to extract image palette");
             return defaultColor;
+        }
+    }
+
+    public static async ValueTask<string?> GetBlurHashAsync(Stream attachment)
+    {
+        try
+        {
+            var img = await Image.LoadAsync<Rgba32>(attachment).ConfigureAwait(false);
+            return Blurhasher.Encode(img, 4, 3);
+        }
+        catch (Exception e)
+        {
+            Config.Log.Warn(e, "Failed to get image blur hash");
+            return null;
         }
     }
 }

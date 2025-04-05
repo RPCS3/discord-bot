@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Text.RegularExpressions;
+using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
@@ -13,18 +14,23 @@ internal static class UpdateInfoFormatter
 
     public static async Task<DiscordEmbedBuilder> AsEmbedAsync(this UpdateInfo? info, DiscordClient client, bool includePrBody = false, DiscordEmbedBuilder? builder = null, Octokit.PullRequest? currentPrInfo = null, bool useCurrent = false)
     {
-        if ((info?.LatestBuild?.Windows?.Download ?? info?.LatestBuild?.Linux?.Download ?? info?.LatestBuild?.Mac?.Download) is null)
-            return builder ?? new DiscordEmbedBuilder {Title = "Error", Description = "Error communicating with the update API. Try again later.", Color = Config.Colors.Maintenance};
+        if ( info is not {ReturnCode: >=StatusCode.UnknownBuild})
+            return builder ?? new DiscordEmbedBuilder
+            {
+                Title = "Error",
+                Description = "Error communicating with the update API. Try again later.",
+                Color = Config.Colors.Maintenance,
+            };
 
-        var justAppend = builder != null;
-        var latestBuild = info!.LatestBuild;
-        var currentBuild = info.CurrentBuild;
+        var justAppend = builder is not null;
+        var latestBuild = info.X64?.LatestBuild ?? info.Arm?.LatestBuild;
+        var currentBuild = info.X64?.CurrentBuild ?? info.Arm?.CurrentBuild;
         var latestPr = latestBuild?.Pr;
         var currentPr = currentBuild?.Pr;
         string? url = null;
         Octokit.PullRequest? latestPrInfo = null;
 
-        string prDesc = "";
+        var prDesc = "";
         if (!justAppend)
         {
             if (latestPr > 0)
@@ -46,7 +52,7 @@ internal static class UpdateInfoFormatter
         if (includePrBody && latestPrInfo?.Body is { Length: >0 } prInfoBody)
             desc = $"**{desc?.TrimEnd()}**\n\n{prInfoBody}";
         desc = desc?.Trim();
-        if (!string.IsNullOrEmpty(desc))
+        if (desc is {Length: >0})
         {
             if (GithubLinksHandler.IssueMention().Matches(desc) is { Count: >0 } issueMatches)
             {
@@ -63,14 +69,14 @@ internal static class UpdateInfoFormatter
                         {
                             num = m.Groups["another_number"].Value;
                             name = "#" + num;
-                            if (!string.IsNullOrEmpty(m.Groups["comment_id"].Value))
+                            if (m.Groups["comment_id"].Value is {Length: >0})
                                 name += " comment";
                         }
-                        if (string.IsNullOrEmpty(num))
+                        if (num is not {Length: >0})
                             continue;
 
                         var commentLink = "";
-                        if (!string.IsNullOrEmpty(m.Groups["comment_id"].Value))
+                        if (m.Groups["comment_id"].Value is {Length: >0})
                             commentLink = "#issuecomment-" + m.Groups["comment_id"].Value;
                         var newLink = $"[{name}](https://github.com/RPCS3/rpcs3/issues/{num}{commentLink})";
                         desc = desc.Replace(str, newLink);
@@ -85,7 +91,7 @@ internal static class UpdateInfoFormatter
                     if (m.Groups["commit_mention"].Value is { Length: >0 } lnk && uniqueLinks.Add(lnk))
                     {
                         var num = m.Groups["commit_hash"].Value;
-                        if (string.IsNullOrEmpty(num))
+                        if (num is not {Length: >0})
                             continue;
 
                         if (num.Length > 7)
@@ -95,7 +101,7 @@ internal static class UpdateInfoFormatter
                 }
             }
         }
-        if (!string.IsNullOrEmpty(desc) && GithubLinksHandler.ImageMarkup().Matches(desc) is {Count: >0} imgMatches)
+        if (desc is {Length: >0} && GithubLinksHandler.ImageMarkup().Matches(desc) is {Count: >0} imgMatches)
         {
             var uniqueLinks = new HashSet<string>(10);
             foreach (Match m in imgMatches)
@@ -104,9 +110,9 @@ internal static class UpdateInfoFormatter
                 {
                     var caption = m.Groups["img_caption"].Value;
                     var link = m.Groups["img_link"].Value;
-                    if (!string.IsNullOrEmpty(caption))
+                    if (caption is {Length: >0})
                         caption = " " + caption;
-                    desc = desc.Replace(str, $"[🖼{caption}]({link})");
+                    desc = desc.Replace(str, $"[🖼️{caption}]({link})");
                 }
             }
         }
@@ -115,11 +121,11 @@ internal static class UpdateInfoFormatter
         var currentCommit = currentPrInfo?.MergeCommitSha;
         var latestCommit = latestPrInfo?.MergeCommitSha;
         var buildTimestampKind = "Built";
-        DateTime? latestBuildTimestamp = null, currentBuildTimestamp = null;
-        if (Config.GetAzureDevOpsClient() is {} azureClient)
+        DateTimeOffset? latestBuildTimestamp = null, currentBuildTimestamp = null;
+        //if (Config.GetAzureDevOpsClient() is {} azureClient)
         {
-            var currentAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt?.DateTime, Config.Cts.Token).ConfigureAwait(false);
-            var latestAppveyorBuild = await azureClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt?.DateTime, Config.Cts.Token).ConfigureAwait(false);
+            var currentAppveyorBuild = await GithubClient.GetMasterBuildInfoAsync(currentCommit, currentPrInfo?.MergedAt?.DateTime, Config.Cts.Token).ConfigureAwait(false);
+            var latestAppveyorBuild = await GithubClient.GetMasterBuildInfoAsync(latestCommit, latestPrInfo?.MergedAt?.DateTime, Config.Cts.Token).ConfigureAwait(false);
             latestBuildTimestamp = latestAppveyorBuild?.FinishTime;
             currentBuildTimestamp = currentAppveyorBuild?.FinishTime;
             if (!latestBuildTimestamp.HasValue)
@@ -129,10 +135,11 @@ internal static class UpdateInfoFormatter
             }
         }
 
-        var linkedBuild = useCurrent ? currentBuild : latestBuild;
-        if (!string.IsNullOrEmpty(linkedBuild?.Datetime))
+        var linkedX64Build = useCurrent ? info.X64?.CurrentBuild : info.X64?.LatestBuild;
+        var linkedArmBuild = useCurrent ? info.Arm?.CurrentBuild : info.Arm?.LatestBuild;
+        if ((linkedX64Build ?? linkedArmBuild)?.Datetime is {Length: >0} dateTime)
         {
-            var timestampInfo = (useCurrent ? currentBuildTimestamp : latestBuildTimestamp)?.ToString("u") ?? linkedBuild.Datetime;
+            var timestampInfo = (useCurrent ? currentBuildTimestamp : latestBuildTimestamp)?.ToString("u") ?? dateTime;
             if (!useCurrent
                 && currentPr > 0
                 && currentPr != latestPr
@@ -153,14 +160,17 @@ internal static class UpdateInfoFormatter
             builder.WithFooter($"{buildTimestampKind} on {timestampInfo}");
         }
         return builder
-            .AddField("Windows download", GetLinkMessage(linkedBuild?.Windows, true), true)
-            .AddField("Linux download", GetLinkMessage(linkedBuild?.Linux, true), true)
-            .AddField("Mac download", GetLinkMessage(linkedBuild?.Mac, true), true);
+            .AddField("Windows x64", GetLinkMessage(linkedX64Build?.Windows, true), true)
+            .AddField("Linux x64", GetLinkMessage(linkedX64Build?.Linux, true), true)
+            .AddField("Mac Intel", GetLinkMessage(linkedX64Build?.Mac, true), true)
+            .AddField("Windows ARM64", "-", true)
+            .AddField("Linux ARM64", GetLinkMessage(linkedArmBuild?.Linux, true), true)
+            .AddField("Mac Apple Silicon", GetLinkMessage(linkedArmBuild?.Mac, true), true);
     }
 
     private static string GetLinkMessage(BuildLink? link, bool simpleName)
     {
-        if (link is null or { Download: null or "" } or { Size: null or 0 })
+        if (link is not {Download.Length: >0, Size: >0})
             return "No link available";
 
         var text = new Uri(link.Download).Segments.Last();
@@ -203,19 +213,16 @@ internal static class UpdateInfoFormatter
 #endif
         });
 
-    public static TimeSpan? GetUpdateDelta(DateTime? latest, DateTime? current)
+    public static TimeSpan? GetUpdateDelta(DateTimeOffset? latest, DateTimeOffset? current)
     {
         if (latest.HasValue && current.HasValue)
             return latest - current;
         return null;
     }
 
-    public static TimeSpan? GetUpdateDelta(this UpdateInfo? updateInfo)
+    public static TimeSpan? GetUpdateDelta(this UpdateInfo updateInfo)
     {
-        if (updateInfo?.LatestBuild?.Datetime is string latestDateTimeStr
-            && DateTime.TryParse(latestDateTimeStr, out var latestDateTime)
-            && updateInfo.CurrentBuild?.Datetime is string dateTimeBuildStr
-            && DateTime.TryParse(dateTimeBuildStr, out var dateTimeBuild))
+        if (updateInfo is { LatestDatetime: DateTime latestDateTime, CurrentDatetime: DateTime dateTimeBuild })
             return latestDateTime - dateTimeBuild;
         return null;
     }
