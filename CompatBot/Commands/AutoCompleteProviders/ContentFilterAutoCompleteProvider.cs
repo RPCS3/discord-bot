@@ -16,6 +16,7 @@ public class ContentFilterAutoCompleteProvider: IAutoCompleteProvider
         IEnumerable<(int id, string trigger)> result;
         if (context.UserInput is not {Length: >0} prefix)
             result = db.Piracystring
+                .Where(f => !f.Disabled)
                 .OrderByDescending(e=>e.Id)
                 .Take(25)
                 .AsNoTracking()
@@ -25,9 +26,11 @@ public class ContentFilterAutoCompleteProvider: IAutoCompleteProvider
         {
             prefix = prefix.ToLowerInvariant();
             var prefixMatches = db.Piracystring
+                .Where(f => !f.Disabled)
                 .Where(i => i.Id.ToString().StartsWith(prefix) || i.String.StartsWith(prefix))
                 .Take(25);
             var substringMatches= db.Piracystring
+                .Where(f => !f.Disabled)
                 .Where(i => i.Id.ToString().Contains(prefix) || i.String.Contains(prefix))
                 .Take(50);
             result = prefixMatches
