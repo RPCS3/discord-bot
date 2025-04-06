@@ -166,10 +166,10 @@ internal static partial class Bot
             {
                 if (status is not null)
                     wdb.BotState.Remove(status);
-                await ctx.Client.UpdateStatusAsync(new()).ConfigureAwait(false);
+                await ctx.Client.UpdateStatusAsync(userStatus: DiscordUserStatus.Online).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Success} Bot status removed");
             }
             await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-            await ctx.RespondAsync($"{Config.Reactions.Success} Bot status removed");
         }
         catch (Exception e)
         {
