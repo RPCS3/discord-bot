@@ -441,11 +441,18 @@ internal sealed partial class ContentFilters
         if (!string.IsNullOrEmpty(error))
             result.AddField("Entry error", error);
 
+        var filterValidationRaw = filter.ValidatingRegex ?? "";
+        var quoting = "`";
+        if (filterValidationRaw.Contains('`'))
+            quoting = "``";
+        else if (filterValidationRaw is not { Length: > 0 })
+            quoting = "";
+
         var validTrigger = string.IsNullOrEmpty(filter.String) || filter.String.Length < Config.MinimumPiracyTriggerLength ? "⚠️ " : "";
         result.AddFieldEx(validTrigger + "Trigger", filter.String, highlight == field++, true)
             .AddFieldEx("Context", filter.Context.ToString(), highlight == field++, true)
             .AddFieldEx("Actions", filter.Actions.ToFlagsString(), highlight == field++, true)
-            .AddFieldEx("Validation", filter.ValidatingRegex?.Trim(EmbedPager.MaxFieldLength) ?? "", highlight == field++, true);
+            .AddFieldEx("Validation", $"{quoting}{filterValidationRaw.Trim(EmbedPager.MaxFieldLength-(quoting.Length*2))}{quoting}", highlight == field++, true);
         if (filter.Actions.HasFlag(FilterAction.SendMessage))
             result.AddFieldEx("Message", filter.CustomMessage?.Trim(EmbedPager.MaxFieldLength) ?? "", highlight == field, true);
         field++;
