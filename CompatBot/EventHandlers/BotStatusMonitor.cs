@@ -13,9 +13,11 @@ internal static class BotStatusMonitor
             var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
             var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
             var msg = txt?.Value;
-            if (Enum.TryParse(status?.Value ?? "Watching", true, out DiscordActivityType activity)
-                && !string.IsNullOrEmpty(msg))
-                await client.UpdateStatusAsync(new DiscordActivity(msg, activity), DiscordUserStatus.Online).ConfigureAwait(false);
+            if (Enum.TryParse<DiscordActivityType>(status?.Value ?? "Watching", true, out var activity)
+                && msg is {Length: >0})
+                await client.UpdateStatusAsync(new(msg, activity), DiscordUserStatus.Online).ConfigureAwait(false);
+            else
+                await client.UpdateStatusAsync(userStatus: DiscordUserStatus.Online).ConfigureAwait(false);
         }
         catch (Exception e)
         {
