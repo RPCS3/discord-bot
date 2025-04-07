@@ -359,7 +359,7 @@ internal sealed partial class ContentFilters
             }
 
             await wdb.SaveChangesAsync().ConfigureAwait(false);
-            var resultEmbed = FormatFilter(filter).WithTitle("Created a new content filter #" + filter.Id);
+            var resultEmbed = FormatFilter(filter).WithTitle("Updated content filter #" + filter.Id);
             await ctx.RespondAsync(resultEmbed, ephemeral: ephemeral).ConfigureAwait(false);
 
             var member = ctx.Member ?? await ctx.Client.GetMemberAsync(ctx.User).ConfigureAwait(false);
@@ -367,7 +367,7 @@ internal sealed partial class ContentFilters
                 $"{member?.GetMentionWithNickname()} updated content filter #{filter.Id}: `{filter.String.Sanitize()}`";
             if (!string.IsNullOrEmpty(filter.ValidatingRegex))
                 reportMsg += $"\nValidation: `{filter.ValidatingRegex}`";
-            await ctx.Client.ReportAsync("🆙 Content filter created", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
+            await ctx.Client.ReportAsync("🆙 Content filter updated", reportMsg, null, ReportSeverity.Low).ConfigureAwait(false);
         }
         ContentFilter.RebuildMatcher();
     }
