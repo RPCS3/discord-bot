@@ -62,7 +62,7 @@ internal static partial class ProductCodeLookup
                                 DiscordButtonStyle.Secondary,
                                 $"{GlobalButtonHandler.ReplaceWithUpdatesPrefix}{result.code}",
                                 "How to check for updates",
-                                emoji: new(DiscordEmoji.FromUnicode("ℹ️"))
+                                emoji: new(DiscordEmoji.FromUnicode("❓"))
                             )
                         );
                     await DiscordMessageExtensions.UpdateOrCreateMessageAsync(null, channel, messageBuilder).ConfigureAwait(false);
