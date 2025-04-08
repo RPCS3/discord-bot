@@ -37,8 +37,6 @@ internal static partial class LogParserResult
         TryGetRpcs3Version(items, out var buildVersion);
         var supportedGpu = string.IsNullOrEmpty(items["rsx_unsupported_gpu"]) && items["supported_gpu"] != DisabledMark;
         var unsupportedGpuDriver = false;
-        if (Config.Colors.CompatStatusNothing.Equals(builder.Color.Value) || Config.Colors.CompatStatusLoadable.Equals(builder.Color.Value))
-            notes.Add("❌ This game doesn't work on the emulator yet");
         if (items["failed_to_decrypt"] != null)
             notes.Add("❌ Failed to decrypt game content, license file might be corrupted");
         if (items["failed_to_boot"] != null)
