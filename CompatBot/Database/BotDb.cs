@@ -38,7 +38,7 @@ internal class BotDb: DbContext
         else
             Interlocked.Increment(ref openReadCount);
         var st = new System.Diagnostics.StackTrace().GetCaller<BotDb>();
-        Config.Log.Trace($"{nameof(BotDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
+        Config.Log.Debug($"{nameof(BotDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
 //#endif
     }
 
@@ -97,7 +97,7 @@ internal class BotDb: DbContext
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Trace($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
 #endif
     }
 
@@ -110,7 +110,7 @@ internal class BotDb: DbContext
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Trace($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
 #endif
     }
 }

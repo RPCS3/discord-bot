@@ -25,7 +25,7 @@ internal class HardwareDb : DbContext
         else
             Interlocked.Increment(ref openReadCount);
         var st = new System.Diagnostics.StackTrace().GetCaller<HardwareDb>();
-        Config.Log.Trace($"{nameof(HardwareDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
+        Config.Log.Debug($"{nameof(HardwareDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
 //#endif
     }
 
@@ -61,7 +61,7 @@ internal class HardwareDb : DbContext
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Trace($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
 #endif
     }
 
@@ -74,7 +74,7 @@ internal class HardwareDb : DbContext
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Trace($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
 #endif
     }
 }
