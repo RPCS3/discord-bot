@@ -32,7 +32,7 @@ internal class ThumbnailDb : DbContext
         else
             Interlocked.Increment(ref openReadCount);
         var st = new System.Diagnostics.StackTrace().GetCaller<ThumbnailDb>();
-        Config.Log.Trace($"{nameof(ThumbnailDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
+        Config.Log.Debug($"{nameof(ThumbnailDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
 //#endif
     }
 
@@ -80,7 +80,7 @@ internal class ThumbnailDb : DbContext
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Trace($"{nameof(ThumbnailDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(ThumbnailDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
 #endif
     }
 
@@ -93,7 +93,7 @@ internal class ThumbnailDb : DbContext
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Trace($"{nameof(ThumbnailDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(ThumbnailDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
 #endif
     }
 }
