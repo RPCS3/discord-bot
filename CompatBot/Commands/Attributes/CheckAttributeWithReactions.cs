@@ -12,13 +12,16 @@ internal abstract class CheckAttributeWithReactions(
 }
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
-internal class RequiresBotModRoleAttribute(): CheckAttributeWithReactions(reactOnFailure: Config.Reactions.Denied);
-
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
 internal class RequiresBotSudoerRoleAttribute(): CheckAttributeWithReactions(reactOnFailure: Config.Reactions.Denied);
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
-internal class RequiresSupporterRoleAttribute(): CheckAttributeWithReactions(reactOnFailure: Config.Reactions.Denied);
+internal class RequiresBotModRoleAttribute(): CheckAttributeWithReactions(reactOnFailure: Config.Reactions.Denied);
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
 internal class RequiresWhitelistedRoleAttribute(): CheckAttributeWithReactions(reactOnFailure: Config.Reactions.Denied);
+
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
+internal class RequiresSmartlistedRoleAttribute(): CheckAttributeWithReactions(reactOnFailure: Config.Reactions.Denied);
+
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
+internal class RequiresSupporterRoleAttribute(): CheckAttributeWithReactions(reactOnFailure: Config.Reactions.Denied);
