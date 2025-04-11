@@ -59,7 +59,7 @@ internal static class MessageMenuCommands
     }
 
     // non-whitenames can use these
-    [Command("👮 Report to mods"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    [Command("👮 Report to mods"), RequiresSupporterRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask Report(MessageCommandContext ctx, DiscordMessage message)
     {
         try
@@ -111,7 +111,7 @@ internal static class MessageMenuCommands
         }
     }
 
-    [Command("🔍 Analyze log"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    [Command("🔍 Analyze log"), RequiresSupporterRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask Reanalyze(MessageCommandContext ctx, DiscordMessage message)
     {
         try
@@ -160,7 +160,7 @@ internal static class MessageMenuCommands
     */
   
     // only bot mods can use this
-    [Command("👎 Toggle bad update"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    [Command("👎 Toggle bad update"), RequiresSmartlistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask BadUpdate(MessageCommandContext ctx, DiscordMessage message)
     {
         if (message.Embeds is not [DiscordEmbed embed]
