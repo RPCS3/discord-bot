@@ -247,12 +247,10 @@ internal static partial class Misc
             Thumbnail? productCode;
             await using (var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false))
             {
-                await using var _ = db.ConfigureAwait(false);
                 var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
                 if (count is 0)
                 {
-                    await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true)
-                        .ConfigureAwait(false);
+                    await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true).ConfigureAwait(false);
                     return;
                 }
 
@@ -261,9 +259,7 @@ internal static partial class Misc
                 productCode = await db.Thumbnail.Skip(tmpRng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
                 if (productCode is null)
                 {
-                    await ctx.RespondAsync(
-                        $"{Config.Reactions.Failure} Sorry, there's something wrong with my brains today. Try again or something.",
-                        ephemeral: true).ConfigureAwait(false);
+                    await ctx.RespondAsync($"{Config.Reactions.Failure} Sorry, there's something wrong with my brains today. Try again or something.", ephemeral: true).ConfigureAwait(false);
                     return;
                 }
             }
