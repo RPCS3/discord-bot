@@ -256,7 +256,11 @@ internal static partial class Misc
 
                 int tmpRng;
                 lock (rng) tmpRng = rng.Next(count);
-                productCode = await db.Thumbnail.Skip(tmpRng).Take(1).FirstOrDefaultAsync().ConfigureAwait(false);
+                productCode = await db.Thumbnail
+                    .AsNoTracking()
+                    .Skip(tmpRng)
+                    .FirstOrDefaultAsync()
+                    .ConfigureAwait(false);
                 if (productCode is null)
                 {
                     await ctx.RespondAsync($"{Config.Reactions.Failure} Sorry, there's something wrong with my brains today. Try again or something.", ephemeral: true).ConfigureAwait(false);
