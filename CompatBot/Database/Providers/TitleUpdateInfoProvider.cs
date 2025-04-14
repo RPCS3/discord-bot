@@ -11,35 +11,49 @@ public static class TitleUpdateInfoProvider
 
     public static async ValueTask<TitlePatch?> GetAsync(string? productId, CancellationToken cancellationToken)
         => await GetCachedAsync(productId, false).ConfigureAwait(false)
-           ?? await GetFromApiAsync(productId, cancellationToken).ConfigureAwait(false);
+           ?? await GetFromApiAsync(productId, cancellationToken).ConfigureAwait(false)
+           ?? await GetCachedAsync(productId, true).ConfigureAwait(false);
 
     private static async ValueTask<TitlePatch?> GetFromApiAsync(string? productId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(productId))
-            return default;
+            return null;
 
         productId = productId.ToUpper();
-        var (update, xml) = await Client.GetTitleUpdatesAsync(productId, cancellationToken).ConfigureAwait(false);
-        if (xml is {Length: > 10})
+        try
         {
-            var xmlChecksum = xml.GetStableHash();
-            await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
-            var updateInfo = wdb.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
-            if (updateInfo is null)
-                wdb.GameUpdateInfo.Add(new() {ProductCode = productId, MetaHash = xmlChecksum, MetaXml = xml, Timestamp = DateTime.UtcNow.Ticks});
-            else if (updateInfo.MetaHash != xmlChecksum && update?.Tag?.Packages is {Length: >0})
+            using var cts = new CancellationTokenSource(5_000);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token);
+            var (update, xml) = await Client.GetTitleUpdatesAsync(productId, linkedCts.Token).ConfigureAwait(false);
+            if (xml is { Length: > 10 })
             {
-                updateInfo.MetaHash = xmlChecksum;
-                updateInfo.MetaXml = xml;
-                updateInfo.Timestamp = DateTime.UtcNow.Ticks;
+                var xmlChecksum = xml.GetStableHash();
+                await using var wdb = await ThumbnailDb.OpenWriteAsync().ConfigureAwait(false);
+                var updateInfo = wdb.GameUpdateInfo.FirstOrDefault(ui => ui.ProductCode == productId);
+                if (updateInfo is null)
+                    wdb.GameUpdateInfo.Add(new()
+                    {
+                        ProductCode = productId, MetaHash = xmlChecksum, MetaXml = xml,
+                        Timestamp = DateTime.UtcNow.Ticks
+                    });
+                else if (updateInfo.MetaHash != xmlChecksum && update?.Tag?.Packages is { Length: > 0 })
+                {
+                    updateInfo.MetaHash = xmlChecksum;
+                    updateInfo.MetaXml = xml;
+                    updateInfo.Timestamp = DateTime.UtcNow.Ticks;
+                }
+                else if (updateInfo.MetaHash == xmlChecksum)
+                    updateInfo.Timestamp = DateTime.UtcNow.Ticks;
+                await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
-            else if (updateInfo.MetaHash == xmlChecksum)
-                updateInfo.Timestamp = DateTime.UtcNow.Ticks;
-            await wdb.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            if (update is { Tag.Packages.Length: > 0 })
+                return update;
         }
-        if (update is not {Tag.Packages.Length: >0})
-            return await GetCachedAsync(productId, true).ConfigureAwait(false);
-        return update;
+        catch (Exception e)
+        {
+            Config.Log.Warn(e, "Failed to get updates information from PSN API");
+        }
+        return null;
     }
 
     private static async ValueTask<TitlePatch?> GetCachedAsync(string? productId, bool returnStale = false)
