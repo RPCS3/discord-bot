@@ -245,10 +245,11 @@ internal static partial class Misc
         [Command("game"), Description("Get random game")]
         public static async ValueTask Game(
             SlashCommandContext ctx,
-            [Description("Only pick from titles with specified compatibility status. Default is any"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "playable"
+            [Description("Only pick from titles with specified compatibility status. Default is any"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "any"
         )
         {
             var ephemeral = !ctx.Channel.IsSpamChannel();
+            await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
             Thumbnail? productCode;
             var (exact, s) = Utils.Extensions.Converters.ParseStatus(status);
             await using (var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false))
@@ -260,7 +261,7 @@ internal static partial class Misc
                     .ConfigureAwait(false);
                 if (count is 0)
                 {
-                    await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true).ConfigureAwait(false);
+                    await ctx.RespondAsync("Sorry, there are no games to pick from", ephemeral: true).ConfigureAwait(false);
                     return;
                 }
 
