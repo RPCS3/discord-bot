@@ -14,7 +14,7 @@ internal static partial class CompatList
         [Description("Top game lists based on Metacritic scores and compatibility status")]
         public static async ValueTask Show(SlashCommandContext ctx,
             [Description("Number of entries in the list")] int number = 10,
-            [Description("Filter by compatibility status"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "any",
+            [Description("Filter by compatibility status"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "playable",
             [Description("Listing type"), SlashChoiceProvider<ScoreTypeChoiceProvider>] string type = "both")
         {
             var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
