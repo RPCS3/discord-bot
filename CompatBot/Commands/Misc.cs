@@ -1,9 +1,11 @@
 ﻿using System.Net.Http;
 using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
+using CompatBot.Commands.ChoiceProviders;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
+using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.TextCommands;
 using HomoglyphConverter;
 using Microsoft.EntityFrameworkCore;
@@ -241,13 +243,21 @@ internal static partial class Misc
     internal static class Rng
     {
         [Command("game"), Description("Get random game")]
-        public static async ValueTask Game(SlashCommandContext ctx)
+        public static async ValueTask Game(
+            SlashCommandContext ctx,
+            [Description("Only pick from titles with specified compatibility status"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "playable"
+        )
         {
             var ephemeral = !ctx.Channel.IsSpamChannel();
             Thumbnail? productCode;
+            var (exact, s) = Utils.Extensions.Converters.ParseStatus(status);
             await using (var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false))
             {
-                var count = await db.Thumbnail.CountAsync().ConfigureAwait(false);
+                var count = await db.Thumbnail
+                    .AsNoTracking()
+                    .WithStatus(s, exact)
+                    .CountAsync()
+                    .ConfigureAwait(false);
                 if (count is 0)
                 {
                     await ctx.RespondAsync("Sorry, I have no information about a single game yet", ephemeral: true).ConfigureAwait(false);
@@ -258,6 +268,7 @@ internal static partial class Misc
                 lock (rng) tmpRng = rng.Next(count);
                 productCode = await db.Thumbnail
                     .AsNoTracking()
+                    .WithStatus(s, exact)
                     .Skip(tmpRng)
                     .FirstOrDefaultAsync()
                     .ConfigureAwait(false);
