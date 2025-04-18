@@ -37,14 +37,14 @@ internal static class Converters
 		return new Rgba32(r.R, r.G, r.B, a);
 	}
 	
-	public static (bool exact, CompatStatus status) ParseStatus(string status)
+	public static (bool exact, CompatStatus? status) ParseStatus(string status)
 	{
 		status = status.ToLowerInvariant();
-		var exactStatus = status.EndsWith("only");
-		if (exactStatus)
+		var exact = status.EndsWith("only");
+		if (exact)
 			status = status[..^4];
-		if (!Enum.TryParse<CompatStatus>(status, true, out var s))
-			s = CompatStatus.Playable;
-		return (exactStatus, s);
+		if (Enum.TryParse<CompatStatus>(status, true, out var s))
+			return (exact, s);
+		return (false, null);
 	}
 }
