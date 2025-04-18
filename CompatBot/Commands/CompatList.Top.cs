@@ -1,6 +1,7 @@
 ﻿using CompatApiClient.Utils;
 using CompatBot.Commands.ChoiceProviders;
 using CompatBot.Database;
+using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
@@ -19,22 +20,15 @@ internal static partial class CompatList
             var ephemeral = !ctx.Channel.IsSpamChannel() && !ctx.Channel.IsOfftopicChannel();
             await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
             
-            status = status.ToLowerInvariant();
             type = type.ToLowerInvariant();
             number = number.Clamp(1, 100);
-            var exactStatus = status.EndsWith("only");
-            if (exactStatus)
-                status = status[..^4];
-            if (!Enum.TryParse(status, true, out CompatStatus s))
-                s = CompatStatus.Playable;
-
+            var (exactStatus, s) = Utils.Extensions.Converters.ParseStatus(status);
             await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
-            var queryBase = db.Thumbnail.AsNoTracking();
-            if (exactStatus)
-                queryBase = queryBase.Where(g => g.CompatibilityStatus == s);
-            else
-                queryBase = queryBase.Where(g => g.CompatibilityStatus >= s);
-            queryBase = queryBase.Where(g => g.Metacritic != null).Include(t => t.Metacritic);
+            var queryBase = db.Thumbnail
+                .AsNoTracking()
+                .WithStatus(s, exactStatus)
+                .Where(g => g.Metacritic != null)
+                .Include(t => t.Metacritic);
             var query = type switch
             {
                 "critic" => queryBase.Where(t => t.Metacritic!.CriticScore > 0).AsEnumerable().Select(t =>

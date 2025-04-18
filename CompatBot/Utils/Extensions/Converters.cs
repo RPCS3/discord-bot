@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using CompatBot.Database;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.ColorSpaces;
 using SixLabors.ImageSharp.ColorSpaces.Conversion;
 using SixLabors.ImageSharp.PixelFormats;
@@ -34,5 +35,16 @@ internal static class Converters
 		h = h < 180 ? h + 180 : h - 180;
 		var r = ColorSpaceConverter.ToRgb(new Hsv(h, hsb.S, hsb.V));
 		return new Rgba32(r.R, r.G, r.B, a);
+	}
+	
+	public static (bool exact, CompatStatus status) ParseStatus(string status)
+	{
+		status = status.ToLowerInvariant();
+		var exactStatus = status.EndsWith("only");
+		if (exactStatus)
+			status = status[..^4];
+		if (!Enum.TryParse<CompatStatus>(status, true, out var s))
+			s = CompatStatus.Playable;
+		return (exactStatus, s);
 	}
 }
