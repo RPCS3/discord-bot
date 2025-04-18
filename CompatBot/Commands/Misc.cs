@@ -245,7 +245,7 @@ internal static partial class Misc
         [Command("game"), Description("Get random game")]
         public static async ValueTask Game(
             SlashCommandContext ctx,
-            [Description("Only pick from titles with specified compatibility status"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "playable"
+            [Description("Only pick from titles with specified compatibility status. Default is any"), SlashChoiceProvider<CompatListStatusChoiceProvider>] string status = "playable"
         )
         {
             var ephemeral = !ctx.Channel.IsSpamChannel();
