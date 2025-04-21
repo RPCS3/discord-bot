@@ -29,7 +29,7 @@ internal static class TitlePatchFormatter
                 embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxFieldTitleLength);
             embedBuilder.Description = $"""
                 ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}.
-                👍 You can use tools such as [rusty-psn](https://github.com/RainbowCookie32/rusty-psn/releases/latest) or [PySN](https://github.com/AphelionWasTaken/PySN/releases/latest) for mass download of all updates.
+                ⏩ You can use tools such as [rusty-psn](https://github.com/RainbowCookie32/rusty-psn/releases/latest) or [PySN](https://github.com/AphelionWasTaken/PySN/releases/latest) for mass download of all updates.
 
                 ⚠️ You **must** install listed updates in order, starting with the first one. You **can not** skip intermediate versions.
                 """;
