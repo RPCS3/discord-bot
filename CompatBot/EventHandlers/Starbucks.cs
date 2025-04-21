@@ -117,6 +117,8 @@ internal static class Starbucks
                 await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
             if (emoji == Config.Reactions.ShutUp && !isBacklog)
                 await ShutupAsync(client, user, message).ConfigureAwait(false);
+            if (emoji == Config.Reactions.BadUpdate && !isBacklog)
+                await BadUpdateAsync(client, user, message, emoji).ConfigureAwait(false);
             await CheckGameFansAsync(client, channel, message).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -173,6 +175,59 @@ internal static class Starbucks
             return;
 
         await message.DeleteAsync().ConfigureAwait(false);
+    }
+
+    private static async ValueTask BadUpdateAsync(DiscordClient client, DiscordUser user, DiscordMessage message, DiscordEmoji emoji)
+    {
+        if (message.Channel?.Id != Config.BotChannelId)
+            return;
+
+        if (!await user.IsSmartlistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
+            return;
+
+        await ToggleBadUpdateAnnouncementAsync(message).ConfigureAwait(false);
+        try
+        {
+            await message.DeleteReactionAsync(emoji, user).ConfigureAwait(false);
+        }
+        catch { }
+    }
+
+    internal static async ValueTask ToggleBadUpdateAnnouncementAsync(DiscordMessage message)
+    {
+        if (message.Embeds is not [DiscordEmbed embed])
+            return;
+        
+        var result = new DiscordEmbedBuilder(embed);
+        const string warningTitle = "Warning!";
+        if (embed.Color?.Value == Config.Colors.UpdateStatusGood.Value)
+        {
+            result = result.WithColor(Config.Colors.UpdateStatusBad);
+            result.ClearFields();
+            var warned = false;
+            foreach (var f in embed.Fields!)
+            {
+                if (!warned)
+                {
+                    result.AddField(warningTitle, "This build is known to have severe problems, please avoid downloading.");
+                    warned = true;
+                }
+                result.AddField(f.Name!, f.Value!, f.Inline);
+            }
+        }
+        else if (embed.Color?.Value == Config.Colors.UpdateStatusBad.Value)
+        {
+            result = result.WithColor(Config.Colors.UpdateStatusGood);
+            result.ClearFields();
+            foreach (var f in embed.Fields!)
+            {
+                if (f.Name is warningTitle)
+                    continue;
+
+                result.AddField(f.Name!, f.Value!, f.Inline);
+            }
+        }
+        await message.UpdateOrCreateMessageAsync(message.Channel!, embed: result).ConfigureAwait(false);
     }
 
     private static async ValueTask CheckGameFansAsync(DiscordClient client, DiscordChannel channel, DiscordMessage message)

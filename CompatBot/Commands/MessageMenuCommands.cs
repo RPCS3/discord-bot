@@ -160,6 +160,7 @@ internal static class MessageMenuCommands
     */
   
     // only bot mods can use this
+    /*
     [Command("👎 Toggle bad update"), RequiresSmartlistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask BadUpdate(MessageCommandContext ctx, DiscordMessage message)
     {
@@ -169,37 +170,9 @@ internal static class MessageMenuCommands
             await ctx.RespondAsync($"{Config.Reactions.Failure} Invalid update announcement message", ephemeral: true).ConfigureAwait(false);
             return;
         }
-
-        var result = new DiscordEmbedBuilder(embed);
-        const string warningTitle = "Warning!";
-        if (embed.Color?.Value == Config.Colors.UpdateStatusGood.Value)
-        {
-            result = result.WithColor(Config.Colors.UpdateStatusBad);
-            result.ClearFields();
-            var warned = false;
-            foreach (var f in embed.Fields!)
-            {
-                if (!warned && f.Name!.EndsWith("download"))
-                {
-                    result.AddField(warningTitle, "This build is known to have severe problems, please avoid downloading.");
-                    warned = true;
-                }
-                result.AddField(f.Name!, f.Value!, f.Inline);
-            }
-        }
-        else if (embed.Color?.Value == Config.Colors.UpdateStatusBad.Value)
-        {
-            result = result.WithColor(Config.Colors.UpdateStatusGood);
-            result.ClearFields();
-            foreach (var f in embed.Fields!)
-            {
-                if (f.Name is warningTitle)
-                    continue;
-
-                result.AddField(f.Name!, f.Value!, f.Inline);
-            }
-        }
-        await message.UpdateOrCreateMessageAsync(message.Channel!, embed: result).ConfigureAwait(false);
+        
+        await Starbucks.ToggleBadUpdateAnnouncementAsync(message).ConfigureAwait(false);
         await ctx.RespondAsync($"{Config.Reactions.Success} Done", ephemeral: true).ConfigureAwait(false);
     }
+    */
 }
