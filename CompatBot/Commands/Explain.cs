@@ -326,7 +326,7 @@ internal static class Explain
             msg += $"`{term}`";
         }
         await wdb.SaveChangesAsync().ConfigureAwait(false);
-        await ctx.RespondAsync(msg, ephemeral: true).ConfigureAwait(false);
+        await ctx.RespondAsync(msg, ephemeral: false).ConfigureAwait(false);
     }
 
     [Command("list")]
