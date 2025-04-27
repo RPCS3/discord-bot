@@ -126,14 +126,20 @@ internal static class ContentFilter
                 return true;
         }
 #endif
+
+        var content = new StringBuilder();
         
-        if (message.Reference is {} refMsg)
+        DumpMessageContent(message, ref content);
+        if (message.Reference is {Type: DiscordMessageReferenceType.Forward} refMsg)
         {
             try
             {
                 var msg = await client.GetMessageAsync(refMsg.Channel, refMsg.Message.Id).ConfigureAwait(false);
                 if (msg is not null)
-                    message = msg;
+                {
+                    content.AppendLine();
+                    DumpMessageContent(msg, ref content);
+                }
             }
             catch (Exception e)
             {
@@ -141,24 +147,8 @@ internal static class ContentFilter
             }
         }
         
-        var content = new StringBuilder(message.Content).AppendLine();
-        if (message.Attachments is not null)
-            foreach (var attachment in message.Attachments.Where(a => a is not null))
-                content.AppendLine(attachment.FileName);
-        if (message.Embeds is not null)
-            foreach (var embed in message.Embeds.Where(e => e is not null))
-            {
-                content.AppendLine(embed.Title)
-                    .AppendLine(embed.Description);
-                if (embed.Fields is not null)
-                    foreach (var field in embed.Fields.Where(f => f is not null))
-                    {
-                        content.AppendLine(field.Name);
-                        content.AppendLine(field.Value);
-                    }
-            }
         var trigger = await FindTriggerAsync(FilterContext.Chat, content.ToString()).ConfigureAwait(false);
-        if (trigger == null)
+        if (trigger is null)
             return true;
 
         await PerformFilterActions(client, message, trigger, suppressActions).ConfigureAwait(false);
@@ -313,4 +303,24 @@ internal static class ContentFilter
            && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is { Success: true, Groups.Count: > 0 } m
             ? m.Groups[0].Value.Trim(256)
             : null;
+
+    private static void DumpMessageContent(DiscordMessage message, ref StringBuilder content)
+    {
+        if (content is {Length: >0})
+            content.AppendLine(message.Content);
+        foreach (var attachment in message.Attachments.Where(a => a.FileName is {Length: >0}))
+            content.AppendLine(attachment.FileName);
+        foreach (var embed in message.Embeds)
+        {
+            content.AppendLine(embed.Title).AppendLine(embed.Description);
+            if (embed.Fields is not { Count: > 0 })
+                continue;
+            
+            foreach (var field in embed.Fields)
+            {
+                content.AppendLine(field.Name);
+                content.AppendLine(field.Value);
+            }
+        }
+    }
 }
