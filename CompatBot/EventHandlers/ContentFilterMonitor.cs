@@ -16,10 +16,12 @@ internal static class ContentFilterMonitor
         var emoji = c.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
         Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Resolved emoji: {emoji}, reaction emoji: {e.Emoji}");
         if (e.Emoji != emoji)
+        {
+            Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Wrong emoji, skipping");
             return;
+        }
 
-        var message = await e.Channel.GetMessageCachedAsync(e.Message.Id).ConfigureAwait(false)
-                      ?? await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
-        await ContentFilter.IsClean(c, message).ConfigureAwait(false);
+        Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Message has content: {(e.Message is { Content.Length: >0 })}");
+        await ContentFilter.IsClean(c, e.Message).ConfigureAwait(false);
     }
 }
