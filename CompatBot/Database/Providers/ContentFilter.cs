@@ -323,7 +323,7 @@ internal static class ContentFilter
 
     private static void DumpMessageContent(DiscordMessage message, StringBuilder content)
     {
-        if (content is {Length: >0})
+        if (message.Content is {Length: >0})
             content.AppendLine(message.Content);
         foreach (var attachment in message.Attachments.Where(a => a.FileName is {Length: >0}))
             content.AppendLine(attachment.FileName);
