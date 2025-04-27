@@ -63,12 +63,12 @@ internal static class EmpathySimulationHandler
     public static Task OnMessageUpdated(DiscordClient _, MessageUpdatedEventArgs e) => Backtrack(e.Channel, e.MessageBefore, false);
     public static Task OnMessageDeleted(DiscordClient _, MessageDeletedEventArgs e) => Backtrack(e.Channel, e.Message, true);
 
-    private static async Task Backtrack(DiscordChannel channel, DiscordMessage message, bool removeFromQueue)
+    private static async Task Backtrack(DiscordChannel channel, DiscordMessage? message, bool removeFromQueue)
     {
         if (channel.IsPrivate)
             return;
 
-        if (message.Author == null)
+        if (message?.Author is null)
             return;
 
         if (message.Author.IsCurrent)
