@@ -21,21 +21,14 @@ internal static class ContentFilter
     public static ValueTask<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
     {
         if (str is not {Length: >0})
-        {
-            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] No content, skipping");
             return ValueTask.FromResult((Piracystring?)null);
-        }
 
         if (!filters.TryGetValue(ctx, out var matcher))
-        {
-            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] No matcher, skipping");
             return ValueTask.FromResult((Piracystring?)null);
-        }
 
         Piracystring? result = null;
         matcher?.ParseText(str, h =>
         {
-            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] Hit trigger `{str[h.Begin .. h.End]}`, validating using `{h.Value.ValidatingRegex}`");
             if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture))
             {
                 result = h.Value;
@@ -45,13 +38,11 @@ internal static class ContentFilter
             return true;
         });
 
-        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] No result, trying on clean content…");
         if (result is null && ctx == FilterContext.Chat)
         {
             str = str.StripInvisibleAndDiacritics();
             matcher?.ParseText(str, h =>
             {
-                Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] Hit trigger `{str[h.Begin .. h.End]}`, validating using `{h.Value.ValidatingRegex}`");
                 if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
                 {
                     result = h.Value;
@@ -137,37 +128,28 @@ internal static class ContentFilter
 #endif
 
         var content = new StringBuilder();
-        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Message length: {message.Content.Length}");
         DumpMessageContent(message, content);
-        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Dumped content length: {content.Length}");
         if (message.Reference is {Type: DiscordMessageReferenceType.Forward} refMsg)
         {
             try
             {
-                Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Message has a forwarded message, getting it…");
                 var msg = await client.GetMessageAsync(refMsg.Channel, refMsg.Message.Id).ConfigureAwait(false);
                 if (msg is not null)
                 {
-                    Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Forwarded message length: {msg.Content.Length}");
                     content.AppendLine();
                     DumpMessageContent(msg, content);
-                    Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Dumped content length: {content.Length}");
                 }
             }
             catch (Exception e)
             {
-                Config.Log.Warn(e, "Failed to get message reference content");
+                Config.Log.Warn(e, "Failed to get forwarded message");
             }
         }
         
         var trigger = await FindTriggerAsync(FilterContext.Chat, content.ToString()).ConfigureAwait(false);
         if (trigger is null)
-        {
-            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Nothing found");
             return true;
-        }
 
-        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Cleaning…");
         await PerformFilterActions(client, message, trigger, suppressActions).ConfigureAwait(false);
         return (trigger.Actions & ~suppressActions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
     }
