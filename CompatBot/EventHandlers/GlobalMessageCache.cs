@@ -70,7 +70,7 @@ internal static class GlobalMessageCache
         return Task.CompletedTask;
     }
 
-    internal static async Task<List<DiscordMessage>> GetMessagesCachedAsync(this DiscordChannel ch, int count = 100)
+    internal static ValueTask<List<DiscordMessage>> GetMessagesCachedAsync(this DiscordChannel ch, int count = 100)
     {
         if (!MessageQueue.TryGetValue(ch.Id, out var queue))
             lock (MessageQueue)
@@ -98,10 +98,10 @@ internal static class GlobalMessageCache
                     queue.AddRange(freshCopy.Concat(fetchedList).Distinct().Reverse());
                 }
         }
-        return result;
+        return ValueTask.FromResult(result);
     }
 
-    internal static async Task<List<DiscordMessage>> GetMessagesBeforeCachedAsync(this DiscordChannel ch, ulong msgId, int count = 100)
+    internal static ValueTask<List<DiscordMessage>> GetMessagesBeforeCachedAsync(this DiscordChannel ch, ulong msgId, int count = 100)
     {
         if (!MessageQueue.TryGetValue(ch.Id, out var queue))
             lock (MessageQueue)
@@ -115,7 +115,7 @@ internal static class GlobalMessageCache
         if (fetchCount > 0)
         {
             IReadOnlyList<DiscordMessage> fetchedList;
-            if (result.Any())
+            if (result.Count > 0)
             {
                 fetchedList = ch.GetMessagesBeforeAsync(result[0].Id, fetchCount).ToList();
                 if (queue.Count < Config.ChannelMessageHistorySize)
@@ -131,7 +131,16 @@ internal static class GlobalMessageCache
                 fetchedList = ch.GetMessagesBeforeAsync(msgId, fetchCount).ToList();
             result.AddRange(fetchedList);
         }
-        return result;
+        return ValueTask.FromResult(result);
+    }
 
+    internal static ValueTask<DiscordMessage?> GetMessageCachedAsync(this DiscordChannel ch, ulong msgId)
+    {
+        if (!MessageQueue.TryGetValue(ch.Id, out var queue))
+            lock (MessageQueue)
+                if (!MessageQueue.TryGetValue(ch.Id, out queue))
+                    MessageQueue[ch.Id] = queue = new(KeyGen);
+        lock(queue.SyncObj)
+            return ValueTask.FromResult(queue.FirstOrDefault(m => m.Id == msgId));
     }
 }
