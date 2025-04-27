@@ -14,14 +14,9 @@ internal static class ContentFilterMonitor
             return;
 
         var emoji = c.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
-        Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Resolved emoji: {emoji}, reaction emoji: {e.Emoji}");
         if (e.Emoji != emoji)
-        {
-            Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Wrong emoji, skipping");
             return;
-        }
 
-        Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Message has content: {(e.Message is { Content.Length: >0 })}");
         await ContentFilter.IsClean(c, e.Message).ConfigureAwait(false);
     }
 }
