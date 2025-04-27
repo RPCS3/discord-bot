@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using CompatBot.EventHandlers;
 using DSharpPlus.Commands.Converters;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
@@ -59,10 +60,12 @@ public static partial class CommandContextExtensions
             && ulong.TryParse(m.Groups["message"].Value, out var msgId)
             && ctx.Client.Guilds.TryGetValue(guildId, out var guild)
             && await guild.GetChannelAsync(channelId).ConfigureAwait(false) is DiscordChannel channel)
-            return await channel.GetMessageAsync(msgId);
+            return await channel.GetMessageCachedAsync(msgId).ConfigureAwait(false)
+                   ?? await channel.GetMessageAsync(msgId);
         return null;
     }
 
     public static async Task<DiscordMessage?> GetMessageAsync(this DiscordClient client, DiscordChannel channel, ulong messageId)
-        => await channel.GetMessageAsync(messageId).ConfigureAwait(false);
+        => await channel.GetMessageCachedAsync(messageId).ConfigureAwait(false)
+           ?? await channel.GetMessageAsync(messageId).ConfigureAwait(false);
 }

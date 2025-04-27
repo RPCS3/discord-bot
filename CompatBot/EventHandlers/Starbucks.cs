@@ -112,7 +112,8 @@ internal static class Starbucks
                 return;
 
             // in case it's not in cache and doesn't contain any info, including Author
-            message = await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
+            message = await channel.GetMessageCachedAsync(message.Id).ConfigureAwait(false)
+                      ?? await channel.GetMessageAsync(message.Id).ConfigureAwait(false);
             if (emoji == Config.Reactions.Starbucks)
                 await CheckMediaTalkAsync(client, channel, message, emoji).ConfigureAwait(false);
             if (emoji == Config.Reactions.ShutUp && !isBacklog)

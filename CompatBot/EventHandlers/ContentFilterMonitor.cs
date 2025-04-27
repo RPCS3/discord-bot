@@ -17,7 +17,8 @@ internal static class ContentFilterMonitor
         if (e.Emoji != emoji)
             return;
 
-        var message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
+        var message = await e.Channel.GetMessageCachedAsync(e.Message.Id).ConfigureAwait(false)
+                      ?? await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
         await ContentFilter.IsClean(c, message).ConfigureAwait(false);
     }
 }
