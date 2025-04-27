@@ -102,7 +102,7 @@ internal static class ContentFilter
 
     public static async ValueTask<bool> IsClean(DiscordClient client, DiscordMessage message)
     {
-        if (message.Channel.IsPrivate)
+        if (message.Channel?.IsPrivate ?? false)
             return true;
 
         /*
@@ -110,7 +110,7 @@ internal static class ContentFilter
             return true;
         */
 
-        if (message.Author.IsCurrent)
+        if (message.Author == client.CurrentUser)
             return true;
 
         var suppressActions = (FilterAction)0;

@@ -17,6 +17,17 @@ internal static class ContentFilterMonitor
         if (e.Emoji != emoji)
             return;
 
-        await ContentFilter.IsClean(c, e.Message).ConfigureAwait(false);
+        var message = e.Message;
+        if (message.Author is null)
+        {
+            Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Author is null, getting from full message cache…");
+            message = await e.Channel.GetMessageCachedAsync(e.Message.Id).ConfigureAwait(false);
+            if (message?.Author is null)
+            {
+                Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Cached message author is null, getting from full message…");
+                message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
+            }
+        }
+        await ContentFilter.IsClean(c, message).ConfigureAwait(false);
     }
 }
