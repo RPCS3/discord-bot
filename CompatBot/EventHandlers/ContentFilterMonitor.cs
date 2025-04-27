@@ -14,6 +14,7 @@ internal static class ContentFilterMonitor
             return;
 
         var emoji = c.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
+        Config.Log.Debug($"[{nameof(ContentFilterMonitor)}] Resolved emoji: {emoji}, reaction emoji: {e.Emoji}");
         if (e.Emoji != emoji)
             return;
 
