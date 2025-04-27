@@ -128,17 +128,21 @@ internal static class ContentFilter
 #endif
 
         var content = new StringBuilder();
-        
-        DumpMessageContent(message, ref content);
+        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Message length: {message.Content.Length}");
+        DumpMessageContent(message, content);
+        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Dumped content length: {content.Length}");
         if (message.Reference is {Type: DiscordMessageReferenceType.Forward} refMsg)
         {
             try
             {
+                Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Message has a forwarded message, getting it…");
                 var msg = await client.GetMessageAsync(refMsg.Channel, refMsg.Message.Id).ConfigureAwait(false);
                 if (msg is not null)
                 {
+                    Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Forwarded message length: {msg.Content.Length}");
                     content.AppendLine();
-                    DumpMessageContent(msg, ref content);
+                    DumpMessageContent(msg, content);
+                    Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Dumped content length: {content.Length}");
                 }
             }
             catch (Exception e)
@@ -149,8 +153,12 @@ internal static class ContentFilter
         
         var trigger = await FindTriggerAsync(FilterContext.Chat, content.ToString()).ConfigureAwait(false);
         if (trigger is null)
+        {
+            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Nothing found");
             return true;
+        }
 
+        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(IsClean)}] Cleaning…");
         await PerformFilterActions(client, message, trigger, suppressActions).ConfigureAwait(false);
         return (trigger.Actions & ~suppressActions & (FilterAction.IssueWarning | FilterAction.RemoveContent)) == 0;
     }
@@ -304,7 +312,7 @@ internal static class ContentFilter
             ? m.Groups[0].Value.Trim(256)
             : null;
 
-    private static void DumpMessageContent(DiscordMessage message, ref StringBuilder content)
+    private static void DumpMessageContent(DiscordMessage message, StringBuilder content)
     {
         if (content is {Length: >0})
             content.AppendLine(message.Content);
