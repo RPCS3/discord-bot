@@ -20,16 +20,23 @@ internal static class ContentFilter
 
     public static ValueTask<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
     {
-        if (string.IsNullOrEmpty(str))
+        if (str is not {Length: >0})
+        {
+            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] No content, skipping");
             return ValueTask.FromResult((Piracystring?)null);
+        }
 
         if (!filters.TryGetValue(ctx, out var matcher))
+        {
+            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] No matcher, skipping");
             return ValueTask.FromResult((Piracystring?)null);
+        }
 
         Piracystring? result = null;
         matcher?.ParseText(str, h =>
         {
-            if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
+            Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] Hit trigger `{str[h.Begin .. h.End]}`, validating using `{h.Value.ValidatingRegex}`");
+            if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture))
             {
                 result = h.Value;
                 Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of message string '{str}'");
@@ -38,11 +45,13 @@ internal static class ContentFilter
             return true;
         });
 
+        Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] No result, trying on clean content…");
         if (result is null && ctx == FilterContext.Chat)
         {
             str = str.StripInvisibleAndDiacritics();
             matcher?.ParseText(str, h =>
             {
+                Config.Log.Debug($"[{nameof(ContentFilter)}.{nameof(FindTriggerAsync)}] Hit trigger `{str[h.Begin .. h.End]}`, validating using `{h.Value.ValidatingRegex}`");
                 if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline))
                 {
                     result = h.Value;
