@@ -448,7 +448,7 @@ internal static partial class LogParserResult
             notes.Add("⚠️ `GPU Texture Scaling` is enabled, please disable");
         if (items["af_override"] is string af)
         {
-            if (isAppleGpu && af is "Auto")
+            if (isAppleGpu && af is not "Auto")
                 notes.Add("⚠️ `Anisotropic Filter` override is not supported on Apple GPUs, please use `Auto`");
             else if (af is "Disabled")
                 notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
