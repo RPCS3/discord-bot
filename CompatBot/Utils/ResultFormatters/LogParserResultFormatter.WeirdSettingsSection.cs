@@ -452,7 +452,7 @@ internal static partial class LogParserResult
                 notes.Add("⚠️ `Anisotropic Filter` override is not supported on Apple GPUs, please use `Auto`");
             else if (af is "Disabled")
                 notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
-            else if (af is not "auto" and not "16")
+            else if (af is not "Auto" and not "16")
                 notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
         }
 
