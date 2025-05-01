@@ -71,9 +71,9 @@ internal static partial class LogParserResult
                      && buildVersion >= IntelThreadSchedulerBuildVersion)
                 notes.Add("ℹ️ Changing `Thread Scheduler` option may or may not increase performance");
         }
+        var isAppleGpu = items["gpu_info"] is string gpuInfoApple && gpuInfoApple.Contains("Apple", StringComparison.OrdinalIgnoreCase);
         if (items["llvm_arch"] is string llvmArch)
             notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
-
         if (items["renderer"] == "D3D12")
             notes.Add("💢 Do **not** use DX12 renderer");
         if (items["renderer"] == "OpenGL"
@@ -187,14 +187,16 @@ internal static partial class LogParserResult
                                      && buildVersion < RdnaMsaaFixedVersion
                                      && RadeonRx5xxPattern().IsMatch(gpuInfo) // RX 590 is a thing 😔
                                      && !gpuInfo.Contains("RADV");
-        if (items["msaa"] == "Disabled")
+        if (items["msaa"] is "Disabled")
         {
-            if (!isWireframeBugPossible)
+            if (!isWireframeBugPossible && !isAppleGpu)
                 notes.Add("ℹ️ `Anti-aliasing` is disabled, which may result in visual artifacts");
         }
-        else if (items["msaa"] is not null and not "Disabled")
+        else if (items["msaa"] is not null)
         {
-            if (isWireframeBugPossible)
+            if (isAppleGpu)
+                notes.Add("⚠️ `Anti-aliasing` is not supported for Apple GPUs, please disable");
+            else if (isWireframeBugPossible)
                 notes.Add("⚠️ Please disable `Anti-aliasing` if you experience wireframe-like visual artifacts");
         }
 
@@ -239,9 +241,16 @@ internal static partial class LogParserResult
         }
         if (items["async_texture_streaming"] == EnabledMark)
         {
-            if (items["async_queue_scheduler"] == "Device")
-                notes.Add("⚠️ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
-            notes.Add("⚠️ If you experience visual artifacts, try disabling `Async Texture Streaming`");
+            if (isAppleGpu)
+            {
+                notes.Add("⚠️ `Async Texture Streaming` is not supported on Apple GPUs");
+            }
+            else
+            {
+                if (items["async_queue_scheduler"] == "Device")
+                    notes.Add("⚠️ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
+                notes.Add("⚠️ If you experience visual artifacts, try disabling `Async Texture Streaming`");
+            }
         }
             
         if (items["ppu_decoder"] is string ppuDecoder)
@@ -426,9 +435,11 @@ internal static partial class LogParserResult
             notes.Add("⚠️ `GPU Texture Scaling` is enabled, please disable");
         if (items["af_override"] is string af)
         {
-            if (af == "Disabled")
+            if (isAppleGpu && af is "Auto")
+                notes.Add("⚠️ `Anisotropic Filter` override is not supported on Apple GPUs, please use `Auto`");
+            else if (af is "Disabled")
                 notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
-            else if (af.ToLowerInvariant() != "auto" && af != "16")
+            else if (af is not "auto" and not "16")
                 notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
         }
 
@@ -465,7 +476,9 @@ internal static partial class LogParserResult
 
         if (items["mtrsx"] is EnabledMark)
         {
-            if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
+            if (isAppleGpu)
+                notes.Add("⚠️ `Multithreaded RSX` is not supported for Apple GPUs");
+            else if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
                 notes.Add("⚠️ `Multithreaded RSX` is enabled, please disable for this game");
             else if (threadCount < 6)
                 notes.Add("⚠️ `Multithreaded RSX` is enabled on a CPU with few threads");
