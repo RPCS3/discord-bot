@@ -457,7 +457,7 @@ internal static partial class LogParserResult
         }
 
         if (items["shader_mode"]?.Contains("Interpreter") is true && isAppleGpu)
-            notes.Add("⚠️ Interpreter shader mode is not supported on Apple GPUs, please use Async-only option");
+            notes.Add("⚠️ Interpreter `Shader Mode` is not supported on Apple GPUs, please use Async-only option");
         else if (items["shader_mode"] == "Interpreter only")
             notes.Add("⚠️ `Shader Interpreter Only` mode is not accurate and very demanding");
         else if (items["shader_mode"]?.StartsWith("Async") is false && !isAppleGpu)

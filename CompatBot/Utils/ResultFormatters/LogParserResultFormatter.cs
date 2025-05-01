@@ -651,6 +651,8 @@ internal static partial class LogParserResult
             items["shader_mode"] = "Async";
         else if (items["disable_async_shaders"] is EnabledMark or "true")
             items["shader_mode"] = "Recompiler only";
+        if (items["rsx_fifo_mode"] is string rsxfm && rsxfm.StartsWith('"') && rsxfm.EndsWith('"'))
+            items["rsx_fifo_mode"] = rsxfm[1..^1];
         if (items["cpu_preempt_count"] is "0")
             items["cpu_preempt_count"] = "Disabled";
 
