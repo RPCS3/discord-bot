@@ -277,6 +277,10 @@ internal partial class LogParser
     private static partial Regex UnsupportedDriverFeatures();
     [GeneratedRegex(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?\r?$", DefaultOptions)]
     private static partial Regex SwapchainMode();
+    [GeneratedRegex(@"RSX: \*\* Using (?<vk_ext>\w+?)\r?$", DefaultOptions)]
+    private static partial Regex VkExtensions();
+    [GeneratedRegex(@"RSX: \[CAPS\] Using (?<gl_ext>\w+?)\r?$", DefaultOptions)]
+    private static partial Regex GlExtensions();
     [GeneratedRegex(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*(Thread terminated due to fatal error: )?|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|·|$)", DefaultSingleLine)]
     private static partial Regex FatalError();
     [GeneratedRegex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions)]

@@ -71,18 +71,21 @@ internal static partial class LogParserResult
                      && buildVersion >= IntelThreadSchedulerBuildVersion)
                 notes.Add("ℹ️ Changing `Thread Scheduler` option may or may not increase performance");
         }
+        var isAppleGpu = items["gpu_info"] is string gpuInfoApple && gpuInfoApple.Contains("Apple", StringComparison.OrdinalIgnoreCase);
+        var canUseRelaxedZcull = items["renderer"] is not "Vulkan" || multiItems["vk_ext"].Contains("VK_EXT_depth_range_unrestricted");
         if (items["llvm_arch"] is string llvmArch)
             notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
-
-        if (items["renderer"] == "D3D12")
+        if (items["renderer"] is "D3D12")
             notes.Add("💢 Do **not** use DX12 renderer");
-        if (items["renderer"] == "OpenGL"
-            && items["supported_gpu"] == EnabledMark
+        if (items["renderer"] is "OpenGL"
+            && items["supported_gpu"] is EnabledMark
             && !GowHDIds.Contains(serial))
             notes.Add("⚠️ `Vulkan` is the recommended `Renderer`");
-        if (items["renderer"] == "Vulkan"
-            && items["supported_gpu"] == DisabledMark)
-            notes.Add("❌ Selected `Vulkan` device is not supported, please use `OpenGL` instead");
+        if (items["renderer"] is "Vulkan")
+        {
+            if (items["supported_gpu"] is DisabledMark)
+                notes.Add("❌ Selected `Vulkan` device is not supported, please use `OpenGL` instead");
+        }
         var selectedRes = items["resolution"];
         var selectedRatio = items["aspect_ratio"];
         if (!string.IsNullOrEmpty(selectedRes))
@@ -187,14 +190,16 @@ internal static partial class LogParserResult
                                      && buildVersion < RdnaMsaaFixedVersion
                                      && RadeonRx5xxPattern().IsMatch(gpuInfo) // RX 590 is a thing 😔
                                      && !gpuInfo.Contains("RADV");
-        if (items["msaa"] == "Disabled")
+        if (items["msaa"] is "Disabled")
         {
-            if (!isWireframeBugPossible)
+            if (!isWireframeBugPossible && !isAppleGpu)
                 notes.Add("ℹ️ `Anti-aliasing` is disabled, which may result in visual artifacts");
         }
-        else if (items["msaa"] is not null and not "Disabled")
+        else if (items["msaa"] is not null)
         {
-            if (isWireframeBugPossible)
+            if (isAppleGpu)
+                notes.Add("⚠️ `Anti-aliasing` is not supported for Apple GPUs, please disable");
+            else if (isWireframeBugPossible)
                 notes.Add("⚠️ Please disable `Anti-aliasing` if you experience wireframe-like visual artifacts");
         }
 
@@ -239,9 +244,16 @@ internal static partial class LogParserResult
         }
         if (items["async_texture_streaming"] == EnabledMark)
         {
-            if (items["async_queue_scheduler"] == "Device")
-                notes.Add("⚠️ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
-            notes.Add("⚠️ If you experience visual artifacts, try disabling `Async Texture Streaming`");
+            if (isAppleGpu)
+            {
+                notes.Add("⚠️ `Async Texture Streaming` is not supported on Apple GPUs");
+            }
+            else
+            {
+                if (items["async_queue_scheduler"] == "Device")
+                    notes.Add("⚠️ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
+                notes.Add("⚠️ If you experience visual artifacts, try disabling `Async Texture Streaming`");
+            }
         }
             
         if (items["ppu_decoder"] is string ppuDecoder)
@@ -324,14 +336,24 @@ internal static partial class LogParserResult
         if (items["cpu_blit"] is EnabledMark 
             && items["write_color_buffers"] is DisabledMark)
             notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
-        if (items["zcull"] is EnabledMark)
+
+        if (items["zcull_status"] is not null and not "Full" && !canUseRelaxedZcull)
+            notes.Add("⚠️ This GPU does not support `VK_EXT_depth_range_unrestricted` extension, please disable `Relaxed ZCull Sync`");
+        else if (items["zcull_status"] is "Disabled")
             notes.Add("⚠️ `ZCull Occlusion Queries` is disabled, which can result in visual artifacts");
         else if (items["relaxed_zcull"] is string relaxedZcull)
         {
-            if (relaxedZcull == EnabledMark && !KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
+            if (relaxedZcull is EnabledMark
+                && !KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
+            {
                 notes.Add("ℹ️ `Relaxed ZCull Sync` is enabled and can cause performance and visual issues");
-            else if (relaxedZcull == DisabledMark && KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
+            }
+            else if (relaxedZcull is DisabledMark
+                     && KnownGamesThatWorkWithRelaxedZcull.Contains(serial)
+                     && canUseRelaxedZcull)
+            {
                 notes.Add("ℹ️ Enabling `Relaxed ZCull Sync` for this game may improve performance");
+            }
         }
         if (!KnownFpsUnlockPatchIds.Contains(serial) || ppuPatches.Count == 0)
         {
@@ -426,15 +448,19 @@ internal static partial class LogParserResult
             notes.Add("⚠️ `GPU Texture Scaling` is enabled, please disable");
         if (items["af_override"] is string af)
         {
-            if (af == "Disabled")
+            if (isAppleGpu && af is "Auto")
+                notes.Add("⚠️ `Anisotropic Filter` override is not supported on Apple GPUs, please use `Auto`");
+            else if (af is "Disabled")
                 notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
-            else if (af.ToLowerInvariant() != "auto" && af != "16")
+            else if (af is not "auto" and not "16")
                 notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
         }
 
-        if (items["shader_mode"] == "Interpreter only")
+        if (items["shader_mode"]?.Contains("Interpreter") is true && isAppleGpu)
+            notes.Add("⚠️ Interpreter `Shader Mode` is not supported on Apple GPUs, please use Async-only option");
+        else if (items["shader_mode"] == "Interpreter only")
             notes.Add("⚠️ `Shader Interpreter Only` mode is not accurate and very demanding");
-        else if (items["shader_mode"]?.StartsWith("Async") is false)
+        else if (items["shader_mode"]?.StartsWith("Async") is false && !isAppleGpu)
             notes.Add("❔ Async shader compilation is disabled");
         if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
             && int.TryParse(driverRecoveryTimeout, out var drtValue)
@@ -465,7 +491,9 @@ internal static partial class LogParserResult
 
         if (items["mtrsx"] is EnabledMark)
         {
-            if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
+            if (isAppleGpu)
+                notes.Add("⚠️ `Multithreaded RSX` is not supported for Apple GPUs");
+            else if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
                 notes.Add("⚠️ `Multithreaded RSX` is enabled, please disable for this game");
             else if (threadCount < 6)
                 notes.Add("⚠️ `Multithreaded RSX` is enabled on a CPU with few threads");
@@ -486,19 +514,21 @@ internal static partial class LogParserResult
         {
             if (buildVersion is not null && buildVersion < CubebBuildVersion)
             {
-                if (items["os_type"] is "Windows" && !audioBackend.Equals("XAudio2", StringComparison.InvariantCultureIgnoreCase))
+                if (items["os_type"] is "Windows" && !audioBackend.Equals("XAudio2", StringComparison.OrdinalIgnoreCase))
                     notes.Add("⚠️ Please use `XAudio2` as the audio backend for this build");
                 else if (items["os_type"] == "Linux"
-                         && !audioBackend.Equals("OpenAL", StringComparison.InvariantCultureIgnoreCase)
-                         && !audioBackend.Equals("FAudio", StringComparison.InvariantCultureIgnoreCase))
+                         && !audioBackend.Equals("OpenAL", StringComparison.OrdinalIgnoreCase)
+                         && !audioBackend.Equals("FAudio", StringComparison.OrdinalIgnoreCase))
                     notes.Add("ℹ️ `FAudio` and `OpenAL` are the recommended audio backends for this build");
             }
             else
             {
-                if (items["os_type"] is "Windows" or "Linux" && !audioBackend.Equals("Cubeb", StringComparison.InvariantCultureIgnoreCase))
+                if (items["os_type"] is "Windows" or "Linux"
+                    && !audioBackend.Equals("Cubeb", StringComparison.OrdinalIgnoreCase)
+                    && !audioBackend.Equals("XAudio2", StringComparison.OrdinalIgnoreCase))
                     notes.Add("⚠️ Please use `Cubeb` as the audio backend");
             }
-            if (audioBackend.Equals("null", StringComparison.InvariantCultureIgnoreCase))
+            if (audioBackend.Equals("null", StringComparison.OrdinalIgnoreCase))
                 notes.Add("⚠️ `Audio backend` is set to `null`");
         }
 
