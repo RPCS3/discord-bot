@@ -398,7 +398,7 @@ internal static partial class Events
         return score > 0.5 ? name : eventName;
     }
 
-    private static async Task<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration, bool react = true)
+    private static async ValueTask<TimeSpan?> TryParseTimeSpanAsync(CommandContext ctx, string duration, bool react = true)
     {
         var d = Duration().Match(duration);
         if (!d.Success)

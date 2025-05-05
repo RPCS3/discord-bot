@@ -96,7 +96,7 @@ public static class InteractivityExtensions
                 if (reaction is not null)
                     await reaction.Interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredMessageUpdate).ConfigureAwait(false);
             }
-            if (text != null && !message.Channel.IsPrivate)
+            if (text is not null && !message.Channel.IsPrivate)
                 try
                 {
                     DeletedMessagesMonitor.RemovedByBotCache.Set(text.Id, true, DeletedMessagesMonitor.CacheRetainTime);
