@@ -261,7 +261,7 @@ internal sealed class Pr
                             windowsDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
                             linuxDownloadText = windowsDownloadText;
                             //macDownloadText = windowsDownloadText;
-                            windowsArmDownloadText = windowsArmDownloadText;
+                            windowsArmDownloadText = windowsDownloadText;
                             linuxArmDownloadText = windowsDownloadText;
                             //macArmDownloadText = windowsDownloadText;
                         }
