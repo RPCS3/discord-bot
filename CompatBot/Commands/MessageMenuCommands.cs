@@ -20,7 +20,7 @@ internal static class MessageMenuCommands
     // limited to 5 commands per menu
 
     // anyone can use this
-    [Command("💬 Explain"), SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    [Command("💬 Explain"), RequiresSupporterRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask ShowToUser(MessageCommandContext ctx, DiscordMessage replyTo)
     {
         if (ctx.Extension.ServiceProvider.GetService<InteractivityExtension>() is not {} interactivity)
