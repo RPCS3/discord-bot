@@ -139,7 +139,7 @@ internal static partial class CompatList
         var matches = db.Thumbnail
             .AsNoTracking()
             .AsEnumerable()
-            .Select(t => (thumb: t, coef: title.GetFuzzyCoefficientCached(t.Name)))
+            .Select(t => (thumb: t, coef: t.ProductCode.Equals(title, StringComparison.OrdinalIgnoreCase) ? 1.0 : title.GetFuzzyCoefficientCached(t.Name)))
             .OrderByDescending(i => i.coef)
             .Take(requestBuilder.AmountRequested)
             .ToList();
