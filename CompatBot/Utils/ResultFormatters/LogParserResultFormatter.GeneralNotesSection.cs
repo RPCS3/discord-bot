@@ -47,7 +47,7 @@ internal static partial class LogParserResult
             notes.Add("❌ Please update the emulator to make this version of the game work");
         else if (items["game_status"] is string gameStatus
                  && Enum.TryParse(gameStatus, true, out CompatStatus status)
-                 && status < CompatStatus.Ingame)
+                 && status is >CompatStatus.Unknown and <CompatStatus.Ingame)
             notes.Add("❌ This game title does not work on the emulator at this time");
         if (brokenDump)
             notes.Add("❌ Some game files are missing or corrupted, please re-dump and validate.");
@@ -578,7 +578,7 @@ internal static partial class LogParserResult
 #if DEBUG
                         : $"Fatal Error (x{count}) [{similarity*100:0.00}%+]";
 #else
-                            : $"Fatal Error (x{count})";
+                        : $"Fatal Error (x{count})";
 #endif
                     if (VerificationErrorPattern().Match(fatalError) is {Success: true} match)
                     {
