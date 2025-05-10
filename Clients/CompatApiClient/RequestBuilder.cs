@@ -23,11 +23,14 @@ public class RequestBuilder
     {
         var parameters = new Dictionary<string, string?>
         {
-            {"g", Search},
-            {"r", AmountRequested.ToString()},
+            ["g"] = Search,
+            ["r"] = AmountRequested.ToString(),
         };
         if (apiCall)
+        {
+            parameters["type"] = "All";
             parameters["api"] = "v" + ApiConfig.Version;
+        }
         return ApiConfig.BaseUrl.SetQueryParameters(parameters);
     }
 }
