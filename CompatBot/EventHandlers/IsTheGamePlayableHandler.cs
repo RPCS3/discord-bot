@@ -107,7 +107,7 @@ internal static partial class IsTheGamePlayableHandler
             status = status?.Append(localList);
             if (status is null
                 || status.ReturnCode != 0 && status.ReturnCode != 2
-                || !status.Results.Any())
+                || status.Results.Count is 0)
                 return (null, null);
                 
             var sortedList = status.GetSortedList();

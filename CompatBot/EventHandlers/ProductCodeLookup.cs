@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using CompatApiClient;
 using CompatApiClient.POCOs;
+using CompatBot.Commands;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.ResultFormatters;
 
@@ -121,7 +122,11 @@ internal static partial class ProductCodeLookup
         CompatResult? result = null;
         try
         {
-            result = await CompatClient.GetCompatResultAsync(RequestBuilder.Start().SetSearch(code), Config.Cts.Token).ConfigureAwait(false);
+            var requestBuilder = RequestBuilder.Start().SetSearch(code);
+            var searchCompatListTask = CompatClient.GetCompatResultAsync(requestBuilder, Config.Cts.Token);
+            var localList = await CompatList.GetLocalCompatResultAsync(requestBuilder).ConfigureAwait(false);
+            var status = await searchCompatListTask.ConfigureAwait(false);
+            result = status?.Append(localList);
             if (result?.ReturnCode == -2)
                 return (
                     await TitleInfo.Maintenance.AsEmbedAsync(code).ConfigureAwait(false),
