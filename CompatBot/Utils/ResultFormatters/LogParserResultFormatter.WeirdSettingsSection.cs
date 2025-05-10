@@ -411,6 +411,7 @@ internal static partial class LogParserResult
             CheckTlouSettings(serial, items, notes, ppuPatches, ppuHashes, patchNames);
             CheckRdrSettings(serial, items, notes);
             CheckMgs4Settings(serial, items, ppuPatches, ppuHashes, generalNotes);
+            CheckMgsPwSettings(serial, items, ppuPatches, ppuHashes, notes);
             CheckProjectDivaSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckGt5Settings(serial, items, generalNotes);
             CheckGt6Settings(serial, items, notes, generalNotes);
@@ -1115,6 +1116,21 @@ internal static partial class LogParserResult
             generalNotes.Add("ℹ️ This game has an FPS unlock patch");
          else if (ppuHashes.Any())
             generalNotes.Add("🤔 Very interesting version of the game you got there");
+    }
+
+    private static readonly HashSet<string> MgsPwIds =
+    [
+        "NPUB30611", "NPEB00686", "NPJB00123",
+        "BLJM55055", "BLJM60351",
+    ];
+
+    private static void CheckMgsPwSettings(string serial, NameValueCollection items, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> notes)
+    {
+        if (!MgsPwIds.Contains(serial))
+            return;
+
+        if (items["disable_getllar_spin_optimization"] is DisabledMark)
+            notes.Add("⚠️ If you experience FPS degradation, try enabling `Disable SPU GETLLAR Spin Optimization`");
     }
 
     private static readonly HashSet<string> PdfIds =
