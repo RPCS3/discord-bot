@@ -346,13 +346,13 @@ internal static partial class LogParserResult
             if (relaxedZcull is EnabledMark
                 && !KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
             {
-                notes.Add("ℹ️ `Relaxed ZCull Sync` is enabled and can cause performance and visual issues");
+                notes.Add("ℹ️ `ZCull Accuracy` is set to `Relaxed` and can cause performance and visual issues");
             }
             else if (relaxedZcull is DisabledMark
                      && KnownGamesThatWorkWithRelaxedZcull.Contains(serial)
                      && canUseRelaxedZcull)
             {
-                notes.Add("ℹ️ Enabling `Relaxed ZCull Sync` for this game may improve performance");
+                notes.Add("ℹ️ Changing `ZCull Accuracy` to `Relaxed` for this game may improve performance");
             }
         }
         if (!KnownFpsUnlockPatchIds.Contains(serial) || ppuPatches.Count == 0)
