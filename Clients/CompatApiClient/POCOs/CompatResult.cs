@@ -7,7 +7,7 @@ namespace CompatApiClient.POCOs;
     
 public class CompatResult
 {
-    public int ReturnCode;
+    public CompatApiStatus ReturnCode;
     public string SearchTerm;
     public Dictionary<string, TitleInfo> Results;
 

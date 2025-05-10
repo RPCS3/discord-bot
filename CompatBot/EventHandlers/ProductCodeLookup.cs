@@ -127,13 +127,13 @@ internal static partial class ProductCodeLookup
             var localList = await CompatList.GetLocalCompatResultAsync(requestBuilder).ConfigureAwait(false);
             var status = await searchCompatListTask.ConfigureAwait(false);
             result = status?.Append(localList);
-            if (result?.ReturnCode == -2)
+            if (result?.ReturnCode is CompatApiStatus.Maintenance)
                 return (
                     await TitleInfo.Maintenance.AsEmbedAsync(code).ConfigureAwait(false),
                     result
                 );
 
-            if (result?.ReturnCode == -1)
+            if (result?.ReturnCode is CompatApiStatus.InternalError)
                 return (
                     await TitleInfo.CommunicationError.AsEmbedAsync(code).ConfigureAwait(false),
                     result
