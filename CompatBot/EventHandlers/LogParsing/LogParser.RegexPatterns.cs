@@ -69,6 +69,8 @@ internal partial class LogParser
     private static partial Regex ThreadSchedulerMode();
     [GeneratedRegex(@"SPU Decoder: (?<spu_decoder>.*?)\r?$", DefaultOptions)]
     private static partial Regex SpuDecoderType();
+    [GeneratedRegex(@"Disable SPU GETLLAR Spin Optimization: (?<disable_getllar_spin_optimization>.*?)\r?$", DefaultOptions)]
+    private static partial Regex DisableSpuGetllarSpinOptimization();
     [GeneratedRegex(@"secondary cores: (?<spu_secondary_cores>.*?)\r?$", DefaultOptions)]
     private static partial Regex SecondaryCores();
     [GeneratedRegex(@"priority: (?<spu_lower_thread_priority>.*?)\r?$", DefaultOptions)]
