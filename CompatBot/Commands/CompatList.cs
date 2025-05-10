@@ -146,7 +146,7 @@ internal static partial class CompatList
         var result = new CompatResult
         {
             RequestBuilder = requestBuilder,
-            ReturnCode = 0,
+            ReturnCode = CompatApiStatus.Success,
             SearchTerm = requestBuilder.Search,
             Results = matches.ToDictionary(i => i.thumb.ProductCode, i => new TitleInfo
             {

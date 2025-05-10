@@ -7,7 +7,7 @@ using NLog;
 
 namespace CompatApiClient;
 
-using ReturnCodeType = Dictionary<int, (bool displayResults, bool overrideAll, bool displayFooter, string info)>;
+using ReturnCodeType = Dictionary<CompatApiStatus, (bool displayResults, bool overrideAll, bool displayFooter, string info)>;
 
 public static class ApiConfig
 {
@@ -22,12 +22,12 @@ public static class ApiConfig
 
     public static readonly ReturnCodeType ReturnCodes = new()
     {
-        [0] = (true, false, true, "Results successfully retrieved."),
-        [1] = (false, false, true, "No results."),
-        [2] = (true, false, true, "No match was found, displaying results for: ***{0}***."),
-        [-1] = (false, true, false, "{0}: Internal error occurred, please contact Ani and Nicba1010"),
-        [-2] = (false, true, false, "{0}: API is undergoing maintenance, please try again later."),
-        [-3] = (false, false, false, "Illegal characters found, please try again with a different search term."),
+        [CompatApiStatus.Success] = (true, false, true, "Results successfully retrieved."),
+        [CompatApiStatus.NoResults] = (false, false, true, "No results."),
+        [CompatApiStatus.NoExactMatch] = (true, false, true, "No match was found, displaying results for: ***{0}***."),
+        [CompatApiStatus.InternalError] = (false, true, false, "{0}: Internal error occurred, please contact Ani and Nicba1010"),
+        [CompatApiStatus.Maintenance] = (false, true, false, "{0}: API is undergoing maintenance, please try again later."),
+        [CompatApiStatus.IllegalQuery] = (false, false, false, "Illegal characters found, please try again with a different search term."),
     };
 
     public static readonly List<int> ResultAmount = [25, 50, 100, 200];

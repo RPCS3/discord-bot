@@ -106,7 +106,7 @@ internal static partial class IsTheGamePlayableHandler
             var status = await searchCompatListTask.ConfigureAwait(false);
             status = status?.Append(localList);
             if (status is null
-                || status.ReturnCode != 0 && status.ReturnCode != 2
+                || status.ReturnCode is not CompatApiStatus.Success and not CompatApiStatus.NoExactMatch
                 || status.Results.Count is 0)
                 return (null, null);
                 
