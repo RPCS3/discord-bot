@@ -1126,9 +1126,11 @@ internal static partial class LogParserResult
 
     private static void CheckMgsPwSettings(string serial, NameValueCollection items, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> notes)
     {
-        if (!MgsPwIds.Contains(serial))
+        if (!MgsPwIds.Contains(serial)
+            || !TryGetRpcs3Version(items, out var v)
+            || v > FixedSpuGetllarOptimizationBuild)
             return;
-
+        
         if (items["disable_getllar_spin_optimization"] is DisabledMark)
             notes.Add("⚠️ If you experience FPS degradation, try enabling `Disable SPU GETLLAR Spin Optimization`");
     }
