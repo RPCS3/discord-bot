@@ -306,10 +306,15 @@ internal static partial class LogParserResult
                                 notes.Add("ℹ️ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
                         }
                     }
-                    else if (IsAmd(gpuInfo) && items["os_type"] == "Windows")
+                    else if (IsAmd(gpuInfo) && items["os_type"] is "Windows")
                     {
                         if (driverVersion < AmdRecommendedWindowsDriverVersion)
                             notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedWindowsDriverVersion}");
+                    }
+                    else if (IsIntel(gpuInfo) && items["os_type"] is "Windows")
+                    {
+                        if (driverVersion < IntelRecommendedWindowsDriverVersion)
+                            notes.Add($"❗ Please update your Intel GPU driver to at least version {IntelRecommendedWindowsDriverVersion.Minor}.{IntelRecommendedWindowsDriverVersion.Build}");
                     }
                 }
                 else if (driverVersionString.Contains("older than", StringComparison.InvariantCultureIgnoreCase))

@@ -56,6 +56,7 @@ internal static partial class LogParserResult
     private static readonly Version NvidiaRecommendedWindowsDriverVersion = new(512, 16);
     private static readonly Version NvidiaRecommendedLinuxDriverVersion = new(515, 57);
     private static readonly Version AmdRecommendedWindowsDriverVersion = new(24, 2, 1);
+    private static readonly Version IntelRecommendedWindowsDriverVersion = new(0, 101, 1660);
 
     private static readonly Version NvidiaFullscreenBugFixed = new(0, 0, 6, 8204);
     private static readonly Version TsxFaFixedVersion  = new(0, 0, 12, 10995);
@@ -1106,28 +1107,26 @@ internal static partial class LogParserResult
         };
 
     internal static bool IsAmd(string gpuInfo)
-    {
-        return gpuInfo.Contains("Radeon", StringComparison.InvariantCultureIgnoreCase) ||
-               gpuInfo.Contains("AMD", StringComparison.InvariantCultureIgnoreCase) ||
-               gpuInfo.Contains("ATI ", StringComparison.InvariantCultureIgnoreCase);
-    }
+        => gpuInfo.Contains("Radeon", StringComparison.OrdinalIgnoreCase) ||
+           gpuInfo.Contains("AMD", StringComparison.OrdinalIgnoreCase) ||
+           gpuInfo.Contains("ATI ", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsNvidia(string gpuInfo)
-    {
-        return gpuInfo.Contains("GeForce", StringComparison.InvariantCultureIgnoreCase) ||
-               gpuInfo.Contains("nVidia", StringComparison.InvariantCultureIgnoreCase) ||
-               gpuInfo.Contains("Quadro", StringComparison.InvariantCultureIgnoreCase) ||
-               gpuInfo.Contains("GTX", StringComparison.InvariantCultureIgnoreCase);
-    }
+        => gpuInfo.Contains("GeForce", StringComparison.OrdinalIgnoreCase) ||
+           gpuInfo.Contains("nVidia", StringComparison.OrdinalIgnoreCase) ||
+           gpuInfo.Contains("Quadro", StringComparison.OrdinalIgnoreCase) ||
+           gpuInfo.Contains("GTX", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool IsIntel(string gpuInfo)
+        => gpuInfo.Contains("Intel", StringComparison.OrdinalIgnoreCase);
 
     private static string GetTimeFormat(long microseconds)
-    {
-        if (microseconds < 1000)
-            return $"{microseconds} µs";
-        if (microseconds < 1_000_000)
-            return $"{microseconds / 1000.0:0.##} ms";
-        return $"{microseconds / 1_000_000.0:0.##} s";
-    }
+        => microseconds switch
+        {
+            <1000 => $"{microseconds} µs",
+            <1_000_000 => $"{microseconds / 1000.0:0.##} ms",
+            _ => $"{microseconds / 1_000_000.0:0.##} s"
+        };
 
     private static List<string> SortLines(List<string> notes, DiscordEmoji? piracyEmoji = null)
     {
