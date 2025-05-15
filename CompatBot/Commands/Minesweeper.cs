@@ -86,17 +86,12 @@ internal static class Minesweeper
 
 	private static void GenerateField(Span<CellVal> cells, int width, int height, in int mineCount, in Random rng)
 	{
-		var len = cells.Length;
 		// put mines
 		for (var i = 0; i < mineCount; i++)
 			cells[i] = CellVal.Mine;
 
 		//shuffle the board
-		for (var i = 0; i < len - 1; i++)
-		{
-			var j = rng.Next(i, len);
-			(cells[i], cells[j]) = (cells[j], cells[i]);
-		}
+		rng.Shuffle(cells);
 		var result = cells.AsSpan2D(height, width);
 
 		//update mine indicators

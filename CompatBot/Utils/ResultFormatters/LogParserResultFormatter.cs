@@ -1134,7 +1134,7 @@ internal static partial class LogParserResult
             return notes;
 
         var priorityList = new List<string>(EmojiPriority);
-        if (piracyEmoji != null)
+        if (piracyEmoji is not null)
             priorityList.Insert(0, piracyEmoji.ToString());
         return notes
             .Select(s =>
