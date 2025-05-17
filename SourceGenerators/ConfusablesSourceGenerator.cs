@@ -6,12 +6,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 namespace SourceGenerators;
 
-[Generator]
-public class ConfusablesSourceGenerator : ISourceGenerator
+[Generator(LanguageNames.CSharp)]
+public class ConfusablesSourceGenerator : IIncrementalGenerator
 {
     private static readonly char[] CommentSplitter = ['#'];
     private static readonly char[] FieldSplitter = [';'];
@@ -35,22 +36,22 @@ public class ConfusablesSourceGenerator : ISourceGenerator
         isEnabledByDefault: true
     );
         
-    public void Initialize(GeneratorInitializationContext context)
+    public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var resourceProvider = context.AdditionalTextsProvider.Where(static f => Path.GetFileName(f.Path).Equals("confusables.txt"));
+        var dataProvider = resourceProvider.Combine(context.AnalyzerConfigOptionsProvider.Combine(context.CompilationProvider));
+        context.RegisterSourceOutput(dataProvider, Execute);
     }
 
-    public void Execute(GeneratorExecutionContext context)
+    private static void Execute(SourceProductionContext context, (AdditionalText resource, (AnalyzerConfigOptionsProvider configOptions, Compilation compilation) generatorContext) args)
     {
-        var resourceName = context.AdditionalFiles.FirstOrDefault(f => Path.GetFileName(f.Path).Equals("confusables.txt"));
-        if (resourceName is null)
-            return;
-
         using var httpClient = new HttpClient();
         using var msg = new HttpRequestMessage(HttpMethod.Get, "https://www.unicode.org/Public/security/latest/confusables.txt");
         msg.Headers.Range = new(0, 512);
         var requestTask = httpClient.SendAsync(msg);
-            
-        using var stream = File.Open(resourceName.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        var resource = args.resource;
+        using var stream = File.Open(resource.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
         if (stream is null)
             throw new InvalidOperationException("Failed to get confusables.txt stream");
 
@@ -91,9 +92,9 @@ public class ConfusablesSourceGenerator : ISourceGenerator
         if (mapping.Count == 0)
             throw new InvalidOperationException("Empty confusable mapping source");
 
-        if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.RootNamespace", out var ns))
-            ns = context.Compilation.AssemblyName;
-        var cn = Path.GetFileNameWithoutExtension(resourceName.Path);
+        if (!args.generatorContext.configOptions.GlobalOptions.TryGetValue("build_property.RootNamespace", out var ns))
+            ns = args.generatorContext.compilation.AssemblyName;
+        var cn = Path.GetFileNameWithoutExtension(resource.Path);
         if (cn.Length == 1)
             cn = cn.ToUpper();
         else
