@@ -34,14 +34,12 @@ internal static class WarningsContextMenus
             .AsEphemeral()
             .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
             .WithTitle("Issue new warning")
-            .AddComponents(
-                new DiscordTextInputComponent(
-                    "Warning reason",
-                    "warning",
-                    "Rule #2",
-                    min_length: 2
-                )
-            );
+            .AddTextInputComponent(new(
+                "Warning reason",
+                "warning",
+                "Rule #2",
+                min_length: 2
+            ));
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         try

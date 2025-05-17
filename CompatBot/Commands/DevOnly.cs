@@ -51,7 +51,7 @@ internal sealed class DevOnly
     {
         var builder = new DiscordMessageBuilder()
             .WithContent("Regular button vs emoji button")
-            .AddComponents(
+            .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, "pt", "✅ Regular"),
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, "pe", "Emoji", emoji: new(DiscordEmoji.FromUnicode("✅")))
             );
