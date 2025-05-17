@@ -70,7 +70,7 @@ public partial class Client
 
     public static string[] GetLocales() => KnownStoreLocales; // Sony removed the ability to get the full store list, now relying on geolocation service instead
 
-    public async Task<Stores?> GetStoresAsync(string locale, CancellationToken cancellationToken)
+    public async ValueTask<Stores?> GetStoresAsync(string locale, CancellationToken cancellationToken)
     {
         try
         {
@@ -96,7 +96,7 @@ public partial class Client
         }
     }
 
-    public async Task<List<string>?> GetMainPageNavigationContainerIdsAsync(string locale, CancellationToken cancellationToken)
+    public async ValueTask<List<string>?> GetMainPageNavigationContainerIdsAsync(string locale, CancellationToken cancellationToken)
     {
         HttpResponseMessage? response = null;
         try
@@ -149,7 +149,7 @@ public partial class Client
         }
     }
 
-    public async Task<StoreNavigation?> GetStoreNavigationAsync(string locale, string containerId, CancellationToken cancellationToken)
+    public async ValueTask<StoreNavigation?> GetStoreNavigationAsync(string locale, string containerId, CancellationToken cancellationToken)
     {
         try
         {
@@ -178,7 +178,7 @@ public partial class Client
         }
     }
 
-    public async Task<Container?> GetGameContainerAsync(string locale, string containerId, int start, int take, Dictionary<string, string> filters, CancellationToken cancellationToken)
+    public async ValueTask<Container?> GetGameContainerAsync(string locale, string containerId, int start, int take, Dictionary<string, string> filters, CancellationToken cancellationToken)
     {
         try
         {
@@ -211,7 +211,7 @@ public partial class Client
         }
     }
 
-    public async Task<Container?> ResolveContentAsync(string locale, string contentId, int depth, CancellationToken cancellationToken)
+    public async ValueTask<Container?> ResolveContentAsync(string locale, string contentId, int depth, CancellationToken cancellationToken)
     {
         try
         {
@@ -239,7 +239,7 @@ public partial class Client
         }
     }
 
-    public async Task<(TitlePatch? patch, string? responseXml)> GetTitleUpdatesAsync(string? productId, CancellationToken cancellationToken)
+    public async ValueTask<(TitlePatch? patch, string? responseXml)> GetTitleUpdatesAsync(string? productId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(productId))
             return default;
@@ -251,8 +251,12 @@ public partial class Client
         using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
         try
         {
-            if (response.StatusCode == HttpStatusCode.NotFound)
-                return default;
+            if (response.StatusCode is HttpStatusCode.NotFound)
+            {
+                var result = default((TitlePatch? patch, string? responseXml));
+                ResponseCache.Set(productId, result, ResponseCacheDuration);
+                return result;
+            }
 
             await response.Content.LoadIntoBufferAsync(cancellationToken).ConfigureAwait(false);
             var xml = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
@@ -302,7 +306,7 @@ public partial class Client
         }
     }
 
-    public async Task<Container?> SearchAsync(string locale, string search, CancellationToken cancellationToken)
+    public async ValueTask<Container?> SearchAsync(string locale, string search, CancellationToken cancellationToken)
     {
         try
         {
@@ -333,7 +337,7 @@ public partial class Client
         }
     }
 
-    public async Task<List<FirmwareInfo>> GetHighestFwVersionAsync(CancellationToken cancellationToken)
+    public async ValueTask<List<FirmwareInfo>> GetHighestFwVersionAsync(CancellationToken cancellationToken)
     {
         var tasks = new List<Task<FirmwareInfo?>>(KnownFwLocales.Length);
         foreach (var fwLocale in KnownFwLocales)
@@ -356,7 +360,7 @@ public partial class Client
         return result;
     }
 
-    private async Task<string> GetSessionCookies(string locale, CancellationToken cancellationToken)
+    private async ValueTask<string> GetSessionCookies(string locale, CancellationToken cancellationToken)
     {
         var (language, country) = locale.AsLocaleData();
         var uri = new Uri("https://store.playstation.com/kamaji/api/valkyrie_storefront/00_09_000/user/session");
