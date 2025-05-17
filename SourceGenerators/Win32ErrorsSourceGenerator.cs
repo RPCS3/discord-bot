@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 namespace SourceGenerators;
 
-[Generator]
-public class Win32ErrorsSourceGenerator : ISourceGenerator
+[Generator(LanguageNames.CSharp)]
+public class Win32ErrorsSourceGenerator : IIncrementalGenerator
 {
     private const string Indent = "    ";
     private static readonly char[] Separator = ['\t'];
@@ -23,24 +24,26 @@ public class Win32ErrorsSourceGenerator : ISourceGenerator
         isEnabledByDefault: true
     );
 
-    public void Initialize(GeneratorInitializationContext context)
+    public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var resourceProvider = context.AdditionalTextsProvider.Where(
+            static f => Path.GetFileName(f.Path) is string fname
+                        && fname.StartsWith("win32_error_codes", StringComparison.OrdinalIgnoreCase)
+                        && fname.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+        );
+        var dataProvider = resourceProvider.Combine(context.AnalyzerConfigOptionsProvider.Combine(context.CompilationProvider));
+        context.RegisterSourceOutput(dataProvider, Execute);
     }
 
-    public void Execute(GeneratorExecutionContext context)
+    private static void Execute(SourceProductionContext context, (AdditionalText resource, (AnalyzerConfigOptionsProvider configOptions, Compilation compilation) generatorContext) args)
     {
-        var resourceName = context.AdditionalFiles
-            .OrderBy(f => f.Path, StringComparer.OrdinalIgnoreCase)
-            .LastOrDefault(f => Path.GetFileName(f.Path) is string fname && fname.StartsWith("win32_error_codes", StringComparison.OrdinalIgnoreCase) && fname.EndsWith(".txt", StringComparison.OrdinalIgnoreCase));
-        if (resourceName is null)
-            return;
-            
-        using var stream = File.Open(resourceName.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var resource = args.resource;
+        using var stream = File.Open(resource.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
         if (stream is null)
             throw new InvalidOperationException("Failed to get win32_error_codes txt stream");
 
-        if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.RootNamespace", out var ns))
-            ns = context.Compilation.AssemblyName;
+        if (!args.generatorContext.configOptions.GlobalOptions.TryGetValue("build_property.RootNamespace", out var ns))
+            ns = args.generatorContext.compilation.AssemblyName;
         var cn = "Win32ErrorCodes";
         var result = new StringBuilder()
             .AppendLine("using System.Collections.Generic;")
@@ -64,7 +67,7 @@ public class Win32ErrorsSourceGenerator : ISourceGenerator
                 continue;
 
             codeLine = line - 1;
-            string errorNameAndDescriptionLine;
+            string? errorNameAndDescriptionLine;
             do
             {
                 errorNameAndDescriptionLine = reader.ReadLine();
@@ -78,7 +81,7 @@ public class Win32ErrorsSourceGenerator : ISourceGenerator
                 context.ReportDiagnostic(Diagnostic.Create(
                     Win32ErrorFormatError,
                     Location.Create(
-                        resourceName.Path,
+                        resource.Path,
                         TextSpan.FromBounds(
                             previousPos,
                             (int)stream.Position

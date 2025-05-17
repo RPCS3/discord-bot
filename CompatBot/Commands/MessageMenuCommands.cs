@@ -32,9 +32,8 @@ internal static class MessageMenuCommands
         var placeholder = StatsStorage.GetExplainStats().FirstOrDefault().name ?? "rule 1";
         var modal = new DiscordInteractionResponseBuilder()
             .WithTitle("Explain Prompt")
-            .AddComponents(new DiscordTextInputComponent("Term to explain", "term", placeholder, min_length: 1))
+            .AddTextInputComponent(new("Term to explain", "term", placeholder, min_length: 1))
             .WithCustomId($"modal:explain:{Guid.NewGuid():n}");
-
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         InteractivityResult<ModalSubmittedEventArgs> modalResult;
@@ -80,16 +79,14 @@ internal static class MessageMenuCommands
                 .AsEphemeral()
                 .WithCustomId($"modal:report:{Guid.NewGuid():n}")
                 .WithTitle("Message Report")
-                .AddComponents(
-                    new DiscordTextInputComponent(
-                        "Comment",
-                        "comment",
-                        "Describe why you report this message",
-                        required: false,
-                        style: DiscordTextInputStyle.Paragraph,
-                        max_length: EmbedPager.MaxFieldLength
-                    )
-                );
+                .AddTextInputComponent(new(
+                    "Comment",
+                    "comment",
+                    "Describe why you report this message",
+                    required: false,
+                    style: DiscordTextInputStyle.Paragraph,
+                    max_length: EmbedPager.MaxFieldLength
+                ));
             await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
             var modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
             if (modalResult.TimedOut)

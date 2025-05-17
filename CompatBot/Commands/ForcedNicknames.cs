@@ -30,16 +30,14 @@ internal static class ForcedNicknames
             .AsEphemeral()
             .WithCustomId($"modal:nickname:{Guid.NewGuid():n}")
             .WithTitle("Enforcing Rule 7")
-            .AddComponents(
-                new DiscordTextInputComponent(
-                    "New nickname",
-                    "nickname",
-                    suggestedName,
-                    suggestedName,
-                    min_length: 2,
-                    max_length: 32
-                )
-            );
+            .AddTextInputComponent(new(
+                "New nickname",
+                "nickname",
+                suggestedName,
+                suggestedName,
+                min_length: 2,
+                max_length: 32
+            ));
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         string resultMsg;

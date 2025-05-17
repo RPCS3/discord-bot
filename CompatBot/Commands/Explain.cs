@@ -116,13 +116,11 @@ internal static class Explain
                 .AsEphemeral()
                 .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
                 .WithTitle("New explanation")
-                .AddComponents(
-                    new DiscordTextInputComponent(
-                        label,
-                        "explanation", 
-                        style: DiscordTextInputStyle.Paragraph
-                    )
-                );
+                .AddTextInputComponent(new(
+                    label,
+                    "explanation", 
+                    style: DiscordTextInputStyle.Paragraph
+                ));
             await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
             InteractivityResult<ModalSubmittedEventArgs> modalResult;
@@ -251,14 +249,12 @@ internal static class Explain
             .AsEphemeral()
             .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
             .WithTitle("Updated explanation")
-            .AddComponents(
-                new DiscordTextInputComponent(
-                    label,
-                    "explanation",
-                    value: item.Text,
-                    style: DiscordTextInputStyle.Paragraph
-                )
-            );
+            .AddTextInputComponent(new(
+                label,
+                "explanation",
+                value: item.Text,
+                style: DiscordTextInputStyle.Paragraph
+            ));
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         InteractivityResult<ModalSubmittedEventArgs> modalResult;
