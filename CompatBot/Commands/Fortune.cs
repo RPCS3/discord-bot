@@ -195,7 +195,7 @@ internal static class Fortune
 
     public static async ValueTask<string?> GetFortuneAsync(DiscordUser user)
     {
-        var prefix = DateTime.UtcNow.ToString("yyyyMMdd")+ user.Id.ToString("x16");
+        var prefix = DateTime.UtcNow.ToString("yyyyMMdd") + user.Id.ToString("x16");
         var rng = new Random(prefix.GetStableHash());
         await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
         Database.Fortune? fortune;
@@ -204,7 +204,7 @@ internal static class Fortune
             var totalFortunes = await db.Fortune.CountAsync().ConfigureAwait(false);
             if (totalFortunes == 0)
                 return null;
-                
+
             var selectedId = rng.Next(totalFortunes);
             fortune = await db.Fortune.AsNoTracking().Skip(selectedId).FirstOrDefaultAsync().ConfigureAwait(false);
         } while (fortune is null);
@@ -213,7 +213,10 @@ internal static class Fortune
         var quote = true;
         foreach (var l in fortune.Content.FixTypography().Split('\n'))
         {
-            quote &= !l.StartsWith("    ");
+            var fixedLine = l.Replace("\t", "    ");
+            quote &= !fixedLine.StartsWith("    ");
+            var trimmed = fixedLine.TrimStart(' ');
+            quote &= trimmed is { Length: 0 } || trimmed[0] is not '-' and not '–' and not '—';
             if (quote)
                 tmp.Append("> ");
             tmp.Append(l).Append('\n');
