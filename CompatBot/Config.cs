@@ -87,6 +87,7 @@ internal static class Config
     public static string PreferredFontFamily => config.GetValue(nameof(PreferredFontFamily), "");
     public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
     public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
+    public static string RedumpDatfileCachePath => config.GetValue(nameof(RedumpDatfileCachePath), "./datfile/");
     public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)");
 
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);

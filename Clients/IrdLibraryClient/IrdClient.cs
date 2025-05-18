@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Serialization;
 using CompatApiClient;
 using CompatApiClient.Compression;
 using IrdLibraryClient.IrdFormat;
@@ -18,6 +22,7 @@ namespace IrdLibraryClient
     public class IrdClient
     {
         private static readonly Uri BaseDownloadUri = new("https://github.com/FlexBy420/playstation_3_ird_database/raw/main/");
+        private static readonly Uri RedumpDatDownloadUri = new("http://redump.org/datfile/ps3/serial,version");
         private static readonly HttpClient Client = HttpClientFactory.Create(new CompressionMessageHandler());
         private static readonly JsonSerializerOptions JsonOptions= new()
         {
@@ -127,6 +132,98 @@ namespace IrdLibraryClient
             }
         }
 
+        public static async ValueTask<XDocument?> GetRedumpDatfileAsync(string localCachePath, CancellationToken cancellationToken)
+        {
+            try
+            {
+                string? localZipFilePath;
+                if (Directory.Exists(localCachePath)
+                    && Directory.EnumerateFiles(
+                        localCachePath,
+                        "*Datfile*.zip",
+                        new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false }
+                    ).OrderBy(n => n).LastOrDefault() is string localFilePath)
+                {
+                    if (new FileInfo(localFilePath).CreationTimeUtc.AddDays(7) > DateTime.UtcNow)
+                        localZipFilePath = localFilePath;
+                    else
+                        localZipFilePath = await DownloadLatestRedumpDatfileAsync(localCachePath, cancellationToken).ConfigureAwait(false)
+                                           ?? localFilePath;
+                }
+                else
+                    localZipFilePath = await DownloadLatestRedumpDatfileAsync(localCachePath, cancellationToken).ConfigureAwait(false);
+                if (localZipFilePath is not { Length: > 0 })
+                    return null;
+
+                await using var zipStream = File.Open(localZipFilePath, new FileStreamOptions
+                {
+                    Mode = FileMode.Open,
+                    Access = FileAccess.Read,
+                    Share = FileShare.Read,
+                    Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
+                });
+                using var zipFile = new ZipArchive(zipStream, ZipArchiveMode.Read, true);
+                var fileEntry = zipFile.Entries.FirstOrDefault(e => e.Name.EndsWith(".dat", StringComparison.OrdinalIgnoreCase));
+                if (fileEntry is null)
+                {
+                    ApiConfig.Log.Warn($"No datfile inside {localZipFilePath}");
+                    return null;
+                }
+
+                await using var xmlStream = fileEntry.Open();
+                using var xmlReader = XmlReader.Create(xmlStream, new(){ Async = true, DtdProcessing = DtdProcessing.Ignore });
+                if (await XDocument.LoadAsync(xmlReader, LoadOptions.None, cancellationToken).ConfigureAwait(false) is not XDocument doc)
+                {
+                    ApiConfig.Log.Warn($"Failed to deserialize {fileEntry.Name} from {localZipFilePath}");
+                    return null;
+                }
+
+                return doc;
+            }
+            catch (Exception e)
+            {
+                ApiConfig.Log.Warn(e, "Failed to get redump datfile content.");
+            }
+            return null;
+        }
+
+        private static async ValueTask<string?> DownloadLatestRedumpDatfileAsync(string localCachePath, CancellationToken cancellationToken)
+        {
+            string? localFilePath = null;
+            using var request = new HttpRequestMessage(HttpMethod.Get, RedumpDatDownloadUri);
+            var response = await Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode &&
+                response.Content.Headers.ContentDisposition?.FileName is string filename)
+            {
+                if (filename.StartsWith('"') && filename.EndsWith('"'))
+                    filename = filename[1..^1];
+                ApiConfig.Log.Info($"Latest redump datfile snapshot: {filename}");
+                var localCacheFilename = Path.Combine(localCachePath, filename);
+                if (File.Exists(localCacheFilename))
+                {
+                    ApiConfig.Log.Info("Using local copy of redump datfile snapshot");
+                    localFilePath = localCacheFilename;
+                }
+                else
+                {
+                    var resultBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        if (!Directory.Exists(localCachePath))
+                            Directory.CreateDirectory(localCachePath);
+                        ApiConfig.Log.Info($"Saving latest redump datfile snapshot in local cache: {filename}...");
+                        await File.WriteAllBytesAsync(localCacheFilename, resultBytes, cancellationToken);
+                        localFilePath = localCacheFilename;
+                    }
+                    catch (Exception ex)
+                    {
+                        ApiConfig.Log.Warn(ex, $"Failed to write {filename} to local cache: {ex.Message}");
+                    }
+                }
+            }
+            return localFilePath;
+        }
+        
         private static string EscapeSegments(string relativePath)
         {
             var segments = relativePath.Split('/');

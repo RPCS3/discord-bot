@@ -113,6 +113,7 @@ internal static class Program
                 ThumbScrapper.GameTdbScraper.RunAsync(Config.Cts.Token),
                 //TitleUpdateInfoProvider.RefreshGameUpdateInfoAsync(Config.Cts.Token),
 #endif
+                DiscLanguageProvider.RefreshAsync(Config.Cts.Token),
                 StatsStorage.BackgroundSaveAsync(),
                 CompatList.ImportCompatListAsync(),
                 Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),

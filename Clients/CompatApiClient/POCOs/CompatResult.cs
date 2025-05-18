@@ -36,6 +36,7 @@ public class TitleInfo
     public int? Network;
     public string Update;
     public bool? UsingLocalCache;
+    public IReadOnlyCollection<string> Languages;
 }
     
 #nullable restore
