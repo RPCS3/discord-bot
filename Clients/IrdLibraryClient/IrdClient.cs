@@ -29,7 +29,7 @@ namespace IrdLibraryClient
 
         public static readonly Uri JsonUrl = new("https://flexby420.github.io/playstation_3_ird_database/all.json");
 
-        public async ValueTask<List<IrdInfo>> SearchAsync(string query, CancellationToken cancellationToken)
+        public static async ValueTask<List<IrdInfo>> SearchAsync(string query, CancellationToken cancellationToken)
         {            
             List<IrdInfo> result = [];
             if (!JsonCache.TryGetValue("json", out Dictionary<string, List<IrdInfo>>? irdData)
