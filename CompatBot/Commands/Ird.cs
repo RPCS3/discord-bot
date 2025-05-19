@@ -19,7 +19,7 @@ internal static class Ird
     )
     {
         var ephemeral = !ctx.Channel.IsSpamChannel() && !ModProvider.IsMod(ctx.User.Id);
-        var result = await Client.SearchAsync(query, Config.Cts.Token).ConfigureAwait(false);
+        var result = await IrdClient.SearchAsync(query, Config.Cts.Token).ConfigureAwait(false);
         await ctx.RespondAsync(embed: result.AsEmbed(), ephemeral: ephemeral).ConfigureAwait(false);
     }
 }

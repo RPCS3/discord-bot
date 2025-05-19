@@ -59,7 +59,7 @@ internal static class TitleInfoFormatter
         string? titleId,
         string? gameTitle = null,
         bool forLog = false,
-        string? thumbnailUrl = null
+        string thumbnailUrl = ""
     )
     {
         if (string.IsNullOrWhiteSpace(gameTitle))
@@ -81,6 +81,8 @@ internal static class TitleInfoFormatter
                 };
             }
         }
+        if (titleId is {Length: 9})
+            info.Languages = await DiscLanguageProvider.GetLanguageListAsync(titleId).ConfigureAwait(false);
         if (info.Status is string status && StatusColors.TryGetValue(status, out var color))
         {
             // apparently there's no formatting in the footer, but you need to escape everything in description; ugh
@@ -100,13 +102,16 @@ internal static class TitleInfoFormatter
             var title = $"{productCodePart}{cacheTitle?.Trim(200)}{onlineOnlyPart}";
             if (string.IsNullOrEmpty(title))
                 desc = "";
-            return new DiscordEmbedBuilder
+            var result = new DiscordEmbedBuilder
             {
                 Title = title,
                 Url = info.Thread > 0 ? $"https://forums.rpcs3.net/thread-{info.Thread}.html" : null,
                 Description = desc,
                 Color = color,
             }.WithThumbnail(thumbnailUrl);
+            if (!forLog)
+                result.WithLanguages(info.Languages);
+            return result;
         }
         else
         {
@@ -119,7 +124,7 @@ internal static class TitleInfoFormatter
             else
             {
                 embedColor = Config.Colors.CompatStatusUnknown;
-                if (!string.IsNullOrEmpty(titleId))
+                if (titleId is {Length: >0})
                     desc = $"Product code {titleId} was not found in compatibility database";
             }
             var result = new DiscordEmbedBuilder
@@ -127,12 +132,13 @@ internal static class TitleInfoFormatter
                 Description = desc,
                 Color = embedColor,
             }.WithThumbnail(thumbnailUrl);
-            if (gameTitle == null
-                && !string.IsNullOrEmpty(titleId)
-                && ThumbnailProvider.GetTitleNameAsync(titleId, Config.Cts.Token).ConfigureAwait(false).GetAwaiter().GetResult() is string titleName
-                && !string.IsNullOrEmpty(titleName))
+            if (!forLog)
+                result.WithLanguages(info.Languages);
+            if (gameTitle is null
+                && titleId is {Length: >0}
+                && await ThumbnailProvider.GetTitleNameAsync(titleId, Config.Cts.Token).ConfigureAwait(false) is {Length: >0} titleName)
                 gameTitle = titleName;
-            if (!string.IsNullOrEmpty(gameTitle))
+            if (gameTitle is {Length: >0})
             {
                 StatsStorage.IncGameStat(gameTitle);
                 result.Title = $"{productCodePart}{gameTitle.Sanitize().Trim(200)}";
@@ -141,12 +147,17 @@ internal static class TitleInfoFormatter
         }
     }
 
+    public static DiscordEmbedBuilder WithLanguages(this DiscordEmbedBuilder embedBuilder, IReadOnlyCollection<string> languages)
+    {
+        if (languages is not {Count: >0})
+            return embedBuilder;
+
+        return embedBuilder.AddField(
+            "Supported Languages",
+            string.Join('\n', languages)
+        );
+    }
+
     public static string AsString(this (string code, TitleInfo info, double score) resultInfo)
         => resultInfo.info.AsString(resultInfo.code);
-
-    public static string AsString(this KeyValuePair<string, TitleInfo> resultInfo)
-        => resultInfo.Value.AsString(resultInfo.Key);
-
-    public static ValueTask<DiscordEmbedBuilder> AsEmbedAsync(this KeyValuePair<string, TitleInfo> resultInfo)
-        => resultInfo.Value.AsEmbedAsync(resultInfo.Key);
 }
