@@ -341,7 +341,7 @@ internal partial class LogParser
     private static partial Regex PpuSyscallTodo();
     [GeneratedRegex(@"Verification failed.+\(e=0x(?<verification_error_hex>[0-9a-f]+)\[(?<verification_error>\d+)\]\)", DefaultOptions)]
     private static partial Regex VerificationFailed();
-    [GeneratedRegex(@"sys_tty_write\(\)\: “(?<tty_line>.*?)”\r?(\n|$)", DefaultSingleLine)]
+    [GeneratedRegex(@"sys_tty_write\(\)\: “(?<tty_line>.*?)(”|“ << endl)\r?(\n|$)", DefaultSingleLine)]
     private static partial Regex SysTtyWrite();
     [GeneratedRegex(@"⁂ (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions)]
     private static partial Regex SyscallDump();
