@@ -244,6 +244,8 @@ internal partial class LogParser
     private static partial Regex GameVersion();
     [GeneratedRegex(@"Failed to verify (?<failed_to_verify_npdrm>(sce|npd)) file.*\r?$", DefaultOptions)]
     private static partial Regex FailedToVerifyNpDrm();
+    [GeneratedRegex(@"Failed to decrypt '(?<failed_to_decrypt_edat>.+exdata.+edat)'\r?$", DefaultOptions)]
+    private static partial Regex FailedToDecryptEdat();
     [GeneratedRegex(
         @"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?"+
         @"RSX: [^\n]+\r?\n[^\n]*?RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?"+
