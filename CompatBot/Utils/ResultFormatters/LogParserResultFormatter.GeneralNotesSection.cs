@@ -678,7 +678,7 @@ internal static partial class LogParserResult
         
     private static void BuildMissingLicensesSection(DiscordEmbedBuilder builder, string serial, NameUniqueObjectCollection<string> items, List<string> generalNotes)
     {
-        if (items["rap_file"] is UniqueList<string> raps && raps.Any())
+        if (items["rap_file"] is {Length: >0} raps)
         {
             var limitTo = 5;
             List<string> licenseNames = raps
@@ -718,6 +718,34 @@ internal static partial class LogParserResult
             if (KnownCustomLicenses.Overlaps(licenseNames))
                 generalNotes.Add("🤔 That is a very interesting license you're missing");
             generalNotes.Add("⚠️ DLC without a license is useless and may lead to game crash in some cases");
+        }
+        if (items["failed_to_decrypt_edat"] is { Length: > 0 } edats)
+        {
+            var limitTo = 5;
+            List<string> edatNames = edats
+                .Select(Path.GetFileName)
+                .Where(l => !string.IsNullOrEmpty(l))
+                .Distinct()
+                .Except(KnownBogusLicenses)
+                .OrderBy(l => l)
+                .ToList()!;
+            var formattedEdatNames = edatNames
+                .Select(p => $"{StringUtils.InvisibleSpacer}`{p}`")
+                .ToList();
+            if (formattedEdatNames.Count == 0)
+                return;
+
+            string content;
+            if (formattedEdatNames.Count > limitTo)
+            {
+                content = string.Join(Environment.NewLine, formattedEdatNames.Take(limitTo - 1));
+                var other = formattedEdatNames.Count - limitTo + 1;
+                content += $"{Environment.NewLine}and {other} other license{StringUtils.GetSuffix(other)}";
+            }
+            else
+                content = string.Join(Environment.NewLine, formattedEdatNames);
+
+            builder.AddField("Unlock DLCs Without License", content);
         }
     }
 

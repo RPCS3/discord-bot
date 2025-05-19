@@ -244,6 +244,8 @@ internal partial class LogParser
     private static partial Regex GameVersion();
     [GeneratedRegex(@"Failed to verify (?<failed_to_verify_npdrm>(sce|npd)) file.*\r?$", DefaultOptions)]
     private static partial Regex FailedToVerifyNpDrm();
+    [GeneratedRegex(@"Failed to decrypt '(?<failed_to_decrypt_edat>.+exdata.+edat)'\r?$", DefaultOptions)]
+    private static partial Regex FailedToDecryptEdat();
     [GeneratedRegex(
         @"RSX:(\d|\.|\s|\w|-)* (?<driver_version>(\d+\.)*\d+)\r?\n[^\n]*?"+
         @"RSX: [^\n]+\r?\n[^\n]*?RSX: (?<driver_manuf>.*?)\r?\n[^\n]*?"+
@@ -287,7 +289,9 @@ internal partial class LogParser
     private static partial Regex FatalError();
     [GeneratedRegex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions)]
     private static partial Regex FailedToLoadRap();
-    [GeneratedRegex(@"Rap file not found: “?(?<rap_file>.*?\.rap)”?\r?$", DefaultOptions)]
+    [GeneratedRegex(@"Failed to locate the game license file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions)]
+    private static partial Regex FailedToLocateRap();
+    [GeneratedRegex(@"Rap file not found: [“']?(?<rap_file>.*?\.rap)[”']?( \(Not found\))?\r?$", DefaultOptions)]
     private static partial Regex RapNotFound();
     [GeneratedRegex(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions)]
     private static partial Regex MissingGamepad();
@@ -337,7 +341,7 @@ internal partial class LogParser
     private static partial Regex PpuSyscallTodo();
     [GeneratedRegex(@"Verification failed.+\(e=0x(?<verification_error_hex>[0-9a-f]+)\[(?<verification_error>\d+)\]\)", DefaultOptions)]
     private static partial Regex VerificationFailed();
-    [GeneratedRegex(@"sys_tty_write\(\)\: “(?<tty_line>.*?)”\r?(\n|$)", DefaultSingleLine)]
+    [GeneratedRegex(@"sys_tty_write\(\)\: “(?<tty_line>.*?)(”|“ << endl)\r?(\n|$)", DefaultSingleLine)]
     private static partial Regex SysTtyWrite();
     [GeneratedRegex(@"⁂ (?<syscall_name>[^ :\[]+?) .*\r?$", DefaultOptions)]
     private static partial Regex SyscallDump();
