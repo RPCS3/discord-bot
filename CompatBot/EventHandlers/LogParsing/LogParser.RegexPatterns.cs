@@ -287,7 +287,9 @@ internal partial class LogParser
     private static partial Regex FatalError();
     [GeneratedRegex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions)]
     private static partial Regex FailedToLoadRap();
-    [GeneratedRegex(@"Rap file not found: “?(?<rap_file>.*?\.rap)”?\r?$", DefaultOptions)]
+    [GeneratedRegex(@"Failed to locate the game license file: (?<rap_file>.*?\.rap).*\r?$", DefaultOptions)]
+    private static partial Regex FailedToLocateRap();
+    [GeneratedRegex(@"Rap file not found: [“']?(?<rap_file>.*?\.rap)[”']?( \(Not found\))?\r?$", DefaultOptions)]
     private static partial Regex RapNotFound();
     [GeneratedRegex(@"(?<native_ui_input>Pad handler expected but none initialized).*?\r?$", DefaultOptions)]
     private static partial Regex MissingGamepad();

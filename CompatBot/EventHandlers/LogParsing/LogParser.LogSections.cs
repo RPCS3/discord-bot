@@ -206,6 +206,7 @@ internal partial class LogParser
                 ["RSX: [CAPS] Using"] = GlExtensions(),
                 ["F "] = FatalError(),
                 ["Failed to load RAP file:"] = FailedToLoadRap(),
+                ["Failed to locate the game license file:"] = FailedToLocateRap(),
                 ["Rap file not found:"] = RapNotFound(),
                 ["Pad handler expected but none initialized"] = MissingGamepad(),
                 ["Failed to bind device"] = FailedToBindGamepad(),
