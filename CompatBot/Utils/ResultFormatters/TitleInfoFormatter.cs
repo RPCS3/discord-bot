@@ -102,14 +102,16 @@ internal static class TitleInfoFormatter
             var title = $"{productCodePart}{cacheTitle?.Trim(200)}{onlineOnlyPart}";
             if (string.IsNullOrEmpty(title))
                 desc = "";
-            return new DiscordEmbedBuilder
+            var result = new DiscordEmbedBuilder
             {
                 Title = title,
                 Url = info.Thread > 0 ? $"https://forums.rpcs3.net/thread-{info.Thread}.html" : null,
                 Description = desc,
                 Color = color,
-            }.WithThumbnail(thumbnailUrl)
-            .WithLanguages(info.Languages);
+            }.WithThumbnail(thumbnailUrl);
+            if (!forLog)
+                result.WithLanguages(info.Languages);
+            return result;
         }
         else
         {
@@ -129,8 +131,9 @@ internal static class TitleInfoFormatter
             {
                 Description = desc,
                 Color = embedColor,
-            }.WithThumbnail(thumbnailUrl)
-            .WithLanguages(info.Languages);
+            }.WithThumbnail(thumbnailUrl);
+            if (!forLog)
+                result.WithLanguages(info.Languages);
             if (gameTitle is null
                 && titleId is {Length: >0}
                 && await ThumbnailProvider.GetTitleNameAsync(titleId, Config.Cts.Token).ConfigureAwait(false) is {Length: >0} titleName)
