@@ -8,7 +8,7 @@ namespace CompatBot.Database.Providers;
 
 public static partial class DiscLanguageProvider
 {
-    [GeneratedRegex(@"^(?<title>.+?) \((?<region>\w+(, \w+)*)\)( \((?<lang>\w{2}(,\w{2})*)\))?", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
+    [GeneratedRegex(@"^(?<title>.+?) \((?<region>(\w|\s)+(, (\w|\s)+)*)\)( \((?<lang>\w{2}(,\w{2})*)\))?", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
     private static partial Regex RedumpName();
     private static readonly Dictionary<string, List<string>> ProductCodeToVersionAndLangList = new();
     
@@ -18,7 +18,10 @@ public static partial class DiscLanguageProvider
         var datXml = await IrdClient.GetRedumpDatfileAsync(Config.RedumpDatfileCachePath, cancellationToken).ConfigureAwait(false);
         if (datXml?.Root?.Descendants("game").ToList() is not { Count: > 0 } gameList)
             return;
-
+#if DEBUG
+        var longestLangList = "";
+        var gameWithLongestLangList = "";
+#endif
         foreach (var gameInfo in gameList)
         {
             var name = (string?)gameInfo.Attribute("name");
@@ -39,6 +42,15 @@ public static partial class DiscLanguageProvider
             try
             {
                 var langs = ParseLangList(name);
+                if (langs is not { Length: > 0 })
+                    continue;
+#if DEBUG
+                if (langs.Length > longestLangList.Length)
+                {
+                    longestLangList = langs;
+                    gameWithLongestLangList = serialList[0];
+                }
+#endif
                 foreach (var serial in serialList)
                 {
                     if (!ProductCodeToVersionAndLangList.TryGetValue(serial, out var listOfLangs))
@@ -53,6 +65,9 @@ public static partial class DiscLanguageProvider
                 Config.Log.Warn(e, "Failed to parse language list");
             }
         }
+#if DEBUG
+        Config.Log.Debug($"Game product code with the longest language list: {gameWithLongestLangList} ({longestLangList})");
+#endif
         Config.Log.Info("Completed refreshing redump datfile");
     }
     
