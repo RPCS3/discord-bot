@@ -851,7 +851,7 @@ internal static partial class LogParserResult
 
     private static string? GetVulkanDriverVersion(string? gpu, UniqueList<string> foundDevices)
     {
-        if (string.IsNullOrEmpty(gpu) || !foundDevices.Any())
+        if (string.IsNullOrEmpty(gpu) || foundDevices.Length is 0)
             return null;
 
         var info = (from line in foundDevices
@@ -875,8 +875,7 @@ internal static partial class LogParserResult
 
         if (gpu.Contains("Intel", StringComparison.InvariantCultureIgnoreCase)
             && Version.TryParse(result, out var ver)
-            && ver.Minor > 400
-            && ver.Build >= 0)
+            && ver is { Minor: > 400, Build: >= 0 })
         {
             var build = ((ver.Minor & 0b_11) << 12) | ver.Build;
             var minor = ver.Minor >> 2;
