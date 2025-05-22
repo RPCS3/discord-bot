@@ -18,15 +18,17 @@ internal sealed partial class TextOnlyDiscordChannelConverter : ITextArgumentCon
         
     public static async Task<Optional<DiscordChannel>> ConvertAsync(ConverterContext ctx)
     {
-        var guildList = new List<DiscordGuild>(ctx.Client.Guilds.Count);
-        if (ctx.Guild is null)
-            foreach (var g in ctx.Client.Guilds.Keys)
-                guildList.Add(await ctx.Client.GetGuildAsync(g).ConfigureAwait(false));
+        if (ctx is not TextConverterContext tctx)
+            return Optional.FromNoValue<DiscordChannel>();
+        
+        var guildList = new List<DiscordGuild>(tctx.Client.Guilds.Count);
+        if (tctx.Guild is null)
+            foreach (var g in tctx.Client.Guilds.Keys)
+                guildList.Add(await tctx.Client.GetGuildAsync(g).ConfigureAwait(false));
         else
-            guildList.Add(ctx.Guild);
+            guildList.Add(tctx.Guild);
 
-        if (ctx.Argument is ulong cid
-            || ctx.Argument is string strArg && ulong.TryParse(strArg, NumberStyles.Integer, CultureInfo.InvariantCulture, out cid))
+        if (tctx.RawArguments is string strArg && ulong.TryParse(strArg, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cid))
         {
             var result = (
                 from g in guildList
@@ -39,7 +41,7 @@ internal sealed partial class TextOnlyDiscordChannelConverter : ITextArgumentCon
             return ret;
         }
 
-        if (ctx.Argument is not string value)
+        if (tctx.RawArguments is not string value)
             return Optional.FromNoValue<DiscordChannel>();
 
         var m = ChannelRegex().Match(value);
