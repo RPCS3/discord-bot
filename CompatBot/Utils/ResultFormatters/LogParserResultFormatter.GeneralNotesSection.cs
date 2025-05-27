@@ -410,7 +410,7 @@ internal static partial class LogParserResult
             notes.Add("❌ PS3 firmware is missing or corrupted");
 
         if (items["game_mod"] is string mod)
-            notes.Add($"ℹ️ Game files modification present: `{mod.Trim(10)}`");
+            notes.Add($"⚠️ Game files modification present: `{mod.Trim(20)}`");
 
         var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
