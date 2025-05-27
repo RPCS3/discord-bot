@@ -45,6 +45,7 @@ internal partial class LogParser
                 ["SYS: Path:"] = BootPathDigitalSys(),
                 ["custom config:"] = CustomConfigPath(),
                 ["patch_log: Failed to load patch file"] = FailedPatchPath(),
+                ["rpcs3.exe"] = UfcModFlag(),
             },
             EndTrigger = ["Used configuration:"],
         },
