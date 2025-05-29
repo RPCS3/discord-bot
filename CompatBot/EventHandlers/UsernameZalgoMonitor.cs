@@ -124,7 +124,7 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static async ValueTask<string> StripZalgoAsync(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormC, int level = 3)
+    public static async ValueTask<string> StripZalgoAsync(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 3)
     {
         const int minNicknameLength = 2;
         displayName = displayName.Normalize(normalizationForm).TrimEager();
@@ -195,13 +195,9 @@ public static class UsernameZalgoMonitor
                     break;
             }
         }
-        var result = builder.ToString().TrimEager();
+        var result = builder.ToString().TrimEager().Normalize(NormalizationForm.FormC);
         if (result is null or {Length: <minNicknameLength})
-        {
-            if (userName is null)
-                return await GenerateRandomNameAsync(userId).ConfigureAwait(false);
-            return await StripZalgoAsync(userName, null, userId, normalizationForm, level).ConfigureAwait(false);
-        }
+            return await GenerateRandomNameAsync(userId).ConfigureAwait(false);
         return result;
     }
 

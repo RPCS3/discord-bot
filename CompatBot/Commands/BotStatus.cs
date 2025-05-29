@@ -15,11 +15,10 @@ internal static class BotStatus
     [Description("Bot subsystem configuration status and various runtime stats")]
     public static async ValueTask Show(SlashCommandContext ctx)
     {
+        var ephemeral = !ctx.Channel.IsSpamChannel();
+        await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
         var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
-        var embed = new DiscordEmbedBuilder
-            {
-                Color = DiscordColor.Purple,
-            }
+        var embed = new DiscordEmbedBuilder { Color = DiscordColor.Purple }
             .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
             .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true);
         if (Config.AzureComputerVisionKey is {Length: >0})
@@ -66,7 +65,7 @@ internal static class BotStatus
 #if DEBUG
         embed.WithFooter("Test Instance");
 #endif
-        await ctx.RespondAsync(embed: embed, ephemeral: !ctx.Channel.IsSpamChannel());
+        await ctx.RespondAsync(embed: embed, ephemeral: ephemeral);
     }
 
     private static string GetConfiguredApiStats()
