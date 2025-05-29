@@ -82,6 +82,7 @@ public class ZalgoTests
     [TestCase("͔", true, "Combining marks")]
     [TestCase("҉҉҉҉", true, "Combining sign")]
     [TestCase("᲼᲼᲼᲼᲼᲼᲼᲼᲼ ", true, "Private block")]
+    [TestCase("녇", true, "Single character after normalization")]
     public async Task ZalgoDetectionTest(string name, bool isBad, string? comment = null)
     {
         var result = await UsernameZalgoMonitor.NeedsRenameAsync(name).ConfigureAwait(false);

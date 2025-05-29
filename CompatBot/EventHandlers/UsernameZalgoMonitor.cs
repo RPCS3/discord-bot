@@ -99,15 +99,15 @@ public static class UsernameZalgoMonitor
     public static async ValueTask<bool> NeedsRenameAsync(string displayName)
     {
         displayName = displayName.Normalize().TrimEager();
-        return displayName != await StripZalgoAsync(displayName, null, 0ul, NormalizationForm.FormC, 3).ConfigureAwait(false);
+        return displayName != await StripZalgoAsync(displayName, null, 0ul).ConfigureAwait(false);
     }
 
-    private static async Task DmAndRenameUserAsync(DiscordClient client, DiscordMember member, string suggestedName)
+    private static async ValueTask DmAndRenameUserAsync(DiscordClient client, DiscordMember member, string suggestedName)
     {
         try
         {
             var renameTask = member.ModifyAsync(m => m.Nickname = suggestedName);
-            Config.Log.Info($"Renamed {member.Username}#{member.Discriminator} ({member.Id}) to {suggestedName}");
+            Config.Log.Info($"Renamed {member} ({member.Id}) to {suggestedName}");
             var rulesChannel = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
             var msg = $"""
                 Hello, your current _display name_ is breaking {rulesChannel.Mention} #7, so you have been renamed to `{suggestedName}`.
@@ -124,7 +124,7 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static async ValueTask<string> StripZalgoAsync(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 0)
+    public static async ValueTask<string> StripZalgoAsync(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormC, int level = 3)
     {
         const int minNicknameLength = 2;
         displayName = displayName.Normalize(normalizationForm).TrimEager();
@@ -134,11 +134,11 @@ public static class UsernameZalgoMonitor
             return await GenerateRandomNameAsync(userId).ConfigureAwait(false);
 
         var builder = new StringBuilder();
-        bool skipLowSurrogate = false;
-        int consecutive = 0;
-        int codePoint = 0;
-        char highSurrogate = '\0';
-        bool hasNormalCharacterBefore = false;
+        var skipLowSurrogate = false;
+        var consecutive = 0;
+        var codePoint = 0;
+        var highSurrogate = '\0';
+        var hasNormalCharacterBefore = false;
         foreach (var c in displayName)
         {
             switch (char.GetUnicodeCategory(c))
