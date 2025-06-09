@@ -1,4 +1,6 @@
-﻿namespace CompatBot.Commands;
+﻿using CompatApiClient.Utils;
+
+namespace CompatBot.Commands;
 #if DEBUG
 internal sealed class DevOnly
 {
@@ -45,17 +47,24 @@ internal sealed class DevOnly
         await ctx.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
 
-    [Command("buttons")]
-    [Description("Buttons test")]
-    public async Task Buttons(CommandContext ctx)
+    [Command("ping"), AllowDMUsage]
+    [Description("Latency test")]
+    public async Task Ping(SlashCommandContext ctx)
     {
-        var builder = new DiscordMessageBuilder()
-            .WithContent("Regular button vs emoji button")
-            .AddActionRowComponent(
-                new DiscordButtonComponent(DiscordButtonStyle.Primary, "pt", "✅ Regular"),
-                new DiscordButtonComponent(DiscordButtonStyle.Primary, "pe", "Emoji", emoji: new(DiscordEmoji.FromUnicode("✅")))
-            );
-        await ctx.RespondAsync(builder).ConfigureAwait(false);
+        await ctx.DeferResponseAsync().ConfigureAwait(false);
+        var commonGuilds = new List<ulong>();
+        foreach (var guild in ctx.Client.Guilds.Values)
+        {
+            if (await guild.GetMemberAsync(ctx.User.Id).ConfigureAwait(false) is DiscordMember _)
+                commonGuilds.Add(guild.Id);
+        }
+        var latencyList = new List<double>();
+        foreach (var guildId in commonGuilds)
+            latencyList.Add(ctx.Client.GetConnectionLatency(guildId).TotalMilliseconds);
+        var msg = $"Latency stats over {latencyList.Count} guild{StringUtils.GetSuffix(latencyList.Count)}: {latencyList.Mean():0.##}ms";
+        if (latencyList.Count > 1)
+            msg += $" ±{latencyList.StdDev():0.##}ms";
+        await ctx.RespondAsync(msg).ConfigureAwait(false);
     }
 }
 #endif

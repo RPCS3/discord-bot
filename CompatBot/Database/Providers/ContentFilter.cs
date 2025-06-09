@@ -20,6 +20,7 @@ internal static class ContentFilter
 
     public static ValueTask<Piracystring?> FindTriggerAsync(FilterContext ctx, string str)
     {
+        str = str.TrimEnd();
         if (str is not {Length: >0})
             return ValueTask.FromResult((Piracystring?)null);
 

@@ -1102,19 +1102,21 @@ internal static partial class LogParserResult
             13 => "macOS Ventura",
             14 => "macOS Sonoma",
             15 => "macOS Sequoia",
+            26 => "macOS Tahoe",
             _ => "Unknown Apple OS",
         };
 
     internal static bool IsAmd(string gpuInfo)
-        => gpuInfo.Contains("Radeon", StringComparison.OrdinalIgnoreCase) ||
-           gpuInfo.Contains("AMD", StringComparison.OrdinalIgnoreCase) ||
-           gpuInfo.Contains("ATI ", StringComparison.OrdinalIgnoreCase);
+        => gpuInfo.Contains("Radeon", StringComparison.OrdinalIgnoreCase)
+           || gpuInfo.Contains("AMD", StringComparison.OrdinalIgnoreCase)
+           || gpuInfo.Contains("ATI ", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsNvidia(string gpuInfo)
-        => gpuInfo.Contains("GeForce", StringComparison.OrdinalIgnoreCase) ||
-           gpuInfo.Contains("nVidia", StringComparison.OrdinalIgnoreCase) ||
-           gpuInfo.Contains("Quadro", StringComparison.OrdinalIgnoreCase) ||
-           gpuInfo.Contains("GTX", StringComparison.OrdinalIgnoreCase);
+        => gpuInfo.Contains("GeForce", StringComparison.OrdinalIgnoreCase)
+           || gpuInfo.Contains("nVidia", StringComparison.OrdinalIgnoreCase)
+           || gpuInfo.Contains("Quadro", StringComparison.OrdinalIgnoreCase)
+           || gpuInfo.Contains("GTX", StringComparison.OrdinalIgnoreCase)
+           || gpuInfo.Contains("RTX", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsIntel(string gpuInfo)
         => gpuInfo.Contains("Intel", StringComparison.OrdinalIgnoreCase);
