@@ -1102,6 +1102,7 @@ internal static partial class LogParserResult
             13 => "macOS Ventura",
             14 => "macOS Sonoma",
             15 => "macOS Sequoia",
+            26 => "macOS Tahoe",
             _ => "Unknown Apple OS",
         };
 
