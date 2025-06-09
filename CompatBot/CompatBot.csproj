@@ -66,10 +66,10 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
     <PackageReference Include="Nerdbank.Streams" Version="2.12.87" />
     <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-    <PackageReference Include="NLog" Version="5.4.0" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.4.0" />
+    <PackageReference Include="NLog" Version="5.5.0" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.5.0" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
-    <PackageReference Include="SharpCompress" Version="0.39.0" />
+    <PackageReference Include="SharpCompress" Version="0.40.0" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.6" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
   </ItemGroup>
