@@ -246,7 +246,8 @@ public partial class Client
                 using var zipStream = ReaderFactory.Open(stream);
                 while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase) is true)
+                    if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase) is true
+                        || zipStream.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
                     {
                         result = result with { MacArmFilename = Path.GetFileName(zipStream.Entry.Key) };
                         break;
