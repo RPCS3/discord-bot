@@ -1402,7 +1402,7 @@ internal static partial class LogParserResult
         "d1437ba8898a79e7474bef17ec9ac3a5489cc9c7", // NPEB90226 / NPUB90375 / NPHB00200
     };
 
-    private static void CheckSkate3Settings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes)
+    private static void CheckSkate3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
     {
         if (!Skate3Ids.Contains(serial))
             return;
