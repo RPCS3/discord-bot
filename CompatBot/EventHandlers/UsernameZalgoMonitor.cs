@@ -124,7 +124,7 @@ public static class UsernameZalgoMonitor
         }
     }
 
-    public static async ValueTask<string> StripZalgoAsync(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 3)
+    public static async ValueTask<string> StripZalgoAsync(string displayName, string? userName, ulong userId, NormalizationForm normalizationForm = NormalizationForm.FormD, int level = 5)
     {
         const int minNicknameLength = 2;
         displayName = displayName.Normalize(normalizationForm).TrimEager();
@@ -134,8 +134,10 @@ public static class UsernameZalgoMonitor
             return await GenerateRandomNameAsync(userId).ConfigureAwait(false);
 
         var builder = new StringBuilder();
+        var strippedBuilder = new StringBuilder();
         var skipLowSurrogate = false;
         var consecutive = 0;
+        var total = 0;
         var codePoint = 0;
         var highSurrogate = '\0';
         var hasNormalCharacterBefore = false;
@@ -146,7 +148,9 @@ public static class UsernameZalgoMonitor
                 case UnicodeCategory.EnclosingMark:
                 case UnicodeCategory.ModifierSymbol:
                 case UnicodeCategory.NonSpacingMark:
-                    if (++consecutive < level && hasNormalCharacterBefore)
+                    if (consecutive++ < 2
+                        && total++ < level
+                        && hasNormalCharacterBefore)
                         builder.Append(c);
                     break;
 
@@ -171,6 +175,7 @@ public static class UsernameZalgoMonitor
                             continue;
 
                         builder.Append(highSurrogate).Append(c);
+                        strippedBuilder.Append(highSurrogate).Append(c);
                         hasNormalCharacterBefore = true;
                         consecutive = 0;
                     }
@@ -188,6 +193,7 @@ public static class UsernameZalgoMonitor
                         if (!OversizedChars.Contains(c))
                         {
                             builder.Append(c);
+                            strippedBuilder.Append(c);
                             hasNormalCharacterBefore = true;
                             consecutive = 0;
                         }
@@ -195,7 +201,10 @@ public static class UsernameZalgoMonitor
                     break;
             }
         }
-        var result = builder.ToString().TrimEager().Normalize(NormalizationForm.FormC);
+        var result = (total <= level ? builder : strippedBuilder)
+            .ToString()
+            .TrimEager()
+            .Normalize(NormalizationForm.FormC);
         if (result is null or {Length: <minNicknameLength})
             return await GenerateRandomNameAsync(userId).ConfigureAwait(false);
         return result;
