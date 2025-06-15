@@ -396,7 +396,7 @@ internal static partial class LogParserResult
         }
         if (warnLibraryOverrides)
             notes.Add("⚠️ Please disable any Firmware Libraries overrides");
-            
+
         if (!string.IsNullOrEmpty(serial))
         {
             CheckP5Settings(serial, items, notes, generalNotes, ppuHashes, ppuPatches, patchNames);
@@ -420,6 +420,7 @@ internal static partial class LogParserResult
             CheckDragonsCrownSettings(serial, items, notes);
             CheckLbpSettings(serial, items, generalNotes);
             CheckKillzone3Settings(serial, items, notes, patchNames);
+            CheckSkate3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
         }
         else if (items["game_title"] == "vsh.self")
             CheckVshSettings(items, notes, generalNotes);
@@ -1386,6 +1387,28 @@ internal static partial class LogParserResult
                     generalNotes.Add("⚠️ Please update the game to prevent hang on boot");
             }
         }
+    }
+
+    private static readonly HashSet<string> Skate3Ids =
+    [
+        "BLUS30464", "BLES00760", "BLJM60296",
+        "NPEB90226", "NPUB90375", "NPHB00200", // demo
+    ];
+
+    private static readonly HashSet<string> KnownSkate3Patches = new(StringComparer.InvariantCultureIgnoreCase)
+    {
+        "376469bd27d45a617b6d086894c07e4a00f86fde", // EU/US 1.05 / 1.00 JP
+        "b34a07c8bc8ee4018657a36539d9d7b1f28bd9bb", // BLUS30464 / BLES00760 1.00
+        "d1437ba8898a79e7474bef17ec9ac3a5489cc9c7", // NPEB90226 / NPUB90375 / NPHB00200
+    };
+
+    private static void CheckSkate3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
+    {
+        if (!Skate3Ids.Contains(serial))
+            return;
+
+        if (!ppuHashes.Overlaps(KnownSkate3Patches))
+            generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
     private static void CheckVshSettings(NameValueCollection items, List<string> notes, List<string> generalNotes)

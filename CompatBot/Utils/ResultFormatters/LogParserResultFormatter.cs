@@ -130,6 +130,7 @@ internal static partial class LogParserResult
     [
         "BLES02247", "BLUS31604", "BLJM61346", "NPEB02436", "NPUB31848", "NPJB00769", // p5
         "BLES00932", "BLUS30443", // DeS
+        "BLUS30464", "BLES00760", "BLJM60296", "NPEB90226", "NPUB90375", "NPHB00200", // Skate 3
     ];
 
     private static readonly HashSet<string> KnownFpsUnlockPatchIds =
