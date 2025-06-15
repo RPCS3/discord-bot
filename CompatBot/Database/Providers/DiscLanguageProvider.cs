@@ -139,12 +139,14 @@ public static partial class DiscLanguageProvider
         ["Japan"] = "Ja",
         ["Korea"] = "Ko",
         ["Mexico"] = "Es-MX",
+        ["New Zealand"] = "En",
         ["Poland"] = "Pl",
         ["Russia"] = "Ru",
         ["Spain"] = "Es",
         ["Switzerland"] = "De",
         ["Turkey"] = "Tr",
         ["UK"] = "En-UK",
+        ["United Arab Emirates"] = "Ar",
         ["USA"] = "En",
     };
 
