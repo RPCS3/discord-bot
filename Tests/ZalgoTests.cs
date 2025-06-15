@@ -86,7 +86,7 @@ public class ZalgoTests
     public async Task ZalgoDetectionTest(string name, bool isBad, string? comment = null)
     {
         var result = await UsernameZalgoMonitor.NeedsRenameAsync(name).ConfigureAwait(false);
-        Assert.That(result, Is.EqualTo(isBad), comment);
+        Assert.That(result, Is.EqualTo(isBad), comment ?? $"Expected to be {(isBad ? "bad" : "acceptable")}");
     }
 }
 

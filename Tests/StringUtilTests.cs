@@ -52,6 +52,9 @@ public class StringUtilTests
     }
 
     [TestCase("jò̵͗s̷̑͠ẻ̵͝p̸̆̂h̸͐̿", "joseph")]
+    [TestCase("çöćķåťřĩĉȅ", "cockatrice")]
+    [TestCase("blazé", "blazé", Description = "Base character with diacritics to same base character")]
+    [TestCase("blazé", "blazé", Description = "Combining diacritics to base character")]
     public async Task StripZalgoTest(string input, string expected)
     {
         var stripped = await UsernameZalgoMonitor.StripZalgoAsync(input, null, 0ul).ConfigureAwait(false);
