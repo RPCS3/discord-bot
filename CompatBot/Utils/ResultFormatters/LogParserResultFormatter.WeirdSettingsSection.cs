@@ -1183,7 +1183,7 @@ internal static partial class LogParserResult
         if (items["frame_limit"] is not null and not "Off")
             notes.Add("⚠️ `Frame Limiter` should be `Off`");
             
-        if (!ppuHashes.Overlaps(KnownPdf2ndPatches))
+        if (!ppuHashes.Overlaps(KnownPdf2ndPatches) && !ppuHashes.Overlaps(KnownPdfPatches))
             generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
