@@ -1140,14 +1140,18 @@ internal static partial class LogParserResult
     [
         "BLJM60527", "BLUS31319", "BLAS50576",
         "NPEB01393", "NPUB31241", "NPHB00559", "NPJB00287",
+        "NPEB90498", "NPJB90588", "NPUB90958", // demo
     ];
 
 
     private static readonly HashSet<string> KnownPdfPatches = new(StringComparer.InvariantCultureIgnoreCase)
     {
-        "f3227f57ec001582b253035fd90de77f05ead470",
-        "c02e3b52e3d75f52f76fb8f0fb5be7ca4d921949",
-        "1105af0a4d6a4a1481930c6f3090c476cde06c4c",
+        "f3227f57ec001582b253035fd90de77f05ead470", // US
+        "c02e3b52e3d75f52f76fb8f0fb5be7ca4d921949", // EU
+        "1105af0a4d6a4a1481930c6f3090c476cde06c4c", // JP
+        "b0e0b8683e771af7d47758d2ba16629752741a86", // NPEB90498
+        "3b862822377252f92731dfd2ba39a809de09a987", // NPJB90588
+        "ccbe4a3f3e934995c7526610d9fcb5282dd64044", // NPUB90958
     };
 
     private static readonly HashSet<string> Pdf2ndIds =
