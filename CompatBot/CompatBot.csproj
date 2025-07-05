@@ -63,15 +63,15 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.6" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.225.1" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Nerdbank.Streams" Version="2.12.87" />
     <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-    <PackageReference Include="NLog" Version="5.5.0" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.5.0" />
+    <PackageReference Include="NLog" Version="6.0.1" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="6.0.1" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
     <PackageReference Include="SharpCompress" Version="0.40.0" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.6" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Clients\CirrusCiClient\CirrusCiClient.csproj" />
