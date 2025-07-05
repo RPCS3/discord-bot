@@ -9,6 +9,7 @@ using CompatBot.Commands.Processors;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
+using CompatBot.Ocr;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
@@ -119,7 +120,8 @@ internal static class Program
                 Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),
                 new GithubClient.Client(Config.GithubToken).GetPipelineDurationAsync(Config.Cts.Token),
                 Config.GetCurrentGitRevisionAsync(Config.Cts.Token),
-                Bot.UpdateCheckScheduledAsync(Config.Cts.Token)
+                Bot.UpdateCheckScheduledAsync(Config.Cts.Token),
+                OcrProvider.InitializeAsync(Config.Cts.Token)
             );
 
             try

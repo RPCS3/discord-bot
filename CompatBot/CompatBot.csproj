@@ -46,6 +46,7 @@
     <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02520" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02520" />
     <PackageReference Include="DSharpPlus.Natives.Zstd" Version="1.5.7.21" />
+    <PackageReference Include="Florence2" Version="24.11.53800" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3783" />
     <PackageReference Include="MathParser.org-mXparser" Version="6.1.0" />
     <PackageReference Include="MegaApiClient" Version="1.10.4" />
@@ -72,6 +73,7 @@
     <PackageReference Include="SharpCompress" Version="0.40.0" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.6" />
     <PackageReference Include="System.Linq.Async" Version="6.0.3" />
+    <PackageReference Include="TesseractCSharp" Version="1.0.5" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Clients\CirrusCiClient\CirrusCiClient.csproj" />

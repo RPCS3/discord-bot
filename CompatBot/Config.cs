@@ -89,6 +89,7 @@ internal static class Config
     public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
     public static string RedumpDatfileCachePath => config.GetValue(nameof(RedumpDatfileCachePath), "./datfile/");
     public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)");
+    public static string OcrBackend => config.GetValue(nameof(OcrBackend), "auto"); // possible values: auto, tesseract, florence2, azure
 
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
     public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
