@@ -1,4 +1,5 @@
-﻿using CompatBot.Database.Providers;
+﻿using CompatApiClient.Utils;
+using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using Microsoft.Extensions.Caching.Memory;
@@ -37,7 +38,7 @@ internal static class DeletedMessagesMonitor
 
 		var logChannel = await c.GetChannelAsync(Config.DeletedMessagesLogChannelId).ConfigureAwait(false);
 		var embed = new DiscordEmbedBuilder()
-			.WithAuthor($"{msg.Author.Username}#{msg.Author.Discriminator} in #{msg.Channel.Name}", iconUrl: msg.Author.AvatarUrl)
+			.WithAuthor($"{msg.Author.Username}#{msg.Author.Discriminator} in #{msg.Channel?.Name ?? "DM"}", iconUrl: msg.Author.AvatarUrl)
 			.WithDescription(msg.JumpLink.ToString())
 			.WithFooter($"Post date: {msg.Timestamp:yyyy-MM-dd HH:mm:ss} ({(DateTime.UtcNow - msg.Timestamp).AsTimeDeltaDescription()} ago)");
 		if (msg.Attachments.Count > 0)
@@ -50,7 +51,11 @@ internal static class DeletedMessagesMonitor
 		{
 			await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embed.Build())).ConfigureAwait(false);
 			if (!string.IsNullOrEmpty(msg.Content))
-				await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msg.Content)).ConfigureAwait(false);
+				await logChannel.SendMessageAsync(new DiscordMessageBuilder().WithContent(
+					msg.Content
+						.Replace(".", $"{StringUtils.InvisibleSpacer}.")
+						.Trim(EmbedPager.MaxMessageLength)
+				)).ConfigureAwait(false);
 		}
 		finally
 		{
