@@ -29,10 +29,5 @@ public abstract class BackendBase: IOcrBackend, IDisposable
 
     public virtual void Dispose() => HttpClient.Dispose();
 
-    protected string ModelCachePath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "discord-bot",
-        "ocr-models",
-        Name.ToLowerInvariant()
-    );
+    protected string ModelCachePath => Path.Combine(Config.BotAppDataFolder, "ocr-models", Name.ToLowerInvariant());
 }
