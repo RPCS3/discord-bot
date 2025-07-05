@@ -1177,17 +1177,15 @@ internal static partial class LogParserResult
         if (!PdfIds.Contains(serial) && !Pdf2ndIds.Contains(serial))
             return;
 
-        if (!ppuPatches.Any())
+        if (ppuPatches.Count is 0)
         {
-            if (ppuHashes.Overlaps(KnownPdfPatches))
-                generalNotes.Add("ℹ️ This game has an FPS unlock patch");
-            else if (ppuHashes.Overlaps(KnownPdf2ndPatches))
+            if (ppuHashes.Overlaps(KnownPdfPatches) || ppuHashes.Overlaps(KnownPdf2ndPatches))
                 generalNotes.Add("ℹ️ This game has an FPS unlock patch");
         }
         if (items["frame_limit"] is not null and not "Off")
             notes.Add("⚠️ `Frame Limiter` should be `Off`");
             
-        if (!ppuHashes.Overlaps(KnownPdf2ndPatches) && !ppuHashes.Overlaps(KnownPdfPatches))
+        if (Pdf2ndIds.Contains(serial) && !ppuHashes.Overlaps(KnownPdf2ndPatches))
             generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
