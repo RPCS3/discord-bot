@@ -247,9 +247,8 @@ internal static class Config
         var fileTarget = new FileTarget("logfile") {
             FileName = CurrentLogPath,
             ArchiveEvery = FileArchivePeriod.Day,
-            ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
+            ArchiveSuffixFormat = ".{1:yyyyMMdd}.{0:00}",
             KeepFileOpen = true,
-            ConcurrentWrites = false,
             AutoFlush = false,
             OpenFileFlushTimeout = 1,
             Layout = "${longdate} ${sequenceid:padding=6} ${level:uppercase=true:padding=-5} ${message} ${onexception:" +
@@ -269,7 +268,7 @@ internal static class Config
         };
         var watchdogTarget = new MethodCallTarget("watchdog")
         {
-            ClassName = typeof(Watchdog).AssemblyQualifiedName,
+            ClassName = typeof(Watchdog).AssemblyQualifiedName!,
             MethodName = nameof(Watchdog.OnLogHandler),
         };
         watchdogTarget.Parameters.AddRange([new MethodCallParameter("${level}"), new("${message}")]);
