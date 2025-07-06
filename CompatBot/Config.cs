@@ -247,7 +247,9 @@ internal static class Config
         var fileTarget = new FileTarget("logfile") {
             FileName = CurrentLogPath,
             ArchiveEvery = FileArchivePeriod.Day,
-            ArchiveSuffixFormat = ".{1:yyyyMMdd}.{0:00}",
+            //ArchiveSuffixFormat = ".{1:yyyyMMdd}.{0:00}",
+            ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
+            ConcurrentWrites = false,
             KeepFileOpen = true,
             AutoFlush = false,
             OpenFileFlushTimeout = 1,
