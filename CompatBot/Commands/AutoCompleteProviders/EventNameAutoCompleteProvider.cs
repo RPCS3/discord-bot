@@ -83,7 +83,9 @@ public class EventNameAutoCompleteProvider: IAutoCompleteProvider
                 .AsEnumerable()
                 .Concat(fuzzy)
                 .Distinct();
-            query = eventNames.Concat(names);
+            query = new[] { context.UserInput }
+                .Concat(eventNames)
+                .Concat(names);
         }
         return query
             .Distinct()
