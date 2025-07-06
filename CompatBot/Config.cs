@@ -254,11 +254,12 @@ internal static class Config
         var loggingConfig = new NLog.Config.LoggingConfiguration();
         var fileTarget = new FileTarget("logfile") {
             FileName = CurrentLogPath,
+            ArchiveFileName = CurrentLogPath,
+            ArchiveSuffixFormat = ".{1:yyyyMMdd}.{0:00}",
+            //ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
+            //ConcurrentWrites = false,
             ArchiveEvery = FileArchivePeriod.Day,
             MaxArchiveDays = 30,
-            //ArchiveSuffixFormat = ".{1:yyyyMMdd}.{0:00}",
-            ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
-            ConcurrentWrites = false,
             KeepFileOpen = true,
             AutoFlush = false,
             OpenFileFlushTimeout = 1,
