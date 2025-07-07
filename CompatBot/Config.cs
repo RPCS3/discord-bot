@@ -293,8 +293,8 @@ internal static class Config
         loggingConfig.AddRule(LogLevel.Debug, LogLevel.Fatal, asyncFileTarget);
         loggingConfig.AddRule(LogLevel.Info, LogLevel.Fatal, watchdogTarget);
 
-        var ignoreFilter1 = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')", Action = FilterResult.Ignore, };
-        var ignoreFilter2 = new ConditionBasedFilter { Condition = "contains('${message}','One or more pre-execution checks failed')", Action = FilterResult.Ignore, };
+        var ignoreFilter1 = new ConditionBasedFilter { Condition = "contains('${message}','TaskCanceledException')"!, Action = FilterResult.Ignore, };
+        var ignoreFilter2 = new ConditionBasedFilter { Condition = "contains('${message}','One or more pre-execution checks failed')"!, Action = FilterResult.Ignore, };
         foreach (var rule in loggingConfig.LoggingRules)
         {
             rule.Filters.Add(ignoreFilter1);

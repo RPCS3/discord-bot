@@ -15,6 +15,7 @@ using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using NLog.Extensions.Logging;
 
@@ -138,8 +139,12 @@ internal static class Program
             var mediaScreenshotMonitor = new MediaScreenshotMonitor();
             var clientBuilder = DiscordClientBuilder
                 .CreateDefault(Config.Token, DiscordIntents.All)
-                .ConfigureLogging(builder => builder.AddNLog(LogManager.Configuration))
-                .UseZstdCompression()
+                .ConfigureLogging(builder => builder.AddNLog(LogManager.Configuration!))
+                .ConfigureServices(
+                    services => services.ConfigureHttpClientDefaults(
+                        builder => builder.RemoveAllLoggers()
+                    )
+                ).UseZstdCompression()
                 .UseCommands((services, extension) =>
                 {
                     var textCommandProcessor = new TextCommandProcessor(new()
