@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mime;
 using CompatBot.EventHandlers;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.TextCommands;
@@ -354,20 +355,20 @@ internal sealed class Vision
     {
         foreach (var embed in msg.Embeds)
         {
-            if (embed.Image?.Url?.ToString() is string url)
+            if (embed.Image?.Url?.ToString() is {Length: >0} url)
                 yield return url;
-            else if (embed.Thumbnail?.Url?.ToString() is string thumbUrl)
+            else if (embed.Thumbnail?.Url?.ToString() is {Length: >0} thumbUrl)
                 yield return thumbUrl;
         }
     }
 
-    internal static IEnumerable<DiscordAttachment> GetImageAttachments(DiscordMessage message)
+    internal static IEnumerable<string> GetImageAttachments(DiscordMessage message)
         => message.Attachments.Where(a =>
-                a.FileName.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
-                || a.FileName.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
-                || a.FileName.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase)
-            //|| a.FileName.EndsWith(".webp", StringComparison.InvariantCultureIgnoreCase)
-        );
+            a.MediaType is MediaTypeNames.Image.Jpeg
+                or MediaTypeNames.Image.Png
+                or MediaTypeNames.Image.Webp
+            && a.Url is {Length: >0}
+        ).Select(att => att.Url!);
 
     private static string GetDescription(ImageDescriptionDetails description, AdultInfo adultInfo)
     {
@@ -416,8 +417,8 @@ internal sealed class Vision
             return null;
         
         var reactMsg = tctx.Message;
-        if (GetImageAttachments(reactMsg).FirstOrDefault() is DiscordAttachment attachment)
-            imageUrl = attachment.Url;
+        if (GetImageAttachments(reactMsg).FirstOrDefault() is {} attUrl)
+            imageUrl = attUrl;
         imageUrl = imageUrl?.Trim() ?? "";
         if (!string.IsNullOrEmpty(imageUrl)
             && imageUrl.StartsWith('<')
@@ -431,17 +432,16 @@ internal sealed class Vision
                  || str.StartsWith("last")
                  || str.StartsWith("previous")
                  || str.StartsWith("^"))
-                && ctx.Channel.PermissionsFor(
-                    await ctx.Client.GetMemberAsync(ctx.Guild, ctx.Client.CurrentUser).ConfigureAwait(false)
-                ).HasPermission(DiscordPermission.ReadMessageHistory))
+                && await ctx.Client.GetMemberAsync(ctx.Guild, ctx.Client.CurrentUser).ConfigureAwait(false) is {} member
+                && ctx.Channel.PermissionsFor(member).HasPermission(DiscordPermission.ReadMessageHistory))
                 try
                 {
                     var previousMessages = (await ctx.Channel.GetMessagesBeforeCachedAsync(tctx.Message.Id, 10).ConfigureAwait(false))!;
                     imageUrl = (
                         from m in previousMessages
                         where m.Attachments?.Count > 0
-                        from a in GetImageAttachments(m)
-                        select a.Url
+                        from url in GetImageAttachments(m)
+                        select url
                     ).FirstOrDefault();
                     if (string.IsNullOrEmpty(imageUrl))
                     {

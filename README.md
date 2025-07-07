@@ -18,7 +18,14 @@ Development Requirements
 Runtime Requirements
 --------------------
 * [.NET 9.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
-  * bot needs `dotnet` command to be available (i.e. alias for the Snap package)
+  * Bot needs `dotnet` command to be available (i.e. alias for the Snap package)
+  * OCR on Linux requires the following dependencies to be installed: `libarchive.so.13`, `liblept.so.5`, `libtiff.so.5`
+    * On Ubuntu 22.04 this is provided by the following packages:
+      ```sh
+      sudo apt install libarchive13t64 liblept5
+      wget https://archive.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6_amd64.deb
+      sudo dpkg -i ./libtiff5_4.3.0-6_amd64.deb
+      ```
 * Optionally Google API credentials to access Google Drive:
   * Create new project in the [Google Cloud Resource Manager](https://console.developers.google.com/cloud-resource-manager)
   * Select the project and enable [Google Drive API](https://console.developers.google.com/apis/library/drive.googleapis.com)

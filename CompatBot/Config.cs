@@ -87,8 +87,16 @@ internal static class Config
     public static string PreferredFontFamily => config.GetValue(nameof(PreferredFontFamily), "");
     public static string LogPath => config.GetValue(nameof(LogPath), "./logs/"); // paths are relative to the working directory
     public static string IrdCachePath => config.GetValue(nameof(IrdCachePath), "./ird/");
-    public static string RedumpDatfileCachePath => config.GetValue(nameof(RedumpDatfileCachePath), "./datfile/");
+    public static string BotAppDataFolder => config.GetValue(
+        nameof(BotAppDataFolder),
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "compat-bot"
+        )
+    );
+    public static string RedumpDatfileCachePath => Path.Combine(BotAppDataFolder, "compat-bot", "datfile");
     public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)");
+    public static string OcrBackend => config.GetValue(nameof(OcrBackend), "auto"); // possible values: auto, tesseract, florence2, azure
 
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
     public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
@@ -246,10 +254,12 @@ internal static class Config
         var loggingConfig = new NLog.Config.LoggingConfiguration();
         var fileTarget = new FileTarget("logfile") {
             FileName = CurrentLogPath,
+            ArchiveFileName = CurrentLogPath,
+            ArchiveSuffixFormat = ".{1:yyyyMMdd}.{0:00}",
+            //ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
+            //ConcurrentWrites = false,
             ArchiveEvery = FileArchivePeriod.Day,
-            //ArchiveSuffixFormat = ".{1:yyyyMMdd}.{0:00}",
-            ArchiveNumbering = ArchiveNumberingMode.DateAndSequence,
-            ConcurrentWrites = false,
+            MaxArchiveDays = 30,
             KeepFileOpen = true,
             AutoFlush = false,
             OpenFileFlushTimeout = 1,

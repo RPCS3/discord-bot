@@ -66,11 +66,14 @@ public class ProductCodeAutoCompleteProvider: IAutoCompleteProvider
                 .AsNoTracking()
                 .AsEnumerable()
                 .Select(t => (code: t.ProductCode, title: t.Name!));
-            result = prefixMatches
+            result = new[] { (code: context.UserInput, title: context.UserInput.Trim(100)) }
+                .Concat(prefixMatches)
                 .Concat(substringMatches)
                 .Distinct()
                 .Take(25);
         }
-        return result.Select(i => new DiscordAutoCompleteChoice($"{i.code}: {i.title}".Trim(100), i.code)).ToList();
+        return result
+            .Select(i => new DiscordAutoCompleteChoice($"{i.code}: {i.title}".Trim(100), i.code))
+            .ToList();
     }
 }

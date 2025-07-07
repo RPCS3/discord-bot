@@ -5,6 +5,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.SourceHandlers;
+using CompatBot.Ocr;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
@@ -20,11 +21,8 @@ internal static class BotStatus
         var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
         var embed = new DiscordEmbedBuilder { Color = DiscordColor.Purple }
             .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
-            .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true);
-        if (Config.AzureComputerVisionKey is {Length: >0})
-            embed.AddField("Max OCR Queue", MediaScreenshotMonitor.MaxQueueLength.ToString(), true);
-        else
-            embed.AddField("Max OCR Queue", "-", true);
+            .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true)
+            .AddField("Max OCR Queue", $"{OcrProvider.BackendName} / {MediaScreenshotMonitor.MaxQueueLength}", true);
         var osInfo = RuntimeInformation.OSDescription;
         if (Environment.OSVersion.Platform is PlatformID.Unix or PlatformID.MacOSX)
             osInfo = RuntimeInformation.RuntimeIdentifier;
