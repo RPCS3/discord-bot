@@ -6,7 +6,7 @@ using TesseractCSharp.Interop;
 
 namespace CompatBot.Ocr.Backend;
 
-internal class Tesseract: BackendBase, IDisposable
+internal class Tesseract: BackendBase
 {
     private TesseractEngine engine;
 
@@ -65,12 +65,12 @@ internal class Tesseract: BackendBase, IDisposable
         return true;
     }
 
-    public override async Task<string> GetTextAsync(string imgUrl, CancellationToken cancellationToken)
+    public override async Task<(string result, double confidence)> GetTextAsync(string imgUrl, CancellationToken cancellationToken)
     {
         var imgData = await HttpClient.GetByteArrayAsync(imgUrl, cancellationToken).ConfigureAwait(false);
         using var img = Pix.LoadFromMemory(imgData);
         using var page = engine.Process(img);
-        return page.GetText() ?? "";
+        return (page.GetText() ?? "", page.GetMeanConfidence());
     }
 
     public override void Dispose()
