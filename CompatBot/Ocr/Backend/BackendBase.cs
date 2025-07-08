@@ -25,7 +25,7 @@ public abstract class BackendBase: IOcrBackend, IDisposable
         return Task.FromResult(true);
     }
 
-    public abstract Task<string> GetTextAsync(string imgUrl, CancellationToken cancellationToken);
+    public abstract Task<(string result, double confidence)> GetTextAsync(string imgUrl, CancellationToken cancellationToken);
 
     public virtual void Dispose() => HttpClient.Dispose();
 

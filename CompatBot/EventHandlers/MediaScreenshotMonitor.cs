@@ -76,17 +76,18 @@ internal sealed class MediaScreenshotMonitor
 
             try
             {
-                if (await OcrProvider.GetTextAsync(item.imgUrl, Config.Cts.Token).ConfigureAwait(false) is {Length: >0} result
+                if (await OcrProvider.GetTextAsync(item.imgUrl, Config.Cts.Token).ConfigureAwait(false) is ({Length: >0} result, var confidence)
                     && !Config.Cts.Token.IsCancellationRequested)
                 {
                     var cnt = true;
                     var prefix = $"[{item.msg.Id % 100:00}]";
-                    var ocrTextBuf = new StringBuilder($"OCR result of message <{item.msg.JumpLink}>:").AppendLine();
-                    Config.Log.Debug($"{prefix} OCR result of message {item.msg.JumpLink}:");
+                    var ocrTextBuf = new StringBuilder($"OCR result of message <{item.msg.JumpLink}> ({confidence*100:0.00}%):").AppendLine();
+                    Config.Log.Debug($"{prefix} OCR result of message {item.msg.JumpLink} ({confidence*100:0.00}%):");
                     var duplicates = new HashSet<string>();
                     ocrTextBuf.AppendLine(result.Sanitize());
                     Config.Log.Debug($"{prefix} {result}");
                     if (cnt
+                        && confidence > 0.65
                         && await ContentFilter.FindTriggerAsync(FilterContext.Chat, result).ConfigureAwait(false) is Piracystring hit
                         && duplicates.Add(hit.String))
                     {

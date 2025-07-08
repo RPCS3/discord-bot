@@ -33,10 +33,11 @@ public static class OcrProvider
         }
     }
 
-    public static async Task<string> GetTextAsync(string imageUrl, CancellationToken cancellationToken)
+    public static async Task<(string result, double confidence)> GetTextAsync(string imageUrl, CancellationToken cancellationToken)
     {
         if (backend is null)
-            return "";
+            return ("", -1);
+
         try
         {
             return await backend.GetTextAsync(imageUrl, cancellationToken).ConfigureAwait(false);
@@ -44,7 +45,7 @@ public static class OcrProvider
         catch (Exception e)
         {
             Config.Log.Warn(e, $"Failed to OCR image {imageUrl}");
-            return "";
+            return ("", 0);
         }
     }
 

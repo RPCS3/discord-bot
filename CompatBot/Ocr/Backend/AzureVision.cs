@@ -22,7 +22,7 @@ public class AzureVision: IOcrBackend
         return Task.FromResult(true);
     }
 
-    public async Task<string> GetTextAsync(string imgUrl,  CancellationToken cancellationToken)
+    public async Task<(string result, double confidence)> GetTextAsync(string imgUrl,  CancellationToken cancellationToken)
     {
         var headers = await cvClient.ReadAsync(imgUrl, cancellationToken: cancellationToken).ConfigureAwait(false);
         var operationId = new Guid(new Uri(headers.OperationLocation).Segments.Last());
@@ -43,10 +43,10 @@ public class AzureVision: IOcrBackend
                 foreach (var r in result.AnalyzeResult.ReadResults)
                 foreach (var l in r.Lines)
                     ocrTextBuf.AppendLine(l.Text);
-                return ocrTextBuf.ToString();
+                return (ocrTextBuf.ToString(), 1);
             }
         }
         Config.Log.Warn($"Failed to OCR image {imgUrl}: {result.Status}");
-        return "";
+        return ("", 0);
     }
 }

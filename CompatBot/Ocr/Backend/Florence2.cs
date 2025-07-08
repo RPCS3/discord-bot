@@ -53,13 +53,13 @@ public class Florence2: BackendBase
         return true;
     }
 
-    public override async Task<string> GetTextAsync(string imgUrl, CancellationToken cancellationToken)
+    public override async Task<(string result, double confidence)> GetTextAsync(string imgUrl, CancellationToken cancellationToken)
     {
         await using var imgStream = await HttpClient.GetStreamAsync(imgUrl, cancellationToken).ConfigureAwait(false);
         var results = model.Run(TaskTypes.OCR_WITH_REGION, [imgStream], "", CancellationToken.None);
         var result = new StringBuilder();
         foreach (var box in results[0].OCRBBox)
             result.AppendLine(box.Text);
-        return result.ToString().TrimEnd();
+        return (result.ToString().TrimEnd(), 1);
     }
 }
