@@ -11,9 +11,12 @@ internal static class EmpathySimulationHandler
     internal static readonly TimeSpan ThrottleDuration = TimeSpan.FromHours(1);
     internal static readonly MemoryCache Throttling = new(new MemoryCacheOptions {ExpirationScanFrequency = TimeSpan.FromMinutes(30)});
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient c, MessageCreatedEventArgs args)
     {
-        if (DefaultHandlerFilter.IsFluff(args.Message))
+        if (DefaultHandlerFilter.IsFluff(args.Message)
+            || args.Message.Content.StartsWith("<@"+c.CurrentUser.Id)
+            || args.Message.Content.StartsWith("<@!"+c.CurrentUser.Id)
+            || args.Message.Content is "🥠")
             return;
 
         if (args.Channel.IsPrivate)
