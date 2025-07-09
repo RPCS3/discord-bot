@@ -305,6 +305,8 @@ internal static partial class LogParserResult
                                 && items["renderer"] == "Vulkan")
                                 notes.Add("ℹ️ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
                         }
+                        if (gpuInfo.Contains("GTX 10") || gpuInfo.Contains("GTX 9") || gpuInfo.Contains("GTX 7"))
+                            notes.Add("ℹ️ Your nVidia GPU no longer receives driver updates.");
                     }
                     else if (IsAmd(gpuInfo) && items["os_type"] is "Windows")
                     {
