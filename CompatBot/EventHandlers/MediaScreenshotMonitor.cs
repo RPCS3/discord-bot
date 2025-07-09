@@ -39,7 +39,7 @@ internal sealed class MediaScreenshotMonitor
 
     public static void EnqueueOcrTask(DiscordMessage message)
     {
-        if (!message.Attachments.Any())
+        if (!message.Attachments.Any() && !message.Embeds.Any())
             return;
 
         var images = Vision.GetImageAttachments(message)

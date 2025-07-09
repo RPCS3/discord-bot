@@ -24,7 +24,7 @@ internal static class ContentFilterMonitor
             if (message?.Author is null)
                 message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
         }
-        if (message.Attachments.Any())
+        if (message.Attachments.Any() || message.Embeds.Any())
             MediaScreenshotMonitor.EnqueueOcrTask(message);
         await ContentFilter.IsClean(c, message).ConfigureAwait(false);
     }
