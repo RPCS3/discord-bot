@@ -193,30 +193,23 @@ internal static partial class LogParserResult
             if (CpuTierList.List.FirstOrDefault(i => i.regex.IsMatch(cpuAndMemoryInfo)) is { tier: { Length: >0 } tier } match)
             {
                 var status = items["game_status"] ?? "unknown";
-                var msg = tier switch
+                var msg = (tier, status) switch
                 {
-                    "S" => "ℹ️ This is an **S** Tier CPU",
-                    "A" => "ℹ️ This is an **A** Tier CPU",
-                    "B" => status switch
-                    {
-                        "ingame" => "⚠️ This is a **B** Tier CPU, and may not be sufficient for some ingame titles",
-                        _ => "ℹ️ This is a **B** Tier CPU",
-                    },
-                    "C" => status switch
-                    {
-                        "playable" => "⚠️ This is a **C** Tier CPU, which is below the recommended system requirements",
-                        _ => "⚠️ This is a **C** Tier CPU, please stick to the playable game titles",
-                    },
-                    "D" => status switch
-                    {
-                        "playable" => "⚠️ This is a **D** Tier CPU, only lighter playable game titles will work",
-                        _ => "⚠️ This is a **D** Tier CPU, please stick to the lighter playable game titles",
-                    },
-                    "F" => "❌ This is an **F** Tier CPU, which is below the minimum system requirements",
-                    _ => "❓",
+                    ("S" or "A", _) => $"ℹ️ This is an **{tier}** Tier CPU",
+                    ("B", "ingame") => "⚠️ This is a **B** Tier CPU, and may not be sufficient for some ingame titles",
+                    ("B", _) => "ℹ️ This is a **B** Tier CPU",
+                    ("C", "playable") => "⚠️ This is a **C** Tier CPU, which is below the recommended system requirements",
+                    ("C", _) => "⚠️ This is a **C** Tier CPU, please stick to the playable game titles",
+                    ("D", "playable") => "⚠️ This is a **D** Tier CPU, only lighter playable game titles will work",
+                    ("D", _) => "⚠️ This is a **D** Tier CPU, please stick to the lighter playable game titles",
+                    ("F", _) => "❌ This is an **F** Tier CPU, which is below the minimum system requirements",
+                    _ => "",
                 };
-                notes.Add($"{msg}");
-                cpuModelMatched = true;
+                if (msg is {Length: >0})
+                {
+                    notes.Add($"{msg}");
+                    cpuModelMatched = true;
+                }
             }
         }
         if (!cpuModelMatched && items["cpu_model"] is string cpu)
