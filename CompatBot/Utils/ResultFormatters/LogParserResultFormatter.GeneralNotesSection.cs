@@ -190,7 +190,7 @@ internal static partial class LogParserResult
         var cpuModelMatched = false;
         if (items["cpu_and_memory_info"] is string cpuAndMemoryInfo)
         {
-            if (CpuTierList.List.FirstOrDefault(i => i.regex.IsMatch(cpuAndMemoryInfo)) is { tier: { Length: >0 } tier } match)
+            if (CpuTierList.List.FirstOrDefault(i => i.regex.IsMatch(cpuAndMemoryInfo)) is { tier: { Length: >0 } tier })
             {
                 var status = items["game_status"] ?? "unknown";
                 var msg = (tier, status) switch
