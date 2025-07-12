@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace SourceGenerators;
 
 [Generator(LanguageNames.CSharp)]
-public class ConfusablesSourceGenerator : IIncrementalGenerator
+public class ConfusablesSourceGenerator: IIncrementalGenerator
 {
     private static readonly char[] CommentSplitter = ['#'];
     private static readonly char[] FieldSplitter = [';'];
@@ -102,25 +102,29 @@ public class ConfusablesSourceGenerator : IIncrementalGenerator
         if (!Version.TryParse(version, out _))
             version = "";
             
-        var result = new StringBuilder()
-            .AppendLine("using System;")
-            .AppendLine("using System.Collections.Generic;")
-            .AppendLine()
-            .AppendLine($"namespace {ns}")
-            .AppendLine("{")
-            .AppendLine($"    internal static class {cn}")
-            .AppendLine("    {")
-            .AppendLine($"        public const string Version = \"{version}\";")
-            .AppendLine()
-            .AppendLine($"        public const string Date = \"{date}\";")
-            .AppendLine()
-            .AppendLine("        public static readonly Dictionary<uint, uint[]> Mapping = new()")
-            .AppendLine("        {");
+        var result = new StringBuilder().AppendLine($$"""
+            using System;
+            using System.Collections.Generic;
+
+            namespace {{ns}};
+
+            internal static class {{cn}}
+            {
+                public const string Version = "{{version}}";
+                public const string Date = "{{date}}";
+                public static readonly Dictionary<uint, uint[]> Mapping = new()
+                {
+            """
+        );
         foreach (var kvp in mapping.OrderBy(i => i.Key))
-            result.AppendLine($@"            [0x{kvp.Key:X5}u] = new[] {{ {string.Join(", ", kvp.Value!.OrderBy(i => i).Select(n => $"0x{n:X5}u"))} }},");
-        result.AppendLine("        };")
-            .AppendLine("    }")
-            .AppendLine("}");
+            result.AppendLine($"""
+                    [0x{kvp.Key:X5}u] = [{string.Join(", ", kvp.Value!.OrderBy(i => i).Select(n => $"0x{n:X5}u"))}],
+            """);
+        result.AppendLine("""
+                };
+            }
+            """
+        );
 
         context.AddSource($"{cn}.Generated.cs", SourceText.From(result.ToString(), Encoding.UTF8));
 

@@ -10,9 +10,8 @@ using Microsoft.CodeAnalysis.Text;
 namespace SourceGenerators;
 
 [Generator(LanguageNames.CSharp)]
-public class Win32ErrorsSourceGenerator : IIncrementalGenerator
+public class Win32ErrorsSourceGenerator: IIncrementalGenerator
 {
-    private const string Indent = "    ";
     private static readonly char[] Separator = ['\t'];
         
     private static readonly DiagnosticDescriptor Win32ErrorFormatError = new(
@@ -44,21 +43,21 @@ public class Win32ErrorsSourceGenerator : IIncrementalGenerator
 
         if (!args.generatorContext.configOptions.GlobalOptions.TryGetValue("build_property.RootNamespace", out var ns))
             ns = args.generatorContext.compilation.AssemblyName;
-        var cn = "Win32ErrorCodes";
-        var result = new StringBuilder()
-            .AppendLine("using System.Collections.Generic;")
-            .AppendLine()
-            .AppendLine($"namespace {ns}")
-            .AppendLine("{")
-            .AppendLine($"{Indent}public static class {cn}")
-            .AppendLine($"{Indent}{{")
-            .AppendLine($"{Indent}{Indent}public static readonly Dictionary<int, (string name, string description)> Map = new()")
-            .AppendLine($"{Indent}{Indent}{{");
+        const string cn = "Win32ErrorCodes";
+        var result = new StringBuilder().AppendLine($$"""
+            using System.Collections.Generic;
+
+            namespace {{ns}};
+
+            public static class {{cn}}
+            {
+                public static readonly Dictionary<int, (string name, string description)> Map = new()
+                {
+            """
+        );
 
         var previousPos = 0;
         var line = 0;
-        var codeLine = 0;
-        var descLine = 0;
         using var reader = new StreamReader(stream, Encoding.UTF8, false);
         while (reader.ReadLine() is string errorCodeLine)
         {
@@ -66,14 +65,14 @@ public class Win32ErrorsSourceGenerator : IIncrementalGenerator
             if (string.IsNullOrWhiteSpace(errorCodeLine))
                 continue;
 
-            codeLine = line - 1;
+            var codeLine = line - 1;
             string? errorNameAndDescriptionLine;
             do
             {
                 errorNameAndDescriptionLine = reader.ReadLine();
                 line++;
             } while (string.IsNullOrWhiteSpace(errorNameAndDescriptionLine));
-            descLine = line - 1;
+            var descLine = line - 1;
                 
             var nameDescParts = errorNameAndDescriptionLine.Split(Separator, 2);
             if (nameDescParts.Length != 2 || !Regex.IsMatch(errorCodeLine, @"0x[0-9a-f]+"))
@@ -99,13 +98,16 @@ public class Win32ErrorsSourceGenerator : IIncrementalGenerator
 
             var name = nameDescParts[0];
             var desc = nameDescParts[1].Replace(@"\", @"\\").Replace("\"", "\\\"");
-            result.AppendLine($"{Indent}{Indent}{Indent}[{errorCodeLine.Trim()}] = (\"{name.Trim()}\", \"{desc.Trim()}\"),");
+            result.AppendLine($"""
+                            [{errorCodeLine.Trim()}] = ("{name.Trim()}", "{desc.Trim()}"),
+                """
+            );
         }
-
-        result.AppendLine($"{Indent}{Indent}}};")
-            .AppendLine($"{Indent}}}")
-            .AppendLine("}");
-            
+        result.AppendLine("""
+                };
+            }
+            """
+        );
         context.AddSource($"{cn}.Generated.cs", SourceText.From(result.ToString(), Encoding.UTF8));
     }
 }
