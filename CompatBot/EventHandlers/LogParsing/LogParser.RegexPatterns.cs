@@ -4,8 +4,8 @@ namespace CompatBot.EventHandlers.LogParsing;
 
 internal partial class LogParser
 {
-    private const RegexOptions DefaultOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.ExplicitCapture;
-    private const RegexOptions DefaultSingleLine = RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture;
+    private const RegexOptions DefaultOptions = RegexOptions.Multiline | RegexOptions.ExplicitCapture;
+    private const RegexOptions DefaultSingleLine = RegexOptions.Singleline | RegexOptions.ExplicitCapture;
 
     [GeneratedRegex(@"(^|.+\d:\d\d:\d\d\.\d{6})\s*(?<build_and_specs>RPCS3 [^\xC2\xB7]+?)\r?(\n·|$)", DefaultSingleLine)]
     private static partial Regex Rpcs3LogHeader();

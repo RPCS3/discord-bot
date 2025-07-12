@@ -12,8 +12,8 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Remove="confusables.txt" />
-    <AdditionalFiles Include="confusables.txt" />
+    <None Remove="..\.resources\confusables.txt" />
+    <AdditionalFiles Include="..\.resources\confusables.txt" />
   </ItemGroup>
 
   <ItemGroup>

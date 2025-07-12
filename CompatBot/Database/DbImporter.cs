@@ -179,7 +179,7 @@ public static class DbImporter
     {
         Config.Log.Debug("Importing name pool…");
         var rootDir = Environment.CurrentDirectory;
-        while (rootDir is not null && !Directory.EnumerateFiles(rootDir, "names_*.txt", SearchOption.TopDirectoryOnly).Any())
+        while (rootDir is not null && !Directory.Exists(Path.Combine(rootDir, ".resources")))
             rootDir = Path.GetDirectoryName(rootDir);
         if (rootDir is null)
         {
@@ -187,7 +187,8 @@ public static class DbImporter
             return wdb.NamePool.Any();
         }
 
-        var resources = Directory.GetFiles(rootDir, "names_*.txt", SearchOption.TopDirectoryOnly)
+        var resourcesDir = Path.Combine(rootDir, ".resources");
+        var resources = Directory.GetFiles(resourcesDir, "names_*.txt", SearchOption.TopDirectoryOnly)
             .OrderBy(f => f)
             .ToList();
         if (resources.Count == 0)

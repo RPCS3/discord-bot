@@ -43,6 +43,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators", "SourceG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CirrusCiClient", "Clients\CirrusCiClient\CirrusCiClient.csproj", "{897476B0-B80A-4134-A576-8CAEAEA14A28}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{519297F9-DE0B-48EE-85B6-0DB6B065760E}"
+	ProjectSection(SolutionItems) = preProject
+		.resources\confusables.txt = .resources\confusables.txt
+		.resources\fortunes.txt = .resources\fortunes.txt
+		.resources\fortunes_fortuneandframe.txt = .resources\fortunes_fortuneandframe.txt
+		.resources\metacritic_ps3.json = .resources\metacritic_ps3.json
+		.resources\names_anidb.txt = .resources\names_anidb.txt
+		.resources\names_anilist.txt = .resources\names_anilist.txt
+		.resources\names_anime.txt = .resources\names_anime.txt
+		.resources\win32_error_codes_v23.0.txt = .resources\win32_error_codes_v23.0.txt
+		.resources\cpu_tier_list.conf = .resources\cpu_tier_list.conf
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

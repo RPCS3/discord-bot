@@ -1,4 +1,4 @@
-﻿0x00000000
+0x00000000
 ERROR_SUCCESS	The operation completed successfully.
 0x00000000
 NERR_Success	The operation completed successfully.

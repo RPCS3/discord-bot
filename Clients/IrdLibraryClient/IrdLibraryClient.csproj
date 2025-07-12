@@ -5,9 +5,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="LTRData.DiscUtils.OpticalDisk" Version="1.0.61" />
+    <PackageReference Include="LTRData.DiscUtils.OpticalDisk" Version="1.0.62" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
-    <PackageReference Include="System.IO.Hashing" Version="9.0.6" />
+    <PackageReference Include="System.IO.Hashing" Version="9.0.7" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CompatApiClient\CompatApiClient.csproj" />
