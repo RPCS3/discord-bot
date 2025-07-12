@@ -31,13 +31,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\metacritic_ps3.json" Link="metacritic_ps3.json">
+    <Content Include="..\.resources\metacritic_ps3.json" Link="metacritic_ps3.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Remove="..\win32_error_codes*.txt" />
-    <AdditionalFiles Include="..\win32_error_codes*.txt" />
+    <None Remove="..\.resources\win32_error_codes*.txt" />
+    <AdditionalFiles Include="..\.resources\win32_error_codes*.txt" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Blurhash.ImageSharp" Version="4.0.0" />

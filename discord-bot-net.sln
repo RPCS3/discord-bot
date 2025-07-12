@@ -45,13 +45,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CirrusCiClient", "Clients\C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{519297F9-DE0B-48EE-85B6-0DB6B065760E}"
 	ProjectSection(SolutionItems) = preProject
-		fortunes.txt = fortunes.txt
-		fortunes_fortuneandframe.txt = fortunes_fortuneandframe.txt
-		metacritic_ps3.json = metacritic_ps3.json
-		names_anidb.txt = names_anidb.txt
-		names_anilist.txt = names_anilist.txt
-		names_anime.txt = names_anime.txt
-		win32_error_codes_v23.0.txt = win32_error_codes_v23.0.txt
+		.resources\confusables.txt = .resources\confusables.txt
+		.resources\fortunes.txt = .resources\fortunes.txt
+		.resources\fortunes_fortuneandframe.txt = .resources\fortunes_fortuneandframe.txt
+		.resources\metacritic_ps3.json = .resources\metacritic_ps3.json
+		.resources\names_anidb.txt = .resources\names_anidb.txt
+		.resources\names_anilist.txt = .resources\names_anilist.txt
+		.resources\names_anime.txt = .resources\names_anime.txt
+		.resources\win32_error_codes_v23.0.txt = .resources\win32_error_codes_v23.0.txt
 	EndProjectSection
 EndProject
 Global
