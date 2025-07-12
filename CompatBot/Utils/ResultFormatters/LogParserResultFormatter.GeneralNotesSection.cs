@@ -187,7 +187,39 @@ internal static partial class LogParserResult
         if (int.TryParse(items["thread_count"], out var threadCount) && threadCount < 4)
             notes.Add($"⚠️ This CPU only has {threadCount} hardware thread{(threadCount == 1 ? "" : "s")} enabled");
 
-        if (items["cpu_model"] is string cpu)
+        var cpuModelMatched = false;
+        if (items["cpu_and_memory_info"] is string cpuAndMemoryInfo)
+        {
+            if (CpuTierList.List.FirstOrDefault(i => i.regex.IsMatch(cpuAndMemoryInfo)) is { tier: { Length: >0 } tier } match)
+            {
+                var status = items["game_status"] ?? "unknown";
+                var msg = tier switch
+                {
+                    "S" => "ℹ️ This is an **S** Tier CPU",
+                    "A" => "ℹ️ This is an **A** Tier CPU",
+                    "B" => status switch
+                    {
+                        "ingame" => "⚠️ This is a **B** Tier CPU, and may not be sufficient for some ingame titles",
+                        _ => "ℹ️ This is a **B** Tier CPU",
+                    },
+                    "C" => status switch
+                    {
+                        "playable" => "⚠️ This is a **C** Tier CPU, which is below the recommended system requirements",
+                        _ => "⚠️ This is a **C** Tier CPU, please stick to the playable game titles",
+                    },
+                    "D" => status switch
+                    {
+                        "playable" => "⚠️ This is a **D** Tier CPU, only lighter playable game titles will work",
+                        _ => "⚠️ This is a **D** Tier CPU, please stick to the lighter playable game titles",
+                    },
+                    "F" => "❌ This is an **F** Tier CPU, which is below the minimum system requirements",
+                    _ => "❓",
+                };
+                notes.Add($"{msg}");
+                cpuModelMatched = true;
+            }
+        }
+        if (!cpuModelMatched && items["cpu_model"] is string cpu)
         {
             if (cpu.StartsWith("AMD"))
             {
@@ -383,7 +415,7 @@ internal static partial class LogParserResult
         // this is a common scenario now that Mega did the version merge from param.sfo
 /*
             if (items["game_category"] == "GD")
-                notes.Add($"❔ Game was booted through the Game Data");
+                notes.Add($"❓ Game was booted through the Game Data");
 */
         if (category is "DG" or "GD") // only disc games should install game data
         {

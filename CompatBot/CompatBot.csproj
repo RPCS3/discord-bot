@@ -37,7 +37,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="..\.resources\win32_error_codes*.txt" />
+    <None Remove="..\.resources\cpu_tier_list*.conf" />
     <AdditionalFiles Include="..\.resources\win32_error_codes*.txt" />
+    <AdditionalFiles Include="..\.resources\cpu_tier_list*.conf" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Blurhash.ImageSharp" Version="4.0.0" />

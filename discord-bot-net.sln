@@ -53,6 +53,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 		.resources\names_anilist.txt = .resources\names_anilist.txt
 		.resources\names_anime.txt = .resources\names_anime.txt
 		.resources\win32_error_codes_v23.0.txt = .resources\win32_error_codes_v23.0.txt
+		.resources\cpu_tier_list_v2.5.2.conf = .resources\cpu_tier_list_v2.5.2.conf
 	EndProjectSection
 EndProject
 Global

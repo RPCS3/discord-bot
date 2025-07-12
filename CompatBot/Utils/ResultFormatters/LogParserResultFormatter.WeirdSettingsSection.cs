@@ -42,7 +42,7 @@ internal static partial class LogParserResult
         }
         /*
         if (items["spu_lower_thread_priority"] == EnabledMark && threadCount > 4)
-            notes.Add("❔ `Lower SPU thread priority` is enabled on a CPU with enough threads");
+            notes.Add("❓ `Lower SPU thread priority` is enabled on a CPU with enough threads");
         */
         if (items["cpu_model"] is string cpu)
         {
@@ -74,7 +74,7 @@ internal static partial class LogParserResult
         var isAppleGpu = items["gpu_info"] is string gpuInfoApple && gpuInfoApple.Contains("Apple", StringComparison.OrdinalIgnoreCase);
         var canUseRelaxedZcull = items["renderer"] is not "Vulkan" || multiItems["vk_ext"].Contains("VK_EXT_depth_range_unrestricted");
         if (items["llvm_arch"] is string llvmArch)
-            notes.Add($"❔ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
+            notes.Add($"❓ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
         if (items["renderer"] is "D3D12")
             notes.Add("💢 Do **not** use DX12 renderer");
         if (items["renderer"] is "OpenGL"
@@ -291,7 +291,7 @@ internal static partial class LogParserResult
             && int.TryParse(resScale, out var resScaleFactor))
         {
             if (resScaleFactor < 100)
-                notes.Add($"❔ `Resolution Scale` is `{resScale}%`; this will not increase performance");
+                notes.Add($"❓ `Resolution Scale` is `{resScale}%`; this will not increase performance");
             if (resScaleFactor != 100
                 && items["texture_scale_threshold"] is string thresholdStr
                 && int.TryParse(thresholdStr, out var threshold)
@@ -335,7 +335,7 @@ internal static partial class LogParserResult
             notes.Add("⚠️ `Frame Skip` is enabled, please disable");
         if (items["cpu_blit"] is EnabledMark 
             && items["write_color_buffers"] is DisabledMark)
-            notes.Add("❔ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
+            notes.Add("❓ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
 
         if (items["zcull_status"] is not null and not "Full" && !canUseRelaxedZcull)
             notes.Add("⚠️ This GPU does not support `VK_EXT_depth_range_unrestricted` extension, please disable `Relaxed ZCull Sync`");
@@ -432,7 +432,7 @@ internal static partial class LogParserResult
         if (items["hook_static_functions"] is EnabledMark)
             notes.Add("⚠️ `Hook Static Functions` is enabled, please disable");
         if (items["host_root"] is EnabledMark)
-            notes.Add("❔ `/host_root/` is enabled");
+            notes.Add("❓ `/host_root/` is enabled");
         if (items["ppu_threads"] is string ppuThreads
             && ppuThreads != "2")
             notes.Add($"⚠️ `PPU Threads` is set to `{ppuThreads.Sanitize()}`; please change it back to `2`");
@@ -455,7 +455,7 @@ internal static partial class LogParserResult
             else if (af is "Disabled")
                 notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
             else if (af is not "Auto" and not "16")
-                notes.Add($"❔ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
+                notes.Add($"❓ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
         }
 
         if (items["shader_mode"]?.Contains("Interpreter") is true && isAppleGpu)
@@ -463,7 +463,7 @@ internal static partial class LogParserResult
         else if (items["shader_mode"] == "Interpreter only")
             notes.Add("⚠️ `Shader Interpreter Only` mode is not accurate and very demanding");
         else if (items["shader_mode"]?.StartsWith("Async") is false && !isAppleGpu)
-            notes.Add("❔ Async shader compilation is disabled");
+            notes.Add("❓ Async shader compilation is disabled");
         if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
             && int.TryParse(driverRecoveryTimeout, out var drtValue)
             && drtValue != 1000000)
@@ -551,9 +551,9 @@ internal static partial class LogParserResult
         }
 
         if (items["auto_start_on_boot"] == DisabledMark)
-            notes.Add("❔ `Automatically start games after boot` is disabled");
+            notes.Add("❓ `Automatically start games after boot` is disabled");
         else if (items["always_start_on_boot"] == DisabledMark)
-            notes.Add("❔ `Always start after boot` is disabled");
+            notes.Add("❓ `Always start after boot` is disabled");
 
         if (items["custom_config"] != null && notes.Any())
             generalNotes.Add("⚠️ To change custom configuration, **Right-click on the game**, then `Configure`");

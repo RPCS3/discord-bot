@@ -137,9 +137,12 @@ internal static partial class LogParserResult
                 }
             }
             var threadCountItem = items["thread_count"]?.Trim();
-            systemInfo += $"{Environment.NewLine}{items["cpu_model"]} | {threadCountItem} Thread{(threadCountItem == "1" ? "" : "s")} | {items["memory_amount"]} GiB RAM";
+            var cpuAndMemoryInfo =
+                $"{items["cpu_model"]} | {threadCountItem} Thread{(threadCountItem == "1" ? "" : "s")} | {items["memory_amount"]} GiB RAM";
             if (!string.IsNullOrEmpty(items["cpu_extensions"]))
-                systemInfo += " | " + items["cpu_extensions"];
+                cpuAndMemoryInfo += " | " + items["cpu_extensions"];
+            systemInfo += $"{Environment.NewLine}{cpuAndMemoryInfo}";
+            items["cpu_and_memory_info"] = cpuAndMemoryInfo;
         }
         if (items["gpu_info"] is string gpu)
             systemInfo += $"{Environment.NewLine}GPU: {gpu}";

@@ -408,7 +408,7 @@ internal static partial class LogParserResult
     private static readonly TimeSpan PrehistoricBuild = TimeSpan.FromDays(365);
 
     private static readonly char[] PrioritySeparator = [' '];
-    private static readonly string[] EmojiPriority = new[]{ "😱", "💢", "‼️", "❗",  "❌", "⁉️", "⚠️", "❔", "✅", "ℹ️" }
+    private static readonly string[] EmojiPriority = new[]{ "😱", "💢", "‼️", "❗",  "❌", "⁉️", "⚠️", "❓", "❔", "✅", "ℹ️" }
         .Select(e => e.TrimEnd('\ufe0f'))
         .ToArray();
     private const string EnabledMark = "[x]";
