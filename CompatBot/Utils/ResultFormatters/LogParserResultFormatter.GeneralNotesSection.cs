@@ -195,15 +195,13 @@ internal static partial class LogParserResult
                 var status = items["game_status"] ?? "unknown";
                 var msg = (tier, status) switch
                 {
-                    ("S" or "A", _) => $"ℹ️ This is an **{tier}** Tier CPU",
-                    ("B", "Ingame") => "⚠️ This is a **B** Tier CPU, and may not be sufficient for some ingame titles",
-                    ("B", _) => "ℹ️ This is a **B** Tier CPU",
-                    ("C", "Playable") => "⚠️ This is a **C** Tier CPU, which is below the recommended system requirements",
-                    ("C", _) => "⚠️ This is a **C** Tier CPU, please stick to the playable game titles",
-                    ("D", "Playable") => "⚠️ This is a **D** Tier CPU, only lighter playable game titles will work",
-                    ("D", _) => "⚠️ This is a **D** Tier CPU, please stick to the lighter playable game titles",
-                    ("F", _) => "❌ This is an **F** Tier CPU, which is below the minimum system requirements",
-                    _ => "",
+                    ("S+" or "S" or "A", _) => $"ℹ️ This is an [**{tier}** Tier CPU](<https://rpcs3.net/cputierlist>)",
+                    ( "B", _) => "ℹ️ This is a [**B** Tier CPU](<https://rpcs3.net/cputierlist>)",
+                    ("C", "Ingame") => "⚠️ This is a [**C** Tier CPU](<https://rpcs3.net/cputierlist>), and may not be sufficient for some ingame titles",
+                    ("C", _) => "ℹ️ This is a [**C** Tier CPU](<https://rpcs3.net/cputierlist>)",
+                    ("D", "Playable") => "⚠️ This is a [**D** Tier CPU](<https://rpcs3.net/cputierlist>), which is below the recommended system requirements",
+                    ("D", _) => "⚠️ This is a [**D** Tier CPU](<https://rpcs3.net/cputierlist>), please stick to the lighter playable game titles",
+                    _ => $"❌ This is an [**{tier}** Tier CPU](<https://rpcs3.net/cputierlist>), which is below the minimum system requirements",
                 };
                 if (msg is {Length: >0})
                 {
