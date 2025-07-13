@@ -190,17 +190,17 @@ internal static partial class LogParserResult
         var cpuModelMatched = false;
         if (items["cpu_and_memory_info"] is string cpuAndMemoryInfo)
         {
-            if (CpuTierList.List.FirstOrDefault(i => i.regex.IsMatch(cpuAndMemoryInfo)) is { tier: { Length: >0 } tier } match)
+            if (CpuTierList.List.FirstOrDefault(i => i.regex.IsMatch(cpuAndMemoryInfo)) is { tier: { Length: >0 } tier })
             {
                 var status = items["game_status"] ?? "unknown";
                 var msg = (tier, status) switch
                 {
                     ("S" or "A", _) => $"ℹ️ This is an **{tier}** Tier CPU",
-                    ("B", "ingame") => "⚠️ This is a **B** Tier CPU, and may not be sufficient for some ingame titles",
+                    ("B", "Ingame") => "⚠️ This is a **B** Tier CPU, and may not be sufficient for some ingame titles",
                     ("B", _) => "ℹ️ This is a **B** Tier CPU",
-                    ("C", "playable") => "⚠️ This is a **C** Tier CPU, which is below the recommended system requirements",
+                    ("C", "Playable") => "⚠️ This is a **C** Tier CPU, which is below the recommended system requirements",
                     ("C", _) => "⚠️ This is a **C** Tier CPU, please stick to the playable game titles",
-                    ("D", "playable") => "⚠️ This is a **D** Tier CPU, only lighter playable game titles will work",
+                    ("D", "Playable") => "⚠️ This is a **D** Tier CPU, only lighter playable game titles will work",
                     ("D", _) => "⚠️ This is a **D** Tier CPU, please stick to the lighter playable game titles",
                     ("F", _) => "❌ This is an **F** Tier CPU, which is below the minimum system requirements",
                     _ => "",
