@@ -65,7 +65,7 @@ public class CpuTierListGenerator: IIncrementalGenerator
             }
 
             tierMap.Add((line, currentTier));
-            line = line.Replace(" ", ".*");
+            line = line.Replace(" ", @"\b.*\b");
             // todo: use generated regex when it's possible https://github.com/dotnet/roslyn/discussions/48358
             /*
             result.AppendLine($"""
