@@ -195,13 +195,13 @@ internal static partial class LogParserResult
                 var status = items["game_status"] ?? "unknown";
                 var msg = (tier, status) switch
                 {
-                    ("S+" or "S" or "A", _) => $"ℹ️ This is an [**{tier}** Tier CPU](<https://rpcs3.net/cputierlist>)",
-                    ( "B", _) => "ℹ️ This is a [**B** Tier CPU](<https://rpcs3.net/cputierlist>)",
-                    ("C", "Ingame") => "⚠️ This is a [**C** Tier CPU](<https://rpcs3.net/cputierlist>), and may not be sufficient for some ingame titles",
-                    ("C", _) => "ℹ️ This is a [**C** Tier CPU](<https://rpcs3.net/cputierlist>)",
-                    ("D", "Playable") => "⚠️ This is a [**D** Tier CPU](<https://rpcs3.net/cputierlist>), which is below the recommended system requirements",
-                    ("D", _) => "⚠️ This is a [**D** Tier CPU](<https://rpcs3.net/cputierlist>), please stick to the lighter playable game titles",
-                    _ => $"❌ This is an [**{tier}** Tier CPU](<https://rpcs3.net/cputierlist>), which is below the minimum system requirements",
+                    ("S+" or "S" or "A", _) => $"ℹ️ This is an [**{tier}** Tier](<https://rpcs3.net/cputierlist>) CPU",
+                    ( "B", _) => "ℹ️ This is a [**B** Tier](<https://rpcs3.net/cputierlist>) CPU",
+                    ("C", "Ingame") => "⚠️ This is a [**C** Tier](<https://rpcs3.net/cputierlist>) CPU, and may not be sufficient for some ingame titles",
+                    ("C", _) => "ℹ️ This is a [**C** Tier](<https://rpcs3.net/cputierlist>) CPU",
+                    ("D", "Playable") => "⚠️ This is a [**D** Tier](<https://rpcs3.net/cputierlist>) CPU, which is below the recommended system requirements",
+                    ("D", _) => "⚠️ This is a [**D** Tier](<https://rpcs3.net/cputierlist>) CPU, please stick to the lighter playable game titles",
+                    _ => $"❌ This is an [**{tier}** Tier](<https://rpcs3.net/cputierlist>) CPU, which is below the minimum system requirements",
                 };
                 if (msg is {Length: >0})
                 {
