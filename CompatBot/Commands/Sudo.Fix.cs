@@ -150,6 +150,25 @@ internal static partial class Sudo
             await ctx.Channel.SendMessageAsync($"Fixed {changed} title{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
+        [Command("amd_cpus")]
+        [Description("Fixes AMD CPU models in hw.db")]
+        public static async ValueTask AmdCpus(TextCommandContext ctx)
+        {
+            try
+            {
+                await using var wdb = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
+                foreach (var info in wdb.HwInfo.Where(i => i.CpuMaker == "AMD" && i.CpuModel.EndsWith(" w/")))
+                    info.CpuModel = info.CpuModel[..^3];
+                var changed = await wdb.SaveChangesAsync().ConfigureAwait(false);
+                await ctx.RespondAsync($"Updated {changed} record{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Couldn't fix AMD CPU model strings");
+                await ctx.RespondAsync("Failed to fix AMD CPU strings in hw.db").ConfigureAwait(false);
+            }
+        }
+
         private static async ValueTask<string?> FixChannelMentionAsync(TextCommandContext ctx, string? msg)
         {
             if (msg is not {Length: >0})
