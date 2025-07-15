@@ -201,7 +201,7 @@ internal static partial class LogParserResult
                     ("C", _) => "ℹ️ This is a [**C** Tier](<https://rpcs3.net/cputierlist>) CPU",
                     ("D", "Playable") => "⚠️ This is a [**D** Tier](<https://rpcs3.net/cputierlist>) CPU, which is below the recommended system requirements",
                     ("D", _) => "⚠️ This is a [**D** Tier](<https://rpcs3.net/cputierlist>) CPU, please stick to the lighter playable game titles",
-                    _ => $"❌ This is an [**{tier}** Tier](<https://rpcs3.net/cputierlist>) CPU, which is below the minimum system requirements",
+                    _ => $"❗ This is an [**{tier}** Tier](<https://rpcs3.net/cputierlist>) CPU, which is far below the recommended system requirements",
                 };
                 if (msg is {Length: >0})
                 {
