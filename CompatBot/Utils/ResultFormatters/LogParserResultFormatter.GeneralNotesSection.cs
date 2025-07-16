@@ -315,7 +315,7 @@ internal static partial class LogParserResult
                     {
                         var isWindows = items["os_type"] is not null and not "Linux";
                         var minVersion = isWindows ? NvidiaRecommendedWindowsDriverVersion : NvidiaRecommendedLinuxDriverVersion;
-                        if (driverVersion < minVersion)
+                        if (driverVersion < minVersion && !IsNouveau(gpuInfo))
                             notes.Add($"❗ Please update your nVidia GPU driver to at least version {minVersion}");
                         if (driverVersion >= NvidiaTextureMemoryBugMinVersion
                             && driverVersion < NvidiaTextureMemoryBugMaxVersion

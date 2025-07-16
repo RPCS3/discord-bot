@@ -1119,6 +1119,9 @@ internal static partial class LogParserResult
            || gpuInfo.Contains("GTX", StringComparison.OrdinalIgnoreCase)
            || gpuInfo.Contains("RTX", StringComparison.OrdinalIgnoreCase);
 
+    internal static bool IsNouveau(string gpuInfo)
+        => gpuInfo.Contains("NVK ");
+
     internal static bool IsIntel(string gpuInfo)
         => gpuInfo.Contains("Intel", StringComparison.OrdinalIgnoreCase);
 
