@@ -260,9 +260,14 @@ internal static class ContentFilter
         {
             try
             {
-                if (await client.GetMemberAsync(message.Channel.Guild, message.Author).ConfigureAwait(false) is DiscordMember mem
+                if (await client.GetMemberAsync(message.Channel?.Guild, message.Author).ConfigureAwait(false) is DiscordMember mem
                     && !mem.Roles.Any())
                 {
+                    try
+                    {
+                        await mem.SendMessageAsync("You have been kicked from the server for posting undesirable content. Please do not post it again.").ConfigureAwait(false);
+                    }
+                    catch {}
                     await mem.RemoveAsync("Filter action for trigger " + trigger.String).ConfigureAwait(false);
                     completedActions.Add(FilterAction.Kick);
                 }
