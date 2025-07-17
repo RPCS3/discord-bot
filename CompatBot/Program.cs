@@ -237,12 +237,11 @@ internal static class Program
                     config.HandleMessageCreated(new MultiEventHandlerWrapper<MessageCreatedEventArgs>(
                         [
                             AntiSpamMessageHandler.OnMessageCreated,
-                            ContentFilterMonitor.OnMessageCreated, // should be first
+                            ContentFilterMonitor.OnMessageCreated,
                             DiscordInviteFilter.OnMessageCreated,
+                            GlobalMessageCache.OnMessageCreated,
                         ],
                         [
-                            //Watchdog.OnMessageCreated,
-                            GlobalMessageCache.OnMessageCreated,
                             mediaScreenshotMonitor.OnMessageCreated,
                             ProductCodeLookup.OnMessageCreated,
                             LogParsingHandler.OnMessageCreated,
