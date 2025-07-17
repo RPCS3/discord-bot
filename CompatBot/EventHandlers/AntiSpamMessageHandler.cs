@@ -33,6 +33,11 @@ public static class AntiSpamMessageHandler
             try
             {
                 await msg.DeleteAsync("spam").ConfigureAwait(false);
+                Config.Log.Debug($"""
+                    Removed spam message from user {author.Username} ({author.Id}) in #{msg.Channel?.Name}:
+                    {msg.Content.Trim()}
+                    """
+                );
                 removedSpam = true;
             }
             catch (Exception e)
