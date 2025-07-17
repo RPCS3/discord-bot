@@ -42,6 +42,16 @@ internal static partial class CommandErroredHandler
                 {
                     Config.Log.Warn(e, "Failed to remove message with unknown text command");
                 }
+                try
+                {
+                    var dm = await tctx.CreateDmAsync().ConfigureAwait(false);
+                    await dm.SendMessageAsync("""
+                        You have tried to use an outdated bot command, please use Discord Application Command instead.
+                        You can access them through `⊕` > `Use Apps` on desktop, or the gamepad button on mobile.
+                        Alternately you can open the list of App Commands by typing `/` prefix.
+                        """
+                    ).ConfigureAwait(false);
+                } catch {}
             }
             else
             {

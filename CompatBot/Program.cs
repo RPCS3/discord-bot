@@ -236,6 +236,7 @@ internal static class Program
                     ]));
                     config.HandleMessageCreated(new MultiEventHandlerWrapper<MessageCreatedEventArgs>(
                         [
+                            AntiSpamMessageHandler.OnMessageCreated,
                             ContentFilterMonitor.OnMessageCreated, // should be first
                             DiscordInviteFilter.OnMessageCreated,
                         ],
