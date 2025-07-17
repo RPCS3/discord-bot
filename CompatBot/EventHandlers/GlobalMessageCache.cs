@@ -10,10 +10,10 @@ internal static class GlobalMessageCache
     private static readonly TCache MessageQueue = new();
     private static readonly Func<DiscordMessage, ulong> KeyGen = m => m.Id;
 
-    public static Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
+    public static Task<bool> OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (args.Channel.IsPrivate)
-            return Task.CompletedTask;
+            return Task.FromResult(true);
 
         if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
             lock (MessageQueue)
@@ -27,7 +27,7 @@ internal static class GlobalMessageCache
         while (queue.Count > Config.ChannelMessageHistorySize)
             lock(queue.SyncObj)
                 queue.TrimExcess();
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
     public static Task OnMessageDeleted(DiscordClient _, MessageDeletedEventArgs args)
