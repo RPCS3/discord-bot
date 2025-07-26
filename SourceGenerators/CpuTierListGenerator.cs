@@ -75,11 +75,11 @@ public class CpuTierListGenerator: IIncrementalGenerator
             );
             */
             result.AppendLine($"""
-                    private static readonly Regex Model{idx++} = new(@"{line}", DefaultOptions);
+                    private static readonly Regex Model{idx++} = new(@"\b{line}", DefaultOptions);
                 """
             );
         }
-        result.AppendLine($"""
+        result.AppendLine("""
 
                 public static readonly List<(string model, string tier, Regex regex)> List = [
             """

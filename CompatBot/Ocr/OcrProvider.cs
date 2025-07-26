@@ -26,6 +26,7 @@ public static class OcrProvider
                 backendName = "tesseract";
             result = GetBackend(backendName)!;
         }
+        Config.Log.Info($"Initializing OCR backend {BackendName}…");
         if (await result.InitializeAsync(cancellationToken).ConfigureAwait(false))
         {
             backend = result;
