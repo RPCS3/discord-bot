@@ -176,11 +176,9 @@ public static class LogParsingHandler
                                 if (await message.Author.IsWhitelistedAsync(client, channel.Guild).ConfigureAwait(false))
                                 {
                                     var piracyWarning = await result.AsEmbedAsync(client, message, source).ConfigureAwait(false);
-                                    piracyWarning = piracyWarning.WithDescription(
-                                        "Please remove the log and issue warning to the original author of the log");
+                                    piracyWarning = piracyWarning.WithDescription("Please remove the log and issue warning to the original author of the log");
                                     botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: piracyWarning).ConfigureAwait(false);
-                                    var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter,
-                                        result.SelectedFilterContext);
+                                    var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
                                     await client.ReportAsync(yarr + " Pirated Release (whitelisted by role)", message,
                                         result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id,
                                         result.SelectedFilterContext, ReportSeverity.Low).ConfigureAwait(false);
@@ -190,8 +188,7 @@ public static class LogParsingHandler
                                     var severity = ReportSeverity.Low;
                                     try
                                     {
-                                        DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true,
-                                            DeletedMessagesMonitor.CacheRetainTime);
+                                        DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                                         await message.DeleteAsync("Piracy detected in log").ConfigureAwait(false);
                                     }
                                     catch (Exception e)
@@ -218,8 +215,7 @@ public static class LogParsingHandler
                                     }
                                     try
                                     {
-                                        var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter,
-                                            result.SelectedFilterContext);
+                                        var matchedOn = ContentFilter.GetMatchedScope(result.SelectedFilter, result.SelectedFilterContext);
                                         await client.ReportAsync(yarr + " Pirated Release", message,
                                             result.SelectedFilter.String, matchedOn, result.SelectedFilter.Id,
                                             result.SelectedFilterContext, severity).ConfigureAwait(false);
@@ -228,7 +224,7 @@ public static class LogParsingHandler
                                     {
                                         Config.Log.Error(e, "Failed to send piracy report");
                                     }
-                                    if (!(message.Channel!.IsPrivate || message.Channel.Name.Contains("spam")))
+                                    //if (!(message.Channel!.IsPrivate || message.Channel.Name.Contains("spam")))
                                     {
                                         var reason = "Logs showing use of pirated content";
                                         var (saved, suppress, recent, total) = await Warnings.AddAsync(
@@ -246,7 +242,7 @@ public static class LogParsingHandler
                                                      Warned for: {reason} by {client.CurrentUser.Mention}
                                                      """
                                                 ).AddMention(new UserMention(message.Author));
-                                            await message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+                                            await message.Channel!.SendMessageAsync(msg).ConfigureAwait(false);
                                         }
                                     }
                                 }
