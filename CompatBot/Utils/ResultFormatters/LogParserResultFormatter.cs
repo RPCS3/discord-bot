@@ -1075,7 +1075,7 @@ internal static partial class LogParserResult
         return $"{osType} {kernelVersion}";
     }
 
-    private static string? GetMacOsVersion(Version macVer)
+    private static string GetMacOsVersion(Version macVer)
         => macVer.Major switch
         {
             10 => macVer.Minor switch
