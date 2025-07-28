@@ -473,11 +473,11 @@ internal static partial class LogParserResult
         else if (items["build_unknown"] is "local_build")
         {
             if (items["build_commit"] is { Length: > 0 } commit && commit.Contains("AUR"))
-                notes.Add("❌ Unofficial AUR builds are not supported");
+                notes.Add("❗ Unofficial AUR builds are not supported");
             else if (items["build_number"] is "1" && items["os_type"] is "Linux")
-                notes.Add("❌ Flatpak builds are not supported");
+                notes.Add("❗ Flatpak builds are not supported");
             else
-                notes.Add("❌ Unofficial builds are not supported");
+                notes.Add("❗ Unofficial builds are not supported");
         }
 
         if (DesIds.Contains(serial))
