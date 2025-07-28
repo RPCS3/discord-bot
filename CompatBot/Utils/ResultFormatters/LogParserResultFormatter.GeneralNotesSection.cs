@@ -646,49 +646,46 @@ internal static partial class LogParserResult
                     notes.Add("⚠️ PPU desync detected, most likely cause is corrupted save data");
             }*/
         }
-        else
+        if (multiItems["bad_save_data_path"] is { Length: > 0 } badSavePaths)
         {
-            if (multiItems["bad_save_data_path"] is { Length: > 0 } badSavePaths)
+            if (badSavePaths is [string singlePath])
+                notes.Add($"❌ Corrupted save data `{singlePath}`");
+            else
             {
-                if (badSavePaths is [string singlePath])
-                    notes.Add($"❌ Corrupted save data `{singlePath}`");
-                else
+                var section = new StringBuilder("```");
+                foreach (var path in badSavePaths)
+                    section.AppendLine(path);
+                if (section.Length + 3 > EmbedPager.MaxFieldLength)
                 {
-                    var section = new StringBuilder("```");
-                    foreach (var path in badSavePaths)
-                        section.AppendLine(path);
-                    if (section.Length + 3 > EmbedPager.MaxFieldLength)
-                    {
-                        section.Length = EmbedPager.MaxFieldLength - 4;
-                        section.Append("…```");
-                    }
-                    builder.AddField(
-                        $"Corrupted save data (x{badSavePaths.Length})",
-                        section.ToString()
-                    );
+                    section.Length = EmbedPager.MaxFieldLength - 4;
+                    section.Append("…```");
                 }
+                builder.AddField(
+                    $"Corrupted save data (x{badSavePaths.Length})",
+                    section.ToString()
+                );
             }
-            if (multiItems["bad_trophy_data_path"] is { Length: > 0 } badTrophyPaths)
+        }
+        if (multiItems["bad_trophy_data_path"] is { Length: > 0 } badTrophyPaths)
+        {
+            if (badTrophyPaths is [string singlePath])
+                notes.Add($"❌ Corrupted trophy data `{singlePath}`");
+            else
             {
-                if (badTrophyPaths is [string singlePath])
-                    notes.Add($"❌ Corrupted trophy data `{singlePath}`");
-                else
+                var section = new StringBuilder("```");
+                foreach (var path in badTrophyPaths)
+                    section.AppendLine(path);
+                if (section.Length + 3 > EmbedPager.MaxFieldLength)
                 {
-                    var section = new StringBuilder("```");
-                    foreach (var path in badTrophyPaths)
-                        section.AppendLine(path);
-                    if (section.Length + 3 > EmbedPager.MaxFieldLength)
-                    {
-                        section.Length = EmbedPager.MaxFieldLength - 4;
-                        section.Append("…```");
-                    }
-                    builder.AddField(
-                        $"Corrupted trophy data (x{badTrophyPaths.Length})",
-                        section.ToString()
-                    );
+                    section.Length = EmbedPager.MaxFieldLength - 4;
+                    section.Append("…```");
                 }
+                builder.AddField(
+                    $"Corrupted trophy data (x{badTrophyPaths.Length})",
+                    section.ToString()
+                );
+            }
 
-            }
         }
         if (items["os_type"] == "Windows")
             foreach (var code in win32ErrorCodes)
