@@ -176,7 +176,11 @@ internal static partial class LogParserResult
             }
 
             var pathSegments = PathUtils.GetSegments(compatDbPath);
-            var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.OrdinalIgnoreCase));
+            var syncFolder = pathSegments.FirstOrDefault(
+                s => KnownSyncFolders.Contains(s)
+                     || s.EndsWith("sync", StringComparison.OrdinalIgnoreCase)
+                     || s.StartsWith("OneDrive - ") // corporate
+            );
             if (!string.IsNullOrEmpty(syncFolder))
                 notes.Add($"⚠️ RPCS3 is installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
             var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
