@@ -176,7 +176,11 @@ internal static partial class LogParserResult
             }
 
             var pathSegments = PathUtils.GetSegments(compatDbPath);
-            var syncFolder = pathSegments.FirstOrDefault(s => KnownSyncFolders.Contains(s) || s.EndsWith("sync", StringComparison.OrdinalIgnoreCase));
+            var syncFolder = pathSegments.FirstOrDefault(
+                s => KnownSyncFolders.Contains(s)
+                     || s.EndsWith("sync", StringComparison.OrdinalIgnoreCase)
+                     || s.StartsWith("OneDrive - ") // corporate
+            );
             if (!string.IsNullOrEmpty(syncFolder))
                 notes.Add($"⚠️ RPCS3 is installed in a file sync service folder `{syncFolder}`; may result in data loss or inconsistent state");
             var rar = pathSegments.FirstOrDefault(s => s.StartsWith("Rar$"));
@@ -438,6 +442,7 @@ internal static partial class LogParserResult
         var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
         if (updateInfo is not null
+            && items["build_unknown"] is not {Length: >0}
             && (buildBranch is "master" or "head" or "spu_perf"
                 || buildBranch is not {Length: >0}
                     && (updateInfo.X64?.CurrentBuild is not null || updateInfo.Arm?.CurrentBuild is not null)))
@@ -464,6 +469,15 @@ internal static partial class LogParserResult
             notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
             if (buildBranch == "spu_perf")
                 notes.Add($"😱 `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
+        }
+        else if (items["build_unknown"] is "local_build")
+        {
+            if (items["build_commit"] is { Length: > 0 } commit && commit.Contains("AUR"))
+                notes.Add("❌ Unofficial AUR builds are not supported");
+            else if (items["build_number"] is "1" && items["os_type"] is "Linux")
+                notes.Add("❌ Flatpak builds are not supported");
+            else
+                notes.Add("❌ Unofficial builds are not supported");
         }
 
         if (DesIds.Contains(serial))
@@ -631,6 +645,50 @@ internal static partial class LogParserResult
                 else
                     notes.Add("⚠️ PPU desync detected, most likely cause is corrupted save data");
             }*/
+        }
+        else
+        {
+            if (multiItems["bad_save_data_path"] is { Length: > 0 } badSavePaths)
+            {
+                if (badSavePaths is [string singlePath])
+                    notes.Add($"❌ Corrupted save data `{singlePath}`");
+                else
+                {
+                    var section = new StringBuilder("```");
+                    foreach (var path in badSavePaths)
+                        section.AppendLine(path);
+                    if (section.Length + 3 > EmbedPager.MaxFieldLength)
+                    {
+                        section.Length = EmbedPager.MaxFieldLength - 4;
+                        section.Append("…```");
+                    }
+                    builder.AddField(
+                        $"Corrupted save data (x{badSavePaths.Length})",
+                        section.ToString()
+                    );
+                }
+            }
+            if (multiItems["bad_trophy_data_path"] is { Length: > 0 } badTrophyPaths)
+            {
+                if (badTrophyPaths is [string singlePath])
+                    notes.Add($"❌ Corrupted trophy data `{singlePath}`");
+                else
+                {
+                    var section = new StringBuilder("```");
+                    foreach (var path in badTrophyPaths)
+                        section.AppendLine(path);
+                    if (section.Length + 3 > EmbedPager.MaxFieldLength)
+                    {
+                        section.Length = EmbedPager.MaxFieldLength - 4;
+                        section.Append("…```");
+                    }
+                    builder.AddField(
+                        $"Corrupted trophy data (x{badTrophyPaths.Length})",
+                        section.ToString()
+                    );
+                }
+
+            }
         }
         if (items["os_type"] == "Windows")
             foreach (var code in win32ErrorCodes)

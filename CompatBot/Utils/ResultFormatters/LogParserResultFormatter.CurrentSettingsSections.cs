@@ -33,6 +33,7 @@ internal static partial class LogParserResult
             items["build_full_version"] = $"{items["build_version"]}.{items["build_number"]}";
             items["build_commit"] = buildInfo.Groups["commit"].Value.Trim();
             items["build_branch"] = buildInfo.Groups["branch"].Value.Trim();
+            items["build_unknown"] = buildInfo.Groups["unknown"].Value.Trim();
             var fwVersion = buildInfo.Groups["fw_version_installed"].Value;
             if (!string.IsNullOrEmpty(fwVersion))
                 items["fw_version_installed"] = fwVersion;

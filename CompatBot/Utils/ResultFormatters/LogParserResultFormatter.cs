@@ -24,7 +24,7 @@ internal static partial class LogParserResult
     // RPCS3 v0.0.5-7104-a19113025 Alpha | HEAD
     // RPCS3 v0.0.5-42b4ce13a Alpha | minor
     // RPCS3 v0.0.18-local_build Alpha | local_build
-    [GeneratedRegex(@"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>\d+))?-(?<commit>[0-9a-z_]+|unknown))( (?<stage>\w+))?( \| (?<branch>[^|\r\n]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$", DefaultSingleLine)]
+    [GeneratedRegex(@"RPCS3 v(?<version_string>(?<version>(\d|\.)+)(-(?<build>(\d|\.)+))?-(?<commit>([0-9a-z_]+|unknown)( \S+)??))( (?<stage>\w+))?( \| (?<branch>[^|\r\n]+))?( \| Firmware version: (?<fw_version_installed>[^|\r\n]+))?( \| (?<unknown>.*))?\r?$", DefaultSingleLine)]
     private static partial Regex BuildInfoInLog();
     [GeneratedRegex(@"(\d{1,2}(th|rd|nd|st) Gen)?(?<cpu_model>[^|@]+?)\s*(((CPU\s*)?@\s*(?<cpu_speed>.+)\s*GHz\s*)|((APU with|((with|w/) )?Radeon|R\d, \d+ Compute) [^|]+)|((\w+[\- ]Core )?Processor))?\s* \| (?<thread_count>\d+) Threads \| (?<memory_amount>[0-9\.\,]+) GiB RAM( \| TSC: (?<tsc>\S+))?( \| (?<cpu_extensions>.*?))?\r?$", DefaultSingleLine)]
     private static partial Regex CpuInfoInLog();
@@ -788,7 +788,7 @@ internal static partial class LogParserResult
         var link = updateInfo.X64?.LatestBuild.Windows?.Download
                    ?? updateInfo.X64?.LatestBuild.Linux?.Download
                    ?? updateInfo.X64?.LatestBuild.Mac?.Download
-                   ??updateInfo.Arm?.LatestBuild.Windows?.Download
+                   ?? updateInfo.Arm?.LatestBuild.Windows?.Download
                    ?? updateInfo.Arm?.LatestBuild.Linux?.Download
                    ?? updateInfo.Arm?.LatestBuild.Mac?.Download;
         if (updateInfo.ReturnCode is not StatusCode.UpdatesAvailable || link is null)
