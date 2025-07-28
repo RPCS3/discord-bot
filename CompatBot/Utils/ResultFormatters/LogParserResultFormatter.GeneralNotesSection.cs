@@ -438,6 +438,7 @@ internal static partial class LogParserResult
         var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
         if (updateInfo is not null
+            && items["build_unknown"] is not {Length: >0}
             && (buildBranch is "master" or "head" or "spu_perf"
                 || buildBranch is not {Length: >0}
                     && (updateInfo.X64?.CurrentBuild is not null || updateInfo.Arm?.CurrentBuild is not null)))
@@ -464,6 +465,15 @@ internal static partial class LogParserResult
             notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
             if (buildBranch == "spu_perf")
                 notes.Add($"😱 `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
+        }
+        else if (items["build_unknown"] is "local_build")
+        {
+            if (items["build_commit"] is { Length: > 0 } commit && commit.Contains("AUR"))
+                notes.Add("❌ Unofficial AUR builds are not supported");
+            else if (items["build_number"] is "1" && items["os_type"] is "Linux")
+                notes.Add("❌ Flatpak builds are not supported");
+            else
+                notes.Add("❌ Unofficial builds are not supported");
         }
 
         if (DesIds.Contains(serial))
