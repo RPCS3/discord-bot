@@ -100,15 +100,24 @@ internal static class Program
                 }
             }
 
+#if DEBUG
+            Config.Log.Debug("Upgrading databases…");
+#endif
             if (!await DbImporter.UpgradeAsync(Config.Cts.Token).ConfigureAwait(false))
                 return;
 
+#if DEBUG
+            Config.Log.Debug("Restoring configuration and stats…");
+#endif
             await SqlConfiguration.RestoreAsync().ConfigureAwait(false);
             Config.Log.Debug("Restored configuration variables from persistent storage");
 
             await StatsStorage.RestoreAsync().ConfigureAwait(false);
             Config.Log.Debug("Restored stats from persistent storage");
 
+#if DEBUG
+            Config.Log.Debug("Starting background tasks…");
+#endif
             var backgroundTasks = Task.WhenAll(
                 AmdDriverVersionProvider.RefreshAsync(),
 #if !DEBUG
@@ -125,6 +134,9 @@ internal static class Program
                 OcrProvider.InitializeAsync(Config.Cts.Token)
             );
 
+#if DEBUG
+            Config.Log.Debug("Checking IRD cache folder…");
+#endif
             try
             {
                 if (!Directory.Exists(Config.IrdCachePath))
@@ -135,6 +147,9 @@ internal static class Program
                 Config.Log.Warn(e, $"Failed to create new folder {Config.IrdCachePath}: {e.Message}");
             }
 
+#if DEBUG
+            Config.Log.Debug("Configuring Discord client…");
+#endif
             var clientInfoLogged = false;
             var mediaScreenshotMonitor = new MediaScreenshotMonitor();
             var clientBuilder = DiscordClientBuilder
@@ -308,6 +323,7 @@ internal static class Program
 
             try
             {
+                Config.Log.Debug("Connecting…");
                 await client.ConnectAsync().ConfigureAwait(false);
             }
             catch (Exception e)
@@ -316,6 +332,9 @@ internal static class Program
                 throw;
             }
 
+#if DEBUG
+            Config.Log.Info("Checking restart state…");
+#endif
             ulong? channelId = null;
             string? restartMsg = null;
             await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))

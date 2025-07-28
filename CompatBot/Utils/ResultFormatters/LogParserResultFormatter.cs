@@ -788,7 +788,7 @@ internal static partial class LogParserResult
         var link = updateInfo.X64?.LatestBuild.Windows?.Download
                    ?? updateInfo.X64?.LatestBuild.Linux?.Download
                    ?? updateInfo.X64?.LatestBuild.Mac?.Download
-                   ??updateInfo.Arm?.LatestBuild.Windows?.Download
+                   ?? updateInfo.Arm?.LatestBuild.Windows?.Download
                    ?? updateInfo.Arm?.LatestBuild.Linux?.Download
                    ?? updateInfo.Arm?.LatestBuild.Mac?.Download;
         if (updateInfo.ReturnCode is not StatusCode.UpdatesAvailable || link is null)
