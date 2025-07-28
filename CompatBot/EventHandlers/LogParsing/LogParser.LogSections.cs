@@ -239,6 +239,9 @@ internal partial class LogParser
                 ["undub"] = UndubFlag(),
                 ["Input: Pad"] = InputDeviceGamepad(),
                 ["SDL: Found game controller"] = SdlControllerName(),
+                ["SYS: Failed to remove save data"] = FailedToRemoveSaveData(),
+                ["Trophy: Failed to remove"] = FailedToRemoveTrophy(),
+                ["Failed to install trophy"] = FailedToInstallTrophy(),
             },
             OnSectionEnd = MarkAsCompleteAndReset,
             EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from"],
@@ -273,6 +276,8 @@ internal partial class LogParser
         "verification_error_hex",
         "verification_error",
         "tty_line",
+        "bad_save_data_path",
+        "bad_trophy_data_path",
     ];
 
     private static readonly string[] CountValueItems = ["enqueue_buffer_error"];
