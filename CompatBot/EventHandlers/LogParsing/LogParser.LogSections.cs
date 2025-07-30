@@ -239,6 +239,7 @@ internal partial class LogParser
                 ["undub"] = UndubFlag(),
                 ["Input: Pad"] = InputDeviceGamepad(),
                 ["SDL: Found game controller"] = SdlControllerName(),
+                ["cellSaveData: cellSaveDataGetListItem"] = SaveDataBeforeSegfault(),
                 ["SYS: Failed to remove save data"] = FailedToRemoveSaveData(),
                 ["Trophy: Failed to remove"] = FailedToRemoveTrophy(),
                 ["Failed to install trophy"] = FailedToInstallTrophy(),

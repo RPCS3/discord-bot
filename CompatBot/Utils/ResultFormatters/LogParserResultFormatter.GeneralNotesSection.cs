@@ -526,7 +526,7 @@ internal static partial class LogParserResult
     private static void BuildFatalErrorSection(DiscordEmbedBuilder builder, NameValueCollection items, NameUniqueObjectCollection<string> multiItems, List<string> notes)
     {
         var win32ErrorCodes = new HashSet<int>();
-        if (multiItems["fatal_error"] is {Length: > 0} fatalErrors)
+        if (multiItems["fatal_error"] is {Length: >0} fatalErrors)
         {
             var contexts = multiItems["fatal_error_context"];
             var reducedFatalErrors = GroupSimilar(fatalErrors);
@@ -646,7 +646,7 @@ internal static partial class LogParserResult
                     notes.Add("⚠️ PPU desync detected, most likely cause is corrupted save data");
             }*/
         }
-        if (multiItems["bad_save_data_path"] is { Length: > 0 } badSavePaths)
+        if (multiItems["bad_save_data_path"] is { Length: >0 } badSavePaths)
         {
             if (badSavePaths is [string singlePath])
                 notes.Add($"❌ Corrupted save data `{singlePath}`");
@@ -666,7 +666,7 @@ internal static partial class LogParserResult
                 );
             }
         }
-        if (multiItems["bad_trophy_data_path"] is { Length: > 0 } badTrophyPaths)
+        if (multiItems["bad_trophy_data_path"] is { Length: >0 } badTrophyPaths)
         {
             if (badTrophyPaths is [string singlePath])
                 notes.Add($"❌ Corrupted trophy data `{singlePath}`");
@@ -687,6 +687,8 @@ internal static partial class LogParserResult
             }
 
         }
+        if (items["save_dir_before_segfault"] is { Length: > 0 } saveDirBeforeSegfault)
+            notes.Add($"❌ Potential save data corruption in `{saveDirBeforeSegfault}`");
         if (items["os_type"] == "Windows")
             foreach (var code in win32ErrorCodes)
             {

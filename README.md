@@ -20,7 +20,7 @@ Runtime Requirements
 * [.NET 9.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
   * Bot needs `dotnet` command to be available (i.e. alias for the Snap package)
   * OCR on Linux requires the following dependencies to be installed: `libarchive.so.13`, `liblept.so.5`, `libtiff.so.5`
-    * On Ubuntu 22.04 this is provided by the following packages:
+    * On Ubuntu 24.04 this is provided by the following packages:
       ```sh
       sudo apt install libarchive13t64 liblept5
       wget https://archive.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6_amd64.deb

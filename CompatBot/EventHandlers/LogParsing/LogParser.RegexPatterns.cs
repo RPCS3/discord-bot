@@ -359,4 +359,11 @@ internal partial class LogParser
     private static partial Regex FailedToRemoveTrophy();
     [GeneratedRegex(@"Failed to install .+ '.*(?<bad_trophy_data_path>/dev_hdd0/.+)' \(.+\)\r?$", DefaultOptions)]
     private static partial Regex FailedToInstallTrophy();
+    [GeneratedRegex(
+        @"cellSaveData:[^\n]+dirName=“(?<save_dir_before_segfault>\w+)”[^\n]+\r?\n"+
+        @"[^\n]+SYS:\s*\n"+
+        "Segfault",
+        DefaultOptions
+    )]
+    private static partial Regex SaveDataBeforeSegfault();
 }
