@@ -59,6 +59,7 @@ internal partial class LogParser
                 ["Use LLVM CPU:"] = LlvmCpuArch(),
                 ["thread scheduler"] = ThreadSchedulerMode(),
                 ["SPU Decoder:"] = SpuDecoderType(),
+                ["SPU Reservation Busy Waiting Enabled:"] = SpuEventsBusyLoop(),
                 ["Disable SPU GETLLAR Spin Optimization:"] = DisableSpuGetllarSpinOptimization(),
                 ["secondary cores:"] = SecondaryCores(),
                 //["priority:"] = LowerThreadPriority(),
