@@ -272,12 +272,14 @@ internal static partial class LogParserResult
         if (items["spu_decoder"] is string spuDecoder && spuDecoder.Contains("Interpreter", StringComparison.InvariantCultureIgnoreCase))
             notes.Add("⚠️ Please set `SPU Decoder` to use recompiler for better performance");
 
-        if (items["accurate_getllar"] == EnabledMark)
+        if (items["accurate_getllar"] is EnabledMark)
             notes.Add("ℹ️ `Accurate GETLLAR` is enabled");
-        if (items["accurate_putlluc"] == EnabledMark)
+        if (items["accurate_putlluc"] is EnabledMark)
             notes.Add("ℹ️ `Accurate PUTLLUC` is enabled");
-        if (items["accurate_rsx_reservation"] == EnabledMark)
+        if (items["accurate_rsx_reservation"] is EnabledMark)
             notes.Add("ℹ️ `Accurate RSX Reservation Access` is enabled");
+        if (items["spu_events_busy_loop"] is EnabledMark && threadCount < 12)
+            notes.Add("⚠️ `SPU Events Busy Loop` is enabled on a CPU with few threads");
 
         if (KnownGamesThatRequireAccurateXfloat.Contains(serial) && items["xfloat_mode"] is not "Accurate")
             notes.Add("⚠️ `Accurate xfloat` is required for this game");
@@ -614,7 +616,7 @@ internal static partial class LogParserResult
                     notes.Add("ℹ️ `SPU Thread Count` is best to set to `2`");
             }
         }
-        if (items["spu_loop_detection"] == EnabledMark)
+        if (items["spu_loop_detection"] is EnabledMark)
             notes.Add("ℹ️ If you have distorted audio, try disabling `SPU Loop Detection`");
         if (items["frame_limit"] is not null and not "Off")
             notes.Add("⚠️ `Frame Limiter` is not required, please disable");
