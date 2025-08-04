@@ -367,7 +367,7 @@ internal static partial class LogParserResult
             && state.ValueHitStats.TryGetValue("enqueue_buffer_error", out var enqueueBufferErrorCount)
             && enqueueBufferErrorCount > 100)
         {
-            if (items["os_type"] == "Windows")
+            if (items["os_type"] is "Windows")
                 notes.Add("⚠️ Audio backend issues detected; it could be caused by a bad driver or 3rd party software");
             else
                 notes.Add("⚠️ Audio backend issues detected; check for high audio driver/sink latency");
@@ -380,8 +380,8 @@ internal static partial class LogParserResult
         var ppuPatches = GetPatches(multiItems["ppu_patch"], true);
         var ovlPatches = GetPatches(multiItems["ovl_patch"], true);
         var allSpuPatches = GetPatches(multiItems["spu_patch"], false);
-        var spuPatches = new Dictionary<string, int>(allSpuPatches.Where(kvp => kvp.Value != 0));
-        if (ppuPatches.Any() || spuPatches.Any() || ovlPatches.Any() || prxPatches.Any())
+        var spuPatches = new Dictionary<string, int>(allSpuPatches.Where(kvp => kvp.Value > 0));
+        if (ppuPatches.Count > 0 || spuPatches.Count > 0 || ovlPatches.Count > 0 || prxPatches.Count > 0)
         {
             var patchCount = "";
             if (ppuPatches.Count != 0)
@@ -466,7 +466,12 @@ internal static partial class LogParserResult
             else
                 timeDeltaStr = "outdated";
 
-            notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
+            if (items["os_type"] is not "Windows"
+                || !TryGetRpcs3Version(items, out var v)
+                || v < NonBrokenMsvcOptimizationBuild)
+            {
+                notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
+            }
             if (buildBranch == "spu_perf")
                 notes.Add($"😱 `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
         }
@@ -478,6 +483,12 @@ internal static partial class LogParserResult
                 notes.Add("❗ Flatpak builds are not supported");
             else
                 notes.Add("❗ Unofficial builds are not supported");
+        }
+        if (items["os_type"] is "Windows"
+            && TryGetRpcs3Version(items, out var v2)
+            && v2 > NonBrokenMsvcOptimizationBuild)
+        {
+            notes.Add($"⚠️ Please downgrade to build v0.0.37-18022 for the Windows");
         }
 
         if (DesIds.Contains(serial))
