@@ -80,10 +80,11 @@ public static partial class DiscLanguageProvider
 
     private static string ParseLangList(string name)
     {
-        string langs;
         if (RedumpName().Match(name) is not { Success: true } match)
             return "";
-        else if (match.Groups["lang"].Value is { Length: > 0 } lang)
+
+        string langs;
+        if (match.Groups["lang"].Value is { Length: > 0 } lang)
             langs = lang;
         else if (match.Groups["region"].Value is not { Length: > 0 } region)
             return "";

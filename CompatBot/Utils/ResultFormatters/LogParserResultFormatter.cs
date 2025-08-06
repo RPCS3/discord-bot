@@ -1067,6 +1067,9 @@ internal static partial class LogParserResult
         if (release.Contains("-artix", StringComparison.OrdinalIgnoreCase))
             return "Artix " + kernelVersion;
 
+        if (release.Contains("-cachyos", StringComparison.OrdinalIgnoreCase))
+            return "CachyOS " + kernelVersion;
+
         if (release.Contains(".fc"))
         {
             var ver = release.Split('.').FirstOrDefault(p => p.StartsWith("fc"))?[2..];
