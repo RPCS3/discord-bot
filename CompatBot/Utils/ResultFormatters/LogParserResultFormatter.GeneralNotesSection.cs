@@ -442,7 +442,6 @@ internal static partial class LogParserResult
         var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
         if (updateInfo is not null
-            && items["build_unknown"] is not {Length: >0}
             && (buildBranch is "master" or "head" or "spu_perf"
                 || buildBranch is not {Length: >0}
                     && (updateInfo.X64?.CurrentBuild is not null || updateInfo.Arm?.CurrentBuild is not null)))
@@ -475,12 +474,14 @@ internal static partial class LogParserResult
             if (buildBranch == "spu_perf")
                 notes.Add($"😱 `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
         }
-        else if (items["build_unknown"] is "local_build")
+        if (items["build_unknown"] is "local_build")
         {
             if (items["build_commit"] is { Length: > 0 } commit && commit.Contains("AUR"))
                 notes.Add("❗ Unofficial AUR builds are not supported");
-            else if (items["build_number"] is "1" && items["os_type"] is "Linux")
+            else if (items["os_type"] is "Linux" && items["build_number"] is "1")
                 notes.Add("❗ Flatpak builds are not supported");
+            else if (items["os_type"] is "Linux" && updateInfo is not null)
+                notes.Add("⚠️ Please try the official AppImage instead of AUR build if you experience issues");
             else
                 notes.Add("❗ Unofficial builds are not supported");
         }
