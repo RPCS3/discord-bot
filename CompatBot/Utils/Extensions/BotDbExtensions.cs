@@ -22,7 +22,9 @@ internal static class BotDbExtensions
     public static T WithNoCase<T>(this T ctx) where T: DbContext
     {
         var connection = (SqliteConnection)ctx.Database.GetDbConnection();
+        // support unicode in NOCASE collation
         connection.CreateCollation("NOCASE", (x, y) => string.Compare(x, y, StringComparison.OrdinalIgnoreCase));
+        // ignore case for str.Contains() translation
         connection.CreateFunction("instr", (string x, string y) => x.Contains(y, StringComparison.OrdinalIgnoreCase), isDeterministic: true);
         return ctx;
     }
