@@ -1067,8 +1067,18 @@ internal static partial class LogParserResult
         if (release.Contains("-artix", StringComparison.OrdinalIgnoreCase))
             return "Artix " + kernelVersion;
 
+        if (release.Contains("-clear", StringComparison.OrdinalIgnoreCase))
+            return "Clear Linux " + kernelVersion;
+
+        if (release.Contains("-Unraid", StringComparison.OrdinalIgnoreCase))
+            return "Unraid " + kernelVersion;
+
         if (release.Contains("-cachyos", StringComparison.OrdinalIgnoreCase))
             return "CachyOS " + kernelVersion;
+
+        if (release.Contains("-chos1", StringComparison.OrdinalIgnoreCase)
+            || release.Contains("-chimeraos", StringComparison.OrdinalIgnoreCase))
+            return "ChimeraOS " + kernelVersion;
 
         if (release.Contains(".fc"))
         {
