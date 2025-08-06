@@ -39,31 +39,29 @@ public static partial class DiscLanguageProvider
             if (serialList is not { Count: > 0 } || name is not {Length: >0})
                 continue;
 
-            try
-            {
-                var langs = ParseLangList(name);
-                if (langs is not { Length: > 0 })
-                    continue;
+            foreach (var serial in serialList)
+                try
+                {
+                    var langs = ParseLangList(serial[2], name);
+                    if (langs is not { Length: > 0 })
+                        continue;
 #if DEBUG
-                if (langs.Length > longestLangList.Length)
-                {
-                    longestLangList = langs;
-                    gameWithLongestLangList = serialList[0];
-                }
+                    if (langs.Length > longestLangList.Length)
+                    {
+                        longestLangList = langs;
+                        gameWithLongestLangList = serialList[0];
+                    }
 #endif
-                foreach (var serial in serialList)
-                {
                     if (!ProductCodeToVersionAndLangList.TryGetValue(serial, out var listOfLangs))
                         ProductCodeToVersionAndLangList[serial] = listOfLangs = [];
                     if (listOfLangs.Any(l => l.Equals(langs, StringComparison.OrdinalIgnoreCase)))
                         continue;
                     listOfLangs.Add(langs);
                 }
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e, "Failed to parse language list");
-            }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, "Failed to parse language list");
+                }
         }
 #if DEBUG
         Config.Log.Debug($"Game product code with the longest language list: {gameWithLongestLangList} ({longestLangList})");
@@ -78,89 +76,100 @@ public static partial class DiscLanguageProvider
         return listOfLangs.AsReadOnly();
     }
 
-    private static string ParseLangList(string name)
+    private static string ParseLangList(char productCodeRegion, string name)
     {
         if (RedumpName().Match(name) is not { Success: true } match)
             return "";
 
-        string langs;
+        string langs = "";
+        List<string> flagList = [];
         if (match.Groups["lang"].Value is { Length: > 0 } lang)
             langs = lang;
         else if (match.Groups["region"].Value is not { Length: > 0 } region)
             return "";
         else
         {
-            var langList = region.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(MapRegionToLang)
+            flagList = region.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(MapRegionToFlag)
                 .Distinct()
                 .Where(l => l is { Length: > 0 })
                 //.OrderBy(l => l, StringComparer.OrdinalIgnoreCase)
                 .ToList();
-            langs = string.Join(",", langList);
         }
-        var langsParts = langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct()
-            .Select(MapLangToFlag)
-            //.OrderBy(l => l, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        return string.Join(' ', langsParts);
+        flagList = flagList.Concat(
+            langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(l => MapLangToFlag(productCodeRegion, l))
+        ).Distinct()
+        //.OrderBy(l => l, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+        return string.Join(' ', flagList);
     }
 
-    private static string MapRegionToLang(string region)
-#if DEBUG
-        => RegionToLang.TryGetValue(region, out var result)
+    private static string MapRegionToFlag(string region)
+        => RegionToFlag.TryGetValue(region, out var result)
             ? result
+#if DEBUG
             : throw new InvalidDataException($"No mapping from region {region} to language");
 #else
-        => RegionToLang.GetValueOrDefault(region, "");
+            : "";
  #endif
 
-    private static string MapLangToFlag(string lang)
+    private static string MapLangToFlag(char region, string lang)
+        => region switch
+           {
+               'E' => EuLangToFlag.TryGetValue(lang, out var flag) ? flag : null,
+               'U' => UsLangToFlag.TryGetValue(lang, out var flag) ? flag : null,
+               _ => null
+           }
+           ?? (
+               LangToFlag.TryGetValue(lang, out var result)
+                   ? result
 #if DEBUG
-        => LangToFlag.TryGetValue(lang, out var result)
-            ? result
-            : throw new InvalidDataException($"No mapping from language {lang} to flag");
+                   : throw new InvalidDataException($"No mapping from language {lang} to flag")
 #else
-        => LangToFlag.GetValueOrDefault(lang, "🏁");
- #endif
+                   : "🏁"
+#endif
+           );
 
-    private static readonly Dictionary<string, string> RegionToLang = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string> RegionToFlag = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["Asia"] = "Ja",
-        ["Australia"] = "En",
-        ["Austria"] = "De",
-        ["Brazil"] = "Pt",
-        ["Canada"] = "En,Fr",
-        ["Europe"] = "En-UK",
-        ["France"] = "Fr",
-        ["Germany"] = "De",
-        ["Greece"] = "El",
-        ["India"] = "En",
-        ["Italy"] = "It",
-        ["Japan"] = "Ja",
-        ["Korea"] = "Ko",
-        ["Mexico"] = "Es-MX",
-        ["New Zealand"] = "En",
-        ["Poland"] = "Pl",
-        ["Russia"] = "Ru",
-        ["Spain"] = "Es",
-        ["Switzerland"] = "De",
-        ["Turkey"] = "Tr",
-        ["UK"] = "En-UK",
-        ["United Arab Emirates"] = "Ar",
-        ["USA"] = "En",
+        ["Asia"] = "🇯🇵",
+        ["Australia"] = "🇦🇺",
+        ["Austria"] = "🇦🇹",
+        ["Brazil"] = "🇧🇷",
+        ["Canada"] = "🇨🇦",
+        ["Europe"] = "🏴󠁥󠁳󠁰󠁶󠁿",
+        ["France"] = "🇫🇷",
+        ["Germany"] = "🇩🇪",
+        ["Greece"] = "🇬🇷",
+        ["India"] = "🇮🇳",
+        ["Italy"] = "🇮🇹",
+        ["Japan"] = "🇯🇵",
+        ["Korea"] = "🇰🇷",
+        ["Mexico"] = "🇲🇽",
+        ["New Zealand"] = "🇳🇿",
+        ["Poland"] = "🇵🇱",
+        ["Russia"] = "🇷🇺",
+        ["Spain"] = "🇪🇸",
+        ["Switzerland"] = "🇨🇭",
+        ["Turkey"] = "🇹🇷",
+        ["UK"] = "🇬🇧",
+        ["United Arab Emirates"] = "🇸🇦",
+        ["USA"] = "🇺🇸",
     };
 
+    // ISO-639 language code to ISO-3166-2 country code
     private static readonly Dictionary<string, string> LangToFlag = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["af"] = "🇿🇦",
-        ["ar"] = "🇸🇦",
-        ["bg"] = "🇧🇬",
-        ["ca"] = "🇦🇩",
+        ["af"] = "🇿🇦", // Afrikaans - South Africa
+        ["ar"] = "🇸🇦", // Arabic - Saudi Arabia
+        ["bg"] = "🇧🇬", // Bulgarian
+        ["ca"] = "🇦🇩", // Catalan - Andorra
         ["cs"] = "🇨🇿",
-        ["da"] = "🇩🇰",
-        ["de"] ="🇩🇪",
-        ["el"] = "🇬🇷",
+        ["da"] = "🇩🇰", // Danish - Denmark
+        ["de"] = "🇩🇪",
+        ["de-AT"] = "🇦🇹",
+        ["el"] = "🇬🇷", // Greek
         ["en"] = "🇺🇸",
         ["en-UK"] = "🇬🇧",
         ["es"] = "🇪🇸",
@@ -168,8 +177,8 @@ public static partial class DiscLanguageProvider
         ["eu"] = "🏴󠁥󠁳󠁰󠁶󠁿",
         ["fi"] = "🇫🇮",
         ["fr"] = "🇫🇷",
-        ["gd"] = "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-        ["hr"] = "🇭🇷",
+        ["gd"] = "🏴󠁧󠁢󠁳󠁣󠁴󠁿", // Gaelic - Scotland
+        ["hr"] = "🇭🇷", // Croatian
         ["hu"] = "🇭🇺",
         ["it"] = "🇮🇹",
         ["ja"] = "🇯🇵",
@@ -177,12 +186,26 @@ public static partial class DiscLanguageProvider
         ["nl"] = "🇳🇱",
         ["no"] = "🇳🇴",
         ["pl"] = "🇵🇱",
-        ["pt"] = "🇧🇷",
+        ["pt"] = "🇵🇹",
+        ["pt-BR"] = "🇧🇷",
         ["ro"] = "🇷🇴",
         ["ru"] = "🇷🇺",
-        ["sk"] = "🇸🇰",
-        ["sv"] = "🇸🇪",
+        ["sk"] = "🇸🇰", // Slovak
+        ["sv"] = "🇸🇪", // Swedish
         ["tr"] = "🇹🇷",
         ["zh"] = "🇨🇳",
+    };
+
+    private static readonly Dictionary<string, string> UsLangToFlag = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["en"] = "🇺🇸",
+        ["es"] = "🇲🇽",
+        ["pt"] = "🇧🇷",
+    };
+
+    private static readonly Dictionary<string, string> EuLangToFlag = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["en"] = "🇬🇧",
+        ["es"] = "🇪🇸",
     };
 }
