@@ -13,6 +13,7 @@ public class ContentFilterAutoCompleteProvider: IAutoCompleteProvider
             return [new($"{Config.Reactions.Denied} You are not authorized to use this command.", -1)];
         
         await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+        db.WithNoCase();
         IEnumerable<(int id, string trigger)> result;
         if (context.UserInput is not {Length: >0} prefix)
             result = db.Piracystring
