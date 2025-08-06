@@ -1,4 +1,6 @@
 ﻿using CompatBot.Database;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Utils;
 
@@ -15,5 +17,13 @@ internal static class BotDbExtensions
         if (result && filter.Actions.HasFlag(FilterAction.ShowExplain))
             result = !string.IsNullOrEmpty(filter.ExplainTerm);
         return result;
+    }
+
+    public static T WithNoCase<T>(this T ctx) where T: DbContext
+    {
+        var connection = (SqliteConnection)ctx.Database.GetDbConnection();
+        connection.CreateCollation("NOCASE", (x, y) => string.Compare(x, y, StringComparison.OrdinalIgnoreCase));
+        connection.CreateFunction("instr", (string x, string y) => x.Contains(y, StringComparison.OrdinalIgnoreCase), isDeterministic: true);
+        return ctx;
     }
 }

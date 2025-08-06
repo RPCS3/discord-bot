@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CompatApiClient;
-using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Nito.AsyncEx;
 
@@ -22,6 +21,11 @@ internal class ThumbnailDb : DbContext
     public DbSet<Fortune> Fortune { get; set; } = null!;
     public DbSet<NamePool> NamePool { get; set; } = null!;
 
+    [Obsolete("For migrations only")]
+    public ThumbnailDb(): this(DbLockSource.WriterLock(Config.Cts.Token))
+    {
+    }
+
     private ThumbnailDb(IDisposable readWriteLock, bool canWrite = false)
     {
         this.readWriteLock = readWriteLock;
@@ -31,8 +35,8 @@ internal class ThumbnailDb : DbContext
             Interlocked.Increment(ref openWriteCount);
         else
             Interlocked.Increment(ref openReadCount);
-        var st = new System.Diagnostics.StackTrace().GetCaller<ThumbnailDb>();
-        Config.Log.Debug($"{nameof(ThumbnailDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
+        //var st = new System.Diagnostics.StackTrace().GetCaller<ThumbnailDb>();
+        //Config.Log.Debug($"{nameof(ThumbnailDb)}>>>{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8} from {st}");
 #endif
     }
 
@@ -58,6 +62,7 @@ internal class ThumbnailDb : DbContext
         modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ProductCode).IsUnique().HasDatabaseName("thumbnail_product_code");
         modelBuilder.Entity<Thumbnail>().HasIndex(m => m.ContentId).IsUnique().HasDatabaseName("thumbnail_content_id");
         modelBuilder.Entity<Thumbnail>().HasIndex(m => m.Timestamp).HasDatabaseName("thumbnail_timestamp");
+        modelBuilder.Entity<Thumbnail>().Property(m => m.Name).UseCollation("NOCASE");
         modelBuilder.Entity<GameUpdateInfo>().HasIndex(ui => ui.ProductCode).IsUnique().HasDatabaseName("game_update_info_product_code");
         modelBuilder.Entity<SyscallInfo>().HasIndex(sci => sci.Function).HasDatabaseName("syscall_info_function");
         modelBuilder.Entity<SyscallToProductMap>().HasKey(m => new {m.ProductId, m.SyscallInfoId});

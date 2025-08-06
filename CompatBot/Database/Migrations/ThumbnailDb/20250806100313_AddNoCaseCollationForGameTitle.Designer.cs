@@ -2,6 +2,7 @@
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CompatBot.Migrations
 {
     [DbContext(typeof(ThumbnailDb))]
-    partial class ThumbnailDbModelSnapshot : ModelSnapshot
+    [Migration("20250806100313_AddNoCaseCollationForGameTitle")]
+    partial class AddNoCaseCollationForGameTitle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
