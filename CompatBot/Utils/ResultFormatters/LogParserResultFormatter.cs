@@ -775,10 +775,10 @@ internal static partial class LogParserResult
         }
     }
 
-    private static async ValueTask<UpdateInfo?> CheckForUpdateAsync(NameValueCollection items)
+    private static async ValueTask<(UpdateInfo? updateInfo, bool isTooOld)> CheckForUpdateAsync(NameValueCollection items)
     {
         if (string.IsNullOrEmpty(items["build_and_specs"]))
-            return null;
+            return default;
 
         var currentBuildCommit = items["build_commit"];
         if (string.IsNullOrEmpty(currentBuildCommit))
@@ -793,13 +793,13 @@ internal static partial class LogParserResult
                    ?? updateInfo.Arm?.LatestBuild.Linux?.Download
                    ?? updateInfo.Arm?.LatestBuild.Mac?.Download;
         if (updateInfo.ReturnCode is not StatusCode.UpdatesAvailable || link is null)
-            return null;
+            return default;
 
         var latestBuildInfo = BuildInfoInUpdate().Match(link.ToLowerInvariant());
         if (latestBuildInfo.Success && VersionIsTooOld(items, latestBuildInfo, updateInfo))
-            return updateInfo;
+            return (updateInfo, true);
 
-        return null;
+        return (updateInfo, false);
     }
 
     private static bool VersionIsTooOld(NameValueCollection items, Match update, UpdateInfo updateInfo)
