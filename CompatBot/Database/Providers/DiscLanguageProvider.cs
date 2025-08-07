@@ -199,13 +199,12 @@ public static partial class DiscLanguageProvider
     private static readonly Dictionary<string, string> UsLangToFlag = new(StringComparer.OrdinalIgnoreCase)
     {
         ["en"] = "🇺🇸",
-        ["es"] = "🇲🇽",
-        ["pt"] = "🇧🇷",
+        // ["es"] = "🇲🇽",
+        // ["pt"] = "🇧🇷",
     };
 
     private static readonly Dictionary<string, string> EuLangToFlag = new(StringComparer.OrdinalIgnoreCase)
     {
         ["en"] = "🇬🇧",
-        ["es"] = "🇪🇸",
     };
 }
