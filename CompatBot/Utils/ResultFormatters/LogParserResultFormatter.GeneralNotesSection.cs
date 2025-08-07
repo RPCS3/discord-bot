@@ -439,12 +439,13 @@ internal static partial class LogParserResult
         if (items["game_mod"] is string mod)
             notes.Add($"⚠️ Game files modification present: `{mod.Trim(20)}`");
 
-        var updateInfo = await CheckForUpdateAsync(items).ConfigureAwait(false);
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
+        var (updateInfo, isTooOld) = await CheckForUpdateAsync(items).ConfigureAwait(false);
         if (updateInfo is not null
+            && isTooOld
             && (buildBranch is "master" or "head" or "spu_perf"
                 || buildBranch is not {Length: >0}
-                    && (updateInfo.X64?.CurrentBuild is not null || updateInfo.Arm?.CurrentBuild is not null)))
+                && (updateInfo.X64?.CurrentBuild is not null || updateInfo.Arm?.CurrentBuild is not null)))
         {
             string prefix = "⚠️";
             string timeDeltaStr;
