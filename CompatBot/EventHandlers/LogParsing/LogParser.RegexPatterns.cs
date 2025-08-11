@@ -351,6 +351,8 @@ internal partial class LogParser
     private static partial Regex UndubFlag();
     [GeneratedRegex(@"(\b|_)(?<game_mod>((UFC )?Undisputed Forever|UDF Packaged))(\b|_)", RegexOptions.IgnoreCase | DefaultOptions)]
     private static partial Regex UfcModFlag();
+    [GeneratedRegex(@"USRDIR/DLC/(?<game_mod>(CFBR_DLC_[^/]+))", DefaultOptions)]
+    private static partial Regex Ncaa14RevampedModFlag();
     [GeneratedRegex(@"Input: Pad (?<pad_id>\d): device='(?<pad_controller_name>(?!Null).+?)', handler=(?<pad_handler>.+?), VID=.+?$", DefaultOptions)]
     private static partial Regex InputDeviceGamepad();
     [GeneratedRegex(@"Found game controller \d: .+ has_accel=(?<pad_has_accel>.+?), has_gyro=(?<pad_has_gyro>[^\r\n]+?)\r?$", DefaultOptions)]

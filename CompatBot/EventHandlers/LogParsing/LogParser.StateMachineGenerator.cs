@@ -62,7 +62,7 @@ internal partial class LogParser
                 lock (state)
                 {
                     if (!state.Syscalls.TryGetValue(serial, out var serialSyscallStats))
-                        state.Syscalls[serial] = serialSyscallStats = new();
+                        state.Syscalls[serial] = serialSyscallStats = [];
                     serialSyscallStats.Add(syscallName);
                 }
             }
