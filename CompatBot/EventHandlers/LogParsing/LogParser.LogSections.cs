@@ -45,7 +45,8 @@ internal partial class LogParser
                 ["SYS: Path:"] = BootPathDigitalSys(),
                 ["custom config:"] = CustomConfigPath(),
                 ["patch_log: Failed to load patch file"] = FailedPatchPath(),
-                ["rpcs3.exe"] = UfcModFlag(),
+                ["Undisputed"] = UfcModFlag(),
+                ["UDF Packaged"] = UfcModFlag(),
             },
             EndTrigger = ["Used configuration:"],
         },
@@ -280,6 +281,7 @@ internal partial class LogParser
         "tty_line",
         "bad_save_data_path",
         "bad_trophy_data_path",
+        "game_mod",
     ];
 
     private static readonly string[] CountValueItems = ["enqueue_buffer_error"];
