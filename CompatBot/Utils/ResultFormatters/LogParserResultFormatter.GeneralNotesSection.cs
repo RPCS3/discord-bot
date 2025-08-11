@@ -438,7 +438,12 @@ internal static partial class LogParserResult
             notes.Add("❌ PS3 firmware is missing or corrupted");
 
         if (multiItems["game_mod"] is { Length: >0 } mods)
-            notes.Add($"⚠️ Game files modification present: `{mods[0].Trim(40)}`");
+        {
+            var mod = mods[0];
+            if (mod.Contains("CFBR_DLC"))
+                mod = "NCAA Football 14 Revamped";
+            notes.Add($"⚠️ Game files modification present: `{mod.Trim(40)}`");
+        }
 
         var buildBranch = items["build_branch"]?.ToLowerInvariant();
         var (updateInfo, isTooOld) = await CheckForUpdateAsync(items).ConfigureAwait(false);

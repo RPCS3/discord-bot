@@ -239,6 +239,7 @@ internal partial class LogParser
                 ["sys_tty_write():"] = SysTtyWrite(),
                 ["⁂"] = SyscallDump(),
                 ["undub"] = UndubFlag(),
+                ["CFBR_DLC"] = Ncaa14RevampedModFlag(),
                 ["Input: Pad"] = InputDeviceGamepad(),
                 ["SDL: Found game controller"] = SdlControllerName(),
                 ["cellSaveData: cellSaveDataGetListItem"] = SaveDataBeforeSegfault(),
