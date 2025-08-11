@@ -218,14 +218,15 @@ internal static partial class LogParserResult
         {
             if (cpu.StartsWith("AMD"))
             {
-                if (cpu.Contains("Ryzen") || cpu.Contains("Custom APU"))
+                if (cpu.Contains("Ryzen", StringComparison.OrdinalIgnoreCase) || cpu.Contains("Custom APU"))
                 {
                     if (threadCount < 12)
                         notes.Add("⚠️ Six cores or more is recommended for Ryzen CPUs");
-                    if (cpu.EndsWith('U')
-                        || cpu.EndsWith('H')
-                        || cpu.EndsWith("HS")
-                        || cpu.Contains("Custom APU"))
+                    if (items["cpu_extensions"]?.Contains("AVX-512") is not true
+                        && cpu.EndsWith('U')
+                            || cpu.EndsWith('H')
+                            || cpu.EndsWith("HS")
+                            || cpu.Contains("Custom APU"))
                         notes.Add("⚠️ Mobile Ryzen CPUs are only recommended for lighter games.");
                 }
                 else
