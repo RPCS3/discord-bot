@@ -15,6 +15,7 @@ internal static class TitlePatchFormatter
         var title = pkgs?.Select(p => p.ParamSfo?.Title).LastOrDefault(t => !string.IsNullOrEmpty(t))
                     ?? await ThumbnailProvider.GetTitleNameAsync(productCode, Config.Cts.Token).ConfigureAwait(false)
                     ?? productCode;
+        title = title.Replace('\r', ' ').Replace('\n', ' ').Replace("  ", " ");
         var content = new StringBuilder();
         var thumbnailUrl = await client.GetThumbnailUrlAsync(productCode).ConfigureAwait(false);
         if (pkgs is {Length: >0})
