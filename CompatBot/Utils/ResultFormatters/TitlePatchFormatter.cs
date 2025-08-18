@@ -9,65 +9,104 @@ namespace CompatBot.Utils.ResultFormatters;
 internal static class TitlePatchFormatter
 {
     // thanks BCES00569
-    public static async Task<List<DiscordEmbedBuilder>> AsEmbedAsync(this TitlePatch? patch, DiscordClient client, string productCode)
+    public static async Task<List<DiscordMessageBuilder>> AsMessageAsync(this TitlePatch? patch, DiscordClient client, string productCode)
     {
-        var result = new List<DiscordEmbedBuilder>();
         var pkgs = patch?.Tag?.Packages;
         var title = pkgs?.Select(p => p.ParamSfo?.Title).LastOrDefault(t => !string.IsNullOrEmpty(t))
                     ?? await ThumbnailProvider.GetTitleNameAsync(productCode, Config.Cts.Token).ConfigureAwait(false)
                     ?? productCode;
+        var content = new StringBuilder();
         var thumbnailUrl = await client.GetThumbnailUrlAsync(productCode).ConfigureAwait(false);
-        var embedBuilder = new DiscordEmbedBuilder
+        if (pkgs is {Length: >0})
         {
-            Title = title,
-            Color = Config.Colors.DownloadLinks,
-        }.WithThumbnail(thumbnailUrl);
-        if (pkgs?.Length > 1)
-        {
-            var pages = pkgs.Length / EmbedPager.MaxFields + (pkgs.Length % EmbedPager.MaxFields == 0 ? 0 : 1);
-            if (pages > 1)
-                embedBuilder.Title = $"{title} [Part 1 of {pages}]".Trim(EmbedPager.MaxFieldTitleLength);
-            embedBuilder.Description = $"""
-                ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}.
-                ⏩ You can use tools such as [rusty-psn](https://github.com/RainbowCookie32/rusty-psn/releases/latest) or [PySN](https://github.com/AphelionWasTaken/PySN/releases/latest) for mass download of all updates.
+            content.AppendLine($"### {title}");
+            if (pkgs.Length > 1)
+                    content.AppendLine(
+                        $"""
+                        ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}.
+                        ⏩ You can use tools such as [rusty-psn](https://github.com/RainbowCookie32/rusty-psn/releases/latest) or [PySN](https://github.com/AphelionWasTaken/PySN/releases/latest) for mass download of all updates.
 
-                ⚠️ You **must** install listed updates in order, starting with the first one. You **can not** skip intermediate versions.
-                """;
-            var i = 0;
-            do
-            {
-                var pkg = pkgs[i++];
-                embedBuilder.AddField($"Update v{pkg.Version} ({pkg.Size.AsStorageUnit()})", $"[⏬ {GetLinkName(pkg.Url)}]({pkg.Url})");
-                if (i % EmbedPager.MaxFields == 0)
-                {
-                    result.Add(embedBuilder);
-                    embedBuilder = new DiscordEmbedBuilder
-                    {
-                        Title = $"{title} [Part {i / EmbedPager.MaxFields + 1} of {pages}]".Trim(EmbedPager.MaxFieldTitleLength),
-                        Color = Config.Colors.DownloadLinks,
-                    }.WithThumbnail(thumbnailUrl);
-                }
-            } while (i < pkgs.Length);
+                        ⚠️ You **must** install listed updates in order, starting with the first one. You **can not** skip intermediate versions.
+                        """
+                    ).AppendLine();
+            foreach (var pkg in pkgs)
+                content.AppendLine($"""[⏬ Update v`{pkg.Version}` ({pkg.Size.AsStorageUnit()})]({pkg.Url})""");
         }
-        else if (pkgs?.Length == 1)
+        else if (pkgs is [var pkg])
         {
-            embedBuilder.Title = $"{title} update v{pkgs[0].Version} ({pkgs[0].Size.AsStorageUnit()})";
-            embedBuilder.Description = $"[⏬ {Path.GetFileName(GetLinkName(pkgs[0].Url))}]({pkgs[0].Url})";
+            content.AppendLine(
+                $"""
+                 ### {title} update v{pkg.Version} ({pkg.Size.AsStorageUnit()})
+                 [⏬ {Path.GetFileName(GetLinkName(pkg.Url))}]({pkg.Url})
+                 """
+            );
         }
-        else if (patch != null)
-            embedBuilder.Description = "No updates available";
         else
-            embedBuilder.Description = "No update information available";
-        if (!result.Any() || embedBuilder.Fields.Any())
-            result.Add(embedBuilder);
+            content.AppendLine($"### {title}")
+                .AppendLine("No updates available");
         if (patch?.OfflineCacheTimestamp is DateTime cacheTimestamp)
-            result[^1].WithFooter($"Offline cache, last updated {(DateTime.UtcNow - cacheTimestamp).AsTimeDeltaDescription()} ago");
+            content.AppendLine()
+                .AppendLine($"-# Offline cache, last updated {(DateTime.UtcNow - cacheTimestamp).AsTimeDeltaDescription()} ago");
+
+        var result = new List<DiscordMessageBuilder>();
+        IReadOnlyList<DiscordTextDisplayComponent> contentParts = Split(content);
+        foreach (var page in contentParts)
+        {
+            IReadOnlyList<DiscordComponent> msgBody;
+            if (thumbnailUrl is { Length: > 0 })
+                msgBody =
+                [
+                    new DiscordSectionComponent([page], new DiscordThumbnailComponent(thumbnailUrl))
+                ];
+            else
+                msgBody = [page];
+            var msgBuilder = new DiscordMessageBuilder()
+                .EnableV2Components()
+                .AddContainerComponent(
+                    new(
+                        msgBody,
+                        color: Config.Colors.DownloadLinks
+                    )
+                );
+            result.Add(msgBuilder);
+        }
+        return result;
+    }
+
+    private static List<DiscordTextDisplayComponent> Split(StringBuilder content)
+    {
+        var lines = content.ToString().TrimEnd().Split(Environment.NewLine);
+        var isMultiPage = content.Length > 4001;
+        var title = lines[0];
+        var result = new List<DiscordTextDisplayComponent>();
+        content.Clear();
+        content.Append(title);
+        if (isMultiPage)
+            content.Append(" [Page 1 of 2]");
+        foreach (var l in lines.Skip(1))
+        {
+            check:
+            if (content.Length + l.Length + 1 <= 4000)
+                content.Append('\n').Append(l);
+            else if (content.Length is 0)
+                content.Append(l.Trim(4000));
+            else
+            {
+                result.Add(new(content.ToString()));
+                content.Clear();
+                content.Append(title).Append(" [Page 2 of 2]");
+                goto check;
+            }
+        }
+        result.Add(new(content.ToString()));
         return result;
     }
 
     private static string GetLinkName(string link)
     {
         var fname = Path.GetFileName(link);
+        if (fname.EndsWith("-PE.pkg"))
+            fname = fname[..^7] + fname[^4..];
         try
         {
             var match = PsnScraper.ContentIdMatcher().Match(fname);
