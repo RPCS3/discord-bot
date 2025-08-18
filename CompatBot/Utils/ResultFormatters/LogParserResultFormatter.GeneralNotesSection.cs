@@ -433,8 +433,8 @@ internal static partial class LogParserResult
         else if (items["audio_backend_init_error"] is string audioBackend) 
             notes.Add($"⚠️ {audioBackend} initialization failed; make sure you have a working audio output device");
 
-        if (items["fw_missing_msg"] is not {Length: >0}
-            || items["fw_missing_something"] is not {Length: >0})
+        if (items["fw_missing_msg"] is {Length: >0}
+            || items["fw_missing_something"] is {Length: >0})
             notes.Add("❌ PS3 firmware is missing or corrupted");
 
         if (items["booting_savestate"] is EnabledMark)
