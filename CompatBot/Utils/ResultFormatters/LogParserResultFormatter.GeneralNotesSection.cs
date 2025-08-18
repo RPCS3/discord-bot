@@ -420,11 +420,11 @@ internal static partial class LogParserResult
             discAsPkg |= items["ldr_game_serial"] is string ldrGameSerial && ldrGameSerial.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase);
         }
 
-        discAsPkg |= category == "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
+        discAsPkg |= category is "HG" && !(items["serial"]?.StartsWith("NP", StringComparison.InvariantCultureIgnoreCase) ?? false);
         if (discInsideGame)
             notes.Add($"❌ Disc game inside `{items["ldr_disc"]}`");
         if (discAsPkg)
-            notes.Add($"ℹ️ Disc game installed as a PKG ");
+            notes.Add("ℹ️ Disc game installed as a PKG ");
 
         if (!string.IsNullOrEmpty(items["native_ui_input"]))
             notes.Add("⚠️ Pad initialization problem detected; try disabling `Native UI`");
@@ -433,9 +433,12 @@ internal static partial class LogParserResult
         else if (items["audio_backend_init_error"] is string audioBackend) 
             notes.Add($"⚠️ {audioBackend} initialization failed; make sure you have a working audio output device");
 
-        if (!string.IsNullOrEmpty(items["fw_missing_msg"])
-            || !string.IsNullOrEmpty(items["fw_missing_something"]))
+        if (items["fw_missing_msg"] is not {Length: >0}
+            || items["fw_missing_something"] is not {Length: >0})
             notes.Add("❌ PS3 firmware is missing or corrupted");
+
+        if (items["booting_savestate"] is EnabledMark)
+            notes.Add("ℹ️ Game was booted from a save state");
 
         if (multiItems["game_mod"] is { Length: >0 } mods)
         {

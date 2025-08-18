@@ -745,6 +745,9 @@ internal static partial class LogParserResult
         if (items["game_update_version"] is string gameUpVer && gameUpVer.StartsWith("0"))
             items["game_update_version"] = gameUpVer[1..];
 
+        items["custom_config"] = items["custom_config"] is { Length: > 0 } ? EnabledMark : DisabledMark;
+        items["booting_savestate"] = items["booting_savestate"] is {Length: >0} ? EnabledMark : DisabledMark;
+
         if (multiItems["fatal_error"] is UniqueList<string> {Count: > 0} fatalErrors)
             multiItems["fatal_error"] = new(fatalErrors.Select(str => str.Contains("'tex00'") ? str.Split('\n', 2)[0] : str), fatalErrors.Comparer);
 

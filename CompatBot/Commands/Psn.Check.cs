@@ -34,28 +34,32 @@ internal static partial class Psn
             }
             
             await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
-            List<DiscordEmbedBuilder> embeds;
+            List<DiscordMessageBuilder> msgList;
             try
             {
                 var updateInfo = await TitleUpdateInfoProvider.GetAsync(id, Config.Cts.Token).ConfigureAwait(false);
-                embeds = await updateInfo.AsEmbedAsync(ctx.Client, id).ConfigureAwait(false);
+                msgList = await updateInfo.AsMessageAsync(ctx.Client, id).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Failed to get title update info");
-                embeds =
+                msgList =
                 [
-                    new()
-                    {
-                        Color = Config.Colors.Maintenance,
-                        Title = "Service is unavailable",
-                        Description = "There was an error communicating with the service. Try again in a few minutes.",
-                    }
+                    new DiscordMessageBuilder()
+                        .EnableV2Components()
+                        .AddContainerComponent(
+                            new([new DiscordTextDisplayComponent(
+                                $"""
+                                 ### Service is unavailable
+                                 There was an error communicating with the service. Try again in a few minutes.
+                                 """
+                                )], color: Config.Colors.Maintenance)
+                        )
                 ];
             }
-            await ctx.RespondAsync(embeds[0], ephemeral: ephemeral).ConfigureAwait(false);
-            foreach (var embed in embeds.Skip(1).Take(EmbedPager.MaxFollowupMessages))
-                await ctx.FollowupAsync(embed, ephemeral: ephemeral).ConfigureAwait(false);
+            await ctx.RespondAsync(new DiscordInteractionResponseBuilder(msgList[0]).AsEphemeral(ephemeral: ephemeral)).ConfigureAwait(false);
+            foreach (var msg in msgList.Skip(1).Take(EmbedPager.MaxFollowupMessages))
+                await ctx.FollowupAsync(new DiscordInteractionResponseBuilder(msg).AsEphemeral(ephemeral: ephemeral)).ConfigureAwait(false);
         }
 
         [Command("firmware")]

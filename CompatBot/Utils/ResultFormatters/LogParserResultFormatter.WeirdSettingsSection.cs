@@ -552,12 +552,22 @@ internal static partial class LogParserResult
                 notes.Add($"⚠️ Please change `SPU Block Size` to `Safe/Mega`, currently `{spuBlockSize}` is unstable.");
         }
 
-        if (items["auto_start_on_boot"] == DisabledMark)
-            notes.Add("❓ `Automatically start games after boot` is disabled");
-        else if (items["always_start_on_boot"] == DisabledMark)
-            notes.Add("❓ `Always start after boot` is disabled");
+        if (items["booting_savestate"] is DisabledMark)
+        {
+            if (items["auto_start_on_boot"] is DisabledMark)
+                notes.Add("❓ `Automatically start games after boot` is disabled");
+            else if (items["always_start_on_boot"] is DisabledMark)
+                notes.Add("❓ `Always start after boot` is disabled");
+        }
+        else
+        {
+            if (items["start_paused_savestate"] is EnabledMark)
+                notes.Add("❓ `Pause emulation after loading savestates` is disabled");
+            if (items["compatible_savestate"] is not EnabledMark)
+                notes.Add("ℹ️ If you have weird compatibility issues after boot, try enabling `SPU-Compatible Savestate Mode`");
+        }
 
-        if (items["custom_config"] != null && notes.Any())
+        if (items["custom_config"] is EnabledMark && notes.Count > 0)
             generalNotes.Add("⚠️ To change custom configuration, **Right-click on the game**, then `Configure`");
 
         var notesContent = new StringBuilder();

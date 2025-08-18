@@ -43,6 +43,7 @@ internal partial class LogParser
                 ["SYS: Path"] = BootPathSys(),
                 ["LDR: Path:"] = BootPathDigitalLdr(),
                 ["SYS: Path:"] = BootPathDigitalSys(),
+                ["SYS: Booting savestate"] = BootingFromSavestate(),
                 ["custom config:"] = CustomConfigPath(),
                 ["patch_log: Failed to load patch file"] = FailedPatchPath(),
                 ["Undisputed"] = UfcModFlag(),
@@ -50,7 +51,6 @@ internal partial class LogParser
             },
             EndTrigger = ["Used configuration:"],
         },
-
         new()
         {
             Extractors = new()
@@ -90,7 +90,6 @@ internal partial class LogParser
             },
             EndTrigger = ["VFS:"],
         },
-
         new()
         {
             Extractors = new()
@@ -99,7 +98,6 @@ internal partial class LogParser
             },
             EndTrigger = ["Video:"],
         },
-
         new()
         {
             Extractors = new()
@@ -140,7 +138,6 @@ internal partial class LogParser
             },
             EndTrigger = ["Audio:"],
         },
-
         new() // Audio, Input/Output, System, Net, Miscellaneous
         {
             Extractors = new()
@@ -154,6 +151,10 @@ internal partial class LogParser
 
                 ["Pad:"] = GamepadType(),
 
+                ["Start Paused:"] = StartPausedSavestate(),
+                ["Suspend Emulation Savestate Mode:"] = SuspendEmulationSavestate(),
+                ["Compatible Savestate Mode:"] = CompatibleSavestate(),
+
                 ["Automatically start games after boot:"] = AutoStartAfterBoot(),
                 ["Always start after boot:"] = AlwaysStartAfterBoot(),
                 ["Use native user interface:"] = NativeUIMode(),
@@ -161,7 +162,6 @@ internal partial class LogParser
             },
             EndTrigger = ["Log:"],
         },
-
         new()
         {
             Extractors = new()
@@ -171,7 +171,6 @@ internal partial class LogParser
             EndTrigger = ["·"],
             OnSectionEnd = MarkAsComplete,
         },
-
         new()
         {
             Extractors = new()
