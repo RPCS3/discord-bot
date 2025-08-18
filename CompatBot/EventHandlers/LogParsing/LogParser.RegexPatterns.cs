@@ -208,6 +208,14 @@ internal partial class LogParser
     private static partial Regex AudioTimeStretching();
     [GeneratedRegex("Pad: (?<pad_handler>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex GamepadType();
+
+    [GeneratedRegex("Start Paused: (?<start_paused_savestate>[^\r\n]*?)\r?$", DefaultOptions)]
+    private static partial Regex StartPausedSavestate();
+    [GeneratedRegex("Suspend Emulation Savestate Mode: (?<suspend_emulation_savestate>[^\r\n]*?)\r?$", DefaultOptions)]
+    private static partial Regex SuspendEmulationSavestate();
+    [GeneratedRegex("Compatible Savestate Mode: (?<compatible_savestate>[^\r\n]*?)\r?$", DefaultOptions)]
+    private static partial Regex CompatibleSavestate();
+
     [GeneratedRegex("Automatically start games after boot: (?<auto_start_on_boot>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex AutoStartAfterBoot();
     [GeneratedRegex("Always start after boot: (?<always_start_on_boot>[^\r\n]*?)\r?$", DefaultOptions)]
@@ -370,4 +378,6 @@ internal partial class LogParser
         DefaultOptions
     )]
     private static partial Regex SaveDataBeforeSegfault();
+    [GeneratedRegex(@"Booting savestate from gamelist per (?<booting_savestate>.+)...\r?$", DefaultOptions)]
+    private static partial Regex BootingFromSavestate();
 }

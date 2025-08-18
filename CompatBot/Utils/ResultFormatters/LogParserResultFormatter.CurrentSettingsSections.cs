@@ -227,7 +227,7 @@ internal static partial class LogParserResult
     {
         if (colA.lines?.Count > 0 && colB.lines?.Count > 0)
         {
-            var isCustomSettings = items["custom_config"] != null;
+            var isCustomSettings = items["custom_config"] is EnabledMark;
             var colAToRemove = colA.lines.Count(l => l.EndsWith("N/A"));
             var colBToRemove = colB.lines.Count(l => l.EndsWith("N/A"));
             var linesToRemove = Math.Min(colAToRemove, colBToRemove);
