@@ -564,7 +564,7 @@ internal static partial class LogParserResult
             if (items["start_paused_savestate"] is EnabledMark)
                 notes.Add("❓ `Pause emulation after loading savestates` is disabled");
             if (items["compatible_savestate"] is not EnabledMark)
-                notes.Add("ℹ️ If you have weird compatibility issues after boot, try enabling `SPU-Compatible Savestate Mode`");
+                notes.Add("⚠️ If you have weird compatibility issues after boot, try enabling `SPU-Compatible Savestate Mode`");
         }
 
         if (items["custom_config"] is EnabledMark && notes.Count > 0)
