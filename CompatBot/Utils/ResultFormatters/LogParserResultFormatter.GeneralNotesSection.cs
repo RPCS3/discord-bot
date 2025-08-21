@@ -438,7 +438,7 @@ internal static partial class LogParserResult
             notes.Add("❌ PS3 firmware is missing or corrupted");
 
         if (items["booting_savestate"] is EnabledMark)
-            notes.Add("ℹ️ Game was booted from a save state");
+            notes.Add("⚠️ Game was booted from a save state");
 
         if (multiItems["game_mod"] is { Length: >0 } mods)
         {
