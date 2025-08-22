@@ -683,41 +683,49 @@ internal static partial class LogParserResult
 
     private static void CheckJojoSettings(string serial, LogParseState state, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
     {
+        if (!AllStarBattleIds.Contains(serial) && serial is not ("BLJS10318" or "NPJB00753"))
+            return;
+
         var items = state.CompletedCollection!;
-        if (AllStarBattleIds.Contains(serial) || serial is "BLJS10318" or "NPJB00753")
+        if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
+            notes.Add("ℹ️ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
+        else if (items["audio_buffering"] == DisabledMark)
+            notes.Add("ℹ️ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
+
+        if (serial is "BLUS31405" or "BLJS10318"
+            && items["vblank_rate"] is string vbrStr
+            && int.TryParse(vbrStr, out var vbr))
         {
-            if (items["audio_buffering"] == EnabledMark && items["audio_buffer_duration"] != "20")
-                notes.Add("ℹ️ If you experience audio issues, set `Audio Buffer Duration` to `20ms`");
-            else if (items["audio_buffering"] == DisabledMark)
-                notes.Add("ℹ️ If you experience audio issues, check `Enable Buffering` and set `Audio Buffer Duration` to `20ms`");
-
-            if (serial is "BLUS31405" or "BLJS10318"
-                && items["vblank_rate"] is string vbrStr
-                && int.TryParse(vbrStr, out var vbr))
+            if (ppuPatches.Count > 0)
             {
-                if (ppuPatches.Any())
-                {
-                    if (vbr == 60)
-                        notes.Add("ℹ️ `VBlank Rate` is not set; FPS is limited to 30");
-                    else if (vbr == 120)
-                        notes.Add("✅ Settings are set for the 60 FPS patch");
-                    else
-                        notes.Add($"⚠️ Settings are configured for the {vbr / 2} FPS patch, which is unsupported");
-                }
+                if (vbr is 60)
+                    notes.Add("ℹ️ `VBlank Rate` is not set; FPS is limited to 30");
+                else if (vbr is 120)
+                    notes.Add("✅ Settings are set for the 60 FPS patch");
                 else
-                {
-                    if (vbr > 60)
-                        notes.Add("ℹ️ Unlocking FPS requires game patch");
-                    if (ppuHashes.Overlaps(KnownJojoPatches))
-                        generalNotes.Add($"ℹ️ This game has an FPS unlock patch");
-                }
+                    notes.Add($"⚠️ Settings are configured for the {vbr / 2} FPS patch, which is unsupported");
             }
+            else
+            {
+                if (vbr > 60)
+                    notes.Add("ℹ️ Unlocking FPS requires game patch");
+                if (ppuHashes.Overlaps(KnownJojoPatches))
+                    generalNotes.Add("ℹ️ This game has an FPS unlock patch");
+            }
+        }
 
-            if (serial == "BLUS31405"
-                && items["compat_database_path"] is string compatDbPath
-                && compatDbPath.Contains("JoJo ASB Emulator v.04")
-                && state.CompleteMultiValueCollection!["rap_file"].Any())
-                generalNotes.Add("🤔 Very interesting version of the game you got there");
+        if (serial == "BLUS31405"
+            && items["compat_database_path"] is string compatDbPath
+            && compatDbPath.Contains("JoJo ASB Emulator v.04")
+            && state.CompleteMultiValueCollection!["rap_file"] is {Length: >0})
+            generalNotes.Add("🤔 Very interesting version of the game you got there");
+
+        if (serial is "BLJS10318" or "NPJB00753"
+            && items["title_was_set_from"] is {Length: >0} oldTitle
+            && items["title_was_set_to"] is {Length: >0} newTitle
+            && oldTitle != newTitle)
+        {
+            generalNotes.Add("⚠️ Unofficial translation modification is not supported");
         }
     }
 

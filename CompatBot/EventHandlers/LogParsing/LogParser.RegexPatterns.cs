@@ -237,6 +237,8 @@ internal partial class LogParser
     [GeneratedRegex(@"Boot path: (?<ldr_boot_path_full>.*(?<ldr_boot_path>/dev_hdd0/game/(?<ldr_boot_path_serial>[^/\r\n]+)).*|[^\r\n]*)\r?$", DefaultOptions)]
     private static partial Regex BootPathInBodyLdr();
     [GeneratedRegex(@"Game: (?<ldr_game_full>.*(?<ldr_game>/dev_hdd0/game/(?<ldr_game_serial>[^/\r\n]+)).*|[^\r\n]*)\r?$", DefaultOptions)]
+    private static partial Regex TitleWasSet();
+    [GeneratedRegex(@"Title was set from (?<title_was_set_from>.+) to (?<title_was_set_to>.+)\r?$", DefaultOptions)]
     private static partial Regex GamePathSys();
     [GeneratedRegex(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|[^\r\n]*)\r?$", DefaultOptions)]
     private static partial Regex DigitalPathSys();
