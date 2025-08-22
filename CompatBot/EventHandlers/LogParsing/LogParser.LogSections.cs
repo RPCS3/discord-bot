@@ -180,6 +180,7 @@ internal partial class LogParser
                 ["LDR: Path:"] = DigitalPathLdr(),
                 ["LDR: Boot path:"] = BootPathInBodyLdr(),
                 ["SYS: Game:"] = GamePathSys(),
+                ["SYS: Title was set from"] = TitleWasSet(),
                 ["SYS: Path:"] = DigitalPathSys(),
                 ["SYS: Boot path:"] = BootPathInBodySys(),
                 ["Elf path:"] = ElfPath(),

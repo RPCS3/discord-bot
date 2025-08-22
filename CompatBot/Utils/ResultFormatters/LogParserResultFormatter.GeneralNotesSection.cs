@@ -651,7 +651,12 @@ internal static partial class LogParserResult
                         else if (int.TryParse(match.Groups["verification_error_hex"].Value, NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out var hexCode))
                             win32ErrorCodes.Add(hexCode);
                     }
-                    builder.AddField(sectionName, $"```\n{fatalError.Trim(EmbedPager.MaxFieldLength - 8)}\n```");
+                    var trimIdx = fatalError.IndexOf(" Called from");
+                    var errorTxt = fatalError;
+                    if (trimIdx > -1)
+                        errorTxt = fatalError[..trimIdx];
+                    errorTxt = errorTxt.Trim(EmbedPager.MaxFieldLength - 7);
+                    builder.AddField(sectionName, $"```\n{errorTxt}```");
                 }
             }
         }
