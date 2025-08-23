@@ -652,9 +652,11 @@ internal static partial class LogParserResult
                             win32ErrorCodes.Add(hexCode);
                     }
                     var trimIdx = fatalError.IndexOf(" Called from");
+                    if (trimIdx is -1)
+                        trimIdx = fatalError.IndexOf("(in file");
                     var errorTxt = fatalError;
                     if (trimIdx > -1)
-                        errorTxt = fatalError[..trimIdx];
+                        errorTxt = fatalError[..trimIdx].TrimEnd();
                     errorTxt = errorTxt.Trim(EmbedPager.MaxFieldLength - 7);
                     builder.AddField(sectionName, $"```\n{errorTxt}```");
                 }
