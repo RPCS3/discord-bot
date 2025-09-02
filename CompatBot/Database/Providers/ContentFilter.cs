@@ -106,6 +106,9 @@ internal static class ContentFilter
         if (message.Channel?.IsPrivate ?? false)
             return true;
 
+        if (message.Channel?.Id == Config.BotLogId)
+            return true;
+
         /*
         if (message.Author.IsBotSafeCheck())
             return true;
