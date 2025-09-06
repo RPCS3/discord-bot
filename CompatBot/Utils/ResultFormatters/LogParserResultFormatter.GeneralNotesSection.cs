@@ -222,12 +222,14 @@ internal static partial class LogParserResult
                 {
                     if (threadCount < 12)
                         notes.Add("⚠️ Six cores or more is recommended for Ryzen CPUs");
-                    if (items["cpu_extensions"]?.Contains("AVX-512") is not true
-                        && cpu.EndsWith('U')
+                    if ((cpu.EndsWith('U')
                             || cpu.EndsWith('H')
                             || cpu.EndsWith("HS")
                             || cpu.Contains("Custom APU"))
+                        && items["cpu_extensions"]?.Contains("AVX-512") is not true)
+                    {
                         notes.Add("⚠️ Mobile Ryzen CPUs are only recommended for lighter games.");
+                    }
                 }
                 else
                     notes.Add("⚠️ AMD CPUs before Ryzen are too weak for PS3 emulation");
@@ -263,7 +265,7 @@ internal static partial class LogParserResult
             Version.TryParse(glslVersionString, out var glslVersion))
         {
             glslVersion = new(glslVersion.Major, glslVersion.Minor / 10);
-            if (oglVersion == null || glslVersion > oglVersion)
+            if (oglVersion is null || glslVersion > oglVersion)
                 oglVersion = glslVersion;
         }
 
