@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="LTRData.DiscUtils.OpticalDisk" Version="1.0.64" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
-    <PackageReference Include="System.IO.Hashing" Version="9.0.8" />
+    <PackageReference Include="System.IO.Hashing" Version="9.0.9" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CompatApiClient\CompatApiClient.csproj" />

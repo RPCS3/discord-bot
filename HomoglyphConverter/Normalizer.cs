@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -10,7 +11,7 @@ public static class Normalizer
 {
     private static readonly Encoding Utf32 = new UTF32Encoding(false, false, true);
 
-    private static readonly Dictionary<string, string> HomoglyphSequences = new()
+    private static readonly FrozenDictionary<string, string> HomoglyphSequences = new Dictionary<string, string>
     {
         ["rn"] = "m",
         ["cl"] = "d",
@@ -24,7 +25,7 @@ public static class Normalizer
         ["WV"] = "VW",
         ["ĸ"] = "k",
         ["◌"] = "o",
-    };
+    }.ToFrozenDictionary();
 
     // as per https://www.unicode.org/reports/tr39/#Confusable_Detection
     [return: NotNullIfNotNull(nameof(input))]
@@ -68,10 +69,10 @@ public static class Normalizer
     {
         var utf32Input = Utf32.GetBytes(input);
         var convertedLength = utf32Input.Length / 4;
-        var uintInput = convertedLength < 256 / sizeof(uint) ? stackalloc uint[convertedLength] : new uint[convertedLength];
+        var uintInput = convertedLength < 256 / sizeof(int) ? stackalloc int[convertedLength] : new int[convertedLength];
         for (var i = 0; i < uintInput.Length; i++)
-            uintInput[i] = BitConverter.ToUInt32(utf32Input, i * 4);
-        var result = new List<uint>(convertedLength);
+            uintInput[i] = BitConverter.ToInt32(utf32Input, i * 4);
+        var result = new List<int>(convertedLength);
         foreach (var ch in uintInput)
         {
             if (Confusables.Mapping.TryGetValue(ch, out var replacement))

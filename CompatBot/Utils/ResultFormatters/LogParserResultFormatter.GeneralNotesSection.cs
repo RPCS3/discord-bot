@@ -689,8 +689,9 @@ internal static partial class LogParserResult
                 if (section.Length + 3 > EmbedPager.MaxFieldLength)
                 {
                     section.Length = EmbedPager.MaxFieldLength - 4;
-                    section.Append("…```");
+                    section.Append('…');
                 }
+                section.Append("```");
                 builder.AddField(
                     $"Corrupted save data (x{badSavePaths.Length})",
                     section.ToString()

@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using CompatApiClient.Utils;
 using CompatBot.Database;
+using HomoglyphConverter;
 
 namespace CompatBot.EventHandlers;
 
@@ -135,70 +136,52 @@ public static class UsernameZalgoMonitor
 
         var builder = new StringBuilder();
         var strippedBuilder = new StringBuilder();
-        var skipLowSurrogate = false;
         var consecutive = 0;
         var total = 0;
-        var codePoint = 0;
-        var highSurrogate = '\0';
         var hasNormalCharacterBefore = false;
-        foreach (var c in displayName)
+        foreach (var r in displayName.EnumerateRunes())
         {
-            switch (char.GetUnicodeCategory(c))
+            switch (Rune.GetUnicodeCategory(r))
             {
                 case UnicodeCategory.EnclosingMark:
                 case UnicodeCategory.ModifierSymbol:
                 case UnicodeCategory.NonSpacingMark:
+                {
                     if (consecutive++ < 2
                         && total++ < level
                         && hasNormalCharacterBefore)
-                        builder.Append(c);
+                        builder.Append(r);
                     break;
+                }
 
                 case UnicodeCategory.Control:
                 case UnicodeCategory.Format:
                 case UnicodeCategory.PrivateUse:
                     break;
 
-                case UnicodeCategory.Surrogate:
-                    if (char.IsHighSurrogate(c))
-                    {
-                        codePoint = 0x10000 | ((c & 0x3ff) << 10);
-                        highSurrogate = c;
-                    }
-                    else
-                    {
-                        codePoint |= c & 0x3ff;
-                        if (codePoint is >= 0x016a0 and < 0x01700  // Runic
-                            or >= 0x101d0 and < 0x10200  // Phaistos Disc
-                            or >= 0x10380 and < 0x10400  // Ugaritic and Old Persian
-                            or >= 0x12000 and < 0x13000) // Cuneiform
-                            continue;
-
-                        builder.Append(highSurrogate).Append(c);
-                        strippedBuilder.Append(highSurrogate).Append(c);
-                        hasNormalCharacterBefore = true;
-                        consecutive = 0;
-                    }
-                    break;
-                    
-                case UnicodeCategory.OtherNotAssigned when c >= 0xdb40:
-                    skipLowSurrogate = true;
-                    break;
-
                 default:
-                    if (char.IsLowSurrogate(c) && skipLowSurrogate)
-                        skipLowSurrogate = false;
+                {
+                    if (r.Value is >= 0x16a0 and < 0x1700 // Runic
+                        or >= 0x1_01d0 and < 0x1_0200 // Phaistos Disc
+                        or >= 0x1_0380 and < 0x1_0400 // Ugaritic and Old Persian
+                        or >= 0x1_2000 and < 0x1_3000  // Cuneiform
+                        || r.Value < 0x1_0000 && OversizedChars.Contains((char)r.Value))
+                        continue;
+
+                    if (UnicodeStyles.StyledToBasicCharacterMap.TryGetValue(r, out var c))
+                    {
+                        builder.Append(c);
+                        strippedBuilder.Append(c);
+                    }
                     else
                     {
-                        if (!OversizedChars.Contains(c))
-                        {
-                            builder.Append(c);
-                            strippedBuilder.Append(c);
-                            hasNormalCharacterBefore = true;
-                            consecutive = 0;
-                        }
+                        builder.Append(r);
+                        strippedBuilder.Append(r);
                     }
+                    hasNormalCharacterBefore = true;
+                    consecutive = 0;
                     break;
+                }
             }
         }
         var result = (total <= level ? builder : strippedBuilder)
