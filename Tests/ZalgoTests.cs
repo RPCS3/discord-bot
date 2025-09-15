@@ -65,7 +65,7 @@ public class ZalgoTests
         }
     }
 
-    [TestCase("ᵇᶦᵒˢʰᵒᶜᵏ96", false)]
+    [TestCase("ᵇᶦᵒˢʰᵒᶜᵏ96", true)]
     [TestCase("GodPan กับยูนิตแขนที่หายไป", false)]
     [TestCase("⛧Bζ͜͡annerBomb⛧", false)]
     [TestCase("(_A_Y_A_Z_)  (͡๏̯͡๏)", false)]
@@ -83,6 +83,7 @@ public class ZalgoTests
     [TestCase("҉҉҉҉", true, "Combining sign")]
     [TestCase("᲼᲼᲼᲼᲼᲼᲼᲼᲼ ", true, "Private block")]
     [TestCase("녇", true, "Single character after normalization")]
+    [TestCase("𝖊𝖝𝖋𝖎𝖇0", true)]
     public async Task ZalgoDetectionTest(string name, bool isBad, string? comment = null)
     {
         var result = await UsernameZalgoMonitor.NeedsRenameAsync(name).ConfigureAwait(false);

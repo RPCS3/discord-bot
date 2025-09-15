@@ -55,7 +55,7 @@ public class ConfusablesSourceGenerator: IIncrementalGenerator
         if (stream is null)
             throw new InvalidOperationException("Failed to get confusables.txt stream");
 
-        var mapping = new Dictionary<uint, uint[]>();
+        var mapping = new Dictionary<int, int[]>();
         var date = "";
         var version = "";
         using var reader = new StreamReader(stream, Encoding.UTF8, false);
@@ -80,8 +80,8 @@ public class ConfusablesSourceGenerator: IIncrementalGenerator
 
             try
             {
-                var confusableChar = uint.Parse(mappingParts[0].Trim(), NumberStyles.HexNumber);
-                var skeletonChars = mappingParts[1].Split(PairSplitter, StringSplitOptions.RemoveEmptyEntries).Select(l => uint.Parse(l, NumberStyles.HexNumber)).ToArray();
+                var confusableChar = int.Parse(mappingParts[0].Trim(), NumberStyles.HexNumber);
+                var skeletonChars = mappingParts[1].Split(PairSplitter, StringSplitOptions.RemoveEmptyEntries).Select(l => int.Parse(l, NumberStyles.HexNumber)).ToArray();
                 mapping.Add(confusableChar, skeletonChars);
             }
             catch (Exception e)
@@ -112,13 +112,13 @@ public class ConfusablesSourceGenerator: IIncrementalGenerator
             {
                 public const string Version = "{{version}}";
                 public const string Date = "{{date}}";
-                public static readonly Dictionary<uint, uint[]> Mapping = new()
+                public static readonly Dictionary<int, int[]> Mapping = new()
                 {
             """
         );
         foreach (var kvp in mapping.OrderBy(i => i.Key))
             result.AppendLine($"""
-                    [0x{kvp.Key:X5}u] = [{string.Join(", ", kvp.Value!.OrderBy(i => i).Select(n => $"0x{n:X5}u"))}],
+                    [0x{kvp.Key:X5}] = [{string.Join(", ", kvp.Value!.OrderBy(i => i).Select(n => $"0x{n:X5}"))}],
             """);
         result.AppendLine("""
                 };
