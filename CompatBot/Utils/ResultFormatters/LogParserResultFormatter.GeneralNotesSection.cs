@@ -478,8 +478,7 @@ internal static partial class LogParserResult
                 timeDeltaStr = "outdated";
 
             if (items["os_type"] is not "Windows"
-                || !TryGetRpcs3Version(items, out var v)
-                || v < NonBrokenMsvcOptimizationBuild)
+                || !TryGetRpcs3Version(items, out var v))
             {
                 notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
             }
@@ -499,9 +498,10 @@ internal static partial class LogParserResult
         }
         if (items["os_type"] is "Windows"
             && TryGetRpcs3Version(items, out var v2)
-            && v2 > NonBrokenMsvcOptimizationBuild)
+            && v2 >= BrokenMsvcOptimizationBuild
+            && v2 < UnBrokenMsvcOptimizationBuild)
         {
-            notes.Add($"⚠️ Please downgrade to build v0.0.37-18022 for the Windows");
+            notes.Add($"⚠️ This build for Windows is known to be broken, please update");
         }
 
         if (DesIds.Contains(serial))
