@@ -205,6 +205,7 @@ internal partial class LogParser
                 ["RSX: Unsupported device"] = UnsupportedDevice(),
                 ["RSX: Your GPU does not support"] = UnsupportedDeviceFeatures(),
                 ["RSX: GPU/driver lacks support"] = UnsupportedDriverFeatures(),
+                ["RSX: Descriptor pool creation failed"] = RsxFragmentationError(),
                 ["RSX: Swapchain:"] = SwapchainMode(),
                 ["RSX: ** Using"] = VkExtensions(),
                 ["RSX: [CAPS] Using"] = GlExtensions(),

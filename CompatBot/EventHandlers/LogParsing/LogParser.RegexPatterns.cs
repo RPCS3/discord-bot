@@ -287,10 +287,12 @@ internal partial class LogParser
     private static partial Regex ShaderLinkageFailed();
     [GeneratedRegex(@"RSX: Unsupported device: (?<rsx_unsupported_gpu>.+)\..+?$", DefaultOptions)]
     private static partial Regex UnsupportedDevice();
-    [GeneratedRegex(@"RSX: Your GPU does not support (?<rsx_not_supported_feature>.+)\..+?$", DefaultOptions)]
+    [GeneratedRegex(@"RSX: Your GPU does not support (?<rsx_not_supported_feature>.+)( in shaders)?\..+?$", DefaultOptions)]
     private static partial Regex UnsupportedDeviceFeatures();
     [GeneratedRegex(@"RSX: GPU/driver lacks support for (?<rsx_not_supported_feature>.+)\..+?$", DefaultOptions)]
     private static partial Regex UnsupportedDriverFeatures();
+    [GeneratedRegex(@"Descriptor pool creation failed with (?<rsx_fragmentation_error>fragmentation error).+?$", DefaultOptions)]
+    private static partial Regex RsxFragmentationError();
     [GeneratedRegex(@"RSX: Swapchain: present mode (?<rsx_swapchain_mode>\d+?) in use.+?$", DefaultOptions)]
     private static partial Regex SwapchainMode();
     [GeneratedRegex(@"RSX: \*\* Using (?<vk_ext>\w+?)\r?$", DefaultOptions)]
