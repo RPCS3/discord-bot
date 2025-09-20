@@ -114,7 +114,7 @@ public static class DiscordClientExtensions
             return null;
 
         var embedBuilder = await MakeReportTemplateAsync(client, infraction, filterId, message, severity, actionList).ConfigureAwait(false);
-        var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn ?? trigger}`{Environment.NewLine}";
+        var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn?.Trim(40) ?? trigger}`{Environment.NewLine}";
         if (!string.IsNullOrEmpty(context))
             reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
         embedBuilder.Description = reportText + embedBuilder.Description;
