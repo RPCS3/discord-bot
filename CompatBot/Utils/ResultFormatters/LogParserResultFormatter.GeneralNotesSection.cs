@@ -356,7 +356,7 @@ internal static partial class LogParserResult
         }
         items["supported_gpu"] = supportedGpu ? EnabledMark : DisabledMark;
 
-        if (!string.IsNullOrEmpty(items["shader_compile_error"]))
+        if (items["shader_compile_error"] is {Length: >0})
         {
             if (unsupportedGpuDriver)
                 notes.Add("❌ Shader compilation error on unsupported GPU driver");
@@ -364,6 +364,10 @@ internal static partial class LogParserResult
                 notes.Add("❌ Shader compilation error might indicate shader cache corruption");
             else
                 notes.Add("❌ Shader compilation error on unsupported GPU");
+        }
+        if (items["rsx_fragmentation_error"] is { Length: > 0 })
+        {
+            notes.Add("⚠️ Descriptor pool fragmentation error. May indicate insufficient VRAM size or driver issues.");
         }
 
         if (!string.IsNullOrEmpty(items["enqueue_buffer_error"])
