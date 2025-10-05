@@ -42,7 +42,7 @@ internal static partial class Bot
             }
             if (logPaths.Length is 0)
             {
-                await ctx.RespondAsync($"{Config.Reactions.Failure} Log files do not exist for specified day", ephemeral: true).ConfigureAwait(false);
+                await ctx.RespondAsync($"{Config.Reactions.Failure} Log files do not exist for specified day", ephemeral: ephemeral).ConfigureAwait(false);
                 return;
             }
                 
@@ -61,7 +61,7 @@ internal static partial class Bot
                 result.Seek(0, SeekOrigin.Begin);
                 var response = new DiscordInteractionResponseBuilder()
                     .AddFile(Path.GetFileName(logPaths[0]) + ".zip", result)
-                    .AsEphemeral();
+                    .AsEphemeral(ephemeral);
                 await ctx.RespondAsync(response).ConfigureAwait(false);
             }
             else

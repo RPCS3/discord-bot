@@ -30,22 +30,25 @@ internal static class MessageMenuCommands
         }
         
         var placeholder = StatsStorage.GetExplainStats().FirstOrDefault().name ?? "rule 1";
-        var modal = new DiscordInteractionResponseBuilder()
+        var modal = new DiscordModalBuilder()
             .WithTitle("Explain Prompt")
-            .AddTextInputComponent(new("Term to explain", "term", placeholder, min_length: 1))
-            .WithCustomId($"modal:explain:{Guid.NewGuid():n}");
+            .AddTextInput(
+                new("term", placeholder, min_length: 1),
+                "Term to explain"
+            ).WithCustomId($"modal:explain:{Guid.NewGuid():n}");
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         InteractivityResult<ModalSubmittedEventArgs> modalResult;
-        string? term = null;
+        IModalSubmission? value;
         (Explanation? explanation, string? fuzzyMatch, double score) result;
         do
         {
             modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
             if (modalResult.TimedOut)
                 return;
-        } while (!modalResult.Result.Values.TryGetValue("term", out term)
-                 || (result = await Explain.LookupTerm(term).ConfigureAwait(false)) is not { score: >0.5 } );
+        } while (!modalResult.Result.Values.TryGetValue("term", out value)
+                 || value is not TextInputModalSubmission {Value: {Length: >0} textValue}
+                 || (result = await Explain.LookupTerm(textValue).ConfigureAwait(false)) is not { score: >0.5 } );
 
         await modalResult.Result.Interaction.CreateResponseAsync(
             DiscordInteractionResponseType.ChannelMessageWithSource,
@@ -54,6 +57,7 @@ internal static class MessageMenuCommands
             .AsEphemeral()
         ).ConfigureAwait(false);
         var canPing = ModProvider.IsMod(ctx.User.Id);
+        var term = ((TextInputModalSubmission)value).Value;
         await Explain.SendExplanationAsync(result, term, replyTo, true, canPing).ConfigureAwait(false);
     }
 
@@ -75,25 +79,24 @@ internal static class MessageMenuCommands
                 return;
             }
 
-            var modal = new DiscordInteractionResponseBuilder()
-                .AsEphemeral()
+            var modal = new DiscordModalBuilder()
                 .WithCustomId($"modal:report:{Guid.NewGuid():n}")
                 .WithTitle("Message Report")
-                .AddTextInputComponent(new(
-                    "Comment",
+                .AddTextInput(new(
                     "comment",
-                    "Describe why you report this message",
                     required: false,
                     style: DiscordTextInputStyle.Paragraph,
                     max_length: EmbedPager.MaxFieldLength
-                ));
+                ),
+                "Comment",
+                "Describe why you are reporting this message");
             await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
             var modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
             if (modalResult.TimedOut)
                 return;
             
             modalResult.Result.Values.TryGetValue("comment", out var comment);
-            await ctx.Client.ReportAsync("👀 Message report", message, [ctx.Member], comment, ReportSeverity.Medium).ConfigureAwait(false);
+            await ctx.Client.ReportAsync("👀 Message report", message, [ctx.Member], ((TextInputModalSubmission?)comment)?.Value, ReportSeverity.Medium).ConfigureAwait(false);
             await message.ReactWithAsync(Config.Reactions.Moderated).ConfigureAwait(false);
             await modalResult.Result.Interaction.CreateResponseAsync(
                 DiscordInteractionResponseType.ChannelMessageWithSource,

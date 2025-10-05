@@ -6,8 +6,6 @@ namespace CompatBot.Utils;
 
 internal static class MemoryCacheExtensions
 {
-    private static readonly object throaway = new();
-    
     public static List<T> GetCacheKeys<T>(this MemoryCache memoryCache)
         => memoryCache.Keys.OfType<T>().ToList();
 

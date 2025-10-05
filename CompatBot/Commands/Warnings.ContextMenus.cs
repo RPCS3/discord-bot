@@ -30,28 +30,28 @@ internal static class WarningsContextMenus
         }
 
         var interaction = ctx.Interaction;
-        var modal = new DiscordInteractionResponseBuilder()
-            .AsEphemeral()
+        var modal = new DiscordModalBuilder()
             .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
             .WithTitle("Issue new warning")
-            .AddTextInputComponent(new(
-                "Warning reason",
+            .AddTextInput(new(
                 "warning",
                 "Rule #2",
                 min_length: 2
-            ));
+            ),
+            "Warning reason");
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         try
         {
             InteractivityResult<ModalSubmittedEventArgs> modalResult;
-            string reason;
+            IModalSubmission? value;
             do
             {
                 modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
                 if (modalResult.TimedOut)
                     return;
-            } while (!modalResult.Result.Values.TryGetValue("warning", out reason!));
+            } while (!modalResult.Result.Values.TryGetValue("warning", out value)
+                     || value is not TextInputModalSubmission{Value.Length: >0 });
 
             interaction = modalResult.Result.Interaction;
             await interaction.CreateResponseAsync(
@@ -59,6 +59,7 @@ internal static class WarningsContextMenus
                 new DiscordInteractionResponseBuilder().AsEphemeral()
             ).ConfigureAwait(false);
             user ??= message?.Author!;
+            var reason = ((TextInputModalSubmission)value).Value;
             var (saved, suppress, recent, total) = await Warnings.AddAsync(user.Id, ctx.User, reason, message?.Content.Sanitize()).ConfigureAwait(false);
             if (!saved)
             {

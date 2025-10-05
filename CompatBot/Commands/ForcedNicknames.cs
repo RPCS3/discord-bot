@@ -26,39 +26,38 @@ internal static class ForcedNicknames
 
         var interaction = ctx.Interaction;
         var suggestedName = await UsernameZalgoMonitor.GenerateRandomNameAsync(discordUser.Id).ConfigureAwait(false);
-        var modal = new DiscordInteractionResponseBuilder()
-            .AsEphemeral()
+        var modal = new DiscordModalBuilder()
             .WithCustomId($"modal:nickname:{Guid.NewGuid():n}")
             .WithTitle("Enforcing Rule 7")
-            .AddTextInputComponent(new(
-                "New nickname",
+            .AddTextInput(new(
                 "nickname",
                 suggestedName,
                 suggestedName,
                 min_length: 2,
                 max_length: 32
-            ));
+            ),
+            "New nickname");
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         string resultMsg;
         try
         {
             InteractivityResult<ModalSubmittedEventArgs> modalResult;
-            string expectedNickname;
+            IModalSubmission? value;
             do
             {
                 modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
                 if (modalResult.TimedOut)
                     return;
             } while (
-                !modalResult.Result.Values.TryGetValue("nickname", out expectedNickname)
-                || expectedNickname is not { Length: >1 and <33 }
-                || (!expectedNickname.All(c => char.IsLetterOrDigit(c)
-                                                    || char.IsWhiteSpace(c)
-                                                    || char.IsPunctuation(c)
-                         )
-                         || expectedNickname.Any(c => c is ':' or '#' or '@' or '`')
-                   ) && !discordUser.IsBotSafeCheck()
+                !modalResult.Result.Values.TryGetValue("nickname", out value)
+                || value is not TextInputModalSubmission { Value: { Length: > 1 and < 33 } textValue }
+                || (!textValue.All(c => char.IsLetterOrDigit(c)
+                                               || char.IsWhiteSpace(c)
+                                               || char.IsPunctuation(c)
+                    )
+                    || textValue.Any(c => c is ':' or '#' or '@' or '`')
+                ) && !discordUser.IsBotSafeCheck()
             );
 
             interaction = modalResult.Result.Interaction;
@@ -69,6 +68,7 @@ internal static class ForcedNicknames
             else
                 guilds = [ctx.Guild];
 
+            var expectedNickname = ((TextInputModalSubmission)value).Value;
             int changed = 0, noPermissions = 0, failed = 0;
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
             foreach (var guild in guilds)
