@@ -49,7 +49,7 @@
     <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02543" />
     <PackageReference Include="DSharpPlus.Natives.Zstd" Version="1.5.7.21" />
     <PackageReference Include="Florence2" Version="25.7.59767" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.70.0.3893" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.71.0.3905" />
     <PackageReference Include="MathParser.org-mXparser" Version="6.1.0" />
     <PackageReference Include="MegaApiClient" Version="1.10.5" />
     <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.23.0" />
