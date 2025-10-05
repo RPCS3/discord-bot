@@ -112,29 +112,25 @@ internal static class Explain
             var label = "Content";
             if (attachment is not null)
                 label += " (can be empty)";
-            var modal = new DiscordInteractionResponseBuilder()
-                .AsEphemeral()
+            var modal = new DiscordModalBuilder()
                 .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
-                .WithTitle("New explanation")
-                .AddTextInputComponent(new(
-                    label,
-                    "explanation", 
-                    style: DiscordTextInputStyle.Paragraph
-                ));
+                .WithTitle("New explanation text")
+                .AddTextInput(new("explanation", style: DiscordTextInputStyle.Paragraph), label);
             await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
             InteractivityResult<ModalSubmittedEventArgs> modalResult;
-            string explanation;
+            IModalSubmission? value;
             do
             {
                 modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
                 if (modalResult.TimedOut)
                     return;
-            } while (!modalResult.Result.Values.TryGetValue("explanation", out explanation)
-                     && (attachment is not null || explanation is {Length: >0}));
+            } while (!modalResult.Result.Values.TryGetValue("explanation", out value)
+                     && (attachment is not null || value is TextInputModalSubmission {Value.Length: >0}));
 
             interaction = modalResult.Result.Interaction;
-            if (string.IsNullOrEmpty(explanation) && string.IsNullOrEmpty(attachmentFilename))
+            var explanation = ((TextInputModalSubmission?)value)?.Value;
+            if (explanation is not {Length: >0} && attachmentFilename is not {Length: >0})
             {
                 await interaction.CreateResponseAsync(
                     DiscordInteractionResponseType.ChannelMessageWithSource,
@@ -245,30 +241,24 @@ internal static class Explain
         var label = "Content";
         if (item.AttachmentFilename is {Length: >0})
             label += " (can be empty)";
-        var modal = new DiscordInteractionResponseBuilder()
-            .AsEphemeral()
+        var modal = new DiscordModalBuilder()
             .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
-            .WithTitle("Updated explanation")
-            .AddTextInputComponent(new(
-                label,
-                "explanation",
-                value: item.Text,
-                style: DiscordTextInputStyle.Paragraph
-            ));
+            .WithTitle("Updated explanation text")
+            .AddTextInput(new("explanation", value: item.Text, style: DiscordTextInputStyle.Paragraph), label);
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         InteractivityResult<ModalSubmittedEventArgs> modalResult;
-        string explanation;
+        IModalSubmission? value;
         do
         {
             modalResult = await interactivity.WaitForModalAsync(modal.CustomId, ctx.User).ConfigureAwait(false);
             if (modalResult.TimedOut)
                 return;
-        } while (!modalResult.Result.Values.TryGetValue("explanation", out explanation)
-                 && (item.AttachmentFilename is {Length: >0} || explanation is {Length: >0}));
+        } while (!modalResult.Result.Values.TryGetValue("explanation", out value)
+                 && (item.AttachmentFilename is {Length: >0} || value is TextInputModalSubmission{Value.Length: >0}));
 
         interaction = modalResult.Result.Interaction;
-        item.Text = explanation;
+        item.Text = ((TextInputModalSubmission?)value)?.Value;
         if (attachmentContent?.Length > 0)
         {
             item.Attachment = attachmentContent;
