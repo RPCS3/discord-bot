@@ -17,15 +17,14 @@ public class MemoryCacheExtensionTests
         const string testVal = "vale13";
         cache.Set(13, testVal);
         cache.Set("bob", 69);
-        Assert.Multiple(() =>
-            {
+        using (Assert.EnterMultipleScope())
+        {
                 Assert.That(cache.TryGetValue(13, out string? expectedVal), Is.True);
                 Assert.That(expectedVal, Is.EqualTo(testVal));
                 Assert.That(cache.TryGetValue("bob", out int? expectedValInt), Is.True);
                 Assert.That(expectedValInt, Is.EqualTo(69));
-            }
-        );
-        Assert.That(cache.GetCacheKeys<int>(), Has.Count.EqualTo(1));
+                Assert.That(cache.GetCacheKeys<int>(), Has.Count.EqualTo(1));
+        }
     }
 
     [Test]
@@ -36,7 +35,10 @@ public class MemoryCacheExtensionTests
 
         cache.Set(13, "val13");
         cache.Set("bob", 69);
-        Assert.That(cache.GetCacheEntries<int>(), Has.Count.EqualTo(1));
-        Assert.That(cache.GetCacheEntries<string>(), Has.Count.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(cache.GetCacheEntries<int>(), Has.Count.EqualTo(1));
+            Assert.That(cache.GetCacheEntries<string>(), Has.Count.EqualTo(1));
+        }
     }
 }
