@@ -1018,16 +1018,16 @@ internal static partial class LogParserResult
                 19041 => "10 2004",
                 19042 => "10 20H2",
                 19043 => "10 21H1",
-                19044 => "10 21H2", // deprecated
-                19045 => "10 22H2",
+                19044 => "10 21H2",
+                19045 => "10 22H2", // deprecated
                 
                 < 21390 => "10 Dev Build " + windowsVersion.Build,
                 21390 => "10 21H2 Insider",
                 < 22000 => "11 Internal Build " + windowsVersion.Build,
-                22000 => "11 21H2", // deprecated
+                22000 => "11 21H2",
                 < 22621 => "11 22H2 Insider Build " + windowsVersion.Build,
-                22621 => "11 22H2",
-                22631 => "11 23H2",
+                22621 => "11 22H2", // deprecated
+                22631 => "11 23H2", // nov 11, 2025
                 < 23000 => "11 Beta Build " + windowsVersion.Build, // 22k series
                 < 24000 => "11 Dev Build " + windowsVersion.Build, // 23k series
                 < 25000 => "11 ??? Build " + windowsVersion.Build,
