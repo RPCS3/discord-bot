@@ -76,7 +76,7 @@ internal static class Fortune
                 if (line is "%" or null)
                 {
                     var newFortune = buf.ToString().Replace("\r\n", "\n").Trim();
-                    if (newFortune.Length > 200)
+                    if (newFortune.Length > Config.MaxFortuneLength)
                     {
                         buf.Clear();
                         skipped++;

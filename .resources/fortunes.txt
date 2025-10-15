@@ -842,3 +842,6 @@ Your work interests can capture the highest status or prestige.
 %
 Slow motion better than no motion.
 %
+The statistical probability of a crocodile attack is much higher in areas with native crocodile populations. I do not suggest immigration to these areas.
+    -- Varna Interstellar Flight AI management System Nos-C71897 Demeter Unit 22.11.31.6
+%
