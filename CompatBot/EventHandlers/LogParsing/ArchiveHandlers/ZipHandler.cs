@@ -40,19 +40,25 @@ internal sealed class ZipHandler: IArchiveHandler
                     && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                 {
                     LogSize = zipReader.Entry.Size;
-                    await using var rarStream = zipReader.OpenEntryStream();
-                    int read;
+                    await using var zipStream = zipReader.OpenEntryStream();
+                    int read, totalRead = 0;
                     FlushResult flushed;
                     do
                     {
                         var memory = writer.GetMemory(Config.MinimumBufferSize);
-                        read = await rarStream.ReadAsync(memory, cancellationToken);
-                        writer.Advance(read);
+                        read = await zipStream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
+                        Config.Log.Debug($"{nameof(ZipHandler)}: read {read} bytes from source stream");
+                        if (read > 0)
+                            writer.Advance(read);
+                        totalRead += read;
+                        Config.Log.Debug($"{nameof(ZipHandler)}: advanced the writer by {read} (total read {totalRead})");
                         SourcePosition = statsStream.Position;
+                        Config.Log.Debug($"{nameof(ZipHandler)}: current source position is {SourcePosition}");
                         flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                        SourcePosition = statsStream.Position;
+                        Config.Log.Debug($"{nameof(ZipHandler)}: flushed the writer");
                     } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
-                    await writer.CompleteAsync();
+                    await writer.CompleteAsync().ConfigureAwait(false);
+                    Config.Log.Debug($"{nameof(ZipHandler)}: writer completed");
                     return;
                 }
                 SourcePosition = statsStream.Position;

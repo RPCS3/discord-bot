@@ -188,7 +188,7 @@ internal static partial class Warnings
                 **Read the {rulesCh.Mention} before continuing to chat**
                 Refusing to read/follow the server rules *will* result in a server ban
 
-                -# You have {recentWarnCount} recent warning{StringUtils.GetSuffix(recentWarnCount)} ({totalWarnCount} total)
+                You have {recentWarnCount} recent warning{StringUtils.GetSuffix(recentWarnCount)} ({totalWarnCount} total)
                 -# Warning added by {moderator.Mention}
                 """;
     }

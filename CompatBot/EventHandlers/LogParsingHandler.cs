@@ -108,8 +108,7 @@ public static class LogParsingHandler
 
                 try
                 {
-                    Config.Log.Debug(
-                        $">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)…");
+                    Config.Log.Debug($">>>>>>> {message.Id % 100} Parsing log '{source.FileName}' from {message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) using {source.GetType().Name} ({source.SourceFileSize} bytes)…");
                     var analyzingProgressEmbed = GetAnalyzingMsgEmbed(client);
                     var msgBuilder = new DiscordMessageBuilder()
                         .AddEmbed(await analyzingProgressEmbed.AddAuthorAsync(client, message, source).ConfigureAwait(false))
@@ -120,8 +119,7 @@ public static class LogParsingHandler
                     LogParseState? result = null, tmpResult;
                     using (var timeout = new CancellationTokenSource(Config.LogParsingTimeoutInSec))
                     {
-                        using var combinedTokenSource =
-                            CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
+                        using var combinedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, Config.Cts.Token);
                         var tries = 0;
                         do
                         {
@@ -147,9 +145,8 @@ public static class LogParsingHandler
                                                   Please run the game again and re-upload a new copy.
                                                   """,
                                     Color = Config.Colors.LogResultFailed,
-                                }
-                                .AddAuthorAsync(client, message, source).ConfigureAwait(false))
-                            .Build()
+                                }.AddAuthorAsync(client, message, source).ConfigureAwait(false))
+                                .Build()
                         ).ConfigureAwait(false);
                         Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start,
                             DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
@@ -248,8 +245,7 @@ public static class LogParsingHandler
                             {
                                 if (result.SelectedFilter != null)
                                 {
-                                    var ignoreFlags = FilterAction.IssueWarning | FilterAction.SendMessage |
-                                                      FilterAction.ShowExplain;
+                                    var ignoreFlags = FilterAction.IssueWarning | FilterAction.SendMessage | FilterAction.ShowExplain;
                                     await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter,
                                         ignoreFlags, result.SelectedFilterContext!).ConfigureAwait(false);
                                 }
@@ -382,9 +378,9 @@ public static class LogParsingHandler
             }
             catch (Exception pre)
             {
-                if (!(pre is OperationCanceledException))
+                if (pre is not OperationCanceledException)
                     Config.Log.Error(pre);
-                if (result == null)
+                if (result is null)
                     throw;
             }
 

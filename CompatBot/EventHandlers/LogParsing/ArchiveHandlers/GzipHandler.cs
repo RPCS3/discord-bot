@@ -21,7 +21,6 @@ internal sealed class GzipHandler: IArchiveHandler
         else if (fileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase)
                  && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
             return (true, null);
-
         return (false, null);
     }
 
@@ -37,7 +36,8 @@ internal sealed class GzipHandler: IArchiveHandler
             {
                 var memory = writer.GetMemory(Config.MinimumBufferSize);
                 read = await gzipStream.ReadAsync(memory, cancellationToken);
-                writer.Advance(read);
+                if (read > 0)
+                    writer.Advance(read);
                 SourcePosition = statsStream.Position;
                 flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
             } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
