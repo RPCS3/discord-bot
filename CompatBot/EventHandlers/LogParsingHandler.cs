@@ -235,13 +235,10 @@ public static class LogParsingHandler
                                         );
                                         if (saved && !suppress)
                                         {
+                                            var content = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, reason, recent, total, client.CurrentUser).ConfigureAwait(false);
                                             var msg = new DiscordMessageBuilder()
-                                                .WithContent(
-                                                    $"""
-                                                     User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                                                     Warned for: {reason} by {client.CurrentUser.Mention}
-                                                     """
-                                                ).AddMention(new UserMention(message.Author));
+                                                .WithContent(content)
+                                                .AddMention(new UserMention(message.Author));
                                             await message.Channel!.SendMessageAsync(msg).ConfigureAwait(false);
                                         }
                                     }

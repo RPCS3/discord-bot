@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using CompatApiClient.Compression;
 using CompatBot.Commands;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
@@ -130,13 +131,10 @@ internal static partial class DiscordInviteFilter
                     ).ConfigureAwait(false);
                     if (saved && !suppress)
                     {
+                        var content = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, reason, recent, total, client.CurrentUser).ConfigureAwait(false);
                         var msg = new DiscordMessageBuilder()
-                            .WithContent(
-                                $"""
-                                 User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                                 Warned for: {reason} by {client.CurrentUser.Mention}
-                                 """
-                            ).AddMention(new UserMention(message.Author));
+                            .WithContent(content)
+                            .AddMention(new UserMention(message.Author));
                         await message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
                     }
                 }

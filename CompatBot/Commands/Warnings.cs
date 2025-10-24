@@ -29,10 +29,7 @@ internal static partial class Warnings
 
         if (!suppress)
         {
-            var userMsgContent = $"""
-                  User warning saved, {user.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                  Warned for: {reason} by {ctx.User.Mention}
-                  """;
+            var userMsgContent = await GetDefaultWarningMessageAsync(ctx.Client, user, reason, recent, total, ctx.User).ConfigureAwait(false);
             var userMsg = new DiscordMessageBuilder()
                 .WithContent(userMsgContent)
                 .AddMention(new UserMention(user));
@@ -173,6 +170,27 @@ internal static partial class Warnings
         }
         else
             await ctx.RespondAsync($"{Config.Reactions.Failure} Warning is not retracted", ephemeral: true).ConfigureAwait(false);
+    }
+
+    internal static async ValueTask<string> GetDefaultWarningMessageAsync(
+        DiscordClient client,
+        DiscordUser userToWarn,
+        string reason,
+        int recentWarnCount,
+        int totalWarnCount,
+        DiscordUser moderator)
+    {
+        var rulesCh = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
+        return $"""
+                ## ⚠️ {userToWarn.Mention} you have been warned ⚠️ 
+                **Reason:** {reason}
+
+                **Read the {rulesCh.Mention} before continuing to chat**
+                Refusing to read/follow the server rules *will* result in a server ban
+
+                -# You have {recentWarnCount} recent warning{StringUtils.GetSuffix(recentWarnCount)} ({totalWarnCount} total)
+                -# Warning added by {moderator.Mention}
+                """;
     }
 
     internal static async ValueTask<(bool saved, bool suppress, int recentCount, int totalCount)>
