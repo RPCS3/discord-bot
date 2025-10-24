@@ -19,10 +19,8 @@ internal sealed class RarHandler: IArchiveHandler
             var firstEntry = Encoding.ASCII.GetString(header);
             if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
                 return (false, "Archive doesn't contain any logs.");
-
             return (true, null);
         }
-
         return (false, null);
     }
 
@@ -46,7 +44,8 @@ internal sealed class RarHandler: IArchiveHandler
                     {
                         var memory = writer.GetMemory(Config.MinimumBufferSize);
                         read = await rarStream.ReadAsync(memory, cancellationToken);
-                        writer.Advance(read);
+                        if (read > 0)
+                            writer.Advance(read);
                         SourcePosition = statsStream.Position;
                         flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                         SourcePosition = statsStream.Position;

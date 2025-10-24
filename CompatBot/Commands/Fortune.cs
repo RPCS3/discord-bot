@@ -37,8 +37,8 @@ internal static class Fortune
             return;
         }
      
-        using var timeouCts = new CancellationTokenSource(TimeSpan.FromSeconds(15*60-5));
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(timeouCts.Token, Config.Cts.Token);
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15*60-5));
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, Config.Cts.Token);
         try
         {
             url ??= attachment?.Url;

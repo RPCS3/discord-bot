@@ -19,10 +19,8 @@ internal sealed class SevenZipHandler: IArchiveHandler
         {
             if (fileSize > Config.AttachmentSizeLimit)
                 return (false, $"Log size is too large for 7z format: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
-
             return (true, null);
         }
-
         return (false, null);
     }
 
@@ -48,7 +46,8 @@ internal sealed class SevenZipHandler: IArchiveHandler
                     {
                         var memory = writer.GetMemory(Config.MinimumBufferSize);
                         read = await entryStream.ReadAsync(memory, cancellationToken);
-                        writer.Advance(read);
+                        if (read > 0)
+                            writer.Advance(read);
                         flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
                     } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
                     await writer.CompleteAsync();

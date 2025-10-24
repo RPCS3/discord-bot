@@ -30,7 +30,8 @@ internal sealed class PlainTextHandler: IArchiveHandler
             {
                 var memory = writer.GetMemory(Config.MinimumBufferSize);
                 read = await sourceStream.ReadAsync(memory, cancellationToken);
-                writer.Advance(read);
+                if (read > 0)
+                    writer.Advance(read);
                 flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
             } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
         }

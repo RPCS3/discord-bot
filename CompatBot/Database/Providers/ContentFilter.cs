@@ -233,20 +233,17 @@ internal static class ContentFilter
                 ).ConfigureAwait(false);
                 if (saved && !suppress && message.Channel is not null)
                 {
+                    var msgContent = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, warningReason, recent, total, client.CurrentUser).ConfigureAwait(false);
                     var msg = new DiscordMessageBuilder()
-                        .WithContent(
-                            $"""
-                             User warning saved, {message.Author.Mention} has {recent} recent warning{StringUtils.GetSuffix(recent)} ({total} total)
-                             Warned for: {warningReason} by {client.CurrentUser.Mention}
-                             """
-                        ).AddMention(new UserMention(message.Author));
+                        .WithContent(msgContent)
+                        .AddMention(new UserMention(message.Author));
                     await message.Channel.SendMessageAsync(msg).ConfigureAwait(false);
                 }
                 completedActions.Add(FilterAction.IssueWarning);
             }
             catch (Exception e)
             {
-                Config.Log.Warn(e, $"Couldn't issue warning in #{message.Channel.Name}");
+                Config.Log.Warn(e, $"Couldn't issue warning in #{message.Channel?.Name}");
             }
         }
 
