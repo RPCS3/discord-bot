@@ -193,7 +193,9 @@ internal partial class LogParser
     private static partial Regex AsyncTextureStreaming();
     [GeneratedRegex(@"Asynchronous Queue Scheduler: (?<async_queue_scheduler>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex AsyncQueueScheduler();
-    
+    [GeneratedRegex(@"Use Re-BAR for GPU uploads: (?<use_rebar>[^\r\n]*?)\r?$", DefaultOptions)]
+    private static partial Regex UseRebar();
+
     [GeneratedRegex("Renderer: (?<audio_backend>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex AudioBackend();
     [GeneratedRegex("Downmix to Stereo: (?<audio_stereo>[^\r\n]*?)\r?$", DefaultOptions)]
@@ -208,6 +210,8 @@ internal partial class LogParser
     private static partial Regex AudioTimeStretching();
     [GeneratedRegex("Pad: (?<pad_handler>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex GamepadType();
+    [GeneratedRegex(@"Loading input configuration: '.*input_configs/(?<custom_input_config>.+)/.+\.yml'\r?$", DefaultOptions)]
+    private static partial Regex CustomInputConfig();
 
     [GeneratedRegex("Start Paused: (?<start_paused_savestate>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex StartPausedSavestate();
@@ -299,6 +303,8 @@ internal partial class LogParser
     private static partial Regex VkExtensions();
     [GeneratedRegex(@"RSX: \[CAPS\] Using (?<gl_ext>\w+?)\r?$", DefaultOptions)]
     private static partial Regex GlExtensions();
+    [GeneratedRegex(@"RSX: Detected (?<gpu_memory_info>\d+ .+) memory\r?$", DefaultOptions)]
+    private static partial Regex DetectedGpuMemoryInfo();
     [GeneratedRegex(@"F \d+:\d+:\d+\.\d+ (({(?<fatal_error_context>[^}]+)} )?(\w+:\s*(Thread terminated due to fatal error: )?|(\w+:\s*)?(class [^\r\n]+ thrown: ))\r?\n?)(?<fatal_error>.*?)(\r?\n)(\r?\n|·|$)", DefaultSingleLine)]
     private static partial Regex FatalError();
     [GeneratedRegex(@"Failed to load RAP file: (?<rap_file>.*?\.rap).*$", DefaultOptions)]

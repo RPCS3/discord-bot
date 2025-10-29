@@ -357,6 +357,22 @@ internal static partial class LogParserResult
                 notes.Add("ℹ️ Changing `ZCull Accuracy` to `Relaxed` for this game may improve performance");
             }
         }
+        if (items["use_rebar"] is DisabledMark)
+            notes.Add("⚠️ `Use Re-BAR memory for GPU uploads` is disabled and may impact perfofrmance");
+        else if (multiItems["gpu_memory_info"] is { Length: > 0 } memoryInfo)
+        {
+            var memoryMaps = memoryInfo
+                .Select(s => s.Split(" of "))
+                .Where(i => i is {Length: 2})
+                .ToDictionary(i => i[1], i => i[0]);
+            if (memoryMaps.TryGetValue("device local", out var deviceLocalMemory)
+                && memoryMaps.TryGetValue("BAR", out var barMemory)
+                && deviceLocalMemory != barMemory)
+            {
+                generalNotes.Add("⚠️ Re-BAR is not available on this system, which may impact performance");
+            }
+        }
+
         if (!KnownFpsUnlockPatchIds.Contains(serial) || ppuPatches.Count == 0)
         {
             if (items["vblank_rate"] is string vblank
@@ -507,8 +523,7 @@ internal static partial class LogParserResult
 
         if (items["failed_pad"] is string failedPad)
             notes.Add($"⚠️ Binding `{failedPad.Sanitize(replaceBackTicks: true)}` failed, check if device is connected.");
-
-        if (!string.IsNullOrEmpty(serial)
+        if (serial is {Length: >0}
             && KnownMotionControlsIds.Contains(serial)
             && !multiItems["pad_handler"].Any(h => h.StartsWith("DualS"))
             && !multiItems["pad_has_gyro"].Any(g => g is "1" or "true"))
@@ -569,6 +584,8 @@ internal static partial class LogParserResult
 
         if (items["custom_config"] is EnabledMark && notes.Count > 0)
             generalNotes.Add("⚠️ To change custom configuration, **Right-click on the game**, then `Configure`");
+        if (items["custom_input_config"] is { Length: > 0 } and not "global")
+            generalNotes.Add("ℹ️ Custom input configuration is applied");
 
         var notesContent = new StringBuilder();
         foreach (var line in SortLines(notes))
