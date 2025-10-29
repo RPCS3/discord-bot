@@ -210,6 +210,8 @@ internal partial class LogParser
     private static partial Regex AudioTimeStretching();
     [GeneratedRegex("Pad: (?<pad_handler>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex GamepadType();
+    [GeneratedRegex(@"Loading input configuration: '.*input_configs/(?<custom_input_config>.+)/.+\.yml'\r?$", DefaultOptions)]
+    private static partial Regex CustomInputConfig();
 
     [GeneratedRegex("Start Paused: (?<start_paused_savestate>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex StartPausedSavestate();

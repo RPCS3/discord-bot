@@ -218,6 +218,7 @@ internal partial class LogParser
                 ["Pad handler expected but none initialized"] = MissingGamepad(),
                 ["Failed to bind device"] = FailedToBindGamepad(),
                 ["Input:"] = InputDeviceConnected(),
+                ["Loading input configuration:"] = CustomInputConfig(),
                 ["XAudio2Thread"] = XAudio2Thread(),
                 ["cellAudio Thread"] = CellAudioThread(),
                 ["using a Null renderer instead"] = AudioBackendFailed(),
