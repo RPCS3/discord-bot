@@ -135,6 +135,7 @@ internal partial class LogParser
                 ["Force FIFO present mode:"] = FifoPresentMode(),
                 ["Asynchronous Texture Streaming"] = AsyncTextureStreaming(),
                 ["Asynchronous Queue Scheduler:"] = AsyncQueueScheduler(),
+                ["Use Re-BAR for GPU uploads:"] = UseRebar(),
             },
             EndTrigger = ["Audio:"],
         },
@@ -209,6 +210,7 @@ internal partial class LogParser
                 ["RSX: Swapchain:"] = SwapchainMode(),
                 ["RSX: ** Using"] = VkExtensions(),
                 ["RSX: [CAPS] Using"] = GlExtensions(),
+                ["RSX: Detected"] = DetectedGpuMemoryInfo(),
                 ["F "] = FatalError(),
                 ["Failed to load RAP file:"] = FailedToLoadRap(),
                 ["Failed to locate the game license file:"] = FailedToLocateRap(),
@@ -284,6 +286,7 @@ internal partial class LogParser
         "bad_save_data_path",
         "bad_trophy_data_path",
         "game_mod",
+        "gpu_memory_info",
     ];
 
     private static readonly string[] CountValueItems = ["enqueue_buffer_error"];

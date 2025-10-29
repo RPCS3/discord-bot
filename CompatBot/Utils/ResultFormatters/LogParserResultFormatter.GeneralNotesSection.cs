@@ -281,11 +281,11 @@ internal static partial class LogParserResult
         if (items["os_type"] is "Windows"
             && Version.TryParse(items["os_version"], out var winVersion)
             && winVersion is { Major: <10 } or { Major: 10, Build: <22631 })
-            notes.Add("⚠️ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to currently supported version");
+            notes.Add("⚠️ Please [upgrade your Windows](https://www.microsoft.com/en-us/software-download/windows11) to the currently supported version");
         if (items["os_type"] is "MacOS" && Version.TryParse(items["os_version"], out var macVersion))
         {
             if (macVersion is {Major: <14})
-                notes.Add("⚠️ Please [upgrade your macOS](https://support.apple.com/en-us/109033#latest) to currently supported version");
+                notes.Add("⚠️ Please [upgrade your macOS](https://support.apple.com/en-us/109033#latest) to the currently supported version");
             else if (macVersion is { Major: 14, Minor: >=0 and <=2 })
                 notes.Add("❌️ Please update your OS to version 14.3 or newer");
         }
