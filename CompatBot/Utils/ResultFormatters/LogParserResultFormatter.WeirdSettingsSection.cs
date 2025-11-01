@@ -358,7 +358,7 @@ internal static partial class LogParserResult
             }
         }
         if (items["use_rebar"] is DisabledMark)
-            notes.Add("⚠️ `Use Re-BAR memory for GPU uploads` is disabled and may impact perfofrmance");
+            notes.Add("⚠️ `Use Re-BAR memory for GPU uploads` is disabled and may impact performance");
         else if (multiItems["gpu_memory_info"] is { Length: > 0 } memoryInfo)
         {
             var memoryMaps = memoryInfo
@@ -369,7 +369,7 @@ internal static partial class LogParserResult
                 && memoryMaps.TryGetValue("BAR", out var barMemory)
                 && deviceLocalMemory != barMemory)
             {
-                generalNotes.Add("⚠️ Re-BAR is not available on this system, which may impact performance");
+                generalNotes.Add("⚠️ [Re-BAR](<https://www.nvidia.com/en-us/geforce/news/geforce-rtx-30-series-resizable-bar-support/>) (or SAM) is not [enabled](<https://www.intel.com/content/www/us/en/support/articles/000090831/graphics.html>) on this system, which may impact performance");
             }
         }
 
