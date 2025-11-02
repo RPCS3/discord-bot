@@ -367,7 +367,7 @@ internal static partial class LogParserResult
         }
         if (items["rsx_fragmentation_error"] is { Length: > 0 })
         {
-            notes.Add("⚠️ Descriptor pool fragmentation error. May indicate insufficient VRAM size or driver issues.");
+            notes.Add("⚠️ Descriptor pool fragmentation error may indicate insufficient VRAM size or driver issues.");
         }
 
         if (!string.IsNullOrEmpty(items["enqueue_buffer_error"])
