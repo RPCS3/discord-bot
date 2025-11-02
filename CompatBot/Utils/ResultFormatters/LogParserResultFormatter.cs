@@ -1036,7 +1036,7 @@ internal static partial class LogParserResult
                 < 26120 => "11 Dev/Canary Build " + windowsVersion.Build, // dev/canary merge branch before 24H2
                 26120 => "11 24H2 Beta Build " + windowsVersion.Build,
                 26200 => "11 25H2",
-                26220 => "11 24H2 Dev Build " + windowsVersion.Build,
+                26220 => "11 25H2 Dev/Beta Build " + windowsVersion.Build,
                 <29000 => "11 Canary Build " + windowsVersion.Build,
                 _ => "11 ??? Build " + windowsVersion.Build,
             },
