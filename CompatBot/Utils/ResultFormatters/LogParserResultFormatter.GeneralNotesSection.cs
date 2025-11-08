@@ -416,8 +416,8 @@ internal static partial class LogParserResult
         //var thonkEmoji = discordClient.GetEmoji(":thonkang:", DiscordEmoji.FromUnicode("🤔"));
         // this is a common scenario now that Mega did the version merge from param.sfo
 /*
-            if (items["game_category"] == "GD")
-                notes.Add($"❓ Game was booted through the Game Data");
+        if (items["game_category"] == "GD")
+            notes.Add($"❓ Game was booted through the Game Data");
 */
         if (category is "DG" or "GD") // only disc games should install game data
         {
