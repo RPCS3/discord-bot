@@ -480,12 +480,7 @@ internal static partial class LogParserResult
             }
             else
                 timeDeltaStr = "outdated";
-
-            if (items["os_type"] is not "Windows"
-                || !TryGetRpcs3Version(items, out var v))
-            {
-                notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
-            }
+            notes.Add($"{prefix} This RPCS3 build is {timeDeltaStr}, please consider updating it");
             if (buildBranch == "spu_perf")
                 notes.Add($"😱 `{buildBranch}` build is obsolete, current master build offers at least the same level of performance and includes many additional improvements");
         }
@@ -505,7 +500,7 @@ internal static partial class LogParserResult
             && v2 >= BrokenMsvcOptimizationBuild
             && v2 < UnBrokenMsvcOptimizationBuild)
         {
-            notes.Add($"⚠️ This build for Windows is known to be broken, please update");
+            notes.Add("⚠️ This build for Windows is known to be broken, please update");
         }
 
         if (DesIds.Contains(serial))
