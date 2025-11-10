@@ -138,7 +138,7 @@ public static partial class DiscLanguageProvider
         ["Austria"] = "🇦🇹",
         ["Brazil"] = "🇧🇷",
         ["Canada"] = "🇨🇦",
-        ["Europe"] = "🏴󠁥󠁳󠁰󠁶󠁿",
+        ["Europe"] = "🇪🇺",
         ["France"] = "🇫🇷",
         ["Germany"] = "🇩🇪",
         ["Greece"] = "🇬🇷",
@@ -174,7 +174,7 @@ public static partial class DiscLanguageProvider
         ["en-UK"] = "🇬🇧",
         ["es"] = "🇪🇸",
         ["es-MX"] = "🇲🇽",
-        ["eu"] = "🏴󠁥󠁳󠁰󠁶󠁿",
+        ["eu"] = "🏴󠁥󠁳󠁰󠁶󠁿", // Basque - France / Spain
         ["fi"] = "🇫🇮",
         ["fr"] = "🇫🇷",
         ["gd"] = "🏴󠁧󠁢󠁳󠁣󠁴󠁿", // Gaelic - Scotland
