@@ -119,7 +119,7 @@ internal static partial class LogParserResult
         if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd)
         {
             var bdvdPath = mountedBdvd.TrimEnd('/');
-            bool isWin = items["os_type"] == "Windows" && bdvdPath.EndsWith(':');\
+            bool isWin = items["os_type"] == "Windows" && bdvdPath.EndsWith(':');
             bool isMac = items["os_type"] == "MacOS" && bdvdPath.StartsWith("/Volumes/", StringComparison.OrdinalIgnoreCase);
             if (isWin || isMac)
             {
