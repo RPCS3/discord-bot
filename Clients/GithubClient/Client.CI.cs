@@ -328,7 +328,7 @@ public partial class Client
             .ToList();
         return await builds
             .ToAsyncEnumerable()
-            .SelectAwait(async b => await GetArtifactsInfoAsync(b.HeadSha, b, cancellationToken).ConfigureAwait(false))
+            .Select((b, ct) => GetArtifactsInfoAsync(b.HeadSha, b, ct))
             .ToListAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
     }
