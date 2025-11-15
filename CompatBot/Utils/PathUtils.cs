@@ -14,9 +14,9 @@ public static class PathUtils
         do
         {
             segment = Path.GetFileName(path);
-            result.Add(string.IsNullOrEmpty(segment) ? path : segment);
+            result.Add(segment is {Length: >0} ? segment : path);
             path = Path.GetDirectoryName(path);
-        } while (!string.IsNullOrEmpty(segment) && !string.IsNullOrEmpty(path));
+        } while (segment is {Length: >0} && path is {Length: >0});
         result.Reverse();
         return result.ToArray();
     }
