@@ -1,11 +1,11 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-noble AS base
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS base
 
 # Native libgdiplus dependencies
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --allow-unauthenticated libc6-dev libgdiplus libx11-dev fonts-roboto tzdata libarchive13t64 liblept5
-RUN wget https://archive.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6_amd64.deb
-RUN dpkg -i ./libtiff5_4.3.0-6_amd64.deb
-RUN rm ./libtiff5_4.3.0-6_amd64.deb
+RUN wget https://archive.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.12_amd64.deb
+RUN dpkg -i ./libtiff5_4.3.0-6ubuntu0.12_amd64.deb
+RUN rm ./libtiff5_4.3.0-6ubuntu0.12_amd64.deb
 
 # Regular stuff
 #COPY packages /root/.nuget/packages/
