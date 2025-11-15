@@ -62,7 +62,7 @@ internal static partial class LogParserResult
                 notes.Add("⚠️ Custom firmware is not supported, please use the latest official one");
         }
 
-        if (items["os_type"] == "Windows")
+        if (items["os_type"] is "Windows")
         {
             var knownPaths = new[]
             {
@@ -99,10 +99,10 @@ internal static partial class LogParserResult
             }
         }
 
-        if (!string.IsNullOrEmpty(items["host_root_in_boot"]) && isEboot)
+        if (items["host_root_in_boot"] is {Length: >0} && isEboot)
             notes.Add("❌ Retail game booted as an ELF through the `/root_host/`, probably due to passing path as an argument; please boot through the game library list for now");
         var path = items["ldr_game"] ?? items["ldr_path"] ?? items["ldr_boot_path"] ?? items["elf_boot_path"];
-        if (!string.IsNullOrEmpty(path)
+        if (path is {Length: >0}
             && serial.StartsWith("NP")
             && items["ldr_game_serial"] != serial
             && items["ldr_path_serial"] != serial
@@ -110,21 +110,18 @@ internal static partial class LogParserResult
             && items["elf_boot_path_serial"] != serial)
             notes.Add("❌ Digital version of the game outside of `/dev_hdd0/game/` directory");
         // LDR: Path: before settings is unreliable, because you can boot through installed patch or game data
-        if (!string.IsNullOrEmpty(items["ldr_disc"])
+        if (items["ldr_disc"] is {Length: >0}
             && serial.StartsWith("BL")
             && !string.IsNullOrEmpty(items["ldr_disc_serial"]))
             notes.Add("❌ Disc version of the game inside the `/dev_hdd0/game/` directory");
-        if (!string.IsNullOrEmpty(serial) && isElf)
+        if (serial is {Length: >0} && isElf)
             notes.Add($"⚠️ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
-        if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd)
+        if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd
+            && items["os_type"] is {Length: >0} osType
+            && (osType is "Windows" && mountedBdvd.TrimEnd('/').EndsWith(':')
+                || osType is "MacOS" && mountedBdvd.StartsWith("/Volumes/")))
         {
-            var bdvdPath = mountedBdvd.TrimEnd('/');
-            bool isWin = items["os_type"] == "Windows" && bdvdPath.EndsWith(':');
-            bool isMac = items["os_type"] == "MacOS" && bdvdPath.StartsWith("/Volumes/", StringComparison.OrdinalIgnoreCase);
-            if (isWin || isMac)
-            {
-                notes.Add("⚠️ Booting directly from blu-ray disc is not supported, please make a proper game dump");
-            }
+            notes.Add("⚠️ Booting directly from blu-ray disc is not supported, please make a proper game dump");
         }
 
         if (items["log_from_ui"] is not null)
@@ -726,7 +723,7 @@ internal static partial class LogParserResult
         }
         if (items["save_dir_before_segfault"] is { Length: > 0 } saveDirBeforeSegfault)
             notes.Add($"❌ Potential save data corruption in `{saveDirBeforeSegfault}`");
-        if (items["os_type"] == "Windows")
+        if (items["os_type"] is "Windows")
             foreach (var code in win32ErrorCodes)
             {
                 var link = code switch
@@ -756,7 +753,7 @@ internal static partial class LogParserResult
                 else
                     notes.Add($"ℹ️ [Error 0x{code:x}]({link}): {error.description}");
             }
-        else if (items["os_type"] == "Linux" && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (items["os_type"] is "Linux" && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             foreach (var code in win32ErrorCodes)
             {
                 try
