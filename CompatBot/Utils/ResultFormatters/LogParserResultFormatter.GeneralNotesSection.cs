@@ -119,8 +119,8 @@ internal static partial class LogParserResult
         if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd
             && items["os_type"] is {Length: >0} osType
             && mountedBdvd.Split('/', StringSplitOptions.RemoveEmptyEntries) is {Length: <3} segments
-            && (osType is "Windows" && segments is [[_, ':']]
-                || osType is "MacOS" && segments is ["Volumes", _]))
+            && (osType is "Windows" && segments is [[_, ':']] // D:/
+                || osType is "MacOS" && segments is ["Volumes", _])) // /Volumes/PS3VOLUME/
         {
             notes.Add("⚠️ Booting directly from blu-ray disc is not supported, please make a proper game dump");
         }
