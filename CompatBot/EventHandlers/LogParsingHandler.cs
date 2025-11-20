@@ -83,10 +83,10 @@ public static class LogParsingHandler
             DiscordMessage? botMsg = null;
             var possibleHandlers = SourceHandlers
                 .ToAsyncEnumerable()
-                .SelectAwait(async h => await h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false))
+                .Select(async (ISourceHandler h, CancellationToken _) => await h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false))
                 .ToList();
-            using var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
-            var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
+            using var source = possibleHandlers.FirstOrDefault(h => h.source is not null).source;
+            var fail = possibleHandlers.FirstOrDefault(h => h.failReason is {Length: >0}).failReason;
             foreach (var (s, _) in possibleHandlers)
             {
                 if (ReferenceEquals(s, source))
