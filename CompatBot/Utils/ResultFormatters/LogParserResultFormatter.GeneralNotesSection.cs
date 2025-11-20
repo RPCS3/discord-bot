@@ -657,7 +657,7 @@ internal static partial class LogParserResult
                             win32ErrorCodes.Add(hexCode);
                     }
                     var trimIdx = fatalError.IndexOf(" Called from");
-                    if (trimIdx is -1)
+                    if (trimIdx is -1 && !fatalError.Contains("Verification failed (object: 0x0)"))
                         trimIdx = fatalError.IndexOf("(in file");
                     var errorTxt = fatalError;
                     if (trimIdx > -1)
