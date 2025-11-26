@@ -89,6 +89,10 @@ public class ZalgoTests
         var result = await UsernameZalgoMonitor.NeedsRenameAsync(name).ConfigureAwait(false);
         Assert.That(result, Is.EqualTo(isBad), comment ?? $"Expected to be {(isBad ? "bad" : "acceptable")}");
     }
+
+    [TestCase("ⓛ➀ⓟ➂ⓢⓒ", ExpectedResult = "l1p3sc")]
+    public async Task<string> StripZalgoTest(string name)
+        => await UsernameZalgoMonitor.StripZalgoAsync(name, null, 0).ConfigureAwait(false);
 }
 
 internal class UserInfo
