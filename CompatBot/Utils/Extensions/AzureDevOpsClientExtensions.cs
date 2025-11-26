@@ -124,7 +124,7 @@ internal static class AzureDevOpsClientExtensions
             .ToList();
         return await builds
             .ToAsyncEnumerable()
-            .SelectAwait(async b => await azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, cancellationToken).ConfigureAwait(false))
+            .Select((b, ct) => azureDevOpsClient.GetArtifactsInfoAsync(b.SourceVersion, b, ct))
             .ToListAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
     }

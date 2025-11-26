@@ -146,6 +146,7 @@ public static partial class DiscLanguageProvider
         ["Italy"] = "🇮🇹",
         ["Japan"] = "🇯🇵",
         ["Korea"] = "🇰🇷",
+        ["Latin America"] = "🇱🇽", // not a real code
         ["Mexico"] = "🇲🇽",
         ["New Zealand"] = "🇳🇿",
         ["Poland"] = "🇵🇱",
