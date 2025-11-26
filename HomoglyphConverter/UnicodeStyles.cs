@@ -58,6 +58,10 @@ public static class UnicodeStyles
     private const string SubscriptDigits = "₀₁₂₃₄₅₆₇₈₉";
     private const string SegmentedDigits = "🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹";
     private const string OutlinedDigits = "𜳰𜳱𜳲𜳳𜳴𜳵𜳶𜳷𜳸𜳹";
+    private const string DingbatNegativeCircled = "❿❶❷❸❹❺❻❼❽❾";
+    private const string DingbatCircledSansSerif = "➉➀➁➂➃➄➅➆➇➈";
+    private const string DingbatNegativeCircledSansSerif = "➓➊➋➌➍➎➏➐➑➒";
+    
     // U+E0030 - U+E0039
     private const string TagsDigits = "󠀰󠀱󠀲󠀳󠀴󠀵󠀶󠀷󠀸󠀹";
 
@@ -118,6 +122,9 @@ public static class UnicodeStyles
             SubscriptDigits,
             SegmentedDigits,
             OutlinedDigits,
+            DingbatNegativeCircled,
+            DingbatCircledSansSerif,
+            DingbatNegativeCircledSansSerif,
             TagsDigits,
         ];
         BuildMap(styleList, DigitsBase, result);

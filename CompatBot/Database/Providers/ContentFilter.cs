@@ -103,7 +103,7 @@ internal static class ContentFilter
 
     public static async ValueTask<bool> IsClean(DiscordClient client, DiscordMessage message)
     {
-        if (message.Channel?.IsPrivate ?? false)
+        if (message.Channel?.IsPrivate is true)
             return true;
 
         if (message.Channel?.Id == Config.BotLogId)
@@ -118,7 +118,7 @@ internal static class ContentFilter
             return true;
 
         var suppressActions = (FilterAction)0;
-        if (message.Timestamp.UtcDateTime.AddHours(1) < DateTime.UtcNow)
+        if (message.Timestamp.UtcDateTime.AddDays(1) < DateTime.UtcNow)
             suppressActions = FilterAction.SendMessage | FilterAction.ShowExplain;
 
 #if !DEBUG
