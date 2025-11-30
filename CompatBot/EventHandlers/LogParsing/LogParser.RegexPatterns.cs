@@ -373,7 +373,7 @@ internal partial class LogParser
     private static partial Regex Ncaa14RevampedModFlag();
     [GeneratedRegex(@"Input: Pad (?<pad_id>\d): device='(?<pad_controller_name>(?!Null).+?)', handler=(?<pad_handler>.+?), VID=.+?$", DefaultOptions)]
     private static partial Regex InputDeviceGamepad();
-    [GeneratedRegex(@"Found game controller \d: .+ has_accel=(?<pad_has_accel>.+?), has_gyro=(?<pad_has_gyro>[^\r\n]+?)\r?$", DefaultOptions)]
+    [GeneratedRegex(@"Found game (controller|pad) \d: .+ has_accel=(?<pad_has_accel>.+?), has_gyro=(?<pad_has_gyro>[^\r\n]+?)\r?$", DefaultOptions)]
     private static partial Regex SdlControllerName();
     [GeneratedRegex(@"Failed to remove save data.+: .+(?<bad_save_data_path>/dev_hdd0/.+) \(.+\)\r?$", DefaultOptions)]
     private static partial Regex FailedToRemoveSaveData();

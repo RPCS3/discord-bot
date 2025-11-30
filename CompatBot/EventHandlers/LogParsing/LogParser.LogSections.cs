@@ -245,7 +245,7 @@ internal partial class LogParser
                 ["undub"] = UndubFlag(),
                 ["CFBR_DLC"] = Ncaa14RevampedModFlag(),
                 ["Input: Pad"] = InputDeviceGamepad(),
-                ["SDL: Found game controller"] = SdlControllerName(),
+                ["SDL: Found game"] = SdlControllerName(),
                 ["cellSaveData: cellSaveDataGetListItem"] = SaveDataBeforeSegfault(),
                 ["SYS: Failed to remove save data"] = FailedToRemoveSaveData(),
                 ["Trophy: Failed to remove"] = FailedToRemoveTrophy(),
