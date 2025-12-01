@@ -25,14 +25,14 @@ internal static class EmpathySimulationHandler
         if (args.Author.IsCurrent)
             return;
 
-        if (args.Author.Id == 197163728867688448ul)
+        if (args.Author.Id is 197163728867688448ul)
             return;
 
         if (!MessageQueue.TryGetValue(args.Channel.Id, out var queue))
             MessageQueue[args.Channel.Id] = queue = new();
         queue.Enqueue(args.Message);
         while (queue.Count > 10)
-            queue.TryDequeue(out var _);
+            queue.TryDequeue(out _);
         var content = args.Message.Content;
         if (string.IsNullOrEmpty(content))
             return;
@@ -55,7 +55,8 @@ internal static class EmpathySimulationHandler
             {
                 Throttling.Set(args.Channel.Id, similarList, ThrottleDuration);
                 var msgContent = GetAvgContent(similarList.Select(m => m.Content).ToList());
-                var botMsg = await args.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(msgContent).AddMention(UserMention.All)).ConfigureAwait(false);
+                var msg = new DiscordMessageBuilder().WithContent(msgContent).SuppressNotifications();
+                var botMsg = await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
                 similarList.Add(botMsg);
             }
             else
