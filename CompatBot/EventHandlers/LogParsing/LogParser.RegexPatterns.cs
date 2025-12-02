@@ -85,7 +85,7 @@ internal partial class LogParser
     private static partial Regex SpuLoopDetection();
     [GeneratedRegex(@"Max SPURS Threads: (?<spurs_threads>\d*?)\r?$", DefaultOptions)]
     private static partial Regex SpursThreadCount();
-    [GeneratedRegex(@"SPU Block Size: (?<spu_block_size>[^\r\n]*?)\r?$", DefaultOptions)]
+    [GeneratedRegex(@"SPU (Analyzer )?Block Size: (?<spu_block_size>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex SpuBlockSize();
     [GeneratedRegex(@"Enable TSX: (?<enable_tsx>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex TsxMode();
