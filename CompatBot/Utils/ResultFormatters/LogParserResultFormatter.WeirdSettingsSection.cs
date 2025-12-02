@@ -564,7 +564,7 @@ internal static partial class LogParserResult
         if (items["spu_block_size"] is string spuBlockSize)
         {
             if (spuBlockSize != "Safe" && spuBlockSize != "Mega")
-                notes.Add($"⚠️ Please change `SPU Block Size` to `Safe/Mega`, currently `{spuBlockSize}` is unstable.");
+                notes.Add($"⚠️ Please change `SPU Analyzer Block Size` to `Safe/Mega`, currently `{spuBlockSize}` is unstable.");
         }
 
         if (items["booting_savestate"] is DisabledMark)
@@ -875,7 +875,7 @@ internal static partial class LogParserResult
             return;
 
         if (items["spu_block_size"] is not null and not "Safe")
-            notes.Add("ℹ️ Please set `SPU Block Size` to `Safe` to reduce crash rate");
+            notes.Add("ℹ️ Please set `SPU Analyzer Block Size` to `Safe` to reduce crash rate");
 
         if (items["frame_limit"] is not null and not "Off")
             notes.Add("⚠️ `Frame Limiter` should be `Off`");
@@ -1015,7 +1015,7 @@ internal static partial class LogParserResult
             return;
 
         if (items["spu_block_size"] is not null and not "Safe")
-            notes.Add("ℹ️ Please set `SPU Block Size` to `Safe` to reduce crash rate");
+            notes.Add("ℹ️ Please set `SPU Analyzer Block Size` to `Safe` to reduce crash rate");
         if (items["cpu_blit"] == EnabledMark)
             notes.Add("⚠️ Please disable `Force CPU Blit`");
         if (items["read_color_buffers"] == DisabledMark)

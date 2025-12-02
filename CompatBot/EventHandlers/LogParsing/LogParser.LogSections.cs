@@ -68,7 +68,7 @@ internal partial class LogParser
                 ["SPU delay penalty:"] = SpuDelayPenalty(),
                 ["SPU loop detection:"] = SpuLoopDetection(),
                 ["Max SPURS Threads:"] = SpursThreadCount(),
-                ["SPU Block Size:"] = SpuBlockSize(),
+                ["Block Size:"] = SpuBlockSize(),
                 ["Enable TSX:"] = TsxMode(),
                 ["Accurate xfloat:"] = AccurateXfloat(),
                 ["Approximate xfloat:"] = ApproximateXfloat(),
