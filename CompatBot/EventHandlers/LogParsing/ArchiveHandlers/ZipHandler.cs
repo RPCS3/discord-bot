@@ -47,18 +47,28 @@ internal sealed class ZipHandler: IArchiveHandler
                     {
                         var memory = writer.GetMemory(Config.MinimumBufferSize);
                         read = await zipStream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
+#if DEBUG
                         Config.Log.Debug($"{nameof(ZipHandler)}: read {read} bytes from source stream");
+#endif
                         if (read > 0)
                             writer.Advance(read);
                         totalRead += read;
+#if DEBUG
                         Config.Log.Debug($"{nameof(ZipHandler)}: advanced the writer by {read} (total read {totalRead})");
+#endif
                         SourcePosition = statsStream.Position;
+#if DEBUG
                         Config.Log.Debug($"{nameof(ZipHandler)}: current source position is {SourcePosition}");
+#endif
                         flushed = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+#if DEBUG
                         Config.Log.Debug($"{nameof(ZipHandler)}: flushed the writer");
+#endif
                     } while (read > 0 && !(flushed.IsCompleted || flushed.IsCanceled || cancellationToken.IsCancellationRequested));
                     await writer.CompleteAsync().ConfigureAwait(false);
+#if DEBUG
                     Config.Log.Debug($"{nameof(ZipHandler)}: writer completed");
+#endif
                     return;
                 }
                 SourcePosition = statsStream.Position;
