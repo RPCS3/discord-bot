@@ -124,7 +124,6 @@ internal static class MessageMenuCommands
             return;
         }
         await ctx.RespondAsync($"{Config.Reactions.Success} Message was enqueued for analysis", ephemeral: true).ConfigureAwait(false);
-
     }
 
     /*
