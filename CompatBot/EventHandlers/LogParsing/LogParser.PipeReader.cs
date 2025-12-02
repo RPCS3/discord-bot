@@ -22,7 +22,9 @@ internal static partial class LogParser
             {
                 result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                 var buffer = result.Buffer;
+#if DEBUG
                 Config.Log.Debug($"{nameof(LogParser)}: Read {buffer.Length} bytes from reader");
+#endif
                 if (!skippedBom)
                 {
                     if (buffer.Length < 3)
@@ -32,7 +34,9 @@ internal static partial class LogParser
                     if (potentialBom.ToArray().SequenceEqual(Bom))
                     {
                         reader.AdvanceTo(potentialBom.End);
+#if DEBUG
                         Config.Log.Debug($"{nameof(LogParser)}: Reader advanced to {potentialBom.End} to skip BOM");
+#endif
                         totalReadBytes += potentialBom.Length;
                         skippedBom = true;
                         continue;
@@ -52,7 +56,9 @@ internal static partial class LogParser
                     if (state.Error != LogParseState.ErrorCode.None)
                     {
                         await reader.CompleteAsync();
+#if DEBUG
                         Config.Log.Debug($"{nameof(LogParser)}: Reader completed (error: {state.Error})");
+#endif
                         return state;
                     }
 
@@ -73,7 +79,9 @@ internal static partial class LogParser
                 var sectionStart = currentSectionLines.First is {} firstLine ? firstLine.Value : buffer;
                 totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
                 reader.AdvanceTo(sectionStart.Start);
+#if DEBUG
                 Config.Log.Debug($"{nameof(LogParser)}: Reader advanced to {sectionStart.Start} (section start)");
+#endif
             }
             catch (Exception e)
             {
@@ -86,7 +94,9 @@ internal static partial class LogParser
         await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
         state.ReadBytes = totalReadBytes;
         await reader.CompleteAsync();
+#if DEBUG
         Config.Log.Debug($"{nameof(LogParser)}: Reader completed");
+#endif
         return state;
     }
 
