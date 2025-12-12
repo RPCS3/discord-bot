@@ -1,12 +1,13 @@
 ﻿using System.IO.Pipelines;
 using System.Net.Http;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
+using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
 internal sealed class DiscordAttachmentHandler : BaseSourceHandler
 {
-    public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+    public override async Task<Result<ISource>> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
         using var client = HttpClientFactory.Create();
         foreach (var attachment in message.Attachments)
@@ -20,11 +21,11 @@ internal sealed class DiscordAttachmentHandler : BaseSourceHandler
                     var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                     foreach (var handler in handlers)
                     {
-                        var (canHandle, reason) = handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read));
-                        if (canHandle)
-                            return (new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize), null);
-                        else if (!string.IsNullOrEmpty(reason))
-                            return (null, reason);
+                        var result = handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read));
+                        if (result.IsSuccess())
+                            return Result.Success<ISource>(new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize));
+                        else if (result.Message is {Length: >0})
+                            return result.Cast<ISource>();
                     }
                 }
                 finally
@@ -37,7 +38,7 @@ internal sealed class DiscordAttachmentHandler : BaseSourceHandler
                 Config.Log.Error(e, "Error sniffing the rar content");
             }
         }
-        return (null, null);
+        return Result.Failure<ISource>();
     }
 
     private sealed class DiscordAttachmentSource : ISource

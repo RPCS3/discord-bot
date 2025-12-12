@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.IO.Pipelines;
+using ResultNet;
 using SharpCompress.Readers.Zip;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
@@ -11,7 +12,7 @@ internal sealed class ZipHandler: IArchiveHandler
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
 
-    public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+    public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
 
         if (header.Length >= Header.Length && header[..Header.Length].SequenceEqual(Header)
@@ -19,12 +20,10 @@ internal sealed class ZipHandler: IArchiveHandler
         {
             var firstEntry = Encoding.ASCII.GetString(header);
             if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
-                return (false, "Archive doesn't contain any logs.");
-
-            return (true, null);
+                return Result.Failure().WithMessage("Archive doesn't contain any logs.");
+            return Result.Success();
         }
-
-        return (false, null);
+        return Result.Failure();
     }
 
     public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
@@ -33,14 +32,14 @@ internal sealed class ZipHandler: IArchiveHandler
         {
             await using var statsStream = new BufferCopyStream(sourceStream);
             using var zipReader = ZipReader.Open(statsStream);
-            while (zipReader.MoveToNextEntry())
+            while (await zipReader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
             {
                 if (!zipReader.Entry.IsDirectory
                     && zipReader.Entry.Key!.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                     && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                 {
                     LogSize = zipReader.Entry.Size;
-                    await using var zipStream = zipReader.OpenEntryStream();
+                    await using var zipStream = await zipReader.OpenEntryStreamAsync(cancellationToken).ConfigureAwait(false);
                     int read, totalRead = 0;
                     FlushResult flushed;
                     do

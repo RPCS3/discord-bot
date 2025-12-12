@@ -14,6 +14,7 @@ using CompatBot.EventHandlers.LogParsing.SourceHandlers;
 using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using Microsoft.Extensions.Caching.Memory;
+using ResultNet;
 
 namespace CompatBot.EventHandlers;
 
@@ -85,19 +86,19 @@ public static class LogParsingHandler
                 .ToAsyncEnumerable()
                 .SelectAwait(async h => await h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false))
                 .ToList();
-            using var source = possibleHandlers.FirstOrDefault(h => h.source != null).source;
-            var fail = possibleHandlers.FirstOrDefault(h => !string.IsNullOrEmpty(h.failReason)).failReason;
-            foreach (var (s, _) in possibleHandlers)
+            using var source = possibleHandlers.FirstOrDefault(h => h.IsSuccess())?.Data;
+            var fail = possibleHandlers.FirstOrDefault(h => h is {Message.Length: >0})?.Message;
+            foreach (var h in possibleHandlers)
             {
-                if (ReferenceEquals(s, source))
+                if (ReferenceEquals(h.Data, source))
                     continue;
                 
-                s?.Dispose();
+                h.Data?.Dispose();
             }
                 
             var isSpamChannel = channel.IsSpamChannel();
             var isHelpChannel = channel.IsHelpChannel();
-            if (source != null)
+            if (source is not null)
             {
                 if (!QueueLimiter.Wait(0))
                 {
@@ -133,10 +134,10 @@ public static class LogParsingHandler
                             ).ConfigureAwait(false);
                             result ??= tmpResult;
                             tries++;
-                        } while ((tmpResult == null || tmpResult.Error == LogParseState.ErrorCode.UnknownError) &&
+                        } while ((tmpResult is null || tmpResult.Error == LogParseState.ErrorCode.UnknownError) &&
                                  !combinedTokenSource.IsCancellationRequested && tries < 3);
                     }
-                    if (result == null)
+                    if (result is null)
                     {
                         botMsg = await botMsg.UpdateOrCreateMessageAsync(channel, embed: (await new DiscordEmbedBuilder
                                 {
@@ -243,7 +244,7 @@ public static class LogParsingHandler
                             }
                             else
                             {
-                                if (result.SelectedFilter != null)
+                                if (result.SelectedFilter is not null)
                                 {
                                     var ignoreFlags = FilterAction.IssueWarning | FilterAction.SendMessage | FilterAction.ShowExplain;
                                     await ContentFilter.PerformFilterActions(client, message, result.SelectedFilter,
@@ -288,7 +289,7 @@ public static class LogParsingHandler
                                 }
 
                                 botMsg = await botMsg.UpdateOrCreateMessageAsync(channel,
-                                    //requester == null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
+                                    //requester is null ? null : $"Analyzed log from {client.GetMember(channel.Guild, message.Author)?.GetUsernameWithNickname()} by request from {requester.Mention}:",
                                     embed: await result.AsEmbedAsync(client, message, source).ConfigureAwait(false)
                                 ).ConfigureAwait(false);
                             }
@@ -388,9 +389,9 @@ public static class LogParsingHandler
             if (result.FilterTriggers.Any())
             {
                 var (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.IssueWarning));
-                if (f == null)
+                if (f is null)
                     (f, c) = result.FilterTriggers.Values.FirstOrDefault(ft => ft.filter.Actions.HasFlag(FilterAction.RemoveContent));
-                if (f == null)
+                if (f is null)
                     (f, c) = result.FilterTriggers.Values.FirstOrDefault();
                 result.SelectedFilter = f;
                 result.SelectedFilterContext = c;

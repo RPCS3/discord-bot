@@ -6,6 +6,7 @@ using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Download;
 using Google.Apis.Drive.v3;
+using ResultNet;
 using FileMeta = Google.Apis.Drive.v3.Data.File;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
@@ -17,17 +18,15 @@ internal sealed partial class GoogleDriveHandler: BaseSourceHandler
     private static readonly string[] Scopes = [DriveService.Scope.DriveReadonly];
     private static readonly string ApplicationName = "RPCS3 Compatibility Bot 2.0";
 
-    public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+    public override async Task<Result<ISource>> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
-        if (string.IsNullOrEmpty(message.Content))
-            return (null, null);
-
-        if (string.IsNullOrEmpty(Config.GoogleApiCredentials))
-            return (null, null);
+        if (message.Content is not {Length: >0}
+            || Config.GoogleApiCredentials is not {Length: >0})
+            return Result.Failure<ISource>();
 
         var matches = ExternalLink().Matches(message.Content);
-        if (matches.Count == 0)
-            return (null, null);
+        if (matches is [])
+            return Result.Failure<ISource>();
 
         var client = GetClient();
         foreach (Match m in matches)
@@ -55,11 +54,11 @@ internal sealed partial class GoogleDriveHandler: BaseSourceHandler
                     var read = (int)progress.BytesDownloaded;
                     foreach (var handler in handlers)
                     {
-                        var (canHandle, reason) = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
-                        if (canHandle)
-                            return (new GoogleDriveSource(client, fileInfoRequest, fileMeta, handler), null);
-                        else if (!string.IsNullOrEmpty(reason))
-                            return(null, reason);
+                        var result = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
+                        if (result.IsSuccess())
+                            return Result.Success<ISource>(new GoogleDriveSource(client, fileInfoRequest, fileMeta, handler));
+                        else if (result.Message is {Length: >0})
+                            return result.Cast<ISource>();
                     }
                 }
                 finally
@@ -72,7 +71,7 @@ internal sealed partial class GoogleDriveHandler: BaseSourceHandler
                 Config.Log.Warn(e, $"Error sniffing {m.Groups["gdrive_link"].Value}");
             }
         }
-        return (null, null);
+        return Result.Failure<ISource>();
     }
 
     private static DriveService GetClient(string? json = null)

@@ -72,6 +72,7 @@
     <PackageReference Include="NLog" Version="6.0.7" />
     <PackageReference Include="NLog.Extensions.Logging" Version="6.1.0" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
+    <PackageReference Include="Result.Net" Version="1.7.0" />
     <PackageReference Include="SharpCompress" Version="0.42.1" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     <PackageReference Include="System.Linq.Async" Version="6.0.3" />

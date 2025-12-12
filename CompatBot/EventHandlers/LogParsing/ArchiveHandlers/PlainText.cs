@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.IO.Pipelines;
+using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
@@ -8,16 +9,16 @@ internal sealed class PlainTextHandler: IArchiveHandler
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
 
-    public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+    public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
         LogSize = fileSize;
         if (fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
-            return (false, null);
+            return Result.Failure();
 
         if (header.Length > 10 && Encoding.UTF8.GetString(header[..30]).Contains("RPCS3 v"))
-            return (true, null);
+            return Result.Success();
 
-        return (false, null);
+        return Result.Failure();
     }
 
     public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
