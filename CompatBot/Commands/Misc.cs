@@ -16,6 +16,7 @@ internal static partial class Misc
 {
     private static readonly HttpClient HttpClient = HttpClientFactory.Create();
     private static readonly Random rng = new();
+    private static readonly Lock rngLock = new();
 
     private static readonly List<string> EightBallAnswers =
     [
@@ -181,7 +182,7 @@ internal static partial class Misc
         if (int.TryParse(dice, out var maxValue))
         {
             if (maxValue > 1)
-                lock (rng) msg = (rng.Next(maxValue) + 1).ToString();
+                lock (rngLock) msg = (rng.Next(maxValue) + 1).ToString();
             if (msg is {Length: >0})
                 return result.WithContent(msg);
             return result.WithContent($"💩 How is {maxValue} a positive natural number?");
@@ -202,7 +203,7 @@ internal static partial class Misc
                 && face is > 1 and < 1001)
             {
                 List<int> rolls;
-                lock (rng) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
+                lock (rngLock) rolls = Enumerable.Range(0, num).Select(_ => rng.Next(face) + 1).ToList();
                 var total = rolls.Sum();
                 var totalStr = total.ToString();
                 if (int.TryParse(m.Groups["mod"].Value, out var mod) && mod > 0)
@@ -266,7 +267,7 @@ internal static partial class Misc
                 }
 
                 int tmpRng;
-                lock (rng) tmpRng = rng.Next(count);
+                lock (rngLock) tmpRng = rng.Next(count);
                 productCode = await db.Thumbnail
                     .AsNoTracking()
                     .WithStatus(s, exact)
@@ -296,7 +297,7 @@ internal static partial class Misc
         
         string answer;
         var pool = string.IsNullOrEmpty(question) ? EightBallSnarkyComments : EightBallAnswers;
-        lock (rng) answer = pool[rng.Next(pool.Count)];
+        lock (rngLock) answer = pool[rng.Next(pool.Count)];
         if (answer.StartsWith(':') && answer.EndsWith(':'))
             answer = ctx.Client.GetEmoji(answer, "🔮");
         if (ctx is SlashCommandContext sctx)
