@@ -28,7 +28,7 @@ internal sealed class DiscordAttachmentHandler : BaseSourceHandler
                         var result = handler.CanHandle(attachment.FileName, attachment.FileSize, buf.AsSpan(0, read));
                         if (result.IsSuccess())
                             return Result.Success<ISource>(new DiscordAttachmentSource(attachment, handler, attachment.FileName, attachment.FileSize));
-                        else if (result.Message is {Length: >0})
+                        else if (result is {Code.Length: >0} or {Message.Length: >0} )
                             return result.Cast<ISource>();
                     }
                 }

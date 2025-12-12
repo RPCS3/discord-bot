@@ -55,7 +55,7 @@ internal sealed partial class GenericLinkHandler : BaseSourceHandler
                         var result = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
                         if (result.IsSuccess())
                             return Result.Success<ISource>(new GenericSource(uri, handler, host, filename, filesize));
-                        else if (result.Message is {Length: > 0})
+                        else if (result is {Code.Length: >0} or {Message.Length: >0} )
                             return result.Cast<ISource>();
                     }
                 }

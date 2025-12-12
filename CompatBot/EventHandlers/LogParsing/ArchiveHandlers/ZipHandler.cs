@@ -22,7 +22,15 @@ internal sealed class ZipHandler: IArchiveHandler
         {
             var firstEntry = Encoding.ASCII.GetString(header);
             if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var idx = -1;
+                while ((idx = firstEntry.IndexOf('.', idx + 1)) > -1 && idx < firstEntry.Length - 4)
+                {
+                    if (firstEntry[idx..(idx + 4)].ToLower().HasExecutableExtension())
+                        return Result.Failure().WithCode("executable");
+                }
                 return Result.Failure().WithMessage("Archive doesn't contain any logs.");
+            }
             return Result.Success();
         }
         return Result.Failure();

@@ -56,6 +56,7 @@ public static class LogParsingHandler
         if (message.Author.IsBotSafeCheck())
             return Task.CompletedTask;
         
+        /*
         if (!args.Channel.IsPrivate
             && !Config.Moderation.LogParsingChannels.Contains(args.Channel.Id))
             return Task.CompletedTask;
@@ -64,6 +65,7 @@ public static class LogParsingHandler
             && (message.Content.StartsWith(Config.CommandPrefix)
                 || message.Content.StartsWith(Config.AutoRemoveCommandPrefix)))
             return Task.CompletedTask;
+        */
 
         var isSpamChannel = args.Channel.IsSpamChannel();
         var isHelpChannel = args.Channel.IsHelpChannel();
@@ -88,7 +90,8 @@ public static class LogParsingHandler
                 .Select(async (ISourceHandler h, CancellationToken _) => await h.FindHandlerAsync(message, ArchiveHandlers).ConfigureAwait(false))
                 .ToList();
             using var source = possibleHandlers.FirstOrDefault(h => h.IsSuccess())?.Data;
-            var fail = possibleHandlers.FirstOrDefault(h => h is {Message.Length: >0})?.Message;
+            var fail = possibleHandlers.FirstOrDefault(h => h is { Code.Length: > 0 })
+                       ?? possibleHandlers.FirstOrDefault(h => h is { Message.Length: > 0 });
             foreach (var h in possibleHandlers)
             {
                 if (ReferenceEquals(h.Data, source))
@@ -314,11 +317,29 @@ public static class LogParsingHandler
                         Config.Log.Debug($"<<<<<<< {message.Id % 100} Finished parsing in {startTime.Elapsed}");
                 }
             }
-            if (!string.IsNullOrEmpty(fail)
+            if (fail is { Code: "executable"} && !await message.Author.IsWhitelistedAsync(client, message.Channel?.Guild).ConfigureAwait(false))
+            {
+                await ContentFilter.PerformFilterActions(
+                    client,
+                    message,
+                    new()
+                    {
+                        Id = -1,
+                        String = fail.Code,
+                        Context = FilterContext.Chat,
+                        Actions = FilterAction.RemoveContent | FilterAction.SendMessage,
+                        CustomMessage = "Uploading executable files is not allowed",
+                    },
+                    infraction: "🦠 Attachment with executable file",
+                    warningReason: "Potential malware"
+                ).ConfigureAwait(false);
+                return;
+            }
+            if (fail is {Message: {Length: >0 } failMsg} 
                 && (isHelpChannel || isSpamChannel))
             {
                 Config.TelemetryClient?.TrackRequest(nameof(LogParsingHandler), start, DateTimeOffset.UtcNow - start, HttpStatusCode.InternalServerError.ToString(), false);
-                await channel.SendMessageAsync($"{message.Author.Mention} {fail}").ConfigureAwait(false);
+                await channel.SendMessageAsync($"{message.Author?.Mention} {failMsg}").ConfigureAwait(false);
                 return;
             }
 
@@ -328,7 +349,7 @@ public static class LogParsingHandler
                 case "TXT":
                 {
                     await channel.SendMessageAsync(
-                        $"{message.Author.Mention}, please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file " +
+                        $"{message.Author?.Mention}, please upload the full RPCS3.log.gz (or RPCS3.log with a zip/rar icon) file " +
                         "after closing the emulator instead of copying the logs from RPCS3's interface, " +
                         "as it doesn't contain all the required information."
                     ).ConfigureAwait(false);

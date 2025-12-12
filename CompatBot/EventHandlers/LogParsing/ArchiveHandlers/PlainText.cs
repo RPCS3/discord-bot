@@ -14,6 +14,9 @@ internal sealed class PlainTextHandler: IArchiveHandler
     public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
         LogSize = fileSize;
+        if (fileName.HasExecutableExtension())
+            return Result.Failure().WithCode("executable");
+
         if (fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
             return Result.Failure();
 
