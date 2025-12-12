@@ -90,17 +90,19 @@ internal static class TitleInfoFormatter
             var desc = $"{info.Status} since {info.ToUpdated() ?? "forever"}";
             if (info.Pr > 0)
                 desc += $" (PR {info.ToPrString()})";
-            if (!forLog && !string.IsNullOrEmpty(info.AlternativeTitle))
-                desc = info.AlternativeTitle + Environment.NewLine + desc;
-            if (!string.IsNullOrEmpty(info.WikiTitle))
-                desc += $"{(forLog ? ", " : Environment.NewLine)}[Wiki Page](https://wiki.rpcs3.net/index.php?title={Uri.EscapeDataString(info.WikiTitle)})";
+            if (!forLog && info.AlternativeTitle is {Length: >0})
+                desc = info.AlternativeTitle + '\n' + desc;
+            if (info.WikiId > 0)
+                desc += $"{(forLog ? ", " : "\n")}[Wiki Page](https://wiki.rpcs3.net/index.php?curid={info.WikiId})";
+            else if (info.WikiTitle is {Length: >0})
+                desc += $"{(forLog ? ", " : "\n")}[Wiki Page](https://wiki.rpcs3.net/index.php?title={Uri.EscapeDataString(info.WikiTitle)})";
             if (info.UsingLocalCache == true)
                 desc += " (cached)";
             var cacheTitle = info.Title ?? gameTitle;
-            if (!string.IsNullOrEmpty(cacheTitle))
+            if (cacheTitle is {Length: >0})
                 StatsStorage.IncGameStat(cacheTitle);
             var title = $"{productCodePart}{cacheTitle?.Trim(200)}{onlineOnlyPart}";
-            if (string.IsNullOrEmpty(title))
+            if (title is not {Length: >0})
                 desc = "";
             var result = new DiscordEmbedBuilder
             {

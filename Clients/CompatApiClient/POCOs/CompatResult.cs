@@ -28,6 +28,8 @@ public class TitleInfo
     public string AlternativeTitle;
     [JsonPropertyName("wiki-title")]
     public string WikiTitle;
+    [JsonPropertyName("wiki-id")]
+    public int? WikiId;
     public string Status;
     public string Date;
     public int Thread;
