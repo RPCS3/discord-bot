@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.IO.Pipelines;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
+using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
@@ -37,11 +38,11 @@ internal class FileSource : ISource
         var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
         foreach (var handler in handlers)
         {
-            var (canHandle, reason) = handler.CanHandle(Path.GetFileName(path), (int)stream.Length, buf.AsSpan(0, read));
-            if (canHandle)
+            var result = handler.CanHandle(Path.GetFileName(path), (int)stream.Length, buf.AsSpan(0, read));
+            if (result.IsSuccess())
                 return new FileSource(path, handler);
                 
-            if (!string.IsNullOrEmpty(reason))
+            if (result.Message is {Length: >0} reason)
                 throw new InvalidOperationException(reason);
         }
         throw new InvalidOperationException("Unknown source type");
