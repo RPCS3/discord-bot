@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using CG.Web.MegaApiClient;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
+using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
@@ -13,14 +14,14 @@ internal sealed partial class MegaHandler : BaseSourceHandler
     private static partial Regex ExternalLink();
     private static readonly IProgress<double> Doodad = new Progress<double>(_ => { });
 
-    public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+    public override async Task<Result<ISource>> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
-        if (string.IsNullOrEmpty(message.Content))
-            return (null, null);
+        if (message.Content is not {Length: >0})
+            return Result.Failure<ISource>();
 
         var matches = ExternalLink().Matches(message.Content);
-        if (matches.Count == 0)
-            return (null, null);
+        if (matches is [])
+            return Result.Failure<ISource>();
 
         var client = new MegaApiClient();
         await client.LoginAnonymousAsync();
@@ -28,7 +29,7 @@ internal sealed partial class MegaHandler : BaseSourceHandler
         {
             try
             {
-                if (m.Groups["mega_link"].Value is not { Length: > 0 } lnk
+                if (m.Groups["mega_link"].Value is not { Length: >0 } lnk
                     || !Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
                     continue;
                 
@@ -43,11 +44,11 @@ internal sealed partial class MegaHandler : BaseSourceHandler
                     var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                     foreach (var handler in handlers)
                     {
-                        var (canHandle, reason) = handler.CanHandle(node.Name, (int)node.Size, buf.AsSpan(0, read));
-                        if (canHandle)
-                            return (new MegaSource(client, uri, node, handler), null);
-                        else if (!string.IsNullOrEmpty(reason))
-                            return (null, reason);
+                        var result = handler.CanHandle(node.Name, (int)node.Size, buf.AsSpan(0, read));
+                        if (result.IsSuccess())
+                            return Result.Success<ISource>(new MegaSource(client, uri, node, handler));
+                        else if (result.Message is {Length: >0})
+                            return result.Cast<ISource>();
                     }
                 }
                 finally
@@ -60,7 +61,7 @@ internal sealed partial class MegaHandler : BaseSourceHandler
                 Config.Log.Warn(e, $"Error sniffing {m.Groups["mega_link"].Value}");
             }
         }
-        return (null, null);
+        return Result.Failure<ISource>();
     }
 
     private sealed class MegaSource : ISource

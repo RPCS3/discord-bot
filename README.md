@@ -9,7 +9,7 @@ You can read the design and implementation notes by visiting the folders in the 
 
 Development Requirements
 ------------------------
-* [.NET 9.0 SDK](https://dotnet.microsoft.com/download) or newer
+* [.NET 10.0 SDK](https://dotnet.microsoft.com/download) or newer
 * Any text editor, but here are some recommends:
   * [Visual Studio](https://visualstudio.microsoft.com/) (Windows, has free Community edition)
   * [Visual Studio Code](https://code.visualstudio.com/) (cross-platform, free)
@@ -17,7 +17,7 @@ Development Requirements
 
 Runtime Requirements
 --------------------
-* [.NET 9.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
+* [.NET 10.0 SDK](https://dotnet.microsoft.com/download) or newer to run from sources
   * Bot needs `dotnet` command to be available (i.e. alias for the Snap package)
   * OCR on Linux requires the following dependencies to be installed: `libarchive.so.13`, `liblept.so.5`, `libtiff.so.5`
     * On Ubuntu 24.04 this is provided by the following packages:

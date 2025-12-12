@@ -1,11 +1,12 @@
 ﻿using System.IO.Pipelines;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
+using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
 public interface ISourceHandler
 {
-    Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
+    Task<Result<ISource>> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers);
 }
 
 public interface ISource: IDisposable

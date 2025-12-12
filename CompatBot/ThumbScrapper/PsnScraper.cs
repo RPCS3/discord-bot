@@ -328,7 +328,7 @@ internal sealed partial class PsnScraper
                             .Select(sku => sku.Id)
                             .Distinct()
                             .ToAsyncEnumerable()
-                            .WhereAwait(async id => ProductCodeLookup.Pattern().IsMatch(id)
+                            .Where(async (id, _) => ProductCodeLookup.Pattern().IsMatch(id)
                                                     && await NeedLookupAsync(id).ConfigureAwait(false)
                             ).ToList();
                         foreach (var relatedSku in relatedSkus)

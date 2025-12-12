@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
+using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
 
@@ -13,19 +14,19 @@ internal sealed partial class DropboxHandler : BaseSourceHandler
     [GeneratedRegex(@"(?<dropbox_link>(https?://)?(www\.)?dropbox\.com/s/(?<dropbox_id>[^/\s]+)/(?<filename>[^/\?\s])(/dl=[01])?)", DefaultOptions)]
     private static partial Regex ExternalLink();
 
-    public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+    public override async Task<Result<ISource>> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
-        if (string.IsNullOrEmpty(message.Content))
-            return (null, null);
+        if (message.Content is not {Length: >0})
+            return Result.Failure<ISource>();
 
         var matches = ExternalLink().Matches(message.Content);
-        if (matches.Count == 0)
-            return (null, null);
+        if (matches is [])
+            return Result.Failure<ISource>();
 
         using var client = HttpClientFactory.Create();
         foreach (Match m in matches)
         {
-            if (m.Groups["dropbox_link"].Value is not { Length: > 0 } lnk
+            if (m.Groups["dropbox_link"].Value is not { Length: >0 } lnk
                 || !Uri.TryCreate(lnk, UriKind.Absolute, out var uri))
                 continue;
             
@@ -52,11 +53,11 @@ internal sealed partial class DropboxHandler : BaseSourceHandler
                     var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                     foreach (var handler in handlers)
                     {
-                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
-                        if (canHandle)
-                            return (new DropboxSource(uri, handler, filename, filesize), null);
-                        else if (!string.IsNullOrEmpty(reason))
-                            return (null, reason);
+                        var result = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                        if (result.IsSuccess())
+                            return Result.Success<ISource>(new DropboxSource(uri, handler, filename, filesize));
+                        else if (result.Message is {Length: >0})
+                            return result.Cast<ISource>();
                     }
                 }
                 finally
@@ -70,7 +71,7 @@ internal sealed partial class DropboxHandler : BaseSourceHandler
                 Config.Log.Warn(e, $"Error sniffing {m.Groups["dropbox_link"].Value}");
             }
         }
-        return (null, null);
+        return Result.Failure<ISource>();
     }
 
     private sealed class DropboxSource : ISource

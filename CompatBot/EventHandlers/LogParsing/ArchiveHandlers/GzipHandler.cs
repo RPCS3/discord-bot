@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.IO.Compression;
 using System.IO.Pipelines;
+using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
@@ -11,17 +12,17 @@ internal sealed class GzipHandler: IArchiveHandler
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
 
-    public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+    public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
         if (header.Length >= Header.Length)
         {
             if (header[..Header.Length].SequenceEqual(Header))
-                return (true, null);
+                return Result.Success();
         }
         else if (fileName.EndsWith(".log.gz", StringComparison.InvariantCultureIgnoreCase)
                  && !fileName.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
-            return (true, null);
-        return (false, null);
+            return Result.Success();
+        return Result.Failure();
     }
 
     public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)

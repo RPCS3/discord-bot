@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.IO.Pipelines;
 using CompatApiClient.Utils;
+using ResultNet;
 using SharpCompress.Archives.SevenZip;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
@@ -12,16 +13,16 @@ internal sealed class SevenZipHandler: IArchiveHandler
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
 
-    public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+    public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
         if (header.Length >= Header.Length && header[..Header.Length].SequenceEqual(Header)
             || header.Length == 0 && fileName.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase))
         {
             if (fileSize > Config.AttachmentSizeLimit)
-                return (false, $"Log size is too large for 7z format: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
-            return (true, null);
+                return Result.Failure().WithMessage($"Log size is too large for 7z format: {fileSize.AsStorageUnit()} (max allowed is {Config.AttachmentSizeLimit.AsStorageUnit()})");
+            return Result.Success();
         }
-        return (false, null);
+        return Result.Failure();
     }
 
     public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
@@ -33,13 +34,13 @@ internal sealed class SevenZipHandler: IArchiveHandler
             fileStream.Seek(0, SeekOrigin.Begin);
             using var zipArchive = SevenZipArchive.Open(fileStream);
             using var zipReader = zipArchive.ExtractAllEntries();
-            while (zipReader.MoveToNextEntry())
+            while (await zipReader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                 if (!zipReader.Entry.IsDirectory
                     && zipReader.Entry.Key!.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                     && !zipReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                 {
                     LogSize = zipReader.Entry.Size;
-                    await using var entryStream = zipReader.OpenEntryStream();
+                    await using var entryStream = await zipReader.OpenEntryStreamAsync(cancellationToken).ConfigureAwait(false);
                     int read;
                     FlushResult flushed;
                     do

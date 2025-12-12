@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.IO.Pipelines;
+using ResultNet;
 using SharpCompress.Readers.Rar;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
@@ -11,17 +12,17 @@ internal sealed class RarHandler: IArchiveHandler
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
 
-    public (bool result, string? reason) CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
+    public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
         if (header.Length >= Header.Length && header[..Header.Length].SequenceEqual(Header)
             || header.Length == 0 && fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
         {
             var firstEntry = Encoding.ASCII.GetString(header);
             if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
-                return (false, "Archive doesn't contain any logs.");
-            return (true, null);
+                return Result.Failure().WithMessage("Archive doesn't contain any logs.");
+            return Result.Success();
         }
-        return (false, null);
+        return Result.Failure();
     }
 
     public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
@@ -30,14 +31,14 @@ internal sealed class RarHandler: IArchiveHandler
         {
             await using var statsStream = new BufferCopyStream(sourceStream);
             using var rarReader = RarReader.Open(statsStream);
-            while (rarReader.MoveToNextEntry())
+            while (await rarReader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
             {
                 if (!rarReader.Entry.IsDirectory
                     && rarReader.Entry.Key!.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)
                     && !rarReader.Entry.Key.Contains("tty.log", StringComparison.InvariantCultureIgnoreCase))
                 {
                     LogSize = rarReader.Entry.Size;
-                    await using var rarStream = rarReader.OpenEntryStream();
+                    await using var rarStream = await rarReader.OpenEntryStreamAsync(cancellationToken).ConfigureAwait(false);
                     int read;
                     FlushResult flushed;
                     do

@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
+using ResultNet;
 using YandexDiskClient;
 
 namespace CompatBot.EventHandlers.LogParsing.SourceHandlers;
@@ -12,14 +13,14 @@ internal sealed partial class YandexDiskHandler: BaseSourceHandler
     private static partial Regex ExternalLink();
     private static readonly Client Client = new();
 
-    public override async Task<(ISource? source, string? failReason)> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
+    public override async Task<Result<ISource>> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
-        if (string.IsNullOrEmpty(message.Content))
-            return (null, null);
+        if (message.Content is not {Length: >0})
+            return Result.Failure<ISource>();
 
         var matches = ExternalLink().Matches(message.Content);
-        if (matches.Count == 0)
-            return (null, null);
+        if (matches is [])
+            return Result.Failure<ISource>();
 
         using var client = HttpClientFactory.Create();
         foreach (Match m in matches)
@@ -34,12 +35,12 @@ internal sealed partial class YandexDiskHandler: BaseSourceHandler
                 var filesize = -1;
 
                 var resourceInfo = await Client.GetResourceInfoAsync(webLink, Config.Cts.Token).ConfigureAwait(false);
-                if (string.IsNullOrEmpty(resourceInfo?.File))
-                    return (null, null);
+                if (resourceInfo is not {File.Length: >0})
+                    return Result.Failure<ISource>();
 
                 if (resourceInfo.Size.HasValue)
                     filesize = resourceInfo.Size.Value;
-                if (!string.IsNullOrEmpty(resourceInfo.Name))
+                if (resourceInfo.Name is {Length: >0})
                     filename = resourceInfo.Name;
 
                 await using var stream = await client.GetStreamAsync(resourceInfo.File).ConfigureAwait(false);
@@ -49,11 +50,11 @@ internal sealed partial class YandexDiskHandler: BaseSourceHandler
                     var read = await stream.ReadBytesAsync(buf).ConfigureAwait(false);
                     foreach (var handler in handlers)
                     {
-                        var (canHandle, reason) = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
-                        if (canHandle)
-                            return (new YaDiskSource(resourceInfo.File, handler, filename, filesize), null);
-                        else if (!string.IsNullOrEmpty(reason))
-                            return (null, reason);
+                        var result = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
+                        if (result.IsSuccess())
+                            return Result.Success<ISource>(new YaDiskSource(resourceInfo.File, handler, filename, filesize));
+                        else if (result.Message is {Length: >0})
+                            return result.Cast<ISource>();
                     }
                 }
                 finally
@@ -67,7 +68,7 @@ internal sealed partial class YandexDiskHandler: BaseSourceHandler
                 Config.Log.Warn(e, $"Error sniffing {m.Groups["yadisk_link"].Value}");
             }
         }
-        return (null, null);
+        return Result.Failure<ISource>();
     }
 
     private sealed class YaDiskSource : ISource
