@@ -218,6 +218,7 @@ internal static class BotStatus
         try
         {
             await using var db = await ThumbnailDb.OpenReadAsync().ConfigureAwait(false);
+            db.WithNoCase();
             var syscallCount = db.SyscallInfo.AsNoTracking().Where(sci => sci.Function.StartsWith("sys_") || sci.Function.StartsWith("_sys_")).Distinct().Count();
             var totalFuncCount = db.SyscallInfo.AsNoTracking().Select(sci => sci.Function).Distinct().Count();
             var fwCallCount = totalFuncCount - syscallCount;
