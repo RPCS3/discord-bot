@@ -1,4 +1,5 @@
-﻿using CompatBot.Database.Providers;
+﻿using CompatBot.Database;
+using CompatBot.Database.Providers;
 
 namespace CompatBot.Commands;
 
@@ -80,7 +81,7 @@ internal static partial class Sudo
             var modList = ModProvider.Mods
                 .Values
                 .ToAsyncEnumerable()
-                .SelectAwait(async m =>(m: m, u: await ctx.Client.GetUserAsync(m.DiscordId).ConfigureAwait(false)))
+                .Select(async (Moderator m, CancellationToken _) => (m: m, u: await ctx.Client.GetUserAsync(m.DiscordId).ConfigureAwait(false)))
                 .OrderByDescending(i => i.m.Sudoer)
                 .ThenBy(i => i.u.Username)
                 .ToList();

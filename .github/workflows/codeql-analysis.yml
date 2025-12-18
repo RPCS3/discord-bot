@@ -54,9 +54,7 @@ jobs:
       - name: Update dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
+          dotnet-version: 10.0.x
 
       - name: Checkout repository
         uses: actions/checkout@v4
