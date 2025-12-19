@@ -311,9 +311,17 @@ internal static class Config
         if (string.IsNullOrEmpty(AzureDevOpsToken))
             return null;
 
-        var azureCreds = new VssBasicCredential("bot", AzureDevOpsToken);
-        var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
-        return azureConnection.GetClient<BuildHttpClient>();
+        try
+        {
+            var azureCreds = new VssBasicCredential("bot", AzureDevOpsToken);
+            var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
+            return azureConnection.GetClient<BuildHttpClient>();
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Failed to authenticate");
+            return null;
+        }
     }
 
     public static TelemetryClient? TelemetryClient
