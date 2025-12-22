@@ -21,7 +21,15 @@ public static class AntiSpamMessageHandler
 #endif
 
         var msg = args.Message;
-        if (msg.Content is not { Length: > 0 })
+        if (msg is { Components: [{ Type: (DiscordComponentType)20 }] }
+            && !args.Channel.IsOfftopicChannel())
+        {
+            await msg.DeleteAsync().ConfigureAwait(false);
+            Config.Log.Debug($"Removed checkpoint spam message from user {author.Username} ({author.Id}) in #{msg.Channel?.Name}");
+            return false;
+        }
+        
+        if (msg.Content is not { Length: >0 })
             return true;
 
         if (MessageCache.TryGetValue(author.Id, out var item)
@@ -42,7 +50,7 @@ public static class AntiSpamMessageHandler
             }
             catch (Exception e)
             {
-                Config.Log.Warn(e, $"Faled to delete spam message from user {author.Username} ({author.Id}) in #{msg.Channel?.Name} {msg.JumpLink}");
+                Config.Log.Warn(e, $"Failed to delete spam message from user {author.Username} ({author.Id}) in #{msg.Channel?.Name} {msg.JumpLink}");
             }
             try
             {

@@ -18,8 +18,8 @@ internal static class SqlConfiguration
         foreach (var stateVar in setVars)
             if (stateVar.Value is string value)
                 Config.InMemorySettings[stateVar.Key[ConfigVarPrefix.Length ..]] = value;
-        if (!Config.InMemorySettings.TryGetValue(nameof(Config.GoogleApiCredentials), out var googleCreds) ||
-            string.IsNullOrEmpty(googleCreds))
+        if (!Config.InMemorySettings.TryGetValue(nameof(Config.GoogleApiCredentials), out var googleCreds)
+            || string.IsNullOrEmpty(googleCreds))
         {
             if (Path.Exists(Config.GoogleApiConfigPath))
             {
