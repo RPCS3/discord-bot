@@ -2,7 +2,9 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using CompatApiClient;
 using CompatApiClient.Compression;
+using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
@@ -232,11 +234,10 @@ internal static partial class DiscordInviteFilter
             try
             {
                 using var handler = new HttpClientHandler {AllowAutoRedirect = false}; // needed to store cloudflare session cookies
-                using var httpClient = HttpClientFactory.Create(handler, new CompressionMessageHandler());
+                using var httpClient = HttpClientFactory.Create(handler, new CompressionMessageHandler()).WithUserAgent();
                 using var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/" + meLink);
                 request.Headers.Accept.Add(new("text/html"));
                 request.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                request.Headers.UserAgent.Add(new("RPCS3CompatibilityBot", "2.0"));
                 using var response = await httpClient.SendAsync(request).ConfigureAwait(false);
                 var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
@@ -258,7 +259,6 @@ internal static partial class DiscordInviteFilter
                             }!),
                         };
                         postRequest.Headers.Accept.Add(new("text/html"));
-                        postRequest.Headers.UserAgent.Add(new("RPCS3CompatibilityBot", "2.0"));
                         using var postResponse = await httpClient.SendAsync(postRequest).ConfigureAwait(false);
                         if (postResponse.StatusCode == HttpStatusCode.Redirect)
                         {
@@ -267,7 +267,6 @@ internal static partial class DiscordInviteFilter
                             {
                                 using var getDiscordRequest = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/server/join/redirect/" + redirectId);
                                 getDiscordRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                                getDiscordRequest.Headers.UserAgent.Add(new("RPCS3CompatibilityBot", "2.0"));
                                 using var discordRedirect = await httpClient.SendAsync(getDiscordRequest).ConfigureAwait(false);
                                 if (discordRedirect.StatusCode == HttpStatusCode.Redirect)
                                 {

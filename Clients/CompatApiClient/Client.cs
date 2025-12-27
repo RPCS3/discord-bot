@@ -19,7 +19,7 @@ public class Client: IDisposable
     private static readonly MemoryCache ResponseCache = new(new MemoryCacheOptions { ExpirationScanFrequency = TimeSpan.FromHours(1) });
     private static readonly string[] BuildArchList = [ArchType.X64, ArchType.Arm];
 
-    private readonly HttpClient client = HttpClientFactory.Create(new CompressionMessageHandler());
+    private readonly HttpClient client = HttpClientFactory.Create(new CompressionMessageHandler()).WithUserAgent();
     private readonly JsonSerializerOptions jsonOptions = new()
     {
         PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,

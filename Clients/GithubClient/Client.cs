@@ -13,7 +13,7 @@ namespace GithubClient;
 
 public partial class Client
 {
-    private readonly GitHubClient client;
+    private readonly GitHubClient client = new(new ProductHeaderValue(ApiConfig.ProductName, ApiConfig.ProductVersion));
 
     private const string OwnerId = "RPCS3";
     private const string RepoId = "rpcs3";
@@ -28,7 +28,6 @@ public partial class Client
     
     public Client(string? githubToken)
     {
-        client = new(new ProductHeaderValue(ApiConfig.ProductName, ApiConfig.ProductVersion));
         if (githubToken is {Length: >0})
             client.Credentials = new(githubToken);
     }

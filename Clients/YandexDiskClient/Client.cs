@@ -15,19 +15,13 @@ namespace YandexDiskClient;
 
 public sealed class Client
 {
-    private readonly HttpClient client;
-    private readonly JsonSerializerOptions jsonOptions;
-
-    public Client()
+    private readonly HttpClient client = HttpClientFactory.Create(new CompressionMessageHandler());
+    private readonly JsonSerializerOptions jsonOptions = new()
     {
-        client = HttpClientFactory.Create(new CompressionMessageHandler());
-        jsonOptions = new()
-        {
-            PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            IncludeFields = true,
-        };
-    }
+        PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        IncludeFields = true,
+    };
 
     public Task<ResourceInfo?> GetResourceInfoAsync(string shareKey, CancellationToken cancellationToken)
         => GetResourceInfoAsync(new Uri($"https://yadi.sk/d/{shareKey}"), cancellationToken);
@@ -41,7 +35,6 @@ public sealed class Client
                 ("fields", "size,name,file")
             );
             using var message = new HttpRequestMessage(HttpMethod.Get, uri);
-            message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
             using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
             try
             {

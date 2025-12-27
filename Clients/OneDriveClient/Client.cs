@@ -14,28 +14,20 @@ namespace OneDriveClient;
 
 public class Client
 {
-    private readonly HttpClient client;
-    private readonly HttpClient noRedirectsClient;
-    private readonly JsonSerializerOptions jsonOptions;
-
-    public Client()
+    private readonly HttpClient client = HttpClientFactory.Create(new CompressionMessageHandler()).WithUserAgent();
+    private readonly HttpClient noRedirectsClient = HttpClientFactory.Create(new HttpClientHandler { AllowAutoRedirect = false }).WithUserAgent();
+    private readonly JsonSerializerOptions jsonOptions = new()
     {
-        client = HttpClientFactory.Create(new CompressionMessageHandler());
-        noRedirectsClient = HttpClientFactory.Create(new HttpClientHandler {AllowAutoRedirect = false});
-        jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            IncludeFields = true,
-        };
-    }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        IncludeFields = true,
+    };
 
     private async Task<Uri?> ResolveShortLink(Uri shortLink, CancellationToken cancellationToken)
     {
         try
         {
             using var message = new HttpRequestMessage(HttpMethod.Head, shortLink);
-            message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
             using var response = await noRedirectsClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             return response.Headers.Location;
         }
@@ -82,7 +74,6 @@ public class Client
                     ("select", "id,@content.downloadUrl,name,size")
                 );
             using var message = new HttpRequestMessage(HttpMethod.Get, resourceMetaUri);
-            message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
             using var response = await client.SendAsync(message, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
             try
             {

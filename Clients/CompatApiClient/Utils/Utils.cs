@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 
 namespace CompatApiClient.Utils;
 
@@ -57,4 +58,10 @@ public static class Utils
             < UnderGB => $"{bytes / (1024.0 * 1024):0.##} MB",
             _ => $"{bytes / (1024.0 * 1024 * 1024):0.##} GB"
         };
+
+    public static HttpClient WithUserAgent(this HttpClient client)
+    {
+        client.DefaultRequestHeaders.UserAgent.Add(ApiConfig.ProductInfoHeader);
+        return client;
+    }
 }
