@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Xml;
 using CompatApiClient.Compression;
+using CompatApiClient.Utils;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
@@ -14,7 +15,7 @@ namespace CompatBot.ThumbScrapper;
 
 internal static partial class GameTdbScraper
 {
-    private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler());
+    private static readonly HttpClient HttpClient = HttpClientFactory.Create(new CompressionMessageHandler()).WithUserAgent();
     private static readonly Uri TitleDownloadLink = new("https://www.gametdb.com/ps3tdb.zip?LANG=EN");
     [GeneratedRegex(
         @"(?<cover_link>https?://art\.gametdb\.com/ps3/cover(?!full)[/\w\d]+\.jpg(\?\d+)?)",
@@ -80,8 +81,7 @@ internal static partial class GameTdbScraper
                 await downloadStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
             fileStream.Seek(0, SeekOrigin.Begin);
             using var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read);
-            var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase));
-            if (logEntry == null)
+            if (zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase)) is not {} logEntry)
                 throw new InvalidOperationException("No zip entries that match the .xml criteria");
 
             await using var zipStream = logEntry.Open();

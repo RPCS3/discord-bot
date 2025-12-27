@@ -76,7 +76,8 @@ internal sealed partial class GoogleDriveHandler: BaseSourceHandler
 
     private static DriveService GetClient(string? json = null)
     {
-        var credential = GoogleCredential.FromJson(json ?? Config.GoogleApiCredentials).CreateScoped(Scopes);
+        var credFactory = CredentialFactory.FromJson<ServiceAccountCredential>(json ?? Config.GoogleApiCredentials);
+        var credential = credFactory.ToGoogleCredential().CreateScoped(Scopes);
         var service = new DriveService(new()
         {
             HttpClientInitializer = credential,
@@ -99,26 +100,13 @@ internal sealed partial class GoogleDriveHandler: BaseSourceHandler
         }
     }
 
-    private sealed class GoogleDriveSource : ISource
+    private sealed class GoogleDriveSource(DriveService driveService, FilesResource.GetRequest fileInfoRequest, FileMeta fileMeta, IArchiveHandler handler) : ISource
     {
         public string SourceType => "Google Drive";
         public string FileName => fileMeta.Name;
         public long SourceFileSize => fileMeta.Size ?? 0;
         public long SourceFilePosition => handler.SourcePosition;
         public long LogFileSize => handler.LogSize;
-
-        private readonly DriveService driveService;
-        private readonly FilesResource.GetRequest fileInfoRequest;
-        private readonly FileMeta fileMeta;
-        private readonly IArchiveHandler handler;
-
-        public GoogleDriveSource(DriveService driveService, FilesResource.GetRequest fileInfoRequest, FileMeta fileMeta, IArchiveHandler handler)
-        {
-            this.driveService = driveService;
-            this.fileInfoRequest = fileInfoRequest;
-            this.fileMeta = fileMeta;
-            this.handler = handler;
-        }
 
         public async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
         {

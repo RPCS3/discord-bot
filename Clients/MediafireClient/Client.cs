@@ -17,8 +17,13 @@ namespace MediafireClient;
 
 public sealed partial class Client
 {
-    private readonly HttpClient client;
-    private readonly JsonSerializerOptions jsonOptions;
+    private readonly HttpClient client = HttpClientFactory.Create(new CompressionMessageHandler()).WithUserAgent();
+    private readonly JsonSerializerOptions jsonOptions = new()
+    {
+        PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        IncludeFields = true,
+    };
         
     //var optSecurityToken = "1605819132.376f3d84695f46daa7b69ee67fbc5edb0a00843a8b2d5ac7d3d1b1ad8a4212b0";
     //private static readonly Regex SecurityTokenRegex = new(@"(var\s+optSecurityToken|name=""security"" value)\s*=\s*""(?<security_token>.+)""", RegexOptions.ExplicitCapture);
@@ -26,24 +31,12 @@ public sealed partial class Client
     [GeneratedRegex(@"(var\s+optDirectURL|href)\s*=\s*""(?<direct_link>https?://download\d+\.mediafire\.com/.+)""")]
     private static partial Regex DirectUrlRegex();
 
-    public Client()
-    {
-        client = HttpClientFactory.Create(new CompressionMessageHandler());
-        jsonOptions = new()
-        {
-            PropertyNamingPolicy = SpecialJsonNamingPolicy.SnakeCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            IncludeFields = true,
-        };
-    }
-
     public async Task<LinksResult?> GetWebLinkAsync(string quickKey, CancellationToken cancellationToken)
     {
         try
         {
             var uri = new Uri($"https://www.mediafire.com/api/1.5/file/get_links.php?quick_key={quickKey}&response_format=json");
             using var message = new HttpRequestMessage(HttpMethod.Get, uri);
-            message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
             using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
             try
             {
@@ -67,7 +60,6 @@ public sealed partial class Client
         try
         {
             using var message = new HttpRequestMessage(HttpMethod.Get, webLink);
-            message.Headers.UserAgent.Add(ApiConfig.ProductInfoHeader);
             using var response = await client.SendAsync(message, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.TemporaryRedirect)
             {

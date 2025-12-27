@@ -47,10 +47,7 @@ internal static partial class Bot
             }
                 
             await using var result = Config.MemoryStreamManager.GetStream();
-            using var zip = new ZipWriter(
-                result,
-                new(CompressionType.LZMA) { DeflateCompressionLevel = CompressionLevel.Default }
-            );
+            using var zip = new ZipWriter(result, new(CompressionType.LZMA));
             foreach (var fname in logPaths)
             {
                 await using var log = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -213,7 +210,7 @@ internal static partial class Bot
                     await wdb.SaveChangesAsync().ConfigureAwait(false);
                 }
             }
-            using (var zip = new ZipWriter(result, new(CompressionType.LZMA){DeflateCompressionLevel = CompressionLevel.Default}))
+            using (var zip = new ZipWriter(result, new(CompressionType.LZMA)))
                 foreach (var fname in Directory.EnumerateFiles(dbDir, $"{dbName}.*", new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, }))
                 {
                     await using var dbData = File.Open(fname, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -243,9 +240,9 @@ internal static partial class Bot
     private static async ValueTask UpdateCheckAsync(SlashCommandContext? ctx, CancellationToken cancellationToken)
     {
         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-#pragma warning disable VSTHRD103
+#pragma warning disable VSTHRD103, CA2016
         if (!LockObj.Wait(0))
-#pragma warning restore VSTHRD103
+#pragma warning restore VSTHRD103, CA2016
         {
             Config.Log.Info("Update check is already in progress");
             if (ctx is not null)

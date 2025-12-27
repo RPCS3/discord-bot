@@ -129,10 +129,8 @@ internal static class Program
 #endif
             var backgroundTasks = Task.WhenAll(
                 AmdDriverVersionProvider.RefreshAsync(),
-#if !DEBUG
                 ThumbScrapper.GameTdbScraper.RunAsync(Config.Cts.Token),
                 //TitleUpdateInfoProvider.RefreshGameUpdateInfoAsync(Config.Cts.Token),
-#endif
                 DiscLanguageProvider.RefreshAsync(Config.Cts.Token),
                 StatsStorage.BackgroundSaveAsync(),
                 CompatList.ImportCompatListAsync(),
