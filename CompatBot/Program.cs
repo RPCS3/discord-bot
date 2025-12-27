@@ -36,7 +36,6 @@ internal static class Program
         //AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromMilliseconds(100));
         Regex.CacheSize = 200; // default is 15, we need more for content filter
 
-
         try
         {
             Console.OutputEncoding = Encoding.UTF8;
