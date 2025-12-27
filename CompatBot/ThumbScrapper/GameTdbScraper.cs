@@ -81,8 +81,7 @@ internal static partial class GameTdbScraper
                 await downloadStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
             fileStream.Seek(0, SeekOrigin.Begin);
             using var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read);
-            var logEntry = zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase));
-            if (logEntry == null)
+            if (zipArchive.Entries.FirstOrDefault(e => e.Name.EndsWith(".xml", StringComparison.InvariantCultureIgnoreCase)) is not {} logEntry)
                 throw new InvalidOperationException("No zip entries that match the .xml criteria");
 
             await using var zipStream = logEntry.Open();
