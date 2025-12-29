@@ -113,7 +113,7 @@ internal static class Explain
             if (attachment is not null)
                 label += " (can be empty)";
             var modal = new DiscordModalBuilder()
-                .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
+                .WithCustomId($"modal:explain:{Guid.NewGuid():n}")
                 .WithTitle("New explanation text")
                 .AddTextInput(new("explanation", style: DiscordTextInputStyle.Paragraph), label);
             await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
@@ -242,7 +242,7 @@ internal static class Explain
         if (item.AttachmentFilename is {Length: >0})
             label += " (can be empty)";
         var modal = new DiscordModalBuilder()
-            .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
+            .WithCustomId($"modal:explain:{Guid.NewGuid():n}")
             .WithTitle("Updated explanation text")
             .AddTextInput(new("explanation", value: item.Text, style: DiscordTextInputStyle.Paragraph), label);
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
