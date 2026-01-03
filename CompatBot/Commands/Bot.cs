@@ -188,6 +188,7 @@ internal static partial class Bot
         try
         {
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            wdb.WithNoCase();
             string dbPath, dbDir;
             await using (var connection = db.Database.GetDbConnection())
             {
