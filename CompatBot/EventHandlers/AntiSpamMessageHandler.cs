@@ -71,7 +71,7 @@ public static class AntiSpamMessageHandler
                     try
                     {
                         if (await client.GetMemberAsync(author).ConfigureAwait(false) is DiscordMember member)
-                            await member.TimeoutAsync(DateTimeOffset.UtcNow.AddMinutes(1)).ConfigureAwait(false);
+                            await member.TimeoutAsync(DateTimeOffset.UtcNow.AddMinutes(1), "Anti-spam filter").ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
