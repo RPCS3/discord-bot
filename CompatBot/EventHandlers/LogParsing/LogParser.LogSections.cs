@@ -184,6 +184,7 @@ internal partial class LogParser
                 ["SYS: Title was set from"] = TitleWasSet(),
                 ["SYS: Path:"] = DigitalPathSys(),
                 ["SYS: Boot path:"] = BootPathInBodySys(),
+                ["SYS: Disc:"] = DiscMountSys(),
                 ["Elf path:"] = ElfPath(),
                 ["VFS: Mounted path \"/dev_bdvd\""] = VfsMountPath(),
                 ["Invalid or unsupported file format:"] = InvalidFileFormat(),
