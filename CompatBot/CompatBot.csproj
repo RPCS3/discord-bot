@@ -64,7 +64,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.1" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
-    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.225.1" />
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.225.2" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Nerdbank.Streams" Version="2.13.16" />
     <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
@@ -72,7 +72,7 @@
     <PackageReference Include="NLog.Extensions.Logging" Version="6.1.0" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
     <PackageReference Include="Result.Net" Version="1.7.0" />
-    <PackageReference Include="SharpCompress" Version="0.42.1" />
+    <PackageReference Include="SharpCompress" Version="0.44.0" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     <PackageReference Include="TesseractCSharp" Version="1.0.5" />
   </ItemGroup>
