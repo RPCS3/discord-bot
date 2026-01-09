@@ -116,7 +116,12 @@ internal static partial class LogParserResult
             notes.Add("❌ Disc version of the game inside the `/dev_hdd0/game/` directory");
         if (serial is {Length: >0} && isElf)
             notes.Add($"⚠️ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
-        if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd
+        
+        if (items["vfs_disc_mount"] is "vfsv0_virtual_iso_overlay_fs_dev")
+        {
+            notes.Add("ℹ️ Booted from ISO");
+        }
+        else if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd
             && items["os_type"] is {Length: >0} osType
             && mountedBdvd.Split('/', StringSplitOptions.RemoveEmptyEntries) is {Length: <3} segments
             && (osType is "Windows" && segments is [[_, ':']] // D:/

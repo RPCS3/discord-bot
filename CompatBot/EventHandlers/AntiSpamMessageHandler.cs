@@ -28,25 +28,35 @@ public static class AntiSpamMessageHandler
             Config.Log.Debug($"Removed checkpoint spam message from user {author.Username} ({author.Id}) in #{msg.Channel?.Name}");
             return false;
         }
-        
-        if (msg.Content is not { Length: >0 })
-            return true;
+
 
         if (MessageCache.TryGetValue(author.Id, out var item)
-            && item is (DiscordMessage { Content.Length: >0 } lastMessage, bool isWarned)
-            && lastMessage.Content == msg.Content
+            && item is (DiscordMessage lastMessage, bool isWarned)
+            && SameContent(lastMessage, msg)
             && lastMessage.ChannelId != msg.ChannelId)
         {
             var removedSpam = false;
             try
             {
                 await msg.DeleteAsync("spam").ConfigureAwait(false);
+                removedSpam = true;
+
+                var newMsgContent = "<???>";
+                if (msg.Content is { Length: > 0 })
+                {
+                    newMsgContent = msg.Content;
+                }
+                else if (msg is { Attachments.Count: > 0 })
+                {
+                    foreach (var att in msg.Attachments)
+                        newMsgContent += $"📎 {att.FileName}\n";
+                    newMsgContent = newMsgContent.TrimEnd();
+                }
                 Config.Log.Debug($"""
                     Removed spam message from user {author.Username} ({author.Id}) in #{msg.Channel?.Name}:
-                    {msg.Content.Trim()}
+                    {newMsgContent.Trim()}
                     """
                 );
-                removedSpam = true;
             }
             catch (Exception e)
             {
@@ -70,5 +80,20 @@ public static class AntiSpamMessageHandler
 
         MessageCache.Set(author.Id, (msg, false), DefaultExpiration);
         return true;
+    }
+
+    private static bool SameContent(DiscordMessage msg1, DiscordMessage msg2)
+    {
+        if (msg1 is { Content.Length: > 0 }
+            && msg2 is { Content.Length: > 0 }
+            && msg1.Content == msg2.Content)
+            return true;
+
+        if (msg1 is { Attachments.Count: > 0 }
+            && msg2 is { Attachments.Count: > 0 }
+            && msg1.Attachments.SequenceEqual(msg2.Attachments, DiscordAttachmentComparer.Instance))
+            return true;
+
+        return false;
     }
 }

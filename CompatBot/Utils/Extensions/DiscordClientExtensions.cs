@@ -256,7 +256,7 @@ public static class DiscordClientExtensions
                 Title = infraction,
                 Color = GetColor(severity),
             }.AddField("Violator", author is null ? message.Author.Mention : GetMentionWithNickname(author), true)
-            .AddField("Channel", message.Channel.IsPrivate ? "Bot's DM" : message.Channel.Mention, true);
+            .AddField("Channel", message.Channel.IsPrivate ? "Bot's DM" : message.JumpLink.ToString(), true);
         if (filterId is not null)
             result.AddField("Filter #", filterId.ToString(), true);
         result.AddField("Content of the offending item", content.Trim(EmbedPager.MaxFieldLength));

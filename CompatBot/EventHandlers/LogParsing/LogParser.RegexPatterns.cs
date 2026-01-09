@@ -248,6 +248,8 @@ internal partial class LogParser
     private static partial Regex DigitalPathSys();
     [GeneratedRegex(@"Boot path: (?<ldr_boot_path_full>.*(?<ldr_boot_path>/dev_hdd0/game/(?<ldr_boot_path_serial>[^/\r\n]+)).*|[^\r\n]*)\r?$", DefaultOptions)]
     private static partial Regex BootPathInBodySys();
+    [GeneratedRegex(@"SYS: Disc: /(?<vfs_disc_mount>\w+)/\r?$", DefaultOptions)]
+    private static partial Regex DiscMountSys();
     [GeneratedRegex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path_full>(?<elf_boot_path>/dev_hdd0/game/(?<elf_boot_path_serial>[^/\r\n]+)/USRDIR/EBOOT\.BIN|.*?))\r?$", DefaultOptions)]
     private static partial Regex ElfPath();
     [GeneratedRegex(@"Mounted path ""/dev_bdvd"" to ""(?<mounted_dev_bdvd>[^""]+)""", DefaultOptions)]

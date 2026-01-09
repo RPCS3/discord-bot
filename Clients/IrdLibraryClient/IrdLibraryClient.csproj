@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="LTRData.DiscUtils.OpticalDisk" Version="1.0.72" />
+    <PackageReference Include="LTRData.DiscUtils.OpticalDisk" Version="1.0.73" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.1" />
   </ItemGroup>
