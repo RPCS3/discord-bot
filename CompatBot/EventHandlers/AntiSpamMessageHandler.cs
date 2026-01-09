@@ -1,5 +1,6 @@
 ﻿using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.VisualStudio.Services.DelegatedAuthorization;
 
 namespace CompatBot.EventHandlers;
 
@@ -67,6 +68,15 @@ public static class AntiSpamMessageHandler
                 if (!isWarned)
                 {
                     await author.SendMessageAsync("Please do not spam the same message in multiple channels. Thank you.").ConfigureAwait(false);
+                    try
+                    {
+                        if (await client.GetMemberAsync(author).ConfigureAwait(false) is DiscordMember member)
+                            await member.TimeoutAsync(DateTimeOffset.UtcNow.AddMinutes(1)).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e, $"Failed to timeout user {author.Username}");
+                    }
                     isWarned = true;
                 }
             }
