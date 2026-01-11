@@ -163,7 +163,7 @@ internal static class UpdateInfoFormatter
             .AddField("Windows x64", GetLinkMessage(linkedX64Build?.Windows, true), true)
             .AddField("Linux x64", GetLinkMessage(linkedX64Build?.Linux, true), true)
             .AddField("Mac Intel", GetLinkMessage(linkedX64Build?.Mac, true), true)
-            .AddField("Windows ARM64", "-", true)
+            .AddField("Windows ARM64", GetLinkMessage(linkedArmBuild?.Windows, true), true)
             .AddField("Linux ARM64", GetLinkMessage(linkedArmBuild?.Linux, true), true)
             .AddField("Mac Apple Silicon", GetLinkMessage(linkedArmBuild?.Mac, true), true);
     }
@@ -188,28 +188,28 @@ internal static class UpdateInfoFormatter
 #if DEBUG
             _ => client.Guilds.Values.FirstOrDefault()?.Emojis.Values.ToList().RandomElement(githubLogin.GetHashCode())?.GetDiscordName(),
 #else
-                "Nekotekina" => ":nekotekina:",
-                "kd-11" => ":kd11:",
-                "Megamouse" => ":megamouse:",
-                "elad335" => ":elad:",
-                "hcorion" => ":hcorion:",
-                "AniLeo" => ":ani:",
-                "Talkashie" => ":font:",
-                "jarveson" => ":jarves:",
-                "xddxd" => ":kekw:",
-                "isJuhn" => "😺",
-                "13xforever" => "💮",
-                "RipleyTom" => ":galciv:",
-                "Whatcookie" => "🍪",
-                "clienthax" => ":gooseknife:",
-                /*
-                "VelocityRa" => null,
-                "CookiePLMonster" => null,
-                "Ruipin" => null,
-                "rajkosto" => null,
-                "dio-gh" => null,
-                */
-                _ => null,
+            "Nekotekina" => ":nekotekina:",
+            "kd-11" => ":kd11:",
+            "Megamouse" => ":megamouse:",
+            "elad335" => ":elad:",
+            "hcorion" => ":hcorion:",
+            "AniLeo" => ":ani:",
+            "Talkashie" => ":font:",
+            "jarveson" => ":jarves:",
+            "xddxd" => ":kekw:",
+            "isJuhn" => "😺",
+            "13xforever" => "💮",
+            "RipleyTom" => ":galciv:",
+            "Whatcookie" => "🍪",
+            "clienthax" => ":gooseknife:",
+            /*
+            "VelocityRa" => null,
+            "CookiePLMonster" => null,
+            "Ruipin" => null,
+            "rajkosto" => null,
+            "dio-gh" => null,
+            */
+            _ => null,
 #endif
         });
 
