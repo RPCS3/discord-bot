@@ -127,7 +127,7 @@ public partial class Client
         // https://api.github.com/repos/RPCS3/rpcs3/actions/artifacts/2802751674 /zip
         // we need public web links like this:
         // https://github.com/RPCS3/rpcs3/actions/runs/14017059654/artifacts/2802751674
-        var windowsBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Windows"));
+        var windowsBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Windows") && !a.Name.Contains("Clang") && !a.Name.Contains("ARM"));
         if (windowsBuildArtifact is { ArchiveDownloadUrl.Length: > 0, Expired: false })
         {
             var winZipUrl = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{windowsBuildArtifact.Id}";
@@ -148,6 +148,31 @@ public partial class Client
             catch (Exception e2)
             {
                 ApiConfig.Log.Error(e2, "Failed to get windows build filename");
+            }
+        }
+
+        // windows arm build
+        var windowsArmBuildArtifact = artifacts.FirstOrDefault(a => a.Name.Contains("Windows") && a.Name.Contains("ARM"));
+        if (windowsArmBuildArtifact is { ArchiveDownloadUrl.Length: > 0, Expired: false })
+        {
+            var winZipUrl = $"https://github.com/RPCS3/rpcs3/actions/runs/{run.Id}/artifacts/{windowsArmBuildArtifact.Id}";
+            result = result with { WindowsArmBuildDownloadLink = winZipUrl };
+            try
+            {
+                await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, windowsArmBuildArtifact.Id, "zip").ConfigureAwait(false);
+                using var zipStream = ReaderFactory.Open(stream);
+                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                {
+                    if (zipStream.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
+                    {
+                        result = result with { WindowsArmFilename = Path.GetFileName(zipStream.Entry.Key) };
+                        break;
+                    }
+                }
+            }
+            catch (Exception e2)
+            {
+                ApiConfig.Log.Error(e2, "Failed to get windows arm build filename");
             }
         }
 
