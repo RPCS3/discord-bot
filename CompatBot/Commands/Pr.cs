@@ -134,7 +134,6 @@ internal sealed class Pr
 
         var (state, _) = prInfo.GetState();
         var embed = prInfo.AsEmbed();
-        var azureClient = Config.GetAzureDevOpsClient();
         if (state is "Open" or "Closed")
         {
             var windowsDownloadHeader = "Windows x64 PR Build";
@@ -151,7 +150,7 @@ internal sealed class Pr
             string? macArmDownloadText = null;
             string? buildTime = null;
 
-            if (azureClient is not null && prInfo is {Head.Sha: {Length: >0} commit})
+            if (prInfo is {Head.Sha: {Length: >0} commit})
                 try
                 {
                     windowsDownloadText = "⏳ Pending…";
@@ -160,9 +159,8 @@ internal sealed class Pr
                     windowsArmDownloadText = "⏳ Pending…";
                     linuxArmDownloadText = "⏳ Pending…";
                     macArmDownloadText = "⏳ Pending…";
-                    var latestBuild = await azureClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
                     var ghBuild = await GithubClient.GetPrBuildInfoAsync(commit, prInfo.MergedAt?.DateTime, pr, Config.Cts.Token).ConfigureAwait(false);
-                    if (latestBuild is null && ghBuild is null)
+                    if (ghBuild is null)
                     {
                         if (state is "Open")
                         {
@@ -174,60 +172,6 @@ internal sealed class Pr
                         windowsArmDownloadText = null;
                         linuxArmDownloadText = null;
                         macArmDownloadText = null;
-                    }
-                    if (latestBuild is not null)
-                    {
-                        var shouldHaveArtifacts = false;
-                        if (latestBuild is
-                            {
-                                Status: BuildStatus.Completed,
-                                Result: BuildResult.Succeeded or BuildResult.PartiallySucceeded,
-                                FinishTime: not null
-                            })
-                        {
-                            buildTime = $"Built on {latestBuild.FinishTime:u} ({(DateTime.UtcNow - latestBuild.FinishTime.Value).AsTimeDeltaDescription()} ago)";
-                            shouldHaveArtifacts = true;
-                        }
-
-                        // Check for subtask errors (win/lin/mac)
-                        if (latestBuild is { Result: BuildResult.Failed or BuildResult.Canceled })
-                        {
-                            macDownloadText = $"❌ {latestBuild.Result}";
-                            macArmDownloadText = $"❌ {latestBuild.Result}";
-                        }
-
-                        // Check estimated time for pending builds
-                        if (latestBuild is { Status: BuildStatus.InProgress, StartTime: not null })
-                        {
-                            var estimatedCompletionTime = latestBuild.StartTime.Value + (await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false)).Mean;
-                            var estimatedTime = TimeSpan.FromMinutes(1);
-                            if (estimatedCompletionTime > DateTime.UtcNow)
-                                estimatedTime = estimatedCompletionTime - DateTime.UtcNow;
-                            macDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
-                            macArmDownloadText = $"⏳ Pending in {estimatedTime.AsTimeDeltaDescription()}…";
-                        }
-
-                        // mac build
-                        var name = latestBuild.MacFilename ?? "Mac PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_macos", "");
-                        if (!string.IsNullOrEmpty(latestBuild.MacBuildDownloadLink))
-                            macDownloadText = $"[⏬ {name}]({latestBuild.MacBuildDownloadLink})";
-                        else if (shouldHaveArtifacts)
-                        {
-                            if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
-                                macDownloadText = "No longer available";
-                        }
-
-                        // mac arm build
-                        name = latestBuild.MacArmFilename ?? "Mac Apple Silicon PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_macos_arm64", "");
-                        if (!string.IsNullOrEmpty(latestBuild.MacArmBuildDownloadLink))
-                            macArmDownloadText = $"[⏬ {name}]({latestBuild.MacArmBuildDownloadLink})";
-                        else if (shouldHaveArtifacts)
-                        {
-                            if (latestBuild.FinishTime.HasValue && (DateTime.UtcNow - latestBuild.FinishTime.Value).TotalDays > 30)
-                                macArmDownloadText = "No longer available";
-                        }
                     }
                     if (ghBuild is not null)
                     {
@@ -360,7 +304,7 @@ internal sealed class Pr
             if (!string.IsNullOrEmpty(buildTime))
                 embed.WithFooter(buildTime);
         }
-        else if (state is "Merged" && azureClient is not null)
+        else if (state is "Merged")
         {
             var mergeTime = prInfo.MergedAt.GetValueOrDefault();
             var now = DateTime.UtcNow;
