@@ -212,7 +212,7 @@ internal sealed class Pr
 
                         // windows build
                         var name = ghBuild.WindowsFilename ?? "Windows PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_win64", "");
+                        name = name.Replace("rpcs3-", "").Replace("_win64", "").Replace("_msvc", "");
                         if (ghBuild.WindowsBuildDownloadLink is {Length: >0})
                             windowsDownloadText = $"[⏬ {name}]({ghBuild.WindowsBuildDownloadLink})";
                         else if (shouldHaveArtifacts)
@@ -223,7 +223,7 @@ internal sealed class Pr
 
                         // windows arm build
                         name = ghBuild.WindowsArmFilename ?? "Windows ARM64 PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_arm64", "");
+                        name = name.Replace("rpcs3-", "").Replace("_aarch64", "").Replace("_clang", "");
                         if (ghBuild.WindowsArmBuildDownloadLink is {Length: >0})
                             windowsArmDownloadText = $"[⏬ {name}]({ghBuild.WindowsArmBuildDownloadLink})";
                         else if (shouldHaveArtifacts)
@@ -231,7 +231,6 @@ internal sealed class Pr
                             if ((DateTime.UtcNow - ghBuild.FinishTime).TotalDays > 30)
                                 windowsArmDownloadText = "No longer available";
                         }
-                        windowsArmDownloadText = "-";
 
                         // linux build
                         name = ghBuild.LinuxFilename ?? "Linux PR Build";
@@ -268,7 +267,7 @@ internal sealed class Pr
 
                         // mac arm build
                         name = ghBuild.MacArmFilename ?? "Mac Apple Silicon PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_macos_arm64", "");
+                        name = name.Replace("rpcs3-", "").Replace("_macos", "").Replace("_arm64", "");
                         if (ghBuild.MacArmBuildDownloadLink is {Length: >0})
                             macArmDownloadText = $"[⏬ {name}]({ghBuild.MacArmBuildDownloadLink})";
                         else if (shouldHaveArtifacts)
