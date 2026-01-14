@@ -4,7 +4,6 @@ using CompatApiClient;
 using CompatApiClient.POCOs;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
-using CompatBot.Utils.Extensions;
 
 namespace CompatBot.Utils.ResultFormatters;
 
