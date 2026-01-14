@@ -223,7 +223,7 @@ internal sealed class Pr
 
                         // windows arm build
                         name = ghBuild.WindowsArmFilename ?? "Windows ARM64 PR Build";
-                        name = name.Replace("rpcs3-", "").Replace("_aarch64", "").Replace("_clang", "");
+                        name = name.Replace("rpcs3-", "").Replace("_win64", "").Replace("_aarch64", "").Replace("_clang", "");
                         if (ghBuild.WindowsArmBuildDownloadLink is {Length: >0})
                             windowsArmDownloadText = $"[⏬ {name}]({ghBuild.WindowsArmBuildDownloadLink})";
                         else if (shouldHaveArtifacts)
