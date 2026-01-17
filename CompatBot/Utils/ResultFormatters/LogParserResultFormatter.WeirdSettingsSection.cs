@@ -369,7 +369,7 @@ internal static partial class LogParserResult
                 && memoryMaps.TryGetValue("BAR", out var barMemory)
                 && deviceLocalMemory != barMemory)
             {
-                generalNotes.Add("⚠️ [Re-BAR](<https://www.nvidia.com/en-us/geforce/news/geforce-rtx-30-series-resizable-bar-support/>) (or SAM) is not [enabled](<https://www.intel.com/content/www/us/en/support/articles/000090831/graphics.html>) on this system, which may impact performance");
+                generalNotes.Add("⚠️ [Re-BAR](<https://www.nvidia.com/en-us/geforce/news/geforce-rtx-30-series-resizable-bar-support/>) (or SAM) is [not enabled](<https://www.intel.com/content/www/us/en/support/articles/000090831/graphics.html>) on this system, which may impact performance");
             }
         }
 
