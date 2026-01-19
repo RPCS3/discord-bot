@@ -12,6 +12,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
-    <PackageReference Include="StrawberryShake.Server" Version="15.1.11" />
+    <PackageReference Include="StrawberryShake.Server" Version="15.1.12" />
   </ItemGroup>
 </Project>
