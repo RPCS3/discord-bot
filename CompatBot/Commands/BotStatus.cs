@@ -24,7 +24,7 @@ internal static class BotStatus
             .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true)
             .AddField("Max OCR Queue", $"{OcrProvider.BackendName} / {MediaScreenshotMonitor.MaxQueueLength}", true);
         var osInfo = RuntimeInformation.OSDescription;
-        if (Environment.OSVersion.Platform is PlatformID.Unix or PlatformID.MacOSX)
+        if (Environment.OSVersion.Platform is PlatformID.Unix or PlatformID.MacOSX && osInfo is not { Length: >0})
             osInfo = RuntimeInformation.RuntimeIdentifier;
         var gcMemInfo = GC.GetGCMemoryInfo();
         var apiMsm = ApiConfig.MemoryStreamManager;

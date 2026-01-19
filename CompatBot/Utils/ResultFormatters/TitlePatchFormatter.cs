@@ -24,21 +24,30 @@ internal static class TitlePatchFormatter
             if (pkgs.Length > 1)
                     content.AppendLine(
                         $"""
-                        ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.Size).AsStorageUnit()}.
+                        ℹ️ Total download size of all {pkgs.Length} packages is {pkgs.Sum(p => p.AltUrl?.Size ?? p.Size).AsStorageUnit()}.
                         ⏩ You can use tools such as [rusty-psn](https://github.com/RainbowCookie32/rusty-psn/releases/latest) or [PySN](https://github.com/AphelionWasTaken/PySN/releases/latest) for mass download of all updates.
 
                         ⚠️ You **must** install listed updates in order, starting with the first one. You **can not** skip intermediate versions.
                         """
                     ).AppendLine();
             foreach (var pkg in pkgs)
-                content.AppendLine($"""[⏬ Update v`{pkg.Version}` ({pkg.Size.AsStorageUnit()})]({pkg.Url})""");
+            {
+                // prefer drm-free link
+                content.Append($"[⏬ Update v`{pkg.Version}` ({(pkg.AltUrl?.Size ?? pkg.Size).AsStorageUnit()})]({pkg.AltUrl?.Url ?? pkg.Url})");
+                if (pkg.AltUrl is { Url: { Length: >0} altUrl })
+                    content.Append($" | [with DRM]({pkg.Url})");
+                content.AppendLine();
+            }
         }
         else if (pkgs is [var pkg])
         {
+            var link = $"[⏬ {Path.GetFileName(GetLinkName(pkg.Url))}]({pkg.Url})";
+            if (pkg.AltUrl is { Url: { Length: > 0 } altUrl })
+                link += $" | [with DRM]({pkg.Url})";
             content.AppendLine(
                 $"""
-                 ### {title} update v{pkg.Version} ({pkg.Size.AsStorageUnit()})
-                 [⏬ {Path.GetFileName(GetLinkName(pkg.Url))}]({pkg.Url})
+                 ### {title} update v{pkg.Version} ({(pkg.AltUrl?.Size ?? pkg.Size).AsStorageUnit()})
+                 {link}
                  """
             );
         }

@@ -36,10 +36,14 @@ public class TitlePatchPackage
     public string Sha1Sum { get; set; }
     [XmlAttribute("url")]
     public string Url { get; set; }
+    [XmlAttribute("drm_type")]
+    public string DrmType { get; set; }
     [XmlAttribute("ps3_system_ver")]
     public string Ps3SystemVer { get; set; }
     [XmlElement("paramsfo")]
     public TitlePatchParamSfo ParamSfo { get; set; }
+    [XmlElement("url")]
+    public UrlInfo AltUrl { get; set; }
 }
 
 public class TitlePatchParamSfo
@@ -47,5 +51,17 @@ public class TitlePatchParamSfo
     [XmlElement("TITLE")]
     public string Title { get; set; }
 }
-    
+
+public class UrlInfo
+{
+    [XmlAttribute("url")]
+    public string Url { get; set; }
+    [XmlAttribute("size")]
+    public long Size { get; set; }
+    [XmlAttribute("sha1sum")]
+    public string Sha1Sum { get; set; }
+    [XmlAttribute("drm_type")]
+    public string DrmType { get; set; }
+}
+
 #nullable restore
