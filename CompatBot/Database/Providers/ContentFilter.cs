@@ -249,10 +249,10 @@ internal static class ContentFilter
 
         if (trigger.Actions.HasFlag(FilterAction.ShowExplain)
             && !ignoreFlags.HasFlag(FilterAction.ShowExplain)
-            && !string.IsNullOrEmpty(trigger.ExplainTerm))
+            && trigger.ExplainTerm is { Length: >0 } term)
         {
-            var result = await Explain.LookupTerm(trigger.ExplainTerm).ConfigureAwait(false);
-            await Explain.SendExplanationAsync(result, trigger.ExplainTerm, message, true).ConfigureAwait(false);
+            var result = await Explain.LookupTerm(term).ConfigureAwait(false);
+            await Explain.SendExplanationAsync(result, term, message, true).ConfigureAwait(false);
         }
 
         if (trigger.Actions.HasFlag(FilterAction.Kick)
