@@ -202,7 +202,7 @@ internal static class Fortune
         do
         {
             var totalFortunes = await db.Fortune.CountAsync().ConfigureAwait(false);
-            if (totalFortunes == 0)
+            if (totalFortunes is 0)
                 return null;
 
             var selectedId = rng.Next(totalFortunes);
@@ -214,7 +214,7 @@ internal static class Fortune
         foreach (var l in fortune.Content.FixTypography().Split('\n'))
         {
             var fixedLine = l.Replace("\t", "    ");
-            quote &= !fixedLine.StartsWith("    ");
+            //quote &= !fixedLine.StartsWith("    ");
             var trimmed = fixedLine.TrimStart(' ');
             quote &= trimmed is { Length: 0 } || trimmed[0] is not '-' and not '–' and not '—';
             if (quote)
@@ -222,8 +222,8 @@ internal static class Fortune
             tmp.Append(l).Append('\n');
         }
         return $"""
-                {user.Mention}, your fortune for today:
-                {tmp.ToString().TrimEnd().FixSpaces()}
-                """;
+            {user.Mention}, your fortune for today:
+            {tmp.ToString().TrimEnd().FixSpaces()}
+            """;
     }
 }
