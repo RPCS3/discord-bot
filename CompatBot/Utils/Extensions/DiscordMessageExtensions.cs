@@ -64,37 +64,4 @@ public static class DiscordMessageExtensions
             msgBuilder.WithReply(refMsg.Id);
         return botMsg.UpdateOrCreateMessageAsync(channel, msgBuilder);
     }
-
-    public static async Task<(Dictionary<string, Stream>? attachmentContent, List<string>? failedFilenames)> DownloadAttachmentsAsync(this DiscordMessage msg)
-    {
-        if (msg.Attachments.Count == 0)
-            return (null, null);
-
-        var attachmentContent = new Dictionary<string, Stream>(msg.Attachments.Count);
-        var attachmentFilenames = new List<string>();
-        using var httpClient = HttpClientFactory.Create(new CompressionMessageHandler());
-        foreach (var att in msg.Attachments)
-        {
-            if (att.FileSize > msg.Channel.Guild.GetAttachmentSizeLimit())
-            {
-                attachmentFilenames.Add(att.FileName);
-                continue;
-            }
-
-            try
-            {
-                await using var sourceStream = await httpClient.GetStreamAsync(att.Url).ConfigureAwait(false);
-                var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose);
-                await sourceStream.CopyToAsync(fileStream, 16384, Config.Cts.Token).ConfigureAwait(false);
-                fileStream.Seek(0, SeekOrigin.Begin);
-                attachmentContent[att.FileName] = fileStream;
-            }
-            catch (Exception ex)
-            {
-                Config.Log.Warn(ex, $"Failed to download attachment {att.FileName} from deleted message {msg.JumpLink}");
-                attachmentFilenames.Add(att.FileName);
-            }
-        }
-        return (attachmentContent: attachmentContent, failedFilenames: attachmentFilenames);
-    }
 }

@@ -118,27 +118,7 @@ public static class DiscordClientExtensions
         if (!string.IsNullOrEmpty(context))
             reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
         embedBuilder.Description = reportText + embedBuilder.Description;
-        var (contents, _) = await message.DownloadAttachmentsAsync().ConfigureAwait(false);
-        try
-        {
-            if (contents?.Count > 0)
-                return await logChannel.SendMessageAsync(
-                    new DiscordMessageBuilder()
-                        .AddEmbed(embedBuilder.Build())
-                        .AddFiles(contents)
-                ).ConfigureAwait(false);
-            else
-                return await logChannel.SendMessageAsync(
-                    new DiscordMessageBuilder()
-                        .AddEmbed(embedBuilder.Build())
-                ).ConfigureAwait(false);
-        }
-        finally
-        {
-            if (contents?.Count > 0)
-                foreach (var f in contents.Values)
-                    await f.DisposeAsync();
-        }
+        return await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embedBuilder.Build())).ConfigureAwait(false);
     }
 
     public static async ValueTask<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember?> reporters, string? comment, ReportSeverity severity)
