@@ -1,25 +1,36 @@
-﻿namespace CompatBot.EventHandlers;
+﻿using System.Text.RegularExpressions;
 
-public static class UsernameRaidMonitor
+namespace CompatBot.EventHandlers;
+
+public static partial class UsernameRaidMonitor
 {
+    [GeneratedRegex(@"\b(Discord|Wang\s*Chuanfu)\b", RegexOptions.ExplicitCapture)]
+    private static partial Regex SpamNickname();
+
     public static async Task OnMemberUpdated(DiscordClient c, GuildMemberUpdatedEventArgs args)
     {
         try
         {
             //member object most likely will not be updated in client cache at this moment
+            var member = await args.Guild.GetMemberAsync(args.Member.Id).ConfigureAwait(false) ?? args.Member;
             string? fallback;
             if (args.NicknameAfter is string name)
-                fallback = args.Member.Username;
+                fallback = member.Username;
             else
             {
-                name = args.Member.Username;
+                name = member.Username;
                 fallback = null;
             }
-
-            var member = await args.Guild.GetMemberAsync(args.Member.Id).ConfigureAwait(false) ?? args.Member;
             if (NeedsKick(name))
             {
-                await args.Member.RemoveAsync("Anti Raid").ConfigureAwait(false);
+                //await member.RemoveAsync("Anti Raid").ConfigureAwait(false);
+                await c.ReportAsync("🤖 Potential scam bot",
+                    $"""
+                    User {member.GetMentionWithNickname()} who changed their nickname to {name} as a potential scam bot
+                    """,
+                    null,
+                    ReportSeverity.Medium
+                );
             }
         }
         catch (Exception e)
@@ -32,10 +43,18 @@ public static class UsernameRaidMonitor
     {
         try
         {
-            var name = args.Member.DisplayName;
+            var member = await args.Guild.GetMemberAsync(args.Member.Id).ConfigureAwait(false) ?? args.Member;
+            var name = member.DisplayName;
             if (NeedsKick(name))
             {
-                await args.Member.RemoveAsync("Anti Raid").ConfigureAwait(false);
+                await member.RemoveAsync("Anti Raid").ConfigureAwait(false);
+                await c.ReportAsync("🤖 Potential scam bot",
+                    $"""
+                    Kicked user {member.GetMentionWithNickname()} who has joined with nickname {name}, and is a potential scam bot
+                    """,
+                    null,
+                    ReportSeverity.Medium
+                );
             }
         }
         catch (Exception e)
@@ -47,7 +66,6 @@ public static class UsernameRaidMonitor
     public static bool NeedsKick(string displayName)
     {
         displayName = displayName.Normalize().TrimEager();
-        return displayName.Equals("D𝗂scord");
+        return SpamNickname().IsMatch(displayName);
     }
-
 }
