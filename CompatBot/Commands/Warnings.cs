@@ -2,6 +2,7 @@
 using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
 using Microsoft.EntityFrameworkCore;
+using ResultNet;
 
 namespace CompatBot.Commands;
 
@@ -20,13 +21,14 @@ internal static partial class Warnings
     )
     {
         await ctx.DeferResponseAsync(ephemeral: true).ConfigureAwait(false);
-        var (saved, suppress, recent, total) = await AddAsync(user.Id, ctx.User, reason).ConfigureAwait(false);
-        if (!saved)
+        var result = await AddAsync(user.Id, ctx.User, reason).ConfigureAwait(false);
+        if (result.IsFailure())
         {
-            await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't save the warning, please try again", ephemeral: true).ConfigureAwait(false);
+            await ctx.RespondAsync($"{Config.Reactions.Failure} {result.Message ?? "Couldn't save the warning, please try again"}", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
+        var (suppress, recent, total) = result.Data;
         if (!suppress)
         {
             var userMsgContent = await GetDefaultWarningMessageAsync(ctx.Client, user, reason, recent, total, ctx.User).ConfigureAwait(false);
@@ -193,9 +195,19 @@ internal static partial class Warnings
                 """;
     }
 
-    internal static async ValueTask<(bool saved, bool suppress, int recentCount, int totalCount)>
+    internal static async ValueTask<Result<(bool suppress, int recentCount, int totalCount)>>
         AddAsync(ulong userId, DiscordUser issuer, string reason, string? fullReason = null)
     {
+        await using (var rdb = await BotDb.OpenReadAsync().ConfigureAwait(false))
+        {
+            var lastWarn = await rdb.Warning.AsNoTracking()
+                .Where(w => w.DiscordId == userId && !w.Retracted)
+                .OrderByDescending(w => w.Timestamp)
+                .FirstOrDefaultAsync();
+            if (lastWarn?.Timestamp > DateTime.UtcNow.AddSeconds(-20).Ticks)
+                return Result.Failure<(bool, int, int)>().WithMessage("Duplicate warning cooldown"); 
+        }
+
         try
         {
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
@@ -215,15 +227,16 @@ internal static partial class Warnings
             var totalCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
             var recentCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted && w.Timestamp > threshold);
             if (recentCount < 4)
-                return (true, false, recentCount, totalCount);
-            
+                return Result.Success((false, recentCount, totalCount));
+
             Config.Log.Debug("Suicide behavior detected, not spamming with warning responses");
-            return (true, true, recentCount, totalCount);
+            return Result.Success((true, recentCount, totalCount));
         }
         catch (Exception e)
         {
-            Config.Log.Error(e, "Couldn't save the warning");
-            return default;
+            const string msg = "Couldn't save the warning";
+            Config.Log.Error(e, msg);
+            return Result.Failure<(bool, int, int)>().WithMessage(msg);
         }
     }
 
