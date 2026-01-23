@@ -119,7 +119,7 @@ internal static class ContentFilter
 
         var suppressActions = (FilterAction)0;
         if (message.Timestamp.UtcDateTime.AddDays(1) < DateTime.UtcNow)
-            suppressActions = FilterAction.SendMessage | FilterAction.ShowExplain;
+            return true; //suppressActions = FilterAction.SendMessage | FilterAction.ShowExplain;
 
 #if !DEBUG
         if (await message.Author.IsWhitelistedAsync(client, message.Channel.Guild).ConfigureAwait(false))
