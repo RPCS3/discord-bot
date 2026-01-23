@@ -6,6 +6,7 @@ using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using NReco.Text;
+using ResultNet;
 
 namespace CompatBot.Database.Providers;
 
@@ -225,14 +226,17 @@ internal static class ContentFilter
             try
             {
                 warningReason ??= "Mention of piracy";
-                var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                var result = await Warnings.AddAsync(
                     message.Author!.Id,
                     client.CurrentUser,
                     warningReason,
                     message.Content.Sanitize()
                 ).ConfigureAwait(false);
-                if (saved && !suppress && message.Channel is not null)
+                if (result.IsSuccess()
+                    && !result.Data.suppress
+                    && message.Channel is not null)
                 {
+                    var (_, recent, total) = result.Data;
                     var msgContent = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, warningReason, recent, total, client.CurrentUser).ConfigureAwait(false);
                     var msg = new DiscordMessageBuilder()
                         .WithContent(msgContent)

@@ -225,14 +225,15 @@ public static class LogParsingHandler
                                     //if (!(message.Channel!.IsPrivate || message.Channel.Name.Contains("spam")))
                                     {
                                         var reason = "Logs showing use of pirated content";
-                                        var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                                        var warnSaveResult = await Warnings.AddAsync(
                                             message.Author.Id,
                                             client.CurrentUser,
                                             reason,
                                             $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}"
                                         );
-                                        if (saved && !suppress)
+                                        if (warnSaveResult.IsSuccess() && !warnSaveResult.Data.suppress)
                                         {
+                                            var (_, recent, total) = warnSaveResult.Data;
                                             var content = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, reason, recent, total, client.CurrentUser).ConfigureAwait(false);
                                             var msg = new DiscordMessageBuilder()
                                                 .WithContent(content)

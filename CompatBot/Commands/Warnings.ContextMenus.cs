@@ -3,6 +3,7 @@ using DSharpPlus.Commands.Processors.MessageCommands;
 using DSharpPlus.Commands.Processors.UserCommands;
 using DSharpPlus.Interactivity;
 using Microsoft.Extensions.DependencyInjection;
+using ResultNet;
 
 namespace CompatBot.Commands;
 
@@ -60,13 +61,17 @@ internal static class WarningsContextMenus
             ).ConfigureAwait(false);
             user ??= message?.Author!;
             var reason = ((TextInputModalSubmission)value).Value;
-            var (saved, suppress, recent, total) = await Warnings.AddAsync(user.Id, ctx.User, reason, message?.Content.Sanitize()).ConfigureAwait(false);
-            if (!saved)
+            var result = await Warnings.AddAsync(user.Id, ctx.User, reason, message?.Content.Sanitize()).ConfigureAwait(false);
+            if (result.IsFailure())
             {
-                await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't save the warning, please try again", ephemeral: true).ConfigureAwait(false);
+                var response = new DiscordInteractionResponseBuilder()
+                    .WithContent($"{Config.Reactions.Failure} {result.Message ?? "Couldn't save the warning, please try again"}")
+                    .AsEphemeral();
+                await interaction.EditOriginalResponseAsync(new(response)).ConfigureAwait(false);
                 return;
             }
 
+            var(suppress, recent, total) = result.Data;
             if (!suppress)
             {
                 var userMsgContent = await Warnings.GetDefaultWarningMessageAsync(ctx.Client, user, reason, recent, total, ctx.User).ConfigureAwait(false);
@@ -85,7 +90,7 @@ internal static class WarningsContextMenus
             Config.Log.Error(e);
             var msg = new DiscordInteractionResponseBuilder()
                 .AsEphemeral()
-                .WithContent($"{Config.Reactions.Failure} Failed to change nickname, check bot's permissions");
+                .WithContent($"{Config.Reactions.Failure} Failed to save warning");
             await interaction.EditOriginalResponseAsync(new(msg)).ConfigureAwait(false);
         }
     }

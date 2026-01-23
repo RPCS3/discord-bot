@@ -10,6 +10,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
+using ResultNet;
 
 namespace CompatBot.EventHandlers;
 
@@ -125,14 +126,15 @@ internal static partial class DiscordInviteFilter
                 if (circumventionAttempt)
                 {
                     var reason = "Attempted to circumvent discord invite filter";
-                    var (saved, suppress, recent, total) = await Warnings.AddAsync(
+                    var result = await Warnings.AddAsync(
                         message.Author.Id,
                         client.CurrentUser,
                         reason,
                         codeResolveMsg
                     ).ConfigureAwait(false);
-                    if (saved && !suppress)
+                    if (result.IsSuccess() && !result.Data.suppress)
                     {
+                        var (_, recent, total) = result.Data;
                         var content = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, reason, recent, total, client.CurrentUser).ConfigureAwait(false);
                         var msg = new DiscordMessageBuilder()
                             .WithContent(content)
