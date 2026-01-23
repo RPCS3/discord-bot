@@ -53,7 +53,7 @@ public static partial class UsernameRaidMonitor
                     Kicked user {member.GetMentionWithNickname()} who has joined with nickname {name}, and is a potential scam bot
                     """,
                     null,
-                    ReportSeverity.Medium
+                    ReportSeverity.Low
                 );
             }
         }
