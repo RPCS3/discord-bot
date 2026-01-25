@@ -184,7 +184,7 @@ internal static partial class Warnings
     {
         var rulesCh = await client.GetChannelAsync(Config.BotRulesChannelId).ConfigureAwait(false);
         return $"""
-                ## ⚠️ {userToWarn.Mention} you have been warned ⚠️ 
+                ## ⚠️ {userToWarn.Mention} you have been warned ⚠️
                 **Reason:** {reason}
 
                 **Read the {rulesCh.Mention} before continuing to chat**
