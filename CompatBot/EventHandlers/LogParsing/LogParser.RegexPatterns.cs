@@ -103,7 +103,7 @@ internal partial class LogParser
     private static partial Regex PutLlucMode();
     [GeneratedRegex(@"Accurate RSX reservation access: (?<accurate_rsx_reservation>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex RsxReservationAccessMode();
-    [GeneratedRegex(@"RSX FIFO Accuracy: (?<rsx_fifo_mode>[^\r\n]*?)\r?$", DefaultOptions)]
+    [GeneratedRegex(@"RSX FIFO (Fetch )?Accuracy: (?<rsx_fifo_mode>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex RsxFifoMode();
     [GeneratedRegex(@"Debug Console Mode: (?<debug_console_mode>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex DebugConsoleMode();

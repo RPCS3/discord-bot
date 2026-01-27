@@ -82,7 +82,7 @@ internal sealed class MediaScreenshotMonitor
                     var cnt = true;
                     var prefix = $"[{item.msg.Id % 100:00}]";
                     var ocrTextBuf = new StringBuilder($"OCR result of message <{item.msg.JumpLink}> ({confidence*100:0.00}%):").AppendLine();
-                    Config.Log.Debug($"{prefix} OCR result of message {item.msg.JumpLink} ({confidence*100:0.00}%):");
+                    Config.Log.Debug($"{prefix} OCR result of message {item.msg.JumpLink} from user {item.msg.Author?.Username} ({item.msg.Author?.Id}) ({confidence*100:0.00}%):");
                     var duplicates = new HashSet<string>();
                     ocrTextBuf.AppendLine(result.Sanitize());
                     Config.Log.Debug($"{prefix} {result}");
