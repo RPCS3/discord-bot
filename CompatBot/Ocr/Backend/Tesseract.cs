@@ -9,6 +9,7 @@ namespace CompatBot.Ocr.Backend;
 internal class Tesseract: BackendBase
 {
     private TesseractEngine engine;
+    private static readonly SemaphoreSlim limiter = new(1, 1);
 
     public override string Name => "tesseract";
 
@@ -68,14 +69,48 @@ internal class Tesseract: BackendBase
     public override async Task<(string result, double confidence)> GetTextAsync(string imgUrl, CancellationToken cancellationToken)
     {
         var imgData = await HttpClient.GetByteArrayAsync(imgUrl, cancellationToken).ConfigureAwait(false);
-        using var img = Pix.LoadFromMemory(imgData);
-        using var page = engine.Process(img);
-        return (page.GetText() ?? "", page.GetMeanConfidence());
+        var img = Pix.LoadFromMemory(imgData);
+        var result = new (string text, float confidence)[4];
+        await limiter.WaitAsync(Config.Cts.Token).ConfigureAwait(false);
+        try
+        {
+            var pass = 0;
+            do
+            {
+                using (var page = engine.Process(img))
+                    result[pass] = (page.GetText() ?? "", page.GetMeanConfidence());
+                if (pass < 3)
+                {
+                    var img2 = img.Rotate90((int)RotationDirection.Clockwise);
+                    img.Dispose();
+                    img = img2;
+                }
+                pass++;
+            } while (pass < 4);
+            var longestText = result
+                .Where(i => i.confidence > 0.5)
+                .OrderByDescending(i => i.text.Length)
+                .FirstOrDefault();
+            if (longestText is { confidence: > 0.5f, text.Length: > 0 })
+                return longestText;
+            else
+                return result.MaxBy(i => i.confidence);
+        }
+        finally
+        {
+            limiter.Release();
+        }
     }
 
     public override void Dispose()
     {
         base.Dispose();
         engine.Dispose();
+    }
+
+    private enum RotationDirection
+    {
+        Clockwise = 1,
+        CounterClockwise = -1,
     }
 }
