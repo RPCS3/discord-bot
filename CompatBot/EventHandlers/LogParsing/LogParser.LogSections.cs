@@ -78,6 +78,7 @@ internal partial class LogParser
                 ["Accurate PUTLLUC:"] = PutLlucMode(),
                 ["Accurate RSX reservation access:"] = RsxReservationAccessMode(),
                 ["RSX FIFO Accuracy:"] = RsxFifoMode(),
+                ["RSX FIFO Fetch Accuracy:"] = RsxFifoMode(),
                 ["Debug Console Mode:"] = DebugConsoleMode(),
                 ["Lib Loader:"] = LibLoaderMode(),
                 ["Hook static functions:"] = HookStaticFunctions(),
