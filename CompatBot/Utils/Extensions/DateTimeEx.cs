@@ -7,20 +7,13 @@ public static class DateTimeEx
 
     public static string AsShortTimespan(this TimeSpan timeSpan)
     {
-        var totalSeconds = timeSpan.TotalSeconds;
-        var totalSecondsInt = (int)totalSeconds;
-        var totalMinutes = totalSeconds / 60;
-        var totalMinutesInt = (int)totalMinutes;
-        var totalHours = totalMinutes / 60;
-        var totalHoursInt = (int)totalHours;
-        var totalDays = totalHours / 24;
+        var totalMinutesInt = (int)timeSpan.TotalMinutes;
+        var totalHoursInt = (int)timeSpan.TotalHours;
+        var totalDays = timeSpan.TotalDays;
         var totalDaysInt = (int)totalDays;
-        var totalWeeks = totalDays / 7;
-        var totalWeeksInt = (int)totalWeeks;
-        var totalMonths = totalDays / 30;
-        var totalMonthsInt = (int)totalMonths;
-        var totalYears = totalDays / 365.25;
-        var totalYearsInt = (int)totalYears;
+        var totalWeeksInt = (int)(totalDays / 7);
+        var totalMonthsInt = (int)(totalDays / 30);
+        var totalYearsInt = (int)(totalDays / 365.25);
 
         var years = totalYearsInt;
         var months = totalMonthsInt - years * 12;
@@ -28,7 +21,6 @@ public static class DateTimeEx
         var days = totalDaysInt - totalWeeksInt * 7;
         var hours = totalHoursInt - totalDaysInt * 24;
         var minutes = totalMinutesInt - totalHoursInt * 60;
-        var seconds = totalSecondsInt - totalMinutesInt * 60;
 
         var result = "";
         if (years > 0)
@@ -43,9 +35,10 @@ public static class DateTimeEx
             result += hours + "h ";
         if (minutes > 0)
             result += minutes + "m ";
-        if (string.IsNullOrEmpty(result))
-            result = seconds + "s";
+        if (result is not { Length: >0})
+            result = (int)timeSpan.TotalSeconds + "s";
+        if (result is not { Length: > 0 })
+            result = (int)timeSpan.TotalMilliseconds + "ms";
         return result.TrimEnd();
     }
-
 }

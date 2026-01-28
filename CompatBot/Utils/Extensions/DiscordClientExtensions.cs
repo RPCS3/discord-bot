@@ -107,13 +107,23 @@ public static class DiscordClientExtensions
         return messages.TakeWhile(m => m.CreationTimestamp > afterTime).ToList().AsReadOnly();
     }
 
-    public static async ValueTask<DiscordMessage?> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, string trigger, string? matchedOn, int? filterId, string? context, ReportSeverity severity, string? actionList = null)
+    public static async ValueTask<DiscordMessage?> ReportAsync(
+        this DiscordClient client,
+        string infraction,
+        DiscordMessage message,
+        string trigger,
+        string? matchedOn,
+        int? filterId,
+        string? context,
+        ReportSeverity severity,
+        string? actionList = null,
+        DateTime? timestamp = null)
     {
         var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
         if (logChannel is null)
             return null;
 
-        var embedBuilder = await MakeReportTemplateAsync(client, infraction, filterId, message, severity, actionList).ConfigureAwait(false);
+        var embedBuilder = await MakeReportTemplateAsync(client, infraction, filterId, message, severity, actionList, timestamp).ConfigureAwait(false);
         var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn?.Trim(40) ?? trigger}`{Environment.NewLine}";
         if (!string.IsNullOrEmpty(context))
             reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
@@ -197,7 +207,14 @@ public static class DiscordClientExtensions
         return channel.SendMessageAsync(message);
     }
 
-    private static async ValueTask<DiscordEmbedBuilder> MakeReportTemplateAsync(DiscordClient client, string infraction, int? filterId, DiscordMessage message, ReportSeverity severity, string? actionList = null)
+    private static async ValueTask<DiscordEmbedBuilder> MakeReportTemplateAsync(
+        DiscordClient client,
+        string infraction,
+        int? filterId,
+        DiscordMessage message,
+        ReportSeverity severity,
+        string? actionList = null,
+        DateTime? timestamp = null)
     {
         var content = message.Content;
         if (message.Channel.IsPrivate)
@@ -240,10 +257,12 @@ public static class DiscordClientExtensions
         if (filterId is not null)
             result.AddField("Filter #", filterId.ToString(), true);
         result.AddField("Content of the offending item", content.Trim(EmbedPager.MaxFieldLength));
-        if (!string.IsNullOrEmpty(actionList))
+        if (actionList is { Length: >0})
             result.AddField("Filter Actions", actionList, true);
+        if (timestamp is not null)
+            result.AddField("Post to action lag", (timestamp.Value - message.Timestamp).AsShortTimespan(), true);
         if (needsAttention && !message.Channel.IsPrivate)
-            result.AddField("Link to the message", message.JumpLink.ToString());
+            result.AddField("Link to the message", message.JumpLink.ToString(), true);
 #if DEBUG
         result.WithFooter("Test bot instance");
 #endif
