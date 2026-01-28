@@ -171,12 +171,14 @@ internal static class ContentFilter
     {
         var severity = ReportSeverity.Low;
         var completedActions = new List<FilterAction>();
+        DateTime? removedTimestamp = null;
         if (trigger.Actions.HasFlag(FilterAction.RemoveContent) && !ignoreFlags.HasFlag(FilterAction.RemoveContent))
         {
             try
             {
                 DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                 await message.Channel.DeleteMessageAsync(message, $"Removed according to filter '{trigger}'").ConfigureAwait(false);
+                removedTimestamp = DateTime.UtcNow;
                 completedActions.Add(FilterAction.RemoveContent);
             }
             catch (Exception e)
@@ -296,7 +298,7 @@ internal static class ContentFilter
             {
                 var context = triggerContext ?? message.Content;
                 var matchedOn = GetMatchedScope(trigger, context);
-                await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, trigger.Id, context, severity, actionList).ConfigureAwait(false);
+                await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, trigger.Id, context, severity, actionList, removedTimestamp).ConfigureAwait(false);
                 ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
             }
         }
