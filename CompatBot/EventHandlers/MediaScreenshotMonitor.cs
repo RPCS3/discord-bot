@@ -5,6 +5,7 @@ using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Ocr;
 using CompatBot.Utils.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CompatBot.EventHandlers;
 
@@ -12,6 +13,8 @@ internal sealed class MediaScreenshotMonitor
 {
     private static readonly SemaphoreSlim WorkSemaphore = new(0);
     private static readonly ConcurrentQueue<(DiscordMessage msg, string imgUrl)> WorkQueue = new();
+    private static readonly MemoryCache RemovedMessages = new(new MemoryCacheOptions() { ExpirationScanFrequency = TimeSpan.FromMinutes(5) });
+    private static readonly TimeSpan CachedTime = TimeSpan.FromMinutes(1);
     public DiscordClient Client { get; internal set; } = null!;
     public static int MaxQueueLength { get; private set; }
 
@@ -74,6 +77,9 @@ internal sealed class MediaScreenshotMonitor
             if (!WorkQueue.TryDequeue(out var item))
                 continue;
 
+            if (RemovedMessages.TryGetValue(item.msg.Id, out bool removed) && removed)
+                continue;
+
             try
             {
                 if (await OcrProvider.GetTextAsync(item.imgUrl, Config.Cts.Token).ConfigureAwait(false) is ({Length: >0} result, var confidence)
@@ -105,6 +111,8 @@ internal sealed class MediaScreenshotMonitor
                             "🖼 Screenshot of an undesirable content",
                             "Screenshot of an undesirable content"
                         ).ConfigureAwait(false);
+                        if (hit.Actions.HasFlag(FilterAction.RemoveContent))
+                            RemovedMessages.Set(item.msg.Id, true, CachedTime);
                         cnt &= !hit.Actions.HasFlag(FilterAction.RemoveContent) && !hit.Actions.HasFlag(FilterAction.IssueWarning);
                     }
                     var ocrText = ocrTextBuf.ToString();
