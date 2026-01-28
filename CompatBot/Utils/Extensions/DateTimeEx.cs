@@ -7,6 +7,7 @@ public static class DateTimeEx
 
     public static string AsShortTimespan(this TimeSpan timeSpan)
     {
+        var totalSecondsInt = (int)timeSpan.TotalSeconds;
         var totalMinutesInt = (int)timeSpan.TotalMinutes;
         var totalHoursInt = (int)timeSpan.TotalHours;
         var totalDays = timeSpan.TotalDays;
@@ -35,8 +36,8 @@ public static class DateTimeEx
             result += hours + "h ";
         if (minutes > 0)
             result += minutes + "m ";
-        if (result is not { Length: >0})
-            result = (int)timeSpan.TotalSeconds + "s";
+        if (result is not { Length: >0} && totalSecondsInt > 0)
+            result = totalSecondsInt + "s";
         if (result is not { Length: > 0 })
             result = (int)timeSpan.TotalMilliseconds + "ms";
         return result.TrimEnd();
