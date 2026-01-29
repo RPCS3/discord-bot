@@ -1027,7 +1027,7 @@ internal static partial class LogParserResult
                 22000 => "11 21H2",
                 < 22621 => "11 22H2 Insider Build " + windowsVersion.Build,
                 22621 => "11 22H2", // deprecated
-                22631 => "11 23H2", // nov 11, 2025
+                22631 => "11 23H2", // deprecated
                 < 23000 => "11 Beta Build " + windowsVersion.Build, // 22k series
                 < 24000 => "11 Dev Build " + windowsVersion.Build, // 23k series
                 < 25000 => "11 ??? Build " + windowsVersion.Build,
@@ -1036,7 +1036,8 @@ internal static partial class LogParserResult
                 < 26120 => "11 Dev/Canary Build " + windowsVersion.Build, // dev/canary merge branch before 24H2
                 26120 => "11 24H2 Beta Build " + windowsVersion.Build,
                 26200 => "11 25H2",
-                26220 => "11 25H2 Dev/Beta Build " + windowsVersion.Build,
+                26220 => "11 25H2 Beta Build " + windowsVersion.Build,
+                26300 => "11 25H2 Dev Build " + windowsVersion.Build,
                 <28000 => "11 Canary Build " + windowsVersion.Build,
                 <29000 => "11 26H1 Canary Build " + windowsVersion.Build,
                 _ => "11 ??? Build " + windowsVersion.Build,
