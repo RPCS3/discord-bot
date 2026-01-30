@@ -1,18 +1,17 @@
-﻿using CompatApiClient.Utils;
+﻿using System.Threading.Channels;
+using CompatApiClient.Utils;
 using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Ocr;
 using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
-using System.Collections.Concurrent;
 
 namespace CompatBot.EventHandlers;
 
 internal sealed class MediaScreenshotMonitor
 {
-    private static readonly SemaphoreSlim WorkSemaphore = new(0);
-    private static readonly ConcurrentQueue<(DiscordMessage msg, string imgUrl)> WorkQueue = new();
+    private static readonly Channel<(DiscordMessage msg, string imgUrl)> WorkQueue = Channel.CreateUnbounded<(DiscordMessage msg, string imgUrl)>();
     private static readonly MemoryCache RemovedMessages = new(new MemoryCacheOptions() { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
     private static readonly TimeSpan CachedTime = TimeSpan.FromMinutes(5);
     public DiscordClient Client { get; internal set; } = null!;
@@ -50,15 +49,8 @@ internal sealed class MediaScreenshotMonitor
             .ToList();
         foreach (var url in images)
         {
-            try
-            {
-                WorkQueue.Enqueue((message, url));
-                WorkSemaphore.Release();
-            }
-            catch (Exception ex)
-            {
-                Config.Log.Warn(ex, "Failed to create a new text recognition task");
-            }
+            if (!WorkQueue.Writer.TryWrite((message, url)))
+                Config.Log.Warn($"Failed to create a new text recognition task for message {message.JumpLink} / {url}");
         }
     }
 
@@ -69,33 +61,30 @@ internal sealed class MediaScreenshotMonitor
 
         do
         {
-            await WorkSemaphore.WaitAsync(Config.Cts.Token).ConfigureAwait(false);
+            MaxQueueLength = Math.Max(MaxQueueLength, WorkQueue.Reader.Count);
+            var (msg, imgUrl) = await WorkQueue.Reader.ReadAsync(Config.Cts.Token).ConfigureAwait(false);
             if (Config.Cts.IsCancellationRequested)
                 return;
 
-            MaxQueueLength = Math.Max(MaxQueueLength, WorkQueue.Count);
-            if (!WorkQueue.TryDequeue(out var item))
-                continue;
-
-            if (RemovedMessages.TryGetValue(item.msg.Id, out bool removed) && removed)
+            if (RemovedMessages.TryGetValue(msg.Id, out bool removed) && removed)
                 continue;
 
             try
             {
-                var signature = GetSignature(item.msg);
-                var prefix = $"[{item.msg.Id % 100:00}]";
+                var signature = GetSignature(msg);
+                var prefix = $"[{msg.Id % 100:00}]";
                 if (RemovedMessages.TryGetValue(signature, out (Piracystring hit, DiscordMessage msg) previousItem))
                 {
-                    Config.Log.Debug($"{prefix} OCR result of message {item.msg.JumpLink} from user {item.msg.Author?.Username} ({item.msg.Author?.Id}):");
-                    var ocrTextBuf = new StringBuilder($"OCR result of message <{item.msg.JumpLink}>:").AppendLine();
+                    Config.Log.Debug($"{prefix} OCR result of message {msg.JumpLink} from user {msg.Author?.Username} ({msg.Author?.Id}):");
+                    var ocrTextBuf = new StringBuilder($"OCR result of message <{msg.JumpLink}>:").AppendLine();
                     FilterAction suppressFlags = 0;
-                    if ("media".Equals(item.msg.Channel?.Name))
+                    if ("media".Equals(msg.Channel?.Name))
                     {
                         suppressFlags = FilterAction.SendMessage | FilterAction.ShowExplain;
                     }
                     await ContentFilter.PerformFilterActions(
                         Client,
-                        item.msg,
+                        msg,
                         previousItem.hit,
                         suppressFlags,
                         $"Matched to previously removed message from {previousItem.msg.Author?.Mention}: {previousItem.msg.JumpLink}",
@@ -103,18 +92,18 @@ internal sealed class MediaScreenshotMonitor
                         "Screenshot of an undesirable content"
                     ).ConfigureAwait(false);
                     if (previousItem.hit.Actions.HasFlag(FilterAction.RemoveContent))
-                        RemovedMessages.Set(item.msg.Id, true, CachedTime);
+                        RemovedMessages.Set(msg.Id, true, CachedTime);
                 }
-                else if (await OcrProvider.GetTextAsync(item.imgUrl, Config.Cts.Token).ConfigureAwait(false) is ({ Length: > 0 } result, var confidence))
+                else if (await OcrProvider.GetTextAsync(imgUrl, Config.Cts.Token).ConfigureAwait(false) is ({ Length: > 0 } result, var confidence))
                 {
                     var cnt = true;
                     var duplicates = new HashSet<string>();
                     Config.Log.Debug($"""
-                        {prefix} OCR result of message {item.msg.JumpLink} from user {item.msg.Author?.Username} ({item.msg.Author?.Id}) ({confidence * 100:0.00}%):
+                        {prefix} OCR result of message {msg.JumpLink} from user {msg.Author?.Username} ({msg.Author?.Id}) ({confidence * 100:0.00}%):
                         {result}
                         """
                     );
-                    var ocrTextBuf = new StringBuilder($"OCR result of message <{item.msg.JumpLink}> ({confidence * 100:0.00}%):").AppendLine()
+                    var ocrTextBuf = new StringBuilder($"OCR result of message <{msg.JumpLink}> ({confidence * 100:0.00}%):").AppendLine()
                         .AppendLine(result.Sanitize());
                     if (cnt
                         && confidence > 0.65
@@ -122,13 +111,13 @@ internal sealed class MediaScreenshotMonitor
                         && duplicates.Add(hit.String))
                     {
                         FilterAction suppressFlags = 0;
-                        if ("media".Equals(item.msg.Channel?.Name))
+                        if ("media".Equals(msg.Channel?.Name))
                         {
                             suppressFlags = FilterAction.SendMessage | FilterAction.ShowExplain;
                         }
                         await ContentFilter.PerformFilterActions(
                             Client,
-                            item.msg,
+                            msg,
                             hit,
                             suppressFlags,
                             result,
@@ -137,9 +126,9 @@ internal sealed class MediaScreenshotMonitor
                         ).ConfigureAwait(false);
                         if (hit.Actions.HasFlag(FilterAction.RemoveContent))
                         {
-                            RemovedMessages.Set(item.msg.Id, true, CachedTime);
+                            RemovedMessages.Set(msg.Id, true, CachedTime);
                             if (signature is { Length: >0})
-                                RemovedMessages.Set(signature, (hit, item.msg), CachedTime);
+                                RemovedMessages.Set(signature, (hit, msg), CachedTime);
                         }
                         cnt &= !hit.Actions.HasFlag(FilterAction.RemoveContent) && !hit.Actions.HasFlag(FilterAction.IssueWarning);
                     }
