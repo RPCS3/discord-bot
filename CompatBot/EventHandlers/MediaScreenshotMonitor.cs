@@ -71,7 +71,7 @@ internal sealed class MediaScreenshotMonitor
 
             try
             {
-                var signature = GetSignature(msg);
+                var signature = GetSignatureLoose(msg);
                 var prefix = $"[{msg.Id % 100:00}]";
                 if (RemovedMessages.TryGetValue(signature, out (Piracystring hit, DiscordMessage msg) previousItem))
                 {
@@ -156,11 +156,19 @@ internal sealed class MediaScreenshotMonitor
         } while (!Config.Cts.IsCancellationRequested);
     }
 
-    private static string GetSignature(DiscordMessage msg)
+    private static string GetSignaturePrecise(DiscordMessage msg)
     {
         var result = msg.Content ?? "";
         foreach (var att in msg.Attachments)
             result += $"📎 {att.FileName} ({att.FileSize})\n";
+        return result.TrimEnd();
+    }
+
+    private static string GetSignatureLoose(DiscordMessage msg)
+    {
+        var result = msg.Content ?? "";
+        foreach (var att in msg.Attachments.OrderByDescending(a => a.FileSize))
+            result += $"📎 ({att.FileSize})\n";
         return result.TrimEnd();
     }
 }
