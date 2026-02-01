@@ -234,7 +234,7 @@ public static class DiscordClientExtensions
         {
             if (!string.IsNullOrEmpty(content))
                 content += Environment.NewLine;
-            content += string.Join(Environment.NewLine, message.Attachments.Select(a => "📎 " + a.FileName));
+            content += string.Join(Environment.NewLine, message.Attachments.Select(a => $"📎 {a.FileName} ({a.FileSize})"));
         }
 
         if (string.IsNullOrEmpty(content))
