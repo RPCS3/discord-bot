@@ -11,7 +11,7 @@ namespace CompatBot.EventHandlers;
 
 internal sealed class MediaScreenshotMonitor
 {
-    private static readonly Channel<(DiscordMessage msg, string imgUrl)> WorkQueue = Channel.CreateUnbounded<(DiscordMessage msg, string imgUrl)>();
+    private static readonly Channel<OcrTask> WorkQueue = Channel.CreateUnboundedPrioritized<OcrTask>(new(){ Comparer = new OcrTaskComparer() });
     private static readonly MemoryCache RemovedMessages = new(new MemoryCacheOptions() { ExpirationScanFrequency = TimeSpan.FromHours(1) });
     private static readonly TimeSpan MessageCachedTime = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan SignatureCachedTime = TimeSpan.FromMinutes(30);
@@ -48,11 +48,15 @@ internal sealed class MediaScreenshotMonitor
         var images = Vision.GetImageAttachments(message)
             .Concat(Vision.GetImagesFromEmbeds(message))
             .ToList();
-        foreach (var url in images)
-        {
-            if (!WorkQueue.Writer.TryWrite((message, url)))
-                Config.Log.Warn($"Failed to create a new text recognition task for message {message.JumpLink} / {url}");
-        }
+        var sig = GetSignatureLoose(message);
+        var priority = 0;
+        for (var r = 0; r < 4; r++)
+            foreach (var url in images)
+            {
+                if (!WorkQueue.Writer.TryWrite(new(priority, r, message, sig, url)))
+                    Config.Log.Warn($"Failed to create a new text recognition task for message {message.JumpLink} / {url}");
+                priority++;
+            }
     }
 
     public async Task ProcessWorkQueue()
@@ -63,16 +67,16 @@ internal sealed class MediaScreenshotMonitor
         do
         {
             MaxQueueLength = Math.Max(MaxQueueLength, WorkQueue.Reader.Count);
-            var (msg, imgUrl) = await WorkQueue.Reader.ReadAsync(Config.Cts.Token).ConfigureAwait(false);
+            var ocrTask = await WorkQueue.Reader.ReadAsync(Config.Cts.Token).ConfigureAwait(false);
             if (Config.Cts.IsCancellationRequested)
                 return;
 
+            var (msg, signature, imgUrl) = (ocrTask.Message, ocrTask.Signature, ocrTask.ImageUrl);
             if (RemovedMessages.TryGetValue(msg.Id, out bool removed) && removed)
                 continue;
 
             try
             {
-                var signature = GetSignatureLoose(msg);
                 var prefix = $"[{msg.Id % 100:00}]";
                 if (RemovedMessages.TryGetValue(signature, out (Piracystring hit, DiscordMessage msg) previousItem))
                 {
@@ -95,7 +99,7 @@ internal sealed class MediaScreenshotMonitor
                     if (previousItem.hit.Actions.HasFlag(FilterAction.RemoveContent))
                         RemovedMessages.Set(msg.Id, true, MessageCachedTime);
                 }
-                else if (await OcrProvider.GetTextAsync(imgUrl, Config.Cts.Token).ConfigureAwait(false) is ({ Length: > 0 } result, var confidence))
+                else if (await OcrProvider.GetTextAsync(imgUrl, ocrTask.Rotation, Config.Cts.Token).ConfigureAwait(false) is ({ Length: > 0 } result, var confidence))
                 {
                     var cnt = true;
                     var duplicates = new HashSet<string>();
@@ -171,5 +175,12 @@ internal sealed class MediaScreenshotMonitor
         foreach (var att in msg.Attachments.OrderByDescending(a => a.FileSize))
             result += $"📎 ({att.FileSize})\n";
         return result.TrimEnd();
+    }
+
+    private record OcrTask(int Priority, int Rotation, DiscordMessage Message, string Signature, string ImageUrl);
+
+    private class OcrTaskComparer : IComparer<OcrTask>
+    {
+        public int Compare(OcrTask? x, OcrTask? y) => Comparer<int?>.Default.Compare(x?.Priority, y?.Priority);
     }
 }

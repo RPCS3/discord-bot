@@ -34,14 +34,14 @@ public static class OcrProvider
         }
     }
 
-    public static async Task<(string result, double confidence)> GetTextAsync(string imageUrl, CancellationToken cancellationToken)
+    public static async Task<(string result, double confidence)> GetTextAsync(string imageUrl, int rotation, CancellationToken cancellationToken)
     {
         if (backend is null)
             return ("", -1);
 
         try
         {
-            return await backend.GetTextAsync(imageUrl, cancellationToken).ConfigureAwait(false);
+            return await backend.GetTextAsync(imageUrl, rotation, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e)
         {

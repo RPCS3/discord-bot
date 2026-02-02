@@ -22,8 +22,11 @@ public class AzureVision: IOcrBackend
         return Task.FromResult(true);
     }
 
-    public async Task<(string result, double confidence)> GetTextAsync(string imgUrl,  CancellationToken cancellationToken)
+    public async Task<(string result, double confidence)> GetTextAsync(string imgUrl, int rotation, CancellationToken cancellationToken)
     {
+        if (rotation > 0)
+            return ("", 0);
+
         var headers = await cvClient.ReadAsync(imgUrl, cancellationToken: cancellationToken).ConfigureAwait(false);
         var operationId = new Guid(new Uri(headers.OperationLocation).Segments.Last());
         ReadOperationResult? result;

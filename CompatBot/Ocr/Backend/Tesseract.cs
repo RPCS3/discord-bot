@@ -66,39 +66,38 @@ internal class Tesseract: BackendBase
         return true;
     }
 
-    public override async Task<(string result, double confidence)> GetTextAsync(string imgUrl, CancellationToken cancellationToken)
+    public override async Task<(string result, double confidence)> GetTextAsync(string imgUrl, int rotation, CancellationToken cancellationToken)
     {
         var imgData = await HttpClient.GetByteArrayAsync(imgUrl, cancellationToken).ConfigureAwait(false);
         var img = Pix.LoadFromMemory(imgData);
-        var result = new (string text, float confidence)[4];
-        await limiter.WaitAsync(Config.Cts.Token).ConfigureAwait(false);
         try
         {
-            var pass = 0;
-            do
+            if (rotation > 0)
             {
-                using (var page = engine.Process(img))
-                    result[pass] = (page.GetText() ?? "", page.GetMeanConfidence());
-                if (pass < 3)
+                var img2 = rotation switch
                 {
-                    var img2 = img.Rotate90((int)RotationDirection.Clockwise);
-                    img.Dispose();
-                    img = img2;
-                }
-                pass++;
-            } while (pass < 4);
-            var longestText = result
-                .Where(i => i.confidence > 0.5)
-                .OrderByDescending(i => i.text.Length)
-                .FirstOrDefault();
-            if (longestText is { confidence: > 0.5f, text.Length: > 0 })
-                return longestText;
-            else
-                return result.MaxBy(i => i.confidence);
+                    1 => img.Rotate90((int)RotationDirection.Clockwise),
+                    2 => img.Rotate((float)Math.PI),
+                    3 => img.Rotate90((int)RotationDirection.CounterClockwise),
+                    _ => throw new InvalidOperationException($"Can only rotate 3 times at most, but asked for {rotation}"),
+                };
+                img.Dispose();
+                img = img2;
+            }
+            await limiter.WaitAsync(Config.Cts.Token).ConfigureAwait(false);
+            try
+            {
+                using var page = engine.Process(img);
+                return (page.GetText() ?? "", page.GetMeanConfidence());
+            }
+            finally
+            {
+                limiter.Release();
+            }
         }
         finally
         {
-            limiter.Release();
+            img.Dispose();
         }
     }
 
