@@ -101,7 +101,8 @@ public static class AntiSpamMessageHandler
 
         if (msg1 is { Attachments.Count: > 0 }
             && msg2 is { Attachments.Count: > 0 }
-            && msg1.Attachments.SequenceEqual(msg2.Attachments, DiscordAttachmentComparer.Instance))
+            && msg1.Attachments.OrderByDescending(a => a.FileSize)
+                .SequenceEqual(msg2.Attachments.OrderByDescending(a => a.FileSize), DiscordAttachmentFuzzyComparer.Instance))
             return true;
 
         return false;
