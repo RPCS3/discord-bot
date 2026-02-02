@@ -94,7 +94,8 @@ internal sealed class MediaScreenshotMonitor
                         suppressFlags,
                         $"Matched to previously removed message from {previousItem.msg.Author?.Mention}: {previousItem.msg.JumpLink}",
                         "🖼 Screenshot of an undesirable content",
-                        "Screenshot of an undesirable content"
+                        "Screenshot of an undesirable content",
+                        quoteTriggerContext: false
                     ).ConfigureAwait(false);
                     if (previousItem.hit.Actions.HasFlag(FilterAction.RemoveContent))
                         RemovedMessages.Set(msg.Id, true, MessageCachedTime);

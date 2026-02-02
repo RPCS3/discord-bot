@@ -166,7 +166,8 @@ internal static class ContentFilter
         FilterAction ignoreFlags = 0,
         string? triggerContext = null,
         string? infraction = null,
-        string? warningReason = null
+        string? warningReason = null,
+        bool quoteTriggerContext = true
     )
     {
         var severity = ReportSeverity.Low;
@@ -298,7 +299,18 @@ internal static class ContentFilter
             {
                 var context = triggerContext ?? message.Content;
                 var matchedOn = GetMatchedScope(trigger, context);
-                await client.ReportAsync(infraction ?? "🤬 Content filter hit", message, trigger.String, matchedOn, trigger.Id, context, severity, actionList, removedTimestamp).ConfigureAwait(false);
+                await client.ReportAsync(
+                    infraction ?? "🤬 Content filter hit",
+                    message,
+                    trigger.String,
+                    matchedOn,
+                    trigger.Id,
+                    context,
+                    severity,
+                    actionList,
+                    removedTimestamp,
+                    quoteTriggerContext
+                ).ConfigureAwait(false);
                 ReportAntispamCache.Set(message.Author.Id, counter + 1, CacheTime);
             }
         }
