@@ -117,16 +117,22 @@ public static class DiscordClientExtensions
         string? context,
         ReportSeverity severity,
         string? actionList = null,
-        DateTime? timestamp = null)
+        DateTime? timestamp = null,
+        bool quoteContext = true)
     {
         var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
         if (logChannel is null)
             return null;
 
         var embedBuilder = await MakeReportTemplateAsync(client, infraction, filterId, message, severity, actionList, timestamp).ConfigureAwait(false);
-        var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn?.Trim(40) ?? trigger}`{Environment.NewLine}";
-        if (!string.IsNullOrEmpty(context))
-            reportText += $"Triggered in: ```{context.Sanitize()}```{Environment.NewLine}";
+        var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn?.Trim(40) ?? trigger}`\n";
+        if (context is { Length: >0})
+        {
+            if (quoteContext)
+                reportText += $"Triggered in:\n```{context.Sanitize()}```\n";
+            else
+                reportText += $"Triggered in: {context}\n";
+        }
         embedBuilder.Description = reportText + embedBuilder.Description;
         return await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embedBuilder.Build())).ConfigureAwait(false);
     }
