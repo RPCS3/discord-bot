@@ -12,8 +12,9 @@ namespace CompatBot.EventHandlers;
 internal sealed class MediaScreenshotMonitor
 {
     private static readonly Channel<(DiscordMessage msg, string imgUrl)> WorkQueue = Channel.CreateUnbounded<(DiscordMessage msg, string imgUrl)>();
-    private static readonly MemoryCache RemovedMessages = new(new MemoryCacheOptions() { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
-    private static readonly TimeSpan CachedTime = TimeSpan.FromMinutes(5);
+    private static readonly MemoryCache RemovedMessages = new(new MemoryCacheOptions() { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+    private static readonly TimeSpan MessageCachedTime = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan SignatureCachedTime = TimeSpan.FromMinutes(30);
     public DiscordClient Client { get; internal set; } = null!;
     public static int MaxQueueLength { get; private set; }
 
@@ -92,7 +93,7 @@ internal sealed class MediaScreenshotMonitor
                         "Screenshot of an undesirable content"
                     ).ConfigureAwait(false);
                     if (previousItem.hit.Actions.HasFlag(FilterAction.RemoveContent))
-                        RemovedMessages.Set(msg.Id, true, CachedTime);
+                        RemovedMessages.Set(msg.Id, true, MessageCachedTime);
                 }
                 else if (await OcrProvider.GetTextAsync(imgUrl, Config.Cts.Token).ConfigureAwait(false) is ({ Length: > 0 } result, var confidence))
                 {
@@ -126,9 +127,9 @@ internal sealed class MediaScreenshotMonitor
                         ).ConfigureAwait(false);
                         if (hit.Actions.HasFlag(FilterAction.RemoveContent))
                         {
-                            RemovedMessages.Set(msg.Id, true, CachedTime);
+                            RemovedMessages.Set(msg.Id, true, MessageCachedTime);
                             if (signature is { Length: >0})
-                                RemovedMessages.Set(signature, (hit, msg), CachedTime);
+                                RemovedMessages.Set(signature, (hit, msg), SignatureCachedTime);
                         }
                         cnt &= !hit.Actions.HasFlag(FilterAction.RemoveContent) && !hit.Actions.HasFlag(FilterAction.IssueWarning);
                     }
