@@ -7,8 +7,6 @@ After=network-online.target
 WorkingDirectory=/home/<USER>/git/discord-bot/CompatBot
 ExecStart=/usr/bin/dotnet run -c Release CompatBot.csproj
 Restart=always
-# Restart service after 10 seconds if the dotnet service crashes:
-RestartSec=1
 KillSignal=SIGINT
 SyslogIdentifier=dotnet-rpcs3bot
 User=rpcs3bot
