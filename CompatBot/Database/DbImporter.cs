@@ -133,7 +133,7 @@ public static class DbImporter
 
     internal static string GetDbPath(string dbName, Environment.SpecialFolder desiredFolder)
     {
-        if (SandboxDetector.Detect() == SandboxType.Docker)
+        if (SandboxDetector.Detect() is SandboxType.Docker)
             return Path.Combine("/bot-db/", dbName);
                 
         var settingsFolder = Path.Combine(Environment.GetFolderPath(desiredFolder), "compat-bot");

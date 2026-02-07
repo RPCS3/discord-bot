@@ -330,7 +330,7 @@ internal static partial class Bot
 
     internal static void RestartNoSaving()
     {
-        if (SandboxDetector.Detect() != SandboxType.Docker)
+        if (SandboxDetector.Detect() is not SandboxType.Docker and not SandboxType.Systemd)
         {
             Config.Log.Info("Restarting…");
             LogManager.LogFactory.Flush();

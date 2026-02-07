@@ -6,4 +6,5 @@ public enum SandboxType
     Snap,
     Flatpak,
     Docker,
+    Systemd,
 }
