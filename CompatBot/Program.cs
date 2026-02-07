@@ -85,7 +85,7 @@ internal static class Program
                 return;
             }
 
-            if (SandboxDetector.Detect() == SandboxType.Docker)
+            if (SandboxDetector.Detect() is SandboxType.Docker)
             {
                 Config.Log.Info("Checking OpenSSL system configuration…");
                 await OpenSslConfigurator.CheckAndFixSystemConfigAsync().ConfigureAwait(false);

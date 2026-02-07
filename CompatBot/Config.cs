@@ -110,7 +110,7 @@ internal static class Config
     {
         get
         {
-            if (SandboxDetector.Detect() == SandboxType.Docker)
+            if (SandboxDetector.Detect() is SandboxType.Docker)
                 return "/bot-config/credentials.json";
 
             if (Assembly.GetEntryAssembly()?.GetCustomAttribute<UserSecretsIdAttribute>() is UserSecretsIdAttribute attribute
