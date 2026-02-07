@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.32014.148
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11415.280 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompatBot", "CompatBot\CompatBot.csproj", "{6D9CA448-60C1-4D66-91D6-EC6C586508E6}"
 EndProject
@@ -25,12 +25,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		CONTRIBUTING.md = CONTRIBUTING.md
 		docker-compose.example.yml = docker-compose.example.yml
 		Dockerfile = Dockerfile
-		nuget.config = nuget.config
-		README.md = README.md
-		SECURITY.md = SECURITY.md
 		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
 		get-names_anidb.ps1 = get-names_anidb.ps1
 		get-names_anilist.ps1 = get-names_anilist.ps1
+		nuget.config = nuget.config
+		README.md = README.md
+		rpcs3bot.service = rpcs3bot.service
+		SECURITY.md = SECURITY.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OneDriveClient", "Clients\OneDriveClient\OneDriveClient.csproj", "{5C4BCF33-2EC6-455F-B026-8A0001B7B7AD}"
@@ -46,6 +47,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{519297F9-DE0B-48EE-85B6-0DB6B065760E}"
 	ProjectSection(SolutionItems) = preProject
 		.resources\confusables.txt = .resources\confusables.txt
+		.resources\cpu_tier_list.conf = .resources\cpu_tier_list.conf
 		.resources\fortunes.txt = .resources\fortunes.txt
 		.resources\fortunes_fortuneandframe.txt = .resources\fortunes_fortuneandframe.txt
 		.resources\metacritic_ps3.json = .resources\metacritic_ps3.json
@@ -53,7 +55,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 		.resources\names_anilist.txt = .resources\names_anilist.txt
 		.resources\names_anime.txt = .resources\names_anime.txt
 		.resources\win32_error_codes_v23.0.txt = .resources\win32_error_codes_v23.0.txt
-		.resources\cpu_tier_list.conf = .resources\cpu_tier_list.conf
 	EndProjectSection
 EndProject
 Global
