@@ -781,22 +781,21 @@ internal static partial class LogParserResult
 
     private static async ValueTask<(UpdateInfo? updateInfo, bool isTooOld)> CheckForUpdateAsync(NameValueCollection items)
     {
-        if (string.IsNullOrEmpty(items["build_and_specs"]))
+        if (items["build_and_specs"] is not { Length: >0 })
             return default;
 
-        var currentBuildCommit = items["build_commit"];
-        if (string.IsNullOrEmpty(currentBuildCommit))
+        if (items["build_commit"] is not { Length: >0 } currentBuildCommit)
             currentBuildCommit = null;
         var updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token, currentBuildCommit).ConfigureAwait(false);
-        if (updateInfo.ReturnCode != StatusCode.UpdatesAvailable && currentBuildCommit is not null)
-            updateInfo = await CompatClient.GetUpdateAsync(Config.Cts.Token).ConfigureAwait(false);
         var link = updateInfo.X64?.LatestBuild.Windows?.Download
                    ?? updateInfo.X64?.LatestBuild.Linux?.Download
                    ?? updateInfo.X64?.LatestBuild.Mac?.Download
                    ?? updateInfo.Arm?.LatestBuild.Windows?.Download
                    ?? updateInfo.Arm?.LatestBuild.Linux?.Download
                    ?? updateInfo.Arm?.LatestBuild.Mac?.Download;
-        if (updateInfo.ReturnCode is not StatusCode.UpdatesAvailable || link is null)
+        if (updateInfo.ReturnCode is StatusCode.UnknownBuild && currentBuildCommit is { Length: > 0 }
+            || updateInfo.ReturnCode is not StatusCode.UpdatesAvailable and not StatusCode.NoUpdates and not StatusCode.UnknownBuild
+            || link is null)
             return default;
 
         var latestBuildInfo = BuildInfoInUpdate().Match(link.ToLowerInvariant());
