@@ -32,8 +32,8 @@ internal sealed class SevenZipHandler: IArchiveHandler
             await using var fileStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 16384, FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.DeleteOnClose);
             await sourceStream.CopyToAsync(fileStream, 16384, cancellationToken).ConfigureAwait(false);
             fileStream.Seek(0, SeekOrigin.Begin);
-            using var zipArchive = SevenZipArchive.Open(fileStream);
-            using var zipReader = zipArchive.ExtractAllEntries();
+            await using var zipArchive = await SevenZipArchive.OpenAsyncArchive(fileStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await using var zipReader = await zipArchive.ExtractAllEntriesAsync().ConfigureAwait(false);
             while (await zipReader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                 if (!zipReader.Entry.IsDirectory
                     && zipReader.Entry.Key!.EndsWith(".log", StringComparison.InvariantCultureIgnoreCase)

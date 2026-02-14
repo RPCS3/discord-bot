@@ -30,7 +30,7 @@ internal sealed class RarHandler: IArchiveHandler
         try
         {
             await using var statsStream = new BufferCopyStream(sourceStream);
-            using var rarReader = RarReader.Open(statsStream);
+            await using var rarReader = await RarReader.OpenAsyncReader(statsStream, cancellationToken: cancellationToken).ConfigureAwait(false);
             while (await rarReader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
             {
                 if (!rarReader.Entry.IsDirectory

@@ -219,12 +219,12 @@ internal static class AzureDevOpsClientExtensions
                 {
                     using var httpClient = HttpClientFactory.Create();
                     await using var stream = await httpClient.GetStreamAsync(winDownloadUrl, cancellationToken).ConfigureAwait(false);
-                    using var zipStream = ReaderFactory.Open(stream);
-                    while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                    await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        if (zipStream.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
+                        if (reader.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
-                            result = result with {WindowsFilename = Path.GetFileName(zipStream.Entry.Key)};
+                            result = result with {WindowsFilename = Path.GetFileName(reader.Entry.Key)};
                             break;
                         }
                     }
@@ -249,12 +249,12 @@ internal static class AzureDevOpsClientExtensions
                 {
                     using var httpClient = HttpClientFactory.Create();
                     await using var stream = await httpClient.GetStreamAsync(linDownloadUrl, cancellationToken).ConfigureAwait(false);
-                    using var zipStream = ReaderFactory.Open(stream);
-                    while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                    await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        if (zipStream.Entry.Key?.EndsWith(".AppImage", StringComparison.InvariantCultureIgnoreCase) is true)
+                        if (reader.Entry.Key?.EndsWith(".AppImage", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
-                            result = result with {LinuxFilename = Path.GetFileName(zipStream.Entry.Key)};
+                            result = result with {LinuxFilename = Path.GetFileName(reader.Entry.Key)};
                             break;
                         }
                     }
@@ -276,13 +276,13 @@ internal static class AzureDevOpsClientExtensions
                 {
                     using var httpClient = HttpClientFactory.Create();
                     await using var stream = await httpClient.GetStreamAsync(macDownloadUrl, cancellationToken).ConfigureAwait(false);
-                    using var zipStream = ReaderFactory.Open(stream);
-                    while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                    await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true
-                            || zipStream.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
+                        if (reader.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true
+                            || reader.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
-                            result = result with { MacFilename = Path.GetFileName(zipStream.Entry.Key) };
+                            result = result with { MacFilename = Path.GetFileName(reader.Entry.Key) };
                             break;
                         }
                     }
@@ -304,13 +304,13 @@ internal static class AzureDevOpsClientExtensions
                 {
                     using var httpClient = HttpClientFactory.Create();
                     await using var stream = await httpClient.GetStreamAsync(macArmDownloadUrl, cancellationToken).ConfigureAwait(false);
-                    using var zipStream = ReaderFactory.Open(stream);
-                    while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                    await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true
-                            || zipStream.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
+                        if (reader.Entry.Key?.EndsWith(".dmg", StringComparison.InvariantCultureIgnoreCase) is true
+                            || reader.Entry.Key?.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) is true)
                         {
-                            result = result with { MacArmFilename = Path.GetFileName(zipStream.Entry.Key) };
+                            result = result with { MacArmFilename = Path.GetFileName(reader.Entry.Key) };
                             break;
                         }
                     }
