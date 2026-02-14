@@ -31,7 +31,7 @@ internal sealed class ZipHandler: IArchiveHandler
         try
         {
             await using var statsStream = new BufferCopyStream(sourceStream);
-            using var zipReader = ZipReader.Open(statsStream);
+            await using var zipReader = await ZipReader.OpenAsyncReader(statsStream, cancellationToken: cancellationToken).ConfigureAwait(false);
             while (await zipReader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
             {
                 if (!zipReader.Entry.IsDirectory

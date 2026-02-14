@@ -135,12 +135,12 @@ public partial class Client
             try
             {
                 await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, windowsBuildArtifact.Id, "zip").ConfigureAwait(false);
-                using var zipStream = ReaderFactory.Open(stream);
-                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
+                    if (reader.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
                     {
-                        result = result with {WindowsFilename = Path.GetFileName(zipStream.Entry.Key)};
+                        result = result with {WindowsFilename = Path.GetFileName(reader.Entry.Key)};
                         break;
                     }
                 }
@@ -160,12 +160,12 @@ public partial class Client
             try
             {
                 await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, windowsArmBuildArtifact.Id, "zip").ConfigureAwait(false);
-                using var zipStream = ReaderFactory.Open(stream);
-                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                while (await reader.MoveToNextEntryAsync(cancellationToken))
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
+                    if (reader.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
                     {
-                        result = result with { WindowsArmFilename = Path.GetFileName(zipStream.Entry.Key) };
+                        result = result with { WindowsArmFilename = Path.GetFileName(reader.Entry.Key) };
                         break;
                     }
                 }
@@ -189,12 +189,12 @@ public partial class Client
             try
             {
                 await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, linuxBuildArtifact.Id, "zip").ConfigureAwait(false);
-                using var zipStream = ReaderFactory.Open(stream);
-                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase) is true)
+                    if (reader.Entry.Key?.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase) is true)
                     {
-                        result = result with {LinuxFilename = Path.GetFileName(zipStream.Entry.Key)};
+                        result = result with {LinuxFilename = Path.GetFileName(reader.Entry.Key)};
                         break;
                     }
                 }
@@ -218,12 +218,12 @@ public partial class Client
             try
             {
                 await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, linuxArmBuildArtifact.Id, "zip").ConfigureAwait(false);
-                using var zipStream = ReaderFactory.Open(stream);
-                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase) is true)
+                    if (reader.Entry.Key?.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase) is true)
                     {
-                        result = result with {LinuxArmFilename = Path.GetFileName(zipStream.Entry.Key)};
+                        result = result with {LinuxArmFilename = Path.GetFileName(reader.Entry.Key)};
                         break;
                     }
                 }
@@ -243,12 +243,12 @@ public partial class Client
             try
             {
                 await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, macBuildArtifact.Id, "zip").ConfigureAwait(false);
-                using var zipStream = ReaderFactory.Open(stream);
-                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
+                    if (reader.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
                     {
-                        result = result with { MacFilename = Path.GetFileName(zipStream.Entry.Key) };
+                        result = result with { MacFilename = Path.GetFileName(reader.Entry.Key) };
                         break;
                     }
                 }
@@ -268,13 +268,13 @@ public partial class Client
             try
             {
                 await using var stream = await client.Actions.Artifacts.DownloadArtifact(OwnerId, RepoId, macArmBuildArtifact.Id, "zip").ConfigureAwait(false);
-                using var zipStream = ReaderFactory.Open(stream);
-                while (zipStream.MoveToNextEntry() && !cancellationToken.IsCancellationRequested)
+                await using var reader = await ReaderFactory.OpenAsyncReader(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                while (await reader.MoveToNextEntryAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    if (zipStream.Entry.Key?.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase) is true
-                        || zipStream.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
+                    if (reader.Entry.Key?.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase) is true
+                        || reader.Entry.Key?.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) is true)
                     {
-                        result = result with { MacArmFilename = Path.GetFileName(zipStream.Entry.Key) };
+                        result = result with { MacArmFilename = Path.GetFileName(reader.Entry.Key) };
                         break;
                     }
                 }
