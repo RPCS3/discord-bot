@@ -112,7 +112,7 @@ internal sealed class MediaScreenshotMonitor
                     var ocrTextBuf = new StringBuilder($"OCR result of message <{msg.JumpLink}> ({confidence * 100:0.00}%):").AppendLine()
                         .AppendLine(result.Sanitize());
                     if (cnt
-                        && confidence > 0.65
+                        && confidence > 0.50
                         && await ContentFilter.FindTriggerAsync(FilterContext.Chat, result).ConfigureAwait(false) is Piracystring hit
                         && duplicates.Add(hit.String))
                     {
