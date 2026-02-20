@@ -53,8 +53,8 @@ internal static partial class LogParserResult
     private static readonly Version NvidiaTextureMemoryBugMinVersion = new(526, 0);
     private static readonly Version NvidiaTextureMemoryBugMaxVersion = new(526, 99);
     
-    private static readonly Version NvidiaRecommendedWindowsDriverVersion = new(512, 16);
-    private static readonly Version NvidiaRecommendedLinuxDriverVersion = new(515, 57);
+    private static readonly Version NvidiaRecommendedWindowsDriverVersion = new(580, 0);
+    private static readonly Version NvidiaRecommendedLinuxDriverVersion = new(580, 0);
     private static readonly Version AmdRecommendedWindowsDriverVersion = new(24, 2, 1);
     private static readonly Version IntelRecommendedWindowsDriverVersion = new(0, 101, 1660);
 
