@@ -76,17 +76,25 @@ internal static partial class LogParserResult
                         items["os_windows_version"] = winVer;
                     break;
                 }
+                case string t when t.StartsWith("windows"):
+                {
+                    items["os_type"] = "Windows";
+                    items["os_version"] = osInfo.Groups["os_version_string"].Value;
+                    if (Version.TryParse(items["os_version"], out var winVersion) && GetWindowsVersion(winVersion) is string winVer)
+                        items["os_windows_version"] = winVer;
+                    break;
+                }
                 case "posix":
                 {
                     items["os_type"] = osInfo.Groups["posix_name"].Value;
                     items["os_version"] = osInfo.Groups["posix_release"].Value;
-                    items["os_linux_version"] = GetLinuxVersion(items["os_type"], items["os_version"], osInfo.Groups["posix_version"].Value);
+                    items["os_linux_version"] = GetLinuxVersion(items["os_type"], items["os_version"], osInfo.Groups["os_version_string"].Value);
                     break;
                 }
                 case "macos":
                 {
                     items["os_type"] = "MacOS";
-                    items["os_version"] = osInfo.Groups["macos_version"].Value;
+                    items["os_version"] = osInfo.Groups["os_version_string"].Value;
                     if (Version.TryParse(items["os_version"], out var macVer) && GetMacOsVersion(macVer) is string macOsVer)
                         items["os_mac_version"] = macOsVer; 
                     break;
@@ -109,7 +117,7 @@ internal static partial class LogParserResult
                 {
                     items["os_type"] = items["posix_name"];
                     items["os_version"] = items["posix_release"];
-                    items["os_linux_version"] = GetLinuxVersion(items["posix_name"], items["os_version"], osInfo.Groups["posix_version"].Value);
+                    items["os_linux_version"] = GetLinuxVersion(items["posix_name"], items["os_version"], osInfo.Groups["os_version_string"].Value);
                     break;
                 }
             }
