@@ -11,10 +11,21 @@ internal partial class LogParser
     private static partial Regex Rpcs3LogHeader();
     [GeneratedRegex(@"(?<first_unicode_dot>·).+$", DefaultOptions)]
     private static partial Regex FirstLineWithDot();
-    [GeneratedRegex(@"Operating system: (?<os_type>[^,]+), (Name: (?<posix_name>[^,]+), Release: (?<posix_release>[^,]+), Version: (?<posix_version>[^\r\n]+)|Major: (?<os_version_major>\d+), Minor: (?<os_version_minor>\d+), Build: (?<os_version_build>\d+), Service Pack: (?<os_service_pack>[^,]+), Compatibility mode: (?<os_compat_mode>[^,\r\n]+)|Version: (?<macos_version>[^\r\n]+))\r?$", DefaultSingleLine)]
     // Operating system: Windows, Major: 10, Minor: 0, Build: 22000, Service Pack: none, Compatibility mode: 0
+    // Operating system: Windows 10 Home, Version 10.0.26200 NT6.3
     // Operating system: POSIX, Name: Linux, Release: 5.15.11-zen1-1-zen, Version: #1 ZEN SMP PREEMPT Wed, 22 Dec 2021 09:23:53 +0000
     // Operating system: macOS, Version 12.1.0
+    [GeneratedRegex("""
+        Operating\ssystem:\s(?<os_type>[^,]+),\s
+        (
+            Name:\s(?<posix_name>[^,]+),\sRelease:\s(?<posix_release>.+(?!:\s,))
+            |Major:\s(?<os_version_major>\d+),\sMinor:\s(?<os_version_minor>\d+),\sBuild:\s(?<os_version_build>\d+),\sService\sPack:\s(?<os_service_pack>[^,]+),\sCompatibility\smode:\s(?<os_compat_mode>[^,\r\n]+)
+        )?
+        (Version:?\s(?<os_version_string>[^\r\n]+?)(\sNT\d+\.\d+)?)?
+        \r?$
+        """,
+        DefaultSingleLine | RegexOptions.IgnorePatternWhitespace
+    )]
     internal static partial Regex OsInfo();
     [GeneratedRegex(@"Current Time: (?<log_start_timestamp>[^\r\n]+)\r?$", DefaultOptions)]
     private static partial Regex CurrentTime();
