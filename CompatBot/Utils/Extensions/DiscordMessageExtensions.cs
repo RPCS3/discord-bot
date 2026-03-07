@@ -1,7 +1,5 @@
-﻿using System.IO;
-using System.Net.Http;
+﻿using Microsoft.TeamFoundation.Test.WebApi;
 using System.Reflection;
-using CompatApiClient.Compression;
 
 namespace CompatBot.Utils;
 
@@ -63,5 +61,46 @@ public static class DiscordMessageExtensions
         if (refMsg is not null)
             msgBuilder.WithReply(refMsg.Id);
         return botMsg.UpdateOrCreateMessageAsync(channel, msgBuilder);
+    }
+
+    public static async ValueTask<string> GetMessageContentForFiltersAsync(this DiscordMessage message, DiscordClient client, bool includeEmbeds = true, bool includeAttachments = true)
+    {
+        var content = new StringBuilder().Append(message, includeEmbeds, includeAttachments);
+        if (message.Reference is { Type: DiscordMessageReferenceType.Forward } refMsg)
+        {
+            try
+            {
+                if (await client.GetMessageAsync(refMsg.Channel, refMsg.Message.Id).ConfigureAwait(false) is {} msg)
+                    content.AppendLine().Append(msg);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Failed to get forwarded message");
+            }
+        }
+        return content.ToString();
+    }
+
+    private static StringBuilder Append(this StringBuilder content, DiscordMessage message, bool includeEmbeds = true, bool includeAttachments = true)
+    {
+        if (message.Content is { Length: > 0 })
+            content.AppendLine(message.Content);
+        if (includeAttachments)
+            foreach (var attachment in message.Attachments.Where(a => a.FileName is { Length: > 0 }))
+                content.AppendLine(attachment.FileName);
+        if (includeEmbeds)
+            foreach (var embed in message.Embeds)
+            {
+                content.AppendLine(embed.Title).AppendLine(embed.Description);
+                if (embed.Fields is not { Count: > 0 })
+                    continue;
+
+                foreach (var field in embed.Fields)
+                {
+                    content.AppendLine(field.Name);
+                    content.AppendLine(field.Value);
+                }
+            }
+        return content;
     }
 }

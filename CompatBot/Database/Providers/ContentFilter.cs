@@ -132,25 +132,7 @@ internal static class ContentFilter
         }
 #endif
 
-        var content = new StringBuilder();
-        DumpMessageContent(message, content);
-        if (message.Reference is {Type: DiscordMessageReferenceType.Forward} refMsg)
-        {
-            try
-            {
-                var msg = await client.GetMessageAsync(refMsg.Channel, refMsg.Message.Id).ConfigureAwait(false);
-                if (msg is not null)
-                {
-                    content.AppendLine();
-                    DumpMessageContent(msg, content);
-                }
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e, "Failed to get forwarded message");
-            }
-        }
-        
+        var content = await message.GetMessageContentForFiltersAsync(client).ConfigureAwait(false);
         var trigger = await FindTriggerAsync(FilterContext.Chat, content.ToString()).ConfigureAwait(false);
         if (trigger is null)
             return true;
@@ -326,24 +308,4 @@ internal static class ContentFilter
            && Regex.Match(context, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) is { Success: true, Groups.Count: > 0 } m
             ? m.Groups[0].Value.Trim(256)
             : null;
-
-    private static void DumpMessageContent(DiscordMessage message, StringBuilder content)
-    {
-        if (message.Content is {Length: >0})
-            content.AppendLine(message.Content);
-        foreach (var attachment in message.Attachments.Where(a => a.FileName is {Length: >0}))
-            content.AppendLine(attachment.FileName);
-        foreach (var embed in message.Embeds)
-        {
-            content.AppendLine(embed.Title).AppendLine(embed.Description);
-            if (embed.Fields is not { Count: > 0 })
-                continue;
-            
-            foreach (var field in embed.Fields)
-            {
-                content.AppendLine(field.Name);
-                content.AppendLine(field.Value);
-            }
-        }
-    }
 }

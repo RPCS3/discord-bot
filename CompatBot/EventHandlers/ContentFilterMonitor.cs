@@ -26,6 +26,7 @@ internal static class ContentFilterMonitor
         }
         if (message.Attachments.Any() || message.Embeds.Any())
             MediaScreenshotMonitor.EnqueueOcrTask(message);
-        await ContentFilter.IsClean(c, message).ConfigureAwait(false);
+        if (await ContentFilter.IsClean(c, message).ConfigureAwait(false))
+            await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(c, message).ConfigureAwait(false);
     }
 }

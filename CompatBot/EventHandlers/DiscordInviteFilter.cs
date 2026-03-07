@@ -2,11 +2,9 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
-using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
-using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
@@ -30,7 +28,7 @@ internal static partial class DiscordInviteFilter
 
     public static async Task<bool> CheckMessageInvitesAreSafeAsync(DiscordClient client, DiscordMessage message)
     {
-        if (message.Channel.IsPrivate)
+        if (message.Channel?.IsPrivate is true)
             return true;
 
         if (message.Author.IsBotSafeCheck())
@@ -44,8 +42,9 @@ internal static partial class DiscordInviteFilter
         if (message.Reactions.Any(r => r.Emoji == Config.Reactions.Moderated && r.IsMe))
             return true;
 
-        var (hasInvalidResults, attemptedWorkaround, invites) = await client.GetInvitesAsync(message.Content, message.Author).ConfigureAwait(false);
-        if (!hasInvalidResults && invites.Count == 0)
+        var messageContent = await message.GetMessageContentForFiltersAsync(client, false, false).ConfigureAwait(false);
+        var (hasInvalidResults, attemptedWorkaround, invites) = await client.GetInvitesAsync(messageContent, message.Author).ConfigureAwait(false);
+        if (!hasInvalidResults && invites is [])
             return true;
 
         if (hasInvalidResults)
@@ -153,11 +152,11 @@ internal static partial class DiscordInviteFilter
         try
         {
             var botMember = await client.GetMemberAsync(guild, client.CurrentUser).ConfigureAwait(false);
-            if (botMember == null)
+            if (botMember is null)
             {
                 await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
                 botMember = await client.GetMemberAsync(guild, client.CurrentUser).ConfigureAwait(false);
-                if (botMember == null)
+                if (botMember is null)
                 {
                     Config.Log.Error("Failed to resolve bot as the guild member for guild " + guild);
                     return;
@@ -203,13 +202,13 @@ internal static partial class DiscordInviteFilter
 
     public static async Task<(bool hasInvalidInvite, bool attemptToWorkaround, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, DiscordUser? author = null, bool tryMessageAsACode = false)
     {
-        if (string.IsNullOrEmpty(message))
+        if (message is not { Length: >0 })
             return (false, false, new(0));
 
-        var inviteCodes = new HashSet<string>(InviteLink().Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => !string.IsNullOrEmpty(s)));
-        var discordMeLinks = InviteLink().Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+        var inviteCodes = new HashSet<string>(InviteLink().Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => s is { Length: >0 }));
+        var discordMeLinks = InviteLink().Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => s is { Length: >0 }).ToList();
         var attemptedWorkaround = false;
-        if (author != null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string>? recentInvites) && recentInvites is not null)
+        if (author is not null && InviteCodeCache.TryGetValue(author.Id, out HashSet<string>? recentInvites) && recentInvites is not null)
         {
             foreach (var c in recentInvites)
                 if (message.Contains(c))
@@ -218,7 +217,7 @@ internal static partial class DiscordInviteFilter
                     InviteCodeCache.Set(author.Id, recentInvites, CacheDuration);
                 }
         }
-        if (inviteCodes.Count == 0 && discordMeLinks.Count == 0 && !tryMessageAsACode)
+        if (inviteCodes is not { Count: >0 } && discordMeLinks is [] && !tryMessageAsACode)
             return (false, attemptedWorkaround, new(0));
 
         var hasInvalidInvites = false;
@@ -258,14 +257,13 @@ internal static partial class DiscordInviteFilter
                             {
                                 ["_token"] = csrfTokenMatch.Groups["csrf_token"].Value,
                                 ["serverEid"] = serverEidMatch.Groups["server_eid"].Value,
-                            }!),
+                            }),
                         };
                         postRequest.Headers.Accept.Add(new("text/html"));
                         using var postResponse = await httpClient.SendAsync(postRequest).ConfigureAwait(false);
                         if (postResponse.StatusCode == HttpStatusCode.Redirect)
                         {
-                            var redirectId = postResponse.Headers.Location?.Segments.Last();
-                            if (redirectId != null)
+                            if (postResponse.Headers.Location?.Segments.Last() is {Length: >0} redirectId)
                             {
                                 using var getDiscordRequest = new HttpRequestMessage(HttpMethod.Get, "https://discord.me/server/join/redirect/" + redirectId);
                                 getDiscordRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
@@ -273,7 +271,7 @@ internal static partial class DiscordInviteFilter
                                 if (discordRedirect.StatusCode == HttpStatusCode.Redirect)
                                 {
                                     var inviteCodeSegment = discordRedirect.Headers.Location?.Segments.Last();
-                                    if (inviteCodeSegment != null)
+                                    if (inviteCodeSegment is not null)
                                     {
                                         inviteCodes.Add(inviteCodeSegment);
                                         hasInvalidInvites = false;
