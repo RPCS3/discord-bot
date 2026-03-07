@@ -2,11 +2,9 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
-using CompatApiClient;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
-using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
