@@ -18,8 +18,7 @@ internal class BufferCopyStream : Stream, IDisposable
 
     public BufferCopyStream(Stream? baseStream, int bufferSize = 4096)
     {
-        if (baseStream == null)
-            throw new ArgumentNullException(nameof(baseStream));
+        ArgumentNullException.ThrowIfNull(baseStream);
 
         if (bufferSize < 1)
             throw new ArgumentException("Buffer size cannot be non-positive", nameof(bufferSize));

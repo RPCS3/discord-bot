@@ -7,7 +7,6 @@ using CompatBot.Utils.Extensions;
 using CompatBot.Utils.ResultFormatters;
 using DSharpPlus.Commands.Processors.TextCommands;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.TeamFoundation.Build.WebApi;
 using Octokit;
 
 namespace CompatBot.Commands;
@@ -202,12 +201,6 @@ internal static partial class CompatList
             if (mergedPrs is not {Count: >0})
                 return;
 
-            var failedAzureBuilds = await Config.GetAzureDevOpsClient().GetMasterBuildsAsync(
-                oldestPrCommit.MergeCommitSha,
-                newestPrCommit.MergeCommitSha,
-                oldestPrCommit.MergedAt?.DateTime,
-                cancellationToken
-            ).ConfigureAwait(false);
             var failedGhBuilds = await GithubClient.GetMasterBuildsAsync(
                 oldestPrCommit.MergeCommitSha,
                 newestPrCommit.MergeCommitSha,
@@ -243,10 +236,9 @@ internal static partial class CompatList
                 }
                 else if (updateInfo.ReturnCode is StatusCode.UnknownBuild)
                 {
-                    var masterBuildInfoAzure = failedAzureBuilds?.FirstOrDefault(b => b.Commit?.Equals(mergedPr.MergeCommitSha, StringComparison.OrdinalIgnoreCase) is true);
                     var masterBuildInfoGh = failedGhBuilds?.FirstOrDefault(b => b.Commit?.Equals(mergedPr.MergeCommitSha, StringComparison.OrdinalIgnoreCase) is true);
-                    var buildTime = masterBuildInfoGh?.FinishTime ?? masterBuildInfoAzure?.FinishTime;
-                    if (masterBuildInfoAzure is not null || masterBuildInfoGh is not null)
+                    var buildTime = masterBuildInfoGh?.FinishTime;
+                    if (masterBuildInfoGh is not null)
                     {
                         updateInfo = new()
                         {
@@ -257,9 +249,9 @@ internal static partial class CompatList
                                 {
                                     Datetime = buildTime!.Value.ToString("yyyy-MM-dd HH:mm:ss"),
                                     Pr = mergedPr.Number,
-                                    Windows = new() { Download = masterBuildInfoAzure?.WindowsBuildDownloadLink ?? masterBuildInfoGh?.WindowsBuildDownloadLink ?? "" },
-                                    Linux = new() { Download = masterBuildInfoAzure?.LinuxBuildDownloadLink ?? masterBuildInfoGh?.LinuxBuildDownloadLink  ?? "" },
-                                    Mac = new() { Download = masterBuildInfoAzure?.MacBuildDownloadLink ?? masterBuildInfoGh?.MacBuildDownloadLink  ?? "" },
+                                    Windows = new() { Download = masterBuildInfoGh?.WindowsBuildDownloadLink ?? "" },
+                                    Linux = new() { Download = masterBuildInfoGh?.LinuxBuildDownloadLink  ?? "" },
+                                    Mac = new() { Download = masterBuildInfoGh?.MacBuildDownloadLink  ?? "" },
                                 },
                             },
                             Arm = new()
@@ -269,8 +261,8 @@ internal static partial class CompatList
                                 {
                                     Datetime = buildTime!.Value.ToString("yyyy-MM-dd HH:mm:ss"),
                                     Pr = mergedPr.Number,
-                                    Linux = new() { Download = masterBuildInfoAzure?.LinuxArmBuildDownloadLink ?? masterBuildInfoGh?.LinuxArmBuildDownloadLink  ?? "" },
-                                    Mac = new() { Download = masterBuildInfoAzure?.MacArmBuildDownloadLink ?? masterBuildInfoGh?.MacArmBuildDownloadLink  ?? "" },
+                                    Linux = new() { Download = masterBuildInfoGh?.LinuxArmBuildDownloadLink  ?? "" },
+                                    Mac = new() { Download = masterBuildInfoGh?.MacArmBuildDownloadLink  ?? "" },
                                 },
                             },
                         };
@@ -298,13 +290,6 @@ internal static partial class CompatList
                         WorkflowRunConclusion.Failure => "Failed to build",
                         WorkflowRunConclusion.Cancelled => "Cancelled",
                         WorkflowRunConclusion.TimedOut => "Timed out",
-                        _ => null,
-                    } ?? masterBuildInfoAzure?.Result switch
-                    {
-                        BuildResult.Succeeded => "Built",
-                        BuildResult.PartiallySucceeded => "Built",
-                        BuildResult.Failed => "Failed to build",
-                        BuildResult.Canceled => "Cancelled",
                         _ => null,
                     };
                     if (buildTime.HasValue && reason is not null)

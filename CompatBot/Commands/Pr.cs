@@ -107,8 +107,8 @@ internal sealed class Pr
     [Command("stats"), RequiresBotModRole]
     public static async ValueTask Stats(SlashCommandContext ctx)
     {
-        var azureClient = Config.GetAzureDevOpsClient();
-        var duration = await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
+        var client = new GithubClient.Client(Config.GithubToken);
+        var duration = await client.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
         await ctx.RespondAsync(
             $"Expected pipeline duration (using {duration.BuildCount} builds): \n" +
             $"95%: {duration.Percentile95} ({duration.Percentile95.TotalMinutes})\n" +

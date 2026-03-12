@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using Microsoft.VisualStudio.Services.Common;
+using CompatBot.Utils.Extensions;
 
 namespace CompatBot.EventHandlers;
 

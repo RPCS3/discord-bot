@@ -13,6 +13,7 @@ internal static partial class NewBuildsMonitor
     private static readonly TimeSpan ActiveCheckInterval = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan ActiveCheckResetThreshold = TimeSpan.FromMinutes(10);
     private static readonly ConcurrentQueue<(DateTime start, DateTime end)> ExpectedNewBuildTimeFrames = new();
+    private static readonly GithubClient.Client CiClient = new(Config.GithubToken);
 
     public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
@@ -24,8 +25,7 @@ internal static partial class NewBuildsMonitor
            )
         {
             Config.Log.Info("Found new PR merge message");
-            var azureClient = Config.GetAzureDevOpsClient();
-            var pipelineDurationStats = await azureClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
+            var pipelineDurationStats = await CiClient.GetPipelineDurationAsync(Config.Cts.Token).ConfigureAwait(false);
             var expectedMean = DateTime.UtcNow + pipelineDurationStats.Mean;
             var start = expectedMean - pipelineDurationStats.StdDev;
             var end = expectedMean + pipelineDurationStats.StdDev + ActiveCheckResetThreshold;

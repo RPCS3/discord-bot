@@ -1,6 +1,5 @@
 ﻿using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.VisualStudio.Services.DelegatedAuthorization;
 
 namespace CompatBot.EventHandlers;
 
