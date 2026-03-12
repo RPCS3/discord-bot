@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using CompatBot.Utils.Extensions;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -10,9 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.Logging;
 using Microsoft.IO;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi;
 using NLog;
 using NLog.Extensions.Logging;
 using NLog.Filters;
@@ -78,7 +76,6 @@ internal static class Config
     public static int MaxFortuneLength => config.GetValue(nameof(MaxFortuneLength), 300);
 
     public static string Token => config.GetValue(nameof(Token), "");
-    public static string AzureDevOpsToken => config.GetValue(nameof(AzureDevOpsToken), "");
     public static string AzureComputerVisionKey => config.GetValue(nameof(AzureComputerVisionKey), "");
     public static string AzureComputerVisionEndpoint => config.GetValue(nameof(AzureComputerVisionEndpoint), "https://westeurope.api.cognitive.microsoft.com/");
     public static Guid AzureDevOpsProjectId => config.GetValue(nameof(AzureDevOpsProjectId), new Guid("3598951b-4d39-4fad-ad3b-ff2386a649de"));
@@ -304,24 +301,6 @@ internal static class Config
         }
         LogManager.Configuration = loggingConfig;
         return LogManager.GetLogger("default");
-    }
-
-    public static BuildHttpClient? GetAzureDevOpsClient()
-    {
-        if (string.IsNullOrEmpty(AzureDevOpsToken))
-            return null;
-
-        try
-        {
-            var azureCreds = new VssBasicCredential("bot", AzureDevOpsToken);
-            var azureConnection = new VssConnection(new Uri("https://dev.azure.com/nekotekina"), azureCreds);
-            return azureConnection.GetClient<BuildHttpClient>();
-        }
-        catch (Exception e)
-        {
-            Log.Error(e, "Failed to authenticate");
-            return null;
-        }
     }
 
     public static TelemetryClient? TelemetryClient

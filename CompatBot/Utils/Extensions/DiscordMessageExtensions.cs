@@ -1,5 +1,4 @@
-﻿using Microsoft.TeamFoundation.Test.WebApi;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace CompatBot.Utils;
 

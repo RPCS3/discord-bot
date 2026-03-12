@@ -133,7 +133,6 @@ internal static class Program
                 DiscLanguageProvider.RefreshAsync(Config.Cts.Token),
                 StatsStorage.BackgroundSaveAsync(),
                 CompatList.ImportCompatListAsync(),
-                Config.GetAzureDevOpsClient().GetPipelineDurationAsync(Config.Cts.Token),
                 new GithubClient.Client(Config.GithubToken).GetPipelineDurationAsync(Config.Cts.Token),
                 Config.GetCurrentGitRevisionAsync(Config.Cts.Token),
                 Bot.UpdateCheckScheduledAsync(Config.Cts.Token),

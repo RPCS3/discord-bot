@@ -69,7 +69,6 @@ internal static class BotStatus
     private static string GetConfiguredApiStats()
         => $"""
             {(GoogleDriveHandler.ValidateCredentials() ? "✅" : "❌")} Google Drive
-            {(string.IsNullOrEmpty(Config.AzureDevOpsToken) ? "❌" : "✅")} Azure DevOps
             {(string.IsNullOrEmpty(Config.AzureComputerVisionKey) ? "❌" : "✅")} Computer Vision
             {(string.IsNullOrEmpty(Config.AzureAppInsightsConnectionString) ? "❌" : "✅")} AppInsights
             {(string.IsNullOrEmpty(Config.GithubToken) ? "❌" : "✅")} GitHub
