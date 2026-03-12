@@ -11,8 +11,7 @@ public sealed class AsciiTable
 
     public AsciiTable(params string[] columns)
     {
-        if (columns == null)
-            throw new ArgumentNullException(nameof(columns));
+        ArgumentNullException.ThrowIfNull(columns);
 
         if (columns.Length == 0)
             throw new ArgumentException("Expected at least one column", nameof(columns));
@@ -31,8 +30,7 @@ public sealed class AsciiTable
 
     public AsciiTable(params AsciiColumn[] columns)
     {
-        if (columns == null)
-            throw new ArgumentNullException(nameof(columns));
+        ArgumentNullException.ThrowIfNull(columns);
 
         if (columns.Length == 0)
             throw new ArgumentException("Expected at least one column", nameof(columns));
@@ -105,8 +103,7 @@ public sealed class AsciiTable
 
     public void Add(params string[] row)
     {
-        if (row == null)
-            throw new ArgumentNullException(nameof(row));
+        ArgumentNullException.ThrowIfNull(row);
 
         if (row.Length != columns.Length)
             throw new ArgumentException($"Expected row with {columns.Length} cells, but received row with {row.Length} cells");

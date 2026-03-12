@@ -6,8 +6,7 @@ internal static class NamingConventionConverter
 {
     public static void ConfigureMapping(this ModelBuilder modelBuilder, Func<string, string> nameResolver)
     {
-        if (nameResolver == null)
-            throw new ArgumentNullException(nameof(nameResolver));
+        ArgumentNullException.ThrowIfNull(nameResolver);
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {

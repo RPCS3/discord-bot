@@ -4,11 +4,8 @@ public static class EnumerableExtensions
 {
     public static IEnumerable<TResult> Pairwise<T, TResult>(this IEnumerable<T> source, Func<T, T, TResult> selector)
     {
-        if (source == null)
-            throw new ArgumentNullException(nameof(source));
-
-        if (selector == null)
-            throw new ArgumentNullException(nameof(selector));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(selector);
 
         using var e = source.GetEnumerator();
         if (!e.MoveNext())
