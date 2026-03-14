@@ -51,7 +51,7 @@ internal static class WarningsContextMenus
             if (await ctx.Client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member)
                 modal.AddCheckbox(new("add_role"), $"Add {role.Name} role for member {member.DisplayName}");
             else
-                modal.AddCheckbox(new("add_role"), $"Add {role.Name} role for user {user.GlobalName ?? user.Username}");
+                modal.AddCheckbox(new("add_role"), $"Add {role.Name} role for user {user.DisplayName}");
         }
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 

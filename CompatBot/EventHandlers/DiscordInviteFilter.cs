@@ -28,10 +28,10 @@ internal static partial class DiscordInviteFilter
 
     public static async Task<bool> CheckMessageInvitesAreSafeAsync(DiscordClient client, DiscordMessage message)
     {
-        if (message.Channel?.IsPrivate is true)
+        if (message.Channel is null or { IsPrivate: true })
             return true;
 
-        if (message.Author.IsBotSafeCheck())
+        if (message.Author is null or { IsBot: true })
             return true;
 
 #if !DEBUG
@@ -129,11 +129,13 @@ internal static partial class DiscordInviteFilter
                         message.Author.Id,
                         client.CurrentUser,
                         reason,
-                        codeResolveMsg
+                        codeResolveMsg,
+                        true
                     ).ConfigureAwait(false);
+                    await message.Author.AddRoleAsync(Config.WarnRoleId, client, message.Channel?.Guild, reason).ConfigureAwait(false);
                     if (result.IsSuccess() && !result.Data.suppress)
                     {
-                        var (_, recent, total) = result.Data;
+                        var (_, recent, total, _) = result.Data;
                         var content = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, reason, recent, total, client.CurrentUser).ConfigureAwait(false);
                         var msg = new DiscordMessageBuilder()
                             .WithContent(content)

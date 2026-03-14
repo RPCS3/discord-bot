@@ -22,31 +22,35 @@ public static class DiscordUserExtensions
         }
     }
 
-    public static string ToSaltedSha256(this DiscordUser user)
-        => BitConverter.GetBytes(user.Id).GetSaltedHash().ToHexString();
-
-    public static async ValueTask<bool> AddRoleAsync(this DiscordUser user, ulong roleId, DiscordClient client, DiscordGuild? guild, string reason)
+    extension(DiscordUser user)
     {
-        if (await client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member
-            && !member.Roles.Any(r => r.Id == roleId)
-            && await client.FindRoleAsync(guild, roleId).ConfigureAwait(false) is DiscordRole warnRole)
-            try
-            {
-                await member.GrantRoleAsync(warnRole, reason).ConfigureAwait(false);
-                return true;
-            }
-            catch (Exception e)
-            {
-                Config.Log.Warn(e, $"Failed to assign warning role to user {user.Username} ({user.Id})");
-            }
-        return false;
-    }
+        public string ToSaltedSha256() => BitConverter.GetBytes(user.Id).GetSaltedHash().ToHexString();
 
-    public static async ValueTask<bool> RemoveRoleAsync(this DiscordUser user, ulong roleId, DiscordClient client, DiscordGuild guild, string reason)
-    {
-        if (await client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member)
-            return await member.RemoveRoleAsync(roleId, client, guild, reason).ConfigureAwait(false);
-        return false;
+        public string DisplayName => user.GlobalName ?? user.Username;
+
+        public async ValueTask<bool> AddRoleAsync(ulong roleId, DiscordClient client, DiscordGuild? guild, string reason)
+        {
+            if (await client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member
+                && !member.Roles.Any(r => r.Id == roleId)
+                && await client.FindRoleAsync(guild, roleId).ConfigureAwait(false) is DiscordRole warnRole)
+                try
+                {
+                    await member.GrantRoleAsync(warnRole, reason).ConfigureAwait(false);
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Failed to assign warning role to user {user.Username} ({user.Id})");
+                }
+            return false;
+        }
+
+        public async ValueTask<bool> RemoveRoleAsync(ulong roleId, DiscordClient client, DiscordGuild guild, string reason)
+        {
+            if (await client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member)
+                return await member.RemoveRoleAsync(roleId, client, guild, reason).ConfigureAwait(false);
+            return false;
+        }
     }
 
     public static async ValueTask<bool> RemoveRoleAsync(this DiscordMember member, ulong roleId, DiscordClient client, DiscordGuild guild, string reason)

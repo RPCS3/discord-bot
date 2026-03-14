@@ -218,7 +218,7 @@ internal static class ContentFilter
                     message.Content.Sanitize(),
                     true
                 ).ConfigureAwait(false);
-                await message.Author.AddRoleAsync(Config.WarnRoleId, client, null, warningReason).ConfigureAwait(false);
+                await message.Author.AddRoleAsync(Config.WarnRoleId, client, message.Channel?.Guild, warningReason).ConfigureAwait(false);
                 if (result.IsSuccess()
                     && !result.Data.suppress
                     && message.Channel is not null)
