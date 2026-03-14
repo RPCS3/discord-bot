@@ -60,7 +60,7 @@ public static class DiscordUserExtensions
             }
             catch (Exception e)
             {
-                Config.Log.Warn(e, $"Failed to revoke warning role from user {member.Nickname} ({member.Username}; {member.Id})");
+                Config.Log.Warn(e, $"Failed to revoke warning role from user {member.DisplayName} ({member.Username}; {member.Id})");
             }
         return false;
 

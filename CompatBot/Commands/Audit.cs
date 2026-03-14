@@ -38,7 +38,7 @@ internal static class Audit
             await using var memoryStream = Config.MemoryStreamManager.GetStream();
             await using var writer = new StreamWriter(memoryStream, new UTF8Encoding(false), 4096, true);
             foreach (var member in members)
-                await writer.WriteLineAsync($"{member.Username}\t{member.Nickname}\t{member.JoinedAt:O}\t{string.Join(',', member.Roles.Select(r => r.Name))}").ConfigureAwait(false);
+                await writer.WriteLineAsync($"{member.Username}\t{member.DisplayName}\t{member.JoinedAt:O}\t{string.Join(',', member.Roles.Select(r => r.Name))}").ConfigureAwait(false);
             await writer.FlushAsync().ConfigureAwait(false);
             memoryStream.Seek(0, SeekOrigin.Begin);
             if (memoryStream.Length <= ctx.GetAttachmentSizeLimit())

@@ -1,4 +1,5 @@
 ﻿using CompatApiClient.Utils;
+using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.MessageCommands;
 using DSharpPlus.Commands.Processors.UserCommands;
 using DSharpPlus.Interactivity;
@@ -29,17 +30,25 @@ internal static class WarningsContextMenus
             await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't get interactivity extension").ConfigureAwait(false);
             return;
         }
+        
+        user ??= message?.Author;
+        if (user is null)
+        {
+            await ctx.RespondAsync($"{Config.Reactions.Failure} User was not provided in any argument").ConfigureAwait(false);
+            return;
+        }
 
         var interaction = ctx.Interaction;
         var modal = new DiscordModalBuilder()
             .WithCustomId($"modal:warn:{Guid.NewGuid():n}")
             .WithTitle("Issue new warning")
-            .AddTextInput(new(
-                "warning",
-                "Rule #2",
-                min_length: 2
-            ),
-            "Warning reason");
+            .AddTextInput(new("warning", "Rule #2", min_length: 2), "Warning reason");
+
+        if (Config.WarnRoleId > 0
+            && ctx.Guild is DiscordGuild guild
+            && await ctx.Client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member
+            && await guild.GetRoleAsync(Config.WarnRoleId).ConfigureAwait(false) is DiscordRole role)
+            modal.AddCheckbox(new("add_role"), $"Add {role.Name} role for member {member.DisplayName}");
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         try
@@ -59,9 +68,11 @@ internal static class WarningsContextMenus
                 DiscordInteractionResponseType.DeferredChannelMessageWithSource,
                 new DiscordInteractionResponseBuilder().AsEphemeral()
             ).ConfigureAwait(false);
-            user ??= message?.Author!;
             var reason = ((TextInputModalSubmission)value).Value;
-            var result = await Warnings.AddAsync(user.Id, ctx.User, reason, message?.Content.Sanitize()).ConfigureAwait(false);
+            var addRole = modalResult.Result.Values.TryGetValue("add_role", out var item)
+                && item is CheckboxModalSubmission cbValue
+                && cbValue.Value is true;
+            var result = await Warnings.AddAsync(user.Id, ctx.User, reason, message?.Content.Sanitize(), addRole).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 var response = new DiscordInteractionResponseBuilder()
@@ -71,7 +82,9 @@ internal static class WarningsContextMenus
                 return;
             }
 
-            var(suppress, recent, total) = result.Data;
+            var(suppress, recent, total, assignRole) = result.Data;
+            if (assignRole)
+                await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild!, reason).ConfigureAwait(false);
             if (!suppress)
             {
                 var userMsgContent = await Warnings.GetDefaultWarningMessageAsync(ctx.Client, user, reason, recent, total, ctx.User).ConfigureAwait(false);

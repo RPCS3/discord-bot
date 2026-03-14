@@ -178,31 +178,6 @@ internal static partial class Warnings
         }
     }
 
-    [Command("revert")]
-    [Description("Bring back warning that's been removed before")]
-    public static async ValueTask Revert(
-        SlashCommandContext ctx,
-        [Description("Warning ID to change"), SlashAutoCompleteProvider<WarningAutoCompleteProvider>]
-        int id,
-        [Description("User to filter autocomplete results")]
-        DiscordUser? user = null
-    )
-    {
-        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-        var warn = await wdb.Warning.FirstOrDefaultAsync(w => w.Id == id).ConfigureAwait(false);
-        if (warn is { Retracted: true })
-        {
-            warn.Retracted = false;
-            warn.RetractedBy = null;
-            warn.RetractionReason = null;
-            warn.RetractionTimestamp = null;
-            await wdb.SaveChangesAsync(Config.Cts.Token).ConfigureAwait(false);
-            await ctx.RespondAsync($"{Config.Reactions.Success} Reissued the warning", ephemeral: true).ConfigureAwait(false);
-        }
-        else
-            await ctx.RespondAsync($"{Config.Reactions.Failure} Warning is not retracted", ephemeral: true).ConfigureAwait(false);
-    }
-
     internal static async ValueTask<string> GetDefaultWarningMessageAsync(
         DiscordClient client,
         DiscordUser userToWarn,

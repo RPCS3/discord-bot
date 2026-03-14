@@ -170,9 +170,9 @@ public static class DiscordClientExtensions
     }
 
     public static string GetMentionWithNickname(this DiscordMember member)
-        => string.IsNullOrEmpty(member.Nickname)
+        => member.DisplayName == member.Username
             ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)"
-            : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
+            : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.DisplayName.Sanitize()}`)";
 
     public static async ValueTask<string> GetUsernameWithNicknameAsync(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
         => (await client.GetMemberAsync(guild, user).ConfigureAwait(false)).GetUsernameWithNickname()
@@ -181,9 +181,9 @@ public static class DiscordClientExtensions
     public static string? GetUsernameWithNickname(this DiscordMember? member)
         => member is null
             ? null
-            : string.IsNullOrEmpty(member.Nickname)
+            : member.DisplayName == member.Username
                 ? $"`{member.Username.Sanitize()}#{member.Discriminator}`"
-                : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
+                : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.DisplayName.Sanitize()}`)";
 
     [return: NotNullIfNotNull(nameof(fallbackEmoji))]
     public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, string? fallbackEmoji = null)
