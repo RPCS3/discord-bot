@@ -9,7 +9,7 @@ internal static class UserRolesValidationMonitor
     public static async Task OnMemberAdded(DiscordClient client, GuildMemberAddedEventArgs args)
     {
         bool assignRole = false;
-        using (var rdb = BotDb.OpenRead())
+        using (var rdb = await BotDb.OpenReadAsync().ConfigureAwait(false))
         {
             assignRole = await rdb.ForcedWarningRoles.AsNoTracking()
                 .AnyAsync(wr => wr.UserId == args.Member.Id)

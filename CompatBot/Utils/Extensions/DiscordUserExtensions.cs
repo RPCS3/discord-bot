@@ -45,15 +45,15 @@ public static class DiscordUserExtensions
             return false;
         }
 
-        public async ValueTask<bool> RemoveRoleAsync(ulong roleId, DiscordClient client, DiscordGuild guild, string reason)
+        public async ValueTask<bool> RemoveRoleAsync(ulong roleId, DiscordClient client, DiscordGuild? guild, string reason)
         {
             if (await client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member)
-                return await member.RemoveRoleAsync(roleId, client, guild, reason).ConfigureAwait(false);
+                return await member.RemoveRoleAsync(roleId, reason).ConfigureAwait(false);
             return false;
         }
     }
 
-    public static async ValueTask<bool> RemoveRoleAsync(this DiscordMember member, ulong roleId, DiscordClient client, DiscordGuild guild, string reason)
+    public static async ValueTask<bool> RemoveRoleAsync(this DiscordMember member, ulong roleId, string reason)
     {
         if (roleId > 0
             && member.Roles.FirstOrDefault(r => r.Id == roleId) is DiscordRole role)
@@ -67,6 +67,5 @@ public static class DiscordUserExtensions
                 Config.Log.Warn(e, $"Failed to revoke warning role from user {member.DisplayName} ({member.Username}; {member.Id})");
             }
         return false;
-
     }
 }
