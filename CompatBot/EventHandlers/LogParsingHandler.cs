@@ -229,11 +229,13 @@ public static class LogParsingHandler
                                             message.Author.Id,
                                             client.CurrentUser,
                                             reason,
-                                            $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}"
+                                            $"{result.SelectedFilter.String} - {result.SelectedFilterContext?.Sanitize()}",
+                                            true
                                         );
+                                        await message.Author.AddRoleAsync(Config.WarnRoleId, client, message.Channel?.Guild, reason).ConfigureAwait(false);
                                         if (warnSaveResult.IsSuccess() && !warnSaveResult.Data.suppress)
                                         {
-                                            var (_, recent, total) = warnSaveResult.Data;
+                                            var (_, recent, total, _) = warnSaveResult.Data;
                                             var content = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, reason, recent, total, client.CurrentUser).ConfigureAwait(false);
                                             var msg = new DiscordMessageBuilder()
                                                 .WithContent(content)

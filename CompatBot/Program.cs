@@ -303,6 +303,7 @@ internal static class Program
                         UsernameZalgoMonitor.OnMemberAdded,
                         UsernameValidationMonitor.OnMemberAdded,
                         UsernameRaidMonitor.OnMemberAdded,
+                        UserRolesValidationMonitor.OnMemberAdded,
                     ]));
                     config.HandleGuildMemberUpdated(MultiEventHandlerWrapper<GuildMemberUpdatedEventArgs>.CreateUnordered([
                         UsernameSpoofMonitor.OnMemberUpdated,

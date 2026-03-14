@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
@@ -9,6 +10,8 @@ namespace CompatBot.Utils;
 
 public static class DiscordClientExtensions
 {
+    private static readonly ConcurrentDictionary<ulong, DiscordRole> ResolvedRoles = new();
+
     public static async ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong? guildId, ulong userId)
     {
         try
@@ -170,9 +173,9 @@ public static class DiscordClientExtensions
     }
 
     public static string GetMentionWithNickname(this DiscordMember member)
-        => string.IsNullOrEmpty(member.Nickname)
+        => member.DisplayName == member.Username
             ? $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`)"
-            : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.Nickname.Sanitize()}`)";
+            : $"<@{member.Id}> (`{member.Username.Sanitize()}#{member.Discriminator}`, shown as `{member.DisplayName.Sanitize()}`)";
 
     public static async ValueTask<string> GetUsernameWithNicknameAsync(this DiscordUser user, DiscordClient client, DiscordGuild? guild = null)
         => (await client.GetMemberAsync(guild, user).ConfigureAwait(false)).GetUsernameWithNickname()
@@ -181,9 +184,9 @@ public static class DiscordClientExtensions
     public static string? GetUsernameWithNickname(this DiscordMember? member)
         => member is null
             ? null
-            : string.IsNullOrEmpty(member.Nickname)
+            : member.DisplayName == member.Username
                 ? $"`{member.Username.Sanitize()}#{member.Discriminator}`"
-                : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.Nickname.Sanitize()}`)";
+                : $"`{member.Username.Sanitize()}#{member.Discriminator}` (shown as `{member.DisplayName.Sanitize()}`)";
 
     [return: NotNullIfNotNull(nameof(fallbackEmoji))]
     public static DiscordEmoji? GetEmoji(this DiscordClient client, string? emojiName, string? fallbackEmoji = null)
@@ -211,6 +214,36 @@ public static class DiscordClientExtensions
         if (!string.IsNullOrEmpty(filename) && attachment?.Length > 0)
             return channel.SendMessageAsync(new DiscordMessageBuilder().AddFile(filename, new MemoryStream(attachment)).WithContent(message));
         return channel.SendMessageAsync(message);
+    }
+
+    public static async ValueTask<DiscordRole?> FindRoleAsync(this DiscordClient client, DiscordGuild? guild, ulong roleId)
+    {
+        if (roleId is 0)
+            return null;
+
+        if (ResolvedRoles.TryGetValue(roleId, out var result))
+            return result;
+
+        try
+        {
+            if (guild is not null)
+                return await guild.GetRoleAsync(roleId).ConfigureAwait(false);
+
+            foreach (var g in client.Guilds.Values)
+            {
+                var guildRoles = await g.GetRolesAsync().ConfigureAwait(false);
+                if (guildRoles.FirstOrDefault(r => r.Id == roleId) is DiscordRole role)
+                {
+                    ResolvedRoles[roleId] = role;
+                    return role;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Config.Log.Error(e, $"Failed to resolve role {roleId}");
+        }
+        return null;
     }
 
     private static async ValueTask<DiscordEmbedBuilder> MakeReportTemplateAsync(

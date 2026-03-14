@@ -27,6 +27,9 @@ internal class BotDb: DbContext
     public DbSet<Kot> Kot { get; set; } = null!;
     public DbSet<Doggo> Doggo { get; set; } = null!;
     public DbSet<ForcedNickname> ForcedNicknames { get; set; } = null!;
+    public DbSet<ForcedWarningRole> ForcedWarningRoles { get; set; } = null!;
+
+    //public BotDb() { } // only needed for ef migrations
 
     private BotDb(IDisposable readWriteLock, bool canWrite = false)
     {
@@ -80,6 +83,7 @@ internal class BotDb: DbContext
         modelBuilder.Entity<Kot>().HasIndex(k => k.UserId).IsUnique().HasDatabaseName("kot_user_id");
         modelBuilder.Entity<Doggo>().HasIndex(d => d.UserId).IsUnique().HasDatabaseName("doggo_user_id");
         modelBuilder.Entity<ForcedNickname>().HasIndex(d => new { d.GuildId, d.UserId }).IsUnique().HasDatabaseName("forced_nickname_guild_id_user_id");
+        modelBuilder.Entity<ForcedWarningRole>().HasIndex(d => d.UserId).IsUnique().HasDatabaseName("forced_warning_role_user_id");
 
         //configure default policy of Id being the primary key
         modelBuilder.ConfigureDefaultPkConvention();
@@ -91,26 +95,26 @@ internal class BotDb: DbContext
     public override void Dispose()
     {
         base.Dispose();
-        readWriteLock.Dispose();
+        readWriteLock?.Dispose();
 #if DEBUG
         if (canWrite)
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Debug($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock?.GetHashCode():x8}");
 #endif
     }
 
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        readWriteLock.Dispose();
+        readWriteLock?.Dispose();
 #if DEBUG
         if (canWrite)
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Debug($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(BotDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock?.GetHashCode():x8}");
 #endif
     }
 }
@@ -250,8 +254,14 @@ internal class Doggo
 internal class ForcedNickname
 {
     public int Id { get; set; }
-    public ulong GuildId { set; get; }
-    public ulong UserId { set; get; }
+    public ulong GuildId { get; set; } //todo: remove?
+    public ulong UserId { get; set; }
     [Required]
     public string Nickname { get; set; } = null!;
+}
+
+internal class ForcedWarningRole
+{
+    public int Id { get; set; }
+    public ulong UserId { get; set; }
 }
