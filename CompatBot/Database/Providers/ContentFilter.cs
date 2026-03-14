@@ -215,13 +215,15 @@ internal static class ContentFilter
                     message.Author!.Id,
                     client.CurrentUser,
                     warningReason,
-                    message.Content.Sanitize()
+                    message.Content.Sanitize(),
+                    true
                 ).ConfigureAwait(false);
+                await message.Author.AddRoleAsync(Config.WarnRoleId, client, null, warningReason).ConfigureAwait(false);
                 if (result.IsSuccess()
                     && !result.Data.suppress
                     && message.Channel is not null)
                 {
-                    var (_, recent, total) = result.Data;
+                    var (_, recent, total, _) = result.Data;
                     var msgContent = await Warnings.GetDefaultWarningMessageAsync(client, message.Author, warningReason, recent, total, client.CurrentUser).ConfigureAwait(false);
                     var msg = new DiscordMessageBuilder()
                         .WithContent(msgContent)

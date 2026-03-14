@@ -46,9 +46,13 @@ internal static class WarningsContextMenus
 
         if (Config.WarnRoleId > 0
             && ctx.Guild is DiscordGuild guild
-            && await ctx.Client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member
             && await guild.GetRoleAsync(Config.WarnRoleId).ConfigureAwait(false) is DiscordRole role)
-            modal.AddCheckbox(new("add_role"), $"Add {role.Name} role for member {member.DisplayName}");
+        {
+            if (await ctx.Client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member)
+                modal.AddCheckbox(new("add_role"), $"Add {role.Name} role for member {member.DisplayName}");
+            else
+                modal.AddCheckbox(new("add_role"), $"Add {role.Name} role for user {user.GlobalName ?? user.Username}");
+        }
         await ctx.RespondWithModalAsync(modal).ConfigureAwait(false);
 
         try
@@ -84,7 +88,7 @@ internal static class WarningsContextMenus
 
             var(suppress, recent, total, assignRole) = result.Data;
             if (assignRole)
-                await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild!, reason).ConfigureAwait(false);
+                await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild, reason).ConfigureAwait(false);
             if (!suppress)
             {
                 var userMsgContent = await Warnings.GetDefaultWarningMessageAsync(ctx.Client, user, reason, recent, total, ctx.User).ConfigureAwait(false);

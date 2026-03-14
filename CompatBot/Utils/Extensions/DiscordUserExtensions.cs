@@ -4,6 +4,7 @@ namespace CompatBot.Utils.Extensions;
 
 public static class DiscordUserExtensions
 {
+
     public static bool IsBotSafeCheck(this DiscordUser? user)
     {
         try
@@ -24,14 +25,13 @@ public static class DiscordUserExtensions
     public static string ToSaltedSha256(this DiscordUser user)
         => BitConverter.GetBytes(user.Id).GetSaltedHash().ToHexString();
 
-    public static async ValueTask<bool> AddRoleAsync(this DiscordUser user, ulong roleId, DiscordClient client, DiscordGuild guild, string reason)
+    public static async ValueTask<bool> AddRoleAsync(this DiscordUser user, ulong roleId, DiscordClient client, DiscordGuild? guild, string reason)
     {
-        if (roleId > 0
-            && await client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member
-            && !member.Roles.Any(r => r.Id == Config.WarnRoleId))
+        if (await client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember member
+            && !member.Roles.Any(r => r.Id == roleId)
+            && await client.FindRoleAsync(guild, roleId).ConfigureAwait(false) is DiscordRole warnRole)
             try
             {
-                var warnRole = await guild.GetRoleAsync(Config.WarnRoleId).ConfigureAwait(false);
                 await member.GrantRoleAsync(warnRole, reason).ConfigureAwait(false);
                 return true;
             }
@@ -52,7 +52,7 @@ public static class DiscordUserExtensions
     public static async ValueTask<bool> RemoveRoleAsync(this DiscordMember member, ulong roleId, DiscordClient client, DiscordGuild guild, string reason)
     {
         if (roleId > 0
-            && member.Roles.FirstOrDefault(r => r.Id == Config.WarnRoleId) is DiscordRole role)
+            && member.Roles.FirstOrDefault(r => r.Id == roleId) is DiscordRole role)
             try
             {
                 await member.RevokeRoleAsync(role, reason).ConfigureAwait(false);

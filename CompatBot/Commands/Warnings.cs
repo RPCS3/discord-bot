@@ -29,8 +29,8 @@ internal static partial class Warnings
         }
 
         var (suppress, recent, total, assignRole) = result.Data;
-        if (assignRole && ctx.Guild is DiscordGuild guild)
-            await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, guild, reason).ConfigureAwait(false);
+        if (assignRole)
+            await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild, reason).ConfigureAwait(false);
         if (!suppress)
         {
             var userMsgContent = await GetDefaultWarningMessageAsync(ctx.Client, user, reason, recent, total, ctx.User).ConfigureAwait(false);
