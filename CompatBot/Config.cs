@@ -49,6 +49,7 @@ internal static class Config
     public static ulong BotRulesChannelId => config.GetValue(nameof(BotRulesChannelId), 311894275015049216ul);    // #rules-info; used to give links to rules
     public static ulong ThumbnailSpamId => config.GetValue(nameof(ThumbnailSpamId), 475678410098606100ul);        // #bot-data; used for whatever bot needs to keep (cover embeds, etc)
     public static ulong DeletedMessagesLogChannelId => config.GetValue(nameof(DeletedMessagesLogChannelId), 0ul);
+    public static ulong WarnRoleId => config.GetValue(nameof(WarnRoleId), 0ul);
 
     public static TimeSpan ModerationBacklogThresholdInHours => TimeSpan.FromHours(config.GetValue(nameof(ModerationBacklogThresholdInHours), 1));
     public static TimeSpan DefaultTimeoutInSec => TimeSpan.FromSeconds(config.GetValue(nameof(DefaultTimeoutInSec), 30));

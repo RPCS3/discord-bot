@@ -1,6 +1,7 @@
 ﻿using CompatApiClient.Utils;
 using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
+using CompatBot.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 using ResultNet;
 
@@ -14,21 +15,22 @@ internal static partial class Warnings
     [Description("Issue a new warning to a user")]
     public static async ValueTask Warn(
         SlashCommandContext ctx,
-        [Description("User to warn")]
-        DiscordUser user,
-        [Description("Warning explanation")]
-        string reason
+        [Description("User to warn")] DiscordUser user,
+        [Description("Warning explanation")] string reason,
+        [Description("Add Warning role")] bool giveRole = false
     )
     {
         await ctx.DeferResponseAsync(ephemeral: true).ConfigureAwait(false);
-        var result = await AddAsync(user.Id, ctx.User, reason).ConfigureAwait(false);
+        var result = await AddAsync(user.Id, ctx.User, reason, assignRole: giveRole).ConfigureAwait(false);
         if (result.IsFailure())
         {
             await ctx.RespondAsync($"{Config.Reactions.Failure} {result.Message ?? "Couldn't save the warning, please try again"}", ephemeral: true).ConfigureAwait(false);
             return;
         }
 
-        var (suppress, recent, total) = result.Data;
+        var (suppress, recent, total, assignRole) = result.Data;
+        if (assignRole && ctx.Guild is DiscordGuild guild)
+            await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, guild, reason).ConfigureAwait(false);
         if (!suppress)
         {
             var userMsgContent = await GetDefaultWarningMessageAsync(ctx.Client, user, reason, recent, total, ctx.User).ConfigureAwait(false);
@@ -78,15 +80,15 @@ internal static partial class Warnings
         SlashCommandContext ctx,
         [Description("Warning ID to remove"), SlashAutoCompleteProvider<WarningAutoCompleteProvider>]
         int id,
-        [Description("Reason for warning removal")]
-        string reason,
-        [Description("User to filter autocomplete results")]
-        DiscordUser? user = null
+        [Description("Reason for warning removal")] string reason,
+        [Description("User to filter autocomplete results")] DiscordUser? user = null,
+        [Description("Remove Warning role")] bool removeRole = false
     )
     {
         await ctx.DeferResponseAsync(ephemeral: true).ConfigureAwait(false);
         var removedCount = 0;
         var warnedUserId = 0ul;
+        var userId = 0ul;
         await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
         {
             var warningsToRemove = await wdb.Warning.Where(w => w.Id == id).ToListAsync().ConfigureAwait(false);
@@ -102,6 +104,22 @@ internal static partial class Warnings
                 removedCount = await wdb.SaveChangesAsync().ConfigureAwait(false);
                 warnedUserId = warningsToRemove[0].DiscordId;
             }
+            if (removeRole && warningsToRemove is [var warn, ..])
+            {
+                if (await wdb.ForcedWarningRoles.FirstOrDefaultAsync(wr => wr.UserId == warn.DiscordId).ConfigureAwait(false) is ForcedWarningRole fwr)
+                {
+                    wdb.ForcedWarningRoles.Remove(fwr);
+                    await wdb.SaveChangesAsync().ConfigureAwait(false);
+                    userId = fwr.UserId;
+                }
+            }
+        }
+        if (removeRole
+            && userId > 0ul
+            && ctx.Guild is DiscordGuild guild
+            && await ctx.Client.GetMemberAsync(guild, userId).ConfigureAwait(false) is DiscordMember member)
+        {
+            await member.RemoveRoleAsync(Config.WarnRoleId, ctx.Client, guild, reason).ConfigureAwait(false);
         }
         if (removedCount is 0)
             await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to remove warning", ephemeral: true).ConfigureAwait(false);
@@ -117,10 +135,9 @@ internal static partial class Warnings
     [Description("Removes **all** warnings for a user")]
     public static async ValueTask Clear(
         SlashCommandContext ctx,
-        [Description("User to clear warnings for")]
-        DiscordUser user,
-        [Description("Reason for clear warning removal")]
-        string reason
+        [Description("User to clear warnings for")] DiscordUser user,
+        [Description("Reason for clear warning removal")] string reason,
+        [Description("Remove Warning role")] bool removeRole = false
     )
     {
         try
@@ -129,8 +146,10 @@ internal static partial class Warnings
             int removed;
             await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
             {
-                var warningsToRemove = await wdb.Warning.Where(w => w.DiscordId == user.Id && !w.Retracted)
-                    .ToListAsync().ConfigureAwait(false);
+                var warningsToRemove = await wdb.Warning
+                    .Where(w => w.DiscordId == user.Id && !w.Retracted)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
                 foreach (var w in warningsToRemove)
                 {
                     w.Retracted = true;
@@ -139,7 +158,17 @@ internal static partial class Warnings
                     w.RetractionTimestamp = DateTime.UtcNow.Ticks;
                 }
                 removed = await wdb.SaveChangesAsync().ConfigureAwait(false);
+                if (removeRole)
+                {
+                    if (await wdb.ForcedWarningRoles.FirstOrDefaultAsync(wr => wr.UserId == user.Id).ConfigureAwait(false) is ForcedWarningRole fwr)
+                    {
+                        wdb.ForcedWarningRoles.Remove(fwr);
+                        await wdb.SaveChangesAsync().ConfigureAwait(false);
+                    }
+                }
             }
+            if (removeRole && ctx.Guild is DiscordGuild guild)
+                await user.RemoveRoleAsync(Config.WarnRoleId, ctx.Client, guild, reason).ConfigureAwait(false);
             await ctx.Channel.SendMessageAsync($"{removed} warning{StringUtils.GetSuffix(removed)} successfully removed!").ConfigureAwait(false);
             await ListUserWarningsAsync(ctx.Client, ctx.Interaction, user.Id, user.Username.Sanitize()).ConfigureAwait(false);
         }
@@ -195,48 +224,63 @@ internal static partial class Warnings
                 """;
     }
 
-    internal static async ValueTask<Result<(bool suppress, int recentCount, int totalCount)>>
-        AddAsync(ulong userId, DiscordUser issuer, string reason, string? fullReason = null)
+    internal static async ValueTask<Result<(bool suppress, int recentCount, int totalCount, bool assignRole)>>
+        AddAsync(ulong userId, DiscordUser issuer, string reason, string? fullReason = null, bool assignRole = false)
     {
+        var roleAlreadyAssigned = false;
+        var cooldown = false;
         await using (var rdb = await BotDb.OpenReadAsync().ConfigureAwait(false))
         {
+            roleAlreadyAssigned = await rdb.ForcedWarningRoles.AsNoTracking()
+                .AnyAsync(wr => wr.UserId == userId)
+                .ConfigureAwait(false);
+
             var lastWarn = await rdb.Warning.AsNoTracking()
                 .Where(w => w.DiscordId == userId && !w.Retracted)
                 .OrderByDescending(w => w.Timestamp)
-                .FirstOrDefaultAsync();
-            if (lastWarn?.Timestamp > DateTime.UtcNow.AddSeconds(-20).Ticks)
-                return Result.Failure<(bool, int, int)>().WithMessage("Duplicate warning cooldown"); 
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+            cooldown = lastWarn?.Timestamp > DateTime.UtcNow.AddSeconds(-20).Ticks;
         }
+
+        if (cooldown && (roleAlreadyAssigned || !assignRole))
+            return Result.Failure<(bool, int, int, bool)>().WithMessage("Duplicate warning cooldown");
 
         try
         {
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-            await wdb.Warning.AddAsync(
-                new()
-                {
-                    DiscordId = userId,
-                    IssuerId = issuer.Id,
-                    Reason = reason,
-                    FullReason = fullReason ?? "",
-                    Timestamp = DateTime.UtcNow.Ticks
-                }
-            ).ConfigureAwait(false);
+            if (!cooldown)
+                await wdb.Warning.AddAsync(
+                    new()
+                    {
+                        DiscordId = userId,
+                        IssuerId = issuer.Id,
+                        Reason = reason,
+                        FullReason = fullReason ?? "",
+                        Timestamp = DateTime.UtcNow.Ticks,
+                    }
+                ).ConfigureAwait(false);
+            if (assignRole && !roleAlreadyAssigned)
+                await wdb.ForcedWarningRoles.AddAsync(
+                    new() { UserId = userId }
+                ).ConfigureAwait(false);
             await wdb.SaveChangesAsync().ConfigureAwait(false);
 
             var threshold = DateTime.UtcNow.AddMinutes(-15).Ticks;
             var totalCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
             var recentCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted && w.Timestamp > threshold);
+            roleAlreadyAssigned |= assignRole;
             if (recentCount < 4)
-                return Result.Success((false, recentCount, totalCount));
+                return Result.Success((false, recentCount, totalCount, roleAlreadyAssigned));
 
             Config.Log.Debug("Suicide behavior detected, not spamming with warning responses");
-            return Result.Success((true, recentCount, totalCount));
+            return Result.Success((true, recentCount, totalCount, roleAlreadyAssigned));
         }
         catch (Exception e)
         {
             const string msg = "Couldn't save the warning";
             Config.Log.Error(e, msg);
-            return Result.Failure<(bool, int, int)>().WithMessage(msg);
+            return Result.Failure<(bool, int, int, bool)>().WithMessage(msg);
         }
     }
 
