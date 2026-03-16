@@ -187,7 +187,6 @@ internal static partial class Sudo
             await using (var rdb = await BotDb.OpenReadAsync().ConfigureAwait(false))
             {
                 warningList = rdb.Warning.AsNoTracking()
-                    .Where(w => !w.Retracted)
                     .AsEnumerable()
                     .Where(
                         w => w.Reason.Contains("Pirated Release", StringComparison.OrdinalIgnoreCase)
@@ -247,7 +246,7 @@ internal static partial class Sudo
                 try
                 {
                     var user = await ctx.Client.GetUserAsync(userId).ConfigureAwait(false);
-                    if (!await user.IsWhitelistedAsync(ctx.Client, ctx.Guild).ConfigureAwait(false))
+                    if (!await user.IsWhitelistedAsync(ctx.Client, ctx.Guild).ConfigureAwait(false) && !user.IsBot)
                     {
                         await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
                         await wdb.ForcedWarningRoles.AddAsync(new() { UserId = userId }).ConfigureAwait(false);
