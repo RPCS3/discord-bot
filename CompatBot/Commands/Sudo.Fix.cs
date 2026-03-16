@@ -226,7 +226,10 @@ internal static partial class Sudo
                     await user.RemoveRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild, "Retroactive role cleanup").ConfigureAwait(false);
                     processed++;
                     if (timer.ElapsedMilliseconds > 10000)
+                    {
                         await ctx.EditResponseAsync($"Removing role from user #{processed} out of {userIdsToWarn.Count} ({processed * 100.0 / userIdsToWarn.Count:0.0}%)…").ConfigureAwait(false);
+                        timer.Restart();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -253,7 +256,10 @@ internal static partial class Sudo
                     }
                     processed++;
                     if (timer.ElapsedMilliseconds > 10000)
-                        await ctx.EditResponseAsync($"Assigning role to user #{processed} out of {userIdsToWarn.Count} ({processed*100.0/userIdsToWarn.Count:0.0}%)…").ConfigureAwait(false);
+                    {
+                        await ctx.EditResponseAsync($"Assigning role to user #{processed} out of {userIdsToWarn.Count} ({processed * 100.0 / userIdsToWarn.Count:0.0}%)…").ConfigureAwait(false);
+                        timer.Restart();
+                    }
                 }
                 catch (Exception e)
                 {
