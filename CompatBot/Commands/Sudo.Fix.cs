@@ -1,7 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
+using CompatBot.Utils.Extensions;
 using DSharpPlus.Commands.Processors.TextCommands;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompatBot.Commands;
 
@@ -11,8 +14,12 @@ internal static partial class Sudo
     // '2018-07-19T12:19:06.7888609Z - '
     [GeneratedRegex(@"^(?<cutout>(?<date>\d{4}-\d\d-\d\d[ T][0-9:\.]+Z?) - )", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
     private static partial Regex Timestamp();
+
     [GeneratedRegex(@"(?<id><#\d+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
     private static partial Regex Channel();
+
+    [GeneratedRegex(@"rules?\s*(\d[,/ \w]*\s*)*2", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
+    private static partial Regex Rule2Reason();
 
     [Command("fix"), RequiresDm]
     [Description("Commands to fix various stuff")]
@@ -167,6 +174,57 @@ internal static partial class Sudo
                 Config.Log.Warn(e, "Couldn't fix AMD CPU model strings");
                 await ctx.RespondAsync("Failed to fix AMD CPU strings in hw.db").ConfigureAwait(false);
             }
+        }
+
+        [Command("warn_roles")]
+        [Description("Try to apply warn roles retroactively")]
+        public static async ValueTask WarnRoles(TextCommandContext ctx)
+        {
+            await ctx.RespondAsync("Checking existing warnings…").ConfigureAwait(false);
+            HashSet<ulong> userIds;
+            await using (var rdb = await BotDb.OpenReadAsync().ConfigureAwait(false))
+            {
+                userIds = [..
+                    rdb.Warning.AsNoTracking()
+                    .AsEnumerable()
+                    .Where(
+                        w => w.Reason.Contains("Pirated Release", StringComparison.OrdinalIgnoreCase)
+                        || w.Reason.Contains("pirated game", StringComparison.OrdinalIgnoreCase)
+                        || w.Reason.Contains("Piracy", StringComparison.OrdinalIgnoreCase)
+                        || w.Reason.Contains('2')
+                    ).Select(w => w.DiscordId)
+                ];
+
+                userIds.ExceptWith(
+                    rdb.ForcedWarningRoles.AsNoTracking()
+                        .Select(wr => wr.UserId)
+                );
+            }
+
+            await ctx.EditResponseAsync($"Assigning role to user #1 out of {userIds.Count} (0.0%)…").ConfigureAwait(false);
+            var timer = Stopwatch.StartNew();
+            int processed = 1, failed=0;
+            foreach (var userId in userIds)
+            {
+                try
+                {
+                    var user = await ctx.Client.GetUserAsync(userId).ConfigureAwait(false);
+                    await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+                    await wdb.ForcedWarningRoles.AddAsync(new() { UserId = userId }).ConfigureAwait(false);
+                    await wdb.SaveChangesAsync().ConfigureAwait(false);
+                    await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild, "Retroactive role assignment").ConfigureAwait(false);
+                    if (timer.ElapsedMilliseconds > 10000)
+                        await ctx.EditResponseAsync($"Assigning role to user #{++processed} out of {userIds.Count} ({processed*100.0/userIds.Count:0.0}%)…").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Failed to apply Warning role retroactively to user {userId}");
+                    failed++;
+                }
+            }
+
+            processed--;
+            await ctx.EditResponseAsync($"Assigned role to {processed} user{(processed is 1 ? "" : "s")}, failed for {failed} user{(failed is 1 ? "" : "s")}").ConfigureAwait(false);
         }
 
         private static async ValueTask<string?> FixChannelMentionAsync(TextCommandContext ctx, string? msg)
