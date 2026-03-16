@@ -181,40 +181,79 @@ internal static partial class Sudo
         public static async ValueTask WarnRoles(TextCommandContext ctx)
         {
             await ctx.RespondAsync("Checking existing warnings…").ConfigureAwait(false);
-            HashSet<ulong> userIds;
+            HashSet<ulong> userIdsToWarn;
+            List<Warning> warningList;
+            List<ulong> usersWithWarnRole;
             await using (var rdb = await BotDb.OpenReadAsync().ConfigureAwait(false))
             {
-                userIds = [..
-                    rdb.Warning.AsNoTracking()
+                warningList = rdb.Warning.AsNoTracking()
+                    .Where(w => !w.Retracted)
                     .AsEnumerable()
                     .Where(
                         w => w.Reason.Contains("Pirated Release", StringComparison.OrdinalIgnoreCase)
                         || w.Reason.Contains("pirated game", StringComparison.OrdinalIgnoreCase)
                         || w.Reason.Contains("Piracy", StringComparison.OrdinalIgnoreCase)
                         || w.Reason.Contains('2')
-                    ).Select(w => w.DiscordId)
-                ];
-
-                userIds.ExceptWith(
-                    rdb.ForcedWarningRoles.AsNoTracking()
+                    ).ToList();
+                usersWithWarnRole = await rdb.ForcedWarningRoles.AsNoTracking()
                         .Select(wr => wr.UserId)
-                );
+                        .ToListAsync();
             }
 
-            await ctx.EditResponseAsync($"Assigning role to user #1 out of {userIds.Count} (0.0%)…").ConfigureAwait(false);
+            userIdsToWarn = [..
+                warningList.Where(w => !w.Retracted).Select(w => w.DiscordId)
+            ];
+
+            HashSet<ulong> userIdsToFix = [..
+                warningList.Where(w => w.Retracted).Select(w => w.DiscordId)
+            ];
+            userIdsToFix.ExceptWith(userIdsToWarn); // do not fix users with active warnings
+            userIdsToWarn.ExceptWith(usersWithWarnRole); // do not assign role to users who already has the role
+            userIdsToFix.IntersectWith(usersWithWarnRole); // only fix users without active warnings who still has the role
+
+            await ctx.EditResponseAsync($"Removing role from user #1 out of {userIdsToFix.Count} (0.0%)…").ConfigureAwait(false);
             var timer = Stopwatch.StartNew();
             int processed = 1, failed=0;
-            foreach (var userId in userIds)
+            foreach (var userId in userIdsToFix)
             {
                 try
                 {
                     var user = await ctx.Client.GetUserAsync(userId).ConfigureAwait(false);
                     await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
-                    await wdb.ForcedWarningRoles.AddAsync(new() { UserId = userId }).ConfigureAwait(false);
+                    var fwr = await wdb.ForcedWarningRoles.FirstAsync(wr => wr.UserId == userId).ConfigureAwait(false);
+                    wdb.ForcedWarningRoles.Remove(fwr);
                     await wdb.SaveChangesAsync().ConfigureAwait(false);
-                    await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild, "Retroactive role assignment").ConfigureAwait(false);
+                    await user.RemoveRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild, "Retroactive role cleanup").ConfigureAwait(false);
+                    processed++;
                     if (timer.ElapsedMilliseconds > 10000)
-                        await ctx.EditResponseAsync($"Assigning role to user #{++processed} out of {userIds.Count} ({processed*100.0/userIds.Count:0.0}%)…").ConfigureAwait(false);
+                        await ctx.EditResponseAsync($"Removing role from user #{processed} out of {userIdsToWarn.Count} ({processed * 100.0 / userIdsToWarn.Count:0.0}%)…").ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Config.Log.Warn(e, $"Failed to remove Warning role from user {userId}");
+                    failed++;
+                }
+            }
+            int totalFixed = processed - 1, failedToFix = failed;
+
+            processed = 1;
+            failed = 0;
+            await ctx.EditResponseAsync($"Assigning role to user #1 out of {userIdsToWarn.Count} (0.0%)…").ConfigureAwait(false);
+            foreach (var userId in userIdsToWarn)
+            {
+                try
+                {
+                    var user = await ctx.Client.GetUserAsync(userId).ConfigureAwait(false);
+                    if (!await user.IsWhitelistedAsync(ctx.Client, ctx.Guild).ConfigureAwait(false))
+                    {
+                        await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+                        await wdb.ForcedWarningRoles.AddAsync(new() { UserId = userId }).ConfigureAwait(false);
+                        await wdb.SaveChangesAsync().ConfigureAwait(false);
+                        await user.AddRoleAsync(Config.WarnRoleId, ctx.Client, ctx.Guild, "Retroactive role assignment").ConfigureAwait(false);
+                    }
+                    processed++;
+                    if (timer.ElapsedMilliseconds > 10000)
+                        await ctx.EditResponseAsync($"Assigning role to user #{processed} out of {userIdsToWarn.Count} ({processed*100.0/userIdsToWarn.Count:0.0}%)…").ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -224,7 +263,12 @@ internal static partial class Sudo
             }
 
             processed--;
-            await ctx.EditResponseAsync($"Assigned role to {processed} user{(processed is 1 ? "" : "s")}, failed for {failed} user{(failed is 1 ? "" : "s")}").ConfigureAwait(false);
+            await ctx.EditResponseAsync(
+                $"""
+                Removed role from {totalFixed} user{(totalFixed is 1 ? "" : "s")}, failed to fix {failedToFix} user{(failedToFix is 1 ? "" : "s")}.
+                Assigned role to {processed} user{(processed is 1 ? "" : "s")}, failed for {failed} user{(failed is 1 ? "" : "s")}.
+                """
+            ).ConfigureAwait(false);
         }
 
         private static async ValueTask<string?> FixChannelMentionAsync(TextCommandContext ctx, string? msg)
