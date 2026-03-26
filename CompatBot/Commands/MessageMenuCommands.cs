@@ -29,7 +29,7 @@ internal static class MessageMenuCommands
             return;
         }
         
-        var placeholder = StatsStorage.GetExplainStats().FirstOrDefault().name ?? "rule 1";
+        var placeholder = StatsStorage.GetExplainStats().FirstOrDefault().name?.Trim(100) ?? "rule 1";
         var modal = new DiscordModalBuilder()
             .WithTitle("Explain Prompt")
             .AddTextInput(
