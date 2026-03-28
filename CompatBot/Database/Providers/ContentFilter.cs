@@ -252,7 +252,7 @@ internal static class ContentFilter
             try
             {
                 if (await client.GetMemberAsync(message.Channel?.Guild, message.Author).ConfigureAwait(false) is DiscordMember mem
-                    && !mem.Roles.Any())
+                    && !mem.Roles.HasAnyRole())
                 {
                     try
                     {

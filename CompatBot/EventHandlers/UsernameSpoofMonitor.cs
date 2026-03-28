@@ -74,7 +74,7 @@ internal static class UsernameSpoofMonitor
     {
         var membersWithRoles = listToCheckAgainst ??
                                client.Guilds.SelectMany(guild => guild.Value.Members.Values)
-                                   .Where(m => m.Roles.Any() || m.IsCurrent)
+                                   .Where(m => m.Roles.HasAnyRole() || m.IsCurrent)
                                    .OrderByDescending(m => m.Hierarchy)
                                    .ThenByDescending(m => m.JoinedAt)
                                    .ToList();

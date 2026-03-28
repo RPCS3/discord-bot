@@ -101,7 +101,7 @@ internal static class ModProvider
 
         var modRole = modRoleList.First().Value;
         var members = guild.GetAllMembersAsync().ToList();
-        var guildMods = members.Where(m => m.Roles.Any(r => r.Id == modRole.Id) && !m.IsBot && !m.IsCurrent).ToList();
+        var guildMods = members.Where(m => m.Roles.Any(r => r.Id == modRole.Id) && m is { IsBot: false, IsCurrent: false }).ToList();
         foreach (var mod in guildMods)
         {
             if (!IsMod(mod.Id))
