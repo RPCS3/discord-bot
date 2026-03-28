@@ -156,7 +156,7 @@ internal static class Starbucks
             .Select(t => t.Unwrap().ConfigureAwait(false).GetAwaiter().GetResult())
             .Where(m => m != null)
             .ToList();
-        var reporters = members.Where(m => m!.Roles.Any()).ToList();
+        var reporters = members.Where(m => m.Roles.HasAnyRole()).ToList();
         if (reporters.Count < Config.Moderation.StarbucksThreshold)
             return;
 

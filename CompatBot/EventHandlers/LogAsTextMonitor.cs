@@ -15,7 +15,7 @@ internal static partial class LogAsTextMonitor
         if (!args.Channel.IsHelpChannel())
             return;
 
-        if ((args.Message.Author as DiscordMember)?.Roles.Any() ?? false)
+        if ((args.Message.Author as DiscordMember)?.Roles.HasAnyRole() ?? false)
             return;
 
         if (LogLine().IsMatch(args.Message.Content))

@@ -262,11 +262,19 @@ internal static partial class LogParserResult
             }
         }
 
+        double ramSize = 0;
         if (items["memory_amount"] is string ramSizeStr
-            && double.TryParse(ramSizeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var ramSize)
+            && double.TryParse(ramSizeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out ramSize)
             && ramSize < 6)
             notes.Add("⚠️ 8 GiB RAM or more is recommended for PS3 emulation");
 
+        if (GetCpuUsageStats(multiItems["total_cpu"]) is {avg: >0, max: >95 } cpuUsageStats)
+            notes.Add($"⚠️ CPU usage: {cpuUsageStats.avg:0.##}% (min: {cpuUsageStats.min:0.##}% / max: {cpuUsageStats.max:0.##}%)");
+        if (GetMemUsageStats(multiItems["current_ram"]) is { avg: >0 } memUsageStats
+            && ramSize > 0
+            && memUsageStats.max / (ramSize * 1024) > 0.95)
+            notes.Add($"⚠️ RAM usage: {memUsageStats.avg} MiB (min: {memUsageStats.min} MiB / max: {memUsageStats.max} MiB)");
+        
         Version? oglVersion = null;
         if (items["opengl_version"] is string oglVersionString)
             _ = Version.TryParse(oglVersionString, out oglVersion);

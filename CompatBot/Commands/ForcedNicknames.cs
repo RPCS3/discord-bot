@@ -1,18 +1,9 @@
-﻿using CompatBot.Database;
-using CompatBot.EventHandlers;
-using CompatBot.Utils.Extensions;
-using DSharpPlus.Commands.Processors.UserCommands;
-using DSharpPlus.Interactivity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace CompatBot.Commands;
+﻿namespace CompatBot.Commands;
 
 [Description("Manage users who has forced nickname.")]
 internal static class ForcedNicknames
 {
-    // limited to 5 commands per menu
-
+/*
     [Command("📛 Enforce nickname"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Enforce specific nickname for a particular user permanently")]
     public static async ValueTask Rename(UserCommandContext ctx, DiscordUser discordUser)
@@ -85,7 +76,7 @@ internal static class ForcedNicknames
                     {
                         if (enforceRules.Nickname == expectedNickname)
                             continue;
-                        
+
                         enforceRules.Nickname = expectedNickname;
                     }
                 }
@@ -137,7 +128,9 @@ internal static class ForcedNicknames
             .WithContent(resultMsg);
         await interaction.EditOriginalResponseAsync(new(msg)).ConfigureAwait(false);
     }
+*/
 
+/*
     [Command("🧼 Remove enforcement"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Remove nickname enforcement from a particular user")]
     public static async ValueTask Remove(UserCommandContext ctx, DiscordUser discordUser)
@@ -175,6 +168,7 @@ internal static class ForcedNicknames
             await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to reset user nickname", ephemeral: true).ConfigureAwait(false);
         }
     }
+*/
 
     /*
     [Command("cleanup"), TextAlias("clean", "fix"), RequiresBotModRole]
@@ -227,31 +221,9 @@ internal static class ForcedNicknames
     }
     */
 
-    [Command("📝 Rename automatically"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
-    [Description("Set automatically generated nickname without enforcing it")]
-    public static async ValueTask Autorename(UserCommandContext ctx, DiscordUser discordUser)
-    {
-        var newName = await UsernameZalgoMonitor.GenerateRandomNameAsync(discordUser.Id).ConfigureAwait(false);
-        try
-        {
-            if (await ctx.Client.GetMemberAsync(discordUser).ConfigureAwait(false) is { } member)
-            {
-                await member.ModifyAsync(m => m.Nickname = new(newName)).ConfigureAwait(false);
-                await ctx.RespondAsync($"{Config.Reactions.Success} Renamed user to {newName}", ephemeral: true).ConfigureAwait(false);
-            }
-            else
-                await ctx.RespondAsync($"{Config.Reactions.Failure} Couldn't resolve guild member for user {discordUser.Username}#{discordUser.Discriminator}", ephemeral: true).ConfigureAwait(false);
-        }
-        catch (Exception e)
-        {
-            Config.Log.Warn(e, $"Failed to rename user {discordUser.Username}#{discordUser.Discriminator}");
-            await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to rename user to {newName}", ephemeral: true).ConfigureAwait(false);
-        }
-    }
-
     /*
     [Command("list"), RequiresBotModRole]
-    [Description("Lists all users who has restricted nickname.")]
+    [Description("Lists all users who have restricted nickname.")]
     public async Task List(CommandContext ctx)
     {
         await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);

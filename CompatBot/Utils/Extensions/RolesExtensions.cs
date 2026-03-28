@@ -66,4 +66,7 @@ internal static class RolesExtensions
 
     public static bool IsSupporter(this IEnumerable<DiscordRole> memberRoles)
         => memberRoles.Any(r => Config.Moderation.SupporterRoleList.Contains(r.Name));
+
+    public static bool HasAnyRole(this IEnumerable<DiscordRole> memberRoles)
+        => memberRoles.Any(r => r.Id != Config.WarnRoleId);
 }

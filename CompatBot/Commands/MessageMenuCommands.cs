@@ -11,15 +11,16 @@ namespace CompatBot.Commands;
 
 internal static class MessageMenuCommands
 {
+    // limited to 5 commands per menu
+
+    // anyone can use this
+
     /*
     [Command("🗨️ message command with very long name")]
     [Description("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")]
     public async ValueTask AnalyzerTest(){}
     */
 
-    // limited to 5 commands per menu
-
-    // anyone can use this
     [Command("💬 Explain"), RequiresSupporterRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask ShowToUser(MessageCommandContext ctx, DiscordMessage replyTo)
     {
@@ -125,7 +126,11 @@ internal static class MessageMenuCommands
         }
         await ctx.RespondAsync($"{Config.Reactions.Success} Message was enqueued for analysis", ephemeral: true).ConfigureAwait(false);
     }
-
+    
+    [Command("❗ Warn user"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
+    public static ValueTask WarnMessageAuthor(MessageCommandContext ctx, DiscordMessage message)
+        => Warnings.Warn(ctx, message, null);
+    
     /*
     [Command("🔇 Shut up bot"), RequiresWhitelistedRole, SlashCommandTypes(DiscordApplicationCommandType.MessageContextMenu)]
     public static async ValueTask Shutup(MessageCommandContext ctx, DiscordMessage message)

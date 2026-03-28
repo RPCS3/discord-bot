@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using CompatApiClient;
@@ -1289,5 +1290,45 @@ internal static partial class LogParserResult
     {
         version = null;
         return items["build_branch"] is "HEAD" or "master" && Version.TryParse(items["build_full_version"], out version);
+    }
+
+    private static (double avg, double min, double max)? GetCpuUsageStats(UniqueList<string> cpuUsageStatList)
+    {
+        if (cpuUsageStatList is not { Length: >10 })
+            return null;
+        
+        var values = new List<double>(cpuUsageStatList.Count);
+        foreach (var stat in cpuUsageStatList)
+        {
+            if (double.TryParse(stat, NumberStyles.Float | NumberStyles.AllowThousands, NumberFormatInfo.InvariantInfo, out var value))
+                values.Add(value);
+        }
+        values.Sort();
+        var skip5 = Math.Max(1, (int)(values.Count * 0.05));
+        var min = values[skip5];
+        var max = values[^skip5];
+        var skip1 = Math.Max(1, (int)(values.Count * 0.01));
+        var avg = values[skip1..^skip1].Sum() / (values.Count - 2 * skip1);
+        return (avg, min, max);
+    }
+
+    private static (int avg, int min, int max)? GetMemUsageStats(UniqueList<string> memUsageStatList)
+    {
+        if (memUsageStatList is not { Length: >10 })
+            return null;
+        
+        var values = new List<int>(memUsageStatList.Count);
+        foreach (var stat in memUsageStatList)
+        {
+            if (int.TryParse(stat, out var value))
+                values.Add(value);
+        }
+        values.Sort();
+        var skip5 = Math.Max(1, (int)(values.Count * 0.05));
+        var min = values[skip5];
+        var max = values[^skip5];
+        var skip1 = Math.Max(1, (int)(values.Count * 0.01));
+        var avg = values[skip1..^skip1].Select(i => (long)i).Sum() / (values.Count - 2 * skip1);
+        return ((int)avg, min, max);
     }
 }
