@@ -403,4 +403,6 @@ internal partial class LogParser
     private static partial Regex SaveDataBeforeSegfault();
     [GeneratedRegex(@"Booting savestate from gamelist per (?<booting_savestate>.+)...\r?$", DefaultOptions)]
     private static partial Regex BootingFromSavestate();
+    [GeneratedRegex(@"CPU Usage: Total: (?<total_cpu>[^%]+).*?(, RAM Usage: (?<current_ram>\d+)MB \(Peak: (?<peak_ram>\d+)MB\))?\r?$", DefaultOptions)]
+    private static partial Regex PerfSensor();
 }

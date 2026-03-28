@@ -252,6 +252,7 @@ internal partial class LogParser
                 ["SYS: Failed to remove save data"] = FailedToRemoveSaveData(),
                 ["Trophy: Failed to remove"] = FailedToRemoveTrophy(),
                 ["Failed to install trophy"] = FailedToInstallTrophy(),
+                ["Performance Sensor"] = PerfSensor(),
             },
             OnSectionEnd = MarkAsCompleteAndReset,
             EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from"],
@@ -290,6 +291,8 @@ internal partial class LogParser
         "bad_trophy_data_path",
         "game_mod",
         "gpu_memory_info",
+        "total_cpu",
+        "current_ram",
     ];
 
     private static readonly string[] CountValueItems = ["enqueue_buffer_error"];
