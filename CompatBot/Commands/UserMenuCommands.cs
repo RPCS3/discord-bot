@@ -42,7 +42,16 @@ internal static class UserMenuCommands
             await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to rename user to {newName}", ephemeral: true).ConfigureAwait(false);
         }
     }
-    
+
+    [Command("📛 Assign Warning role"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    public static ValueTask AddWarnRole(UserCommandContext ctx, DiscordUser user)
+        => Warnings.Role.Assign(ctx, user);
+
+    [Command("🧼 Remove Warning role"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
+    public static ValueTask RemoveWarnRole(UserCommandContext ctx, DiscordUser user)
+        => Warnings.Role.Revoke(ctx, user);
+
+/*
     [Command("📛 Enforce nickname"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Enforce specific nickname for a particular user permanently")]
     public static async ValueTask Rename(UserCommandContext ctx, DiscordUser discordUser)
@@ -115,7 +124,7 @@ internal static class UserMenuCommands
                     {
                         if (enforceRules.Nickname == expectedNickname)
                             continue;
-                        
+
                         enforceRules.Nickname = expectedNickname;
                     }
                 }
@@ -167,7 +176,9 @@ internal static class UserMenuCommands
             .WithContent(resultMsg);
         await interaction.EditOriginalResponseAsync(new(msg)).ConfigureAwait(false);
     }
+*/
 
+/*
     [Command("🧼 Remove enforcement"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     [Description("Remove nickname enforcement from a particular user")]
     public static async ValueTask Remove(UserCommandContext ctx, DiscordUser discordUser)
@@ -205,4 +216,5 @@ internal static class UserMenuCommands
             await ctx.RespondAsync($"{Config.Reactions.Failure} Failed to reset user nickname", ephemeral: true).ConfigureAwait(false);
         }
     }
+*/
 }
