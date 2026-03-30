@@ -9,7 +9,8 @@ public class FilterContextChoiceProvider : IChoiceProvider
         new("Default", 0),
         new("Chat", (int)FilterContext.Chat),
         new("Logs", (int)FilterContext.Log),
-        new("Both", (int)(FilterContext.Chat | FilterContext.Log)),
+        new("Invites", (int)FilterContext.Invite),
+        new("Content", (int)(FilterContext.Chat | FilterContext.Log)),
     ];
 
     public ValueTask<IEnumerable<DiscordApplicationCommandOptionChoice>> ProvideAsync(CommandParameter parameter)
