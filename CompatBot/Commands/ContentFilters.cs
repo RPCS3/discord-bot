@@ -94,7 +94,7 @@ internal sealed partial class ContentFilters
     [Description("Add a new content filter")]
     public static async ValueTask Add(
         SlashCommandContext ctx,
-        [Description("A plain string to match"), MinMaxLength(minLength: 3)]
+        [Description("A plain string to match"), MinMaxLength(minLength: 2)]
         string trigger,
         //[Description("Context where filter is active (default is Chat and Logs)"), VariadicArgument(2, 0)]IReadOnlyList<FilterContext> context, // todo: use this when variadic bugs are fixed
         [Description("Context where filter is active (default is Chat and Logs)"), SlashChoiceProvider<FilterContextChoiceProvider>]
@@ -285,7 +285,7 @@ internal sealed partial class ContentFilters
     public async Task Edit(SlashCommandContext ctx,
         [Description("Filter ID"), SlashAutoCompleteProvider<ContentFilterAutoCompleteProvider>]
         int id,
-        [Description("A plain string to match"), MinMaxLength(minLength: 3)]
+        [Description("A plain string to match"), MinMaxLength(minLength: 2)]
         string? trigger = null,
         //[Description("Context where filter is active (default is Chat and Logs)"), VariadicArgument(2, 0)]IReadOnlyList<FilterContext> context, // todo: use this when variadic bugs are fixed
         [Description("Context where filter is active (default is Chat and Logs)"), SlashChoiceProvider<FilterContextChoiceProvider>]
