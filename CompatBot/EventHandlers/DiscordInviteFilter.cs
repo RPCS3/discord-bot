@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands;
+using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using Microsoft.Extensions.Caching.Memory;
@@ -68,12 +69,14 @@ internal static partial class DiscordInviteFilter
             return false;
         }
 
+        Piracystring? match = null;
+        var kicked = false;
         foreach (var invite in invites)
         {
             if (!await InviteWhitelistProvider.IsWhitelistedAsync(invite).ConfigureAwait(false))
             {
                 if (!InviteCodeCache.TryGetValue(message.Author.Id, out HashSet<string>? recentInvites) || recentInvites is null)
-                    recentInvites = new();
+                    recentInvites = [];
                 var repeatedInvitePost = !recentInvites.Add(invite.Code);
                 var circumventionAttempt = repeatedInvitePost && attemptedWorkaround;
                 InviteCodeCache.Set(message.Author.Id, recentInvites, CacheDuration);
@@ -89,7 +92,26 @@ internal static partial class DiscordInviteFilter
                     Config.Log.Warn(e);
                 }
 
-                var codeResolveMsg = $"Invite {invite.Code} was resolved to the {invite.Guild?.Name} server";
+                if (await ContentFilter.FindTriggerAsync(FilterContext.Invite, invite.Guild.Name).ConfigureAwait(false) is Piracystring trigger
+                    && trigger.Actions.HasFlag(FilterAction.Kick)
+                    && ! kicked)
+                {
+                    match ??= trigger;
+                    try
+                    {
+                        if (await client.GetMemberAsync(message.Channel.Guild, message.Author).ConfigureAwait(false) is DiscordMember member)
+                        {
+                            await member.RemoveAsync($"Invite filter #{trigger.Id}");
+                            kicked = true;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e, $"Failed to kick user {message.Author.DisplayName} ({message.Author.Id})");
+                    }
+                }
+                
+                var codeResolveMsg = $"Invite `{invite.Code}` was resolved to the `{invite.Guild.Name.Sanitize()}` server";
                 var reportMsg = codeResolveMsg;
                 string userMsg;
                 if (circumventionAttempt)
@@ -105,21 +127,43 @@ internal static partial class DiscordInviteFilter
                     else
                         userMsg += "Please remove it and refrain from posting it again until you have received an approval from a moderator.";
                 }
-                await client.ReportAsync("🛃 An unapproved discord invite", message, reportMsg, null, null, null, ReportSeverity.Low).ConfigureAwait(false);
-                if (repeatedInvitePost || recentInvites.Count > 1)
+                string? actions = null;
+                if (removed)
+                    actions += $"✅ {FilterAction.RemoveContent}";
+                if (match is not null)
+                {
+                    if (kicked)
+                        actions += $"✅ {FilterAction.Kick}";
+                    else
+                        actions += $"❌ {FilterAction.Kick}";
+                }
+                if (!kicked && (repeatedInvitePost || recentInvites.Count > 1))
                     try
                     {
                         var member = await client.GetMemberAsync(message.Channel.Guild, message.Author).ConfigureAwait(false);
                         if (member is not null)
                         {
                             await member.RemoveAsync("Multiple invites after being warned").ConfigureAwait(false);
-                            return false;
+                            kicked = true;
                         }
                     }
                     catch (Exception e)
                     {
                         Config.Log.Warn(e, $"Failed to kick user {await message.Author.GetUsernameWithNicknameAsync(client).ConfigureAwait(false)} for repeated invite spam");
                     }
+                await client.ReportAsync(
+                    "🛃 An unapproved discord invite",
+                    message,
+                    match?.String ?? invite.Code,
+                    null,
+                    match?.Id,
+                    reportMsg,
+                    ReportSeverity.Low,
+                    actions,
+                    quoteContext: false
+                ).ConfigureAwait(false);
+                if (kicked)
+                    return false;
                 
                 await message.Channel.SendMessageAsync(userMsg).ConfigureAwait(false);
                 if (circumventionAttempt)
@@ -205,7 +249,7 @@ internal static partial class DiscordInviteFilter
     public static async Task<(bool hasInvalidInvite, bool attemptToWorkaround, List<DiscordInvite> invites)> GetInvitesAsync(this DiscordClient client, string message, DiscordUser? author = null, bool tryMessageAsACode = false)
     {
         if (message is not { Length: >0 })
-            return (false, false, new(0));
+            return (false, false, []);
 
         var inviteCodes = new HashSet<string>(InviteLink().Matches(message).Select(m => m.Groups["invite_id"].Value).Where(s => s is { Length: >0 }));
         var discordMeLinks = InviteLink().Matches(message).Select(m => m.Groups["me_id"].Value).Distinct().Where(s => s is { Length: >0 }).ToList();
@@ -220,7 +264,7 @@ internal static partial class DiscordInviteFilter
                 }
         }
         if (inviteCodes is not { Count: >0 } && discordMeLinks is [] && !tryMessageAsACode)
-            return (false, attemptedWorkaround, new(0));
+            return (false, attemptedWorkaround, []);
 
         var hasInvalidInvites = false;
         foreach (var meLink in discordMeLinks)

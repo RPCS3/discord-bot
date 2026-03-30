@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
+using System.Text;
 
 namespace CompatApiClient.Utils;
 
@@ -39,6 +41,14 @@ public static class Utils
         if (breakLinks)
             result = result.Replace(".", ".\u200d").Replace(":", ":\u200d");
         return result;
+    }
+
+    public static string RemoveWhitespaces(this string str)
+    {
+        var result = new StringBuilder();
+        foreach (var rune in str.EnumerateRunes().Where(r => !Rune.IsWhiteSpace(r)))
+            result.Append(rune.ToString());
+        return result.ToString();
     }
 
     public static int Clamp(this int amount, int low, int high)

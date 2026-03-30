@@ -133,7 +133,7 @@ internal static class ContentFilter
 #endif
 
         var content = await message.GetMessageContentForFiltersAsync(client).ConfigureAwait(false);
-        var trigger = await FindTriggerAsync(FilterContext.Chat, content.ToString()).ConfigureAwait(false);
+        var trigger = await FindTriggerAsync(FilterContext.Chat, content).ConfigureAwait(false);
         if (trigger is null)
             return true;
 

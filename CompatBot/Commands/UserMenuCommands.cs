@@ -1,11 +1,5 @@
-﻿using CompatBot.Commands;
-using CompatBot.Database;
-using CompatBot.EventHandlers;
-using CompatBot.Utils.Extensions;
+﻿using CompatBot.EventHandlers;
 using DSharpPlus.Commands.Processors.UserCommands;
-using DSharpPlus.Interactivity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace CompatBot.Commands;
 
