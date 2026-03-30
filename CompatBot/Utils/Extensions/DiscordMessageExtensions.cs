@@ -1,9 +1,15 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using CompatApiClient.Utils;
 
 namespace CompatBot.Utils;
 
-public static class DiscordMessageExtensions
+public static partial class DiscordMessageExtensions
 {
+    [GeneratedRegex("(?<lnk><[^>]+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
+    private static partial Regex Link();
+    
     public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, DiscordMessageBuilder messageBuilder)
     {
         Exception? lastException = null;
@@ -83,7 +89,7 @@ public static class DiscordMessageExtensions
     private static StringBuilder Append(this StringBuilder content, DiscordMessage message, bool includeEmbeds = true, bool includeAttachments = true)
     {
         if (message.Content is { Length: > 0 })
-            content.AppendLine(message.Content);
+            content.AppendLine(message.Content.FixSuppressedLinks());
         if (includeAttachments)
             foreach (var attachment in message.Attachments.Where(a => a.FileName is { Length: > 0 }))
                 content.AppendLine(attachment.FileName);
@@ -100,6 +106,21 @@ public static class DiscordMessageExtensions
                     content.AppendLine(field.Value);
                 }
             }
+        return content;
+    }
+
+    [return: NotNullIfNotNull(nameof(content))]
+    private static string? FixSuppressedLinks(this string? content)
+    {
+        if (content is not { Length: > 0 })
+            return content;
+        
+        var matches = Link().Matches(content);
+        foreach (Match m in matches)
+        {
+            var lnk = m.Groups["lnk"].Value;
+            content = content.Replace(lnk, lnk.RemoveWhitespaces());
+        }
         return content;
     }
 }
