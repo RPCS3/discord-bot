@@ -8,6 +8,7 @@ using CompatBot.Commands;
 using CompatBot.Database;
 using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
+using HomoglyphConverter;
 using Microsoft.Extensions.Caching.Memory;
 using ResultNet;
 
@@ -92,7 +93,11 @@ internal static partial class DiscordInviteFilter
                     Config.Log.Warn(e);
                 }
 
-                if (await ContentFilter.FindTriggerAsync(FilterContext.Invite, invite.Guild.Name).ConfigureAwait(false) is Piracystring trigger
+                var guildName = $"""
+                                 {invite.Guild.Name}
+                                 {invite.Guild.Name.ToCanonicalForm()}
+                                 """;
+                if (await ContentFilter.FindTriggerAsync(FilterContext.Invite, guildName).ConfigureAwait(false) is Piracystring trigger
                     && trigger.Actions.HasFlag(FilterAction.Kick)
                     && ! kicked)
                 {
@@ -154,8 +159,8 @@ internal static partial class DiscordInviteFilter
                 await client.ReportAsync(
                     "🛃 An unapproved discord invite",
                     message,
-                    match?.String ?? invite.Code,
-                    null,
+                    invite.Code,
+                    match?.String,
                     match?.Id,
                     reportMsg,
                     ReportSeverity.Low,
