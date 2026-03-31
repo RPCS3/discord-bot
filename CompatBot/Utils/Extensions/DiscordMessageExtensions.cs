@@ -97,7 +97,7 @@ public static partial class DiscordMessageExtensions
             foreach (var embed in message.Embeds)
             {
                 content.AppendLine(embed.Title).AppendLine(embed.Description);
-                if (embed.Fields is not { Count: > 0 })
+                if (embed.Fields is not { Count: >0 })
                     continue;
 
                 foreach (var field in embed.Fields)
@@ -119,7 +119,8 @@ public static partial class DiscordMessageExtensions
         foreach (Match m in matches)
         {
             var lnk = m.Groups["lnk"].Value;
-            content = content.Replace(lnk, lnk.RemoveWhitespaces());
+            var fixedLnk = Uri.UnescapeDataString(lnk.RemoveWhitespaces());
+            content = content.Replace(lnk, fixedLnk);
         }
         return content;
     }
