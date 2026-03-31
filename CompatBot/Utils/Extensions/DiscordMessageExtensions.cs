@@ -7,7 +7,7 @@ namespace CompatBot.Utils;
 
 public static partial class DiscordMessageExtensions
 {
-    [GeneratedRegex("(?<lnk><[^>]+>)", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
+    [GeneratedRegex(@"<(?<lnk>(?!(#|@[&!]?\d+))[^>]+)>", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
     private static partial Regex Link();
     
     public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, DiscordMessageBuilder messageBuilder)
