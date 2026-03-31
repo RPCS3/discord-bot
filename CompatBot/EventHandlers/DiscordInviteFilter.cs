@@ -16,7 +16,7 @@ namespace CompatBot.EventHandlers;
 
 internal static partial class DiscordInviteFilter
 {
-    [GeneratedRegex(@"(https?://)?discord((((app)?\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|>|$))", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    [GeneratedRegex(@"\bdiscord((((app)?\.com/invite|\.gg)/(?<invite_id>[a-z0-9\-]+))|(\.me/(?<me_id>.*?))(\s|>|$))", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     private static partial Regex InviteLink();
     [GeneratedRegex(@"name=""csrf-token"" content=""(?<csrf_token>\w+)""")]
     private static partial Regex CsrfTokenPattern();
