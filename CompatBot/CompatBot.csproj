@@ -43,12 +43,12 @@
   <ItemGroup>
     <PackageReference Include="Blurhash.ImageSharp" Version="4.0.1" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02578" />
-    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02578" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02578" />
+    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02581" />
+    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02581" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02581" />
     <PackageReference Include="DSharpPlus.Natives.Zstd" Version="1.5.7.21" />
     <PackageReference Include="Florence2" Version="25.12.63049" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.73.0.4081" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.73.0.4098" />
     <PackageReference Include="MathParser.org-mXparser" Version="6.1.0" />
     <PackageReference Include="MegaApiClient" Version="1.10.5" />
     <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.23.0" />
@@ -67,11 +67,11 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="Nerdbank.Streams" Version="2.13.16" />
     <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-    <PackageReference Include="NLog" Version="6.1.1" />
+    <PackageReference Include="NLog" Version="6.1.2" />
     <PackageReference Include="NLog.Extensions.Logging" Version="6.1.2" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
     <PackageReference Include="Result.Net" Version="1.7.0" />
-    <PackageReference Include="SharpCompress" Version="0.47.3" />
+    <PackageReference Include="SharpCompress" Version="0.47.4" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     <PackageReference Include="TesseractCSharp" Version="1.0.5" />
   </ItemGroup>

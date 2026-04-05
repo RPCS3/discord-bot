@@ -134,13 +134,13 @@ internal static partial class DiscordInviteFilter
                 }
                 string? actions = null;
                 if (removed)
-                    actions += $"✅ {FilterAction.RemoveContent}";
+                    actions += $"✅ {FilterAction.RemoveContent}";
                 if (match is not null)
                 {
                     if (kicked)
-                        actions += $" ✅ {FilterAction.Kick}";
+                        actions += $" ✅ {FilterAction.Kick}";
                     else
-                        actions += $" ❌ {FilterAction.Kick}";
+                        actions += $" ❌ {FilterAction.Kick}";
                 }
                 if (!kicked && (repeatedInvitePost || recentInvites.Count > 1))
                     try
