@@ -138,9 +138,9 @@ internal static partial class DiscordInviteFilter
                 if (match is not null)
                 {
                     if (kicked)
-                        actions += $"✅ {FilterAction.Kick}";
+                        actions += $" ✅ {FilterAction.Kick}";
                     else
-                        actions += $"❌ {FilterAction.Kick}";
+                        actions += $" ❌ {FilterAction.Kick}";
                 }
                 if (!kicked && (repeatedInvitePost || recentInvites.Count > 1))
                     try
@@ -164,7 +164,7 @@ internal static partial class DiscordInviteFilter
                     match?.Id,
                     reportMsg,
                     ReportSeverity.Low,
-                    actions,
+                    actions?.TrimStart(),
                     quoteContext: false
                 ).ConfigureAwait(false);
                 if (kicked)
