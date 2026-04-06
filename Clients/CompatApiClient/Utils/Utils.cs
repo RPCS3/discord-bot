@@ -74,4 +74,10 @@ public static class Utils
         client.DefaultRequestHeaders.UserAgent.Add(ApiConfig.ProductInfoHeader);
         return client;
     }
+
+    public static HttpClient WithTimeout(this HttpClient client, TimeSpan timeout)
+    {
+        client.Timeout = timeout;
+        return client;
+    }
 }

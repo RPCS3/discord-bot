@@ -273,7 +273,7 @@ internal static class ContentFilter
         foreach (FilterAction fa in FilterActionExtensions.ActionFlagValues)
         {
             if (trigger.Actions.HasFlag(fa) && !ignoreFlags.HasFlag(fa))
-                actionList += (completedActions.Contains(fa) ? "✅" : "❌") + " " + fa + ' ';
+                actionList += $"{(completedActions.Contains(fa) ? "✅" : "❌")} {fa} ";
         }
 
         try
