@@ -358,8 +358,7 @@ internal static partial class LogParserResult
                     {
                         if (driverVersion >= AmdShaderCompilationBugVersion
                             && driverVersion < AmdShaderCompilationBugFixedVersion
-                            && items["renderer"] is "Vulkan"
-                            && gpuInfo.Contains(" RX 7") || gpuInfo.Contains(" RX 9"))
+                            && items["renderer"] is "Vulkan")
                         {
                             if (AmdDriverVersionProvider.LatestKnownVersion > driverVersion)
                                 notes.Add("❗ If you experience visual artifacts, please update your AMD Radeon drivers to a newer version");
