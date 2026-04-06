@@ -49,10 +49,13 @@ internal static partial class LogParserResult
     private static readonly Version MinimumOpenGLVersion = new(4, 3);
     private static readonly Version MinimumFirmwareVersion = new(4, 80);
 
-    private static readonly Version NvidiaFullscreenBugMinVersion = new(400, 0);
-    private static readonly Version NvidiaFullscreenBugMaxVersion = new(499, 99);
-    private static readonly Version NvidiaTextureMemoryBugMinVersion = new(526, 0);
-    private static readonly Version NvidiaTextureMemoryBugMaxVersion = new(526, 99);
+    private static readonly Version NvidiaFullscreenBugVersion = new(400, 0);
+    private static readonly Version NvidiaFullscreenBugFixedVersion = new(499, 99);
+    private static readonly Version NvidiaTextureMemoryBugVersion = new(526, 0);
+    private static readonly Version NvidiaTextureMemoryBugFixedVersion = new(526, 99);
+
+    private static readonly Version AmdShaderCompilationBugVersion = new(26, 3, 1);
+    private static readonly Version AmdShaderCompilationBugFixedVersion = new(26, 3, 2);
     
     private static readonly Version NvidiaRecommendedWindowsDriverVersion = new(512, 16);
     private static readonly Version NvidiaRecommendedLinuxDriverVersion = new(515, 57);

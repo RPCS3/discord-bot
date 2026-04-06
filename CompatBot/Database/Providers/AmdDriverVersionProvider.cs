@@ -8,8 +8,10 @@ internal static class AmdDriverVersionProvider
 {
     private static readonly Dictionary<string, List<string>> VulkanToDriver = new();
     private static readonly Dictionary<string, string> OpenglToDriver = new();
-    private static readonly Dictionary<string, string> InternalToDriver = new();
+    //private static readonly Dictionary<string, string> InternalToDriver = new();
     private static readonly SemaphoreSlim SyncObj = new(1, 1);
+
+    public static Version LatestKnownVersion { get; private set; } = default;
 
     public static async Task RefreshAsync()
     {
@@ -29,21 +31,26 @@ internal static class AmdDriverVersionProvider
                 {
                     var winVer = (string?)driver.Element("windows-version");
                     var vkVer = (string?)driver.Element("vulkan-version");
-                    var internVer = (string?)driver.Element("internal-version");
+                    //var internVer = (string?)driver.Element("internal-version");
                     var driverVer = (string?)driver.Attribute("version");
                     if (vkVer is null)
                         continue;
 
                     if (!VulkanToDriver.TryGetValue(vkVer, out var verList))
-                        VulkanToDriver[vkVer] = verList = new();
-                    if (string.IsNullOrEmpty(driverVer))
+                        VulkanToDriver[vkVer] = verList = [];
+                    if (driverVer is not {Length: >0})
                         continue;
                         
                     verList.Insert(0, driverVer);
-                    if (!string.IsNullOrEmpty(winVer))
+                    if (winVer is {Length: >0})
                         OpenglToDriver[winVer] = driverVer;
-                    if (!string.IsNullOrEmpty(internVer))
+                    /*
+                    if (internVer is {Length: >0})
                         InternalToDriver[internVer] = driverVer;
+                    */
+                    if (Version.TryParse(driverVer, out var ver)
+                        && ver > LatestKnownVersion)
+                        LatestKnownVersion = ver;
                 }
                 foreach (var key in VulkanToDriver.Keys.ToList())
                     VulkanToDriver[key] = VulkanToDriver[key].Distinct().ToList();
@@ -95,17 +102,17 @@ internal static class AmdDriverVersionProvider
         }
 
         var approximate = glVersions.FirstOrDefault(v => v.glVer.Minor == glVersion.Minor && v.glVer.Build == glVersion.Build);
-        if (!string.IsNullOrEmpty(approximate.driverVer))
+        if (approximate.driverVer is {Length: >0})
             return $"{approximate.driverVer} rev {glVersion.Revision}";
 
-        if (string.IsNullOrEmpty(approximate.driverVer))
+        if (approximate.driverVer is not {Length: >0})
             for (var i = 0; i < glVersions.Count - 1; i++)
                 if (glVersion > glVersions[i].glVer && glVersion < glVersions[i + 1].glVer)
                 {
                     approximate = glVersions[i];
                     break;
                 }
-        if (!string.IsNullOrEmpty(approximate.driverVer))
+        if (approximate.driverVer is {Length: >0})
             return $"probably {approximate.driverVer}";
 
         return openglVersion;
@@ -118,8 +125,8 @@ internal static class AmdDriverVersionProvider
 
         if (result?.Count > 0 || (VulkanToDriver.TryGetValue(vulkanVersion, out result) && result.Count > 0))
         {
-            if (result.Count == 1)
-                return result[0];
+            if (result is [string ver])
+                return ver;
             return $"{result.First()} - {result.Last()}";
         }
 
@@ -131,7 +138,7 @@ internal static class AmdDriverVersionProvider
                 if (Version.TryParse(key, out var ver))
                     vkVersions.Add((ver, VulkanToDriver[key]));
             }
-            if (vkVersions.Count == 0)
+            if (vkVersions is [])
                 return vulkanVersion;
 
             vkVersions.Sort((l, r) => l.vkVer < r.vkVer ? -1 : l.vkVer > r.vkVer ? 1 : 0);

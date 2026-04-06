@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using CompatApiClient.Utils;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.EventHandlers;
 using CompatBot.EventHandlers.LogParsing.POCOs;
 using IrdLibraryClient.IrdFormat;
@@ -337,24 +338,34 @@ internal static partial class LogParserResult
                     items["driver_version_parsed"] = driverVersion.ToString();
                     if (IsNvidia(gpuInfo))
                     {
-                        var isWindows = items["os_type"] is not null and not "Linux";
+                        var isWindows = items["os_type"] is "Windows";
                         var minVersion = isWindows ? NvidiaRecommendedWindowsDriverVersion : NvidiaRecommendedLinuxDriverVersion;
                         if (driverVersion < minVersion && !IsNouveau(gpuInfo))
                             notes.Add($"❗ Please update your nVidia GPU driver to at least version {minVersion}");
-                        if (driverVersion >= NvidiaTextureMemoryBugMinVersion
-                            && driverVersion < NvidiaTextureMemoryBugMaxVersion
-                            && items["renderer"] == "Vulkan")
+                        if (driverVersion >= NvidiaTextureMemoryBugVersion
+                            && driverVersion < NvidiaTextureMemoryBugFixedVersion
+                            && items["renderer"] is "Vulkan")
                             notes.Add("ℹ️ 526 series nVidia drivers can cause out of memory errors, please upgrade the drivers");
                         if (isWindows && buildVersion < NvidiaFullscreenBugFixed)
                         {
-                            if (driverVersion >= NvidiaFullscreenBugMinVersion
-                                && driverVersion < NvidiaFullscreenBugMaxVersion
-                                && items["renderer"] == "Vulkan")
+                            if (driverVersion >= NvidiaFullscreenBugVersion
+                                && driverVersion < NvidiaFullscreenBugFixedVersion
+                                && items["renderer"] is "Vulkan")
                                 notes.Add("ℹ️ 400 series nVidia drivers can cause screen freezes, please update RPCS3");
                         }
                     }
                     else if (IsAmd(gpuInfo) && items["os_type"] is "Windows")
                     {
+                        if (driverVersion >= AmdShaderCompilationBugVersion
+                            && driverVersion < AmdShaderCompilationBugFixedVersion
+                            && items["renderer"] is "Vulkan"
+                            && gpuInfo.Contains(" RX 7") || gpuInfo.Contains(" RX 9"))
+                        {
+                            if (AmdDriverVersionProvider.LatestKnownVersion > driverVersion)
+                                notes.Add("❗ If you experience visual artifacts, please update your AMD Radeon drivers to a newer version");
+                            else
+                                notes.Add("❗ If you experience visual artifacts, please downgrade your AMD Radeon drivers to version 26.2.2 or temporarily switch the `Renderer` to use `OpenGL`");
+                        }
                         if (driverVersion < AmdRecommendedWindowsDriverVersion)
                             notes.Add($"❗ Please update your AMD GPU driver to at least version {AmdRecommendedWindowsDriverVersion}");
                     }
