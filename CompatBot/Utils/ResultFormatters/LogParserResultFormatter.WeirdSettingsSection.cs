@@ -827,8 +827,15 @@ internal static partial class LogParserResult
 
     private static readonly HashSet<string> Gow3Ids =
     [
-        "BCAS25003", "BCES00510", "BCES00516", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003",
+        "BCAS25003", "BCES00510", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003",
     ];
+
+    private static readonly HashSet<string> KnownGow3Patches = new(StringComparer.InvariantCultureIgnoreCase)
+    {
+        "4d5c51503a81a327c2a99427390a395b8dcb3767", // 1.00
+        "cc23d46d671458b37f34e08b6e06d1751084a34e", // 1.00 BCAS25003 & BCKS15003
+        "19724fde16a5b111b7b4d2a065f5dccaf8e01962", // 1.03
+    };
 
     private static readonly HashSet<string> GowHDIds =
     [
@@ -843,15 +850,13 @@ internal static partial class LogParserResult
         "NPHA80258",
     ];
 
-    private static void CheckGoWSettings(string serial, NameValueCollection items, List<string> notes, List<string> generalNotes)
+    private static void CheckGow3Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
     {
-        if (serial == "NPUA70080") // GoW3 Demo
+        if (!Gow3Ids.Contains(serial))
             return;
 
-        if (Gow3Ids.Contains(serial))
-            generalNotes.Add("ℹ️ Black screen after Santa Monica logo is fine for up to 5 minutes");
-        else if (GowAscIds.Contains(serial))
-            generalNotes.Add("ℹ️ This game is known to be very unstable");
+        if (!ppuHashes.Overlaps(KnownGow3Patches))
+            generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
     private static readonly HashSet<string> DesIds =
