@@ -424,7 +424,7 @@ internal static partial class LogParserResult
             CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckScottPilgrimSettings(serial, items, notes, generalNotes);
-            CheckGoWSettings(serial, items, notes, generalNotes);
+            CheckGoW3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckTlouSettings(serial, items, notes, ppuPatches, ppuHashes, patchNames);
             CheckRdrSettings(serial, items, notes);
@@ -828,6 +828,7 @@ internal static partial class LogParserResult
     private static readonly HashSet<string> Gow3Ids =
     [
         "BCAS25003", "BCES00510", "BCES00799", "BCJS37001", "BCUS98111", "BCKS15003",
+        "NPUA70080", // Demo
     ];
 
     private static readonly HashSet<string> KnownGow3Patches = new(StringComparer.InvariantCultureIgnoreCase)
@@ -835,6 +836,7 @@ internal static partial class LogParserResult
         "4d5c51503a81a327c2a99427390a395b8dcb3767", // 1.00
         "cc23d46d671458b37f34e08b6e06d1751084a34e", // 1.00 BCAS25003 & BCKS15003
         "19724fde16a5b111b7b4d2a065f5dccaf8e01962", // 1.03
+        "c25d318100a48dc3d8b85460e385e4c38289f555", // Demo
     };
 
     private static readonly HashSet<string> GowHDIds =
