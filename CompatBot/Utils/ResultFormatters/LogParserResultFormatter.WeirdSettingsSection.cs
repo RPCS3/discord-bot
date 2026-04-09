@@ -424,7 +424,7 @@ internal static partial class LogParserResult
             CheckNierSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckDod3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckScottPilgrimSettings(serial, items, notes, generalNotes);
-            CheckGoW3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
+            CheckGow3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckDesSettings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
             CheckTlouSettings(serial, items, notes, ppuPatches, ppuHashes, patchNames);
             CheckRdrSettings(serial, items, notes);
