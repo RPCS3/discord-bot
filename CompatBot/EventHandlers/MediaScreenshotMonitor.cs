@@ -12,9 +12,9 @@ namespace CompatBot.EventHandlers;
 internal sealed class MediaScreenshotMonitor
 {
     private static readonly Channel<OcrTask> WorkQueue = Channel.CreateUnboundedPrioritized<OcrTask>(new(){ Comparer = new OcrTaskComparer() });
-    private static readonly MemoryCache RemovedMessages = new(new MemoryCacheOptions() { ExpirationScanFrequency = TimeSpan.FromHours(1) });
+    private static readonly MemoryCache RemovedMessages = new(new MemoryCacheOptions() { ExpirationScanFrequency = TimeSpan.FromMinutes(10) });
     private static readonly TimeSpan MessageCachedTime = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan SignatureCachedTime = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan SignatureCachedTime = TimeSpan.FromMinutes(10);
     public DiscordClient Client { get; internal set; } = null!;
     public static int MaxQueueLength { get; private set; }
 
