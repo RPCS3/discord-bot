@@ -12,6 +12,7 @@ internal partial class LogParser
     [GeneratedRegex(@"(?<first_unicode_dot>·).+$", DefaultOptions)]
     private static partial Regex FirstLineWithDot();
     // Operating system: Windows, Major: 10, Minor: 0, Build: 22000, Service Pack: none, Compatibility mode: 0
+    // Operating system: Windows, Major: 10, Minor: 0, Build: 26200, Service Pack: none
     // Operating system: Windows 10 Home, Version 10.0.26200 NT6.3
     // Operating system: POSIX, Name: Linux, Release: 5.15.11-zen1-1-zen, Version: #1 ZEN SMP PREEMPT Wed, 22 Dec 2021 09:23:53 +0000
     // Operating system: macOS, Version 12.1.0
@@ -19,7 +20,7 @@ internal partial class LogParser
         Operating\ssystem:\s(?<os_type>[^,]+),\s
         (
             Name:\s(?<posix_name>[^,]+),\sRelease:\s(?<posix_release>.+(?!:\s,))
-            |Major:\s(?<os_version_major>\d+),\sMinor:\s(?<os_version_minor>\d+),\sBuild:\s(?<os_version_build>\d+),\sService\sPack:\s(?<os_service_pack>[^,]+),\sCompatibility\smode:\s(?<os_compat_mode>[^,\r\n]+)
+            |Major:\s(?<os_version_major>\d+),\sMinor:\s(?<os_version_minor>\d+),\sBuild:\s(?<os_version_build>\d+),\sService\sPack:\s(?<os_service_pack>[^,]+)(,\sCompatibility\smode:\s(?<os_compat_mode>[^,\r\n]+))?
         )?
         (Version:?\s(?<os_version_string>[^\r\n]+?)(\sNT\d+\.\d+)?)?
         \r?$
