@@ -118,9 +118,16 @@ internal static partial class LogParserResult
         if (serial is {Length: >0} && isElf)
             notes.Add($"⚠️ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
         
-        if (items["vfs_disc_mount"] is "vfsv0_virtual_iso_overlay_fs_dev")
+        if (items["vfs_disc_mount"] is "vfsv0_virtual_iso_overlay_fs_dev"
+            || items["iso_path"] is {Length: >0})
         {
-            notes.Add("ℹ️ Booted from ISO");
+            var encType = items["iso_enc_type"] switch
+            {
+                "REDUMP" or "ENC_3K3Y" => "an encrypted",
+                "NONE" => "a decrypted",
+                _ => "an"
+            };
+            notes.Add($"ℹ️ Booted from {encType} ISO");
         }
         else if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd
             && items["os_type"] is {Length: >0} osType
