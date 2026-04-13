@@ -261,6 +261,10 @@ internal partial class LogParser
     private static partial Regex BootPathInBodySys();
     [GeneratedRegex(@"SYS: Disc: /(?<vfs_disc_mount>\w+)/\r?$", DefaultOptions)]
     private static partial Regex DiscMountSys();
+    [GeneratedRegex(@"SYS: Loading (iso archive|ISO) '(?<iso_path>\w+)'\r?$", DefaultOptions)]
+    private static partial Regex LoadingIso();
+    [GeneratedRegex(@"SYS: init\(\): Set 'enc type': (?<iso_enc_type>\w+), 'reg count': (?<iso_reg_count>\d+).+\r?$", DefaultOptions)]
+    private static partial Regex IsoEncType();
     [GeneratedRegex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path_full>(?<elf_boot_path>/dev_hdd0/game/(?<elf_boot_path_serial>[^/\r\n]+)/USRDIR/EBOOT\.BIN|.*?))\r?$", DefaultOptions)]
     private static partial Regex ElfPath();
     [GeneratedRegex(@"Mounted path ""/dev_bdvd"" to ""(?<mounted_dev_bdvd>[^""]+)""", DefaultOptions)]
