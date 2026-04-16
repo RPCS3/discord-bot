@@ -188,6 +188,7 @@ internal partial class LogParser
                 ["SYS: Disc:"] = DiscMountSys(),
                 ["SYS: Loading iso"] = LoadingIso(),
                 ["SYS: init(): Set"] = IsoEncType(),
+                ["ISO: init(): Set"] = IsoEncType(),
                 ["Elf path:"] = ElfPath(),
                 ["VFS: Mounted path \"/dev_bdvd\""] = VfsMountPath(),
                 ["Invalid or unsupported file format:"] = InvalidFileFormat(),
