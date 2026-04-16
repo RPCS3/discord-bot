@@ -70,7 +70,7 @@ internal partial class LogParser
         else
         {
             var matches = extractor.Matches(buffer);
-            if (matches.Count == 0)
+            if (matches.Count is 0)
                 return;
 
             foreach (Match match in matches)

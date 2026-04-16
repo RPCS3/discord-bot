@@ -262,7 +262,7 @@ internal partial class LogParser
     private static partial Regex BootPathInBodySys();
     [GeneratedRegex(@"SYS: Disc: /(?<vfs_disc_mount>\w+)/\r?$", DefaultOptions)]
     private static partial Regex DiscMountSys();
-    [GeneratedRegex(@"SYS: Loading (iso archive|ISO) '(?<iso_path>\w+)'\r?$", DefaultOptions)]
+    [GeneratedRegex(@"SYS: Loading (iso archive|ISO) '(?<iso_path>.+)'\r?$", DefaultOptions)]
     private static partial Regex LoadingIso();
     [GeneratedRegex(@"(SYS|ISO): init(\(\))?: Set 'enc type': (?<iso_enc_type>\w+), 'reg count': (?<iso_reg_count>\d+).+\r?$", DefaultOptions)]
     private static partial Regex IsoEncType();
