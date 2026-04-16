@@ -63,11 +63,11 @@ internal static partial class LogParser
                     }
 
                     buffer = buffer.Slice(buffer.GetPosition(1, lineEnd.Value));
-                } while (lineEnd != null);
+                } while (lineEnd is not null);
 
                 if (result.IsCanceled || cancellationToken.IsCancellationRequested)
                 {
-                    if (state.Error == LogParseState.ErrorCode.None)
+                    if (state.Error is LogParseState.ErrorCode.None)
                         state.Error = LogParseState.ErrorCode.SizeLimit;
                 }
                 else if (result.IsCompleted)
