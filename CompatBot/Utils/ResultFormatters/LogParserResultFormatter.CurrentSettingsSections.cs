@@ -1,6 +1,7 @@
 ﻿using System.Collections.Specialized;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers.LogParsing;
+using LTRData.Extensions.Formatting;
 
 namespace CompatBot.Utils.ResultFormatters;
 
@@ -235,7 +236,7 @@ internal static partial class LogParserResult
     {
         if (colA.lines?.Count > 0 && colB.lines?.Count > 0)
         {
-            var isCustomSettings = items["custom_config"] is EnabledMark;
+            var configType = items["applied_config_type"]; // default is selected_config_mode = database, even if there's no database config
             var colAToRemove = colA.lines.Count(l => l.EndsWith("N/A"));
             var colBToRemove = colB.lines.Count(l => l.EndsWith("N/A"));
             var linesToRemove = Math.Min(colAToRemove, colBToRemove);
@@ -255,21 +256,24 @@ internal static partial class LogParserResult
                 if (!tmpLines[i].EndsWith("N/A") || linesToSkip-- > 0)
                     colB.lines.Add(tmpLines[i]);
 
-            AddSettingsSection(builder, colA.name!, colA.lines, isCustomSettings);
-            AddSettingsSection(builder, colB.name!, colB.lines, isCustomSettings);
+            AddSettingsSection(builder, colA.name!, colA.lines, configType);
+            AddSettingsSection(builder, colB.name!, colB.lines, configType);
         }
     }
 
-    private static void AddSettingsSection(DiscordEmbedBuilder builder, string name, List<string> lines, bool isCustomSettings)
+    private static void AddSettingsSection(DiscordEmbedBuilder builder, string name, List<string> lines, string? configMode)
     {
         var result = new StringBuilder();
         foreach (var line in lines)
             result.Append('`').Append(line).AppendLine("`");
-        if (isCustomSettings)
-            name = "Per-game " + name;
-        else
-            name = "Global " + name;
-        builder.AddField(name, result.ToString().FixSpaces(), true);
+        var prefix = configMode switch
+        {
+            "custom" or "continuous" => "Custom per-game",
+            "database" => "Auto-configured",
+            { Length: >0} unkMode => unkMode.Capitalize(),
+            _ => "Unknown"
+        };
+        builder.AddField($"{prefix} {name}", result.ToString().FixSpaces(), true);
     }
 
     private static void BuildLibsSection(DiscordEmbedBuilder builder, NameValueCollection items)
