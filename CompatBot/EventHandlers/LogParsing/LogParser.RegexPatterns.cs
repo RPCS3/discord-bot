@@ -66,8 +66,10 @@ internal partial class LogParser
     private static partial Regex BootPathDigitalLdr();
     [GeneratedRegex(@"Path: (?<ldr_path_full>.*(?<ldr_path>/dev_hdd0/game/(?<ldr_path_serial>[^/\r\n]+)).*|[^\r\n]*)\r?$", DefaultOptions)]
     private static partial Regex BootPathDigitalSys();
-    [GeneratedRegex(@"custom config: (?<custom_config>[^\r\n]*?)\r?$", DefaultOptions)]
-    private static partial Regex CustomConfigPath();
+    [GeneratedRegex(@"Selected config: mode=(?<selected_config_mode>\w+) config, path=.*\r?$", DefaultOptions)]
+    private static partial Regex SelectedConfigType();
+    [GeneratedRegex(@"Applying (?<applied_config_type>\w+) config(: (?<applied_config_path>[^\r\n]*?))?\r?$", DefaultOptions)]
+    private static partial Regex ConfigTypeAndPath();
     [GeneratedRegex(@"patch_log: Failed to load patch file (?<patch_error_file>\S*)\r?\n.* line (?<patch_error_line>\d+), column (?<patch_error_column>\d+): (?<patch_error_text>.*?)$", DefaultOptions)]
     private static partial Regex FailedPatchPath();
     

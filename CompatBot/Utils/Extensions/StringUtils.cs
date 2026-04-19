@@ -389,16 +389,8 @@ public static partial class StringUtils
         return result;
     }
 
-    private static bool IsFormat(char c) => SpaceCharacters.Contains(c);
-
-    private static string CreateTrimmedString(string str, int start, int end)
-    {
-        var len = end - start + 1;
-        if (len == str.Length)
-            return str;
-
-        return len == 0 ? "" : str.Substring(start, len);
-    }
+    public static string Capitalize(this string str)
+        => $"{char.ToUpper(str[0])}{str[1..]}";
 
     internal static string GetAcronym(this string? str, bool includeAllCaps = false, bool includeAllDigits = false)
     {
@@ -451,6 +443,17 @@ public static partial class StringUtils
         var data = Encoding.UTF8.GetBytes(str.ToLowerInvariant());
         var hash = SHA256.HashData(data);
         return BitConverter.ToInt32(hash, 0);
+    }
+
+    private static bool IsFormat(char c) => SpaceCharacters.Contains(c);
+
+    private static string CreateTrimmedString(string str, int start, int end)
+    {
+        var len = end - start + 1;
+        if (len == str.Length)
+            return str;
+
+        return len == 0 ? "" : str.Substring(start, len);
     }
 
     private static double GetScoreWithAcronym(this string strA, string strB)

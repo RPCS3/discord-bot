@@ -582,7 +582,7 @@ internal static partial class LogParserResult
                 notes.Add("⚠️ If you have weird compatibility issues after boot, try enabling `SPU-Compatible Savestate Mode`");
         }
 
-        if (items["custom_config"] is EnabledMark && notes.Count > 0)
+        if (items["applied_config_type"] is "custom" or "continuous" && notes.Count > 0)
             generalNotes.Add("⚠️ To change custom configuration, **Right-click on the game**, then `Configure`");
         if (items["custom_input_config"] is { Length: > 0 } and not "global")
             generalNotes.Add("ℹ️ Custom input configuration is applied");
