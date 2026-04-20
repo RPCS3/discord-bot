@@ -359,18 +359,11 @@ internal static partial class LogParserResult
         }
         if (items["use_rebar"] is DisabledMark)
             notes.Add("⚠️ `Use Re-BAR memory for GPU uploads` is disabled and may impact performance");
-        else if (multiItems["gpu_memory_info"] is { Length: > 0 } memoryInfo)
+        else if (items["gpu_vram_size"] is {Length: >0} deviceLocalMemory
+            && items["gpu_rebar_size"] is {Length: >0} barMemory
+            && deviceLocalMemory != barMemory)
         {
-            var memoryMaps = memoryInfo
-                .Select(s => s.Split(" of "))
-                .Where(i => i is {Length: 2})
-                .ToDictionary(i => i[1], i => i[0]);
-            if (memoryMaps.TryGetValue("device local", out var deviceLocalMemory)
-                && memoryMaps.TryGetValue("BAR", out var barMemory)
-                && deviceLocalMemory != barMemory)
-            {
-                generalNotes.Add("⚠️ [Re-BAR](<https://www.nvidia.com/en-us/geforce/news/geforce-rtx-30-series-resizable-bar-support/>) (or SAM) is [not enabled](<https://www.intel.com/content/www/us/en/support/articles/000090831/graphics.html>) on this system, which may impact performance");
-            }
+            generalNotes.Add("⚠️ [Re-BAR](<https://www.nvidia.com/en-us/geforce/news/geforce-rtx-30-series-resizable-bar-support/>) (or SAM) is [not enabled](<https://www.intel.com/content/www/us/en/support/articles/000090831/graphics.html>) on this system, which may impact performance");
         }
 
         if (!KnownFpsUnlockPatchIds.Contains(serial) || ppuPatches.Count == 0)

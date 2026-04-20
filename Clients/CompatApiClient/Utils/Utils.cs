@@ -64,9 +64,9 @@ public static class Utils
         => bytes switch
         {
             < UnderKB => $"{bytes} byte{(bytes == 1 ? "" : "s")}",
-            < UnderMB => $"{bytes / 1024.0:0.##} KB",
-            < UnderGB => $"{bytes / (1024.0 * 1024):0.##} MB",
-            _ => $"{bytes / (1024.0 * 1024 * 1024):0.##} GB"
+            < UnderMB => $"{bytes / 1024.0:0.##} KiB",
+            < UnderGB => $"{bytes / (1024.0 * 1024):0.##} MiB",
+            _ => $"{bytes / (1024.0 * 1024 * 1024):0.##} GiB"
         };
 
     public static HttpClient WithUserAgent(this HttpClient client)

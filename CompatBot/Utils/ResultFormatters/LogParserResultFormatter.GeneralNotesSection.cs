@@ -327,7 +327,7 @@ internal static partial class LogParserResult
                 if (!string.IsNullOrEmpty(modelNumber) && modelNumber.StartsWith('P'))
                     modelNumber = modelNumber[1..];
                 _ = int.TryParse(modelNumber, out var modelNumberInt);
-                if (family is "UHD" or "Iris Plus" or "Iris Xe" || modelNumberInt is > 500 and < 1000)
+                if (family is "" or "UHD" or "Iris Plus" or "Iris Xe" || modelNumberInt is > 500 and < 1000)
                     notes.Add("⚠️ Intel iGPUs are not officially supported; visual glitches are to be expected");
                 else if (family is not "Arc")
                 {
