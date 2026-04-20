@@ -127,13 +127,13 @@ internal static class Hardware
         var highRam = mem.Where(i => i.Mem >= 48 * 1024 - margin).Sum(i => i.Count);
         var ramStats = new (int Count, string Mem)[]
             {
-                (lowRam, "less than 4 GB"),
-                (ram4to6, "4 to 6 GB"),
-                (ram6to8, "6 to 8 GB"),
-                (ram8to16, "8 to 16 GB"),
-                (ram16to32, "16 to 32 GB"),
-                (ram32to48, "32 to 48 GB"),
-                (highRam, "48 GB or more"),
+                (lowRam, "less than 4 GiB"),
+                (ram4to6, "4 to 6 GiB"),
+                (ram6to8, "6 to 8 GiB"),
+                (ram8to16, "8 to 16 GiB"),
+                (ram16to32, "16 to 32 GiB"),
+                (ram32to48, "32 to 48 GiB"),
+                (highRam, "48 GiB or more"),
             }
             .Where(i => i.Count > 0)
             //.Reverse()

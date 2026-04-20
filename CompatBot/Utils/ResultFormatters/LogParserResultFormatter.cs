@@ -39,7 +39,7 @@ internal static partial class LogParserResult
     private static partial Regex BuildInfoInUpdate();
     [GeneratedRegex(@"'(?<device_name>.+)' running on driver (?<version>.+)\r?$", DefaultSingleLine)]
     private static partial Regex VulkanDeviceInfo();
-    [GeneratedRegex(@"Intel\s?(®|\(R\))? (?<gpu_model>((?<gpu_family>(\w|®| )+) Graphics)( (?<gpu_model_number>P?\d+))?)(\s+\(|$)", DefaultSingleLine)]
+    [GeneratedRegex(@"Intel\s?(®|\(R\))?\s?((?<gpu_model>((?<gpu_family>(\w|®| )+))? Graphics)( (?<gpu_model_number>P?\d+))?)(\s+[\(|]|$)", DefaultSingleLine)]
     private static partial Regex IntelGpuModel();
     [GeneratedRegex(@"[A-Z]:/(?<program_files>Program Files( \(x86\))?/)?(?<desktop>([^/]+/)+Desktop/)?(?<rpcs3_folder>[^/]+/)*GuiConfigs/", DefaultSingleLine)]
     private static partial Regex InstallPath();
@@ -559,39 +559,70 @@ internal static partial class LogParserResult
                 gpuName = gpuName[..^10];
             return gpuName;
         }
-        if (items["vulkan_initialized_device"] != null)
-            items["gpu_info"] = items["vulkan_initialized_device"];
-        else if (items["driver_manuf_new"] != null)
-            items["gpu_info"] = items["driver_manuf_new"];
-        else if (items["vulkan_gpu"] != "\"\"")
-            items["gpu_info"] = items["vulkan_gpu"];
-        else if (items["d3d_gpu"] != "\"\"")
-            items["gpu_info"] = items["d3d_gpu"];
-        else if (items["driver_manuf"] != null)
-            items["gpu_info"] = items["driver_manuf"];
-        if (!string.IsNullOrEmpty(items["gpu_info"]))
+        if (items["vulkan_initialized_device"] is {Length: >0} vkInitDev)
+            items["gpu_info"] = vkInitDev;
+        else if (items["driver_manuf_new"] is {Length: >0} driverManufNew)
+            items["gpu_info"] = driverManufNew;
+        else if (items["vulkan_gpu"] is not "\"\"" and {Length: >0} vkGpu)
+            items["gpu_info"] = vkGpu;
+        else if (items["d3d_gpu"] is not "\"\"" and {Length: >0} d3dGpu)
+            items["gpu_info"] = d3dGpu;
+        else if (items["driver_manuf"] is {Length: >0} driverManuf)
+            items["gpu_info"] = driverManuf;
+        if (items["gpu_info"] is {Length: >0} gpuInfoTmp)
         {
-            items["gpu_info"] = items["gpu_info"]?.StripMarks();
+            items["gpu_info"] = gpuInfoTmp.StripMarks();
             items["driver_version_info"] = GetVulkanDriverVersion(items["vulkan_initialized_device"], multiItems["vulkan_found_device"]) ??
                                            GetVulkanDriverVersion(items["gpu_info"], multiItems["vulkan_found_device"]) ??
                                            GetOpenglDriverVersion(items["gpu_info"], items["driver_version_new"] ?? items["driver_version"]) ??
                                            GetVulkanDriverVersionRaw(items["gpu_info"], items["vulkan_driver_version_raw"]);
         }
         items["gpu_info"] = StripOpenGlMaker(items["gpu_info"]);
-        if (items["driver_version_info"] != null)
+
+        if (multiItems["gpu_memory_info"] is { Length: > 0 } memoryInfo)
         {
-            items["gpu_name"] = items["gpu_info"];
-            items["gpu_info"] += $" ({items["driver_version_info"]})";
+            var memoryMaps = memoryInfo
+                .Select(s => s.Split(" of "))
+                .Where(i => i is { Length: 2 })
+                .ToDictionary(i => i[1], i => i[0]);
+            foreach (var (key, value) in memoryMaps)
+            {
+                var itemKey = key switch
+                {
+                    "device local" => "gpu_vram_size",
+                    "host coherent" => "gpu_shared_size",
+                    "BAR" => "gpu_rebar_size",
+                    _ => null,
+                };
+                if (itemKey is not null && value.Split(' ') is [{Length: >0} size, "MB"])
+                    items[itemKey] = size;
+            }
+        }
+        if (items["gpu_vram_size"] is {Length: >0} gpuVramSizeStr
+            && int.TryParse(gpuVramSizeStr, out var gpuVramSizeMb))
+        {
+            if (gpuVramSizeMb > 1024)
+            {
+                // round to the nearest 0.5 GB
+                gpuVramSizeMb = (int)(Math.Ceiling(gpuVramSizeMb / 1024.0 * 2) / 2 * 1024);
+            }
+            items["gpu_info"] += $" | {(gpuVramSizeMb * 1024L * 1024L).AsStorageUnit()} VRAM";
         }
 
-        if (multiItems["vulkan_compatible_device_name"] is { Count: > 0 } vulkanDevices)
+        if (items["driver_version_info"] is {Length: >0} driverVerInfo)
+        {
+            items["gpu_name"] = items["gpu_info"];
+            items["gpu_info"] += $" | {driverVerInfo}";
+        }
+
+        if (multiItems["vulkan_compatible_device_name"] is {Count: >0} vulkanDevices)
         {
             var devices = vulkanDevices
                 .Distinct()
                 .Select(n => new { name = n.StripMarks(), driverVersion = GetVulkanDriverVersion(n, multiItems["vulkan_found_device"]) })
                 .Reverse()
                 .ToList();
-            if (string.IsNullOrEmpty(items["gpu_info"]) && devices.Count > 0)
+            if (items["gpu_info"] is not {Length: >0} && devices.Count > 0)
             {
                 var discreteGpu = devices.FirstOrDefault(d => IsNvidia(d.name))
                                   ?? devices.FirstOrDefault(d => IsAmd(d.name))

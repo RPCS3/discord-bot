@@ -71,8 +71,7 @@ internal partial class LogParser
     [GeneratedRegex(@"Applying (?<applied_config_type>\w+) config(: (?<applied_config_path>[^\r\n]*?))?\r?$", DefaultOptions)]
     private static partial Regex ConfigTypeAndPath();
     [GeneratedRegex(@"patch_log: Failed to load patch file (?<patch_error_file>\S*)\r?\n.* line (?<patch_error_line>\d+), column (?<patch_error_column>\d+): (?<patch_error_text>.*?)$", DefaultOptions)]
-    private static partial Regex FailedPatchPath();
-    
+    private static partial Regex FailedPatchPath();    
     [GeneratedRegex(@"PPU Decoder: (?<ppu_decoder>[^\r\n]*?)\r?$", DefaultOptions)]
     private static partial Regex PpuDecoderType();
     [GeneratedRegex(@"PPU Threads: (?<ppu_threads>[^\r\n]*?)\r?$", DefaultOptions)]
