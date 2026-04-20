@@ -370,7 +370,8 @@ internal partial class LogParser
             "driver_manuf_new", "driver_version_new",
             "vulkan_found_device", "vulkan_compatible_device_name",
             "vulkan_gpu", "vulkan_driver_version_raw",
-            "compat_database_path"
+            "compat_database_path",
+            "selected_config_mode", "applied_config_type", "applied_config_path"
         );
         Config.Log.Trace("===== cleared");
     }
