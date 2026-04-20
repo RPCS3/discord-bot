@@ -23,7 +23,7 @@ internal static partial class LogParser
                 result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                 var buffer = result.Buffer;
 #if DEBUG
-                Config.Log.Debug($"{nameof(LogParser)}: Read {buffer.Length} bytes from reader");
+                //Config.Log.Debug($"{nameof(LogParser)}: Read {buffer.Length} bytes from reader");
 #endif
                 if (!skippedBom)
                 {
@@ -35,7 +35,7 @@ internal static partial class LogParser
                     {
                         reader.AdvanceTo(potentialBom.End);
 #if DEBUG
-                        Config.Log.Debug($"{nameof(LogParser)}: Reader advanced to {potentialBom.End} to skip BOM");
+                        //Config.Log.Debug($"{nameof(LogParser)}: Reader advanced to {potentialBom.End} to skip BOM");
 #endif
                         totalReadBytes += potentialBom.Length;
                         skippedBom = true;
@@ -80,13 +80,13 @@ internal static partial class LogParser
                 totalReadBytes += result.Buffer.Slice(0, sectionStart.Start).Length;
                 reader.AdvanceTo(sectionStart.Start);
 #if DEBUG
-                Config.Log.Debug($"{nameof(LogParser)}: Reader advanced to {sectionStart.Start} (section start)");
+                //Config.Log.Debug($"{nameof(LogParser)}: Reader advanced to {sectionStart.Start} (section start)");
 #endif
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e, "Aborted log parsing due to exception");
-                if (state.Error == LogParseState.ErrorCode.None)
+                if (state.Error is LogParseState.ErrorCode.None)
                     state.Error = LogParseState.ErrorCode.UnknownError;
                 break;
             }
@@ -95,7 +95,7 @@ internal static partial class LogParser
         state.ReadBytes = totalReadBytes;
         await reader.CompleteAsync();
 #if DEBUG
-        Config.Log.Debug($"{nameof(LogParser)}: Reader completed");
+        //Config.Log.Debug($"{nameof(LogParser)}: Reader completed");
 #endif
         return state;
     }
@@ -108,6 +108,9 @@ internal static partial class LogParser
         {
             await FlushAllLinesAsync(buffer, sectionLines, state).ConfigureAwait(false);
             await TaskScheduler.WaitForClearTagAsync(state).ConfigureAwait(false);
+#if DEBUG
+            Config.Log.Trace($"Found end-of-section marker in line '{strLine}'");
+#endif
             SectionParsers[state.Id].OnSectionEnd?.Invoke(state);
             state.Id++;
         }
@@ -118,7 +121,7 @@ internal static partial class LogParser
 
     private static async ValueTask FlushAllLinesAsync(ReadOnlySequence<byte> buffer, LinkedList<ReadOnlySequence<byte>> sectionLines, LogParseState state)
     {
-        while (sectionLines.Count > 0 && state.Error == LogParseState.ErrorCode.None)
+        while (sectionLines.Count > 0 && state.Error is LogParseState.ErrorCode.None)
             await ProcessFirstLineInBufferAsync(buffer, sectionLines, state).ConfigureAwait(false);
     }
 

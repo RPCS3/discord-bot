@@ -260,7 +260,7 @@ internal partial class LogParser
                 ["Performance Sensor"] = PerfSensor(),
             },
             OnSectionEnd = MarkAsCompleteAndReset,
-            EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from"],
+            EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from", "SYS: Booting from"],
         }
     ];
 
@@ -357,7 +357,7 @@ internal partial class LogParser
             }
         }
         state.WipCollection = [];
-        state.WipMultiValueCollection = new();
+        state.WipMultiValueCollection = [];
         Copy(
             "build_and_specs", "fw_version_installed",
             "log_start_timestamp", "hw_id",
@@ -370,7 +370,8 @@ internal partial class LogParser
             "driver_manuf_new", "driver_version_new",
             "vulkan_found_device", "vulkan_compatible_device_name",
             "vulkan_gpu", "vulkan_driver_version_raw",
-            "compat_database_path"
+            "compat_database_path",
+            "selected_config_mode", "applied_config_type", "applied_config_path"
         );
         Config.Log.Trace("===== cleared");
     }
