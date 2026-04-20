@@ -260,7 +260,7 @@ internal partial class LogParser
                 ["Performance Sensor"] = PerfSensor(),
             },
             OnSectionEnd = MarkAsCompleteAndReset,
-            EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from"],
+            EndTrigger = ["Stopping emulator...", "All threads stopped...", "LDR: Booting from", "SYS: Booting from"],
         }
     ];
 
@@ -357,7 +357,7 @@ internal partial class LogParser
             }
         }
         state.WipCollection = [];
-        state.WipMultiValueCollection = new();
+        state.WipMultiValueCollection = [];
         Copy(
             "build_and_specs", "fw_version_installed",
             "log_start_timestamp", "hw_id",

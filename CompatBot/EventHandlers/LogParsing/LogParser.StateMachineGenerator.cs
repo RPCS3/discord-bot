@@ -76,12 +76,14 @@ internal partial class LogParser
             foreach (Match match in matches)
             foreach (Group group in match.Groups)
             {
-                if (group.Name is null or "" or "0"
+                if (group is not { Success: true, Name: { Length: >0 } and not "0" }
                     || string.IsNullOrWhiteSpace(group.Value))
                     continue;
 
                 var strValue = group.Value.ToUtf8();
-                //Config.Log.Trace($"regex {group.Name} = {group.Value}");
+#if DEBUG
+                Config.Log.Trace($"regex {group.Name} = {group.Value}");
+#endif
                 lock (state)
                 {
                     if (MultiValueItems.Contains(group.Name))
