@@ -56,8 +56,6 @@ internal static partial class LogParserResult
                     _ => "AMD APU for PlayStation?",
                 };
             }
-            else if (cpuModel.Equals("VirtualApple", StringComparison.OrdinalIgnoreCase))
-                cpuModel = items["gpu_name"] is string appleGpu && appleGpu.StartsWith("Apple M", StringComparison.OrdinalIgnoreCase) ? appleGpu : "Apple Mx";
             items["cpu_model"] = cpuModel;
             items["thread_count"] = cpuInfo.Groups["thread_count"].Value;
             items["memory_amount"] = cpuInfo.Groups["memory_amount"].Value;
