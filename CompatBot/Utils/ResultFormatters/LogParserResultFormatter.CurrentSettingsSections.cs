@@ -1,7 +1,6 @@
 ﻿using System.Collections.Specialized;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers.LogParsing;
-using LTRData.Extensions.Formatting;
 
 namespace CompatBot.Utils.ResultFormatters;
 
@@ -155,13 +154,13 @@ internal static partial class LogParserResult
             items["cpu_and_memory_info"] = cpuAndMemoryInfo;
         }
         if (items["gpu_info"] is string gpu)
-            systemInfo += $"{Environment.NewLine}GPU: {gpu}";
+            systemInfo += $"{Environment.NewLine}{gpu}";
         else if (items["gpu_available_info"] is string availableGpus)
         {
             var multiple = availableGpus.Contains(Environment.NewLine);
             systemInfo += $"{Environment.NewLine}GPU{(multiple ? "s" : "")}:{(multiple ? Environment.NewLine : " ")}{availableGpus}";
         }
-        builder.AddField("Build Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
+        builder.AddField("System Info", systemInfo.Trim(EmbedPager.MaxFieldLength));
     }
 
     private const int ColumnWidth = 30;
