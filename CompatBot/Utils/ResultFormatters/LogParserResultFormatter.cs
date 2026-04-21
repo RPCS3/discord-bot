@@ -602,10 +602,7 @@ internal static partial class LogParserResult
             && int.TryParse(gpuVramSizeStr, out var gpuVramSizeMb))
         {
             if (gpuVramSizeMb > 1024)
-            {
-                // round to the nearest 0.5 GB
-                gpuVramSizeMb = (int)(Math.Round(gpuVramSizeMb / 1024.0 * 2) / 2 * 1024);
-            }
+                gpuVramSizeMb = (int)(Math.Round(gpuVramSizeMb / 1024.0) * 1024);
             items["gpu_info"] += $" | {(gpuVramSizeMb * 1024L * 1024L).AsStorageUnit()} VRAM";
         }
 
