@@ -176,6 +176,25 @@ internal static partial class Sudo
             }
         }
 
+        [Command("gpu_names")]
+        [Description("Fixes GPU model names in hw.db after recent changes")]
+        public static async ValueTask GpuNames(TextCommandContext ctx)
+        {
+            try
+            {
+                await using var wdb = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
+                foreach (var info in wdb.HwInfo.Where(i => i.GpuModel.EndsWith("VRAM")))
+                    info.GpuModel = info.GpuModel.Split(" | ")[0];
+                var changed = await wdb.SaveChangesAsync().ConfigureAwait(false);
+                await ctx.RespondAsync($"Updated {changed} record{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Config.Log.Warn(e, "Couldn't fix GPU model strings");
+                await ctx.RespondAsync("Failed to fix GPU model strings in hw.db").ConfigureAwait(false);
+            }
+        }
+
         [Command("warn_roles")]
         [Description("Try to apply warn roles retroactively")]
         public static async ValueTask WarnRoles(TextCommandContext ctx)

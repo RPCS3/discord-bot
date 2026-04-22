@@ -31,7 +31,7 @@ internal static class HwInfoProvider
             return;
 
         var cpuStringParts = cpuString.Split(' ', 2);
-        var gpuStringParts = gpuString.Split(' ', 2);
+        var gpuStringParts = gpuString.Split(" | ", 2)[0].Split(' ', 2);
         if (cpuStringParts.Length != 2 || gpuStringParts.Length != 2)
             return;
 
