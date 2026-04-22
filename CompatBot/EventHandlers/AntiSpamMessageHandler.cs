@@ -11,7 +11,7 @@ public static class AntiSpamMessageHandler
     public static async Task<bool> OnMessageCreated(DiscordClient client, MessageCreatedEventArgs args)
     {
         var author = args.Author;
-        if (author.IsBotSafeCheck())
+        if (author.IsBotSafeCheck() || args.Channel is null or { IsPrivate: true })
             return true;
 
 #if !DEBUG
