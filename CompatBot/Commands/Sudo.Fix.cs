@@ -183,8 +183,11 @@ internal static partial class Sudo
             try
             {
                 await using var wdb = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
-                foreach (var info in wdb.HwInfo.Where(i => i.GpuModel.EndsWith("VRAM")))
-                    info.GpuModel = info.GpuModel.Split(" | ")[0];
+                foreach (var info in wdb.HwInfo.Where(i => i.GpuModel.EndsWith("VRAM") || i.CpuModel.EndsWith("VRAM")))
+                {
+                    info.GpuModel = info.GpuModel.Split(" | ", 2)[0];
+                    info.CpuModel = info.CpuModel.Split(" | ", 2)[0];
+                }
                 var changed = await wdb.SaveChangesAsync().ConfigureAwait(false);
                 await ctx.RespondAsync($"Updated {changed} record{(changed == 1 ? "" : "s")}").ConfigureAwait(false);
             }
