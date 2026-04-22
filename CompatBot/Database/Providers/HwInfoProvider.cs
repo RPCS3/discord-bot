@@ -30,8 +30,11 @@ internal static class HwInfoProvider
             || items["cpu_extensions"] is not string cpuExtensions)
             return;
 
+        gpuString = gpuString.Split(" | ", 2)[0];
+        if (cpuString is "VirtualApple")
+            cpuString = gpuString;
+        var gpuStringParts = gpuString.Split(' ', 2);
         var cpuStringParts = cpuString.Split(' ', 2);
-        var gpuStringParts = gpuString.Split(" | ", 2)[0].Split(' ', 2);
         if (cpuStringParts.Length != 2 || gpuStringParts.Length != 2)
             return;
 
