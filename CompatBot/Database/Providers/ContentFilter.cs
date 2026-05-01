@@ -31,7 +31,7 @@ internal static class ContentFilter
         Piracystring? result = null;
         matcher?.ParseText(str, h =>
         {
-            if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.ExplicitCapture))
+            if (string.IsNullOrEmpty(h.Value.ValidatingRegex) || Regex.IsMatch(str, h.Value.ValidatingRegex, RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.ExplicitCapture))
             {
                 result = h.Value;
                 Config.Log.Info($"Triggered content filter #{h.Value.Id} ({h.Value.String}; regex={h.Value.ValidatingRegex}) at idx {h.Begin} of message string '{str}'");
