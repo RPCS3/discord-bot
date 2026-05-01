@@ -121,13 +121,16 @@ internal static partial class LogParserResult
         if (items["vfs_disc_mount"] is "vfsv0_virtual_iso_overlay_fs_dev"
             || items["iso_path"] is {Length: >0})
         {
-            var encType = items["iso_enc_type"] switch
+            if (items["os_type"] is "Windows"
+                && items["iso_path"] is [_, ':'])
             {
-                "REDUMP" or "ENC_3K3Y" => "an encrypted",
-                "NONE" => "a decrypted",
-                _ => "an"
-            };
-            notes.Add($"ℹ️ Booted from {encType} ISO");
+                if (items["failed_disc_key_file"] is { Length: > 0 })
+                    notes.Add("❌ Disc decryption key is missing");
+                else if (items["found_disc_key_file"] is { Length: > 0 })
+                    notes.Add($"ℹ️ Booted from {GetDiscKeyType(items)} blu-ray disc");
+            }
+            else
+                notes.Add($"ℹ️ Booted from {GetDiscKeyType(items)} ISO");
         }
         else if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd
             && items["os_type"] is {Length: >0} osType
@@ -160,7 +163,7 @@ internal static partial class LogParserResult
             builder.Color = Config.Colors.CompatStatusNothing;
             notes.Add("❌ PSP software is not supported");
         }
-        else if (category == "MN")
+        else if (category is "MN")
         {
             builder.Color = Config.Colors.CompatStatusNothing;
             notes.Add("❌ Minis are not supported");

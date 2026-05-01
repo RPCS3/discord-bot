@@ -267,6 +267,10 @@ internal partial class LogParser
     private static partial Regex LoadingIso();
     [GeneratedRegex(@"(SYS|ISO): init(\(\))?: Set 'enc type': (?<iso_enc_type>\w+), 'reg count': (?<iso_reg_count>\d+).+\r?$", DefaultOptions)]
     private static partial Regex IsoEncType();
+    [GeneratedRegex(@"ISO: init: (?<failed_disc_key_file>Failed to open, or missing, key file).+\r?$", DefaultOptions)]
+    private static partial Regex FailedDiscKeyFile();
+    [GeneratedRegex(@"ISO: init: Found matching key file: '(?<found_disc_key_file>.+)'\r?$", DefaultOptions)]
+    private static partial Regex FoundDiscKeyFile();
     [GeneratedRegex(@"Elf path: (?<host_root_in_boot>/host_root/)?(?<elf_boot_path_full>(?<elf_boot_path>/dev_hdd0/game/(?<elf_boot_path_serial>[^/\r\n]+)/USRDIR/EBOOT\.BIN|.*?))\r?$", DefaultOptions)]
     private static partial Regex ElfPath();
     [GeneratedRegex(@"Mounted path ""/dev_bdvd"" to ""(?<mounted_dev_bdvd>[^""]+)""", DefaultOptions)]

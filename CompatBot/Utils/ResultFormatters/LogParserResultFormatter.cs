@@ -73,6 +73,7 @@ internal static partial class LogParserResult
     private static readonly Version FixedSpuGetllarOptimizationBuild = new(0, 0, 36, 17938);
     private static readonly Version BrokenMsvcOptimizationBuild = new(0, 0, 37, 18023);
     private static readonly Version UnBrokenMsvcOptimizationBuild = new(0, 0, 37, 18147);
+    private static readonly Version BdromSupportWindowsBuild = new(0, 0, 40, 19262);
 
     private static readonly Dictionary<string, string> RsxPresentModeMap = new()
     {
@@ -1363,4 +1364,12 @@ internal static partial class LogParserResult
         var avg = values[skip1..^skip1].Select(i => (long)i).Sum() / (values.Count - 2 * skip1);
         return ((int)avg, min, max);
     }
+
+    private static string GetDiscKeyType(NameValueCollection items)
+        => items["iso_enc_type"] switch
+        {
+            "REDUMP" or "ENC_3K3Y" => "an encrypted",
+            "NONE" => "a decrypted",
+            _ => "an"
+        };
 }

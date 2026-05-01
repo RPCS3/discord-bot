@@ -46,6 +46,8 @@ internal partial class LogParser
                 ["SYS: Booting savestate"] = BootingFromSavestate(),
                 ["SYS: Loading iso"] = LoadingIso(),
                 ["Set 'enc type':"] = IsoEncType(),
+                ["ISO: init: Failed"] = FailedDiscKeyFile(),
+                ["Found matching key file:"] = FoundDiscKeyFile(),
                 ["Selected config:"] = SelectedConfigType(),
                 ["Applying"] = ConfigTypeAndPath(),
                 ["patch_log: Failed to load patch file"] = FailedPatchPath(),
