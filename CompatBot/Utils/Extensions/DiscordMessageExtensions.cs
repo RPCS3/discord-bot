@@ -7,6 +7,8 @@ namespace CompatBot.Utils;
 
 public static partial class DiscordMessageExtensions
 {
+    [GeneratedRegex(@"(^>\s.*$)+", RegexOptions.ExplicitCapture | RegexOptions.Multiline)]
+    private static partial Regex MarkdownQuotes();
     [GeneratedRegex(@"<(?<lnk>(?!(#|@[&!]?\d+))[^>]+)>", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
     private static partial Regex Link();
     
@@ -89,7 +91,12 @@ public static partial class DiscordMessageExtensions
     private static StringBuilder Append(this StringBuilder content, DiscordMessage message, bool includeEmbeds = true, bool includeAttachments = true)
     {
         if (message.Content is { Length: > 0 })
-            content.AppendLine(message.Content.FixSuppressedLinks());
+        {
+            var tmpContent = message.Content;
+            if (MarkdownQuotes().IsMatch(tmpContent))
+                tmpContent = tmpContent.Replace("> ", "");
+            content.AppendLine(tmpContent.FixSuppressedLinks());
+        }
         if (includeAttachments)
             foreach (var attachment in message.Attachments.Where(a => a.FileName is { Length: > 0 }))
                 content.AppendLine(attachment.FileName);
