@@ -45,6 +45,7 @@ internal static partial class DiscordInviteFilter
             return true;
 
         var messageContent = await message.GetMessageContentForFiltersAsync(client, false, false).ConfigureAwait(false);
+        messageContent = messageContent.Replace('｡', '.').Replace(@"\\", @"\").Replace(@"\", "/");
         var (hasInvalidResults, attemptedWorkaround, invites) = await client.GetInvitesAsync(messageContent, message.Author).ConfigureAwait(false);
         if (!hasInvalidResults && invites is [])
             return true;
