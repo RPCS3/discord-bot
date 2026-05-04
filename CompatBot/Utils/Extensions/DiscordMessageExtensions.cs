@@ -126,7 +126,7 @@ public static partial class DiscordMessageExtensions
         foreach (Match m in matches)
         {
             var lnk = m.Groups["lnk"].Value;
-            var fixedLnk = Uri.UnescapeDataString(lnk.RemoveWhitespaces());
+            var fixedLnk = Uri.UnescapeDataString(lnk.RemoveWhitespaces()).Replace('｡', '.').Replace(@"\\", @"\").Replace(@"\", "/");
             content = content.Replace(lnk, fixedLnk);
         }
         return content;
