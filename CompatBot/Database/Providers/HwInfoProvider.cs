@@ -79,6 +79,9 @@ internal static class HwInfoProvider
             OsName = GetName(osType, items),
             OsVersion = items["os_version"],
         };
+        if (items["gpu_vram_size"] is {Length: >0} gpuVramSizeStr
+            && int.TryParse(gpuVramSizeStr, out var gpuVramSizeMb))
+            info.VramInMb = gpuVramSizeMb;
         await using var wdb = await HardwareDb.OpenWriteAsync().ConfigureAwait(false);
         var existingItem = await wdb.HwInfo.FindAsync([info.InstallId], cancellationToken: cancellationToken).ConfigureAwait(false);
         if (existingItem is null)

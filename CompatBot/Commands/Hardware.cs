@@ -117,29 +117,15 @@ internal static class Hardware
             .Select(g => new { Count = g.Count(), Mem = g.Key })
             .ToListAsync()
             .ConfigureAwait(false);
-        const int margin = 200;
-        var lowRam = mem.Where(i => i.Mem < 4 * 1024 - margin).Sum(i => i.Count);
-        var ram4to6 = mem.Where(i => i.Mem is >= 4 * 1024 - margin and < 6 * 1024 - margin).Sum(i => i.Count);
-        var ram6to8 = mem.Where(i => i.Mem is >= 6 * 1024 - margin and < 8 * 1024 - margin).Sum(i => i.Count);
-        var ram8to16 = mem.Where(i => i.Mem is >= 8 * 1024 - margin and < 16 * 1024 - margin).Sum(i => i.Count);
-        var ram16to32 = mem.Where(i => i.Mem is >= 16 * 1024 - margin and < 32 * 1024 - margin).Sum(i => i.Count);
-        var ram32to48 = mem.Where(i => i.Mem is >= 32 * 1024 - margin and < 48 * 1024 - margin).Sum(i => i.Count);
-        var highRam = mem.Where(i => i.Mem >= 48 * 1024 - margin).Sum(i => i.Count);
-        var ramStats = new (int Count, string Mem)[]
-            {
-                (lowRam, "less than 4 GiB"),
-                (ram4to6, "4 to 6 GiB"),
-                (ram6to8, "6 to 8 GiB"),
-                (ram8to16, "8 to 16 GiB"),
-                (ram16to32, "16 to 32 GiB"),
-                (ram32to48, "32 to 48 GiB"),
-                (highRam, "48 GiB or more"),
-            }
-            .Where(i => i.Count > 0)
-            //.Reverse()
-            .OrderByDescending(i => i.Count)
-            .Take(top)
-            .ToList();
+        var ramStats = BinRamBrackets(mem.Select(i => (i.Count, i.Mem)).ToList(), top);
+
+        var vmem = await db.HwInfo.AsNoTracking()
+            .Where(i => i.Timestamp > ts)
+            .GroupBy(i => i.VramInMb)
+            .Select(g => new { Count = g.Count(), Mem = g.Key })
+            .ToListAsync()
+            .ConfigureAwait(false);
+        var vramStats = BinRamBrackets(vmem.Select(i => (i.Count, i.Mem)).ToList(), top);
         
         var embed = new DiscordEmbedBuilder()
             .WithTitle($"RPCS3 Hardware Survey (past {period} day{(period == 1 ? "" : "s")})")
@@ -165,9 +151,39 @@ internal static class Hardware
             
             .AddField("Top Thread Configurations", string.Join('\n', threadStats.Select(i => $"{i.Count*100.0/count:0.00}% {i.Number} threads")), true)
             .AddField("Top RAM Configurations", string.Join('\n', ramStats.Select(i => $"{i.Count*100.0/count:0.00}% {i.Mem}")), true)
+            .AddField("Top VRAM Configurations", string.Join('\n', vramStats.Select(i => $"{i.Count*100.0/count:0.00}% {i.Mem}")), true)
 
             .WithFooter("All collected data is anonymous, for details see bot source code");
         await ctx.RespondAsync(embed: embed, ephemeral: ephemeral).ConfigureAwait(false);
+    }
+
+    private static List<(int Count, string Mem)> BinRamBrackets(List<(int Count, long Mem)> mem, int top)
+    {
+        const int margin = 200;
+        var unknownRam = mem.Where(i => i.Mem is 0).Sum(i => i.Count);
+        var lowRam = mem.Where(i => i.Mem is > 0 and < 4 * 1024 - margin).Sum(i => i.Count);
+        var ram4to6 = mem.Where(i => i.Mem is >= 4 * 1024 - margin and < 6 * 1024 - margin).Sum(i => i.Count);
+        var ram6to8 = mem.Where(i => i.Mem is >= 6 * 1024 - margin and < 8 * 1024 - margin).Sum(i => i.Count);
+        var ram8to16 = mem.Where(i => i.Mem is >= 8 * 1024 - margin and < 16 * 1024 - margin).Sum(i => i.Count);
+        var ram16to32 = mem.Where(i => i.Mem is >= 16 * 1024 - margin and < 32 * 1024 - margin).Sum(i => i.Count);
+        var ram32to48 = mem.Where(i => i.Mem is >= 32 * 1024 - margin and < 48 * 1024 - margin).Sum(i => i.Count);
+        var highRam = mem.Where(i => i.Mem >= 48 * 1024 - margin).Sum(i => i.Count);
+        return new (int Count, string Mem)[]
+            {
+                (unknownRam, "unknown"),
+                (lowRam, "less than 4 GiB"),
+                (ram4to6, "4 to 5 GiB"),
+                (ram6to8, "6 to 7 GiB"),
+                (ram8to16, "8 to 15 GiB"),
+                (ram16to32, "16 to 31 GiB"),
+                (ram32to48, "32 to 47 GiB"),
+                (highRam, "48 GiB or more"),
+            }
+            .Where(i => i.Count > 0)
+            //.Reverse()
+            .OrderByDescending(i => i.Count)
+            .Take(top)
+            .ToList();
     }
 
     private static string GetNum(int position)
