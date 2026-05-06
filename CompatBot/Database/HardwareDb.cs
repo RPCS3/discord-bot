@@ -15,6 +15,8 @@ internal class HardwareDb : DbContext
 
     public DbSet<HwInfo> HwInfo { get; set; } = null!;
 
+    //public HardwareDb() { } // only needed for ef migrations
+
     private HardwareDb(IDisposable readWriteLock, bool canWrite = false)
     {
         this.readWriteLock = readWriteLock;
@@ -55,26 +57,26 @@ internal class HardwareDb : DbContext
     public override void Dispose()
     {
         base.Dispose();
-        readWriteLock.Dispose();
+        readWriteLock?.Dispose();
 #if DEBUG
         if (canWrite)
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Debug($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock?.GetHashCode():x8}");
 #endif
     }
 
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        readWriteLock.Dispose();
+        readWriteLock?.Dispose();
 #if DEBUG
         if (canWrite)
             Interlocked.Decrement(ref openWriteCount);
         else
             Interlocked.Decrement(ref openReadCount);
-        Config.Log.Debug($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock.GetHashCode():x8}");
+        Config.Log.Debug($"{nameof(HardwareDb)}<<<{(canWrite ? "Write" : "Read")} (r/w: {openReadCount}/{openWriteCount}) #{readWriteLock?.GetHashCode():x8}");
 #endif
     }
 }
@@ -117,6 +119,7 @@ internal class HwInfo
     public CpuFeatures CpuFeatures { get; set; }
 
     public long RamInMb { get; set; }
+    public long VramInMb { get; set; }
     
     [Required]
     public string GpuMaker { get; set; } = null!;
