@@ -127,10 +127,10 @@ internal static partial class LogParserResult
                 if (items["failed_disc_key_file"] is { Length: > 0 })
                     notes.Add("❌ Disc decryption key is missing");
                 else if (items["found_disc_key_file"] is { Length: > 0 })
-                    notes.Add($"ℹ️ Booted from {GetDiscKeyType(items)} blu-ray disc");
+                    notes.Add($"⚠️ Booted from {GetDiscKeyType(items)} blu-ray disc");
             }
             else
-                notes.Add($"ℹ️ Booted from {GetDiscKeyType(items)} ISO");
+                notes.Add($"⚠️ Booted from {GetDiscKeyType(items)} ISO");
         }
         else if (items["mounted_dev_bdvd"] is { Length: > 0 } mountedBdvd
             && items["os_type"] is {Length: >0} osType
