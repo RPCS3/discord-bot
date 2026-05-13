@@ -13,7 +13,7 @@ internal static class HwInfoProvider
 
     public static async ValueTask AddOrUpdateSystemAsync(DiscordClient client, DiscordMessage msg, NameValueCollection items, CancellationToken cancellationToken)
     {
-        var ignoreAuthor = await msg.Author.IsWhitelistedAsync(client, msg.Channel.Guild).ConfigureAwait(false);
+        var ignoreAuthor = await msg.Author.IsWhitelistedAsync(client, msg.Channel?.Guild).ConfigureAwait(false);
         byte counter = 0;
         if (!ignoreAuthor
             && UserCache.TryGetValue(msg.Author.Id, out counter)
@@ -38,17 +38,25 @@ internal static class HwInfoProvider
         if (cpuStringParts.Length != 2 || gpuStringParts.Length != 2)
             return;
 
-        if (cpuStringParts[0].ToLower() is not ("intel" or "amd" or "apple"))
+        if (cpuStringParts[0].ToLower() is not ("intel" or "amd" or "apple" or "arm" or "qualcomm"))
         {
-            Config.Log.Warn($"Unknown CPU maker {cpuStringParts[0]}, plz fix");
-            return;
+            if (cpuString.StartsWith("unknown", StringComparison.OrdinalIgnoreCase)
+                        && gpuString.StartsWith("qualcomm", StringComparison.OrdinalIgnoreCase))
+                cpuStringParts = ["Qualcomm", cpuString];
+            else
+            {
+                Config.Log.Warn($"Unknown CPU maker {cpuStringParts[0]}, plz fix");
+                return;
+            }
         }
 
-        if (gpuStringParts[0].ToLower() is not ("nvidia" or "amd" or "ati" or "intel" or "apple"))
+        if (gpuStringParts[0].ToLower() is not ("nvidia" or "amd" or "ati" or "intel" or "apple" or "qualcomm"))
             if (LogParserResult.IsNvidia(gpuString))
                 gpuStringParts = ["NVIDIA", gpuString];
             else if (LogParserResult.IsAmd(gpuString))
                 gpuStringParts = ["AMD", gpuString];
+            else if (gpuStringParts[0].StartsWith("mali", StringComparison.OrdinalIgnoreCase))
+                gpuStringParts = ["ARM", gpuString];
             else
             {
                 Config.Log.Warn($"Unknown GPU maker {gpuStringParts[0]}, plz fix");
