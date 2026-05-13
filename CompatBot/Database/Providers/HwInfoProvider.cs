@@ -43,7 +43,10 @@ internal static class HwInfoProvider
             gpuString = $"ARM {gpuString}";
         var gpuStringParts = gpuString.Split(' ', 2);
         if (cpuStringParts.Length != 2 || gpuStringParts.Length != 2)
+        {
+            Config.Log.Warn($"Missing vendor in the cpu ({cpuString}) or the gpu ({gpuString}) string");
             return;
+        }
 
         if (cpuStringParts[0].ToLower() is not ("intel" or "amd" or "apple" or "arm" or "qualcomm"))
         {
