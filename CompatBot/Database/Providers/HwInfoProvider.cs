@@ -35,8 +35,16 @@ internal static class HwInfoProvider
         if (cpuString is "VirtualApple")
             cpuString = gpuString;
         else if (cpuString.StartsWith("unknown", StringComparison.OrdinalIgnoreCase)
-            && gpuString.StartsWith("qualcomm", StringComparison.OrdinalIgnoreCase))
+                && gpuString.StartsWith("qualcomm", StringComparison.OrdinalIgnoreCase))
             cpuString = $"Qualcomm {cpuString}";
+        else if (cpuString.StartsWith("virtual", StringComparison.OrdinalIgnoreCase)
+                && gpuString.StartsWith("qualcomm", StringComparison.OrdinalIgnoreCase))
+        {
+            if (gpuString.Contains("Adreno X1", StringComparison.OrdinalIgnoreCase))
+                cpuString = $"Qualcomm Snapdragon X Virtual";
+            else if (gpuString.Contains("Adreno X2", StringComparison.OrdinalIgnoreCase))
+                cpuString = $"Qualcomm Snapdragon X2 Virtual";
+        }
         var cpuStringParts = cpuString.Split(' ', 2);
 
         if (gpuString.StartsWith("mali", StringComparison.OrdinalIgnoreCase))
