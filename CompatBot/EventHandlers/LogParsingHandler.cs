@@ -35,11 +35,12 @@ public static class LogParsingHandler
     ];
     private static readonly IArchiveHandler[] ArchiveHandlers =
     [
-        new GzipHandler(),
-        new ZipHandler(),
-        new RarHandler(),
-        new SevenZipHandler(),
-        new PlainTextHandler(),
+        GzipHandler.Instance,
+        ZipHandler.Instance,
+        RarHandler.Instance,
+        SevenZipHandler.Instance,
+        PlainTextHandler.Instance,
+        TarHandler.Instance,
     ];
 
     private static readonly SemaphoreSlim QueueLimiter = new(

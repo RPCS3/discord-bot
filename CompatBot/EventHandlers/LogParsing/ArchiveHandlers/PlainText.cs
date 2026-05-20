@@ -6,6 +6,8 @@ namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
 internal sealed class PlainTextHandler: IArchiveHandler
 {
+    public static readonly PlainTextHandler Instance = new();
+    
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
 

@@ -1,31 +1,22 @@
-﻿using System.IO;
+﻿using System.Formats.Tar;
+using System.IO;
 using System.IO.Compression;
 using System.IO.Pipelines;
 using ResultNet;
 
 namespace CompatBot.EventHandlers.LogParsing.ArchiveHandlers;
 
-internal sealed class GzipHandler: IArchiveHandler
+internal sealed class TarHandler: IArchiveHandler
 {
-    private static readonly byte[] Header = [0x1F, 0x8B, 0x08];
-
-    private bool isTarGz;
+    public static readonly TarHandler Instance = new();
     
-    public static readonly GzipHandler Instance = new();
-
     public long LogSize { get; private set; }
     public long SourcePosition { get; private set; }
 
     public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
-        isTarGz = fileName.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase);
-        if (header.Length >= Header.Length)
-        {
-            if (header[..Header.Length].SequenceEqual(Header))
-                return Result.Success();
-        }
-        else if (fileName.EndsWith(".log.gz", StringComparison.OrdinalIgnoreCase)
-                 && !fileName.Contains("tty.log", StringComparison.OrdinalIgnoreCase))
+        if (header.Length >= 9
+            && Encoding.UTF8.GetString(header[..9]).Equals("RPCS3.log", StringComparison.OrdinalIgnoreCase))
             return Result.Success();
         return Result.Failure();
     }
@@ -33,13 +24,12 @@ internal sealed class GzipHandler: IArchiveHandler
     public async Task FillPipeAsync(Stream sourceStream, PipeWriter writer, CancellationToken cancellationToken)
     {
         await using var statsStream = new BufferCopyStream(sourceStream);
-        await using var gzipStream = new GZipStream(statsStream, CompressionMode.Decompress);
-        if (isTarGz)
-        {
-            await TarHandler.Instance.FillPipeAsync(gzipStream, writer, cancellationToken).ConfigureAwait(false);
+        await using var tarReader = new TarReader(statsStream);
+        var entry = await tarReader.GetNextEntryAsync(true, cancellationToken).ConfigureAwait(false);
+        if (entry is not { DataStream: { } dataStream })
             return;
-        }
         
+        await using var stream = dataStream;
         try
         {
             int read;
@@ -47,7 +37,7 @@ internal sealed class GzipHandler: IArchiveHandler
             do
             {
                 var memory = writer.GetMemory(Config.MinimumBufferSize);
-                read = await gzipStream.ReadAsync(memory, cancellationToken);
+                read = await stream.ReadAsync(memory, cancellationToken);
                 if (read > 0)
                     writer.Advance(read);
                 SourcePosition = statsStream.Position;
