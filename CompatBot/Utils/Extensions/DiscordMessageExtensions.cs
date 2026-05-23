@@ -9,7 +9,7 @@ public static partial class DiscordMessageExtensions
 {
     [GeneratedRegex(@"(^>\s.*$)+", RegexOptions.ExplicitCapture | RegexOptions.Multiline)]
     private static partial Regex MarkdownQuotes();
-    [GeneratedRegex(@"<(?<lnk>(?!(#|@[&!]?\d+))[^>]+)>", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
+    [GeneratedRegex(@"<(?<lnk>(?!(#|@[&!]?\d+))[^>]+)>|(\((?<lnk2>\w+:/[#@]+[^\)]+)\))", RegexOptions.ExplicitCapture | RegexOptions.Singleline)]
     private static partial Regex Link();
     
     public static async Task<DiscordMessage> UpdateOrCreateMessageAsync(this DiscordMessage? botMsg, DiscordChannel channel, DiscordMessageBuilder messageBuilder)
@@ -125,7 +125,9 @@ public static partial class DiscordMessageExtensions
         var matches = Link().Matches(content);
         foreach (Match m in matches)
         {
-            var lnk = m.Groups["lnk"].Value;
+            var lnk = m.Groups["lnk"] is { Success: true, Value: { } l }
+                        ? l
+                        : m.Groups["lnk2"].Value;
             var fixedLnk = Uri.UnescapeDataString(lnk.RemoveWhitespaces()).Replace('｡', '.').Replace(@"\\", @"\").Replace(@"\", "/");
             content = content.Replace(lnk, fixedLnk);
         }
