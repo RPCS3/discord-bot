@@ -55,7 +55,7 @@ internal static partial class LogParserResult
     private static readonly Version NvidiaTextureMemoryBugFixedVersion = new(526, 99);
 
     private static readonly Version AmdShaderCompilationBugVersion = new(26, 3, 1);
-    private static readonly Version AmdShaderCompilationBugFixedVersion = new(26, 5, 2);
+    private static readonly Version AmdShaderCompilationBugFixedVersion = new(26, 6, 1);
     
     private static readonly Version NvidiaRecommendedWindowsDriverVersion = new(512, 16);
     private static readonly Version NvidiaRecommendedLinuxDriverVersion = new(515, 57);
