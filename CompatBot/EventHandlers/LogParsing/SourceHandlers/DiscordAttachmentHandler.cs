@@ -10,8 +10,12 @@ internal sealed class DiscordAttachmentHandler : BaseSourceHandler
     public override async Task<Result<ISource>> FindHandlerAsync(DiscordMessage message, ICollection<IArchiveHandler> handlers)
     {
         using var client = HttpClientFactory.Create();
-        foreach (var attachment in message.Attachments)
+        foreach (var attachment in message.Attachments.OrderBy(a => a.FileSize))
         {
+            if (attachment.FileName is not {Length: >0} afname
+                || afname.Contains("tty", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             try
             {
                 await using var stream = await client.GetStreamAsync(attachment.Url).ConfigureAwait(false);
