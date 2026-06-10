@@ -1071,6 +1071,7 @@ internal static partial class LogParserResult
                 26300 => "11 25H2 Dev/Experimental Build " + windowsVersion.Build,
                 <28000 => "11 Canary Build " + windowsVersion.Build,
                 <28020 => "11 26H1 Canary Build " + windowsVersion.Build,
+                <28100 => "11 26H1 Beta Build " + windowsVersion.Build,
                 <29500 => "11 26H1 Experimental Build " + windowsVersion.Build,
                 <29576 => "11 26H2 Canary Build " + windowsVersion.Build,
                 <30000 => "11 Future Platforms Build " + windowsVersion.Build,
