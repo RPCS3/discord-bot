@@ -43,9 +43,9 @@
   <ItemGroup>
     <PackageReference Include="Blurhash.ImageSharp" Version="4.0.1" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02590" />
-    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02590" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02590" />
+    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02593" />
+    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02593" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02593" />
     <PackageReference Include="DSharpPlus.Natives.Zstd" Version="1.5.7.22" />
     <PackageReference Include="Florence2" Version="25.12.63049" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.74.0.4135" />
