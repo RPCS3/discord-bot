@@ -124,11 +124,11 @@ internal static partial class CommandErroredHandler
                     ```
                     """,
 
-            DiscordException { Response.StatusCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } discordException
-                => $"Discord API error {discordException.Response.StatusCode} occurred: {discordException.JsonMessage ?? "No further information was provided."}",
+            DiscordException { Response.ResponseCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } discordException
+                => $"Discord API error {discordException.Response.ResponseCode} occurred: {discordException.JsonMessage ?? "No further information was provided."}",
 
-            DiscordException { Response: not null } discordException
-                => $"Discord API error {discordException.Response.StatusCode} occurred: {discordException.JsonMessage ?? discordException.Message}",
+            DiscordException discordException
+                => $"Discord API error {discordException.Response.ResponseCode} occurred: {discordException.JsonMessage ?? discordException.Message}",
 
             _ => $"An unexpected error occurred: {eventArgs.Exception.Message}",
         });
