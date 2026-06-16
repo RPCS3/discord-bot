@@ -327,7 +327,7 @@ public static class LogParsingHandler
                         Id = -1,
                         String = fail.Code,
                         Context = FilterContext.Chat,
-                        Actions = FilterAction.RemoveContent | FilterAction.SendMessage,
+                        Actions = FilterAction.RemoveContent | FilterAction.SendMessage | FilterAction.Kick,
                         CustomMessage = "Uploading executable files is not allowed",
                     },
                     infraction: "🦠 Attachment with executable file",
