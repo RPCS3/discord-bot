@@ -53,7 +53,7 @@ internal sealed partial class YandexDiskHandler: BaseSourceHandler
                         var result = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
                         if (result.IsSuccess())
                             return Result.Success<ISource>(new YaDiskSource(resourceInfo.File, handler, filename, filesize));
-                        else if (result.Message is {Length: >0})
+                        else if (result is {Code.Length: >0} or {Message.Length: >0} )
                             return result.Cast<ISource>();
                     }
                 }

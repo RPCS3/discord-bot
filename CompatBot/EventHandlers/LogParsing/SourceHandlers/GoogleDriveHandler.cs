@@ -57,7 +57,7 @@ internal sealed partial class GoogleDriveHandler: BaseSourceHandler
                         var result = handler.CanHandle(fileMeta.Name, (int)fileMeta.Size, buf.AsSpan(0, read));
                         if (result.IsSuccess())
                             return Result.Success<ISource>(new GoogleDriveSource(client, fileInfoRequest, fileMeta, handler));
-                        else if (result.Message is {Length: >0})
+                        else if (result is {Code.Length: >0} or {Message.Length: >0} )
                             return result.Cast<ISource>();
                     }
                 }

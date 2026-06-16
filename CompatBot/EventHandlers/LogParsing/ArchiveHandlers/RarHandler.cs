@@ -17,11 +17,19 @@ internal sealed class RarHandler: IArchiveHandler
     public Result CanHandle(string fileName, int fileSize, ReadOnlySpan<byte> header)
     {
         if (header.Length >= Header.Length && header[..Header.Length].SequenceEqual(Header)
-            || header.Length == 0 && fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
+            || header is [] && fileName.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase))
         {
             var firstEntry = Encoding.ASCII.GetString(header);
             if (!firstEntry.Contains(".log", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var idx = -1;
+                while ((idx = firstEntry.IndexOf('.', idx + 1)) > -1 && idx < firstEntry.Length - 4)
+                {
+                    if (firstEntry[idx..(idx + 4)].ToLower().HasExecutableExtension())
+                        return Result.Failure().WithCode("executable");
+                }
                 return Result.Failure().WithMessage("Archive doesn't contain any logs.");
+            }
             return Result.Success();
         }
         return Result.Failure();

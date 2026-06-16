@@ -61,7 +61,7 @@ internal sealed partial class MediafireHandler : BaseSourceHandler
                         var result = handler.CanHandle(filename, filesize, buf.AsSpan(0, read));
                         if (result.IsSuccess())
                             return Result.Success<ISource>(new MediafireSource(directLink, handler, filename, filesize));
-                        else if (result.Message is {Length: >0})
+                        else if (result is {Code.Length: >0} or {Message.Length: >0} )
                             return result.Cast<ISource>();
                     }
                     Config.Log.Debug("MediaFire Response:\n" + Encoding.UTF8.GetString(buf, 0, read));
