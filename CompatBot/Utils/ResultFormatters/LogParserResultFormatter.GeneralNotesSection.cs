@@ -279,7 +279,7 @@ internal static partial class LogParserResult
             && ramSize < 6)
             notes.Add("⚠️ 8 GiB RAM or more is recommended for PS3 emulation");
 
-        if (GetCpuUsageStats(multiItems["total_cpu"]) is {avg: >50, max: >95 } cpuUsageStats)
+        if (GetCpuUsageStats(multiItems["total_cpu"]) is {avg: >50, max: >95} cpuUsageStats)
             notes.Add($"⚠️ CPU usage: {cpuUsageStats.avg:0.##}% (min: {cpuUsageStats.min:0.##}% / max: {cpuUsageStats.max:0.##}%)");
         if (GetMemUsageStats(multiItems["current_ram"]) is { avg: >0 } memUsageStats
             && ramSize > 0
