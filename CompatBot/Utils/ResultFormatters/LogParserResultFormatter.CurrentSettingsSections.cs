@@ -22,10 +22,18 @@ internal static partial class LogParserResult
             if (idxEnd > 0)
                 systemInfo = systemInfo[..idxStart] + systemInfo[idxEnd..];
         }
-        var sysInfoParts = systemInfo.Split(NewLineChars, StringSplitOptions.RemoveEmptyEntries);
+        var sysInfoParts = systemInfo.Split(NewLineChars, StringSplitOptions.RemoveEmptyEntries).AsSpan();
         var buildInfo = BuildInfoInLog().Match(sysInfoParts.Length > 0 ? sysInfoParts[0] : systemInfo);
-        var cpuInfo = CpuInfoInLog().Match(sysInfoParts.Length > 1 ? sysInfoParts[1] : systemInfo);
-        var osInfo = LogParser.OsInfo().Match(sysInfoParts.Length > 2 ? sysInfoParts[2] : systemInfo);
+        var hasCpuInfo = false;
+        if (sysInfoParts.Length > 1)
+        {
+            sysInfoParts = sysInfoParts[1].StartsWith("Architecture:")
+                ? sysInfoParts[2..]
+                : sysInfoParts[1..];
+            hasCpuInfo = true;
+        }
+        var cpuInfo = CpuInfoInLog().Match(hasCpuInfo ? sysInfoParts[0] : systemInfo);
+        var osInfo = LogParser.OsInfo().Match(hasCpuInfo && sysInfoParts.Length > 1 ? sysInfoParts[1] : systemInfo);
         if (buildInfo.Success)
         {
             items["build_version"] = buildInfo.Groups["version"].Value.Trim();
