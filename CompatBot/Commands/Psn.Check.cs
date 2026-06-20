@@ -125,12 +125,14 @@ internal static partial class Psn
 
             try
             {
+                var psnCmd = await client.GetGlobalApplicationCommandAsync("psn").ConfigureAwait(false);
+                var psnChkUpdCmdMention = psnCmd.GetSubcommandMention("check", "updates");
                 await e.Interaction.CreateResponseAsync(
                     DiscordInteractionResponseType.ChannelMessageWithSource,
                     new DiscordInteractionResponseBuilder()
                         .AsEphemeral()
                         // /psn check updates product_code: BLUS30078
-                        .WithContent($"Use application command `/psn check updates product_code:{productCode}` to search for game updates")
+                        .WithContent($"Use application command {psnChkUpdCmdMention} with the product code `{productCode}` to search for game updates")
                 ).ConfigureAwait(false);
             }
             catch (Exception ex)
