@@ -20,7 +20,7 @@ internal static partial class PostLogHelpHandler
     };
     private static DateTime lastMention = DateTime.UtcNow.AddHours(-1);
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient client, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
@@ -41,13 +41,14 @@ internal static partial class PostLogHelpHandler
         try
         {
             var explanation = await GetExplanationAsync(string.IsNullOrEmpty(match.Groups["vulkan"].Value) ? "log" : "vulkan-1").ConfigureAwait(false);
+            var explainContent = await explanation.FormatTextAsync(client).ConfigureAwait(false);
             var lastBotMessages = await args.Channel.GetMessagesBeforeCachedAsync(args.Message.Id, 10).ConfigureAwait(false);
             foreach (var msg in lastBotMessages)
                 if (BotReactionsHandler.NeedToSilence(msg).needToChill
-                    || msg.Author.IsCurrent && msg.Content == explanation.Text)
+                    || msg.Author!.IsCurrent && msg.Content == explainContent)
                     return;
 
-            await args.Channel.SendMessageAsync(explanation.Text, explanation.Attachment, explanation.AttachmentFilename).ConfigureAwait(false);
+            await args.Channel.SendMessageAsync(explainContent, explanation.Attachment, explanation.AttachmentFilename).ConfigureAwait(false);
             lastMention = DateTime.UtcNow;
         }
         finally

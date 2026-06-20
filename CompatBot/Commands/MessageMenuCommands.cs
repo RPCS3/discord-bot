@@ -59,7 +59,7 @@ internal static class MessageMenuCommands
         ).ConfigureAwait(false);
         var canPing = ModProvider.IsMod(ctx.User.Id);
         var term = ((TextInputModalSubmission)value).Value;
-        await Explain.SendExplanationAsync(result, term, replyTo, true, canPing).ConfigureAwait(false);
+        await Explain.SendExplanationAsync(result, term, ctx.Client, replyTo, true, canPing).ConfigureAwait(false);
     }
 
     // non-whitenames can use these
