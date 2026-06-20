@@ -81,7 +81,8 @@ internal static partial class IsTheGamePlayableHandler
                 if (!string.IsNullOrEmpty(info.Date))
                     msg += $" since {info.ToUpdated()}";
             }
-            msg += $"\nfor more results please use [compatibility list](<https://rpcs3.net/compatibility>) or `/compatibility title:{gameTitle.Sanitize()}` command in {botSpamChannel.Mention}";
+            var compatCmd = await c.GetGlobalApplicationCommandAsync("compatibility").ConfigureAwait(false);
+            msg += $"\nfor more results please use [compatibility list](<https://rpcs3.net/compatibility>) or {compatCmd.Mention} command in {botSpamChannel.Mention}";
             await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
             CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
         }
