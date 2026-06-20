@@ -7,7 +7,7 @@ internal static partial class LogAsTextMonitor
     [GeneratedRegex(@"^[`""]?(·|(\w|!)) ({(rsx|PPU|SPU)|LDR:)|E LDR:", RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     private static partial Regex LogLine();
 
-    public static async Task OnMessageCreated(DiscordClient _, MessageCreatedEventArgs args)
+    public static async Task OnMessageCreated(DiscordClient client, MessageCreatedEventArgs args)
     {
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
@@ -26,20 +26,25 @@ internal static partial class LogAsTextMonitor
             {
                 brokenDump = true;
                 if (args.Message.Content.Contains("fs::file is null"))
-                    msg = $"{args.Message.Author.Mention} this error usually indicates a missing `.rap` license file.\n";
+                    msg = $"{args.Message.Author!.Mention} this error usually indicates a missing `.rap` license file.\n";
                 else if (args.Message.Content.Contains("Invalid or unsupported file format"))
-                    msg = $"{args.Message.Author.Mention} this error usually indicates an encrypted or corrupted game dump.\n";
+                    msg = $"{args.Message.Author!.Mention} this error usually indicates an encrypted or corrupted game dump.\n";
                 else
                     brokenDump = false;
             }
             var logUploadExplain = await PostLogHelpHandler.GetExplanationAsync("log").ConfigureAwait(false);
+            var logUploadTxt = await logUploadExplain.FormatTextAsync(client).ConfigureAwait(false);
             if (brokenDump)
-                msg += "Please follow the quickstart guide to get a proper dump of a digital title.\n" +
-                       "Also please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant.\n" +
-                       logUploadExplain.Text;
+                msg += $"""
+                    Please follow the quickstart guide to get a proper dump of a digital title.
+                    Also please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant.
+                    {logUploadTxt}
+                    """;
             else
-                msg = $"{args.Message.Author.Mention} please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant." +
-                      logUploadExplain.Text;
+                msg = $"""
+                    {args.Message.Author!.Mention} please upload the full RPCS3 log instead of pasting only a section which may be completely irrelevant.
+                    {logUploadTxt}
+                    """;
             await args.Channel.SendMessageAsync(msg, logUploadExplain.Attachment, logUploadExplain.AttachmentFilename).ConfigureAwait(false);
         }
     }

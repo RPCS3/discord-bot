@@ -1,8 +1,4 @@
-﻿using System.Globalization;
-using System.IO;
-using System.Net.Http;
-using System.Runtime.InteropServices;
-using CompatApiClient.Compression;
+﻿using CompatApiClient.Compression;
 using CompatApiClient.Utils;
 using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
@@ -10,6 +6,11 @@ using CompatBot.Database.Providers;
 using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ResultNet;
+using System.Globalization;
+using System.IO;
+using System.Net.Http;
+using System.Runtime.InteropServices;
 
 namespace CompatBot.Commands;
 
@@ -42,7 +43,7 @@ internal static class Explain
         if (to is null)
         {
             if (result.explanation.Text is {Length: >0})
-                explainMsg.WithContent(result.explanation.Text);
+                explainMsg.WithContent(await result.explanation.FormatTextAsync(ctx.Client).ConfigureAwait(false));
         }
         else
         {
@@ -50,7 +51,7 @@ internal static class Explain
             explainMsg.WithContent(
                 $"""
                  {to.Mention} please read the explanation for `{result.explanation.Keyword.Sanitize(replaceBackTicks: true)}`:
-                 {result.explanation.Text}
+                 {await result.explanation.FormatTextAsync(ctx.Client).ConfigureAwait(false)}
                  """
             );
             if (canPing)
@@ -438,7 +439,13 @@ internal static class Explain
         return (explanation, fuzzyMatch, coefficient);
     }
 
-    internal static async ValueTask<bool> SendExplanationAsync((Explanation? explanation, string? fuzzyMatch, double score) termLookupResult, string term, DiscordMessage sourceMessage, bool useReply, bool ping = false)
+    internal static async ValueTask<bool> SendExplanationAsync(
+        (Explanation? explanation, string? fuzzyMatch, double score) termLookupResult,
+        string term,
+        DiscordClient client,
+        DiscordMessage sourceMessage,
+        bool useReply,
+        bool ping = false)
     {
         try
         {
@@ -465,7 +472,7 @@ internal static class Explain
                 StatsStorage.IncExplainStat(explain.Keyword);
                 msgBuilder = new();
                 if (explain.Text is {Length: >0})
-                    msgBuilder.WithContent(explain.Text);
+                    msgBuilder.WithContent(await explain.FormatTextAsync(client).ConfigureAwait(false));
                 if (!usedReply && useReply)
                     msgBuilder.WithReply(sourceMessage.Id, ping);
                 if (ping)
