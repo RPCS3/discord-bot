@@ -19,6 +19,11 @@ internal static partial class ProductCodeLookup
         if (DefaultHandlerFilter.IsFluff(args.Message))
             return;
 
+        if (!args.Channel.IsSpamChannel()
+            && !await args.Message.Author.IsWhitelistedAsync(c)
+            && !await args.Message.Author.IsSmartlistedAsync(c))
+            return;
+
         var lastBotMessages = await args.Channel.GetMessagesBeforeAsync(args.Message.Id, 20, DateTime.UtcNow.AddSeconds(-30)).ConfigureAwait(false);
         if (lastBotMessages.Any(msg => BotReactionsHandler.NeedToSilence(msg).needToChill))
             return;
