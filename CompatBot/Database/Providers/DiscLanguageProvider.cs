@@ -157,6 +157,7 @@ public static partial class DiscLanguageProvider
         ["UK"] = "🇬🇧",
         ["United Arab Emirates"] = "🇸🇦",
         ["USA"] = "🇺🇸",
+        ["World"] = "🗺️",
     };
 
     // ISO-639 language code to ISO-3166-2 country code
