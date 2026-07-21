@@ -20,11 +20,13 @@ public class BotConfigurationAutoCompleteProvider: IAutoCompleteProvider
             return [new($"{Config.Reactions.Denied} You are not authorized to use this command.", -1)];
 
         await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+        db.WithNoCase();
         IEnumerable<string> result;
         var input = context.UserInput;
         if (input is not { Length: > 0 })
         {
-            var set = db.BotState
+            var set = db
+                .BotState
                 .AsNoTracking()
                 .Where(v => v.Key.StartsWith(SqlConfiguration.ConfigVarPrefix))
                 .OrderBy(v => v.Key)

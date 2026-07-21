@@ -35,6 +35,7 @@ internal static partial class CompatList
     {
         using (var db = BotDb.OpenRead())
         {
+            db.WithNoCase();
             lastUpdateInfo = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateStateKey)?.Value;
             lastFullBuildNumber = db.BotState.FirstOrDefault(k => k.Key == Rpcs3UpdateBuildKey)?.Value;
         }

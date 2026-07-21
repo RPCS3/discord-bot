@@ -10,6 +10,7 @@ internal static class BotStatusMonitor
         try
         {
             await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+            db.WithNoCase();
             var status = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
             var txt = await db.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
             var msg = txt?.Value;

@@ -85,6 +85,7 @@ internal static partial class Psn
 
             var newVersion = fwList[0].Version;
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            wdb.WithNoCase();
             var fwVersionState = wdb.BotState.FirstOrDefault(s => s.Key == "Latest-Firmware-Version");
             latestFwVersion ??= fwVersionState?.Value;
             if (latestFwVersion is null
