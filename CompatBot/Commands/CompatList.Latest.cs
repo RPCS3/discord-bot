@@ -156,6 +156,7 @@ internal static partial class CompatList
                 lastFullBuildNumber = latestUpdateBuild;
                 await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
                 {
+                    wdb.WithNoCase();
                     var currentState = await wdb.BotState.FirstOrDefaultAsync(k => k.Key == Rpcs3UpdateStateKey).ConfigureAwait(false);
                     if (currentState == null)
                         await wdb.BotState.AddAsync(new() { Key = Rpcs3UpdateStateKey, Value = latestUpdatePr }).ConfigureAwait(false);

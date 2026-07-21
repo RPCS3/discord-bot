@@ -345,15 +345,16 @@ internal static class Program
             string? restartMsg = null;
             await using (var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false))
             {
+                wdb.WithNoCase();
                 var chState = wdb.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
-                if (chState != null)
+                if (chState is not null)
                 {
                     if (ulong.TryParse(chState.Value, out var ch))
                         channelId = ch;
                     wdb.BotState.Remove(chState);
                 }
                 var msgState = wdb.BotState.FirstOrDefault(i => i.Key == "bot-restart-msg");
-                if (msgState != null)
+                if (msgState is not null)
                 {
                     restartMsg = msgState.Value;
                     wdb.BotState.Remove(msgState);

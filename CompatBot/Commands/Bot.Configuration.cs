@@ -16,6 +16,7 @@ internal static partial class Bot
         public static async ValueTask List(SlashCommandContext ctx)
         {
             await using var db = await BotDb.OpenReadAsync().ConfigureAwait(false);
+            db.WithNoCase();
             var setVars = await db.BotState
                 .AsNoTracking()
                 .Where(v => v.Key.StartsWith(SqlConfiguration.ConfigVarPrefix))
@@ -50,6 +51,7 @@ internal static partial class Bot
             Config.RebuildConfiguration();
             key = SqlConfiguration.ConfigVarPrefix + key;
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            wdb.WithNoCase();
             var stateValue = await wdb.BotState.FirstOrDefaultAsync(v => v.Key == key).ConfigureAwait(false);
             if (stateValue == null)
             {
@@ -73,6 +75,7 @@ internal static partial class Bot
             Config.RebuildConfiguration();
             key = SqlConfiguration.ConfigVarPrefix + key;
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            wdb.WithNoCase();
             var stateValue = await wdb.BotState.Where(v => v.Key == key).FirstOrDefaultAsync().ConfigureAwait(false);
             if (stateValue is not null)
             {

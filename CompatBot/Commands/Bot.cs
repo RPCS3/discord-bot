@@ -144,6 +144,7 @@ internal static partial class Bot
         try
         {
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
+            wdb.WithNoCase();
             var status = await wdb.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-activity").ConfigureAwait(false);
             var txt = await wdb.BotState.FirstOrDefaultAsync(s => s.Key == "bot-status-text").ConfigureAwait(false);
             if (message is {Length: >0})
@@ -307,6 +308,7 @@ internal static partial class Bot
     {
         Config.Log.Info($"Saving channelId {channelId} into settings…");
         using var wdb = BotDb.OpenWrite();
+        wdb.WithNoCase();
         var ch = wdb.BotState.FirstOrDefault(k => k.Key == "bot-restart-channel");
         if (ch is null)
         {
