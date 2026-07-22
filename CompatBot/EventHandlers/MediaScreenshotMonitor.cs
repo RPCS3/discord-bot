@@ -100,7 +100,7 @@ internal sealed class MediaScreenshotMonitor
                     if (previousItem.hit.Actions.HasFlag(FilterAction.RemoveContent))
                         RemovedMessages.Set(msg.Id, true, MessageCachedTime);
                 }
-                else if (await OcrProvider.GetTextAsync(imgUrl, ocrTask.Rotation, Config.Cts.Token).ConfigureAwait(false) is ({ Length: > 0 } result, var confidence))
+                else if (await OcrProvider.GetTextAsync(imgUrl, ocrTask.Rotation, Config.Cts.Token).ConfigureAwait(false) is ({Length: >0} result, var confidence))
                 {
                     var cnt = true;
                     var duplicates = new HashSet<string>();
