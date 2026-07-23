@@ -243,7 +243,7 @@ internal static partial class Warnings
                 ).ConfigureAwait(false);
             await wdb.SaveChangesAsync().ConfigureAwait(false);
 
-            var threshold = DateTime.UtcNow.AddMinutes(-15).Ticks;
+            var threshold = DateTime.UtcNow.AddDays(-1).Ticks;
             var totalCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted);
             var recentCount = wdb.Warning.Count(w => w.DiscordId == userId && !w.Retracted && w.Timestamp > threshold);
             roleAlreadyAssigned |= assignRole;
