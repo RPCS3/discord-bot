@@ -102,7 +102,7 @@ internal static class ContentFilter
         filters = newFilters;
     }
 
-    public static async ValueTask<bool> IsClean(DiscordClient client, DiscordMessage message)
+    public static async ValueTask<bool> IsClean(DiscordClient client, DiscordMessage message, bool logContent = false)
     {
         if (message.Channel?.IsPrivate is true)
             return true;
@@ -133,6 +133,15 @@ internal static class ContentFilter
 #endif
 
         var content = await message.GetMessageContentForFiltersAsync(client).ConfigureAwait(false);
+        if (logContent)
+        {
+            var prefix = $"[{message.Id % 100:00}]";
+            Config.Log.Debug($"""
+                {prefix} Filter content for message {message.JumpLink} from user {message.Author?.Username} ({message.Author?.Id}):
+                {content}
+                """
+            );
+        }
         var trigger = await FindTriggerAsync(FilterContext.Chat, content).ConfigureAwait(false);
         if (trigger is null)
             return true;

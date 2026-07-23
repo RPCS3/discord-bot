@@ -103,8 +103,10 @@ public static partial class DiscordMessageExtensions
         if (includeEmbeds)
             foreach (var embed in message.Embeds)
             {
+                if (embed.Author?.Name is {Length: >0} embedAuthor)
+                    content.AppendLine(embedAuthor);
                 content.AppendLine(embed.Title).AppendLine(embed.Description);
-                if (embed.Fields is not { Count: >0 })
+                if (embed.Fields is not {Count: >0})
                     continue;
 
                 foreach (var field in embed.Fields)
