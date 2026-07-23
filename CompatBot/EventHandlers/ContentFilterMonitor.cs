@@ -19,14 +19,10 @@ internal static class ContentFilterMonitor
 
         var message = e.Message;
         if (message.Author is null)
-        {
-            message = await e.Channel.GetMessageCachedAsync(e.Message.Id).ConfigureAwait(false);
-            if (message?.Author is null)
-                message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
-        }
+            message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
         if (message.Attachments.Any() || message.Embeds.Any())
             MediaScreenshotMonitor.EnqueueOcrTask(message);
-        if (await ContentFilter.IsClean(c, message).ConfigureAwait(false))
+        if (await ContentFilter.IsClean(c, message, true).ConfigureAwait(false))
             await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(c, message).ConfigureAwait(false);
     }
 }
