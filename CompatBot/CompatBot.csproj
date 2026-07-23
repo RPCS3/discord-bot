@@ -73,6 +73,8 @@
     <PackageReference Include="Result.Net" Version="1.7.0" />
     <PackageReference Include="SharpCompress" Version="0.50.0" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
+    <PackageReference Include="SourceGear.sqlite3" Version="3.53.3" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.4" />
     <PackageReference Include="TesseractCSharp" Version="1.0.5" />
   </ItemGroup>
   <ItemGroup>
