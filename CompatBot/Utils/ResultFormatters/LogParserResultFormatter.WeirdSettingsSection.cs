@@ -432,6 +432,7 @@ internal static partial class LogParserResult
             CheckLbpSettings(serial, items, generalNotes);
             CheckKillzone3Settings(serial, items, notes, patchNames);
             CheckSkate3Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
+            CheckSonic06Settings(serial, items, notes, ppuPatches, ppuHashes, generalNotes);
         }
         else if (items["game_title"] == "vsh.self")
             CheckVshSettings(items, notes, generalNotes);
@@ -1447,6 +1448,28 @@ internal static partial class LogParserResult
             return;
 
         if (!ppuHashes.Overlaps(KnownSkate3Patches))
+            generalNotes.Add("🤔 Very interesting version of the game you got there");
+    }
+
+    private static readonly HashSet<string> Sonic06Ids =
+    [
+        "BLES00028", "BLJM60006", "BLUS30008",
+    ];
+
+    private static readonly HashSet<string> KnownSonic06Patches = new(StringComparer.InvariantCultureIgnoreCase)
+    {
+        "4b46d0161ca657ab16b0a779d9062810ea5ea2dd", // BLUS30008 1.01
+        "c1be5dc25994c9b4006295882516c829f8c63707", // BLJM60006 1.01
+        "10847518eb618b57777bc2df9d5e9a26eb58f9e3", // BLES00028 1.01
+        "5fa63817d4349e8b47e6ddd2425fadfd2914a1fa", // BLES00028 2.01
+    };
+
+    private static void CheckSonic06Settings(string serial, NameValueCollection items, List<string> notes, Dictionary<string, int> ppuPatches, HashSet<string> ppuHashes, List<string> generalNotes)
+    {
+        if (!Sonic06Ids.Contains(serial))
+            return;
+
+        if (!ppuHashes.Overlaps(KnownSonic06Patches))
             generalNotes.Add("🤔 Very interesting version of the game you got there");
     }
 
