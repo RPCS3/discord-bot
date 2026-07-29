@@ -158,7 +158,7 @@ internal static class Program
             var clientInfoLogged = false;
             var mediaScreenshotMonitor = new MediaScreenshotMonitor();
             var clientBuilder = DiscordClientBuilder
-                .CreateDefault(Config.Token, DiscordIntents.All)
+                .CreateDefault(Config.Token, DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents)
                 .ConfigureLogging(builder => builder.AddNLog(LogManager.Configuration!))
                 .ConfigureServices(
                     services => services.ConfigureHttpClientDefaults(
