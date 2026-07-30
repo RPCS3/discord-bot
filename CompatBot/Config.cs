@@ -96,8 +96,10 @@ internal static class Config
     public static string RedumpDatfileCachePath => Path.Combine(BotAppDataFolder, "compat-bot", "datfile");
     public static string RenameNameSuffix => config.GetValue(nameof(RenameNameSuffix), " (Rule 7)");
     public static string OcrBackend => config.GetValue(nameof(OcrBackend), "auto"); // possible values: auto, tesseract, florence2, azure
+    public static string TesseractModelVariantSuffix => config.GetValue(nameof(TesseractModelVariantSuffix), "_best"); // "_fast", "", "_best"
 
     public static double GameTitleMatchThreshold => config.GetValue(nameof(GameTitleMatchThreshold), 0.57);
+    public static double OcrMinAcceptedConfidence => config.GetValue(nameof(OcrMinAcceptedConfidence), 0.50);
     public static byte[] CryptoSalt => Convert.FromBase64String(config.GetValue(nameof(CryptoSalt), ""));
     public static bool EnableEfDebugLogging => config.GetValue(nameof(EnableEfDebugLogging), false);
     public static bool EnableBulkDiscordCommandOverwrite => config.GetValue(nameof(EnableBulkDiscordCommandOverwrite), false);
