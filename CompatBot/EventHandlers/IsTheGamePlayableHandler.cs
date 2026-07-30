@@ -40,8 +40,7 @@ internal static partial class IsTheGamePlayableHandler
                 return;
 #endif
 
-        var matches = GameNameStatusMention().Matches(args.Message.Content);
-        if (!matches.Any())
+        if (GameNameStatusMention().Matches(args.Message.Content) is not { Count: >0} matches)
             return;
 
         try
@@ -72,18 +71,18 @@ internal static partial class IsTheGamePlayableHandler
             var status = info.Status.ToLowerInvariant();
             string msg;
             if (status == "unknown")
-                msg = $"{args.Message.Author.Mention} {gameTitle} status is {status}";
+                msg = $"{gameTitle} status is {status}";
             else
             {
                 if (status != "playable")
                     status += " (not playable)";
-                msg = $"{args.Message.Author.Mention} {gameTitle} is {status}";
+                msg = $"{gameTitle} is {status}";
                 if (!string.IsNullOrEmpty(info.Date))
                     msg += $" since {info.ToUpdated()}";
             }
             var compatCmd = await c.GetGlobalApplicationCommandAsync("compatibility").ConfigureAwait(false);
             msg += $"\nfor more results please use [compatibility list](<https://rpcs3.net/compatibility>) or {compatCmd.Mention} command in {botSpamChannel.Mention}";
-            await args.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+            await args.Message.RespondAsync(msg).ConfigureAwait(false);
             CooldownBuckets[args.Channel.Id] = DateTime.UtcNow;
         }
         catch (Exception e)
