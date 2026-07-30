@@ -19,10 +19,13 @@ internal static class BotStatus
         var ephemeral = !ctx.Channel.IsSpamChannel();
         await ctx.DeferResponseAsync(ephemeral).ConfigureAwait(false);
         var latency = ctx.Client.GetConnectionLatency(Config.BotGuildId);
+        string ocrBackendName = OcrProvider.BackendName;
+        if (ocrBackendName is "tesseract")
+            ocrBackendName += Config.TesseractModelVariantSuffix;
         var embed = new DiscordEmbedBuilder { Color = DiscordColor.Purple }
             .AddField("Current Uptime", Config.Uptime.Elapsed.AsShortTimespan(), true)
             .AddField("Discord Latency", $"{latency.TotalMilliseconds:0.0} ms", true)
-            .AddField("Max OCR Queue", $"{OcrProvider.BackendName} / {MediaScreenshotMonitor.MaxQueueLength}", true);
+            .AddField("Max OCR Queue", $"{ocrBackendName} / {MediaScreenshotMonitor.MaxQueueLength}", true);
         var osInfo = RuntimeInformation.OSDescription;
         if (Environment.OSVersion.Platform is PlatformID.Unix or PlatformID.MacOSX && osInfo is not { Length: >0})
             osInfo = RuntimeInformation.RuntimeIdentifier;
