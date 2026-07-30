@@ -12,7 +12,11 @@ internal class Tesseract: BackendBase
     private static readonly SemaphoreSlim Limiter = new(1, 1);
 
     public override string Name => "tesseract";
-    private string ModelSuffix => Config.TesseractModelVariantSuffix;
+    private string ModelSuffix => Config.TesseractModelVariantSuffix switch
+    {
+        "_fast" or "_best" => Config.TesseractModelVariantSuffix,
+        _ => ""
+    };
 
     public override async Task<bool> InitializeAsync(CancellationToken cancellationToken)
     {
@@ -106,7 +110,7 @@ internal class Tesseract: BackendBase
 
     private async ValueTask<bool> EnsureModelIsCached(string lang, CancellationToken cancellationToken)
     {
-        var modelPath = Path.Combine(ModelVariantCachePath, $"{lang}{ModelSuffix}.traineddata");
+        var modelPath = Path.Combine(ModelVariantCachePath, $"{lang}.traineddata");
         if (File.Exists(modelPath))
             return true;
         
@@ -114,6 +118,9 @@ internal class Tesseract: BackendBase
         {
             using var client = HttpClientFactory.Create(new CompressionMessageHandler());
             // existing repos: tessdata_fast, tessdata, tessdata_best
+            // https://github.com/tesseract-ocr/tessdata_fast/raw/refs/heads/main/eng.traineddata
+            // https://github.com/tesseract-ocr/tessdata/raw/refs/heads/main/eng.traineddata
+            // https://github.com/tesseract-ocr/tessdata_best/raw/refs/heads/main/eng.traineddata
             var uri = $"https://github.com/tesseract-ocr/tessdata{ModelSuffix}/raw/refs/heads/main/{lang}.traineddata";
             await using var response = await client.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
             await using var file = File.Open(modelPath, new FileStreamOptions
