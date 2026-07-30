@@ -105,7 +105,7 @@ internal sealed class MediaScreenshotMonitor
                     var cnt = true;
                     var duplicates = new HashSet<string>();
                     Config.Log.Debug($"""
-                        {prefix} OCR result of message {msg.JumpLink} from user {msg.Author?.Username} ({msg.Author?.Id}) ({confidence * 100:0.00}%):
+                        {prefix} OCR result of message {msg.JumpLink} from user {msg.Author?.Username} ({msg.Author?.Id}) ({confidence * 100:0.00}/{Config.OcrMinAcceptedConfidence * 100:0.00}%):
                         {result}
                         """
                     );
