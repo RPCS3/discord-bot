@@ -34,7 +34,7 @@ internal static class ForcedNicknames
             else
                 guilds = [ctx.Guild];
 
-            int changed = 0, noPermissions = 0, failed = 0;
+            int changed = 0, noPermissions = 0, failed = 0, enforced = 0, skipped = 0;
             await using var wdb = await BotDb.OpenWriteAsync().ConfigureAwait(false);
             foreach (var guild in guilds)
             {
@@ -49,9 +49,13 @@ internal static class ForcedNicknames
                     else
                     {
                         if (enforceRules.Nickname == newNickname)
+                        {
+                            skipped++;
                             continue;
+                        }
 
                         enforceRules.Nickname = newNickname;
+                        enforced++;
                     }
                 }
                 if (await ctx.Client.GetMemberAsync(guild, user).ConfigureAwait(false) is DiscordMember discordMember)
@@ -67,17 +71,21 @@ internal static class ForcedNicknames
                     }
             }
             await wdb.SaveChangesAsync().ConfigureAwait(false);
-            if (guilds.Count > 1)
+            if (guilds.Count >1)
             {
-                if (changed > 0)
+                if (changed > 0 || enforced > 0)
                     resultMsg = $"{Config.Reactions.Success} Forced nickname for {user.Mention} in {changed} server{(changed == 1 ? "" : "s")}";
+                if (skipped > 0)
+                    resultMsg = $"{Config.Reactions.Success} Nickname for {user.Mention} is already enforced";
                 else
                     resultMsg = $"{Config.Reactions.Failure} Failed to force nickname for {user.Mention} in any server";
             }
             else
             {
-                if (changed > 0)
+                if (changed > 0 || enforced > 0)
                     resultMsg = $"{Config.Reactions.Success} Forced nickname for {user.Mention}";
+                if (skipped > 0)
+                    resultMsg = $"{Config.Reactions.Success} Nickname for {user.Mention} is already enforced";
                 else if (failed > 0)
                     resultMsg = $"{Config.Reactions.Failure} Failed to force nickname for {user.Mention}";
                 else if (noPermissions > 0)
