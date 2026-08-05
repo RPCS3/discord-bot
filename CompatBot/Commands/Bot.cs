@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IO;
 using NLog;
 using SharpCompress.Common;
-using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
 using SharpCompress.Writers.Zip;
 
@@ -21,6 +20,7 @@ internal static partial class Bot
     private static readonly SemaphoreSlim LockObj = new(1, 1);
     private static readonly SemaphoreSlim ImportLockObj = new(1, 1);
     private static readonly ProcessStartInfo RestartInfo = new("dotnet", $"run -c Release");
+    private static readonly ProcessStartInfo BuildInfo = new("dotnet", $"build -c Release");
 
     [Command("log")]
     [Description("Upload log file as an attachment")]
@@ -273,6 +273,9 @@ internal static partial class Bot
             }
 
             if (ctx is not null)
+                await ctx.EditResponseAsync("Compiling new version…").ConfigureAwait(false);
+            await BuildAsync().ConfigureAwait(false);
+            if (ctx is not null)
                 await ctx.EditResponseAsync("Saving state…").ConfigureAwait(false);
             await StatsStorage.SaveAsync(true).ConfigureAwait(false);
             if (ctx is not null)
@@ -293,7 +296,6 @@ internal static partial class Bot
     
     internal static async ValueTask<(bool updated, string stdout)> GitPullAsync(CancellationToken cancellationToken)
     {
-
         var stdout = await GitRunner.Exec("pull", cancellationToken);
         if (string.IsNullOrEmpty(stdout))
             return (false, stdout);
@@ -328,6 +330,17 @@ internal static partial class Bot
         wdb.SaveChanges();
         Config.TelemetryClient?.TrackEvent("Restart");
         RestartNoSaving();
+    }
+
+    internal static async ValueTask BuildAsync()
+    {
+        Config.Log.Info("Building…");
+        using var dotnet = new Process { StartInfo = BuildInfo };
+        dotnet.Start();
+        await Task.WhenAny(
+            dotnet.WaitForExitAsync(Config.Cts.Token),
+            Task.Delay(Config.BotBuildTimeInSec)
+        ).ConfigureAwait(false);
     }
 
     internal static void RestartNoSaving()

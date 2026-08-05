@@ -60,6 +60,7 @@ internal static class Config
     public static TimeSpan ForcedNicknamesRecheckTimeInHours => TimeSpan.FromHours(config.GetValue(nameof(ForcedNicknamesRecheckTimeInHours), 3));
     public static TimeSpan IncomingMessageCheckIntervalInMin => TimeSpan.FromMinutes(config.GetValue(nameof(IncomingMessageCheckIntervalInMin), 10));
     public static TimeSpan MetricsIntervalInSec => TimeSpan.FromSeconds(config.GetValue(nameof(MetricsIntervalInSec), 10));
+    public static TimeSpan BotBuildTimeInSec => TimeSpan.FromSeconds(config.GetValue(nameof(BotBuildTimeInSec), 80));
 
     public static int ProductCodeLookupHistoryThrottle => config.GetValue(nameof(ProductCodeLookupHistoryThrottle), 7);
     public static int TopLimit => config.GetValue(nameof(TopLimit), 15);
