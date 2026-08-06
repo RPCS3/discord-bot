@@ -25,7 +25,7 @@ jobs:
     - name: dotnet build Debug
       run: dotnet build --no-restore --configuration Debug
     - name: dotnet test
-      run: dotnet test --no-build --verbosity normal Tests/Tests.csproj
+      run: dotnet test --no-build --verbosity normal --report-gh Tests/Tests.csproj
 
   BuildRelease:
     runs-on: ubuntu-latest
