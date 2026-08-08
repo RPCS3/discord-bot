@@ -1,6 +1,7 @@
 ﻿using CompatApiClient.Utils;
 using CompatBot.Commands.AutoCompleteProviders;
 using CompatBot.Database;
+using CompatBot.Database.Providers;
 using CompatBot.Utils.Extensions;
 using DSharpPlus.Interactivity;
 using Microsoft.EntityFrameworkCore;
@@ -65,7 +66,8 @@ internal static partial class Warnings
         }
 
         var warningToEdit = warnings.First();
-        if (warningToEdit.IssuerId != ctx.User.Id)
+        if (warningToEdit.IssuerId != ctx.User.Id
+            && !ModProvider.IsSudoer(ctx.User.Id))
         {
             await ctx.RespondAsync($"{Config.Reactions.Denied} This warning wasn't issued by you", ephemeral: true).ConfigureAwait(false);
             return;
