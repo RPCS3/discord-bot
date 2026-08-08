@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.CompilerServices;
 using CompatApiClient.Utils;
 using CompatBot.EventHandlers;
 using DSharpPlus.Commands.Processors.TextCommands;
@@ -12,7 +13,13 @@ public static class DiscordClientExtensions
 {
     private static readonly ConcurrentDictionary<ulong, DiscordRole> ResolvedRoles = new();
 
-    public static async ValueTask<DiscordMember?> GetMemberAsync(this DiscordClient client, ulong? guildId, ulong userId)
+    public static async ValueTask<DiscordMember?> GetMemberAsync(
+        this DiscordClient client,
+        ulong? guildId,
+        ulong userId,
+        [CallerFilePath]string? callerPath = null,
+        [CallerMemberName]string? callerName = null,
+        [CallerLineNumber]int? callerLine = null)
     {
         try
         {
@@ -34,7 +41,7 @@ public static class DiscordClientExtensions
         }
         catch (Exception e)
         {
-            Config.Log.Error(e, "Failed to fetch member data");
+            Config.Log.Warn(e, $"Failed to fetch member data ({callerName} in {callerPath}:{callerLine})");
         }
         return null;
     }
