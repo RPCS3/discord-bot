@@ -17,12 +17,19 @@ internal static class ContentFilterMonitor
         if (e.Emoji != emoji)
             return;
 
-        var message = e.Message;
-        if (message.Author is null)
-            message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
-        if (message.Attachments.Any() || message.Embeds.Any())
-            MediaScreenshotMonitor.EnqueueOcrTask(message);
-        if (await ContentFilter.IsClean(c, message, true).ConfigureAwait(false))
-            await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(c, message).ConfigureAwait(false);
+        try
+        {
+            var message = e.Message;
+            if (message.Author is null)
+                message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
+            if (message.Attachments.Any() || message.Embeds.Any())
+                MediaScreenshotMonitor.EnqueueOcrTask(message);
+            if (await ContentFilter.IsClean(c, message, true).ConfigureAwait(false))
+                await DiscordInviteFilter.CheckMessageInvitesAreSafeAsync(c, message).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Config.Log.Warn(ex, $"Failed to check message {e.Message.JumpLink} from {e.Message.Author}");
+        }
     }
 }
