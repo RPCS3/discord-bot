@@ -102,7 +102,7 @@ internal static class ContentFilter
         filters = newFilters;
     }
 
-    public static async ValueTask<bool> IsClean(DiscordClient client, DiscordMessage message, bool logContent = false)
+    public static async ValueTask<bool> IsClean(DiscordClient client, DiscordMessage message, bool forceRecheck = false)
     {
         if (message.Channel?.IsPrivate is true)
             return true;
@@ -119,7 +119,7 @@ internal static class ContentFilter
             return true;
 
         var suppressActions = (FilterAction)0;
-        if (message.Timestamp.UtcDateTime.AddDays(1) < DateTime.UtcNow)
+        if (message.Timestamp.UtcDateTime.AddDays(1) < DateTime.UtcNow && !forceRecheck)
             return true; //suppressActions = FilterAction.SendMessage | FilterAction.ShowExplain;
 
 #if !DEBUG
@@ -133,7 +133,7 @@ internal static class ContentFilter
 #endif
 
         var content = await message.GetMessageContentForFiltersAsync(client).ConfigureAwait(false);
-        if (logContent)
+        if (forceRecheck)
         {
             var prefix = $"[{message.Id % 100:00}]";
             Config.Log.Debug($"""
