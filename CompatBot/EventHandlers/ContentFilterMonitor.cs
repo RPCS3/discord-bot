@@ -10,15 +10,15 @@ internal static class ContentFilterMonitor
 
     public static async Task OnReaction(DiscordClient c, MessageReactionAddedEventArgs e)
     {
-        if (e.User.IsBotSafeCheck())
-            return;
-
-        var emoji = c.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
-        if (e.Emoji != emoji)
-            return;
-
         try
         {
+            if (e.User.IsBotSafeCheck())
+                return;
+
+            var emoji = c.GetEmoji(":piratethink:", Config.Reactions.PiracyCheck);
+            if (e.Emoji != emoji)
+                return;
+
             var message = e.Message;
             if (message.Author is null)
                 message = await e.Channel.GetMessageAsync(e.Message.Id).ConfigureAwait(false);
