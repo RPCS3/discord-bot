@@ -22,7 +22,7 @@ namespace IrdLibraryClient
     public class IrdClient
     {
         private static readonly Uri BaseDownloadUri = new("https://github.com/FlexBy420/playstation_3_ird_database/raw/main/");
-        private static readonly Uri RedumpDatDownloadUri = new("http://redump.org/datfile/ps3/serial,version");
+        private static readonly Uri RedumpDatDownloadUri = new("https://redump.info/datfile/PS3/serial,version");
         private static readonly HttpClient Client = HttpClientFactory.Create(new CompressionMessageHandler());
         private static readonly JsonSerializerOptions JsonOptions= new()
         {

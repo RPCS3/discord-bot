@@ -60,7 +60,7 @@ public static partial class DiscLanguageProvider
                 }
                 catch (Exception e)
                 {
-                    Config.Log.Warn(e, "Failed to parse language list");
+                    Config.Log.Warn(e, $"Failed to parse language list for {serial} {name}");
                 }
         }
 #if DEBUG
@@ -81,7 +81,7 @@ public static partial class DiscLanguageProvider
         if (RedumpName().Match(name) is not { Success: true } match)
             return "";
 
-        string langs = "";
+        var langs = "";
         List<string> flagList = [];
         if (match.Groups["lang"].Value is { Length: > 0 } lang)
             langs = lang;
@@ -98,7 +98,24 @@ public static partial class DiscLanguageProvider
         }
         flagList = flagList.Concat(
             langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(l => MapLangToFlag(productCodeRegion, l))
+            .Select(
+#if DEBUG
+                l =>
+                {
+                    try
+                    {
+                        return MapLangToFlag(productCodeRegion, l);
+                    }
+                    catch (Exception e)
+                    {
+                        Config.Log.Warn(e, $"Failed to parse language list for {name}");
+                        return "";
+                    }
+                }
+#else
+                l => MapLangToFlag(productCodeRegion, l)
+#endif
+            )
         ).Distinct()
         //.OrderBy(l => l, StringComparer.OrdinalIgnoreCase)
         .ToList();
@@ -138,6 +155,7 @@ public static partial class DiscLanguageProvider
         ["Austria"] = "🇦🇹",
         ["Brazil"] = "🇧🇷",
         ["Canada"] = "🇨🇦",
+        ["Czechia"] = "🇨🇿",
         ["Europe"] = "🇪🇺",
         ["France"] = "🇫🇷",
         ["Germany"] = "🇩🇪",
@@ -168,6 +186,7 @@ public static partial class DiscLanguageProvider
         ["bg"] = "🇧🇬", // Bulgarian
         ["ca"] = "🇦🇩", // Catalan - Andorra
         ["cs"] = "🇨🇿",
+        ["cy"] = "🏴󠁧󠁢󠁷󠁬󠁳󠁿", // Wales
         ["da"] = "🇩🇰", // Danish - Denmark
         ["de"] = "🇩🇪",
         ["de-AT"] = "🇦🇹",
@@ -179,7 +198,9 @@ public static partial class DiscLanguageProvider
         ["eu"] = "🏴󠁥󠁳󠁰󠁶󠁿", // Basque - France / Spain
         ["fi"] = "🇫🇮",
         ["fr"] = "🇫🇷",
+        ["ga"] = "🇮🇪", // Ireland
         ["gd"] = "🏴󠁧󠁢󠁳󠁣󠁴󠁿", // Gaelic - Scotland
+        ["gl"] = "🏴󠁥󠁳󠁧󠁡󠁿", // Galician
         ["hr"] = "🇭🇷", // Croatian
         ["hu"] = "🇭🇺",
         ["it"] = "🇮🇹",

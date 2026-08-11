@@ -72,10 +72,7 @@ internal static class EmpathySimulationHandler
         if (channel.IsPrivate)
             return;
 
-        if (message?.Author is null)
-            return;
-
-        if (message.Author.IsCurrent)
+        if (message is null or {Author: null or {IsCurrent: true}})
             return;
 
         if (!Throttling.TryGetValue(channel.Id, out List<DiscordMessage>? msgList) || msgList is null)
@@ -90,8 +87,11 @@ internal static class EmpathySimulationHandler
             try
             {
                 await channel.DeleteMessageAsync(botMsg).ConfigureAwait(false);
-                if (removeFromQueue)
-                    MessageQueue.TryRemove(message.Id, out _);
+                if (removeFromQueue && MessageQueue.TryGetValue(channel.Id, out var queue))
+                {
+                    var newQueue = new ConcurrentQueue<DiscordMessage>(queue.Where(m => m.Id != message.Id));
+                    MessageQueue[channel.Id] = newQueue;
+                }
             }
             catch { }
         }
