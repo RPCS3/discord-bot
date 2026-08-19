@@ -7,9 +7,11 @@ internal static class UserMenuCommands
 {
     // limited to 5 commands per menu
 
+    /*
     [Command("❗ Warn"), RequiresBotModRole, SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu)]
     public static ValueTask WarnUser(UserCommandContext ctx, DiscordUser user)
         => Warnings.Warn(ctx, null, user);
+    */
 
     [Command("🔍 Show warnings"), SlashCommandTypes(DiscordApplicationCommandType.UserContextMenu), AllowDMUsage]
     public static ValueTask ShowWarnings(UserCommandContext ctx, DiscordUser user)

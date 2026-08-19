@@ -186,7 +186,7 @@ public static partial class DiscLanguageProvider
         ["bg"] = "🇧🇬", // Bulgarian
         ["ca"] = "🇦🇩", // Catalan - Andorra
         ["cs"] = "🇨🇿",
-        ["cy"] = "🏴󠁧󠁢󠁷󠁬󠁳󠁿", // Wales
+        ["cy"] = "🏴󠁧󠁢󠁷󠁬󠁳󠁿", // Cymraeg - Wales
         ["da"] = "🇩🇰", // Danish - Denmark
         ["de"] = "🇩🇪",
         ["de-AT"] = "🇦🇹",
@@ -198,9 +198,9 @@ public static partial class DiscLanguageProvider
         ["eu"] = "🏴󠁥󠁳󠁰󠁶󠁿", // Basque - France / Spain
         ["fi"] = "🇫🇮",
         ["fr"] = "🇫🇷",
-        ["ga"] = "🇮🇪", // Ireland
+        ["ga"] = "🇮🇪", // Gaeilge - Ireland
         ["gd"] = "🏴󠁧󠁢󠁳󠁣󠁴󠁿", // Gaelic - Scotland
-        ["gl"] = "🏴󠁥󠁳󠁧󠁡󠁿", // Galician
+        ["gl"] = "🏴󠁥󠁳󠁧󠁡󠁿", // Galego - Galicia
         ["hr"] = "🇭🇷", // Croatian
         ["hu"] = "🇭🇺",
         ["it"] = "🇮🇹",
