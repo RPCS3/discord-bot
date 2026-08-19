@@ -255,6 +255,7 @@ internal static class ContentFilter
             await Explain.SendExplanationAsync(result, term, client, message, true).ConfigureAwait(false);
         }
 
+        var kicked = false;
         if (trigger.Actions.HasFlag(FilterAction.Kick)
             && !ignoreFlags.HasFlag(FilterAction.Kick))
         {
@@ -270,6 +271,7 @@ internal static class ContentFilter
                     catch {}
                     await mem.RemoveAsync("Filter action for trigger " + trigger.String).ConfigureAwait(false);
                     completedActions.Add(FilterAction.Kick);
+                    kicked = true;
                 }
             }
             catch (Exception e)
@@ -288,10 +290,14 @@ internal static class ContentFilter
         try
         {
             ReportAntispamCache.TryGetValue(message.Author.Id, out int counter);
-            if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue) && !ignoreFlags.HasFlag(FilterAction.MuteModQueue) && counter < 3)
+            if (!trigger.Actions.HasFlag(FilterAction.MuteModQueue)
+                && !ignoreFlags.HasFlag(FilterAction.MuteModQueue)
+                && counter < 3
+                || kicked)
             {
                 var context = triggerContext ?? message.Content;
                 var matchedOn = GetMatchedScope(trigger, context);
+                var truncateContent = trigger.Actions.HasFlag(FilterAction.MuteModQueue) && kicked;
                 await client.ReportAsync(
                     infraction ?? "🤬 Content filter hit",
                     message,
@@ -300,6 +306,7 @@ internal static class ContentFilter
                     trigger.Id,
                     context,
                     severity,
+                    truncateContent,
                     actionList,
                     removedTimestamp,
                     quoteTriggerContext

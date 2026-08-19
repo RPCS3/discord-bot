@@ -161,7 +161,14 @@ internal static class Starbucks
             return;
 
         await message.ReactWithAsync(emoji).ConfigureAwait(false);
-        await client.ReportAsync(Config.Reactions.Starbucks + " Media talk report", message, reporters, null, ReportSeverity.Medium).ConfigureAwait(false);
+        await client.ReportAsync(
+            Config.Reactions.Starbucks + " Media talk report",
+            message,
+            reporters,
+            null,
+            ReportSeverity.Medium,
+            false
+        ).ConfigureAwait(false);
     }
 
     private static async ValueTask ShutupAsync(DiscordClient client, DiscordUser user, DiscordMessage message)

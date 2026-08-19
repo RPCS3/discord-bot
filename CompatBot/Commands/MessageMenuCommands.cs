@@ -97,7 +97,13 @@ internal static class MessageMenuCommands
                 return;
             
             modalResult.Result.Values.TryGetValue("comment", out var comment);
-            await ctx.Client.ReportAsync("👀 Message report", message, [ctx.Member], ((TextInputModalSubmission?)comment)?.Value, ReportSeverity.Medium).ConfigureAwait(false);
+            await ctx.Client.ReportAsync("👀 Message report",
+                message,
+                [ctx.Member],
+                ((TextInputModalSubmission?)comment)?.Value,
+                ReportSeverity.Medium,
+                false
+            ).ConfigureAwait(false);
             await message.ReactWithAsync(Config.Reactions.Moderated).ConfigureAwait(false);
             await modalResult.Result.Interaction.CreateResponseAsync(
                 DiscordInteractionResponseType.ChannelMessageWithSource,

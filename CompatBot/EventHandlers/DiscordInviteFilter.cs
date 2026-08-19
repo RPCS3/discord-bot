@@ -55,13 +55,31 @@ internal static partial class DiscordInviteFilter
             {
                 DeletedMessagesMonitor.RemovedByBotCache.Set(message.Id, true, DeletedMessagesMonitor.CacheRetainTime);
                 await message.DeleteAsync("Not a white-listed discord invite link").ConfigureAwait(false);
-                await client.ReportAsync("🛃 An unapproved discord invite", message, "An invalid or expired invite",  null, null, null, ReportSeverity.Low).ConfigureAwait(false);
+                await client.ReportAsync(
+                    "🛃 An unapproved discord invite",
+                    message,
+                    "An invalid or expired invite",
+                    null,
+                    null,
+                    null,
+                    ReportSeverity.Low,
+                    false
+                ).ConfigureAwait(false);
                 await message.Channel.SendMessageAsync($"{message.Author.Mention} please refrain from posting invites that were not approved by a moderator, especially expired or invalid.").ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 Config.Log.Warn(e);
-                await client.ReportAsync("🛃 An unapproved discord invite", message, "An invalid or expired invite", null, null, null, ReportSeverity.Medium).ConfigureAwait(false);
+                await client.ReportAsync(
+                    "🛃 An unapproved discord invite",
+                    message,
+                    "An invalid or expired invite",
+                    null,
+                    null,
+                    null,
+                    ReportSeverity.Medium,
+                    false
+                ).ConfigureAwait(false);
                 await message.ReactWithAsync(Config.Reactions.Moderated,
                     $"{message.Author.Mention} please remove this expired or invalid invite, and refrain from posting it again until you have received an approval from a moderator.",
                     true
@@ -164,6 +182,7 @@ internal static partial class DiscordInviteFilter
                     match?.Id,
                     reportMsg,
                     ReportSeverity.Low,
+                    false,
                     actions?.TrimStart(),
                     quoteContext: false
                 ).ConfigureAwait(false);

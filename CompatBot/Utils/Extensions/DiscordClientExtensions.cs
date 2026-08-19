@@ -126,31 +126,49 @@ public static class DiscordClientExtensions
         int? filterId,
         string? context,
         ReportSeverity severity,
+        bool truncateContent,
         string? actionList = null,
         DateTime? timestamp = null,
         bool quoteContext = true)
     {
         var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-        if (logChannel is null)
-            return null;
-
-        var embedBuilder = await MakeReportTemplateAsync(client, infraction, filterId, message, severity, actionList, timestamp).ConfigureAwait(false);
-        var reportText = string.IsNullOrEmpty(trigger) ? "" : $"Triggered by: `{matchedOn?.Trim(40) ?? trigger}`\n";
-        if (context is { Length: >0})
+        var embedBuilder = await MakeReportTemplateAsync(client,
+            infraction,
+            filterId,
+            message,
+            severity,
+            truncateContent,
+            actionList,
+            timestamp).ConfigureAwait(false);
+        var reportText = trigger is {Length: >0} ? $"Triggered by: `{matchedOn?.Trim(40) ?? trigger}`\n" : "";
+        if (context is {Length: >0})
         {
+            var mod = "";
+            if (truncateContent)
+            {
+                context = string.Join('\n', context.Split('\n', 4).Take(3)); // take only 3 first lines
+                mod = " (truncated)";
+            }
             if (quoteContext)
-                reportText += $"Triggered in:\n```{context.Sanitize()}```\n";
+                reportText += $"Triggered in{mod}:\n```{context.Sanitize()}```\n";
             else
-                reportText += $"Triggered in: {context}\n";
+                reportText += $"Triggered in{mod}: {context}\n";
         }
         embedBuilder.Description = reportText + embedBuilder.Description;
         return await logChannel.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(embedBuilder.Build())).ConfigureAwait(false);
     }
 
-    public static async ValueTask<DiscordMessage> ReportAsync(this DiscordClient client, string infraction, DiscordMessage message, IEnumerable<DiscordMember?> reporters, string? comment, ReportSeverity severity)
+    public static async ValueTask<DiscordMessage> ReportAsync(
+        this DiscordClient client,
+        string infraction,
+        DiscordMessage message,
+        IEnumerable<DiscordMember?> reporters,
+        string? comment,
+        ReportSeverity severity,
+        bool truncateContent)
     {
         var getLogChannelTask = client.GetChannelAsync(Config.BotLogId);
-        var embedBuilder = await MakeReportTemplateAsync(client, infraction, null, message, severity).ConfigureAwait(false);
+        var embedBuilder = await MakeReportTemplateAsync(client, infraction, null, message, severity, truncateContent).ConfigureAwait(false);
         var reportText = string.IsNullOrEmpty(comment) ? "" : comment.Sanitize() + Environment.NewLine;
         embedBuilder.Description = (reportText + embedBuilder.Description).Trim(EmbedPager.MaxDescriptionLength);
         var mentions = reporters.Where(m => m is not null).Select(GetMentionWithNickname!);
@@ -259,6 +277,7 @@ public static class DiscordClientExtensions
         int? filterId,
         DiscordMessage message,
         ReportSeverity severity,
+        bool truncateContent,
         string? actionList = null,
         DateTime? timestamp = null)
     {
@@ -266,24 +285,24 @@ public static class DiscordClientExtensions
         if (message.Channel.IsPrivate)
             severity = ReportSeverity.None;
         var needsAttention = severity > ReportSeverity.Low;
-        if (message.Embeds?.Count > 0)
+        if (message.Embeds is {Count: >0})
         {
-            if (!string.IsNullOrEmpty(content))
+            if (content is {Length: >0})
                 content += Environment.NewLine;
 
-            var srcEmbed = message.Embeds.First();
+            var srcEmbed = message.Embeds[0];
             content += $"🔤 {srcEmbed.Title}";
-            if (srcEmbed.Fields?.Any() ?? false)
+            if (srcEmbed.Fields is {Count: >0})
                 content += $"{Environment.NewLine}{srcEmbed.Description}{Environment.NewLine}+{srcEmbed.Fields.Count} fields";
         }
-        if (message.Attachments?.Count > 0)
+        if (message.Attachments is {Count: >0})
         {
-            if (!string.IsNullOrEmpty(content))
+            if (content is {Length: >0})
                 content += Environment.NewLine;
             content += string.Join(Environment.NewLine, message.Attachments.Select(a => $"📎 {a.FileName} ({a.FileSize})"));
         }
 
-        if (string.IsNullOrEmpty(content))
+        if (content is not {Length: >0})
             content = "🤔 something fishy is going on here, there was no message or attachment";
         DiscordMember? author = null;
         try
@@ -301,7 +320,7 @@ public static class DiscordClientExtensions
             }.AddField("Violator", author is null ? message.Author.Mention : GetMentionWithNickname(author), true)
             .AddField("Channel", message.Channel.IsPrivate ? "Bot's DM" : message.JumpLink.ToString(), true);
         if (filterId is not null)
-            result.AddField("Filter #", filterId.ToString(), true);
+            result.AddField("Filter #", filterId.ToString()!, true);
         result.AddField("Content of the offending item", content.Trim(EmbedPager.MaxFieldLength));
         if (actionList is { Length: >0})
             result.AddField("Filter Actions", actionList, true);
