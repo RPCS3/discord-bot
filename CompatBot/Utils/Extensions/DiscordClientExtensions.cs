@@ -354,14 +354,16 @@ public static class DiscordClientExtensions
         if (trigger is not {Length: >0})
             return Truncate(content);
         
+        /*
         var idx = content.IndexOf(trigger);
         var start = Math.Max(0, idx - 100);
         var end = Math.Min(content.Length - 1, idx + 100);
         var result = content[start..end];
-        var lines = result.Split('\n');
-        idx = lines.Index().First(i => i.Item.Contains(trigger)).Index;
-        start = Math.Max(0, idx - 1);
-        end = Math.Min(lines.Length - 1, idx + 1);
+        */
+        var lines = content.Split('\n');
+        var idx = lines.Index().First(i => i.Item.Contains(trigger)).Index;
+        var start = Math.Max(0, idx - 1);
+        var end = Math.Min(lines.Length - 1, idx + 1);
         return string.Join('\n', lines[start..end]);
     }
 }
