@@ -146,7 +146,7 @@ public static class DiscordClientExtensions
             var mod = "";
             if (truncateContent)
             {
-                context = string.Join('\n', context.Split('\n', 4).Take(3)); // take only 3 first lines
+                context = Truncate(context, trigger);
                 mod = " (truncated)";
             }
             if (quoteContext)
@@ -342,4 +342,26 @@ public static class DiscordClientExtensions
             ReportSeverity.High => Config.Colors.LogAlert,
             _ => Config.Colors.LogUnknown
         };
+
+    private static string Truncate(string content)
+    {
+        var lines = content.Split('\n', 4).Take(3); // take the first three lines
+        return string.Join('\n', lines);
+    }
+    
+    private static string Truncate(string content, string trigger)
+    {
+        if (trigger is not {Length: >0})
+            return Truncate(content);
+        
+        var idx = content.IndexOf(trigger);
+        var start = Math.Max(0, idx - 100);
+        var end = Math.Min(content.Length - 1, idx + 100);
+        var result = content[start..end];
+        var lines = result.Split('\n');
+        idx = lines.Index().First(i => i.Item.Contains(trigger)).Index;
+        start = Math.Max(0, idx - 1);
+        end = Math.Min(lines.Length - 1, idx + 1);
+        return string.Join('\n', lines[start..end]);
+    }
 }
