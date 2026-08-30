@@ -47,6 +47,7 @@ internal partial class LogParser
                 ["SYS: Loading iso"] = LoadingIso(),
                 ["Set 'enc type':"] = IsoEncType(),
                 ["ISO: init: Failed"] = FailedDiscKeyFile(),
+                ["ISO: iso_archive: Corrupt ISO file"] = CorruptIsoFile(),
                 ["Found matching key file:"] = FoundDiscKeyFile(),
                 ["Selected config:"] = SelectedConfigType(),
                 ["Applying"] = ConfigTypeAndPath(),

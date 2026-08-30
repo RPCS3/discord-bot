@@ -118,6 +118,13 @@ internal static partial class LogParserResult
         if (serial is {Length: >0} && isElf)
             notes.Add($"⚠️ Retail game booted directly through `{Path.GetFileName(elfBootPath)}`, which is not recommended");
         
+        if (items["corrupted_iso_file"] is {Length: >0})
+        {
+            if (items["corrupt_iso_file_error"] is {Length: >0} isoError)
+                notes.Add($"❌ Corrupted ISO file: {isoError}");
+            else
+                notes.Add("❌ Corrupted ISO file");
+        }
         if (items["vfs_disc_mount"] is "vfsv0_virtual_iso_overlay_fs_dev"
             || items["iso_path"] is {Length: >0})
         {

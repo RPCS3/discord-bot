@@ -9,8 +9,10 @@ namespace CompatBot.Utils;
 
 public static partial class CommandContextExtensions
 {
+    // https://discord.com/channels/@me/417347887341633547/1540081817690841148
+    // https://discord.com/channels/988391523454431262/988392381118308394/1534607595828936744
     [GeneratedRegex(
-        @"(?:https?://)?discord(app)?\.com/channels/(?<guild>\d+)/(?<channel>\d+)/(?<message>\d+)",
+        @"(?:https?://)?discord(app)?\.com/channels/(?<guild>\d+|@me)/(?<channel>\d+)/(?<message>\d+)",
         RegexOptions.IgnoreCase | RegexOptions.Singleline
     )]
     internal static partial Regex MessageLinkPattern();
@@ -55,13 +57,24 @@ public static partial class CommandContextExtensions
     public static async Task<DiscordMessage?> GetMessageAsync(this CommandContext ctx, string messageLink)
     {
         if (MessageLinkPattern().Match(messageLink) is Match m
-            && ulong.TryParse(m.Groups["guild"].Value, out var guildId)
             && ulong.TryParse(m.Groups["channel"].Value, out var channelId)
-            && ulong.TryParse(m.Groups["message"].Value, out var msgId)
-            && ctx.Client.Guilds.TryGetValue(guildId, out var guild)
-            && await guild.GetChannelAsync(channelId).ConfigureAwait(false) is DiscordChannel channel)
-            return await channel.GetMessageCachedAsync(msgId).ConfigureAwait(false)
-                   ?? await channel.GetMessageAsync(msgId);
+            && ulong.TryParse(m.Groups["message"].Value, out var msgId))
+        {
+            DiscordChannel? channel = null;
+            if (m.Groups["guild"].Value is "@me")
+            {
+                channel = await ctx.User.CreateDmChannelAsync().ConfigureAwait(false);
+            }
+            else if (ulong.TryParse(m.Groups["guild"].Value, out var guildId)
+                     && ctx.Client.Guilds.TryGetValue(guildId, out var guild)
+                     && await guild.GetChannelAsync(channelId).ConfigureAwait(false) is DiscordChannel ch)
+                channel = ch;
+            if (channel is not null)
+            {
+                return await channel.GetMessageCachedAsync(msgId).ConfigureAwait(false)
+                       ?? await channel.GetMessageAsync(msgId);
+            }
+        }
         return null;
     }
 
