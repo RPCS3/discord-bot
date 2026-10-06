@@ -367,6 +367,7 @@ internal sealed class Vision
             a.MediaType is MediaTypeNames.Image.Jpeg
                 or MediaTypeNames.Image.Png
                 or MediaTypeNames.Image.Webp
+                or MediaTypeNames.Image.Gif
             && a.Url is {Length: >0}
         ).Select(att => att.Url!);
 
