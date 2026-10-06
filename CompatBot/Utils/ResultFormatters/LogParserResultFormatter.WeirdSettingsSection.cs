@@ -72,7 +72,6 @@ internal static partial class LogParserResult
                 notes.Add("ℹ️ Changing `Thread Scheduler` option may or may not increase performance");
         }
         var isAppleGpu = items["gpu_info"] is string gpuInfoApple && gpuInfoApple.Contains("Apple", StringComparison.OrdinalIgnoreCase);
-        var canUseRelaxedZcull = items["renderer"] is not "Vulkan" || multiItems["vk_ext"].Contains("VK_EXT_depth_range_unrestricted");
         if (items["llvm_arch"] is string llvmArch)
             notes.Add($"❓ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
         if (items["renderer"] is "D3D12")
@@ -339,9 +338,7 @@ internal static partial class LogParserResult
             && items["write_color_buffers"] is DisabledMark)
             notes.Add("❓ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
 
-        if (items["zcull_status"] is not null and not "Full" && !canUseRelaxedZcull)
-            notes.Add("⚠️ This GPU does not support `VK_EXT_depth_range_unrestricted` extension, please disable `Relaxed ZCull Sync`");
-        else if (items["zcull_status"] is "Disabled")
+        if (items["zcull_status"] is "Disabled")
             notes.Add("⚠️ `ZCull Occlusion Queries` is disabled, which can result in visual artifacts");
         else if (items["relaxed_zcull"] is string relaxedZcull)
         {
@@ -351,8 +348,7 @@ internal static partial class LogParserResult
                 notes.Add("ℹ️ `ZCull Accuracy` is set to `Relaxed` and can cause performance and visual issues");
             }
             else if (relaxedZcull is DisabledMark
-                     && KnownGamesThatWorkWithRelaxedZcull.Contains(serial)
-                     && canUseRelaxedZcull)
+                     && KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
             {
                 notes.Add("ℹ️ Changing `ZCull Accuracy` to `Relaxed` for this game may improve performance");
             }
