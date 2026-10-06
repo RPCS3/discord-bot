@@ -72,7 +72,6 @@ internal static partial class LogParserResult
                 notes.Add("ℹ️ Changing `Thread Scheduler` option may or may not increase performance");
         }
         var isAppleGpu = items["gpu_info"] is string gpuInfoApple && gpuInfoApple.Contains("Apple", StringComparison.OrdinalIgnoreCase);
-        var canUseRelaxedZcull = items["renderer"] is not "Vulkan" || multiItems["vk_ext"].Contains("VK_EXT_depth_range_unrestricted");
         if (items["llvm_arch"] is string llvmArch)
             notes.Add($"❓ LLVM target CPU architecture override is set to `{llvmArch.Sanitize(replaceBackTicks: true)}`");
         if (items["renderer"] is "D3D12")
@@ -244,16 +243,9 @@ internal static partial class LogParserResult
         }
         if (items["async_texture_streaming"] == EnabledMark)
         {
-            if (isAppleGpu)
-            {
-                notes.Add("⚠️ `Async Texture Streaming` is not supported on Apple GPUs");
-            }
-            else
-            {
-                if (items["async_queue_scheduler"] == "Device")
-                    notes.Add("⚠️ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
-                notes.Add("⚠️ If you experience visual artifacts, try disabling `Async Texture Streaming`");
-            }
+            if (items["async_queue_scheduler"] == "Device")
+                notes.Add("⚠️ If you experience visual artifacts, try setting `Async Queue Scheduler` to use `Host`");
+            notes.Add("⚠️ If you experience visual artifacts, try disabling `Async Texture Streaming`");
         }
             
         if (items["ppu_decoder"] is string ppuDecoder)
@@ -339,9 +331,7 @@ internal static partial class LogParserResult
             && items["write_color_buffers"] is DisabledMark)
             notes.Add("❓ `Force CPU Blit` is enabled, but `Write Color Buffers` is disabled");
 
-        if (items["zcull_status"] is not null and not "Full" && !canUseRelaxedZcull)
-            notes.Add("⚠️ This GPU does not support `VK_EXT_depth_range_unrestricted` extension, please disable `Relaxed ZCull Sync`");
-        else if (items["zcull_status"] is "Disabled")
+        if (items["zcull_status"] is "Disabled")
             notes.Add("⚠️ `ZCull Occlusion Queries` is disabled, which can result in visual artifacts");
         else if (items["relaxed_zcull"] is string relaxedZcull)
         {
@@ -351,8 +341,7 @@ internal static partial class LogParserResult
                 notes.Add("ℹ️ `ZCull Accuracy` is set to `Relaxed` and can cause performance and visual issues");
             }
             else if (relaxedZcull is DisabledMark
-                     && KnownGamesThatWorkWithRelaxedZcull.Contains(serial)
-                     && canUseRelaxedZcull)
+                     && KnownGamesThatWorkWithRelaxedZcull.Contains(serial))
             {
                 notes.Add("ℹ️ Changing `ZCull Accuracy` to `Relaxed` for this game may improve performance");
             }
@@ -462,19 +451,15 @@ internal static partial class LogParserResult
             notes.Add("⚠️ `GPU Texture Scaling` is enabled, please disable");
         if (items["af_override"] is string af)
         {
-            if (isAppleGpu && af is not "Auto")
-                notes.Add("⚠️ `Anisotropic Filter` override is not supported on Apple GPUs, please use `Auto`");
-            else if (af is "Disabled")
+            if (af is "Disabled")
                 notes.Add("❌ `Anisotropic Filter` is `Disabled`, please use `Auto` instead");
             else if (af is not "Auto" and not "16")
                 notes.Add($"❓ `Anisotropic Filter` is set to `{af}x`, which makes little sense over `16x` or `Auto`");
         }
 
-        if (items["shader_mode"]?.Contains("Interpreter") is true && isAppleGpu)
-            notes.Add("⚠️ Interpreter `Shader Mode` is not supported on Apple GPUs, please use Async-only option");
-        else if (items["shader_mode"] == "Interpreter only")
+        if (items["shader_mode"] == "Interpreter only")
             notes.Add("⚠️ `Shader Interpreter Only` mode is not accurate and very demanding");
-        else if (items["shader_mode"]?.StartsWith("Async") is false && !isAppleGpu)
+        else if (items["shader_mode"]?.StartsWith("Async") is false)
             notes.Add("❓ Async shader compilation is disabled");
         if (items["driver_recovery_timeout"] is string driverRecoveryTimeout
             && int.TryParse(driverRecoveryTimeout, out var drtValue)
@@ -506,7 +491,7 @@ internal static partial class LogParserResult
         if (items["mtrsx"] is EnabledMark)
         {
             if (isAppleGpu)
-                notes.Add("⚠️ `Multithreaded RSX` is not supported for Apple GPUs");
+                notes.Add("⚠️ `Multithreaded RSX` is very slow on Apple GPUs");
             else if (multiItems["fatal_error"].Any(f => f.Contains("VK_ERROR_OUT_OF_POOL_MEMORY_KHR")))
                 notes.Add("⚠️ `Multithreaded RSX` is enabled, please disable for this game");
             else if (threadCount < 6)
