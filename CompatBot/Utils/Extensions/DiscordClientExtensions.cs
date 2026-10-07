@@ -39,6 +39,10 @@ public static class DiscordClientExtensions
                     return result;
             }
         }
+        catch (NotFoundException)
+        {
+            Config.Log.Warn($"Failed to fetch member data ({callerName} in {callerPath}:{callerLine})");
+        }
         catch (Exception e)
         {
             Config.Log.Warn(e, $"Failed to fetch member data ({callerName} in {callerPath}:{callerLine})");
