@@ -8,11 +8,11 @@ namespace CompatBot.Ocr.Backend;
 
 internal class Tesseract: BackendBase
 {
-    private TesseractEngine engine = null!;
+    protected TesseractEngine Engine = null!;
     private static readonly SemaphoreSlim Limiter = new(1, 1);
 
     public override string Name => "tesseract";
-    private string ModelSuffix => Config.TesseractModelVariantSuffix switch
+    private static string ModelSuffix => Config.TesseractModelVariantSuffix switch
     {
         "_fast" or "_best" => Config.TesseractModelVariantSuffix,
         _ => ""
@@ -40,7 +40,7 @@ internal class Tesseract: BackendBase
 
         try
         {
-            engine = new(ModelVariantCachePath, "eng+rus", EngineMode.Default);
+            Engine = new(ModelVariantCachePath, "eng+rus", EngineMode.Default);
         }
         catch (Exception e)
         {
@@ -55,11 +55,20 @@ internal class Tesseract: BackendBase
     {
         var imgData = await HttpClient.GetByteArrayAsync(imgUrl, cancellationToken).ConfigureAwait(false);
         var img = Pix.LoadFromMemory(imgData);
+        if (img.XRes < 1500 || img.YRes < 2000)
+        {
+            var img2 = img.Scale(2f, 2f);
+            img.Dispose();
+            img = img2;
+        }
+        var img3 = img.ConvertRGBToGray();
+        img.Dispose();
+        img = img3;
         try
         {
             if (rotation > 0)
             {
-                var img2 = rotation switch
+                var img4 = rotation switch
                 {
                     1 => img.Rotate90((int)RotationDirection.Clockwise),
                     2 => img.Rotate((float)Math.PI),
@@ -67,12 +76,12 @@ internal class Tesseract: BackendBase
                     _ => throw new InvalidOperationException($"Can only rotate 3 times at most, but asked for {rotation}"),
                 };
                 img.Dispose();
-                img = img2;
+                img = img4;
             }
             await Limiter.WaitAsync(Config.Cts.Token).ConfigureAwait(false);
             try
             {
-                using var page = engine.Process(img);
+                using var page = Engine.Process(img);
                 return (page.GetText() ?? "", page.GetMeanConfidence());
             }
             finally
@@ -89,7 +98,7 @@ internal class Tesseract: BackendBase
     public override void Dispose()
     {
         base.Dispose();
-        engine.Dispose();
+        Engine.Dispose();
     }
 
     private string ModelVariantCachePath

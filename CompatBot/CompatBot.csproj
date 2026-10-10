@@ -71,7 +71,7 @@
     <PackageReference Include="NLog.Extensions.Logging" Version="6.2.1" />
     <PackageReference Include="NReco.Text.AhoCorasickDoubleArrayTrie" Version="1.1.1" />
     <PackageReference Include="Result.Net" Version="1.7.1" />
-    <PackageReference Include="SharpCompress" Version="0.50.4" />
+    <PackageReference Include="SharpCompress" Version="0.50.5" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />

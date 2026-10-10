@@ -11,10 +11,10 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.12" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageReference Include="Microsoft.Testing.Extensions.GitHubActionsReport" Version="2.5.0" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Telemetry" Version="2.5.0" />
-    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.5.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Telemetry" Version="2.5.1" />
+    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.5.1" />
     <PackageReference Include="NUnit" Version="5.0.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="6.3.0">
+    <PackageReference Include="NUnit3TestAdapter" Version="6.3.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -22,6 +22,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="TesseractCSharp" Version="1.0.5" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Clients\IrdLibraryClient\IrdLibraryClient.csproj" />
