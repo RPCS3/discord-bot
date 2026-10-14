@@ -113,6 +113,7 @@ internal static partial class DiscordInviteFilter
 
                 var guildName = $"""
                                  {invite.Guild.Name}
+                                 {invite.Guild.Name.ToSkeletonString()}
                                  {invite.Guild.Name.ToCanonicalForm()}
                                  """;
                 if (await ContentFilter.FindTriggerAsync(FilterContext.Invite, guildName).ConfigureAwait(false) is Piracystring trigger
