@@ -29,7 +29,7 @@ public static class Normalizer
 
     // as per https://www.unicode.org/reports/tr39/#Confusable_Detection
     [return: NotNullIfNotNull(nameof(input))]
-    private static string? ToSkeletonString(this string? input)
+    public static string? ToSkeletonString(this string? input)
     {
         if (input is null or "")
             return input;
