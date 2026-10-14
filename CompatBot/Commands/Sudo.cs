@@ -140,21 +140,28 @@ internal static partial class Sudo
 
     private static async ValueTask<DiscordChannel?> ParseChannelNameAsync(this TextCommandContext ctx, string channelName)
     {
-        await using var scope = ctx.Extension.ServiceProvider.CreateAsyncScope();
-        if (await TextOnlyDiscordChannelConverter.ConvertAsync(new TextConverterContext()
-            {
-                User = ctx.User,
-                Channel = ctx.Channel,
-                Message = ctx.Message,
-                Command = ctx.Command,
-                RawArguments = channelName,
+        try
+        {
+            await using var scope = ctx.Extension.ServiceProvider.CreateAsyncScope();
+            if (await TextOnlyDiscordChannelConverter.ConvertAsync(new TextConverterContext
+                {
+                    User = ctx.User,
+                    Channel = ctx.Channel,
+                    Message = ctx.Message,
+                    Command = ctx.Command,
+                    RawArguments = channelName,
 
-                PrefixLength = ctx.Prefix?.Length ?? 0,
-                Splicer = DefaultTextArgumentSplicer.Splice,
-                Extension = ctx.Extension,
-                ServiceScope = scope,
-            }).ConfigureAwait(false) is { HasValue: true } ch)
-            return ch.Value;
+                    PrefixLength = ctx.Prefix?.Length ?? 0,
+                    Splicer = DefaultTextArgumentSplicer.Splice,
+                    Extension = ctx.Extension,
+                    ServiceScope = scope,
+                }).ConfigureAwait(false) is { HasValue: true } ch)
+                return ch.Value;
+        }
+        catch (Exception e)
+        {
+            Config.Log.Error(e, "Failed to parse channel name from {channelName}", channelName);
+        }
         return null;
     }
 }

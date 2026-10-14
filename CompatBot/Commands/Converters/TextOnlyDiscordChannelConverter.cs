@@ -52,7 +52,7 @@ internal sealed partial class TextOnlyDiscordChannelConverter : ITextArgumentCon
                 from ch in g.Channels
                 select ch
             ).FirstOrDefault(xc => xc.Key == cid && xc.Value?.Type == DiscordChannelType.Text);
-            var ret = result.Value == null!
+            var ret = result.Value is null
                 ? Optional.FromNoValue<DiscordChannel>()
                 : Optional.FromValue(result.Value);
             return ret;
@@ -63,9 +63,21 @@ internal sealed partial class TextOnlyDiscordChannelConverter : ITextArgumentCon
         value = value.ToLowerInvariant();
         var chn = (
             from g in guildList
+            where g is not null
             from ch in g.Channels
             select ch
-        ).FirstOrDefault(xc => xc.Value?.Name.ToLowerInvariant() == value && xc.Value?.Type == DiscordChannelType.Text);
-        return chn.Value == null! ? Optional.FromNoValue<DiscordChannel>() : Optional.FromValue(chn.Value);
+        ).ToAsyncEnumerable()
+        .Select(
+            async (ch, _, _) => ch.Value is null
+                ? KeyValuePair.Create(ch.Key, await ctx.Client.GetChannelAsync(ch.Key).ConfigureAwait(false))
+                : ch
+        ).ToBlockingEnumerable()
+        .FirstOrDefault(
+            xc => xc.Value.Type == DiscordChannelType.Text
+                  && value.Equals(xc.Value.Name, StringComparison.InvariantCultureIgnoreCase)
+        );
+        return chn.Value is null
+            ? Optional.FromNoValue<DiscordChannel>()
+            : Optional.FromValue(chn.Value);
     }
 }
