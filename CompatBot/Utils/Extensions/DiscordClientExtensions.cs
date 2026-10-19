@@ -136,21 +136,23 @@ public static class DiscordClientExtensions
         bool quoteContext = true)
     {
         var logChannel = await client.GetChannelAsync(Config.BotLogId).ConfigureAwait(false);
-        var embedBuilder = await MakeReportTemplateAsync(client,
+        var embedBuilder = await MakeReportTemplateAsync(
+            client,
             infraction,
             filterId,
             message,
             severity,
             truncateContent,
             actionList,
-            timestamp).ConfigureAwait(false);
+            timestamp
+        ).ConfigureAwait(false);
         var reportText = trigger is {Length: >0} ? $"Triggered by: `{matchedOn?.Trim(40) ?? trigger}`\n" : "";
         if (context is {Length: >0})
         {
             var mod = "";
             if (truncateContent)
             {
-                context = Truncate(context, trigger);
+                context = Truncate(context, trigger, matchedOn);
                 mod = " (truncated)";
             }
             if (quoteContext)
@@ -321,7 +323,7 @@ public static class DiscordClientExtensions
             {
                 Title = infraction,
                 Color = GetColor(severity),
-            }.AddField("Violator", author is null ? message.Author.Mention : GetMentionWithNickname(author), true)
+            }.AddField("Violator", author is null ? message.Author.Mention : author.GetMentionWithNickname(), true)
             .AddField("Channel", message.Channel.IsPrivate ? "Bot's DM" : message.JumpLink.ToString(), true);
         if (filterId is not null)
             result.AddField("Filter #", filterId.ToString()!, true);
@@ -353,9 +355,9 @@ public static class DiscordClientExtensions
         return string.Join('\n', lines);
     }
     
-    private static string Truncate(string content, string trigger)
+    private static string Truncate(string content, string trigger, string? matchedOn)
     {
-        if (trigger is not {Length: >0})
+        if (trigger is not {Length: >0} && matchedOn is not {Length: >0})
             return Truncate(content);
 
         try
@@ -366,8 +368,20 @@ public static class DiscordClientExtensions
             var end = Math.Min(content.Length - 1, idx + 100);
             var result = content[start..end];
             */
+
+            matchedOn = matchedOn?.Split('\n').FirstOrDefault(l => l is {Length: >0})
+                ?? trigger;
+            var minLen = trigger.Length;
+            if (minLen is 0 || matchedOn.Length < minLen)
+                minLen = matchedOn.Length;
             var lines = content.Split('\n');
-            var idx = lines.Index().FirstOrDefault(i => i.Item.Contains(trigger)).Index;
+            var idx = lines.Index()
+                .FirstOrDefault(
+                    i =>
+                        i.Item.Length >= minLen
+                        && (i.Item.Contains(trigger, StringComparison.OrdinalIgnoreCase)
+                            || i.Item.Contains(matchedOn))
+                ).Index;
             var start = Math.Max(0, idx - 1);
             var end = Math.Min(lines.Length - 1, idx + 1);
             return string.Join('\n', lines[start..end]);
