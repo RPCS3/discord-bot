@@ -357,17 +357,25 @@ public static class DiscordClientExtensions
     {
         if (trigger is not {Length: >0})
             return Truncate(content);
-        
-        /*
-        var idx = content.IndexOf(trigger);
-        var start = Math.Max(0, idx - 100);
-        var end = Math.Min(content.Length - 1, idx + 100);
-        var result = content[start..end];
-        */
-        var lines = content.Split('\n');
-        var idx = lines.Index().First(i => i.Item.Contains(trigger)).Index;
-        var start = Math.Max(0, idx - 1);
-        var end = Math.Min(lines.Length - 1, idx + 1);
-        return string.Join('\n', lines[start..end]);
+
+        try
+        {
+            /*
+            var idx = content.IndexOf(trigger);
+            var start = Math.Max(0, idx - 100);
+            var end = Math.Min(content.Length - 1, idx + 100);
+            var result = content[start..end];
+            */
+            var lines = content.Split('\n');
+            var idx = lines.Index().FirstOrDefault(i => i.Item.Contains(trigger)).Index;
+            var start = Math.Max(0, idx - 1);
+            var end = Math.Min(lines.Length - 1, idx + 1);
+            return string.Join('\n', lines[start..end]);
+        }
+        catch (Exception e)
+        {
+            Config.Log.Warn(e, $"Failed to truncate content lines for trigger '{trigger}' in '{content}'");
+            return Truncate(content);
+        }
     }
 }
