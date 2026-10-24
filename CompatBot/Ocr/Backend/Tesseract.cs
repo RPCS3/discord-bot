@@ -8,7 +8,7 @@ namespace CompatBot.Ocr.Backend;
 
 internal class Tesseract: BackendBase
 {
-    protected TesseractEngine Engine = null!;
+    protected TesseractEngine? Engine;
     private static readonly SemaphoreSlim Limiter = new(1, 1);
 
     public override string Name => "tesseract";
@@ -40,6 +40,7 @@ internal class Tesseract: BackendBase
 
         try
         {
+            Engine?.Dispose();
             Engine = new(ModelVariantCachePath, "eng+rus", EngineMode.Default);
         }
         catch (Exception e)
@@ -53,6 +54,9 @@ internal class Tesseract: BackendBase
 
     public override async Task<(string result, double confidence)> GetTextAsync(string imgUrl, int rotation, CancellationToken cancellationToken)
     {
+        if (Engine is null)
+            throw new InvalidOperationException("Engine is not initialized");
+        
         var imgData = await HttpClient.GetByteArrayAsync(imgUrl, cancellationToken).ConfigureAwait(false);
         var img = Pix.LoadFromMemory(imgData);
         if (img.XRes < 1500 || img.YRes < 2000)
@@ -97,8 +101,8 @@ internal class Tesseract: BackendBase
 
     public override void Dispose()
     {
+        Engine?.Dispose();
         base.Dispose();
-        Engine.Dispose();
     }
 
     private string ModelVariantCachePath
