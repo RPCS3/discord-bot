@@ -9,7 +9,7 @@ public static class UsernameZalgoMonitor
 {
     private static readonly HashSet<char> OversizedChars =
     [
-        '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄', '˞',
+        '꧁', '꧂', '⎝', '⎠', '⧹', '⧸', '⎛', '⎞', '﷽', '⸻', 'ဪ', '꧅', '꧄', '˞', '༒'
     ];
 
     public static async Task OnUserUpdated(DiscordClient c, UserUpdatedEventArgs args)

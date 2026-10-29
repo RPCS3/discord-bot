@@ -84,6 +84,7 @@ public class ZalgoTests
     [TestCase("᲼᲼᲼᲼᲼᲼᲼᲼᲼ ", true, "Private block")]
     [TestCase("녇", true, "Single character after normalization")]
     [TestCase("𝖊𝖝𝖋𝖎𝖇0", true)]
+    [TestCase("༒ᵏ⁰ʳ³༒", true)]
     public async Task ZalgoDetectionTest(string name, bool isBad, string? comment = null)
     {
         var result = await UsernameZalgoMonitor.NeedsRenameAsync(name).ConfigureAwait(false);
