@@ -21,7 +21,7 @@ public class FilterActionAutoCompleteProvider: IAutoCompleteProvider
     private static readonly int minValue;
     private static readonly int maxValue;
     private static readonly DiscordAutoCompleteChoice[] choiceList;
-    private static readonly char[] Delimiters = { ',', ' ' };
+    private static readonly char[] Delimiters = [',', ' '];
     
     public ValueTask<TResult> AutoCompleteAsync(AutoCompleteContext context)
         => ValueTask.FromResult(GetChoices(Parse(context.UserInput)));
